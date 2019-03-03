@@ -26,12 +26,12 @@ namespace Klyte.DynamicTextBoards
 
         public override void doErrorLog(string fmt, params object[] args)
         {
-            KCAIUtils.doErrorLog(fmt, args);
+            DTBUtils.doErrorLog(fmt, args);
         }
 
         public override void doLog(string fmt, params object[] args)
         {
-            KCAIUtils.doLog(fmt, args);
+            DTBUtils.doLog(fmt, args);
         }
 
         public override void LoadSettings()
