@@ -16,20 +16,14 @@ using static BuildingInfo;
 namespace Klyte.DynamicTextBoards.Overrides
 {
 
-    public class BoardGeneratorBuildings : BoardGeneratorParent<BoardGeneratorBuildings, BuildingBoardContainer, SubBuildingControl, BoardDescriptor, BoardTextDescriptor>
+    public class BoardGeneratorBuildings : BoardGeneratorParent<BoardGeneratorBuildings, BoardBunchContainer, CacheControl, BasicRenderInformation, BoardDescriptor, BoardTextDescriptor>
     {
-
-        private uint lastFontUpdateFrame = SimulationManager.instance.m_currentTickIndex;
 
 
         private Dictionary<String, List<BoardDescriptor>> loadedDescriptors;
 
         private UpdateFlagsBuildings[] m_updateData;
         public bool[] m_updatedIdsColorsLines;
-
-        public override Type TypeToOverride => typeof(BuildingAI);
-
-        public override string MethodNameToOverride => "RenderMeshes";
 
         public override int ObjArraySize => BuildingManager.MAX_BUILDING_COUNT;
 
@@ -39,24 +33,27 @@ namespace Klyte.DynamicTextBoards.Overrides
             m_updateData = new UpdateFlagsBuildings[BuildingManager.MAX_BUILDING_COUNT];
             m_updatedIdsColorsLines = new bool[BuildingManager.MAX_BUILDING_COUNT];
             loadedDescriptors = GenerateDefaultDictionary();
-            Font.textureRebuilt += onTextureRebuilt;
 
 
             TransportManagerOverrides.eventOnLineUpdated += onLineUpdated;
             TransportManager.instance.eventLineColorChanged += (x) => onLineUpdated();
             BuildingManagerOverrides.eventOnBuildingRenamed += onBuildingNameChanged;
+
+            #region Hooks
+            //var postRenderMeshs = GetType().GetMethod("AfterRenderMeshes", allFlags);
+            //doLog($"Patching=> {postRenderMeshs}");
+            //AddRedirect(typeof(BuildingAI).GetMethod("RenderMeshes", allFlags), null, postRenderMeshs);
+            #endregion
         }
 
-
-        private void onTextureRebuilt(Font obj)
+        protected override void OnTextureRebuilt()
         {
-            lastFontUpdateFrame = SimulationManager.instance.m_currentTickIndex;
             m_updateData = new UpdateFlagsBuildings[BuildingManager.MAX_BUILDING_COUNT];
         }
 
         protected void Reset()
         {
-            m_subBuildingObjs = new BuildingBoardContainer[BuildingManager.MAX_BUILDING_COUNT];
+            m_boardsContainers = new BoardBunchContainer[BuildingManager.MAX_BUILDING_COUNT];
             m_updateData = new UpdateFlagsBuildings[BuildingManager.MAX_BUILDING_COUNT];
             m_updatedIdsColorsLines = new bool[BuildingManager.MAX_BUILDING_COUNT];
         }
@@ -69,13 +66,12 @@ namespace Klyte.DynamicTextBoards.Overrides
         private void onBuildingNameChanged(ushort id)
         {
             doLog("onBuildingNameChanged");
-            m_updateData[id].m_nameNormal = false;
-            m_updateData[id].m_nameOutline = false;
+            m_updateData[id].m_nameMesh = false;
         }
         #endregion
 
 
-        public static void RenderMeshes(BuildingAI __instance, RenderManager.CameraInfo cameraInfo, ushort buildingID, ref Building data, int layerMask, ref RenderManager.Instance instance)
+        public static void AfterRenderMeshes(BuildingAI __instance, RenderManager.CameraInfo cameraInfo, ushort buildingID, ref Building data, int layerMask, ref RenderManager.Instance instance)
         {
             BoardGeneratorBuildings.instance.AfterRenderMeshesImpl(cameraInfo, buildingID, ref data, layerMask, ref instance, __instance);
         }
@@ -86,15 +82,14 @@ namespace Klyte.DynamicTextBoards.Overrides
             {
                 return;
             }
-            if (m_subBuildingObjs[buildingID] == null)
+            if (m_boardsContainers[buildingID] == null)
             {
-                m_subBuildingObjs[buildingID] = new BuildingBoardContainer();
+                m_boardsContainers[buildingID] = new BoardBunchContainer();
             }
-            if (m_subBuildingObjs[buildingID]?.m_boardsData?.Count() != loadedDescriptors[data.Info.name].Count)
+            if (m_boardsContainers[buildingID]?.m_boardsData?.Count() != loadedDescriptors[data.Info.name].Count)
             {
-                m_subBuildingObjs[buildingID].m_boardsData = new SubBuildingControl[loadedDescriptors[data.Info.name].Count];
-                m_updateData[buildingID].m_nameOutline = false;
-                m_updateData[buildingID].m_nameNormal = false;
+                m_boardsContainers[buildingID].m_boardsData = new CacheControl[loadedDescriptors[data.Info.name].Count];
+                m_updateData[buildingID].m_nameMesh = false;
                 m_updatedIdsColorsLines[buildingID] = false;
             }
 
@@ -102,13 +97,13 @@ namespace Klyte.DynamicTextBoards.Overrides
             for (var i = 0; i < loadedDescriptors[data.Info.name].Count; i++)
             {
                 var descriptor = loadedDescriptors[data.Info.name][i];
-                UpdateSubparams(ref m_subBuildingObjs[buildingID].m_boardsData[i], buildingID, ref data, cameraInfo, ref renderInstance, descriptor, updatedColors, i);
+                UpdateSubparams(ref m_boardsContainers[buildingID].m_boardsData[i], buildingID, ref data, cameraInfo, ref renderInstance, descriptor, updatedColors, i);
 
-                RenderPropMesh(cameraInfo, buildingID, ref data, layerMask, ref renderInstance, i, descriptor, out Matrix4x4 propMatrix);
+                RenderPropMesh(cameraInfo, buildingID, data.m_angle, layerMask, renderInstance.m_dataMatrix1.MultiplyPoint(descriptor.m_propPosition), renderInstance.m_dataVector3, i, 0, ref descriptor.m_propName, descriptor.m_propRotation, out Matrix4x4 propMatrix);
 
                 for (int j = 0; j < descriptor.m_textDescriptors.Length; j++)
                 {
-                    RenderTextMesh(cameraInfo, buildingID, ref descriptor, propMatrix, ref descriptor.m_textDescriptors[j], ref m_subBuildingObjs[buildingID].m_boardsData[i]);
+                    RenderTextMesh(cameraInfo, buildingID, 0, ref descriptor, propMatrix, ref descriptor.m_textDescriptors[j], ref m_boardsContainers[buildingID].m_boardsData[i]);
                 }
             }
             m_updatedIdsColorsLines[buildingID] = true;
@@ -117,48 +112,23 @@ namespace Klyte.DynamicTextBoards.Overrides
 
 
         #region Upadate Data
-        protected override BasicRenderInformation GetOwnNameMesh(ushort buildingID, bool useOutline)
+        protected override BasicRenderInformation GetOwnNameMesh(ushort buildingID, int secIdx)
         {
-            doLog($"!nameUpdated {buildingID}");
+            if (m_boardsContainers[buildingID].m_nameSubInfo == null || !m_updateData[buildingID].m_nameMesh)
+            {
+                RefreshNameData(ref m_boardsContainers[buildingID].m_nameSubInfo, BuildingManager.instance.GetBuildingName(buildingID, new InstanceID()) ?? "DUMMY!!!!!");
+                m_updateData[buildingID].m_nameMesh = true;
+            }
+            return m_boardsContainers[buildingID].m_nameSubInfo;
 
-
-            if (useOutline)
-            {
-                if (m_subBuildingObjs[buildingID].m_nameSubInfoOutline == null || !m_updateData[buildingID].m_nameOutline)
-                {
-                    RefreshNameData(ref m_subBuildingObjs[buildingID].m_nameSubInfoOutline, BuildingManager.instance.GetBuildingName(buildingID, new InstanceID()) ?? "DUMMY!!!!!", useOutline);
-                    m_updateData[buildingID].m_nameOutline = true;
-                }
-                return m_subBuildingObjs[buildingID].m_nameSubInfoOutline;
-            }
-            else
-            {
-                if (m_subBuildingObjs[buildingID].m_nameSubInfoNormal == null || !m_updateData[buildingID].m_nameNormal)
-                {
-                    RefreshNameData(ref m_subBuildingObjs[buildingID].m_nameSubInfoNormal, BuildingManager.instance.GetBuildingName(buildingID, new InstanceID()) ?? "DUMMY!!!!!", useOutline);
-                    m_updateData[buildingID].m_nameNormal = true;
-                }
-                return m_subBuildingObjs[buildingID].m_nameSubInfoNormal;
-            }
-        }
-        protected override BasicRenderInformation GetFixedTextMesh(ref BoardTextDescriptor textDescriptor, ushort buildingID)
-        {
-            if (textDescriptor.GeneratedFixedTextRenderInfo == null || textDescriptor.GeneratedFixedTextRenderInfoTick < lastFontUpdateFrame)
-            {
-                var result = textDescriptor.GeneratedFixedTextRenderInfo;
-                RefreshNameData(ref result, textDescriptor.m_isFixedTextLocalized ? Locale.Get(textDescriptor.m_fixedText, textDescriptor.m_fixedTextLocaleKey) : textDescriptor.m_fixedText, textDescriptor.m_useOutline);
-                textDescriptor.GeneratedFixedTextRenderInfo = result;
-            }
-            return textDescriptor.GeneratedFixedTextRenderInfo;
         }
 
-        protected override void UpdateSubparams(ref SubBuildingControl ctrl, ushort buildingID, ref Building data, RenderManager.CameraInfo cameraInfo, ref RenderManager.Instance instanceData, BoardDescriptor descriptor, bool updatedIdsColors, int idx)
+        protected void UpdateSubparams(ref CacheControl ctrl, ushort buildingID, ref Building data, RenderManager.CameraInfo cameraInfo, ref RenderManager.Instance instanceData, BoardDescriptor descriptor, bool updatedIdsColors, int idx)
         {
             BuildingManager instance = Singleton<BuildingManager>.instance;
-            if (ctrl == null) ctrl = new SubBuildingControl();
+            if (ctrl == null) ctrl = new CacheControl();
             if (!updatedIdsColors)
             {
-                doLog($"!colorUpdated {buildingID}");
                 Color color;
                 List<Quad2> boundaries = new List<Quad2>();
                 var subBuilding = buildingID;
@@ -195,7 +165,7 @@ namespace Klyte.DynamicTextBoards.Overrides
                     }
                 }
                 var nearStops = KlyteUtils.FindNearStops(instanceData.m_dataMatrix1.MultiplyPoint(descriptor.m_propPosition), data.Info.m_class.m_service, data.Info.m_class.m_service, descriptor.m_targetVehicle ?? VehicleInfo.VehicleType.None, true, 400f, out List<float> dist, boundaries);
-                doLog($"updatedIdsColors {nearStops.Count} [{string.Join(",", nearStops.Select(x => x.ToString()).ToArray())}], [{string.Join(",", dist.Select(x => x.ToString()).ToArray())}], ");
+                //doLog($"updatedIdsColors {nearStops.Count} [{string.Join(",", nearStops.Select(x => x.ToString()).ToArray())}], [{string.Join(",", dist.Select(x => x.ToString()).ToArray())}], ");
                 if (nearStops.Count > 0)
                 {
                     var effNearStopId = nearStops[dist.IndexOf(dist.Min(x => x))];
@@ -213,11 +183,17 @@ namespace Klyte.DynamicTextBoards.Overrides
         }
         #endregion
 
-        public override Color GetColor(ushort buildingID, int idx)
+        public override Color GetColor(ushort buildingID, int idx, int secIdx)
         {
-            return m_subBuildingObjs[buildingID].m_boardsData[idx]?.m_cachedColor ?? Color.white;
+            return m_boardsContainers[buildingID].m_boardsData[idx]?.m_cachedColor ?? Color.white;
         }
 
+        protected override InstanceID GetPropRenderID(ushort buildingID)
+        {
+            InstanceID result = default(InstanceID);
+            result.Building = buildingID;
+            return result;
+        }
 
         private static Dictionary<string, List<BoardDescriptor>> GenerateDefaultDictionary()
         {
@@ -226,25 +202,19 @@ namespace Klyte.DynamicTextBoards.Overrides
                              new BoardTextDescriptor{
                                 m_textRelativePosition = new Vector3(0,4.3f, -0.11f) ,
                                 m_textRelativeRotation = Vector3.zero,
-                                m_maxWidthMeters = 15.5f,
-                                m_useOutline = false,
-                                m_useContrastColor =true
+                                m_maxWidthMeters = 15.5f
                              },
                              new BoardTextDescriptor{
                                 m_textRelativePosition = new Vector3(0,4.3f,0),
                                 m_textRelativeRotation = new Vector3(0,180,0),
-                                m_maxWidthMeters = 15.5f,
-                                m_useOutline = false,
-                                m_useContrastColor =true
+                                m_maxWidthMeters = 15.5f
                              },
                         };
             var basicWallTextDescriptor = new BoardTextDescriptor[]{
                              new BoardTextDescriptor{
                                 m_textRelativePosition =new Vector3(0,0,-0.05f) ,
                                 m_textRelativeRotation = Vector3.zero,
-                                m_maxWidthMeters = 15.5f,
-                                m_useOutline = false,
-                                m_useContrastColor =true
+                                m_maxWidthMeters = 15.5f
                              },
                         };
 
@@ -926,18 +896,15 @@ namespace Klyte.DynamicTextBoards.Overrides
             };
         }
 
+
+
         private struct UpdateFlagsBuildings
         {
-            public bool m_nameNormal;
-            public bool m_nameOutline;
-            public bool m_streetNormal;
-            public bool m_streetOutline;
-            public bool m_streetPrefixNormal;
-            public bool m_streetPrefixOutline;
-            public bool m_streetSuffixNormal;
-            public bool m_streetSuffixOutline;
-            public bool m_streetNumberNormal;
-            public bool m_streetNumberOutline;
+            public bool m_nameMesh;
+            public bool m_streetMesh;
+            public bool m_streetPrefixMesh;
+            public bool m_streetSuffixMesh;
+            public bool m_streetNumberMesh;
         }
     }
 
