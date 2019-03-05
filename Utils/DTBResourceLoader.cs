@@ -8,5 +8,6 @@ namespace Klyte.DynamicTextBoards.Utils
         protected override string prefix => "Klyte.DynamicTextBoards.";
         public BoardGeneratorBuildings BoardGeneratorInstance => BoardGeneratorBuildings.instance;
         public BoardGeneratorRoadNodes BoardGeneratorRoadNodesInstance => BoardGeneratorRoadNodes.instance;
+        public BoardGeneratorHighwayMileage BoardGeneratorHighwayMileageInstance => BoardGeneratorHighwayMileage.instance;
     }
 }

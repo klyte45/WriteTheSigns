@@ -16,7 +16,7 @@ using static BuildingInfo;
 namespace Klyte.DynamicTextBoards.Overrides
 {
 
-    public class BoardGeneratorBuildings : BoardGeneratorParent<BoardGeneratorBuildings, BoardBunchContainer, CacheControl, BasicRenderInformation, BoardDescriptor, BoardTextDescriptor>
+    public class BoardGeneratorBuildings : BoardGeneratorParent<BoardGeneratorBuildings, BoardBunchContainer, CacheControl, BasicRenderInformation, BoardDescriptor, BoardTextDescriptor, ushort>
     {
 
 
@@ -26,6 +26,8 @@ namespace Klyte.DynamicTextBoards.Overrides
         public bool[] m_updatedIdsColorsLines;
 
         public override int ObjArraySize => BuildingManager.MAX_BUILDING_COUNT;
+
+        public override UIFont DrawFont => Singleton<DistrictManager>.instance.m_properties.m_areaNameFont;
 
         #region Initialize
         public override void Initialize()
@@ -99,11 +101,13 @@ namespace Klyte.DynamicTextBoards.Overrides
                 var descriptor = loadedDescriptors[data.Info.name][i];
                 UpdateSubparams(ref m_boardsContainers[buildingID].m_boardsData[i], buildingID, ref data, cameraInfo, ref renderInstance, descriptor, updatedColors, i);
 
-                RenderPropMesh(cameraInfo, buildingID, data.m_angle, layerMask, renderInstance.m_dataMatrix1.MultiplyPoint(descriptor.m_propPosition), renderInstance.m_dataVector3, i, 0, ref descriptor.m_propName, descriptor.m_propRotation, out Matrix4x4 propMatrix);
-
-                for (int j = 0; j < descriptor.m_textDescriptors.Length; j++)
+                RenderPropMesh(ref m_boardsContainers[buildingID].m_boardsData[i].m_cachedProp, cameraInfo, buildingID, i, 0, layerMask, data.m_angle, renderInstance.m_dataMatrix1.MultiplyPoint(descriptor.m_propPosition), renderInstance.m_dataVector3, ref descriptor.m_propName, descriptor.m_propRotation, out Matrix4x4 propMatrix, out bool rendered);
+                if (rendered)
                 {
-                    RenderTextMesh(cameraInfo, buildingID, 0, ref descriptor, propMatrix, ref descriptor.m_textDescriptors[j], ref m_boardsContainers[buildingID].m_boardsData[i]);
+                    for (int j = 0; j < descriptor.m_textDescriptors.Length; j++)
+                    {
+                        RenderTextMesh(cameraInfo, buildingID, i, j, ref descriptor, propMatrix, ref descriptor.m_textDescriptors[j], ref m_boardsContainers[buildingID].m_boardsData[i]);
+                    }
                 }
             }
             m_updatedIdsColorsLines[buildingID] = true;
@@ -112,7 +116,7 @@ namespace Klyte.DynamicTextBoards.Overrides
 
 
         #region Upadate Data
-        protected override BasicRenderInformation GetOwnNameMesh(ushort buildingID, int secIdx)
+        protected override BasicRenderInformation GetOwnNameMesh(ushort buildingID, int boardIdx, int secIdx)
         {
             if (m_boardsContainers[buildingID].m_nameSubInfo == null || !m_updateData[buildingID].m_nameMesh)
             {

@@ -16,13 +16,14 @@ using static BuildingInfo;
 namespace Klyte.DynamicTextBoards.Overrides
 {
 
-    public class BoardGeneratorRoadNodes : BoardGeneratorParent<BoardGeneratorRoadNodes, BoardBunchContainerStreetPlate, CacheControlStreetPlate, BasicRenderInformation, BoardDescriptor, BoardTextDescriptor>
+    public class BoardGeneratorRoadNodes : BoardGeneratorParent<BoardGeneratorRoadNodes, BoardBunchContainerStreetPlate, CacheControlStreetPlate, BasicRenderInformation, BoardDescriptor, BoardTextDescriptor, ushort>
     {
 
         private UpdateFlagsSegments[] m_updateDataSegments;
         public bool[] m_updatedStreetPositions;
 
         public override int ObjArraySize => NetManager.MAX_NODE_COUNT;
+        public override UIFont DrawFont => Singleton<DistrictManager>.instance.m_properties.m_areaNameFont;
 
         private BoardDescriptor m_baseDescriptorStreetPlate = new BoardDescriptor
         {
@@ -58,9 +59,9 @@ namespace Klyte.DynamicTextBoards.Overrides
             DistrictManagerOverrides.eventOnDistrictChanged += onDistrictChanged;
 
             #region Hooks
-            var postRenderMeshs = GetType().GetMethod("AfterRenderNode", allFlags);
-            doLog($"Patching=> {postRenderMeshs} {postRenderMeshs.IsStatic}");
-            AddRedirect(typeof(RoadBaseAI).GetMethod("RenderNode", allFlags), null, postRenderMeshs);
+            //var postRenderMeshs = GetType().GetMethod("AfterRenderNode", allFlags);
+            //doLog($"Patching=> {postRenderMeshs} {postRenderMeshs.IsStatic}");
+            //AddRedirect(typeof(RoadBaseAI).GetMethod("RenderNode", allFlags), null, postRenderMeshs);
             #endregion
         }
 
@@ -141,7 +142,7 @@ namespace Klyte.DynamicTextBoards.Overrides
                     if (segmentIid != 0)
                     {
                         NetSegment netSegmentI = Singleton<NetManager>.instance.m_segments.m_buffer[(int)segmentIid];
-                        if (netSegmentI.Info != null && netSegmentI.Info.m_netAI is RoadBaseAI)
+                        if (netSegmentI.Info != null && netSegmentI.Info.m_netAI is RoadBaseAI roadAiI && !roadAiI.m_highwayRules)
                         {
                             Vector3 startPos = Vector3.zero;
                             Vector3 startAng = Vector3.zero;
@@ -157,7 +158,7 @@ namespace Klyte.DynamicTextBoards.Overrides
                                 if (segmentJid != 0 && segmentJid != segmentIid)
                                 {
                                     NetSegment netSegmentJ = Singleton<NetManager>.instance.m_segments.m_buffer[(int)segmentJid];
-                                    if (netSegmentJ.Info != null && netSegmentJ.Info.m_netAI is RoadBaseAI)
+                                    if (netSegmentJ.Info != null && netSegmentJ.Info.m_netAI is RoadBaseAI roadAiJ && !roadAiJ.m_highwayRules)
                                     {
                                         Vector3 segmentJDirection = (nodeID != netSegmentJ.m_startNode) ? netSegmentJ.m_endDirection : netSegmentJ.m_startDirection;
                                         float angle = segmentIDirection.x * segmentJDirection.x + segmentIDirection.z * segmentJDirection.z;
@@ -226,24 +227,29 @@ startAng = {startAng}
             }
 
 
-            for (int i = 0; i < m_boardsContainers[nodeID].m_boardsData.Length; i++)
+            for (int boardIdx = 0; boardIdx < m_boardsContainers[nodeID].m_boardsData.Length; boardIdx++)
             {
-                if (m_boardsContainers[nodeID].m_boardsData[i]?.m_renderPlate ?? false)
+                if (m_boardsContainers[nodeID].m_boardsData[boardIdx]?.m_renderPlate ?? false)
                 {
 
-                    RenderPropMesh(cameraInfo, nodeID, 0, 0xFFFFFFF, (m_boardsContainers[nodeID].m_boardsData[i].m_platePosition), Vector4.zero, i, 0, ref descriptor.m_propName, m_boardsContainers[nodeID].m_boardsData[i].m_streetDirection1 + descriptor.m_propRotation, out Matrix4x4 propMatrix);
-
-                    for (int j = 0; j < descriptor.m_textDescriptors.Length; j++)
+                    RenderPropMesh(ref m_boardsContainers[nodeID].m_boardsData[boardIdx].m_cachedProp, cameraInfo, nodeID, boardIdx, 0, 0xFFFFFFF, 0, m_boardsContainers[nodeID].m_boardsData[boardIdx].m_platePosition, Vector4.zero, ref descriptor.m_propName, m_boardsContainers[nodeID].m_boardsData[boardIdx].m_streetDirection2 + descriptor.m_propRotation, out Matrix4x4 propMatrix, out bool rendered);
+                    if (rendered)
                     {
-                        RenderTextMesh(cameraInfo, nodeID, 0, ref descriptor, propMatrix, ref descriptor.m_textDescriptors[j], ref m_boardsContainers[nodeID].m_boardsData[i]);
+                        for (int j = 0; j < descriptor.m_textDescriptors.Length; j++)
+                        {
+                            RenderTextMesh(cameraInfo, nodeID, boardIdx, 0, ref descriptor, propMatrix, ref descriptor.m_textDescriptors[j], ref m_boardsContainers[nodeID].m_boardsData[boardIdx]);
+                        }
+                    }
+                    RenderPropMesh(ref m_boardsContainers[nodeID].m_boardsData[boardIdx].m_cachedProp, cameraInfo, nodeID, boardIdx, 1, 0xFFFFFFF, 0, m_boardsContainers[nodeID].m_boardsData[boardIdx].m_platePosition, Vector4.zero, ref descriptor.m_propName, m_boardsContainers[nodeID].m_boardsData[boardIdx].m_streetDirection2 + descriptor.m_propRotation, out propMatrix, out rendered);
+                    if (rendered)
+                    {
+
+                        for (int j = 0; j < descriptor.m_textDescriptors.Length; j++)
+                        {
+                            RenderTextMesh(cameraInfo, nodeID, boardIdx, 1, ref descriptor, propMatrix, ref descriptor.m_textDescriptors[j], ref m_boardsContainers[nodeID].m_boardsData[boardIdx]);
+                        }
                     }
 
-                    RenderPropMesh(cameraInfo, nodeID, 0, 0xFFFFFFF, (m_boardsContainers[nodeID].m_boardsData[i].m_platePosition), Vector4.zero, i, 1, ref descriptor.m_propName, m_boardsContainers[nodeID].m_boardsData[i].m_streetDirection2 + descriptor.m_propRotation, out propMatrix);
-
-                    for (int j = 0; j < descriptor.m_textDescriptors.Length; j++)
-                    {
-                        RenderTextMesh(cameraInfo, nodeID, 1, ref descriptor, propMatrix, ref descriptor.m_textDescriptors[j], ref m_boardsContainers[nodeID].m_boardsData[i]);
-                    }
                 }
             }
 
@@ -252,7 +258,7 @@ startAng = {startAng}
 
 
         #region Upadate Data
-        protected override BasicRenderInformation GetOwnNameMesh(ushort idx, int secIdx)
+        protected override BasicRenderInformation GetOwnNameMesh(ushort idx, int boardIdx, int secIdx)
         {
             if (!m_updateDataSegments[idx].m_nameMesh)
             {

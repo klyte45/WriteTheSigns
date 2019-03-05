@@ -15,8 +15,8 @@ using static BuildingInfo;
 
 namespace Klyte.DynamicTextBoards.Overrides
 {
-    public abstract class BoardGeneratorParent<BG, BBC, CC, BRI, BD, BTD> : Redirector<BG>
-        where BG : BoardGeneratorParent<BG, BBC, CC, BRI, BD, BTD>
+    public abstract class BoardGeneratorParent<BG, BBC, CC, BRI, BD, BTD, MRT> : Redirector<BG>
+        where BG : BoardGeneratorParent<BG, BBC, CC, BRI, BD, BTD, MRT>
         where BBC : IBoardBunchContainer<CC, BRI>
         where BD : BoardDescriptor
         where BTD : BoardTextDescriptor
@@ -24,6 +24,7 @@ namespace Klyte.DynamicTextBoards.Overrides
         where BRI : BasicRenderInformation, new()
     {
         public abstract int ObjArraySize { get; }
+        public abstract UIFont DrawFont { get; }
 
 
         protected uint lastFontUpdateFrame = SimulationManager.instance.m_currentTickIndex;
@@ -52,7 +53,10 @@ namespace Klyte.DynamicTextBoards.Overrides
 
         private void OnTextureRebuilt(Font obj)
         {
-            lastFontUpdateFrame = SimulationManager.instance.m_currentTickIndex;
+            if (obj == DrawFont.baseFont)
+            {
+                lastFontUpdateFrame = SimulationManager.instance.m_currentTickIndex;
+            }
         }
         protected abstract void OnTextureRebuilt();
 
@@ -99,29 +103,30 @@ namespace Klyte.DynamicTextBoards.Overrides
             DTBUtils.doLog(format, args);
         }
 
-        protected void RenderPropMesh(RenderManager.CameraInfo cameraInfo, ushort refId, float refAngleRad, int layerMask, Vector3 position, Vector4 dataVector, int idx, int secIdx, ref string propName, float propAngle, out Matrix4x4 propMatrix)
+        protected void RenderPropMesh(ref PropInfo propInfo, RenderManager.CameraInfo cameraInfo, ushort refId, int boardIdx, int secIdx, int layerMask, float refAngleRad, Vector3 position, Vector4 dataVector, ref string propName, float propAngle, out Matrix4x4 propMatrix, out bool rendered)
         {
             if (!string.IsNullOrEmpty(propName))
             {
-                if (m_boardsContainers[refId].m_boardsData[idx].m_cachedProp == null)
+                if (propInfo == null)
                 {
-                    m_boardsContainers[refId].m_boardsData[idx].m_cachedProp = PrefabCollection<PropInfo>.FindLoaded(propName);
-                    if (m_boardsContainers[refId].m_boardsData[idx].m_cachedProp == null)
+                    propInfo = PrefabCollection<PropInfo>.FindLoaded(propName);
+                    if (propInfo == null)
                     {
                         DTBUtils.doErrorLog($"PREFAB NOT FOUND: {propName}");
                         propName = null;
                     }
                 }
-                m_boardsContainers[refId].m_boardsData[idx].m_cachedProp.m_color0 = GetColor(refId, idx, secIdx);
+                propInfo.m_color0 = GetColor(refId, boardIdx, secIdx);
             }
-            propMatrix = RenderProp(refId, refAngleRad, cameraInfo, m_boardsContainers[refId].m_boardsData[idx].m_cachedProp, position, dataVector, idx, layerMask, Mathf.Deg2Rad * propAngle);
+            propMatrix = RenderProp(refId, refAngleRad, cameraInfo, propInfo, position, dataVector, boardIdx, layerMask, Mathf.Deg2Rad * propAngle, out rendered);
         }
 
 
 
         #region Rendering
-        private Matrix4x4 RenderProp(ushort refId, float refAngleRad, RenderManager.CameraInfo cameraInfo, PropInfo propInfo, Vector3 position, Vector4 dataVector, int idx, int layerMask, float radAngle)
+        private Matrix4x4 RenderProp(ushort refId, float refAngleRad, RenderManager.CameraInfo cameraInfo, PropInfo propInfo, Vector3 position, Vector4 dataVector, int idx, int layerMask, float radAngle, out bool rendered)
         {
+            rendered = false;
             DistrictManager instance2 = Singleton<DistrictManager>.instance;
             Randomizer randomizer = new Randomizer((int)refId << 6 | (idx + 32));
             float scale = 1;
@@ -137,7 +142,7 @@ namespace Klyte.DynamicTextBoards.Overrides
                     {
                         InstanceID propRenderID2 = this.GetPropRenderID(refId);
                         PropInstance.RenderInstance(cameraInfo, propInfo, propRenderID2, position, scale, refAngleRad + radAngle, color, dataVector, true);
-
+                        rendered = true;
                     }
                 }
             }
@@ -148,28 +153,28 @@ namespace Klyte.DynamicTextBoards.Overrides
 
         protected abstract InstanceID GetPropRenderID(ushort refID);
 
-        protected void RenderTextMesh(RenderManager.CameraInfo cameraInfo, ushort refID, int secIdx, ref BoardDescriptor descriptor, Matrix4x4 propMatrix, ref BTD textDescriptor, ref CC ctrl)
+        protected void RenderTextMesh(RenderManager.CameraInfo cameraInfo, MRT refID, int boardIdx, int secIdx, ref BoardDescriptor descriptor, Matrix4x4 propMatrix, ref BTD textDescriptor, ref CC ctrl)
         {
             BRI renderInfo = null;
             switch (textDescriptor.m_textType)
             {
                 case TextType.OwnName:
-                    renderInfo = GetOwnNameMesh(refID, secIdx);
+                    renderInfo = GetOwnNameMesh(refID, boardIdx, secIdx);
                     break;
                 case TextType.Fixed:
                     renderInfo = GetFixedTextMesh(ref textDescriptor, refID);
                     break;
                 case TextType.StreetPrefix:
-                    renderInfo = GetMeshStreetPrefix(refID, secIdx);
+                    renderInfo = GetMeshStreetPrefix(refID, boardIdx, secIdx);
                     break;
                 case TextType.StreetSuffix:
-                    renderInfo = GetMeshStreetSuffix(refID, secIdx);
+                    renderInfo = GetMeshStreetSuffix(refID, boardIdx, secIdx);
                     break;
                 case TextType.StreetNameComplete:
-                    renderInfo = GetMeshFullStreetName(refID, secIdx);
+                    renderInfo = GetMeshFullStreetName(refID, boardIdx, secIdx);
                     break;
                 case TextType.BuildingNumber:
-                    renderInfo = GetMeshCurrentNumber(refID, secIdx);
+                    renderInfo = GetMeshCurrentNumber(refID, boardIdx, secIdx);
                     break;
             }
             if (renderInfo == null) return;
@@ -204,7 +209,7 @@ namespace Klyte.DynamicTextBoards.Overrides
                 }
                 else if (textDescriptor.m_useContrastColor)
                 {
-                    if (ctrl.m_cachedContrastColor == Color.black)
+                    if (ctrl?.m_cachedContrastColor == Color.black)
                     {
                         if (renderInfo.m_blackMaterial == null)
                         {
@@ -230,8 +235,7 @@ namespace Klyte.DynamicTextBoards.Overrides
         {
             if (result == null) result = new BRI();
             doLog($"RefreshNameData {name}");
-            var font = Singleton<DistrictManager>.instance.m_properties.m_areaNameFont;
-            UIFontManager.Invalidate(font);
+            UIFontManager.Invalidate(DrawFont);
             UIRenderData uirenderData = UIRenderData.Obtain();
             try
             {
@@ -240,7 +244,7 @@ namespace Klyte.DynamicTextBoards.Overrides
                 PoolList<Color32> colors = uirenderData.colors;
                 PoolList<Vector2> uvs = uirenderData.uvs;
                 PoolList<int> triangles = uirenderData.triangles;
-                using (UIFontRenderer uifontRenderer = font.ObtainRenderer())
+                using (UIFontRenderer uifontRenderer = DrawFont.ObtainRenderer())
                 {
 
                     float num = 10000f;
@@ -272,10 +276,11 @@ namespace Klyte.DynamicTextBoards.Overrides
                 result.m_mesh.colors32 = colors.ToArray();
                 result.m_mesh.uv = uvs.ToArray();
                 result.m_mesh.triangles = triangles.ToArray();
-                result.m_material = new Material(font.material)
+                result.m_material = new Material(DrawFont.material)
                 {
                     renderQueue = 0
                 };
+                result.m_frameDrawTime = lastFontUpdateFrame;
             }
             finally
             {
@@ -287,12 +292,12 @@ namespace Klyte.DynamicTextBoards.Overrides
         #endregion
         public abstract Color GetColor(ushort buildingID, int idx, int secIdx);
         #region UpdateData
-        protected virtual BRI GetOwnNameMesh(ushort refID, int secIdx) => null;
-        protected virtual BRI GetMeshCurrentNumber(ushort refID, int secIdx) => null;
-        protected virtual BRI GetMeshFullStreetName(ushort refID, int secIdx) => null;
-        protected virtual BRI GetMeshStreetSuffix(ushort refID, int secIdx) => null;
-        protected virtual BRI GetMeshStreetPrefix(ushort refID, int secIdx) => null;
-        protected virtual BRI GetFixedTextMesh(ref BTD textDescriptor, ushort buildingID)
+        protected virtual BRI GetOwnNameMesh(MRT refID, int boardIdx, int secIdx) => null;
+        protected virtual BRI GetMeshCurrentNumber(MRT refID, int boardIdx, int secIdx) => null;
+        protected virtual BRI GetMeshFullStreetName(MRT refID, int boardIdx, int secIdx) => null;
+        protected virtual BRI GetMeshStreetSuffix(MRT refID, int boardIdx, int secIdx) => null;
+        protected virtual BRI GetMeshStreetPrefix(MRT refID, int boardIdx, int secIdx) => null;
+        protected virtual BRI GetFixedTextMesh(ref BTD textDescriptor, MRT refID)
         {
             if (textDescriptor.GeneratedFixedTextRenderInfo == null || textDescriptor.GeneratedFixedTextRenderInfoTick < lastFontUpdateFrame)
             {
@@ -325,6 +330,7 @@ namespace Klyte.DynamicTextBoards.Overrides
         public Material m_material;
         public Material m_blackMaterial;
         public Vector2 m_sizeMetersUnscaled;
+        public uint m_frameDrawTime;
     }
 
 
