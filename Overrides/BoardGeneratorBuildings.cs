@@ -19,7 +19,6 @@ namespace Klyte.DynamicTextBoards.Overrides
     public class BoardGeneratorBuildings : BoardGeneratorParent<BoardGeneratorBuildings, BoardBunchContainer, CacheControl, BasicRenderInformation, BoardDescriptor, BoardTextDescriptor, ushort>
     {
 
-
         private Dictionary<String, List<BoardDescriptor>> loadedDescriptors;
 
         private UpdateFlagsBuildings[] m_updateData;
@@ -27,7 +26,9 @@ namespace Klyte.DynamicTextBoards.Overrides
 
         public override int ObjArraySize => BuildingManager.MAX_BUILDING_COUNT;
 
-        public override UIFont DrawFont => Singleton<DistrictManager>.instance.m_properties.m_areaNameFont;
+        private UIDynamicFont m_font;
+
+        public override UIFont DrawFont => m_font;
 
         #region Initialize
         public override void Initialize()
@@ -36,15 +37,16 @@ namespace Klyte.DynamicTextBoards.Overrides
             m_updatedIdsColorsLines = new bool[BuildingManager.MAX_BUILDING_COUNT];
             loadedDescriptors = GenerateDefaultDictionary();
 
+            BuildSurfaceFont(out m_font, "Consolas");
 
             TransportManagerOverrides.eventOnLineUpdated += onLineUpdated;
             TransportManager.instance.eventLineColorChanged += (x) => onLineUpdated();
             BuildingManagerOverrides.eventOnBuildingRenamed += onBuildingNameChanged;
 
             #region Hooks
-            //var postRenderMeshs = GetType().GetMethod("AfterRenderMeshes", allFlags);
-            //doLog($"Patching=> {postRenderMeshs}");
-            //AddRedirect(typeof(BuildingAI).GetMethod("RenderMeshes", allFlags), null, postRenderMeshs);
+            var postRenderMeshs = GetType().GetMethod("AfterRenderMeshes", allFlags);
+            doLog($"Patching=> {postRenderMeshs}");
+            AddRedirect(typeof(BuildingAI).GetMethod("RenderMeshes", allFlags), null, postRenderMeshs);
             #endregion
         }
 
@@ -62,12 +64,12 @@ namespace Klyte.DynamicTextBoards.Overrides
 
         private void onLineUpdated()
         {
-            doLog("onLineUpdated");
+            //doLog("onLineUpdated");
             m_updatedIdsColorsLines = new bool[BuildingManager.MAX_BUILDING_COUNT];
         }
         private void onBuildingNameChanged(ushort id)
         {
-            doLog("onBuildingNameChanged");
+            //doLog("onBuildingNameChanged");
             m_updateData[id].m_nameMesh = false;
         }
         #endregion
@@ -106,7 +108,10 @@ namespace Klyte.DynamicTextBoards.Overrides
                 {
                     for (int j = 0; j < descriptor.m_textDescriptors.Length; j++)
                     {
-                        RenderTextMesh(cameraInfo, buildingID, i, j, ref descriptor, propMatrix, ref descriptor.m_textDescriptors[j], ref m_boardsContainers[buildingID].m_boardsData[i]);
+                        MaterialPropertyBlock materialBlock = Singleton<PropManager>.instance.m_materialBlock;
+                        materialBlock.Clear();                      
+
+                        RenderTextMesh(cameraInfo, buildingID, i, j, ref descriptor, propMatrix, ref descriptor.m_textDescriptors[j], ref m_boardsContainers[buildingID].m_boardsData[i], materialBlock);
                     }
                 }
             }
@@ -204,19 +209,19 @@ namespace Klyte.DynamicTextBoards.Overrides
 
             var basicEOLTextDescriptor = new BoardTextDescriptor[]{
                              new BoardTextDescriptor{
-                                m_textRelativePosition = new Vector3(0,4.3f, -0.11f) ,
+                                m_textRelativePosition = new Vector3(0,4.3f, -0.13f) ,
                                 m_textRelativeRotation = Vector3.zero,
                                 m_maxWidthMeters = 15.5f
                              },
                              new BoardTextDescriptor{
-                                m_textRelativePosition = new Vector3(0,4.3f,0),
+                                m_textRelativePosition = new Vector3(0,4.3f,0.02f),
                                 m_textRelativeRotation = new Vector3(0,180,0),
                                 m_maxWidthMeters = 15.5f
                              },
                         };
             var basicWallTextDescriptor = new BoardTextDescriptor[]{
                              new BoardTextDescriptor{
-                                m_textRelativePosition =new Vector3(0,0,-0.05f) ,
+                                m_textRelativePosition =new Vector3(0,0,-0.08f) ,
                                 m_textRelativeRotation = Vector3.zero,
                                 m_maxWidthMeters = 15.5f
                              },

@@ -26,10 +26,11 @@ namespace Klyte.DynamicTextBoards.Overrides
         public BasicRenderInformation[] m_cachedDirectionMeshes;
         public List<RoadIdentifier> m_destroyQueue = new List<RoadIdentifier>();
 
-        private UIDynamicFont font = new UIDynamicFont();
+        private UIDynamicFont m_font;
+
 
         public override int ObjArraySize => 0;
-        public override UIFont DrawFont => font;
+        public override UIFont DrawFont => m_font;
 
         private BoardDescriptor m_baseDescriptorMileagePlate = new BoardDescriptor
         {
@@ -68,12 +69,7 @@ namespace Klyte.DynamicTextBoards.Overrides
             NetManagerOverrides.eventSegmentNameChanged += onNameSeedChanged;
             DistrictManagerOverrides.eventOnDistrictChanged += onDistrictChanged;
 
-            font.shader = Shader.Find("UI/Dynamic Font Shader");
-            font.material = new Material(Singleton<DistrictManager>.instance.m_properties.m_areaNameFont.material);
-            font.baseline = (Singleton<DistrictManager>.instance.m_properties.m_areaNameFont as UIDynamicFont).baseline;
-            font.size = (Singleton<DistrictManager>.instance.m_properties.m_areaNameFont as UIDynamicFont).size;
-            font.lineHeight = (Singleton<DistrictManager>.instance.m_properties.m_areaNameFont as UIDynamicFont).lineHeight;
-            font.baseFont = Font.CreateDynamicFontFromOSFont("Highway Gothic", 16);
+            BuildSurfaceFont(out m_font, "Highway Gothic");
 
             #region Hooks
             var postRenderMeshs = GetType().GetMethod("AfterRenderNode", allFlags);
@@ -84,11 +80,14 @@ namespace Klyte.DynamicTextBoards.Overrides
             #endregion
         }
 
+
+
+        private void Font_textureRebuilt(Font obj)
+        {
+        }
+
         protected override void OnTextureRebuilt()
         {
-            doLog("onTextureRebuilt");
-            m_cachedKilometerMeshes = new BasicRenderInformation[m_cachedKilometerMeshes.Length];
-            m_cachedDirectionMeshes = new BasicRenderInformation[9];
         }
 
         private void onNodeChanged(ushort nodeId)
@@ -245,7 +244,9 @@ namespace Klyte.DynamicTextBoards.Overrides
                     for (int j = 0; j < m_baseDescriptorMileagePlate.m_textDescriptors.Length; j++)
                     {
                         CacheControl c = null;
-                        RenderTextMesh(cameraInfo, plate.First, plate.Second, plate.Third.kilometer, ref m_baseDescriptorMileagePlate, propMatrix, ref m_baseDescriptorMileagePlate.m_textDescriptors[j], ref c);
+                        var block = NetManager.instance.m_materialBlock;
+                        block.Clear();
+                        RenderTextMesh(cameraInfo, plate.First, plate.Second, plate.Third.kilometer, ref m_baseDescriptorMileagePlate, propMatrix, ref m_baseDescriptorMileagePlate.m_textDescriptors[j], ref c, block);
                     }
                 }
 
@@ -355,153 +356,14 @@ namespace Klyte.DynamicTextBoards.Overrides
             }
         }
 
-        private static Shader[] m_shaderList = new Shader[]
+        private void A_ReloadFromDisk()
         {
-Shader.Find("Custom/Buildings/Building/AnimUV"                 ),
-Shader.Find("Custom/Buildings/Building/Basement"               ),
-Shader.Find("Custom/Buildings/Building/Construction"           ),
-Shader.Find("Custom/Buildings/Building/Default"                ),
-Shader.Find("Custom/Buildings/Building/Fence"                  ),
-Shader.Find("Custom/Buildings/Building/Floating"               ),
-Shader.Find("Custom/Buildings/Building/NoBase"                 ),
-Shader.Find("Custom/Buildings/Building/Water"                  ),
-Shader.Find("Custom/Buildings/Building/WaterFlow"              ),
-Shader.Find("Custom/Buildings/Building/WindTurbine"            ),
-Shader.Find("Custom/Buildings/Group/Default"                   ),
-Shader.Find("Custom/Buildings/Marker/Default"                  ),
-Shader.Find("Custom/Citizens/Citizen/Default"                  ),
-Shader.Find("Custom/Citizens/Citizen/Underground"              ),
-Shader.Find("Custom/DayNight/Clouds"                           ),
-Shader.Find("Custom/DayNight/DynamicClouds"                    ),
-Shader.Find("Custom/DayNight/SaraBorealis"                     ),
-Shader.Find("Custom/Decoration/Default"                        ),
-Shader.Find("Custom/Decoration/Render"                         ),
-Shader.Find("Custom/Effects/Lightning"                         ),
-Shader.Find("Custom/Lights/FloatingGroup"                      ),
-Shader.Find("Custom/Lights/FloatingGroupVolume"                ),
-Shader.Find("Custom/Lights/Group"                              ),
-Shader.Find("Custom/Lights/GroupVolume"                        ),
-Shader.Find("Custom/Loading/AlphaBlend"                        ),
-Shader.Find("Custom/Net/Electricity"                           ),
-Shader.Find("Custom/Net/Fence"                                 ),
-Shader.Find("Custom/Net/Group/Electricity"                     ),
-Shader.Find("Custom/Net/Group/Metro"                           ),
-Shader.Find("Custom/Net/Group/Road"                            ),
-Shader.Find("Custom/Net/Group/Water"                           ),
-Shader.Find("Custom/Net/Marker"                                ),
-Shader.Find("Custom/Net/Metro"                                 ),
-Shader.Find("Custom/Net/Road"                                  ),
-Shader.Find("Custom/Net/RoadBridge"                            ),
-Shader.Find("Custom/Net/TrainBridge"                           ),
-Shader.Find("Custom/Net/Water"                                 ),
-Shader.Find("Custom/Overlay/AreaBorder"                        ),
-Shader.Find("Custom/Overlay/Brush"                             ),
-Shader.Find("Custom/Overlay/BuildingHighlight"                 ),
-Shader.Find("Custom/Overlay/DecorationArea"                    ),
-Shader.Find("Custom/Overlay/DirectionArrow"                    ),
-Shader.Find("Custom/Overlay/DistrictAreas"                     ),
-Shader.Find("Custom/Overlay/DistrictIcon"                      ),
-Shader.Find("Custom/Overlay/DistrictName"                      ),
-Shader.Find("Custom/Overlay/GameAreas"                         ),
-Shader.Find("Custom/Overlay/Notification"                      ),
-Shader.Find("Custom/Overlay/RoadName"                          ),
-Shader.Find("Custom/Overlay/Shape"                             ),
-Shader.Find("Custom/Overlay/ShapeBlend"                        ),
-Shader.Find("Custom/Overlay/SurfaceLine"                       ),
-Shader.Find("Custom/Overlay/Topography"                        ),
-Shader.Find("Custom/Overlay/TransportConnection"               ),
-Shader.Find("Custom/Overlay/TransportLine"                     ),
-Shader.Find("Custom/Overlay/TransportPath"                     ),
-Shader.Find("Custom/Overlay/UndergroundLine"                   ),
-Shader.Find("Custom/Overlay/ZonedArea"                         ),
-Shader.Find("Custom/Particles/Additive (Soft)"                 ),
-Shader.Find("Custom/Particles/Alpha Blended"                   ),
-Shader.Find("Custom/Particles/Alpha Tested"                    ),
-Shader.Find("Custom/PostProcess/Fog"                           ),
-Shader.Find("Custom/PostProcess/Overlay"                       ),
-Shader.Find("Custom/Props/Decal/Blend"                         ),
-Shader.Find("Custom/Props/Decal/Solid"                         ),
-Shader.Find("Custom/Props/Marker/Default"                      ),
-Shader.Find("Custom/Props/Prop/AnimUV"                         ),
-Shader.Find("Custom/Props/Prop/Default"                        ),
-Shader.Find("Custom/Props/Prop/Fence"                          ),
-Shader.Find("Custom/Props/Prop/Flag"                           ),
-Shader.Find("Custom/Props/Prop/Floating"                       ),
-Shader.Find("Custom/Props/Prop/Rotating"                       ),
-Shader.Find("Custom/Props/Prop/TrafficLight"                   ),
-Shader.Find("Custom/Rain"                                      ),
-Shader.Find("Custom/RainParticle"                              ),
-Shader.Find("Custom/SMAAshader"                                ),
-Shader.Find("Custom/Terrain/Default"                           ),
-Shader.Find("Custom/Tools/DisasterMarker"                      ),
-Shader.Find("Custom/Trees/Default"                             ),
-Shader.Find("Custom/Trees/Group"                               ),
-Shader.Find("Custom/Trees/Render"                              ),
-Shader.Find("Custom/Vehicles/Vehicle/Aircraft"                 ),
-Shader.Find("Custom/Vehicles/Vehicle/Billboard"                ),
-Shader.Find("Custom/Vehicles/Vehicle/Default"                  ),
-Shader.Find("Custom/Vehicles/Vehicle/Helicopter"               ),
-Shader.Find("Custom/Vehicles/Vehicle/Rotors"                   ),
-Shader.Find("Custom/Vehicles/Vehicle/Ship"                     ),
-Shader.Find("Custom/Vehicles/Vehicle/Train"                    ),
-Shader.Find("Custom/Vehicles/Vehicle/Underground"              ),
-Shader.Find("Custom/Vehicles/Vehicle/Vortex"                   ),
-Shader.Find("Custom/Water/Default"                             ),
-Shader.Find("Custom/Water/Transparent"                         ),
-Shader.Find("GUI/Text Shader"                                  ),
-Shader.Find("Hidden/3DLUTColorCorrection"                      ),
-Shader.Find("Hidden/BlendForBloom"                             ),
-Shader.Find("Hidden/BlitCopy"                                  ),
-Shader.Find("Hidden/BlitCopyDepth"                             ),
-Shader.Find("Hidden/BlurAndFlares"                             ),
-Shader.Find("Hidden/BrightPassFilter2"                         ),
-Shader.Find("Hidden/ConvertTexture"                            ),
-Shader.Find("Hidden/CubeBlend"                                 ),
-Shader.Find("Hidden/CubeBlur"                                  ),
-Shader.Find("Hidden/CubeCopy"                                  ),
-Shader.Find("Hidden/DayNight/Fog"                              ),
-Shader.Find("Hidden/DayNight/Skybox"                           ),
-Shader.Find("Hidden/DayNight/Stars"                            ),
-Shader.Find("Hidden/Dof/DepthOfFieldHdr"                       ),
-Shader.Find("Hidden/Dof/DX11Dof"                               ),
-Shader.Find("Hidden/Dof/TiltShiftHdrLensBlur"                  ),
-Shader.Find("Hidden/Fade Effect"                               ),
-Shader.Find("Hidden/FilmGrainEffect"                           ),
-Shader.Find("Hidden/Internal-CombineDepthNormals"              ),
-Shader.Find("Hidden/Internal-DeferredReflections"              ),
-Shader.Find("Hidden/Internal-DeferredShading"                  ),
-Shader.Find("Hidden/Internal-DepthNormalsTexture"              ),
-Shader.Find("Hidden/InternalErrorShader"                       ),
-Shader.Find("Hidden/Internal-Flare"                            ),
-Shader.Find("Hidden/Internal-GUITexture"                       ),
-Shader.Find("Hidden/Internal-GUITextureBlit"                   ),
-Shader.Find("Hidden/Internal-GUITextureClip"                   ),
-Shader.Find("Hidden/Internal-GUITextureClipText"               ),
-Shader.Find("Hidden/Internal-Halo"                             ),
-Shader.Find("Hidden/Internal-MotionVectors"                    ),
-Shader.Find("Hidden/Internal-PrePassLighting"                  ),
-Shader.Find("Hidden/Internal-ScreenSpaceShadows"               ),
-Shader.Find("Hidden/Internal-StencilWrite"                     ),
-Shader.Find("Hidden/LensFlareCreate"                           ),
-Shader.Find("Hidden/ToneMapping"                               ),
-Shader.Find("Hidden/VideoDecode"                               ),
-Shader.Find("Legacy Shaders/Diffuse"                           ),
-Shader.Find("Legacy Shaders/VertexLit"                         ),
-Shader.Find("Sprites/Default"                                  ),
-Shader.Find("UI/ColorPicker HSB"                               ),
-Shader.Find("UI/ColorPicker Hue"                               ),
-Shader.Find("UI/Default"                                       ),
-Shader.Find("UI/Default Font"                                  ),
-Shader.Find("UI/Default UI Shader"                             ),
-Shader.Find("UI/Dynamic Font Shader"                           ),
-Shader.Find("UI/LegendGradient"                                ),
-Shader.Find("UI/LegendStepGradient"                            ),
-Shader.Find("UI/LegendStepGradient3"                           ),
-Shader.Find("UI/ModalEffect"                                   ),
-Shader.Find("UI/ParticlesAdditive"                             ),
-Shader.Find("Unlit/Transparent"                                ),
-
-        };
+            DTBResourceLoader.instance.ReloadFromDisk();
+        }
+        private void A_CopyToFont()
+        {
+            m_font.shader = DTBResourceLoader.instance.LoadedShaders["Klyte/DynamicTextBoards/klytetextboards"];
+        }
 
     }
 }

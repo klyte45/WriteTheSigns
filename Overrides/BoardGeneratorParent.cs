@@ -27,6 +27,7 @@ namespace Klyte.DynamicTextBoards.Overrides
         public abstract UIFont DrawFont { get; }
 
 
+        public static readonly int m_shaderPropColor = Shader.PropertyToID("_Color");
         protected uint lastFontUpdateFrame = SimulationManager.instance.m_currentTickIndex;
         public abstract void Initialize();
 
@@ -45,9 +46,23 @@ namespace Klyte.DynamicTextBoards.Overrides
             Initialize();
             m_boardsContainers = new BBC[ObjArraySize];
 
-            doLog($"Loading Boards Generator {typeof(BG)} {GetType()}");
+            doLog($"Loading Boards Generator {typeof(BG)}");
 
 
+        }
+
+        protected void BuildSurfaceFont(out UIDynamicFont font, string fontName)
+        {
+            font = new UIDynamicFont
+            {
+                shader = TextShader,
+                material = new Material(Singleton<DistrictManager>.instance.m_properties.m_areaNameFont.material),
+                baseline = (Singleton<DistrictManager>.instance.m_properties.m_areaNameFont as UIDynamicFont).baseline,
+                size = (Singleton<DistrictManager>.instance.m_properties.m_areaNameFont as UIDynamicFont).size,
+                lineHeight = (Singleton<DistrictManager>.instance.m_properties.m_areaNameFont as UIDynamicFont).lineHeight,
+                baseFont = Font.CreateDynamicFontFromOSFont(fontName, 16)
+            };
+            font.material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.EmissiveIsBlack | MaterialGlobalIlluminationFlags.RealtimeEmissive;
         }
 
 
@@ -56,6 +71,7 @@ namespace Klyte.DynamicTextBoards.Overrides
             if (obj == DrawFont.baseFont)
             {
                 lastFontUpdateFrame = SimulationManager.instance.m_currentTickIndex;
+                OnTextureRebuilt();
             }
         }
         protected abstract void OnTextureRebuilt();
@@ -153,7 +169,7 @@ namespace Klyte.DynamicTextBoards.Overrides
 
         protected abstract InstanceID GetPropRenderID(ushort refID);
 
-        protected void RenderTextMesh(RenderManager.CameraInfo cameraInfo, MRT refID, int boardIdx, int secIdx, ref BoardDescriptor descriptor, Matrix4x4 propMatrix, ref BTD textDescriptor, ref CC ctrl)
+        protected void RenderTextMesh(RenderManager.CameraInfo cameraInfo, MRT refID, int boardIdx, int secIdx, ref BoardDescriptor descriptor, Matrix4x4 propMatrix, ref BTD textDescriptor, ref CC ctrl, MaterialPropertyBlock materialPropertyBlock)
         {
             BRI renderInfo = null;
             switch (textDescriptor.m_textType)
@@ -198,38 +214,24 @@ namespace Klyte.DynamicTextBoards.Overrides
                 new Vector3(defaultMultiplierX * overflowScaleX, defaultMultiplierY * overflowScaleY, 1));
             if (cameraInfo.CheckRenderDistance(matrix.MultiplyPoint(Vector3.zero), Math.Min(3000, 500 * textDescriptor.m_textScale)))
             {
-                Material material;
-                if (textDescriptor.m_forceColor != Color.clear)
+                if (textDescriptor.m_useContrastColor)
                 {
-                    if (textDescriptor.m_forcedColorMaterial == null)
-                    {
-                        textDescriptor.m_forcedColorMaterial = new Material(renderInfo.m_material) { color = textDescriptor.m_forceColor };
-                    }
-                    material = textDescriptor.m_forcedColorMaterial;
+                    materialPropertyBlock.SetColor(m_shaderPropColor, ctrl.m_cachedContrastColor);
                 }
-                else if (textDescriptor.m_useContrastColor)
+                else if (textDescriptor.m_defaultColor != Color.clear)
                 {
-                    if (ctrl?.m_cachedContrastColor == Color.black)
-                    {
-                        if (renderInfo.m_blackMaterial == null)
-                        {
-                            renderInfo.m_blackMaterial = new Material(renderInfo.m_material) { color = Color.black };
-                        }
-                        material = renderInfo.m_blackMaterial;
-                    }
-                    else
-                    {
-                        material = renderInfo.m_material;
-                    }
+                    materialPropertyBlock.SetColor(m_shaderPropColor, textDescriptor.m_defaultColor);
                 }
                 else
                 {
-                    material = renderInfo.m_material;
+                    materialPropertyBlock.SetColor(m_shaderPropColor, Color.white);
                 }
-                Graphics.DrawMesh(renderInfo.m_mesh, matrix, material, 0);
+
+                Graphics.DrawMesh(renderInfo.m_mesh, matrix, DrawFont.material, ctrl?.m_cachedProp?.m_prefabDataLayer ?? 10, cameraInfo.m_camera, 0, materialPropertyBlock, false, true, true);
             }
         }
 
+        protected static Shader TextShader => DTBResourceLoader.instance.LoadedShaders["Klyte/DynamicTextBoards/klytetextboards"];
 
         protected void RefreshNameData(ref BRI result, string name)
         {
@@ -244,10 +246,13 @@ namespace Klyte.DynamicTextBoards.Overrides
                 PoolList<Color32> colors = uirenderData.colors;
                 PoolList<Vector2> uvs = uirenderData.uvs;
                 PoolList<int> triangles = uirenderData.triangles;
+                doLog(uirenderData.ToString());
+                doLog("Colors =" + string.Join("|", uirenderData.colors.Select(x => $"{x.r},{x.g},{x.b},{x.a}").ToArray()));
                 using (UIFontRenderer uifontRenderer = DrawFont.ObtainRenderer())
                 {
 
                     float num = 10000f;
+                    uifontRenderer.colorizeSprites = true;
                     uifontRenderer.defaultColor = Color.white;
                     uifontRenderer.textScale = m_textScale;
                     uifontRenderer.pixelRatio = m_pixelRatio;
@@ -276,10 +281,6 @@ namespace Klyte.DynamicTextBoards.Overrides
                 result.m_mesh.colors32 = colors.ToArray();
                 result.m_mesh.uv = uvs.ToArray();
                 result.m_mesh.triangles = triangles.ToArray();
-                result.m_material = new Material(DrawFont.material)
-                {
-                    renderQueue = 0
-                };
                 result.m_frameDrawTime = lastFontUpdateFrame;
             }
             finally
@@ -327,8 +328,6 @@ namespace Klyte.DynamicTextBoards.Overrides
     public class BasicRenderInformation
     {
         public Mesh m_mesh;
-        public Material m_material;
-        public Material m_blackMaterial;
         public Vector2 m_sizeMetersUnscaled;
         public uint m_frameDrawTime;
     }
@@ -365,7 +364,7 @@ namespace Klyte.DynamicTextBoards.Overrides
         [XmlAttribute("useContrastColor")]
         public bool m_useContrastColor = true;
         [XmlAttribute("forceColor")]
-        public Color m_forceColor = Color.clear;
+        public Color m_defaultColor = Color.clear;
         [XmlAttribute("textType")]
         public TextType m_textType = TextType.OwnName;
         [XmlAttribute("fixedText")]

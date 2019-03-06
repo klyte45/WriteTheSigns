@@ -68,7 +68,7 @@ namespace Klyte.DynamicTextBoards.Overrides
 
         protected override void OnTextureRebuilt()
         {
-            m_updateDataSegments = new UpdateFlagsSegments[NetManager.MAX_SEGMENT_COUNT];
+            //m_updateDataSegments = new UpdateFlagsSegments[NetManager.MAX_SEGMENT_COUNT];
         }
 
         protected void Reset()
@@ -237,7 +237,7 @@ startAng = {startAng}
                     {
                         for (int j = 0; j < descriptor.m_textDescriptors.Length; j++)
                         {
-                            RenderTextMesh(cameraInfo, nodeID, boardIdx, 0, ref descriptor, propMatrix, ref descriptor.m_textDescriptors[j], ref m_boardsContainers[nodeID].m_boardsData[boardIdx]);
+                            RenderTextMesh(cameraInfo, nodeID, boardIdx, 0, ref descriptor, propMatrix, ref descriptor.m_textDescriptors[j], ref m_boardsContainers[nodeID].m_boardsData[boardIdx], null);
                         }
                     }
                     RenderPropMesh(ref m_boardsContainers[nodeID].m_boardsData[boardIdx].m_cachedProp, cameraInfo, nodeID, boardIdx, 1, 0xFFFFFFF, 0, m_boardsContainers[nodeID].m_boardsData[boardIdx].m_platePosition, Vector4.zero, ref descriptor.m_propName, m_boardsContainers[nodeID].m_boardsData[boardIdx].m_streetDirection2 + descriptor.m_propRotation, out propMatrix, out rendered);
@@ -246,7 +246,7 @@ startAng = {startAng}
 
                         for (int j = 0; j < descriptor.m_textDescriptors.Length; j++)
                         {
-                            RenderTextMesh(cameraInfo, nodeID, boardIdx, 1, ref descriptor, propMatrix, ref descriptor.m_textDescriptors[j], ref m_boardsContainers[nodeID].m_boardsData[boardIdx]);
+                            RenderTextMesh(cameraInfo, nodeID, boardIdx, 1, ref descriptor, propMatrix, ref descriptor.m_textDescriptors[j], ref m_boardsContainers[nodeID].m_boardsData[boardIdx], null);
                         }
                     }
 
