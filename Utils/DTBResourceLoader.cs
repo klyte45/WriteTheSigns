@@ -10,47 +10,29 @@ namespace Klyte.DynamicTextBoards.Utils
     public sealed class DTBResourceLoader : KlyteResourceLoader<DTBResourceLoader>
     {
         protected override string prefix => "Klyte.DynamicTextBoards.";
-        public BoardGeneratorBuildings BoardGeneratorInstance => BoardGeneratorBuildings.instance;
-        public BoardGeneratorRoadNodes BoardGeneratorRoadNodesInstance => BoardGeneratorRoadNodes.instance;
-        public BoardGeneratorHighwayMileage BoardGeneratorHighwayMileageInstance => BoardGeneratorHighwayMileage.instance;
-        static AssetBundle memoryLoaded;
-        public override Dictionary<string, Shader> LoadedShaders
+        public override Shader GetLoadedShader(string shaderName)
         {
-            get {
-                if (m_loadedShaders == null)
-                {
-                    memoryLoaded?.Unload(true);
-                    memoryLoaded = loadAllShaders("Shader.ShaderTest.unity3d");
-                }
-                return m_loadedShaders;
-            }
-
-        }
-        private static Dictionary<string, Shader> m_loadedShaders = null;
-
-        public void ReloadFromDisk()
-        {
-            memoryLoaded?.Unload(true);
-            memoryLoaded = AssetBundle.LoadFromMemory(File.ReadAllBytes("Q:/SkylineMods/TesteLinha/TransportLinesManager/TransportLinesManager/DynamicTextBoards/Shader/ShaderTest.unity3d"));
-            if (memoryLoaded != null)
-            {
-                ReadShaders(memoryLoaded);
-            }
+            DTBShaderLibrary.GetShaders().TryGetValue(shaderName, out Shader result);
+            return result;
         }
 
-        public AssetBundle loadAllShaders(string assetBundleName)
+
+        public Dictionary<string, Shader> loadAllShaders(string assetBundleName)
         {
             var bundle = loadBundle(assetBundleName);
             if (bundle != null)
             {
-                m_loadedShaders = new Dictionary<string, Shader>();
-                ReadShaders(bundle);
+
+                ReadShaders(bundle, out Dictionary<string, Shader> m_loadedShaders);
+                bundle.Unload(false);
+                return m_loadedShaders;
             }
-            return bundle;
+            return null;
         }
 
-        private void ReadShaders(AssetBundle bundle)
+        private void ReadShaders(AssetBundle bundle, out Dictionary<string, Shader> m_loadedShaders)
         {
+            m_loadedShaders = new Dictionary<string, Shader>();
             var files = bundle.GetAllAssetNames();
             foreach (var filename in files)
             {
@@ -63,9 +45,5 @@ namespace Klyte.DynamicTextBoards.Utils
             }
         }
 
-        public void OnDestroy()
-        {
-            memoryLoaded?.Unload(true);
-        }
     }
 }

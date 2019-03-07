@@ -42,7 +42,7 @@ namespace Klyte.DynamicTextBoards.Overrides
                     m_maxWidthMeters = 0.45f,
                     m_textScale = .375f,
                     m_useContrastColor = false,
-                    m_textRelativeRotation = new Vector3(0,180,0),
+                    m_textRelativeRotation = new Vector3(0,180,0)
                 },
                 new BoardTextDescriptor{
                     m_textRelativePosition =new Vector3(0f,0.95f,0.066f) ,
@@ -171,7 +171,7 @@ namespace Klyte.DynamicTextBoards.Overrides
                     m_highwayMarksObjects.Remove(removeTarget);
                     m_destroyQueue.Remove(removeTarget);
 
-                    var segments = DTBUtils.GetSegmentRoadEdges(segmentId, true, false, false, out ComparableRoad start, out ComparableRoad end);
+                    var segments = DTBUtils.GetSegmentRoadEdges(segmentId, false, false, false, out ComparableRoad start, out ComparableRoad end);
                     if (segments == null)
                     {
                         RoadIdentifier tuple = new RoadIdentifier(default(ComparableRoad), default(ComparableRoad), new ushort[] { segmentId });
@@ -354,15 +354,6 @@ namespace Klyte.DynamicTextBoards.Overrides
                 hashCode = hashCode * -1521134295 + EqualityComparer<ComparableRoad>.Default.GetHashCode(end);
                 return hashCode;
             }
-        }
-
-        private void A_ReloadFromDisk()
-        {
-            DTBResourceLoader.instance.ReloadFromDisk();
-        }
-        private void A_CopyToFont()
-        {
-            m_font.shader = DTBResourceLoader.instance.LoadedShaders["Klyte/DynamicTextBoards/klytetextboards"];
         }
 
     }

@@ -17,9 +17,9 @@ namespace Klyte.DynamicTextBoards.TextureAtlas
     public class DTBCommonTextureAtlas : TextureAtlasDescriptor<DTBCommonTextureAtlas, DTBResourceLoader>
     {
         protected override string ResourceName => "UI.Images.sprites.png";
-        protected override string CommonName => "KlyteCAISprites";
+        protected override string CommonName => "KlyteDTBSprites";
         public override string[] SpriteNames => new string[] {
-                    "ToolbarIconGroup6Hovered",    "ToolbarIconGroup6Focused",   "ToolbarIconGroup6Pressed",    "KlyteMenuIcon"
+                "KDTBIcon","FontIcon","AutoNameIcon","AutoColorIcon","RemoveUnwantedIcon","ConfigIcon","24hLineIcon", "PerHourIcon","AbsoluteMode","RelativeMode","Copy","Paste"
                 };
     }
 }

@@ -28,6 +28,7 @@ namespace Klyte.DynamicTextBoards.Overrides
 
 
         public static readonly int m_shaderPropColor = Shader.PropertyToID("_Color");
+        public static readonly int m_shaderPropEmissive = Shader.PropertyToID("_Emission");
         protected uint lastFontUpdateFrame = SimulationManager.instance.m_currentTickIndex;
         public abstract void Initialize();
 
@@ -53,16 +54,17 @@ namespace Klyte.DynamicTextBoards.Overrides
 
         protected void BuildSurfaceFont(out UIDynamicFont font, string fontName)
         {
-            font = new UIDynamicFont
-            {
-                shader = TextShader,
-                material = new Material(Singleton<DistrictManager>.instance.m_properties.m_areaNameFont.material),
-                baseline = (Singleton<DistrictManager>.instance.m_properties.m_areaNameFont as UIDynamicFont).baseline,
-                size = (Singleton<DistrictManager>.instance.m_properties.m_areaNameFont as UIDynamicFont).size,
-                lineHeight = (Singleton<DistrictManager>.instance.m_properties.m_areaNameFont as UIDynamicFont).lineHeight,
-                baseFont = Font.CreateDynamicFontFromOSFont(fontName, 16)
-            };
-            font.material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.EmissiveIsBlack | MaterialGlobalIlluminationFlags.RealtimeEmissive;
+            font = ScriptableObject.CreateInstance<UIDynamicFont>();
+
+            font.shader = TextShader;
+            font.material = new Material(Singleton<DistrictManager>.instance.m_properties.m_areaNameFont.material);
+            font.baseline = (Singleton<DistrictManager>.instance.m_properties.m_areaNameFont as UIDynamicFont).baseline;
+            font.size = (Singleton<DistrictManager>.instance.m_properties.m_areaNameFont as UIDynamicFont).size;
+            font.lineHeight = (Singleton<DistrictManager>.instance.m_properties.m_areaNameFont as UIDynamicFont).lineHeight;
+            font.baseFont = Font.CreateDynamicFontFromOSFont(fontName, 16);
+
+
+            font.material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.None;
         }
 
 
@@ -227,11 +229,13 @@ namespace Klyte.DynamicTextBoards.Overrides
                     materialPropertyBlock.SetColor(m_shaderPropColor, Color.white);
                 }
 
+                materialPropertyBlock.SetFloat(m_shaderPropEmissive, 1.4f * (SimulationManager.instance.m_isNightTime ? textDescriptor.m_nightEmissiveMultiplier : textDescriptor.m_dayEmissiveMultiplier));
+
                 Graphics.DrawMesh(renderInfo.m_mesh, matrix, DrawFont.material, ctrl?.m_cachedProp?.m_prefabDataLayer ?? 10, cameraInfo.m_camera, 0, materialPropertyBlock, false, true, true);
             }
         }
 
-        protected static Shader TextShader => DTBResourceLoader.instance.LoadedShaders["Klyte/DynamicTextBoards/klytetextboards"];
+        protected static Shader TextShader => DTBResourceLoader.instance.GetLoadedShader("Klyte/DynamicTextBoards/klytetextboards") ?? DistrictManager.instance.m_properties.m_areaNameShader;
 
         protected void RefreshNameData(ref BRI result, string name)
         {
@@ -373,6 +377,10 @@ namespace Klyte.DynamicTextBoards.Overrides
         public string m_fixedTextLocaleKey = null;
         [XmlAttribute("fixedTextLocalized")]
         public bool m_isFixedTextLocalized = false;
+        [XmlAttribute("nightEmissiveMultiplier")]
+        public float m_nightEmissiveMultiplier = -0.1f;
+        [XmlAttribute("dayEmissiveMultiplier")]
+        public float m_dayEmissiveMultiplier = 0.6f;
         [XmlIgnore]
         private BasicRenderInformation m_generatedFixedTextRenderInfo;
         [XmlIgnore]

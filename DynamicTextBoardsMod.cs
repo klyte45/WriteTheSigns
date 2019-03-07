@@ -2,8 +2,10 @@ using ColossalFramework.UI;
 using ICities;
 using Klyte.Commons.Extensors;
 using Klyte.Commons.Interfaces;
+using Klyte.Commons.UI;
 using Klyte.DynamicTextBoards.i18n;
 using Klyte.DynamicTextBoards.TextureAtlas;
+using Klyte.DynamicTextBoards.UI;
 using Klyte.DynamicTextBoards.Utils;
 using System;
 using System.Linq;
@@ -13,12 +15,13 @@ using UnityEngine;
 [assembly: AssemblyVersion("0.0.0.*")]
 namespace Klyte.DynamicTextBoards
 {
-    public class DynamicTextBoardsMod : BasicIUserMod<DynamicTextBoardsMod, DTBLocaleUtils, DTBResourceLoader, MonoBehaviour, DTBCommonTextureAtlas, UICustomControl>
+    public class DynamicTextBoardsMod : BasicIUserMod<DynamicTextBoardsMod, DTBLocaleUtils, DTBResourceLoader, MonoBehaviour, DTBCommonTextureAtlas, DTBPanel>
     {
         public DynamicTextBoardsMod()
         {
             Construct();
         }
+        protected override ModTab? Tab => ModTab.DynamicTextBoards;
 
         public override string SimpleName => "Klyte's Dynamic Text Boards";
 
@@ -38,8 +41,15 @@ namespace Klyte.DynamicTextBoards
         {
         }
 
+
+
         public override void TopSettingsUI(UIHelperExtension ext)
         {
+        }
+
+        public override void OnReleased()
+        {
+            base.OnReleased();
         }
     }
 }

@@ -37,7 +37,7 @@ namespace Klyte.DynamicTextBoards.Overrides
             m_updatedIdsColorsLines = new bool[BuildingManager.MAX_BUILDING_COUNT];
             loadedDescriptors = GenerateDefaultDictionary();
 
-            BuildSurfaceFont(out m_font, "Consolas");
+            BuildSurfaceFont(out m_font, "Helvetica World");
 
             TransportManagerOverrides.eventOnLineUpdated += onLineUpdated;
             TransportManager.instance.eventLineColorChanged += (x) => onLineUpdated();
@@ -109,7 +109,7 @@ namespace Klyte.DynamicTextBoards.Overrides
                     for (int j = 0; j < descriptor.m_textDescriptors.Length; j++)
                     {
                         MaterialPropertyBlock materialBlock = Singleton<PropManager>.instance.m_materialBlock;
-                        materialBlock.Clear();                      
+                        materialBlock.Clear();
 
                         RenderTextMesh(cameraInfo, buildingID, i, j, ref descriptor, propMatrix, ref descriptor.m_textDescriptors[j], ref m_boardsContainers[buildingID].m_boardsData[i], materialBlock);
                     }
@@ -226,6 +226,38 @@ namespace Klyte.DynamicTextBoards.Overrides
                                 m_maxWidthMeters = 15.5f
                              },
                         };
+            var basicTotem = new BoardTextDescriptor[]{
+                             new BoardTextDescriptor{
+                                m_textRelativePosition =new Vector3(0.145f,2,-0.18f) ,
+                                m_textRelativeRotation = new Vector3(0,330,270),
+                                m_maxWidthMeters = 2.5f,
+                                m_textScale = 0.5f,
+                                m_dayEmissiveMultiplier = 0f,
+                                m_nightEmissiveMultiplier = 7f,
+                                m_useContrastColor = false,
+                                m_defaultColor = Color.white
+                             },
+                             new BoardTextDescriptor{
+                                m_textRelativePosition =new Vector3(-0.165f,2,0f) ,
+                                m_textRelativeRotation = new Vector3(0,210,270),
+                                m_maxWidthMeters = 2.5f,
+                                m_textScale = 0.5f,
+                                m_dayEmissiveMultiplier = 0f,
+                                m_nightEmissiveMultiplier = 7f,
+                                m_useContrastColor = false,
+                                m_defaultColor = Color.white
+                             },
+                             new BoardTextDescriptor{
+                                m_textRelativePosition =new Vector3(0.14f,2,0.17f) ,
+                                m_textRelativeRotation = new Vector3(0,90,270),
+                                m_maxWidthMeters = 2.5f,
+                                m_textScale = 0.5f,
+                                m_dayEmissiveMultiplier = 0f,
+                                m_nightEmissiveMultiplier = 7f,
+                                m_useContrastColor = false,
+                                m_defaultColor = Color.white
+                             },
+                        };
 
             return new Dictionary<string, List<BoardDescriptor>>
             {
@@ -234,7 +266,7 @@ namespace Klyte.DynamicTextBoards.Overrides
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6.BoardV6_Data",
-                        m_propPosition= new Vector3(11.5f,3.75f,0),
+                        m_propPosition= new Vector3(8f,6f,0.5F),
                         m_propRotation= 0,
                         m_textDescriptors =basicWallTextDescriptor,
                         m_targetVehicle = VehicleInfo.VehicleType.Train
@@ -242,7 +274,7 @@ namespace Klyte.DynamicTextBoards.Overrides
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6.BoardV6_Data",
-                        m_propPosition= new Vector3(-11.5f,3.75f,0),
+                        m_propPosition= new Vector3(-13.5f,6f,0.5F),
                         m_propRotation= 0,
                         m_textDescriptors =basicWallTextDescriptor,
                         m_targetVehicle = VehicleInfo.VehicleType.Train
@@ -723,10 +755,10 @@ namespace Klyte.DynamicTextBoards.Overrides
                 {
                     new BoardDescriptor
                     {
-                        m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(0,0,-0),
+                        m_propName=    "Metro Totem.Metro Totem_Data",
+                        m_propPosition= new Vector3(4,0,4),
                         m_propRotation= 0,
-                        m_textDescriptors =basicEOLTextDescriptor,
+                        m_textDescriptors =basicTotem,
                         m_targetVehicle = VehicleInfo.VehicleType.Metro
                     },
                 },
