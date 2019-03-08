@@ -30,7 +30,7 @@ namespace Klyte.DynamicTextBoards.Utils
             return null;
         }
 
-        private void ReadShaders(AssetBundle bundle, out Dictionary<string, Shader> m_loadedShaders)
+        public void ReadShaders(AssetBundle bundle, out Dictionary<string, Shader> m_loadedShaders)
         {
             m_loadedShaders = new Dictionary<string, Shader>();
             var files = bundle.GetAllAssetNames();
@@ -38,9 +38,19 @@ namespace Klyte.DynamicTextBoards.Utils
             {
                 if (filename.EndsWith(".shader"))
                 {
+
                     var shader = bundle.LoadAsset<Shader>(filename);
-                    shader.name = $"{prefix.Replace(".", "/")}{filename.Split('.')[0].Split('/').Last()}";
-                    m_loadedShaders[shader.name] = (shader);
+                    var effectiveName = filename.Split('.')[0].Split('/').Last();
+                    if (effectiveName.StartsWith("klyte"))
+                    {
+                        shader.name = $"{prefix.Replace(".", "/")}{effectiveName}";
+                        m_loadedShaders[shader.name] = (shader);
+                        
+                    }
+                    else
+                    {
+                        Destroy(shader);
+                    }
                 }
             }
         }

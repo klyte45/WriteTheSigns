@@ -30,7 +30,7 @@ namespace Klyte.DynamicTextBoards.Overrides
 
 
         public override int ObjArraySize => 0;
-        public override UIFont DrawFont => m_font;
+        public override UIDynamicFont DrawFont => m_font;
 
         private BoardDescriptor m_baseDescriptorMileagePlate = new BoardDescriptor
         {
@@ -272,9 +272,9 @@ namespace Klyte.DynamicTextBoards.Overrides
         }
         protected override BasicRenderInformation GetMeshCurrentNumber(RoadIdentifier id, int boardIdx, int kilometers)
         {
-            if (m_cachedKilometerMeshes.Length <= kilometers)
+            if (m_cachedKilometerMeshes.Length <= kilometers + 1)
             {
-                m_cachedKilometerMeshes = new BasicRenderInformation[kilometers];
+                m_cachedKilometerMeshes = new BasicRenderInformation[kilometers + 1];
             }
             if (m_cachedKilometerMeshes[kilometers] == null || lastFontUpdateFrame > m_cachedKilometerMeshes[kilometers].m_frameDrawTime)
             {
@@ -292,12 +292,16 @@ namespace Klyte.DynamicTextBoards.Overrides
 
         }
 
-
         protected override InstanceID GetPropRenderID(ushort nodeId)
         {
             InstanceID result = default(InstanceID);
             result.NetNode = nodeId;
             return result;
+        }
+
+        public override Color GetContrastColor(RoadIdentifier refID, int boardIdx, int secIdx)
+        {
+            return Color.black;
         }
 
         private static Func<ushort, Color> GetDistrictColor = (ushort districtId) => Color.gray;

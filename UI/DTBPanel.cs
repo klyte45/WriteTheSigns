@@ -63,51 +63,51 @@ namespace Klyte.DynamicTextBoards.UI
             CreateTitleBar();
 
 
-            DTBUtils.createUIElement(out m_StripMain, mainPanel.transform, "DTBTabstrip", new Vector4(5, 40, mainPanel.width - 10, 40));
+            //DTBUtils.createUIElement(out m_StripMain, mainPanel.transform, "DTBTabstrip", new Vector4(5, 40, mainPanel.width - 10, 40));
 
-            DTBUtils.createUIElement(out UITabContainer tabContainer, mainPanel.transform, "DTBTabContainer", new Vector4(0, 80, mainPanel.width, mainPanel.height - 80));
-            m_StripMain.tabPages = tabContainer;
+            //DTBUtils.createUIElement(out UITabContainer tabContainer, mainPanel.transform, "DTBTabContainer", new Vector4(0, 80, mainPanel.width, mainPanel.height - 80));
+            //m_StripMain.tabPages = tabContainer;
 
-            UIButton tabPerBuilding = CreateTabTemplate();
-            tabPerBuilding.normalFgSprite = "ToolbarIconMonuments";
-            tabPerBuilding.tooltip = Locale.Get("DTB_CONFIG_PER_BUILDING_TAB");
+            //UIButton tabPerBuilding = CreateTabTemplate();
+            //tabPerBuilding.normalFgSprite = "ToolbarIconMonuments";
+            //tabPerBuilding.tooltip = Locale.Get("DTB_CONFIG_PER_BUILDING_TAB");
 
-            DTBUtils.createUIElement(out UIPanel contentContainerPerBuilding, null);
-            contentContainerPerBuilding.name = "Container";
-            contentContainerPerBuilding.area = new Vector4(0, 40, mainPanel.width, mainPanel.height - 80);
+            //DTBUtils.createUIElement(out UIPanel contentContainerPerBuilding, null);
+            //contentContainerPerBuilding.name = "Container";
+            //contentContainerPerBuilding.area = new Vector4(0, 40, mainPanel.width, mainPanel.height - 80);
 
-            m_StripMain.AddTab("DTBPerBuilding", tabPerBuilding.gameObject, contentContainerPerBuilding.gameObject);
-            CreateTitleRowBuilding(ref m_titleLineBuildings, contentContainerPerBuilding);
-            CreateSsdTabstrip(ref m_StripBuilings, ref m_StripBuilingsStrips, m_titleLineBuildings, contentContainerPerBuilding, true);
+            //m_StripMain.AddTab("DTBPerBuilding", tabPerBuilding.gameObject, contentContainerPerBuilding.gameObject);
+            //CreateTitleRowBuilding(ref m_titleLineBuildings, contentContainerPerBuilding);
+            //CreateSsdTabstrip(ref m_StripBuilings, ref m_StripBuilingsStrips, m_titleLineBuildings, contentContainerPerBuilding, true);
 
-            UIButton tabPerDistrict = CreateTabTemplate();
-            tabPerDistrict.normalFgSprite = "ToolbarIconDistrict";
-            tabPerDistrict.tooltip = Locale.Get("DTB_CONFIG_PER_DISTRICT_TAB");
+            //UIButton tabPerDistrict = CreateTabTemplate();
+            //tabPerDistrict.normalFgSprite = "ToolbarIconDistrict";
+            //tabPerDistrict.tooltip = Locale.Get("DTB_CONFIG_PER_DISTRICT_TAB");
 
-            DTBUtils.createUIElement(out UIPanel contentContainerPerDistrict, mainPanel.transform);
-            contentContainerPerDistrict.name = "Container2";
-            contentContainerPerDistrict.area = new Vector4(0, 40, mainPanel.width, mainPanel.height - 80);
+            //DTBUtils.createUIElement(out UIPanel contentContainerPerDistrict, mainPanel.transform);
+            //contentContainerPerDistrict.name = "Container2";
+            //contentContainerPerDistrict.area = new Vector4(0, 40, mainPanel.width, mainPanel.height - 80);
 
-            m_StripMain.AddTab("DTBPerDistrict", tabPerDistrict.gameObject, contentContainerPerDistrict.gameObject);
-            CreateSsdTabstrip(ref m_StripDistricts, ref m_StripDistrictsStrips, null, contentContainerPerDistrict);
+            //m_StripMain.AddTab("DTBPerDistrict", tabPerDistrict.gameObject, contentContainerPerDistrict.gameObject);
+            //CreateSsdTabstrip(ref m_StripDistricts, ref m_StripDistrictsStrips, null, contentContainerPerDistrict);
 
-            m_cachedDistricts = DTBUtils.getValidDistricts();
-          
-           
+            //m_cachedDistricts = DTBUtils.getValidDistricts();
 
-            m_StripMain.selectedIndex = -1;
-            m_StripBuilings.selectedIndex = -1;
-            m_StripDistricts.selectedIndex = -1;
 
-            foreach (var strip in m_StripDistrictsStrips.Values)
-            {
-                strip.selectedIndex = -1;
-            }
-            foreach (var strip in m_StripBuilingsStrips.Values)
-            {
-                strip.selectedIndex = -1;
-            }
-            
+
+            //m_StripMain.selectedIndex = -1;
+            //m_StripBuilings.selectedIndex = -1;
+            //m_StripDistricts.selectedIndex = -1;
+
+            //foreach (var strip in m_StripDistrictsStrips.Values)
+            //{
+            //    strip.selectedIndex = -1;
+            //}
+            //foreach (var strip in m_StripBuilingsStrips.Values)
+            //{
+            //    strip.selectedIndex = -1;
+            //}
+
         }
 
 

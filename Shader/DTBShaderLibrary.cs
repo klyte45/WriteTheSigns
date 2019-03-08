@@ -7,9 +7,9 @@ using UnityEngine;
 
 namespace Klyte.DynamicTextBoards.Utils
 {
-    public static class DTBShaderLibrary
+    internal static class DTBShaderLibrary
     {
-        private static Dictionary<string, Shader> m_loadedShaders = null;
+        internal static Dictionary<string, Shader> m_loadedShaders = null;
 
         public static Dictionary<string, Shader> GetShaders()
         {
@@ -31,6 +31,23 @@ namespace Klyte.DynamicTextBoards.Utils
             }
             return m_loadedShaders;
         }
+        static AssetBundle memoryLoaded;
+        public static void ReloadFromDisk()
+        {
+            DTBUtils.doErrorLog("LOADING ");
+            memoryLoaded?.Unload(true);
+            memoryLoaded = AssetBundle.LoadFromFile("Q:/SkylineMods/TesteLinha/TransportLinesManager/TextProp/TestProj/New Resource.unity3d");
+            if (memoryLoaded != null)
+            {
+                DTBUtils.doErrorLog("FOUND");
+                DTBResourceLoader.instance.ReadShaders(memoryLoaded, out m_loadedShaders);
+            }
+            else
+            {
+                DTBUtils.doErrorLog("NOT FOUND");
+            }
+        }
+
 
     }
 }

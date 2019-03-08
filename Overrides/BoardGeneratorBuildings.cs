@@ -28,7 +28,7 @@ namespace Klyte.DynamicTextBoards.Overrides
 
         private UIDynamicFont m_font;
 
-        public override UIFont DrawFont => m_font;
+        public override UIDynamicFont DrawFont => m_font;
 
         #region Initialize
         public override void Initialize()
@@ -196,6 +196,10 @@ namespace Klyte.DynamicTextBoards.Overrides
         {
             return m_boardsContainers[buildingID].m_boardsData[idx]?.m_cachedColor ?? Color.white;
         }
+        public override Color GetContrastColor(ushort buildingID, int idx, int secIdx)
+        {
+            return m_boardsContainers[buildingID].m_boardsData[idx]?.m_cachedContrastColor ?? Color.white;
+        }
 
         protected override InstanceID GetPropRenderID(ushort buildingID)
         {
@@ -235,7 +239,8 @@ namespace Klyte.DynamicTextBoards.Overrides
                                 m_dayEmissiveMultiplier = 0f,
                                 m_nightEmissiveMultiplier = 7f,
                                 m_useContrastColor = false,
-                                m_defaultColor = Color.white
+                                m_defaultColor = Color.white,
+                                m_shader =TextShaderIlum.name
                              },
                              new BoardTextDescriptor{
                                 m_textRelativePosition =new Vector3(-0.165f,2,0f) ,
@@ -245,7 +250,8 @@ namespace Klyte.DynamicTextBoards.Overrides
                                 m_dayEmissiveMultiplier = 0f,
                                 m_nightEmissiveMultiplier = 7f,
                                 m_useContrastColor = false,
-                                m_defaultColor = Color.white
+                                m_defaultColor = Color.white,
+                                m_shader =TextShaderIlum.name
                              },
                              new BoardTextDescriptor{
                                 m_textRelativePosition =new Vector3(0.14f,2,0.17f) ,
@@ -255,7 +261,8 @@ namespace Klyte.DynamicTextBoards.Overrides
                                 m_dayEmissiveMultiplier = 0f,
                                 m_nightEmissiveMultiplier = 7f,
                                 m_useContrastColor = false,
-                                m_defaultColor = Color.white
+                                m_defaultColor = Color.white,
+                                m_shader =TextShaderIlum.name
                              },
                         };
 
@@ -270,7 +277,7 @@ namespace Klyte.DynamicTextBoards.Overrides
                         m_propRotation= 0,
                         m_textDescriptors =basicWallTextDescriptor,
                         m_targetVehicle = VehicleInfo.VehicleType.Train
-                    },
+},
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6.BoardV6_Data",
