@@ -17,7 +17,7 @@ using static Klyte.Commons.Utils.KlyteUtils;
 namespace Klyte.DynamicTextBoards.Overrides
 {
 
-    public class BoardGeneratorHighwayMileage : BoardGeneratorParent<BoardGeneratorHighwayMileage, BoardBunchContainer, CacheControl, BasicRenderInformation, BoardDescriptor, BoardTextDescriptor, BoardGeneratorHighwayMileage.RoadIdentifier>
+    public class BoardGeneratorHighwayMileage : BoardGeneratorParent<BoardGeneratorHighwayMileage, IBoardBunchContainer<CacheControl, BasicRenderInformation>,CacheControl, BasicRenderInformation, BoardDescriptor, BoardTextDescriptor, BoardGeneratorHighwayMileage.RoadIdentifier>
     {
 
         public Dictionary<RoadIdentifier, List<MileagePlateDescriptor>> m_highwayMarksObjects;
@@ -92,7 +92,7 @@ namespace Klyte.DynamicTextBoards.Overrides
 
         private void onNodeChanged(ushort nodeId)
         {
-            //doLog("onNodeChanged");
+            //doLog($"onNodeChanged { System.Environment.StackTrace }");
             for (int i = 0; i < 8; i++)
             {
                 var segmentId = NetManager.instance.m_nodes.m_buffer[nodeId].GetSegment(i);
@@ -238,7 +238,7 @@ namespace Klyte.DynamicTextBoards.Overrides
 
             foreach (var plate in renderQueue)
             {
-                RenderPropMesh(ref cachedDefaultInfo, cameraInfo, segmentID, plate.Second, plate.Third.kilometer, layerMask, 0, plate.Third.position, Vector4.zero, ref m_baseDescriptorMileagePlate.m_propName, plate.Third.rotation + m_baseDescriptorMileagePlate.m_propRotation, out Matrix4x4 propMatrix, out bool rendered);
+                RenderPropMesh(ref cachedDefaultInfo, cameraInfo, segmentID, plate.Second, plate.Third.kilometer, layerMask, 0, plate.Third.position, Vector4.zero, ref m_baseDescriptorMileagePlate.m_propName, plate.Third.rotation + m_baseDescriptorMileagePlate.m_propRotation, ref m_baseDescriptorMileagePlate, out Matrix4x4 propMatrix, out bool rendered);
                 if (rendered)
                 {
                     for (int j = 0; j < m_baseDescriptorMileagePlate.m_textDescriptors.Length; j++)
@@ -286,7 +286,7 @@ namespace Klyte.DynamicTextBoards.Overrides
         }
         #endregion
 
-        public override Color GetColor(ushort buildingID, int idx, int secIdx)
+        public override Color GetColor(ushort buildingID, int idx, int secIdx, BoardDescriptor descriptor)
         {
             return Color.white;
 
@@ -299,7 +299,7 @@ namespace Klyte.DynamicTextBoards.Overrides
             return result;
         }
 
-        public override Color GetContrastColor(RoadIdentifier refID, int boardIdx, int secIdx)
+        public override Color GetContrastColor(RoadIdentifier refID, int boardIdx, int secIdx, BoardDescriptor descriptor)
         {
             return Color.black;
         }

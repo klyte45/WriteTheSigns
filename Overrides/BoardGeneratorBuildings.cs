@@ -12,17 +12,20 @@ using System.Linq;
 using System.Xml.Serialization;
 using UnityEngine;
 using static BuildingInfo;
+using static Klyte.Commons.Utils.KlyteUtils;
+using static Klyte.DynamicTextBoards.Overrides.BoardGeneratorBuildings;
 
 namespace Klyte.DynamicTextBoards.Overrides
 {
 
-    public class BoardGeneratorBuildings : BoardGeneratorParent<BoardGeneratorBuildings, BoardBunchContainer, CacheControl, BasicRenderInformation, BoardDescriptor, BoardTextDescriptor, ushort>
+    public class BoardGeneratorBuildings : BoardGeneratorParent<BoardGeneratorBuildings, BoardBunchContainerBuilding, CacheControlTransportBuilding, BasicRenderInformation, BoardDescriptor, BoardTextDescriptor, ushort>
     {
 
         private Dictionary<String, List<BoardDescriptor>> loadedDescriptors;
 
+        private LineDescriptor[] m_linesDescriptors;
         private UpdateFlagsBuildings[] m_updateData;
-        public bool[] m_updatedIdsColorsLines;
+        private Dictionary<string, StopPointDescriptorLanes[]> m_buildingStopsDescriptor = new Dictionary<string, StopPointDescriptorLanes[]>();
 
         public override int ObjArraySize => BuildingManager.MAX_BUILDING_COUNT;
 
@@ -34,13 +37,14 @@ namespace Klyte.DynamicTextBoards.Overrides
         public override void Initialize()
         {
             m_updateData = new UpdateFlagsBuildings[BuildingManager.MAX_BUILDING_COUNT];
-            m_updatedIdsColorsLines = new bool[BuildingManager.MAX_BUILDING_COUNT];
+            m_linesDescriptors = new LineDescriptor[TransportManager.MAX_LINE_COUNT];
             loadedDescriptors = GenerateDefaultDictionary();
 
-            BuildSurfaceFont(out m_font, "Helvetica World");
+            BuildSurfaceFont(out m_font, "Arial");
 
             TransportManagerOverrides.eventOnLineUpdated += onLineUpdated;
-            TransportManager.instance.eventLineColorChanged += (x) => onLineUpdated();
+            NetManagerOverrides.eventNodeChanged += onNodeChanged;
+            TransportManager.instance.eventLineColorChanged += onLineUpdated;
             BuildingManagerOverrides.eventOnBuildingRenamed += onBuildingNameChanged;
 
             #region Hooks
@@ -50,22 +54,25 @@ namespace Klyte.DynamicTextBoards.Overrides
             #endregion
         }
 
+        private void onNodeChanged(ushort id)
+        {
+            var buildingId = NetNode.FindOwnerBuilding(id, 56f);
+            if (buildingId > 0 && m_boardsContainers[buildingId] != null)
+            {
+                m_boardsContainers[buildingId].m_linesUpdateFrame = 0;
+            }
+        }
+
         protected override void OnTextureRebuilt()
         {
             m_updateData = new UpdateFlagsBuildings[BuildingManager.MAX_BUILDING_COUNT];
         }
 
-        protected void Reset()
-        {
-            m_boardsContainers = new BoardBunchContainer[BuildingManager.MAX_BUILDING_COUNT];
-            m_updateData = new UpdateFlagsBuildings[BuildingManager.MAX_BUILDING_COUNT];
-            m_updatedIdsColorsLines = new bool[BuildingManager.MAX_BUILDING_COUNT];
-        }
 
-        private void onLineUpdated()
+        private void onLineUpdated(ushort lineId)
         {
             //doLog("onLineUpdated");
-            m_updatedIdsColorsLines = new bool[BuildingManager.MAX_BUILDING_COUNT];
+            m_linesDescriptors[lineId] = default(LineDescriptor);
         }
         private void onBuildingNameChanged(ushort id)
         {
@@ -88,22 +95,20 @@ namespace Klyte.DynamicTextBoards.Overrides
             }
             if (m_boardsContainers[buildingID] == null)
             {
-                m_boardsContainers[buildingID] = new BoardBunchContainer();
+                m_boardsContainers[buildingID] = new BoardBunchContainerBuilding();
             }
             if (m_boardsContainers[buildingID]?.m_boardsData?.Count() != loadedDescriptors[data.Info.name].Count)
             {
-                m_boardsContainers[buildingID].m_boardsData = new CacheControl[loadedDescriptors[data.Info.name].Count];
+                m_boardsContainers[buildingID].m_boardsData = new CacheControlTransportBuilding[loadedDescriptors[data.Info.name].Count];
                 m_updateData[buildingID].m_nameMesh = false;
-                m_updatedIdsColorsLines[buildingID] = false;
             }
 
-            var updatedColors = m_updatedIdsColorsLines[buildingID];
+            UpdateLinesBuilding(buildingID, ref data, m_boardsContainers[buildingID]);
             for (var i = 0; i < loadedDescriptors[data.Info.name].Count; i++)
             {
                 var descriptor = loadedDescriptors[data.Info.name][i];
-                UpdateSubparams(ref m_boardsContainers[buildingID].m_boardsData[i], buildingID, ref data, cameraInfo, ref renderInstance, descriptor, updatedColors, i);
-
-                RenderPropMesh(ref m_boardsContainers[buildingID].m_boardsData[i].m_cachedProp, cameraInfo, buildingID, i, 0, layerMask, data.m_angle, renderInstance.m_dataMatrix1.MultiplyPoint(descriptor.m_propPosition), renderInstance.m_dataVector3, ref descriptor.m_propName, descriptor.m_propRotation, out Matrix4x4 propMatrix, out bool rendered);
+                if (m_boardsContainers[buildingID].m_boardsData[i] == null) m_boardsContainers[buildingID].m_boardsData[i] = new CacheControlTransportBuilding();
+                RenderPropMesh(ref m_boardsContainers[buildingID].m_boardsData[i].m_cachedProp, cameraInfo, buildingID, i, 0, layerMask, data.m_angle, renderInstance.m_dataMatrix1.MultiplyPoint(descriptor.m_propPosition), renderInstance.m_dataVector3, ref descriptor.m_propName, descriptor.m_propRotation, ref descriptor, out Matrix4x4 propMatrix, out bool rendered);
                 if (rendered)
                 {
                     for (int j = 0; j < descriptor.m_textDescriptors.Length; j++)
@@ -115,7 +120,6 @@ namespace Klyte.DynamicTextBoards.Overrides
                     }
                 }
             }
-            m_updatedIdsColorsLines[buildingID] = true;
         }
 
 
@@ -131,74 +135,196 @@ namespace Klyte.DynamicTextBoards.Overrides
             return m_boardsContainers[buildingID].m_nameSubInfo;
 
         }
-
-        protected void UpdateSubparams(ref CacheControl ctrl, ushort buildingID, ref Building data, RenderManager.CameraInfo cameraInfo, ref RenderManager.Instance instanceData, BoardDescriptor descriptor, bool updatedIdsColors, int idx)
+        protected void UpdateLinesBuilding(ushort buildingID, ref Building data, BoardBunchContainerBuilding bbcb)
         {
-            BuildingManager instance = Singleton<BuildingManager>.instance;
-            if (ctrl == null) ctrl = new CacheControl();
-            if (!updatedIdsColors)
+            if (bbcb.m_platformToLine == null || (bbcb.m_ordenedLines?.Length > 0 && bbcb.m_linesUpdateFrame < bbcb.m_ordenedLines.Select((x) => m_linesDescriptors[x]?.m_lastUpdate ?? 0).Max()))
             {
-                Color color;
-                List<Quad2> boundaries = new List<Quad2>();
-                var subBuilding = buildingID;
-                var allnodes = new List<ushort>();
-                while (subBuilding > 0)
+                if (!m_buildingStopsDescriptor.ContainsKey(data.Info.name))
                 {
-                    boundaries.Add(GetBounds(ref BuildingManager.instance.m_buildings.m_buffer[subBuilding]));
-                    var node = BuildingManager.instance.m_buildings.m_buffer[subBuilding].m_netNode;
-                    while (node > 0)
-                    {
-                        allnodes.Add(node);
-                        node = NetManager.instance.m_nodes.m_buffer[node].m_nextBuildingNode;
-                    }
-                    subBuilding = BuildingManager.instance.m_buildings.m_buffer[subBuilding].m_subBuilding;
+                    m_buildingStopsDescriptor[data.Info.name] = MapStopPoints(data.Info);
+                    //m_buildingStopsDescriptor[data.Info.name + "PLAT"] = GetAllPlatforms(data.Info.m_buildingAI);
                 }
-                foreach (ushort node in allnodes)
-                {
-                    if (!boundaries.Any(x => x.Intersect(NetManager.instance.m_nodes.m_buffer[node].m_position)))
-                    {
-                        for (var segIdx = 0; segIdx < 8; segIdx++)
-                        {
-                            var segmentId = NetManager.instance.m_nodes.m_buffer[node].GetSegment(segIdx);
-                            if (segmentId != 0 && allnodes.Contains(NetManager.instance.m_segments.m_buffer[segmentId].GetOtherNode(node)))
-                            {
 
-
-                                boundaries.Add(GetBounds(
-                                    NetManager.instance.m_nodes.m_buffer[NetManager.instance.m_segments.m_buffer[segmentId].m_startNode].m_position,
-                                    NetManager.instance.m_nodes.m_buffer[NetManager.instance.m_segments.m_buffer[segmentId].m_endNode].m_position,
-                                    NetManager.instance.m_segments.m_buffer[segmentId].Info.m_halfWidth)
-                                    );
-                            }
-                        }
-                    }
-                }
-                var nearStops = KlyteUtils.FindNearStops(instanceData.m_dataMatrix1.MultiplyPoint(descriptor.m_propPosition), data.Info.m_class.m_service, data.Info.m_class.m_service, descriptor.m_targetVehicle ?? VehicleInfo.VehicleType.None, true, 400f, out List<float> dist, boundaries);
-                //doLog($"updatedIdsColors {nearStops.Count} [{string.Join(",", nearStops.Select(x => x.ToString()).ToArray())}], [{string.Join(",", dist.Select(x => x.ToString()).ToArray())}], ");
-                if (nearStops.Count > 0)
+                var platforms = m_buildingStopsDescriptor[data.Info.name].Select((v, i) => new { Key = i, Value = v }).ToDictionary(o => o.Key, o => o.Value);
+                //var platformsPlat = m_buildingStopsDescriptor[data.Info.name + "PLAT"].Select((v, i) => new { Key = i, Value = v }).ToDictionary(o => o.Key, o => o.Value);
+                if (platforms.Count == 0)
                 {
-                    var effNearStopId = nearStops[dist.IndexOf(dist.Min(x => x))];
-                    var stopPos = NetManager.instance.m_nodes.m_buffer[effNearStopId].m_position;
-                    color = TransportManager.instance.GetLineColor(NetManager.instance.m_nodes.m_buffer[effNearStopId].m_transportLine);
+                    bbcb.m_ordenedLines = new ushort[0];
+                    bbcb.m_platformToLine = new ushort[0][];
                 }
                 else
                 {
-                    color = Color.white;
+
+                    List<Quad2> boundaries = new List<Quad2>();
+                    var subBuilding = buildingID;
+                    var allnodes = new List<ushort>();
+                    while (subBuilding > 0)
+                    {
+                        boundaries.Add(GetBounds(ref BuildingManager.instance.m_buildings.m_buffer[subBuilding]));
+                        var node = BuildingManager.instance.m_buildings.m_buffer[subBuilding].m_netNode;
+                        while (node > 0)
+                        {
+                            allnodes.Add(node);
+                            node = NetManager.instance.m_nodes.m_buffer[node].m_nextBuildingNode;
+                        }
+                        subBuilding = BuildingManager.instance.m_buildings.m_buffer[subBuilding].m_subBuilding;
+                    }
+                    foreach (ushort node in allnodes)
+                    {
+                        if (!boundaries.Any(x => x.Intersect(NetManager.instance.m_nodes.m_buffer[node].m_position)))
+                        {
+                            for (var segIdx = 0; segIdx < 8; segIdx++)
+                            {
+                                var segmentId = NetManager.instance.m_nodes.m_buffer[node].GetSegment(segIdx);
+                                if (segmentId != 0 && allnodes.Contains(NetManager.instance.m_segments.m_buffer[segmentId].GetOtherNode(node)))
+                                {
+
+
+                                    boundaries.Add(GetBounds(
+                                        NetManager.instance.m_nodes.m_buffer[NetManager.instance.m_segments.m_buffer[segmentId].m_startNode].m_position,
+                                        NetManager.instance.m_nodes.m_buffer[NetManager.instance.m_segments.m_buffer[segmentId].m_endNode].m_position,
+                                        NetManager.instance.m_segments.m_buffer[segmentId].Info.m_halfWidth)
+                                        );
+                                }
+                            }
+                        }
+                    }
+                    var nearStops = KlyteUtils.FindNearStops(data.m_position, ItemClass.Service.PublicTransport, ItemClass.Service.PublicTransport, VehicleInfo.VehicleType.None, true, 400f, out List<float> dist, out List<Vector3> absolutePos, boundaries);
+                    if (nearStops.Count > 0)
+                    {
+                        bbcb.m_platformToLine = new ushort[m_buildingStopsDescriptor[data.Info.name].Length][];
+                        var nearStopsParsed = nearStops.Select((x, i) => new { stopId = x, relPos = CalculatePositionRelative(absolutePos[i], BuildingManager.instance.m_buildings.m_buffer[buildingID].m_angle, BuildingManager.instance.m_buildings.m_buffer[buildingID].m_position) })
+                         .Select((y, i) => Tuple.New(platforms.Where((x, j) =>
+                         {
+                             //var relOrg = CalculatePositionRelative(absolutePos[i], BuildingManager.instance.m_buildings.m_buffer[buildingID].m_angle, BuildingManager.instance.m_buildings.m_buffer[buildingID].m_position);
+                             var distance = x.Value.platformLine.DistanceSqr(y.relPos, out float k);
+                             doLog($"[{BuildingManager.instance.m_buildings.m_buffer[buildingID].Info.name}]x = {x.Key} ({x.Value.platformLine.a} {x.Value.platformLine.b} {x.Value.platformLine.c} {x.Value.platformLine.d}) (w= {x.Value.width}) {x.Value.vehicleType}\t| relOrg {y.relPos} \t| {distance}");
+                             return Mathf.Abs(distance - x.Value.width * x.Value.width) < 0.1f;
+                         }).FirstOrDefault().Key, NetManager.instance.m_nodes.m_buffer[y.stopId].m_transportLine));
+
+                        foreach (var nearStopsParsedItem in nearStopsParsed.Select(x => x.First).Distinct())
+                        {
+                            bbcb.m_platformToLine[nearStopsParsedItem] = nearStopsParsed.Where(x => x.First == nearStopsParsedItem).Select(x => x.Second).ToArray();
+                        }
+                        var uniqueLines = nearStopsParsed.Select(x => x.Second).Distinct().ToList();
+                        uniqueLines.Sort((a, b) => VehicleToPriority(TransportManager.instance.m_lines.m_buffer[a].Info.m_vehicleType).CompareTo(VehicleToPriority(TransportManager.instance.m_lines.m_buffer[b].Info.m_vehicleType)));
+                        bbcb.m_ordenedLines = uniqueLines.ToArray();
+                        //doLog($"updatedIdsColors {nearStops.Count} [{string.Join(",", nearStops.Select(x => x.ToString()).ToArray())}], [{string.Join(",", dist.Select(x => x.ToString()).ToArray())}], ");
+                    }
                 }
-                ctrl.m_cachedColor = color;
-                ctrl.m_cachedContrastColor = DTBUtils.contrastColor(color);
+                bbcb.m_linesUpdateFrame = SimulationManager.instance.m_currentTickIndex;
             }
-            return;
         }
+
+        private static Vector3 CalculatePositionRelative(Vector3 position, float angle, Vector3 original)
+        {
+            Vector3 offset = new Vector3
+            {
+                y = position.y - original.y
+            };
+
+            var cos = Mathf.Cos(angle);
+            var sin = Mathf.Sin(angle);
+
+            //           position.x = original.x +              cos * offset.x +  sin   * offset.z;
+            //position.z            =              original.z + sin * offset.x + (-cos) * offset.z;
+
+            //                   cos * position.x = cos * original.x +                                  cos * cos * offset.x  + cos * sin    * offset.z;
+            //sin * position.z                    =                    sin * original.z +               sin * sin * offset.x  + sin * (-cos) * offset.z;
+            //==========================================================================================================================================
+            //sin * position.z + cos * position.x = cos * original.x + sin * original.z + (cos * cos + sin * sin) * offset.x;
+
+            offset.x = -(cos * original.x + sin * original.z - sin * position.z - cos * position.x);
+            offset.z = (-position.x + original.x + cos * offset.x) / -sin;
+
+            return offset;
+        }
+
+
+        private int VehicleToPriority(VehicleInfo.VehicleType tt)
+        {
+            switch (tt)
+            {
+                case VehicleInfo.VehicleType.Car:
+                    return 99;
+                case VehicleInfo.VehicleType.Metro:
+                case VehicleInfo.VehicleType.Train:
+                case VehicleInfo.VehicleType.Monorail:
+                    return 20;
+                case VehicleInfo.VehicleType.Ship:
+                    return 10;
+                case VehicleInfo.VehicleType.Plane:
+                    return 5;
+                case VehicleInfo.VehicleType.Tram:
+                    return 88;
+                case VehicleInfo.VehicleType.Helicopter:
+                    return 7;
+                case VehicleInfo.VehicleType.Ferry:
+                    return 15;
+
+                case VehicleInfo.VehicleType.CableCar:
+                    return 30;
+                case VehicleInfo.VehicleType.Blimp:
+                    return 12;
+                case VehicleInfo.VehicleType.Balloon:
+                    return 11;
+                default: return 9999;
+            }
+        }
+
         #endregion
 
-        public override Color GetColor(ushort buildingID, int idx, int secIdx)
+        public override Color GetColor(ushort buildingID, int boardIdx, int textIdx, BoardDescriptor descriptor)
         {
-            return m_boardsContainers[buildingID].m_boardsData[idx]?.m_cachedColor ?? Color.white;
+            var targetPlatforms = descriptor.m_platforms;
+            foreach (var platform in targetPlatforms)
+            {
+                if (m_boardsContainers[buildingID].m_platformToLine != null && m_boardsContainers[buildingID].m_platformToLine.ElementAtOrDefault(platform) != null)
+                {
+                    var line = m_boardsContainers[buildingID].m_platformToLine[platform].ElementAtOrDefault(0);
+                    if (line != 0)
+                    {
+                        if (m_linesDescriptors[line] == null)
+                        {
+                            UpdateLine(line);
+                        }
+                        return m_linesDescriptors[line].m_lineColor;
+                    }
+                }
+            }
+            return Color.white;
         }
-        public override Color GetContrastColor(ushort buildingID, int idx, int secIdx)
+        public override Color GetContrastColor(ushort buildingID, int boardIdx, int textIdx, BoardDescriptor descriptor)
         {
-            return m_boardsContainers[buildingID].m_boardsData[idx]?.m_cachedContrastColor ?? Color.white;
+            var targetPlatforms = descriptor.m_platforms;
+            foreach (var platform in targetPlatforms)
+            {
+                if (m_boardsContainers[buildingID].m_platformToLine != null && m_boardsContainers[buildingID].m_platformToLine.ElementAtOrDefault(platform) != null && m_boardsContainers[buildingID].m_platformToLine[platform].Length > 0)
+                {
+                    var line = m_boardsContainers[buildingID].m_platformToLine[platform].ElementAtOrDefault(0);
+                    if (line != 0)
+                    {
+                        if (m_linesDescriptors[line] == null)
+                        {
+                            UpdateLine(line);
+                        }
+                        return m_linesDescriptors[line].m_contrastColor;
+                    }
+                }
+            }
+            return Color.black;
+        }
+
+        private void UpdateLine(ushort lineId)
+        {
+            m_linesDescriptors[lineId] = new LineDescriptor
+            {
+                m_lineColor = TransportManager.instance.GetLineColor(lineId),
+                m_lastUpdate = SimulationManager.instance.m_currentTickIndex
+            };
+
+            m_linesDescriptors[lineId].m_contrastColor = KlyteUtils.contrastColor(m_linesDescriptors[lineId].m_lineColor);
+
         }
 
         protected override InstanceID GetPropRenderID(ushort buildingID)
@@ -239,8 +365,7 @@ namespace Klyte.DynamicTextBoards.Overrides
                                 m_dayEmissiveMultiplier = 0f,
                                 m_nightEmissiveMultiplier = 7f,
                                 m_useContrastColor = false,
-                                m_defaultColor = Color.white,
-                                m_shader =TextShaderIlum.name
+                                m_defaultColor = Color.white
                              },
                              new BoardTextDescriptor{
                                 m_textRelativePosition =new Vector3(-0.165f,2,0f) ,
@@ -250,8 +375,7 @@ namespace Klyte.DynamicTextBoards.Overrides
                                 m_dayEmissiveMultiplier = 0f,
                                 m_nightEmissiveMultiplier = 7f,
                                 m_useContrastColor = false,
-                                m_defaultColor = Color.white,
-                                m_shader =TextShaderIlum.name
+                                m_defaultColor = Color.white
                              },
                              new BoardTextDescriptor{
                                 m_textRelativePosition =new Vector3(0.14f,2,0.17f) ,
@@ -261,8 +385,7 @@ namespace Klyte.DynamicTextBoards.Overrides
                                 m_dayEmissiveMultiplier = 0f,
                                 m_nightEmissiveMultiplier = 7f,
                                 m_useContrastColor = false,
-                                m_defaultColor = Color.white,
-                                m_shader =TextShaderIlum.name
+                                m_defaultColor = Color.white
                              },
                         };
 
@@ -276,7 +399,7 @@ namespace Klyte.DynamicTextBoards.Overrides
                         m_propPosition= new Vector3(8f,6f,0.5F),
                         m_propRotation= 0,
                         m_textDescriptors =basicWallTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+                        m_platforms = new int[]{ 0 }
 },
                     new BoardDescriptor
                     {
@@ -284,7 +407,7 @@ namespace Klyte.DynamicTextBoards.Overrides
                         m_propPosition= new Vector3(-13.5f,6f,0.5F),
                         m_propRotation= 0,
                         m_textDescriptors =basicWallTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+                        m_platforms = new int[]{ 0 }
                     },
                     new BoardDescriptor
                     {
@@ -292,7 +415,7 @@ namespace Klyte.DynamicTextBoards.Overrides
                         m_propPosition= new Vector3(0,5f,-16),
                         m_propRotation= 180,
                         m_textDescriptors =basicWallTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+                        m_platforms = new int[]{ 1 }
                     },
                     new BoardDescriptor
                     {
@@ -300,7 +423,8 @@ namespace Klyte.DynamicTextBoards.Overrides
                         m_propPosition = new Vector3(-14, 8f, 22),
                         m_propRotation = 180,
                         m_textDescriptors =basicWallTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+
+                        m_platforms = new int[]{ 0,1 }
                     },
                 },
                 ["End of the line Trainstation"] = new List<BoardDescriptor>
@@ -308,227 +432,255 @@ namespace Klyte.DynamicTextBoards.Overrides
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(48,1,-48),
+                        m_propPosition= new Vector3(48,-1.5f,-48),
                         m_propRotation= 90,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+
+                        m_platforms = new int[]{ 2 }
                     },
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(32,1,-48),
+                        m_propPosition= new Vector3(32,-1.5f,-48),
                         m_propRotation= 90,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+
+                        m_platforms = new int[]{3,4 }
                     },
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(16,1,-48),
+                        m_propPosition= new Vector3(16,-1.5f,-48),
                         m_propRotation= 90,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+
+                        m_platforms = new int[]{5,6}
                     },
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(0,1,-48),
+                        m_propPosition= new Vector3(0,-1.5f,-48),
                         m_propRotation= 90,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+
+                        m_platforms = new int[]{ 7,8 }
                     },
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(-48,1,-48),
+                        m_propPosition= new Vector3(-48,-1.5f,-48),
                         m_propRotation= 90,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+
+                        m_platforms = new int[]{ 13 }
                     },
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(-32,1,-48),
+                        m_propPosition= new Vector3(-32,-1.5f,-48),
                         m_propRotation= 90,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+
+                        m_platforms = new int[]{ 11,12 }
                     },
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(-16,1,-48),
+                        m_propPosition= new Vector3(-16,-1.5f,-48),
                         m_propRotation= 90,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+
+                        m_platforms = new int[]{ 9, 10 }
                     },
 
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(48,1,-80),
+                        m_propPosition= new Vector3(48,-1.5f,-80),
                         m_propRotation= 90,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+
+                        m_platforms = new int[]{2 }
                     },
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(32,1,-80),
+                        m_propPosition= new Vector3(32,-1.5f,-80),
                         m_propRotation= 90,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+
+                        m_platforms = new int[]{ 3,4 }
                     },
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(16,1,-80),
+                        m_propPosition= new Vector3(16,-1.5f,-80),
                         m_propRotation= 90,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+
+                        m_platforms = new int[]{ 5,6 }
                     },
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(0,1,-80),
+                        m_propPosition= new Vector3(0,-1.5f,-80),
                         m_propRotation= 90,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+
+                        m_platforms = new int[]{ 7,8 }
                     },
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(-48,1,-80),
+                        m_propPosition= new Vector3(-48,-1.5f,-80),
                         m_propRotation= 90,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+
+                        m_platforms = new int[]{ 13 }
                     },
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(-32,1,-80),
+                        m_propPosition= new Vector3(-32,-1.5f,-80),
                         m_propRotation= 90,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+
+                        m_platforms = new int[]{ 11,12 }
                     },
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(-16,1,-80),
+                        m_propPosition= new Vector3(-16,-1.5f,-80),
                         m_propRotation= 90,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+
+                        m_platforms = new int[]{ 9, 10 }
                     },
                      new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(48,1,-106),
+                        m_propPosition= new Vector3(48,-1.5f,-106),
                         m_propRotation= 90,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+
+                        m_platforms = new int[]{ 2 }
                     },
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(32,1,-106),
+                        m_propPosition= new Vector3(32,-1.5f,-106),
                         m_propRotation= 90,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+
+                        m_platforms = new int[]{ 3,4 }
                     },
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(16,1,-106),
+                        m_propPosition= new Vector3(16,-1.5f,-106),
                         m_propRotation= 90,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+
+                        m_platforms = new int[]{5,6 }
                     },
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(0,1,-106),
+                        m_propPosition= new Vector3(0,-1.5f,-106),
                         m_propRotation= 90,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+
+                        m_platforms = new int[]{ 7,8 }
                     },
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(-48,1,-106),
+                        m_propPosition= new Vector3(-48,-1.5f,-106),
                         m_propRotation= 90,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+
+                        m_platforms = new int[]{ 13 }
                     },
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(-32,1,-106),
+                        m_propPosition= new Vector3(-32,-1.5f,-106),
                         m_propRotation= 90,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+
+                        m_platforms = new int[]{ 11,12 }
                     },
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(-16,1,-106),
+                        m_propPosition= new Vector3(-16,-1.5f,-106),
                         m_propRotation= 90,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+
+                        m_platforms = new int[]{ 9, 10 }
                     },
                      new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(48,1,-133),
+                        m_propPosition= new Vector3(48,-1.5f,-133),
                         m_propRotation= 90,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+
+                        m_platforms = new int[]{2 }
                     },
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(32,1,-133),
+                        m_propPosition= new Vector3(32,-1.5f,-133),
                         m_propRotation= 90,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+
+                        m_platforms = new int[]{ 3,4 }
                     },
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(16,1,-133),
+                        m_propPosition= new Vector3(16,-1.5f,-133),
                         m_propRotation= 90,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+
+                        m_platforms = new int[]{ 5,6 }
                     },
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(0,1,-133),
+                        m_propPosition= new Vector3(0,-1.5f,-133),
                         m_propRotation= 90,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+
+                        m_platforms = new int[]{ 7,8 }
                     },
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(-48,1,-133),
+                        m_propPosition= new Vector3(-48,-1.5f,-133),
                         m_propRotation= 90,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+
+                        m_platforms = new int[]{13 }
                     },
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(-32,1,-133),
+                        m_propPosition= new Vector3(-32,-1.5f,-133),
                         m_propRotation= 90,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+
+                        m_platforms = new int[]{11,12 }
                     },
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(-16,1,-133),
+                        m_propPosition= new Vector3(-16,-1.5f,-133),
                         m_propRotation= 90,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+
+                        m_platforms = new int[]{ 9,10 }
                     },
                 },
                 ["Large Trainstation"] = new List<BoardDescriptor>
@@ -536,226 +688,253 @@ namespace Klyte.DynamicTextBoards.Overrides
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(41,1,-0),
+                        m_propPosition= new Vector3(41,-1.5f,-0),
                         m_propRotation= 0,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+                        m_platforms = new int[]{2},
+
                     },
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(41,1,-16),
+                        m_propPosition= new Vector3(41,-1.5f,-16),
                         m_propRotation= 0,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+                        m_platforms = new int[]{3,4},
+
                     },
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(41,1,-32),
+                        m_propPosition= new Vector3(41,-1.5f,-32),
                         m_propRotation= 0,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+                        m_platforms = new int[]{5,6 },
+
                     },
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(41,1,-48),
+                        m_propPosition= new Vector3(41,-1.5f,-48),
                         m_propRotation= 0,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+                        m_platforms = new int[]{7,8},
+
                     },
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(41,1,-64),
+                        m_propPosition= new Vector3(41,-1.5f,-64),
                         m_propRotation= 0,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+                        m_platforms = new int[]{9,10},
+
                     },
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(41,1,-80),
+                        m_propPosition= new Vector3(41,-1.5f,-80),
                         m_propRotation= 0,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+                        m_platforms = new int[]{11,12},
+
                     },
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(41,1,-95.5f),
+                        m_propPosition= new Vector3(41,-1.5f,-95.5f),
                         m_propRotation= 0,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+                        m_platforms = new int[]{13},
                     },
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(17,1,-0),
+                        m_propPosition= new Vector3(17,-1.5f,-0),
                         m_propRotation= 0,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+                        m_platforms = new int[]{2},
+
                     },
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(17,1,-16),
+                        m_propPosition= new Vector3(17,-1.5f,-16),
                         m_propRotation= 0,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+                        m_platforms = new int[]{4,3},
+
                     },
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(17,1,-32),
+                        m_propPosition= new Vector3(17,-1.5f,-32),
                         m_propRotation= 0,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+                        m_platforms = new int[]{6,5},
+
                     },
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(17,1,-48),
+                        m_propPosition= new Vector3(17,-1.5f,-48),
                         m_propRotation= 0,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+                        m_platforms = new int[]{8,7},
+
                     },
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(17,1,-64),
+                        m_propPosition= new Vector3(17,-1.5f,-64),
                         m_propRotation= 0,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+                        m_platforms = new int[]{10,9},
+
                     },
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(17,1,-80),
+                        m_propPosition= new Vector3(17,-1.5f,-80),
                         m_propRotation= 0,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+                        m_platforms = new int[]{12,11},
+
                     },
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(17,1,-95.5f),
+                        m_propPosition= new Vector3(17,-1.5f,-95.5f),
                         m_propRotation= 0,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+                        m_platforms = new int[]{13},
+
                     },
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(-41,1,-0),
+                        m_propPosition= new Vector3(-41,-1.5f,-0),
                         m_propRotation= 0,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+                        m_platforms = new int[]{2},
+
                     },
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(-41,1,-16),
+                        m_propPosition= new Vector3(-41,-1.5f,-16),
                         m_propRotation= 0,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+                        m_platforms = new int[]{3,4},
+
                     },
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(-41,1,-32),
+                        m_propPosition= new Vector3(-41,-1.5f,-32),
                         m_propRotation= 0,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+                        m_platforms = new int[]{5,6},
+
                     },
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(-41,1,-48),
+                        m_propPosition= new Vector3(-41,-1.5f,-48),
                         m_propRotation= 0,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+                        m_platforms = new int[]{7,8},
+
                     },
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(-41,1,-64),
+                        m_propPosition= new Vector3(-41,-1.5f,-64),
                         m_propRotation= 0,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+                        m_platforms = new int[]{9,10},
+
                     },
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(-41,1,-80),
+                        m_propPosition= new Vector3(-41,-1.5f,-80),
                         m_propRotation= 0,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+                        m_platforms = new int[]{11,12},
+
                     },
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(-41,1,-95.5f),
+                        m_propPosition= new Vector3(-41,-1.5f,-95.5f),
                         m_propRotation= 0,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+                        m_platforms = new int[]{13},
+
                     },
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(-17,1,-0),
+                        m_propPosition= new Vector3(-17,-1.5f,-0),
                         m_propRotation= 0,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+                        m_platforms = new int[]{2},
+
                     },
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(-17,1,-16),
+                        m_propPosition= new Vector3(-17,-1.5f,-16),
                         m_propRotation= 0,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+                        m_platforms = new int[]{4,3},
+
                     },
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(-17,1,-32),
+                        m_propPosition= new Vector3(-17,-1.5f,-32),
                         m_propRotation= 0,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+                        m_platforms = new int[]{6,5},
+
                     },
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(-17,1,-48),
+                        m_propPosition= new Vector3(-17,-1.5f,-48),
                         m_propRotation= 0,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+                        m_platforms = new int[]{8,7},
+
                     },
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(-17,1,-64),
+                        m_propPosition= new Vector3(-17,-1.5f,-64),
                         m_propRotation= 0,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+                        m_platforms = new int[]{10,9},
+
                     },
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(-17,1,-80),
+                        m_propPosition= new Vector3(-17,-1.5f,-80),
                         m_propRotation= 0,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+                        m_platforms = new int[]{12,11},
+
                     },
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(-17,1,-95.5f),
+                        m_propPosition= new Vector3(-17,-1.5f,-95.5f),
                         m_propRotation= 0,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+                        m_platforms = new int[]{13},
+
                     },
                 },
                 ["Metro Entrance"] = new List<BoardDescriptor>
@@ -766,7 +945,8 @@ namespace Klyte.DynamicTextBoards.Overrides
                         m_propPosition= new Vector3(4,0,4),
                         m_propRotation= 0,
                         m_textDescriptors =basicTotem,
-                        m_targetVehicle = VehicleInfo.VehicleType.Metro
+                        m_platforms = new int[]{0,1},
+
                     },
                 },
                 ["Monorail Station Standalone"] = new List<BoardDescriptor>
@@ -777,7 +957,8 @@ namespace Klyte.DynamicTextBoards.Overrides
                         m_propPosition= new Vector3(0,6,-0.05f),
                         m_propRotation= 0,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Monorail
+                        m_platforms = new int[]{0,1},
+
                     },
                 },
                 ["Monorail Station Avenue"] = new List<BoardDescriptor>
@@ -788,7 +969,8 @@ namespace Klyte.DynamicTextBoards.Overrides
                         m_propPosition= new Vector3(0.05f,6,0),
                         m_propRotation= 270,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Monorail
+                        m_platforms = new int[]{0,1},
+
                     },
                 },
                 ["Monorail Bus Hub"] = new List<BoardDescriptor>
@@ -799,7 +981,8 @@ namespace Klyte.DynamicTextBoards.Overrides
                         m_propPosition= new Vector3(0.05f,6,0),
                         m_propRotation= 270,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Monorail
+                        m_platforms = new int[]{0,1},
+
                     },
                     new BoardDescriptor
                     {
@@ -807,7 +990,8 @@ namespace Klyte.DynamicTextBoards.Overrides
                         m_propPosition= new Vector3(29.5f,-1,4),
                         m_propRotation= 0,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Car
+                        m_platforms = new int[]{6,8,10},
+
                     },
                     new BoardDescriptor
                     {
@@ -815,7 +999,8 @@ namespace Klyte.DynamicTextBoards.Overrides
                         m_propPosition= new Vector3(29.5f,-1,-4),
                         m_propRotation= 0,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Car
+                        m_platforms = new int[]{6,4,2},
+
                     },
                     new BoardDescriptor
                     {
@@ -823,7 +1008,8 @@ namespace Klyte.DynamicTextBoards.Overrides
                         m_propPosition= new Vector3(-29.5f,-1,4),
                         m_propRotation= 0,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Car
+                        m_platforms = new int[]{7,9,11},
+
                     },
                     new BoardDescriptor
                     {
@@ -831,7 +1017,8 @@ namespace Klyte.DynamicTextBoards.Overrides
                         m_propPosition= new Vector3(-29.5f,-1,-4),
                         m_propRotation= 0,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Car
+                        m_platforms = new int[]{7,5,3},
+
                     },
                 },
                 ["Monorail Train Metro Hub"] = new List<BoardDescriptor>
@@ -839,26 +1026,29 @@ namespace Klyte.DynamicTextBoards.Overrides
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(0,8,-3),
+                        m_propPosition= new Vector3(0,5.5f,-3),
                         m_propRotation= 0,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Monorail
+                        m_platforms = new int[]{0},
+
                     },
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(0,8,12),
+                        m_propPosition= new Vector3(0,5.5f,12),
                         m_propRotation= 0,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Monorail
+                        m_platforms = new int[]{2,3},
+
                     },
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(0,8,27),
+                        m_propPosition= new Vector3(0,5.5f,27),
                         m_propRotation= 0,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Monorail
+                        m_platforms = new int[]{5},
+
                     },
                     new BoardDescriptor
                     {
@@ -866,7 +1056,8 @@ namespace Klyte.DynamicTextBoards.Overrides
                         m_propPosition = new Vector3(16, 4f, -0.75f),
                         m_propRotation = 0,
                         m_textDescriptors =basicWallTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+                        m_platforms = new int[]{6},
+
                     },
                     new BoardDescriptor
                     {
@@ -874,7 +1065,8 @@ namespace Klyte.DynamicTextBoards.Overrides
                         m_propPosition = new Vector3(-16, 4f, -0.75f),
                         m_propRotation = 0,
                         m_textDescriptors =basicWallTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+                        m_platforms = new int[]{6},
+
                     },
                     new BoardDescriptor
                     {
@@ -882,7 +1074,8 @@ namespace Klyte.DynamicTextBoards.Overrides
                         m_propPosition = new Vector3(44, 4f, -0.75f),
                         m_propRotation = 0,
                         m_textDescriptors =basicWallTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+                        m_platforms = new int[]{6},
+
                     },
                     new BoardDescriptor
                     {
@@ -890,69 +1083,87 @@ namespace Klyte.DynamicTextBoards.Overrides
                         m_propPosition = new Vector3(-44, 4f, -0.75f),
                         m_propRotation = 0,
                         m_textDescriptors =basicWallTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+                        m_platforms = new int[]{6},
+
                     },
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(52,0,-16),
+                        m_propPosition= new Vector3(52,-2.5f-16),
                         m_propRotation= 0,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+                        m_platforms = new int[]{7,8},
+
                     },
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(-52,0,-16),
+                        m_propPosition= new Vector3(-52,-2.5f-16),
                         m_propRotation= 0,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+                        m_platforms = new int[]{8,7},
                     },
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(0,0,-16),
+                        m_propPosition= new Vector3(0,-2.5f-16),
                         m_propRotation= 0,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+                        m_platforms = new int[]{7,8},
                     },
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(52,0,-31.5f),
+                        m_propPosition= new Vector3(52,-2.5f-31.5f),
                         m_propRotation= 0,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+                        m_platforms = new int[]{9},
+
                     },
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(-52,0,-31.5f),
+                        m_propPosition= new Vector3(-52,-2.5f-31.5f),
                         m_propRotation= 0,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+                        m_platforms = new int[]{9}
                     },
                     new BoardDescriptor
                     {
                         m_propName=    "BoardV6plat.BoardV6plat_Data",
-                        m_propPosition= new Vector3(0,0,-31.5f),
+                        m_propPosition= new Vector3(0,-2.5f-31.5f),
                         m_propRotation= 0,
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_targetVehicle = VehicleInfo.VehicleType.Train
+                        m_platforms = new int[]{9}
+
                     }
                 }
             };
         }
 
-
+        private class LineDescriptor
+        {
+            public Color m_lineColor;
+            public Color m_contrastColor;
+            public BasicRenderInformation m_lineName;
+            public BasicRenderInformation m_lineNumber;
+            public uint m_lastUpdate;
+        }
 
         private struct UpdateFlagsBuildings
         {
             public bool m_nameMesh;
-            public bool m_streetMesh;
-            public bool m_streetPrefixMesh;
-            public bool m_streetSuffixMesh;
-            public bool m_streetNumberMesh;
+        }
+
+        public class CacheControlTransportBuilding : CacheControl
+        {
+        }
+
+        public class BoardBunchContainerBuilding : IBoardBunchContainer<CacheControlTransportBuilding, BasicRenderInformation>
+        {
+            public ushort[][] m_platformToLine;
+            public ushort[] m_ordenedLines;
+            public uint m_linesUpdateFrame;
         }
     }
 

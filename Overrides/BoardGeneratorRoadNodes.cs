@@ -9,6 +9,7 @@ using Klyte.DynamicTextBoards.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Xml.Serialization;
 using UnityEngine;
 using static BuildingInfo;
@@ -68,7 +69,7 @@ namespace Klyte.DynamicTextBoards.Overrides
 
         private void onNodeChanged(ushort nodeId)
         {
-            doLog("onNodeChanged");
+            //doLog($"onNodeChanged { System.Environment.StackTrace }");
             m_updatedStreetPositions[nodeId] = false;
         }
         private void onNameSeedChanged(ushort segmentId)
@@ -79,7 +80,7 @@ namespace Klyte.DynamicTextBoards.Overrides
         }
         private void onSegmentChanged(ushort segmentId)
         {
-            doLog("onSegmentChanged");
+            //doLog("onSegmentChanged");
             m_updatedStreetPositions[NetManager.instance.m_segments.m_buffer[segmentId].m_endNode] = false;
             m_updatedStreetPositions[NetManager.instance.m_segments.m_buffer[segmentId].m_startNode] = false;
             m_updateDataSegments[segmentId] = new UpdateFlagsSegments();
@@ -99,6 +100,11 @@ namespace Klyte.DynamicTextBoards.Overrides
         }
         public void AfterRenderInstanceImpl(RenderManager.CameraInfo cameraInfo, ushort nodeID, ref NetNode data)
         {
+
+            if (!cameraInfo.CheckRenderDistance(data.m_position, 400))
+            {
+                return;
+            }
             if (data.CountSegments() <= 2)
             {
                 return;
@@ -112,7 +118,6 @@ namespace Klyte.DynamicTextBoards.Overrides
             {
                 m_updatedStreetPositions[nodeID] = false;
             }
-
             var descriptor = m_baseDescriptorStreetPlate;
             var updatedStreets = m_updatedStreetPositions[nodeID];
             if (!updatedStreets)
@@ -139,7 +144,6 @@ namespace Klyte.DynamicTextBoards.Overrides
                             Vector3 otherSegmentDirection = Vector3.zero;
                             float resultAngle = -4f;
                             ushort resultOtherSegment = 0;
-                            bool inverted = false;
                             for (int j = 0; j < 8; j++)
                             {
                                 ushort segmentJid = data.GetSegment(j);
@@ -157,7 +161,6 @@ namespace Klyte.DynamicTextBoards.Overrides
                                                 resultAngle = angle;
                                                 resultOtherSegment = segmentJid;
                                                 otherSegmentDirection = segmentJDirection;
-                                                inverted = true;
                                             }
                                         }
                                         else
@@ -168,7 +171,6 @@ namespace Klyte.DynamicTextBoards.Overrides
                                                 resultAngle = angle;
                                                 resultOtherSegment = segmentJid;
                                                 otherSegmentDirection = segmentJDirection;
-                                                inverted = false;
                                             }
                                         }
                                     }
@@ -248,7 +250,7 @@ namespace Klyte.DynamicTextBoards.Overrides
                 if (m_boardsContainers[nodeID].m_boardsData[boardIdx]?.m_renderPlate ?? false)
                 {
 
-                    RenderPropMesh(ref m_boardsContainers[nodeID].m_boardsData[boardIdx].m_cachedProp, cameraInfo, nodeID, boardIdx, 0, 0xFFFFFFF, 0, m_boardsContainers[nodeID].m_boardsData[boardIdx].m_platePosition, Vector4.zero, ref descriptor.m_propName, m_boardsContainers[nodeID].m_boardsData[boardIdx].m_streetDirection1 + descriptor.m_propRotation, out Matrix4x4 propMatrix, out bool rendered);
+                    RenderPropMesh(ref m_boardsContainers[nodeID].m_boardsData[boardIdx].m_cachedProp, cameraInfo, nodeID, boardIdx, 0, 0xFFFFFFF, 0, m_boardsContainers[nodeID].m_boardsData[boardIdx].m_platePosition, Vector4.zero, ref descriptor.m_propName, m_boardsContainers[nodeID].m_boardsData[boardIdx].m_streetDirection1 + descriptor.m_propRotation, ref descriptor, out Matrix4x4 propMatrix, out bool rendered);
                     if (rendered)
                     {
                         for (int j = 0; j < descriptor.m_textDescriptors.Length; j++)
@@ -258,7 +260,7 @@ namespace Klyte.DynamicTextBoards.Overrides
                             RenderTextMesh(cameraInfo, nodeID, boardIdx, 0, ref descriptor, propMatrix, ref descriptor.m_textDescriptors[j], ref m_boardsContainers[nodeID].m_boardsData[boardIdx], properties);
                         }
                     }
-                    RenderPropMesh(ref m_boardsContainers[nodeID].m_boardsData[boardIdx].m_cachedProp, cameraInfo, nodeID, boardIdx, 1, 0xFFFFFFF, 0, m_boardsContainers[nodeID].m_boardsData[boardIdx].m_platePosition, Vector4.zero, ref descriptor.m_propName, m_boardsContainers[nodeID].m_boardsData[boardIdx].m_streetDirection2 + descriptor.m_propRotation, out propMatrix, out rendered);
+                    RenderPropMesh(ref m_boardsContainers[nodeID].m_boardsData[boardIdx].m_cachedProp, cameraInfo, nodeID, boardIdx, 1, 0xFFFFFFF, 0, m_boardsContainers[nodeID].m_boardsData[boardIdx].m_platePosition, Vector4.zero, ref descriptor.m_propName, m_boardsContainers[nodeID].m_boardsData[boardIdx].m_streetDirection2 + descriptor.m_propRotation, ref descriptor, out propMatrix, out rendered);
                     if (rendered)
                     {
 
@@ -421,7 +423,7 @@ namespace Klyte.DynamicTextBoards.Overrides
         }
         #endregion
 
-        public override Color GetColor(ushort buildingID, int idx, int secIdx)
+        public override Color GetColor(ushort buildingID, int idx, int secIdx, BoardDescriptor descriptor)
         {
             if (secIdx == 0)
             {
@@ -432,7 +434,7 @@ namespace Klyte.DynamicTextBoards.Overrides
                 return m_boardsContainers[buildingID].m_boardsData[idx]?.m_cachedColor2 ?? Color.white;
             }
         }
-        public override Color GetContrastColor(ushort buildingID, int idx, int secIdx)
+        public override Color GetContrastColor(ushort buildingID, int idx, int secIdx, BoardDescriptor descriptor)
         {
             if (secIdx == 0)
             {
@@ -567,11 +569,13 @@ namespace Klyte.DynamicTextBoards.Overrides
         public byte m_districtId2;
         public float m_distanceRef;
         public bool m_renderPlate;
+        public Color m_cachedColor = Color.white;
         public Color m_cachedColor2 = Color.white;
         internal uint m_fullNameSubInfoDrawTime2;
         internal uint m_fullNameSubInfoDrawTime;
         internal uint m_nameSubInfoDrawTime2;
         internal uint m_nameSubInfoDrawTime;
+        internal Color m_cachedContrastColor;
         internal Color m_cachedContrastColor2;
         internal BasicRenderInformation m_nameSubInfo;
         internal BasicRenderInformation m_nameSubInfo2;

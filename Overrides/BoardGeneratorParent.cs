@@ -15,7 +15,50 @@ using static BuildingInfo;
 
 namespace Klyte.DynamicTextBoards.Overrides
 {
-    public abstract class BoardGeneratorParent<BG, BBC, CC, BRI, BD, BTD, MRT> : Redirector<BG>
+
+    public abstract class BoardGeneratorParent<BG> : Redirector<BG> where BG : BoardGeneratorParent<BG>
+    {
+        public abstract UIDynamicFont DrawFont { get; }
+        protected uint lastFontUpdateFrame = SimulationManager.instance.m_currentTickIndex;
+        protected static Shader TextShader => DTBResourceLoader.instance.GetLoadedShader("Klyte/DynamicTextBoards/klytetextboards") ?? DistrictManager.instance.m_properties.m_areaNameShader;
+
+        protected void BuildSurfaceFont(out UIDynamicFont font, string fontName)
+        {
+            font = ScriptableObject.CreateInstance<UIDynamicFont>();
+
+            font.shader = TextShader;
+            font.material = new Material(Singleton<DistrictManager>.instance.m_properties.m_areaNameFont.material);
+            font.baseline = (Singleton<DistrictManager>.instance.m_properties.m_areaNameFont as UIDynamicFont).baseline;
+            font.size = (Singleton<DistrictManager>.instance.m_properties.m_areaNameFont as UIDynamicFont).size;
+            font.lineHeight = (Singleton<DistrictManager>.instance.m_properties.m_areaNameFont as UIDynamicFont).lineHeight;
+            font.baseFont = Font.CreateDynamicFontFromOSFont(fontName, 16);
+
+
+            font.material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.EmissiveIsBlack | MaterialGlobalIlluminationFlags.RealtimeEmissive;
+        }
+
+        public void ChangeFont(string newFont)
+        {
+            var fontList = new List<String> { newFont };
+            fontList.AddRange(DistrictManager.instance.m_properties.m_areaNameFont.baseFont.fontNames.ToList());
+            DrawFont.baseFont = Font.CreateDynamicFontFromOSFont(fontList.ToArray(), 16);
+            lastFontUpdateFrame = SimulationManager.instance.m_currentTickIndex;
+            OnTextureRebuilt();
+        }
+
+
+        protected void OnTextureRebuilt(Font obj)
+        {
+            if (obj == DrawFont.baseFont)
+            {
+                lastFontUpdateFrame = SimulationManager.instance.m_currentTickIndex;
+                OnTextureRebuilt();
+            }
+        }
+        protected abstract void OnTextureRebuilt();
+    }
+
+    public abstract class BoardGeneratorParent<BG, BBC, CC, BRI, BD, BTD, MRT> : BoardGeneratorParent<BG>
         where BG : BoardGeneratorParent<BG, BBC, CC, BRI, BD, BTD, MRT>
         where BBC : IBoardBunchContainer<CC, BRI>
         where BD : BoardDescriptor
@@ -24,17 +67,13 @@ namespace Klyte.DynamicTextBoards.Overrides
         where BRI : BasicRenderInformation, new()
     {
         public abstract int ObjArraySize { get; }
-        public abstract UIDynamicFont DrawFont { get; }
 
-        protected static Shader TextShader => DTBResourceLoader.instance.GetLoadedShader("Klyte/DynamicTextBoards/klytetextboardsfrag") ?? DistrictManager.instance.m_properties.m_areaNameShader;
-        protected static Shader TextShaderIlum => DTBResourceLoader.instance.GetLoadedShader("Klyte/DynamicTextBoards/klytetextboards") ?? DistrictManager.instance.m_properties.m_areaNameShader;
 
 
 
         public static readonly int m_shaderPropColor = Shader.PropertyToID("_Color");
         public static readonly int m_shaderPropEmissive = Shader.PropertyToID("_Emission");
         public static readonly int m_shaderPropDepth = Shader.PropertyToID("_Depth");
-        protected uint lastFontUpdateFrame = SimulationManager.instance.m_currentTickIndex;
         public abstract void Initialize();
 
 
@@ -57,31 +96,6 @@ namespace Klyte.DynamicTextBoards.Overrides
 
         }
 
-        protected void BuildSurfaceFont(out UIDynamicFont font, string fontName)
-        {
-            font = ScriptableObject.CreateInstance<UIDynamicFont>();
-
-            font.shader = TextShader;
-            font.material = new Material(Singleton<DistrictManager>.instance.m_properties.m_areaNameFont.material);
-            font.baseline = (Singleton<DistrictManager>.instance.m_properties.m_areaNameFont as UIDynamicFont).baseline;
-            font.size = (Singleton<DistrictManager>.instance.m_properties.m_areaNameFont as UIDynamicFont).size;
-            font.lineHeight = (Singleton<DistrictManager>.instance.m_properties.m_areaNameFont as UIDynamicFont).lineHeight;
-            font.baseFont = Font.CreateDynamicFontFromOSFont(fontName, 16);
-
-
-            font.material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.EmissiveIsBlack | MaterialGlobalIlluminationFlags.RealtimeEmissive;
-        }
-
-
-        private void OnTextureRebuilt(Font obj)
-        {
-            if (obj == DrawFont.baseFont)
-            {
-                lastFontUpdateFrame = SimulationManager.instance.m_currentTickIndex;
-                OnTextureRebuilt();
-            }
-        }
-        protected abstract void OnTextureRebuilt();
 
         protected Quad2 GetBounds(ref Building data)
         {
@@ -126,7 +140,7 @@ namespace Klyte.DynamicTextBoards.Overrides
             DTBUtils.doLog(format, args);
         }
 
-        protected void RenderPropMesh(ref PropInfo propInfo, RenderManager.CameraInfo cameraInfo, ushort refId, int boardIdx, int secIdx, int layerMask, float refAngleRad, Vector3 position, Vector4 dataVector, ref string propName, float propAngle, out Matrix4x4 propMatrix, out bool rendered)
+        protected void RenderPropMesh(ref PropInfo propInfo, RenderManager.CameraInfo cameraInfo, ushort refId, int boardIdx, int secIdx, int layerMask, float refAngleRad, Vector3 position, Vector4 dataVector, ref string propName, float propAngle, ref BoardDescriptor descriptor, out Matrix4x4 propMatrix, out bool rendered)
         {
             if (!string.IsNullOrEmpty(propName))
             {
@@ -139,7 +153,7 @@ namespace Klyte.DynamicTextBoards.Overrides
                         propName = null;
                     }
                 }
-                propInfo.m_color0 = GetColor(refId, boardIdx, secIdx);
+                propInfo.m_color0 = GetColor(refId, boardIdx, secIdx, descriptor);
             }
             propMatrix = RenderProp(refId, refAngleRad, cameraInfo, propInfo, position, dataVector, boardIdx, layerMask, Mathf.Deg2Rad * propAngle, out rendered);
         }
@@ -238,7 +252,7 @@ namespace Klyte.DynamicTextBoards.Overrides
             {
                 if (textDescriptor.m_useContrastColor)
                 {
-                    materialPropertyBlock.SetColor(m_shaderPropColor, GetContrastColor(refID, boardIdx, secIdx));
+                    materialPropertyBlock.SetColor(m_shaderPropColor, GetContrastColor(refID, boardIdx, secIdx, descriptor));
                 }
                 else if (textDescriptor.m_defaultColor != Color.clear)
                 {
@@ -360,8 +374,8 @@ namespace Klyte.DynamicTextBoards.Overrides
         }
 
         #endregion
-        public abstract Color GetColor(ushort buildingID, int idx, int secIdx);
-        public abstract Color GetContrastColor(MRT refID, int boardIdx, int secIdx);
+        public abstract Color GetColor(ushort buildingID, int idx, int secIdx, BoardDescriptor descriptor);
+        public abstract Color GetContrastColor(MRT refID, int boardIdx, int secIdx, BoardDescriptor descriptor);
 
         #region UpdateData
         protected virtual BRI GetOwnNameMesh(MRT refID, int boardIdx, int secIdx) => null;
@@ -384,7 +398,7 @@ namespace Klyte.DynamicTextBoards.Overrides
         }
         #endregion
 
-        protected static string A_ShaderNameTest = "Klyte/DynamicTextBoards/klytetextboardsfrag";
+        protected static string A_ShaderNameTest = "Klyte/DynamicTextBoards/klytetextboards";
         protected static IEnumerable<string> A_Shaders => DTBShaderLibrary.m_loadedShaders.Keys;
 
         protected void A_ReloadFromDisk()
@@ -398,18 +412,15 @@ namespace Klyte.DynamicTextBoards.Overrides
 
     }
 
-    public abstract class IBoardBunchContainer<CC, BRI> where CC : CacheControl where BRI : BasicRenderInformation
+    public class IBoardBunchContainer<CC, BRI> where CC : CacheControl where BRI : BasicRenderInformation
     {
         internal BRI m_nameSubInfo;
         internal CC[] m_boardsData;
     }
-    public class BoardBunchContainer : IBoardBunchContainer<CacheControl, BasicRenderInformation> { }
 
     public class CacheControl
     {
         public PropInfo m_cachedProp;
-        public Color m_cachedColor = Color.white;
-        public Color m_cachedContrastColor = Color.black;
     }
     public class BasicRenderInformation
     {
@@ -429,8 +440,10 @@ namespace Klyte.DynamicTextBoards.Overrides
         public float m_propRotation;
         [XmlArrayItem("textEntry")]
         public BoardTextDescriptor[] m_textDescriptors;
-        [XmlAttribute("targetVehicleType")]
-        public VehicleInfo.VehicleType? m_targetVehicle = null;
+        [XmlAttribute("platforms")]
+        public int[] m_platforms = new int[0];
+        [XmlAttribute("showIfNoLine")]
+        public bool m_showIfNoLine = true;
 
         public Matrix4x4 m_textMatrixTranslation(int idx) => Matrix4x4.Translate(m_textDescriptors[idx].m_textRelativePosition);
         public Matrix4x4 m_textMatrixRotation(int idx) => Matrix4x4.TRS(Vector3.zero, Quaternion.Euler(m_textDescriptors[idx].m_textRelativeRotation), Vector3.one);
@@ -460,13 +473,15 @@ namespace Klyte.DynamicTextBoards.Overrides
         [XmlAttribute("fixedTextLocalized")]
         public bool m_isFixedTextLocalized = false;
         [XmlAttribute("nightEmissiveMultiplier")]
-        public float m_nightEmissiveMultiplier = -0.1f;
+        public float m_nightEmissiveMultiplier = 0f;
         [XmlAttribute("dayEmissiveMultiplier")]
-        public float m_dayEmissiveMultiplier = 0.6f;
+        public float m_dayEmissiveMultiplier = 0f;
+        [XmlAttribute("bumpFactor")]
+        public float m_bumpFactor = 1f;
         [XmlAttribute("textAlign")]
         public UIHorizontalAlignment m_textAlign = UIHorizontalAlignment.Center;
         [XmlAttribute("shader")]
-        public string m_shader;
+        public string m_shader = null;
         [XmlIgnore]
         public Shader ShaderOverride
         {
@@ -480,7 +495,7 @@ namespace Klyte.DynamicTextBoards.Overrides
             }
         }
         [XmlIgnore]
-        internal Shader m_shaderOverride;
+        private Shader m_shaderOverride;
         [XmlIgnore]
         private BasicRenderInformation m_generatedFixedTextRenderInfo;
         [XmlIgnore]
@@ -494,9 +509,6 @@ namespace Klyte.DynamicTextBoards.Overrides
                 GeneratedFixedTextRenderInfoTick = SimulationManager.instance.m_currentTickIndex;
             }
         }
-        [XmlIgnore]
-        public Material m_forcedColorMaterial = null;
-
         [XmlIgnore]
         public uint GeneratedFixedTextRenderInfoTick { get; private set; }
     }

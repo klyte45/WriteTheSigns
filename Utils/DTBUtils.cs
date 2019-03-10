@@ -18,7 +18,7 @@ namespace Klyte.DynamicTextBoards.Utils
             {
                 if (DynamicTextBoardsMod.debugMode)
                 {
-                    Debug.LogWarningFormat("DTBv" + DynamicTextBoardsMod.version + " " + format, args);
+                    Console.WriteLine("DTBv" + DynamicTextBoardsMod.version + " " + format, args);
                 }
             }
             catch
@@ -30,7 +30,7 @@ namespace Klyte.DynamicTextBoards.Utils
         {
             try
             {
-                Debug.LogWarningFormat("DTBv" + DynamicTextBoardsMod.version + " " + format, args);
+                Console.WriteLine("[ERR] DTBv" + DynamicTextBoardsMod.version + " " + format, args);
             }
             catch
             {
