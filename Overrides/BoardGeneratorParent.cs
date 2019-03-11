@@ -81,7 +81,7 @@ namespace Klyte.DynamicTextBoards.Overrides
 
 
         private const float m_pixelRatio = 0.5f;
-        private const float m_scaleY = 1.2f;
+        //private const float m_scaleY = 1.2f;
         private const float m_textScale = 4;
         private readonly Vector2 scalingMatrix = new Vector2(0.015f, 0.015f);
 
@@ -140,7 +140,7 @@ namespace Klyte.DynamicTextBoards.Overrides
             DTBUtils.doLog(format, args);
         }
 
-        protected void RenderPropMesh(ref PropInfo propInfo, RenderManager.CameraInfo cameraInfo, ushort refId, int boardIdx, int secIdx, int layerMask, float refAngleRad, Vector3 position, Vector4 dataVector, ref string propName, float propAngle, ref BoardDescriptor descriptor, out Matrix4x4 propMatrix, out bool rendered)
+        protected void RenderPropMesh(ref PropInfo propInfo, RenderManager.CameraInfo cameraInfo, ushort refId, int boardIdx, int secIdx, int layerMask, float refAngleRad, Vector3 position, Vector4 dataVector, ref string propName, Vector3 propAngle, Vector3 propScale, ref BD descriptor, out Matrix4x4 propMatrix, out bool rendered)
         {
             if (!string.IsNullOrEmpty(propName))
             {
@@ -155,21 +155,22 @@ namespace Klyte.DynamicTextBoards.Overrides
                 }
                 propInfo.m_color0 = GetColor(refId, boardIdx, secIdx, descriptor);
             }
-            propMatrix = RenderProp(refId, refAngleRad, cameraInfo, propInfo, position, dataVector, boardIdx, layerMask, Mathf.Deg2Rad * propAngle, out rendered);
+            propMatrix = RenderProp(refId, refAngleRad, cameraInfo, propInfo, position, dataVector, boardIdx, layerMask, propAngle, propScale, out rendered);
         }
 
 
 
         #region Rendering
-        private Matrix4x4 RenderProp(ushort refId, float refAngleRad, RenderManager.CameraInfo cameraInfo, PropInfo propInfo, Vector3 position, Vector4 dataVector, int idx, int layerMask, float radAngle, out bool rendered)
+        private Matrix4x4 RenderProp(ushort refId, float refAngleRad, RenderManager.CameraInfo cameraInfo, PropInfo propInfo, Vector3 position, Vector4 dataVector, int idx, int layerMask, Vector3 rotation, Vector3 scale, out bool rendered)
         {
             rendered = false;
             DistrictManager instance2 = Singleton<DistrictManager>.instance;
             Randomizer randomizer = new Randomizer((int)refId << 6 | (idx + 32));
-            float scale = 1;
+            Matrix4x4 matrix = default(Matrix4x4);
+            matrix.SetTRS(position, Quaternion.AngleAxis(rotation.y + refAngleRad * Mathf.Rad2Deg, Vector3.down) * Quaternion.AngleAxis(rotation.x, Vector3.left) * Quaternion.AngleAxis(rotation.z, Vector3.back), scale);
             if (propInfo != null)
             {
-                scale = propInfo.m_minScale + (float)randomizer.Int32(10000u) * (propInfo.m_maxScale - propInfo.m_minScale) * 0.0001f;
+                //scale = propInfo.m_minScale + (float)randomizer.Int32(10000u) * (propInfo.m_maxScale - propInfo.m_minScale) * 0.0001f;
                 byte district = instance2.GetDistrict(position);
                 propInfo = propInfo.GetVariation(ref randomizer, ref instance2.m_districts.m_buffer[(int)district]);
                 Color color = propInfo.m_color0;
@@ -178,19 +179,17 @@ namespace Klyte.DynamicTextBoards.Overrides
                     if (cameraInfo.CheckRenderDistance(position, propInfo.m_maxRenderDistance))
                     {
                         InstanceID propRenderID2 = this.GetPropRenderID(refId);
-                        PropInstance.RenderInstance(cameraInfo, propInfo, propRenderID2, position, scale, refAngleRad + radAngle, color, dataVector, true);
+                        PropInstance.RenderInstance(cameraInfo, propInfo, propRenderID2, matrix, position, scale.y, refAngleRad + rotation.y * Mathf.Deg2Rad, color, dataVector, false);
                         rendered = true;
                     }
                 }
             }
-            Matrix4x4 matrix = default(Matrix4x4);
-            matrix.SetTRS(position, Quaternion.AngleAxis((refAngleRad + radAngle) * Mathf.Rad2Deg, Vector3.down), new Vector3(scale, scale, scale));
             return matrix;
         }
 
         protected abstract InstanceID GetPropRenderID(ushort refID);
 
-        protected void RenderTextMesh(RenderManager.CameraInfo cameraInfo, MRT refID, int boardIdx, int secIdx, ref BoardDescriptor descriptor, Matrix4x4 propMatrix, ref BTD textDescriptor, ref CC ctrl, MaterialPropertyBlock materialPropertyBlock)
+        protected void RenderTextMesh(RenderManager.CameraInfo cameraInfo, MRT refID, int boardIdx, int secIdx, ref BD descriptor, Matrix4x4 propMatrix, ref BTD textDescriptor, ref CC ctrl, MaterialPropertyBlock materialPropertyBlock)
         {
             BRI renderInfo = null;
             switch (textDescriptor.m_textType)
@@ -229,6 +228,8 @@ namespace Klyte.DynamicTextBoards.Overrides
             var defaultMultiplierX = textDescriptor.m_textScale * scalingMatrix.x;
             var defaultMultiplierY = textDescriptor.m_textScale * scalingMatrix.y;
             var realWidth = defaultMultiplierX * renderInfo.m_sizeMetersUnscaled.x;
+            var realHeight = defaultMultiplierY * renderInfo.m_sizeMetersUnscaled.y;
+            //doLog($"[{GetType().Name},{refID},{boardIdx},{secIdx}] realWidth = {realWidth}; realHeight = {realHeight}");
             var targetRelativePosition = textDescriptor.m_textRelativePosition;
             if (textDescriptor.m_maxWidthMeters > 0 && textDescriptor.m_maxWidthMeters < realWidth)
             {
@@ -238,11 +239,22 @@ namespace Klyte.DynamicTextBoards.Overrides
                     overflowScaleY = overflowScaleX;
                 }
             }
-            else if (textDescriptor.m_maxWidthMeters > 0 && textDescriptor.m_textAlign != UIHorizontalAlignment.Center)
+            else
             {
-                var factor = (textDescriptor.m_textAlign == UIHorizontalAlignment.Left) == (((textDescriptor.m_textRelativeRotation.y) % 360 + 810) % 360 > 180) ? 0.5f : -0.5f;
-                targetRelativePosition += new Vector3((textDescriptor.m_maxWidthMeters - realWidth) * factor, 0, 0);
+                if (textDescriptor.m_maxWidthMeters > 0 && textDescriptor.m_textAlign != UIHorizontalAlignment.Center)
+                {
+                    var factor = (textDescriptor.m_textAlign == UIHorizontalAlignment.Left) == (((textDescriptor.m_textRelativeRotation.y) % 360 + 810) % 360 > 180) ? 0.5f : -0.5f;
+                    targetRelativePosition += new Vector3((textDescriptor.m_maxWidthMeters - realWidth) * factor, 0, 0);
+                }
             }
+            if (textDescriptor.m_verticalAlign != UIVerticalAlignment.Middle)
+            {
+                var factor = (textDescriptor.m_verticalAlign == UIVerticalAlignment.Bottom) != (((textDescriptor.m_textRelativeRotation.x) % 360 + 810) % 360 > 180) ? 0.5f : -0.5f;
+                targetRelativePosition += new Vector3(0, (realHeight) * factor, 0);
+            }
+
+
+
 
             var matrix = propMatrix * Matrix4x4.TRS(
                 targetRelativePosition,
@@ -250,13 +262,13 @@ namespace Klyte.DynamicTextBoards.Overrides
                 new Vector3(defaultMultiplierX * overflowScaleX, defaultMultiplierY * overflowScaleY, 1));
             if (cameraInfo.CheckRenderDistance(matrix.MultiplyPoint(Vector3.zero), Math.Min(3000, 200 * textDescriptor.m_textScale)))
             {
-                if (textDescriptor.m_useContrastColor)
-                {
-                    materialPropertyBlock.SetColor(m_shaderPropColor, GetContrastColor(refID, boardIdx, secIdx, descriptor));
-                }
-                else if (textDescriptor.m_defaultColor != Color.clear)
+                if (textDescriptor.m_defaultColor != Color.clear)
                 {
                     materialPropertyBlock.SetColor(m_shaderPropColor, textDescriptor.m_defaultColor);
+                }
+                else if (textDescriptor.m_useContrastColor)
+                {
+                    materialPropertyBlock.SetColor(m_shaderPropColor, GetContrastColor(refID, boardIdx, secIdx, descriptor));
                 }
                 else
                 {
@@ -275,40 +287,48 @@ namespace Klyte.DynamicTextBoards.Overrides
             doLog($"!UpdateMeshStreetSuffix {idx}");
             Type t = Type.GetType("Klyte.Addresses.Overrides.NetManagerOverrides, Addresses");
             string result = "";
-            if (t != null)
-            {
-                List<ushort> usedQueue = new List<ushort>();
-                result = DTBUtils.RunPrivateStaticAction(t, "GenerateSegmentNameInternal", idx, result, usedQueue, true)[1].ToString();
+            //if (t != null)
+            //{
+            //    List<ushort> usedQueue = new List<ushort>();
+            //    result = DTBUtils.RunPrivateStaticAction(t, "GenerateSegmentNameInternal", idx, result, usedQueue, true)[1].ToString();
 
-            }
-            else
-            {
-                if ((NetManager.instance.m_segments.m_buffer[idx].m_flags & NetSegment.Flags.CustomName) != 0)
-                {
-                    doLog($"!UpdateMeshStreetSuffix Custom");
-                    InstanceID id = default(InstanceID);
-                    id.NetSegment = idx;
-                    result = Singleton<InstanceManager>.instance.GetName(id);
-                }
-                else
-                {
-                    doLog($"!UpdateMeshStreetSuffix NonCustom {NetManager.instance.m_segments.m_buffer[idx].m_nameSeed}");
-                    if (NetManager.instance.m_segments.m_buffer[idx].Info.m_netAI is RoadBaseAI ai)
-                    {
-                        Randomizer randomizer = new Randomizer((int)NetManager.instance.m_segments.m_buffer[idx].m_nameSeed);
-                        randomizer.Int32(12);
-                        result = DTBUtils.RunPrivateMethod<string>(ai, "GenerateStreetName", randomizer);
-                        //}
-                    }
-                    else
-                    {
-                        result = "???";
-                    }
-                }
-            }
+            //}
+            //else
+            //{
+            result = GetStreetSuffix(idx);
+            //}
             //(ushort segmentID, ref string __result, ref List<ushort> usedQueue, bool defaultPrefix, bool removePrefix = false)
             RefreshNameData(ref bri, result);
         }
+
+        private static Func<ushort, string> GetStreetSuffix = (ushort idx) =>
+        {
+            string result;
+            if ((NetManager.instance.m_segments.m_buffer[idx].m_flags & NetSegment.Flags.CustomName) != 0)
+            {
+                DTBUtils.doLog($"!UpdateMeshStreetSuffix Custom");
+                InstanceID id = default(InstanceID);
+                id.NetSegment = idx;
+                result = Singleton<InstanceManager>.instance.GetName(id);
+            }
+            else
+            {
+                DTBUtils.doLog($"!UpdateMeshStreetSuffix NonCustom {NetManager.instance.m_segments.m_buffer[idx].m_nameSeed}");
+                if (NetManager.instance.m_segments.m_buffer[idx].Info.m_netAI is RoadBaseAI ai)
+                {
+                    Randomizer randomizer = new Randomizer((int)NetManager.instance.m_segments.m_buffer[idx].m_nameSeed);
+                    randomizer.Int32(12);
+                    result = DTBUtils.RunPrivateMethod<string>(ai, "GenerateStreetName", randomizer);
+                    //}
+                }
+                else
+                {
+                    result = "???";
+                }
+            }
+
+            return result;
+        };
 
         protected void UpdateMeshFullNameStreet(ushort idx, ref BRI bri)
         {
@@ -317,6 +337,8 @@ namespace Klyte.DynamicTextBoards.Overrides
             doLog($"!GenName {name} for {idx}");
             RefreshNameData(ref bri, name);
         }
+
+        private float m_y = 0.5f;
 
         protected void RefreshNameData(ref BRI result, string name)
         {
@@ -333,7 +355,8 @@ namespace Klyte.DynamicTextBoards.Overrides
                 using (UIFontRenderer uifontRenderer = DrawFont.ObtainRenderer())
                 {
 
-                    float num = 10000f;
+                    float width = 10000f;
+                    float height = 900f;
                     uifontRenderer.colorizeSprites = true;
                     uifontRenderer.defaultColor = Color.white;
                     uifontRenderer.textScale = m_textScale;
@@ -342,7 +365,7 @@ namespace Klyte.DynamicTextBoards.Overrides
                     uifontRenderer.multiLine = false;
                     uifontRenderer.wordWrap = false;
                     uifontRenderer.textAlign = UIHorizontalAlignment.Center;
-                    uifontRenderer.maxSize = new Vector2(num, 900f);
+                    uifontRenderer.maxSize = new Vector2(width, height);
                     uifontRenderer.multiLine = false;
                     uifontRenderer.opacity = 1;
                     uifontRenderer.shadow = false;
@@ -350,7 +373,7 @@ namespace Klyte.DynamicTextBoards.Overrides
                     uifontRenderer.shadowOffset = Vector2.zero;
                     uifontRenderer.outline = false;
                     var sizeMeters = uifontRenderer.MeasureString(name) * m_pixelRatio;
-                    uifontRenderer.vectorOffset = new Vector3(num * m_pixelRatio * -0.5f, sizeMeters.y * m_scaleY, 0f);
+                    uifontRenderer.vectorOffset = new Vector3(width * m_pixelRatio * -0.5f, sizeMeters.y * 0.5f, 0f);
                     uifontRenderer.Render(name, uirenderData);
                     result.m_sizeMetersUnscaled = sizeMeters;
                 }
@@ -374,8 +397,8 @@ namespace Klyte.DynamicTextBoards.Overrides
         }
 
         #endregion
-        public abstract Color GetColor(ushort buildingID, int idx, int secIdx, BoardDescriptor descriptor);
-        public abstract Color GetContrastColor(MRT refID, int boardIdx, int secIdx, BoardDescriptor descriptor);
+        public abstract Color GetColor(ushort buildingID, int idx, int secIdx, BD descriptor);
+        public abstract Color GetContrastColor(MRT refID, int boardIdx, int secIdx, BD descriptor);
 
         #region UpdateData
         protected virtual BRI GetOwnNameMesh(MRT refID, int boardIdx, int secIdx) => null;
@@ -428,31 +451,60 @@ namespace Klyte.DynamicTextBoards.Overrides
         public Vector2 m_sizeMetersUnscaled;
         public uint m_frameDrawTime;
     }
-
+    [XmlRoot("buildingConfig")]
+    public class BuildingConfigurationSerializer<BD> where BD : BoardDescriptor
+    {
+        [XmlAttribute("buildingName")]
+        public string m_buildingName;
+        [XmlElement("boardDescriptor")]
+        public BD[] m_boardDescriptors;
+    }
 
     public class BoardDescriptor
     {
         [XmlAttribute("propName")]
         public string m_propName;
-        [XmlAttribute("propPosition")]
+        [XmlIgnore]
         public Vector3 m_propPosition;
-        [XmlAttribute("propRotation")]
-        public float m_propRotation;
-        [XmlArrayItem("textEntry")]
+        [XmlIgnore]
+        public Vector3 PropScale => new Vector3(ScaleX, ScaleY ?? ScaleX, ScaleZ ?? ScaleX);
+        [XmlIgnore]
+        public Vector3 m_propRotation;
+        [XmlElement("textDescriptor")]
         public BoardTextDescriptor[] m_textDescriptors;
-        [XmlAttribute("platforms")]
-        public int[] m_platforms = new int[0];
-        [XmlAttribute("showIfNoLine")]
-        public bool m_showIfNoLine = true;
+
+
+        [XmlAttribute("positionX")]
+        public float PropPositionX { get => m_propPosition.x; set => m_propPosition.x = value; }
+        [XmlAttribute("positionY")]
+        public float PropPositionY { get => m_propPosition.y; set => m_propPosition.y = value; }
+        [XmlAttribute("positionZ")]
+        public float PropPositionZ { get => m_propPosition.z; set => m_propPosition.z = value; }
+
+
+        [XmlAttribute("rotationX")]
+        public float PropRotationX { get => m_propRotation.x; set => m_propRotation.x = value; }
+        [XmlAttribute("rotationY")]
+        public float PropRotationY { get => m_propRotation.y; set => m_propRotation.y = value; }
+        [XmlAttribute("rotationZ")]
+        public float PropRotationZ { get => m_propRotation.z; set => m_propRotation.z = value; }
+
+        [XmlAttribute("scaleX")]
+        public float ScaleX = 1;
+        [XmlAttribute("scaleY")]
+        public float? ScaleY;
+        [XmlAttribute("scaleZ")]
+        public float? ScaleZ;
+
 
         public Matrix4x4 m_textMatrixTranslation(int idx) => Matrix4x4.Translate(m_textDescriptors[idx].m_textRelativePosition);
         public Matrix4x4 m_textMatrixRotation(int idx) => Matrix4x4.TRS(Vector3.zero, Quaternion.Euler(m_textDescriptors[idx].m_textRelativeRotation), Vector3.one);
     }
     public class BoardTextDescriptor
     {
-        [XmlAttribute("relativePosition")]
+        [XmlIgnore]
         public Vector3 m_textRelativePosition;
-        [XmlAttribute("relativeRotation")]
+        [XmlIgnore]
         public Vector3 m_textRelativeRotation;
         [XmlAttribute("textScale")]
         public float m_textScale = 1f;
@@ -462,7 +514,7 @@ namespace Klyte.DynamicTextBoards.Overrides
         public bool m_applyOverflowResizingOnY = false;
         [XmlAttribute("useContrastColor")]
         public bool m_useContrastColor = true;
-        [XmlAttribute("forceColor")]
+        [XmlIgnore]
         public Color m_defaultColor = Color.clear;
         [XmlAttribute("textType")]
         public TextType m_textType = TextType.OwnName;
@@ -476,12 +528,32 @@ namespace Klyte.DynamicTextBoards.Overrides
         public float m_nightEmissiveMultiplier = 0f;
         [XmlAttribute("dayEmissiveMultiplier")]
         public float m_dayEmissiveMultiplier = 0f;
-        [XmlAttribute("bumpFactor")]
-        public float m_bumpFactor = 1f;
         [XmlAttribute("textAlign")]
         public UIHorizontalAlignment m_textAlign = UIHorizontalAlignment.Center;
+        [XmlAttribute("verticalAlign")]
+        public UIVerticalAlignment m_verticalAlign = UIVerticalAlignment.Middle;
         [XmlAttribute("shader")]
         public string m_shader = null;
+
+
+
+        [XmlAttribute("relativePositionX")]
+        public float RelPositionX { get => m_textRelativePosition.x; set => m_textRelativePosition.x = value; }
+        [XmlAttribute("relativePositionY")]
+        public float RelPositionY { get => m_textRelativePosition.y; set => m_textRelativePosition.y = value; }
+        [XmlAttribute("relativePositionZ")]
+        public float RelPositionZ { get => m_textRelativePosition.z; set => m_textRelativePosition.z = value; }
+
+        [XmlAttribute("relativeRotationX")]
+        public float RotationX { get => m_textRelativeRotation.x; set => m_textRelativeRotation.x = value; }
+        [XmlAttribute("relativeRotationY")]
+        public float RotationY { get => m_textRelativeRotation.y; set => m_textRelativeRotation.y = value; }
+        [XmlAttribute("relativeRotationZ")]
+        public float RotationZ { get => m_textRelativeRotation.z; set => m_textRelativeRotation.z = value; }
+
+        [XmlAttribute("forceColor")]
+        public string ForceColor { get => m_defaultColor == Color.clear ? null : ColorExtensions.ToRGB(m_defaultColor); set => m_defaultColor = value.IsNullOrWhiteSpace() ? Color.clear : (Color)ColorExtensions.FromRGB(value); }
+
         [XmlIgnore]
         public Shader ShaderOverride
         {
@@ -512,6 +584,8 @@ namespace Klyte.DynamicTextBoards.Overrides
         [XmlIgnore]
         public uint GeneratedFixedTextRenderInfoTick { get; private set; }
     }
+
+
 
     public enum TextType
     {

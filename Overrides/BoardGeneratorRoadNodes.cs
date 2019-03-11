@@ -250,7 +250,7 @@ namespace Klyte.DynamicTextBoards.Overrides
                 if (m_boardsContainers[nodeID].m_boardsData[boardIdx]?.m_renderPlate ?? false)
                 {
 
-                    RenderPropMesh(ref m_boardsContainers[nodeID].m_boardsData[boardIdx].m_cachedProp, cameraInfo, nodeID, boardIdx, 0, 0xFFFFFFF, 0, m_boardsContainers[nodeID].m_boardsData[boardIdx].m_platePosition, Vector4.zero, ref descriptor.m_propName, m_boardsContainers[nodeID].m_boardsData[boardIdx].m_streetDirection1 + descriptor.m_propRotation, ref descriptor, out Matrix4x4 propMatrix, out bool rendered);
+                    RenderPropMesh(ref m_boardsContainers[nodeID].m_boardsData[boardIdx].m_cachedProp, cameraInfo, nodeID, boardIdx, 0, 0xFFFFFFF, 0, m_boardsContainers[nodeID].m_boardsData[boardIdx].m_platePosition, Vector4.zero, ref descriptor.m_propName, new Vector3(0, m_boardsContainers[nodeID].m_boardsData[boardIdx].m_streetDirection1) + descriptor.m_propRotation, descriptor.PropScale, ref descriptor, out Matrix4x4 propMatrix, out bool rendered);
                     if (rendered)
                     {
                         for (int j = 0; j < descriptor.m_textDescriptors.Length; j++)
@@ -260,7 +260,7 @@ namespace Klyte.DynamicTextBoards.Overrides
                             RenderTextMesh(cameraInfo, nodeID, boardIdx, 0, ref descriptor, propMatrix, ref descriptor.m_textDescriptors[j], ref m_boardsContainers[nodeID].m_boardsData[boardIdx], properties);
                         }
                     }
-                    RenderPropMesh(ref m_boardsContainers[nodeID].m_boardsData[boardIdx].m_cachedProp, cameraInfo, nodeID, boardIdx, 1, 0xFFFFFFF, 0, m_boardsContainers[nodeID].m_boardsData[boardIdx].m_platePosition, Vector4.zero, ref descriptor.m_propName, m_boardsContainers[nodeID].m_boardsData[boardIdx].m_streetDirection2 + descriptor.m_propRotation, ref descriptor, out propMatrix, out rendered);
+                    RenderPropMesh(ref m_boardsContainers[nodeID].m_boardsData[boardIdx].m_cachedProp, cameraInfo, nodeID, boardIdx, 1, 0xFFFFFFF, 0, m_boardsContainers[nodeID].m_boardsData[boardIdx].m_platePosition, Vector4.zero, ref descriptor.m_propName, new Vector3(0, m_boardsContainers[nodeID].m_boardsData[boardIdx].m_streetDirection2) + descriptor.m_propRotation, descriptor.PropScale, ref descriptor, out propMatrix, out rendered);
                     if (rendered)
                     {
 
@@ -477,83 +477,91 @@ namespace Klyte.DynamicTextBoards.Overrides
 
         private BoardDescriptor m_baseDescriptorStreetPlate = new BoardDescriptor
         {
-            m_propName = "StreetPlateSP.Street Plate_Data",
-            m_propRotation = 90,
+            m_propName = "1679673551.Street Plate_Data",
+            m_propRotation = new Vector3(0, 90, 0),
             m_textDescriptors = new BoardTextDescriptor[]{
                 new BoardTextDescriptor{
-                    m_textRelativePosition =new Vector3(0.53f,2.2f,-0.001f) ,
+                    m_textRelativePosition =new Vector3(0.53f,2.25f,-0.001f) ,
                     m_textRelativeRotation = Vector3.zero,
                     m_maxWidthMeters = 0.92f,
                     m_textScale = .5f,
                     m_useContrastColor = false,
                     m_defaultColor = Color.white,
                     m_textType = TextType.StreetSuffix,
-                    m_textAlign = UIHorizontalAlignment.Left
+                    m_textAlign = UIHorizontalAlignment.Left,
+                    m_verticalAlign = UIVerticalAlignment.Bottom
                 },
                 new BoardTextDescriptor{
-                    m_textRelativePosition =new Vector3(0.53f,2.12f,-0.001f) ,
+                    m_textRelativePosition =new Vector3(0.53f,2.25f,-0.001f) ,
                     m_textRelativeRotation = Vector3.zero,
                     m_maxWidthMeters = 0.92f,
                     m_textScale = .2f,
                     m_useContrastColor = false,
                     m_defaultColor = Color.white,
                     m_textType = TextType.StreetNameComplete,
-                    m_textAlign = UIHorizontalAlignment.Left
+                    m_textAlign = UIHorizontalAlignment.Left,
+                    m_verticalAlign = UIVerticalAlignment.Top
                 },
                 new BoardTextDescriptor{
-                    m_textRelativePosition =new Vector3(0.47f,1.985f,-0.001f) ,
+                    m_textRelativePosition =new Vector3(0.47f,2.05f,-0.001f) ,
                     m_textRelativeRotation = Vector3.zero,
                     m_maxWidthMeters = 0.8f,
                     m_textScale = .2f,
                     m_useContrastColor = true,
-                    m_textType = TextType.Custom1 // District
+                    m_textType = TextType.Custom1,// District
+                    m_verticalAlign =  UIVerticalAlignment.Middle
                 },
                 new BoardTextDescriptor{
-                    m_textRelativePosition =new Vector3(0.94f,1.97f,-0.001f) ,
+                    m_textRelativePosition =new Vector3(0.94f,2.06f,-0.001f) ,
                     m_textRelativeRotation = Vector3.zero,
                     m_maxWidthMeters = 0.1f,
                     m_textScale = .25f,
                     m_useContrastColor = false,
                     m_defaultColor = Color.black,
-                    m_textType = TextType.Custom2 //Distance
+                    m_textType = TextType.Custom2, //Distance
+                    m_verticalAlign = UIVerticalAlignment.Middle
                 },
                 new BoardTextDescriptor{
-                    m_textRelativePosition =new Vector3(0.53f,2.2f,0.001f) ,
+                    m_textRelativePosition =new Vector3(0.53f,2.25f,0.001f) ,
                     m_textRelativeRotation = new Vector3(0,180,0),
                     m_maxWidthMeters = 0.92f,
                     m_textScale = .5f,
                     m_useContrastColor = false,
                     m_defaultColor = Color.white,
                     m_textType = TextType.StreetSuffix,
-                    m_textAlign = UIHorizontalAlignment.Left
+                    m_textAlign = UIHorizontalAlignment.Left,
+                    m_verticalAlign = UIVerticalAlignment.Bottom
                 },
                 new BoardTextDescriptor{
-                    m_textRelativePosition =new Vector3(0.53f,2.12f,0.001f) ,
-                    m_textRelativeRotation =new Vector3(0,180,0),
+                    m_textRelativePosition =new Vector3(0.53f,2.25f,0.001f) ,
+                    m_textRelativeRotation = new Vector3(0,180,0),
                     m_maxWidthMeters = 0.92f,
                     m_textScale = .2f,
-                    m_defaultColor = Color.white,
                     m_useContrastColor = false,
+                    m_defaultColor = Color.white,
                     m_textType = TextType.StreetNameComplete,
-                    m_textAlign = UIHorizontalAlignment.Left
+                    m_textAlign = UIHorizontalAlignment.Left,
+                    m_verticalAlign = UIVerticalAlignment.Top
                 },
                 new BoardTextDescriptor{
-                    m_textRelativePosition =new Vector3(0.47f,1.985f,0.001f) ,
+                    m_textRelativePosition =new Vector3(0.47f,2.05f,0.001f) ,
                     m_textRelativeRotation = new Vector3(0,180,0),
                     m_maxWidthMeters = 0.8f,
                     m_textScale = .2f,
                     m_useContrastColor = true,
-                    m_textType = TextType.Custom1 // District
+                    m_textType = TextType.Custom1,// District
+                    m_verticalAlign =  UIVerticalAlignment.Middle
                 },
                 new BoardTextDescriptor{
-                    m_textRelativePosition =new Vector3(0.94f,1.97f,0.001f) ,
+                    m_textRelativePosition =new Vector3(0.94f,2.06f,0.001f) ,
                     m_textRelativeRotation = new Vector3(0,180,0),
                     m_maxWidthMeters = 0.1f,
                     m_textScale = .25f,
                     m_useContrastColor = false,
                     m_defaultColor = Color.black,
-                    m_textType = TextType.Custom2 //Distance
-                },
+                    m_textType = TextType.Custom2, //Distance
+                    m_verticalAlign = UIVerticalAlignment.Middle
+                }
             }
         };
 

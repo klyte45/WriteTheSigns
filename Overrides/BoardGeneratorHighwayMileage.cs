@@ -17,7 +17,7 @@ using static Klyte.Commons.Utils.KlyteUtils;
 namespace Klyte.DynamicTextBoards.Overrides
 {
 
-    public class BoardGeneratorHighwayMileage : BoardGeneratorParent<BoardGeneratorHighwayMileage, IBoardBunchContainer<CacheControl, BasicRenderInformation>,CacheControl, BasicRenderInformation, BoardDescriptor, BoardTextDescriptor, BoardGeneratorHighwayMileage.RoadIdentifier>
+    public class BoardGeneratorHighwayMileage : BoardGeneratorParent<BoardGeneratorHighwayMileage, IBoardBunchContainer<CacheControl, BasicRenderInformation>, CacheControl, BasicRenderInformation, BoardDescriptor, BoardTextDescriptor, BoardGeneratorHighwayMileage.RoadIdentifier>
     {
 
         public Dictionary<RoadIdentifier, List<MileagePlateDescriptor>> m_highwayMarksObjects;
@@ -34,18 +34,17 @@ namespace Klyte.DynamicTextBoards.Overrides
 
         private BoardDescriptor m_baseDescriptorMileagePlate = new BoardDescriptor
         {
-            m_propName = "Mileage Marker.Mileage Marker_Data",
-            m_propRotation = 0,
+            m_propName = "1679681061.Mileage Marker_Data",
             m_textDescriptors = new BoardTextDescriptor[]{
                 new BoardTextDescriptor{
-                    m_textRelativePosition =new Vector3(0f,1.65f,0.066f) ,
+                    m_textRelativePosition =new Vector3(0f,1.78f,0.066f) ,
                     m_maxWidthMeters = 0.45f,
                     m_textScale = .375f,
                     m_useContrastColor = false,
                     m_textRelativeRotation = new Vector3(0,180,0)
                 },
                 new BoardTextDescriptor{
-                    m_textRelativePosition =new Vector3(0f,0.95f,0.066f) ,
+                    m_textRelativePosition =new Vector3(0f,1.33f,0.066f) ,
                     m_textRelativeRotation = new Vector3(0,180,0),
                     m_maxWidthMeters = 0.45f,
                     m_textScale = .5f,
@@ -165,7 +164,7 @@ namespace Klyte.DynamicTextBoards.Overrides
                     {
                         foreach (var id in removeTarget.segments)
                         {
-                            m_segmentToHighway[id] = default(RoadIdentifier);
+                            if (m_segmentToHighway[id] == removeTarget) m_segmentToHighway[id] = default(RoadIdentifier);
                         }
                     }
                     m_highwayMarksObjects.Remove(removeTarget);
@@ -225,6 +224,7 @@ namespace Klyte.DynamicTextBoards.Overrides
                         }
                         if (entry.Count > 0)
                         {
+                            m_destroyQueue.AddRange(m_highwayMarksObjects.Where(x => x.Value.Intersect(entry).Count() > 0).Select(x => x.Key));
                             m_highwayMarksObjects[tupleIdentifier] = (entry);
                         }
                     }
@@ -238,7 +238,7 @@ namespace Klyte.DynamicTextBoards.Overrides
 
             foreach (var plate in renderQueue)
             {
-                RenderPropMesh(ref cachedDefaultInfo, cameraInfo, segmentID, plate.Second, plate.Third.kilometer, layerMask, 0, plate.Third.position, Vector4.zero, ref m_baseDescriptorMileagePlate.m_propName, plate.Third.rotation + m_baseDescriptorMileagePlate.m_propRotation, ref m_baseDescriptorMileagePlate, out Matrix4x4 propMatrix, out bool rendered);
+                RenderPropMesh(ref cachedDefaultInfo, cameraInfo, segmentID, plate.Second, plate.Third.kilometer, layerMask, 0, plate.Third.position, Vector4.zero, ref m_baseDescriptorMileagePlate.m_propName, new Vector3(0, plate.Third.rotation) + m_baseDescriptorMileagePlate.m_propRotation, m_baseDescriptorMileagePlate.PropScale, ref m_baseDescriptorMileagePlate, out Matrix4x4 propMatrix, out bool rendered);
                 if (rendered)
                 {
                     for (int j = 0; j < m_baseDescriptorMileagePlate.m_textDescriptors.Length; j++)

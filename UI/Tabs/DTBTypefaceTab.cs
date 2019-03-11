@@ -39,6 +39,7 @@ namespace Klyte.DynamicTextBoards.UI
 
             m_uiHelperDistrict.AddSpace(1);
             DTBUtils.LimitWidth((UIButton)m_uiHelperDistrict.AddButton(Locale.Get("DTB_RELOAD_FONTS"), reloadDropDownsFonts), 380);
+            DTBUtils.LimitWidth((UIButton)m_uiHelperDistrict.AddButton(Locale.Get("DTB_RELOAD_CONFIGS"), BoardGeneratorBuildings.instance.LoadAllBuildingConfigurations), 380);
             reloadDropDownsFonts();
 
         }
