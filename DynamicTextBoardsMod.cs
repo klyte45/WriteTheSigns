@@ -18,7 +18,7 @@ using UnityEngine;
 [assembly: AssemblyVersion("0.0.0.*")]
 namespace Klyte.DynamicTextBoards
 {
-    public class DynamicTextBoardsMod : BasicIUserMod<DynamicTextBoardsMod, DTBLocaleUtils, DTBResourceLoader, MonoBehaviour, DTBCommonTextureAtlas, DTBPanel>
+    public class DynamicTextBoardsMod : BasicIUserMod<DynamicTextBoardsMod, DTBLocaleUtils, DTBResourceLoader, DTBController, DTBCommonTextureAtlas, DTBPanel>
     {
         public DynamicTextBoardsMod()
         {
@@ -43,7 +43,7 @@ namespace Klyte.DynamicTextBoards
         public override void LoadSettings()
         {
         }
-
+        
         public override void OnReleased()
         {
             base.OnReleased();

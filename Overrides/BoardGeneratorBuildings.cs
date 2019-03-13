@@ -137,9 +137,9 @@ namespace Klyte.DynamicTextBoards.Overrides
                 var descriptor = loadedDescriptors[data.Info.name][i];
                 if (m_boardsContainers[buildingID].m_boardsData[i] == null) m_boardsContainers[buildingID].m_boardsData[i] = new CacheControlTransportBuilding();
                 RenderPropMesh(ref m_boardsContainers[buildingID].m_boardsData[i].m_cachedProp, cameraInfo, buildingID, i, 0, layerMask, data.m_angle, renderInstance.m_dataMatrix1.MultiplyPoint(descriptor.m_propPosition), renderInstance.m_dataVector3, ref descriptor.m_propName, descriptor.m_propRotation, descriptor.PropScale, ref descriptor, out Matrix4x4 propMatrix, out bool rendered);
-                if (rendered)
+                if (rendered && descriptor.m_textDescriptors != null)
                 {
-                    for (int j = 0; j < descriptor.m_textDescriptors.Length; j++)
+                    for (int j = 0; j < descriptor.m_textDescriptors?.Length; j++)
                     {
                         MaterialPropertyBlock materialBlock = Singleton<PropManager>.instance.m_materialBlock;
                         materialBlock.Clear();
@@ -221,14 +221,16 @@ namespace Klyte.DynamicTextBoards.Overrides
                     if (nearStops.Count > 0)
                     {
                         bbcb.m_platformToLine = new ushort[m_buildingStopsDescriptor[data.Info.name].Length][];
-                        var nearStopsParsed = nearStops.Select((x, i) => new { stopId = x, relPos = CalculatePositionRelative(absolutePos[i], BuildingManager.instance.m_buildings.m_buffer[buildingID].m_angle, BuildingManager.instance.m_buildings.m_buffer[buildingID].m_position) })
+                        var nearStopsParsed = nearStops.Select((x, i) => new { stopId = x, relPos = DTBUtils.CalculatePositionRelative(absolutePos[i], BuildingManager.instance.m_buildings.m_buffer[buildingID].m_angle, BuildingManager.instance.m_buildings.m_buffer[buildingID].m_position) })
                          .Select((y, i) => Tuple.New(platforms.Where((x, j) =>
                          {
                              if (x.Value.vehicleType != TransportManager.instance.m_lines.m_buffer[NetManager.instance.m_nodes.m_buffer[y.stopId].m_transportLine].Info.m_vehicleType) return false;
                              //var relOrg = CalculatePositionRelative(absolutePos[i], BuildingManager.instance.m_buildings.m_buffer[buildingID].m_angle, BuildingManager.instance.m_buildings.m_buffer[buildingID].m_position);
                              var distance = x.Value.platformLine.DistanceSqr(y.relPos, out float k);
-                             doLog($"[{BuildingManager.instance.m_buildings.m_buffer[buildingID].Info.name}]x = {x.Key} ({x.Value.platformLine.a} {x.Value.platformLine.b} {x.Value.platformLine.c} {x.Value.platformLine.d}) (w= {x.Value.width}) {x.Value.vehicleType}\t| relOrg {y.relPos} \t| {distance}");
-                             return Mathf.Abs(distance - x.Value.width * x.Value.width) < 0.1f * x.Value.width;
+                             doLog($"[{BuildingManager.instance.m_buildings.m_buffer[buildingID].Info.name}]x = {x.Key} ({x.Value.platformLine.a} {x.Value.platformLine.b} {x.Value.platformLine.c} {x.Value.platformLine.d}) (w= {x.Value.width}) {x.Value.vehicleType}\t| relOrg {y.relPos} \t| {distance} \t|dy = { x.Value.platformLine.GetBounds().center.y - y.relPos.y}");
+                             var sqrWidth = x.Value.width * x.Value.width;
+
+                             return Mathf.Abs(distance - sqrWidth) < 0.1f * sqrWidth && x.Value.platformLine.GetBounds().center.y - y.relPos.y < 1f;
                          }).FirstOrDefault().Key, NetManager.instance.m_nodes.m_buffer[y.stopId].m_transportLine));
 
                         foreach (var nearStopsParsedItem in nearStopsParsed.Select(x => x.First).Distinct())
@@ -244,33 +246,6 @@ namespace Klyte.DynamicTextBoards.Overrides
                 bbcb.m_linesUpdateFrame = SimulationManager.instance.m_currentTickIndex;
             }
         }
-
-        private static Vector3 CalculatePositionRelative(Vector3 position, float angle, Vector3 original)
-        {
-            Vector3 offset = new Vector3
-            {
-                y = position.y - original.y
-            };
-
-            var cos = Mathf.Cos(angle);
-            var sin = Mathf.Sin(angle);
-
-            //           position.x = original.x +              cos * offset.x +  sin   * offset.z;
-            //position.z            =              original.z + sin * offset.x + (-cos) * offset.z;
-
-            //                   cos * position.x = cos * original.x +                                  cos * cos * offset.x  + cos * sin    * offset.z;
-            //sin * position.z                    =                    sin * original.z +               sin * sin * offset.x  + sin * (-cos) * offset.z;
-            //==========================================================================================================================================
-            //sin * position.z + cos * position.x = cos * original.x + sin * original.z + (cos * cos + sin * sin) * offset.x;
-
-            offset.x = -(cos * original.x + sin * original.z - sin * position.z - cos * position.x);
-            offset.z = (-position.x + original.x + cos * offset.x) / -sin;
-
-            return offset;
-        }
-
-
-
 
         #endregion
 
@@ -1145,10 +1120,10 @@ namespace Klyte.DynamicTextBoards.Overrides
 
                     {
                         m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(0,5.5f,-3),
+                        m_propPosition= new Vector3(0,8f,-3),
                         m_propRotation= new Vector3(0,0,0),
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_platforms = new int[]{0},
+                        m_platforms = new int[]{5},
 
                     },
                     new BoardDescriptorStations
@@ -1165,10 +1140,10 @@ namespace Klyte.DynamicTextBoards.Overrides
 
                     {
                         m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(0,5.5f,27),
+                        m_propPosition= new Vector3(0,8f,27),
                         m_propRotation= new Vector3(0,0,0),
                         m_textDescriptors =basicEOLTextDescriptor,
-                        m_platforms = new int[]{5},
+                        m_platforms = new int[]{0},
 
                     },
                     new BoardDescriptorStations

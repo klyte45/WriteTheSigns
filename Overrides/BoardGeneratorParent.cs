@@ -73,7 +73,6 @@ namespace Klyte.DynamicTextBoards.Overrides
 
         public static readonly int m_shaderPropColor = Shader.PropertyToID("_Color");
         public static readonly int m_shaderPropEmissive = Shader.PropertyToID("_Emission");
-        public static readonly int m_shaderPropDepth = Shader.PropertyToID("_Depth");
         public abstract void Initialize();
 
 
@@ -259,7 +258,7 @@ namespace Klyte.DynamicTextBoards.Overrides
             var matrix = propMatrix * Matrix4x4.TRS(
                 targetRelativePosition,
                 Quaternion.AngleAxis(textDescriptor.m_textRelativeRotation.x, Vector3.left) * Quaternion.AngleAxis(textDescriptor.m_textRelativeRotation.y, Vector3.down) * Quaternion.AngleAxis(textDescriptor.m_textRelativeRotation.z, Vector3.back),
-                new Vector3(defaultMultiplierX * overflowScaleX, defaultMultiplierY * overflowScaleY, 1));
+                new Vector3(defaultMultiplierX * overflowScaleX / descriptor.ScaleX, defaultMultiplierY * overflowScaleY / descriptor.PropScale.y, 1));
             if (cameraInfo.CheckRenderDistance(matrix.MultiplyPoint(Vector3.zero), Math.Min(3000, 200 * textDescriptor.m_textScale)))
             {
                 if (textDescriptor.m_defaultColor != Color.clear)
@@ -276,7 +275,6 @@ namespace Klyte.DynamicTextBoards.Overrides
                 }
 
                 materialPropertyBlock.SetFloat(m_shaderPropEmissive, 1.4f * (SimulationManager.instance.m_isNightTime ? textDescriptor.m_nightEmissiveMultiplier : textDescriptor.m_dayEmissiveMultiplier));
-                materialPropertyBlock.SetFloat(m_shaderPropDepth, 2);
                 DrawFont.material.shader = textDescriptor.ShaderOverride ?? TextShader;
                 Graphics.DrawMesh(renderInfo.m_mesh, matrix, DrawFont.material, ctrl?.m_cachedProp?.m_prefabDataLayer ?? 10, cameraInfo.m_camera, 0, materialPropertyBlock, false, true, true);
             }
@@ -444,7 +442,33 @@ namespace Klyte.DynamicTextBoards.Overrides
     public class CacheControl
     {
         public PropInfo m_cachedProp;
+
+
     }
+
+    public abstract class CacheControlSerializer<CCS, CC> where CC : CacheControl where CCS : CacheControlSerializer<CCS, CC>, new()
+    {
+        protected CC cc;
+
+
+        public virtual void Deserialize(string input)
+        {
+        }
+        public virtual string Serialize()
+        {
+            return null;
+        }
+
+        public static CCS New(CC sign)
+        {
+            return new CCS
+            {
+                cc = sign
+            };
+        }
+
+    }
+
     public class BasicRenderInformation
     {
         public Mesh m_mesh;
@@ -467,7 +491,15 @@ namespace Klyte.DynamicTextBoards.Overrides
         [XmlIgnore]
         public Vector3 m_propPosition;
         [XmlIgnore]
-        public Vector3 PropScale => new Vector3(ScaleX, ScaleY ?? ScaleX, ScaleZ ?? ScaleX);
+        public Vector3 PropScale
+        {
+            get => new Vector3(ScaleX, ScaleY ?? ScaleX, ScaleZ ?? ScaleX);
+            set {
+                ScaleX = value.x;
+                ScaleY = value.y;
+                ScaleZ = value.z;
+            }
+        }
         [XmlIgnore]
         public Vector3 m_propRotation;
         [XmlElement("textDescriptor")]

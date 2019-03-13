@@ -24,7 +24,7 @@ namespace Klyte.DynamicTextBoards.UI
 
         #region Awake
         private void Awake()
-        {
+        { 
             mainContainer = GetComponent<UIComponent>();
 
             m_uiHelperDistrict = new UIHelperExtension(mainContainer);

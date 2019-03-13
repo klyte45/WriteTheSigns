@@ -61,6 +61,7 @@ namespace Klyte.DynamicTextBoards.UI
 
 
             CreateTab<DTBFontConfigTab>("ToolbarIconZoomOutGlobe", "DTB_FONT_CONFIG_TAB", "DTBFonts");
+            CreateTab<DTBHighwaySignTab>("ToolbarIconZoomOutGlobe", "DTB_HIGHWAY_SIGN_CONFIG_TAB", "DTBHighwaySign");
 
         }
         private void CreateTitleBar()
