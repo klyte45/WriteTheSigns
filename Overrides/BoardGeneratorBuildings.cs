@@ -45,7 +45,7 @@ namespace Klyte.DynamicTextBoards.Overrides
             TransportManagerOverrides.eventOnLineUpdated += onLineUpdated;
             NetManagerOverrides.eventNodeChanged += onNodeChanged;
             TransportManager.instance.eventLineColorChanged += onLineUpdated;
-            BuildingManagerOverrides.eventOnBuildingRenamed += onBuildingNameChanged;
+            InstanceManagerOverrides.eventOnBuildingRenamed += onBuildingNameChanged;
 
             #region Hooks
             var postRenderMeshs = GetType().GetMethod("AfterRenderMeshes", allFlags);
@@ -72,10 +72,10 @@ namespace Klyte.DynamicTextBoards.Overrides
 
         private void LoadDescriptorsFromXml(FileStream stream)
         {
-            var serializer = new XmlSerializer(typeof(BuildingConfigurationSerializer<BoardDescriptorStations>));
+            var serializer = new XmlSerializer(typeof(BuildingConfigurationSerializer<BoardDescriptorStations, BoardTextDescriptor>));
 
 
-            if (serializer.Deserialize(stream) is BuildingConfigurationSerializer<BoardDescriptorStations> config)
+            if (serializer.Deserialize(stream) is BuildingConfigurationSerializer<BoardDescriptorStations, BoardTextDescriptor> config)
             {
                 if (loadedDescriptors == null) loadedDescriptors = new Dictionary<string, BoardDescriptorStations[]>();
                 loadedDescriptors[config.m_buildingName] = config.m_boardDescriptors;
@@ -336,8 +336,8 @@ namespace Klyte.DynamicTextBoards.Overrides
 
         public static void GenerateDefaultBuildingsConfiguration()
         {
-            var fileContent = GenerateDefaultDictionary().Select(x => new BuildingConfigurationSerializer<BoardDescriptorStations> { m_buildingName = x.Key, m_boardDescriptors = x.Value.ToArray() }).ToArray();
-            var serializer = new XmlSerializer(typeof(BuildingConfigurationSerializer<BoardDescriptorStations>));
+            var fileContent = GenerateDefaultDictionary().Select(x => new BuildingConfigurationSerializer<BoardDescriptorStations, BoardTextDescriptor> { m_buildingName = x.Key, m_boardDescriptors = x.Value.ToArray() }).ToArray();
+            var serializer = new XmlSerializer(typeof(BuildingConfigurationSerializer<BoardDescriptorStations, BoardTextDescriptor>));
             foreach (var item in fileContent)
             {
                 var filePath = DynamicTextBoardsMod.defaultBuildingsConfigurationFolder + Path.DirectorySeparatorChar + $"{DynamicTextBoardsMod.defaultFileNameXml}_{item.m_buildingName}.xml";
@@ -1249,7 +1249,7 @@ namespace Klyte.DynamicTextBoards.Overrides
 
     }
 
-    public class BoardDescriptorStations : BoardDescriptor
+    public class BoardDescriptorStations : BoardDescriptorParent<BoardDescriptorStations, BoardTextDescriptor>
 
     {
         [XmlAttribute("platforms")]

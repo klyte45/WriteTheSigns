@@ -6,6 +6,7 @@ using System;
 using System.Diagnostics;
 using UnityEngine;
 using Klyte.DynamicTextBoards.Tools;
+using UnityEngine.SceneManagement;
 
 namespace Klyte.DynamicTextBoards
 {

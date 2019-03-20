@@ -372,15 +372,12 @@ namespace Klyte.DynamicTextBoards.Overrides
         protected override BasicRenderInformation GetMeshCustom2(ushort idx, int boardIdx, int secIdx)
         {
             int distanceRef = (int)Mathf.Floor(m_boardsContainers[idx].m_boardsData[boardIdx].m_distanceRef / 1000);
-            if (m_cachedNumber.Length <= distanceRef + 1)
+            while (m_cachedNumber.Length <= distanceRef + 1)
             {
                 doLog($"!Length {m_cachedNumber.Length }/{distanceRef}");
-                var newArray = new BasicRenderInformation[distanceRef + 1];
-                for (int i = 0; i < m_cachedNumber.Length; i++)
-                {
-                    newArray[i] = m_cachedNumber[i];
-                }
-                m_cachedNumber = newArray;
+                var newArray = m_cachedNumber.ToList();
+                newArray.Add(null);
+                m_cachedNumber = newArray.ToArray();
             }
             if (m_cachedNumber[distanceRef] == null)
             {

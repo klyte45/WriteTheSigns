@@ -8,7 +8,9 @@ using Klyte.Commons.Utils;
 using Klyte.DynamicTextBoards.Utils;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Xml;
 using System.Xml.Serialization;
 using UnityEngine;
 using static BuildingInfo;
@@ -61,8 +63,8 @@ namespace Klyte.DynamicTextBoards.Overrides
     public abstract class BoardGeneratorParent<BG, BBC, CC, BRI, BD, BTD, MRT> : BoardGeneratorParent<BG>
         where BG : BoardGeneratorParent<BG, BBC, CC, BRI, BD, BTD, MRT>
         where BBC : IBoardBunchContainer<CC, BRI>
-        where BD : BoardDescriptor
-        where BTD : BoardTextDescriptor
+        where BD : BoardDescriptorParent<BD, BTD>
+        where BTD : BoardTextDescriptorParent<BTD>
         where CC : CacheControl
         where BRI : BasicRenderInformation, new()
     {
@@ -76,7 +78,7 @@ namespace Klyte.DynamicTextBoards.Overrides
         public abstract void Initialize();
 
 
-        public BBC[] m_boardsContainers;
+        public static BBC[] m_boardsContainers;
 
 
         private const float m_pixelRatio = 0.5f;
@@ -171,17 +173,31 @@ namespace Klyte.DynamicTextBoards.Overrides
             {
                 //scale = propInfo.m_minScale + (float)randomizer.Int32(10000u) * (propInfo.m_maxScale - propInfo.m_minScale) * 0.0001f;
                 byte district = instance2.GetDistrict(position);
-                propInfo = propInfo.GetVariation(ref randomizer, ref instance2.m_districts.m_buffer[(int)district]);
+                byte park = instance2.GetPark(position);
+                propInfo = propInfo.GetVariation(ref randomizer);//, park, ref instance2.m_districts.m_buffer[(int)district]);
                 Color color = propInfo.m_color0;
-                if ((layerMask & 1 << propInfo.m_prefabDataLayer) != 0 || propInfo.m_hasEffects)
+                var magn = scale.magnitude;
+                //if ((layerMask & 1 << propInfo.m_prefabDataLayer) != 0 || propInfo.m_hasEffects)
+                //{
+                if (cameraInfo.CheckRenderDistance(position, propInfo.m_maxRenderDistance * scale.sqrMagnitude))
                 {
-                    if (cameraInfo.CheckRenderDistance(position, propInfo.m_maxRenderDistance))
+                    InstanceID propRenderID2 = this.GetPropRenderID(refId);
+                    var oldLayerMask = cameraInfo.m_layerMask;
+                    var oldRenderDist = propInfo.m_lodRenderDistance;
+                    propInfo.m_lodRenderDistance *= scale.sqrMagnitude;
+                    cameraInfo.m_layerMask = 0x7FFFFFFF;
+                    try
                     {
-                        InstanceID propRenderID2 = this.GetPropRenderID(refId);
-                        PropInstance.RenderInstance(cameraInfo, propInfo, propRenderID2, matrix, position, scale.y, refAngleRad + rotation.y * Mathf.Deg2Rad, color, dataVector, false);
-                        rendered = true;
+                        PropInstance.RenderInstance(cameraInfo, propInfo, propRenderID2, matrix, position, scale.y, refAngleRad + rotation.y * Mathf.Deg2Rad, color, dataVector, true);
                     }
+                    finally
+                    {
+                        propInfo.m_lodRenderDistance = oldRenderDist;
+                        cameraInfo.m_layerMask = oldLayerMask;
+                    }
+                    rendered = true;
                 }
+                //}
             }
             return matrix;
         }
@@ -243,7 +259,7 @@ namespace Klyte.DynamicTextBoards.Overrides
                 if (textDescriptor.m_maxWidthMeters > 0 && textDescriptor.m_textAlign != UIHorizontalAlignment.Center)
                 {
                     var factor = (textDescriptor.m_textAlign == UIHorizontalAlignment.Left) == (((textDescriptor.m_textRelativeRotation.y) % 360 + 810) % 360 > 180) ? 0.5f : -0.5f;
-                    targetRelativePosition += new Vector3((textDescriptor.m_maxWidthMeters - realWidth) * factor, 0, 0);
+                    targetRelativePosition += new Vector3((textDescriptor.m_maxWidthMeters - realWidth) * factor / descriptor.ScaleX, 0, 0);
                 }
             }
             if (textDescriptor.m_verticalAlign != UIVerticalAlignment.Middle)
@@ -476,7 +492,9 @@ namespace Klyte.DynamicTextBoards.Overrides
         public uint m_frameDrawTime;
     }
     [XmlRoot("buildingConfig")]
-    public class BuildingConfigurationSerializer<BD> where BD : BoardDescriptor
+    public class BuildingConfigurationSerializer<BD, BTD>
+        where BD : BoardDescriptorParent<BD, BTD>
+        where BTD : BoardTextDescriptorParent<BTD>
     {
         [XmlAttribute("buildingName")]
         public string m_buildingName;
@@ -484,7 +502,54 @@ namespace Klyte.DynamicTextBoards.Overrides
         public BD[] m_boardDescriptors;
     }
 
-    public class BoardDescriptor
+    /*
+     *    public string Serialize()
+            {
+                XmlSerializer xmlser = new XmlSerializer(typeof(BoardDescriptorHigwaySign));
+                XmlWriterSettings settings = new XmlWriterSettings { Indent = false };
+                using (StringWriter textWriter = new StringWriter())
+                {
+                    using (XmlWriter xw = XmlWriter.Create(textWriter, settings))
+                    {
+                        XmlSerializerNamespaces ns = new XmlSerializerNamespaces();
+                        ns.Add("", "");
+                        xmlser.Serialize(xw, descriptor, ns);
+                        return textWriter.ToString();
+                    }
+                }
+            }
+
+            public void Deserialize(String s)
+            {
+                XmlSerializer xmlser = new XmlSerializer(typeof(BoardDescriptorHigwaySign));
+                try
+                {
+                    using (TextReader tr = new StringReader(s))
+                    {
+                        using (XmlReader reader = XmlReader.Create(tr))
+                        {
+                            if (xmlser.CanDeserialize(reader))
+                            {
+                                descriptor = (BoardDescriptorHigwaySign)xmlser.Deserialize(reader);
+                            }
+                            else
+                            {
+                                DTBUtils.doErrorLog($"CAN'T DESERIALIZE BOARD DESCRIPTOR!\nText : {s}");
+                            }
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    DTBUtils.doErrorLog($"CAN'T DESERIALIZE BOARD DESCRIPTOR!\nText : {s}\n{e.Message}\n{e.StackTrace}");
+                }
+
+            }
+     * */
+
+    public abstract class BoardDescriptorParent<BD, BTD>
+        where BD : BoardDescriptorParent<BD, BTD>
+        where BTD : BoardTextDescriptorParent<BTD>
     {
         [XmlAttribute("propName")]
         public string m_propName;
@@ -503,7 +568,7 @@ namespace Klyte.DynamicTextBoards.Overrides
         [XmlIgnore]
         public Vector3 m_propRotation;
         [XmlElement("textDescriptor")]
-        public BoardTextDescriptor[] m_textDescriptors;
+        public BTD[] m_textDescriptors;
 
 
         [XmlAttribute("positionX")]
@@ -531,8 +596,55 @@ namespace Klyte.DynamicTextBoards.Overrides
 
         public Matrix4x4 m_textMatrixTranslation(int idx) => Matrix4x4.Translate(m_textDescriptors[idx].m_textRelativePosition);
         public Matrix4x4 m_textMatrixRotation(int idx) => Matrix4x4.TRS(Vector3.zero, Quaternion.Euler(m_textDescriptors[idx].m_textRelativeRotation), Vector3.one);
+
+
+        public string Serialize()
+        {
+            XmlSerializer xmlser = new XmlSerializer(typeof(BD));
+            XmlWriterSettings settings = new XmlWriterSettings { Indent = false };
+            using (StringWriter textWriter = new StringWriter())
+            {
+                using (XmlWriter xw = XmlWriter.Create(textWriter, settings))
+                {
+                    XmlSerializerNamespaces ns = new XmlSerializerNamespaces();
+                    ns.Add("", "");
+                    xmlser.Serialize(xw, this, ns);
+                    return textWriter.ToString();
+                }
+            }
+        }
+
+        public static BD Deserialize(String s)
+        {
+            XmlSerializer xmlser = new XmlSerializer(typeof(BD));
+            try
+            {
+                using (TextReader tr = new StringReader(s))
+                {
+                    using (XmlReader reader = XmlReader.Create(tr))
+                    {
+                        if (xmlser.CanDeserialize(reader))
+                        {
+                            return (BD)xmlser.Deserialize(reader);
+                        }
+                        else
+                        {
+                            DTBUtils.doErrorLog($"CAN'T DESERIALIZE BOARD DESCRIPTOR!\nText : {s}");
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                DTBUtils.doErrorLog($"CAN'T DESERIALIZE BOARD DESCRIPTOR!\nText : {s}\n{e.Message}\n{e.StackTrace}");
+            }
+            return null;
+        }
     }
-    public class BoardTextDescriptor
+
+    public class BoardDescriptor : BoardDescriptorParent<BoardDescriptor, BoardTextDescriptor> { }
+
+    public abstract class BoardTextDescriptorParent<T> where T : BoardTextDescriptorParent<T>
     {
         [XmlIgnore]
         public Vector3 m_textRelativePosition;
@@ -615,7 +727,52 @@ namespace Klyte.DynamicTextBoards.Overrides
         }
         [XmlIgnore]
         public uint GeneratedFixedTextRenderInfoTick { get; private set; }
+
+        public string Serialize()
+        {
+            XmlSerializer xmlser = new XmlSerializer(typeof(T));
+            XmlWriterSettings settings = new XmlWriterSettings { Indent = false };
+            using (StringWriter textWriter = new StringWriter())
+            {
+                using (XmlWriter xw = XmlWriter.Create(textWriter, settings))
+                {
+                    XmlSerializerNamespaces ns = new XmlSerializerNamespaces();
+                    ns.Add("", "");
+                    xmlser.Serialize(xw, this, ns);
+                    return textWriter.ToString();
+                }
+            }
+        }
+
+        public static T Deserialize(String s)
+        {
+            XmlSerializer xmlser = new XmlSerializer(typeof(T));
+            try
+            {
+                using (TextReader tr = new StringReader(s))
+                {
+                    using (XmlReader reader = XmlReader.Create(tr))
+                    {
+                        if (xmlser.CanDeserialize(reader))
+                        {
+                            return (T)xmlser.Deserialize(reader);
+                        }
+                        else
+                        {
+                            DTBUtils.doErrorLog($"CAN'T DESERIALIZE BOARD DESCRIPTOR!\nText : {s}");
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                DTBUtils.doErrorLog($"CAN'T DESERIALIZE BOARD DESCRIPTOR!\nText : {s}\n{e.Message}\n{e.StackTrace}");
+            }
+            return null;
+        }
     }
+
+    public class BoardTextDescriptor : BoardTextDescriptorParent<BoardTextDescriptor> { }
 
 
 

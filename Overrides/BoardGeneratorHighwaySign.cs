@@ -22,7 +22,7 @@ using System.Xml;
 namespace Klyte.DynamicTextBoards.Overrides
 {
 
-    public class BoardGeneratorHighwaySigns : BoardGeneratorParent<BoardGeneratorHighwaySigns, BoardBunchContainerHighwaySign, CacheControlHighwaySign, BasicRenderInformation, BoardDescriptorHigwaySign, BoardTextDescriptor, ushort>, ISerializableDataExtension
+    public class BoardGeneratorHighwaySigns : BoardGeneratorParent<BoardGeneratorHighwaySigns, BoardBunchContainerHighwaySign, CacheControlHighwaySign, BasicRenderInformation, BoardDescriptorHigwaySign, BoardTextDescriptorHigwaySign, ushort>, ISerializableDataExtension
     {
 
 
@@ -32,6 +32,8 @@ namespace Klyte.DynamicTextBoards.Overrides
         public List<string> LoadedProps { get; private set; }
 
         private UIDynamicFont m_font;
+
+
 
 
         public override int ObjArraySize => NetManager.MAX_SEGMENT_COUNT;
@@ -122,7 +124,7 @@ namespace Klyte.DynamicTextBoards.Overrides
             for (var i = 0; i < m_boardsContainers[segmentID]?.m_boardsData?.Length; i++)
             {
                 var sign = m_boardsContainers[segmentID]?.m_boardsData[i];
-                if (sign.descriptor == null) continue;
+                if (sign?.descriptor == null) continue;
                 sign.m_cachedProp = null;
                 var segmentInverted = (NetManager.instance.m_segments.m_buffer[segmentID].m_flags & NetSegment.Flags.Invert) > 0;
                 var effectiveSegmentPos = segmentInverted ? 1 - sign.descriptor.m_segmentPosition : sign.descriptor.m_segmentPosition;
@@ -187,7 +189,9 @@ namespace Klyte.DynamicTextBoards.Overrides
             }
             using (MemoryStream memoryStream = new MemoryStream())
             {
-                byte[] data = System.Text.Encoding.UTF8.GetBytes(Serialize());
+                var serialData = Serialize();
+                DTBUtils.doLog($"serialData: {serialData}");
+                byte[] data = System.Text.Encoding.UTF8.GetBytes(serialData);
                 serializableDataManager.SaveData(ID, data);
             }
         }
@@ -201,9 +205,10 @@ namespace Klyte.DynamicTextBoards.Overrides
         private static BoardBunchContainerHighwaySign[] s_loadedBoards;
 
 
-        public static void Deserialize(string data)
+        public void Deserialize(string data)
         {
-            DTBUtils.doLog($"STR: {data}");
+            DTBUtils.doLog($"STR: \"{data}\"");
+            if (data.IsNullOrWhiteSpace()) return;
             var parsedData = ParseSerialization(data.Split(SERIALIZATION_ITM_SEPARATOR.ToCharArray()));
             s_loadedBoards = new BoardBunchContainerHighwaySign[NetManager.MAX_SEGMENT_COUNT];
             foreach (var item in parsedData)
@@ -215,6 +220,7 @@ namespace Klyte.DynamicTextBoards.Overrides
 
         private static void FillItem(IGrouping<ushort, Tuple<ushort, string>> item)
         {
+            if (item.Key == 0) return;
             var count = item.Count();
             DTBUtils.doLog($"COUNT: {count}");
             s_loadedBoards[item.Key] = new BoardBunchContainerHighwaySign
@@ -240,10 +246,12 @@ namespace Klyte.DynamicTextBoards.Overrides
             }).GroupBy(x => x.First);
         }
 
-        public static string Serialize()
+        public string Serialize()
         {
-            var list = instance.m_boardsContainers?.SelectMany(SerializeSelectMany) ?? new List<string>();
-            return string.Join(SERIALIZATION_ITM_SEPARATOR, list.ToArray());
+            DTBUtils.doLog($"m_boardsContainers: \"{ m_boardsContainers}\"");
+            var list = m_boardsContainers.SelectMany(SerializeSelectMany) ?? new List<string>();
+            DTBUtils.doLog($"list: \"{list?.Count()}\"");
+            return string.Join(SERIALIZATION_ITM_SEPARATOR, list?.ToArray());
         }
         private static IEnumerable<string> SerializeSelectMany(BoardBunchContainerHighwaySign x, int i)
         {
@@ -257,6 +265,63 @@ namespace Klyte.DynamicTextBoards.Overrides
 
 
         #region Upadate Data
+        protected override BasicRenderInformation GetOwnNameMesh(ushort buildingID, int boardIdx, int secIdx)
+        {
+
+            if (m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].GeneratedFixedTextRenderInfo == null
+                || m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].m_cachedTextContent != m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].m_ownTextContent
+                || m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].GeneratedFixedTextRenderInfoTick < lastFontUpdateFrame)
+            {
+                var result = m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].GeneratedFixedTextRenderInfo;
+                var resultText = "X";
+                switch (m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].m_ownTextContent)
+                {
+                    case OwnNameContent.None:
+                        resultText = "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW";
+                        break;
+                    case OwnNameContent.Custom:
+                        resultText = m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].m_fixedText ?? "-- NULL --";
+                        break;
+                    case OwnNameContent.NextExitNumber:
+                        break;
+                    case OwnNameContent.NextExitDistanceMeters:
+                        break;
+                    case OwnNameContent.NextExitDistanceKilometers:
+                        break;
+                    case OwnNameContent.NextExitImmediateRoad:
+                        break;
+                    case OwnNameContent.NextExitNearestAvenue1:
+                        break;
+                    case OwnNameContent.NextExitNearestAvenue2:
+                        break;
+                    case OwnNameContent.NextExitNearestAvenue3:
+                        break;
+                    case OwnNameContent.NextExitCurrentDistrict:
+                        break;
+                    case OwnNameContent.NextExitDistrictDestination1A:
+                        break;
+                    case OwnNameContent.NextExitDistrictDestination1B:
+                        break;
+                    case OwnNameContent.NextExitDistrictDestination2A:
+                        break;
+                    case OwnNameContent.NextExitDistrictDestination2B:
+                        break;
+                    case OwnNameContent.NextExitDistrictDestination3A:
+                        break;
+                    case OwnNameContent.NextExitDistrictDestination3B:
+                        break;
+                }
+                if (m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].m_allCaps)
+                {
+                    resultText = resultText.ToUpper();
+                }
+                RefreshNameData(ref result, resultText);
+                m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].GeneratedFixedTextRenderInfo = result;
+                m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].m_cachedTextContent = m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].m_ownTextContent;
+            }
+            return m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].GeneratedFixedTextRenderInfo;
+        }
+
         protected override BasicRenderInformation GetMeshCurrentNumber(ushort id, int boardIdx, int kilometers)
         {
             if (m_cachedExitTitles.Length <= kilometers + 1)
@@ -273,9 +338,9 @@ namespace Klyte.DynamicTextBoards.Overrides
         }
         #endregion
 
-        public override Color GetColor(ushort buildingID, int idx, int secIdx, BoardDescriptorHigwaySign descriptor)
+        public override Color GetColor(ushort segmentId, int idx, int secIdx, BoardDescriptorHigwaySign descriptor)
         {
-            return Color.white;
+            return m_boardsContainers[segmentId].m_boardsData[idx].descriptor.m_color;
 
         }
 
@@ -343,12 +408,50 @@ namespace Klyte.DynamicTextBoards.Overrides
             }
         }
 
-        public class BoardDescriptorHigwaySign : BoardDescriptor
+        public class BoardDescriptorHigwaySign : BoardDescriptorParent<BoardDescriptorHigwaySign, BoardTextDescriptorHigwaySign>
         {
             [XmlAttribute("inverted")]
             public bool m_invertSign = false;
             [XmlAttribute("segmentPosition")]
             public float m_segmentPosition = 0.5f;
+            [XmlIgnore]
+            public Color m_color = Color.white;
+            [XmlAttribute("color")]
+            public string ColorStr
+            {
+                get => ColorExtensions.ToRGB(m_color);
+                set => m_color = ColorExtensions.FromRGB(value);
+            }
+        }
+        public class BoardTextDescriptorHigwaySign : BoardTextDescriptorParent<BoardTextDescriptorHigwaySign>
+        {
+            [XmlAttribute("nameContent")]
+            public OwnNameContent m_ownTextContent;
+            [XmlIgnore]
+            public OwnNameContent m_cachedTextContent;
+            [XmlAttribute("allCaps")]
+            public bool m_allCaps;
+
+        }
+
+        public enum OwnNameContent
+        {
+            None,
+            Custom,
+            NextExitNumber,
+            NextExitDistanceMeters,
+            NextExitDistanceKilometers,
+            NextExitImmediateRoad,
+            NextExitNearestAvenue1,
+            NextExitNearestAvenue2,
+            NextExitNearestAvenue3,
+            NextExitCurrentDistrict,
+            NextExitDistrictDestination1A,
+            NextExitDistrictDestination1B,
+            NextExitDistrictDestination2A,
+            NextExitDistrictDestination2B,
+            NextExitDistrictDestination3A,
+            NextExitDistrictDestination3B,
         }
 
         public class BoardBunchContainerHighwaySign : IBoardBunchContainer<CacheControlHighwaySign, BasicRenderInformation>

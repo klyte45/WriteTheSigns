@@ -46,7 +46,7 @@ namespace Klyte.DynamicTextBoards.UI
             controlContainer.isVisible = false;
             controlContainer.name = "DTBPanel";
 
-            DTBUtils.createUIElement(out mainPanel, controlContainer.transform, "DTBListPanel", new Vector4(0, 0, 875, 550));
+            DTBUtils.createUIElement(out mainPanel, controlContainer.transform, "DTBListPanel", new Vector4(0, 0, 875, 850));
             mainPanel.backgroundSprite = "MenuPanel2";
 
             CreateTitleBar();
@@ -62,8 +62,8 @@ namespace Klyte.DynamicTextBoards.UI
 
             CreateTab<DTBFontConfigTab>("ToolbarIconZoomOutGlobe", "DTB_FONT_CONFIG_TAB", "DTBFonts");
             CreateTab<DTBHighwaySignTab>("ToolbarIconZoomOutGlobe", "DTB_HIGHWAY_SIGN_CONFIG_TAB", "DTBHighwaySign");
-
         }
+
         private void CreateTitleBar()
         {
             DTBUtils.createUIElement(out UILabel titlebar, mainPanel.transform, "DTBListPanel", new Vector4(75, 10, mainPanel.width - 150, 20));

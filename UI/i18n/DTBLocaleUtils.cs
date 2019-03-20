@@ -7,8 +7,8 @@ namespace Klyte.DynamicTextBoards.i18n
 {
     public class DTBLocaleUtils : KlyteLocaleUtils<DTBLocaleUtils, DTBResourceLoader>
     {
-        public override string prefix => "KCAI_";
+        public override string prefix => "DTB_";
 
-        protected override string packagePrefix => "Klyte.CustomAI";
+        protected override string packagePrefix => "Klyte.DynamicTextBoards";
     }
 }
