@@ -19,7 +19,7 @@ namespace Klyte.DynamicTextBoards.TextureAtlas
         protected override string ResourceName => "UI.Images.sprites.png";
         protected override string CommonName => "KlyteDTBSprites";
         public override string[] SpriteNames => new string[] {
-                "KDTBIcon","FontIcon","AutoNameIcon","AutoColorIcon","RemoveIcon","Load","24hLineIcon", "PerHourIcon","AbsoluteMode","Save","Copy","Paste"
+                "KDTBIcon","FontIcon","AutoNameIcon","AutoColorIcon","RemoveIcon","Load","24hLineIcon", "PerHourIcon","Reload","Save","Copy","Paste"
                 };
     }
 }

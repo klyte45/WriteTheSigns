@@ -85,7 +85,7 @@ namespace Klyte.DynamicTextBoards.Overrides
         {
         }
 
-        protected override void OnTextureRebuilt()
+        protected override void OnTextureRebuiltImpl(Font obj)
         {
         }
 
@@ -257,8 +257,9 @@ namespace Klyte.DynamicTextBoards.Overrides
 
 
         #region Upadate Data
-        protected override BasicRenderInformation GetOwnNameMesh(RoadIdentifier id, int boardIdx, int kilometers)
+        protected override BasicRenderInformation GetOwnNameMesh(RoadIdentifier id, int boardIdx, int kilometers, out UIFont font)
         {
+            font = DrawFont;
             //doLog($"GetOwnNameMesh segmentId {id} (boardIdx {boardIdx}|kilometers {kilometers})");
             var direction = m_highwayMarksObjects[id][boardIdx].cardinalDirection8;
             if (m_cachedDirectionMeshes[direction] == null || lastFontUpdateFrame > m_cachedDirectionMeshes[direction].m_frameDrawTime)
@@ -270,8 +271,9 @@ namespace Klyte.DynamicTextBoards.Overrides
             return m_cachedDirectionMeshes[direction];
 
         }
-        protected override BasicRenderInformation GetMeshCurrentNumber(RoadIdentifier id, int boardIdx, int kilometers)
+        protected override BasicRenderInformation GetMeshCurrentNumber(RoadIdentifier id, int boardIdx, int kilometers, out UIFont font)
         {
+            font = DrawFont;
             if (m_cachedKilometerMeshes.Length <= kilometers + 1)
             {
                 m_cachedKilometerMeshes = new BasicRenderInformation[kilometers + 1];

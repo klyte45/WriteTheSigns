@@ -24,7 +24,7 @@ namespace Klyte.DynamicTextBoards.UI
 
         #region Awake
         private void Awake()
-        { 
+        {
             mainContainer = GetComponent<UIComponent>();
 
             m_uiHelperDistrict = new UIHelperExtension(mainContainer);
@@ -55,29 +55,12 @@ namespace Klyte.DynamicTextBoards.UI
 
         private void reloadDropDownsFonts()
         {
-            reloadFontOf<BoardGeneratorBuildings>(m_fontStationBuildings);
-            reloadFontOf<BoardGeneratorRoadNodes>(m_fontStreetCorners);
-            reloadFontOf<BoardGeneratorHighwayMileage>(m_fontHighwayProps);
+            DTBUtils.ReloadFontsOf<BoardGeneratorBuildings>(m_fontStationBuildings);
+            DTBUtils.ReloadFontsOf<BoardGeneratorRoadNodes>(m_fontStreetCorners);
+            DTBUtils.ReloadFontsOf<BoardGeneratorHighwayMileage>(m_fontHighwayProps);
         }
 
-        private void reloadFontOf<BG>(UIDropDown target) where BG : BoardGeneratorParent<BG>
-        {
-            DTBUtils.doLog($"{Redirector<BG>.instance}");
-            List<string> items = Font.GetOSInstalledFontNames().ToList();
-            items.Insert(0, Locale.Get("DTB_DEFAULT_FONT_LABEL"));
-            target.items = items.ToArray();
-            string filename = Redirector<BG>.instance.DrawFont.baseFont.fontNames[0];
-            if (items.Contains(filename))
-            {
-                target.selectedValue = filename;
-            }
-            else
-            {
-                target.selectedIndex = 0;
-                Redirector<BG>.instance.ChangeFont(null);
-            }
 
-        }
 
 
     }

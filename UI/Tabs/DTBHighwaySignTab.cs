@@ -23,6 +23,9 @@ namespace Klyte.DynamicTextBoards.UI
 
         private UIHelperExtension m_uiHelperHS;
 
+        private UIDropDown m_fontSelect;
+
+
         private UIButton m_buttonTool;
 
 
@@ -57,6 +60,7 @@ namespace Klyte.DynamicTextBoards.UI
         private UITextField m_textItemName;
         private UIDropDown m_dropdownTextContent;
         private UITextField m_customText;
+        private UIDropDown m_overrideFontText;
         private UITextField[] m_posVectorEditorText;
         private UITextField[] m_rotVectorEditorText;
         private UIColorField m_colorEditorText;
@@ -103,7 +107,19 @@ namespace Klyte.DynamicTextBoards.UI
 
             m_uiHelperHS = new UIHelperExtension(mainContainer);
 
+            AddDropdown(Locale.Get("DTB_FONT_PLACED_PROPS"), out m_fontSelect, m_uiHelperHS, new string[0], OnSetFont);
+            m_fontSelect.width -= 40;
+            var parent = m_fontSelect.GetComponentInParent<UIPanel>();
+            var actionButton = ConfigureActionButton(parent);
+            SetIcon(actionButton, "Reload", Color.white);
+            actionButton.eventClick += (x, t) =>
+            {
+                DTBUtils.ReloadFontsOf<BoardGeneratorHighwaySigns>(m_fontSelect);
+            };
+            DTBUtils.ReloadFontsOf<BoardGeneratorHighwaySigns>(m_fontSelect);
+
             m_buttonTool = (UIButton)m_uiHelperHS.AddButton(Locale.Get("DTB_PICK_A_SEGMENT"), EnablePickTool);
+            DTBUtils.LimitWidth(m_buttonTool, m_uiHelperHS.self.width - 20, true);
 
             m_contentContainer = m_uiHelperHS.AddGroupExtended(Locale.Get("DTB_PICKED_SEGMENT_DATA"));
             ((UIPanel)m_contentContainer.self).backgroundSprite = "";
@@ -235,12 +251,13 @@ namespace Klyte.DynamicTextBoards.UI
 
             var groupTexts = m_pseudoTabTextsContainer.AddTogglableGroup(Locale.Get("DTB_TEXTS_COMMON_CONFIGURATION"), out UILabel lblTxt);
 
-            m_colorEditorText = groupTexts.AddColorPicker(Locale.Get("DTB_TEXT_COLOR"), Color.white, SetTextColor);
             AddTextField(Locale.Get("DTB_TEXT_TAB_TITLE"), out m_textItemName, groupTexts, SetTextItemName);
+            m_colorEditorText = groupTexts.AddColorPicker(Locale.Get("DTB_TEXT_COLOR"), Color.white, SetTextColor);
             DTBUtils.LimitWidth(m_colorEditorText.parent.GetComponentInChildren<UILabel>(), groupTexts.self.width / 2, true);
             AddDropdown(Locale.Get("DTB_TEXT_CONTENT"), out m_dropdownTextContent, groupTexts, Enum.GetNames(typeof(OwnNameContent)).Select(x => Locale.Get("DTB_OWN_NAME_CONTENT", x)).ToArray(), SetTextOwnNameContent);
             AddTextField(Locale.Get("DTB_CUSTOM_TEXT"), out m_customText, groupTexts, SetTextCustom);
             m_dropdownTextContent.eventSelectedIndexChanged += (e, idx) => m_customText.GetComponentInParent<UIPanel>().isVisible = idx == (int)OwnNameContent.Custom;
+            AddDropdown(Locale.Get("DTB_OVERRIDE_FONT"), out m_overrideFontText, groupTexts, new string[0], SetOverrideFont);
 
             groupTexts = m_pseudoTabTextsContainer.AddTogglableGroup(Locale.Get("DTB_TEXTS_SIZE_POSITION"));
             AddVector3Field(Locale.Get("DTB_RELATIVE_POS"), out m_posVectorEditorText, groupTexts, SetTextRelPosition);
@@ -638,6 +655,20 @@ namespace Klyte.DynamicTextBoards.UI
             SafeActionInTextBoard(descriptor => descriptor.m_nightEmissiveMultiplier = val);
         }
 
+        private void SetOverrideFont(int idx)
+        {
+            SafeActionInTextBoard(descriptor =>
+            {
+                descriptor.m_overrideFont = idx > 0 ? m_overrideFontText.selectedValue : null;
+                descriptor.m_cachedTextContent = (OwnNameContent)(-1);
+            });
+        }
+
+        private void OnSetFont(int idx)
+        {
+            if (idx >= 0) Redirector<BoardGeneratorHighwaySigns>.instance.ChangeFont(idx == 0 ? null : m_fontSelect.items[idx]);
+        }
+
         private void SafeActionInTextBoard(Action<BoardTextDescriptorHigwaySign> toDo)
         {
             if (m_currentSelectedSegment != 0 && !m_isLoading)
@@ -880,6 +911,7 @@ namespace Klyte.DynamicTextBoards.UI
             m_textResizeYOnOverflow.isChecked = (descriptor?.m_applyOverflowResizingOnY ?? false);
             m_textLuminosityDay.value = (descriptor?.m_dayEmissiveMultiplier ?? 0);
             m_textLuminosityNight.value = (descriptor?.m_nightEmissiveMultiplier ?? 0);
+            ReloadFontsOverride(m_overrideFontText, descriptor?.m_overrideFont);
         }
 
         private void CreateGroupFileSelect(string i18n, OnDropdownSelectionChanged onChanged, out UIDropDown dropDown)
@@ -887,6 +919,23 @@ namespace Klyte.DynamicTextBoards.UI
             dropDown = m_uiHelperHS.AddDropdownLocalized(i18n, new String[0], -1, onChanged);
             dropDown.width = 370;
             m_uiHelperHS.AddSpace(20);
+        }
+
+
+
+        private void ReloadFontsOverride(UIDropDown target, string currentVal)
+        {
+            List<string> items = Font.GetOSInstalledFontNames().ToList();
+            items.Insert(0, Locale.Get("DTB_USE_DEFAULT_FONT_HS"));
+            target.items = items.ToArray();
+            if (items.Contains(currentVal))
+            {
+                target.selectedIndex = items.IndexOf(currentVal);
+            }
+            else
+            {
+                target.selectedIndex = 0;
+            }
         }
 
         #endregion

@@ -91,9 +91,9 @@ namespace Klyte.DynamicTextBoards.Overrides
             }
         }
 
-        protected override void OnTextureRebuilt()
+        protected override void OnTextureRebuiltImpl(Font obj)
         {
-            m_updateData = new UpdateFlagsBuildings[BuildingManager.MAX_BUILDING_COUNT];
+            if (obj == DrawFont.baseFont) m_updateData = new UpdateFlagsBuildings[BuildingManager.MAX_BUILDING_COUNT];
         }
 
 
@@ -153,8 +153,9 @@ namespace Klyte.DynamicTextBoards.Overrides
 
 
         #region Upadate Data
-        protected override BasicRenderInformation GetOwnNameMesh(ushort buildingID, int boardIdx, int secIdx)
+        protected override BasicRenderInformation GetOwnNameMesh(ushort buildingID, int boardIdx, int secIdx, out UIFont font)
         {
+            font = DrawFont;
             if (m_boardsContainers[buildingID].m_nameSubInfo == null || !m_updateData[buildingID].m_nameMesh)
             {
                 RefreshNameData(ref m_boardsContainers[buildingID].m_nameSubInfo, BuildingManager.instance.GetBuildingName(buildingID, new InstanceID()) ?? "DUMMY!!!!!");

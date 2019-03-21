@@ -26,7 +26,7 @@ namespace Klyte.DynamicTextBoards.Overrides
     public class BoardGeneratorHighwaySigns : BoardGeneratorParent<BoardGeneratorHighwaySigns, BoardBunchContainerHighwaySign, CacheControlHighwaySign, BasicRenderInformation, BoardDescriptorHigwaySign, BoardTextDescriptorHigwaySign, ushort>, ISerializableDataExtension
     {
 
-
+        public Dictionary<string, Tuple<UIFont, uint>> m_fontCache = new Dictionary<string, Tuple<UIFont, uint>>();
         public BasicRenderInformation[] m_cachedExitTitles;
         public BasicRenderInformation[] m_cachedDistanceMeshes;
         public List<ushort> m_destroyQueue = new List<ushort>();
@@ -69,8 +69,12 @@ namespace Klyte.DynamicTextBoards.Overrides
         }
 
 
-        protected override void OnTextureRebuilt()
+        protected override void OnTextureRebuiltImpl(Font obj)
         {
+            if (m_fontCache.ContainsKey(obj?.fontNames?.ElementAtOrDefault(0)))
+            {
+                m_fontCache[obj.fontNames[0]] = Tuple.New(m_fontCache[obj.fontNames[0]].First, SimulationManager.instance.m_currentTickIndex);
+            }
         }
 
         private void onSegmentReleased(ushort segmentId)
@@ -266,12 +270,12 @@ namespace Klyte.DynamicTextBoards.Overrides
 
 
         #region Upadate Data
-        protected override BasicRenderInformation GetOwnNameMesh(ushort buildingID, int boardIdx, int secIdx)
+        protected override BasicRenderInformation GetOwnNameMesh(ushort buildingID, int boardIdx, int secIdx, out UIFont font)
         {
-
+            font = m_fontCache.TryGetValue(m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].m_overrideFont ?? "", out Tuple<UIFont, uint> fontCacheVal) ? fontCacheVal.First : DrawFont;
             if (m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].GeneratedFixedTextRenderInfo == null
                 || m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].m_cachedTextContent != m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].m_ownTextContent
-                || m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].GeneratedFixedTextRenderInfoTick < lastFontUpdateFrame)
+                || m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].GeneratedFixedTextRenderInfoTick < (fontCacheVal?.Second ?? lastFontUpdateFrame))
             {
                 var result = m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].GeneratedFixedTextRenderInfo;
                 var resultText = "X";
@@ -283,48 +287,60 @@ namespace Klyte.DynamicTextBoards.Overrides
                     case OwnNameContent.Custom:
                         resultText = m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].m_fixedText ?? "-- NULL --";
                         break;
-                    //case OwnNameContent.NextExitNumber:
-                    //    break;
-                    //case OwnNameContent.NextExitDistanceMeters:
-                    //    break;
-                    //case OwnNameContent.NextExitDistanceKilometers:
-                    //    break;
-                    //case OwnNameContent.NextExitImmediateRoad:
-                    //    break;
-                    //case OwnNameContent.NextExitNearestAvenue1:
-                    //    break;
-                    //case OwnNameContent.NextExitNearestAvenue2:
-                    //    break;
-                    //case OwnNameContent.NextExitNearestAvenue3:
-                    //    break;
-                    //case OwnNameContent.NextExitCurrentDistrict:
-                    //    break;
-                    //case OwnNameContent.NextExitDistrictDestination1A:
-                    //    break;
-                    //case OwnNameContent.NextExitDistrictDestination1B:
-                    //    break;
-                    //case OwnNameContent.NextExitDistrictDestination2A:
-                    //    break;
-                    //case OwnNameContent.NextExitDistrictDestination2B:
-                    //    break;
-                    //case OwnNameContent.NextExitDistrictDestination3A:
-                    //    break;
-                    //case OwnNameContent.NextExitDistrictDestination3B:
-                    //    break;
+                        //case OwnNameContent.NextExitNumber:
+                        //    break;
+                        //case OwnNameContent.NextExitDistanceMeters:
+                        //    break;
+                        //case OwnNameContent.NextExitDistanceKilometers:
+                        //    break;
+                        //case OwnNameContent.NextExitImmediateRoad:
+                        //    break;
+                        //case OwnNameContent.NextExitNearestAvenue1:
+                        //    break;
+                        //case OwnNameContent.NextExitNearestAvenue2:
+                        //    break;
+                        //case OwnNameContent.NextExitNearestAvenue3:
+                        //    break;
+                        //case OwnNameContent.NextExitCurrentDistrict:
+                        //    break;
+                        //case OwnNameContent.NextExitDistrictDestination1A:
+                        //    break;
+                        //case OwnNameContent.NextExitDistrictDestination1B:
+                        //    break;
+                        //case OwnNameContent.NextExitDistrictDestination2A:
+                        //    break;
+                        //case OwnNameContent.NextExitDistrictDestination2B:
+                        //    break;
+                        //case OwnNameContent.NextExitDistrictDestination3A:
+                        //    break;
+                        //case OwnNameContent.NextExitDistrictDestination3B:
+                        //    break;
                 }
-                if (m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].m_allCaps)
+                //if (m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].m_allCaps)
+                //{
+                //    resultText = resultText.ToUpper();
+                //}
+                UIFont overrideFont = null;
+                if (!m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].m_overrideFont.IsNullOrWhiteSpace())
                 {
-                    resultText = resultText.ToUpper();
+                    if (!m_fontCache.ContainsKey(m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].m_overrideFont))
+                    {
+                        BuildSurfaceFont(out UIDynamicFont surfaceFont, m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].m_overrideFont);
+                        if (surfaceFont.baseFont == null) m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].m_overrideFont = null;
+                        else m_fontCache[m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].m_overrideFont] = Tuple.New((UIFont)surfaceFont, 0u);
+                    }
+                    overrideFont = m_fontCache[m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].m_overrideFont].First;
                 }
-                RefreshNameData(ref result, resultText);
+                RefreshNameData(ref result, resultText, overrideFont);
                 m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].GeneratedFixedTextRenderInfo = result;
                 m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].m_cachedTextContent = m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].m_ownTextContent;
             }
             return m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].GeneratedFixedTextRenderInfo;
         }
 
-        protected override BasicRenderInformation GetMeshCurrentNumber(ushort id, int boardIdx, int kilometers)
+        protected override BasicRenderInformation GetMeshCurrentNumber(ushort id, int boardIdx, int kilometers, out UIFont font)
         {
+            font = DrawFont;
             if (m_cachedExitTitles.Length <= kilometers + 1)
             {
                 m_cachedExitTitles = new BasicRenderInformation[kilometers + 1];
@@ -435,8 +451,8 @@ namespace Klyte.DynamicTextBoards.Overrides
             public OwnNameContent m_ownTextContent;
             [XmlIgnore]
             public OwnNameContent m_cachedTextContent;
-            [XmlAttribute("allCaps")]
-            public bool m_allCaps;
+            [XmlAttribute("overrideFont")]
+            public string m_overrideFont;
 
             [XmlAttribute("saveName")]
             public string SaveName { get; set; }
