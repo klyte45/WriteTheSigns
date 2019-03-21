@@ -451,12 +451,15 @@ namespace Klyte.DynamicTextBoards.Overrides
 
     public class IBoardBunchContainer<CC, BRI> where CC : CacheControl where BRI : BasicRenderInformation
     {
+        [XmlIgnore]
         internal BRI m_nameSubInfo;
+        [XmlIgnore]
         internal CC[] m_boardsData;
     }
 
     public class CacheControl
     {
+        [XmlIgnore]
         public PropInfo m_cachedProp;
 
 

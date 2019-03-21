@@ -33,7 +33,7 @@ namespace Klyte.DynamicTextBoards.UI
         }
 
         private UIPanel mainPanel;
-        
+
         private UITabstrip m_StripMain;
 
         #region Awake
@@ -109,6 +109,7 @@ namespace Klyte.DynamicTextBoards.UI
             m_StripMain.AddTab(objectName, tab.gameObject, contentContainer.gameObject);
 
             DTBUtils.CreateScrollPanel(contentContainer, out UIScrollablePanel scrollablePanel, out UIScrollbar scrollbar, contentContainer.width - 20, contentContainer.height - 5, new Vector3()).self.gameObject.AddComponent<T>();
+            scrollablePanel.scrollPadding = new RectOffset(10, 10, 10, 10);
         }
         #endregion
     }

@@ -18,6 +18,7 @@ using static Klyte.DynamicTextBoards.Overrides.BoardGeneratorHighwaySigns;
 using System.IO;
 using ColossalFramework.IO;
 using System.Xml;
+using Klyte.DynamicTextBoards.Libraries;
 
 namespace Klyte.DynamicTextBoards.Overrides
 {
@@ -282,34 +283,34 @@ namespace Klyte.DynamicTextBoards.Overrides
                     case OwnNameContent.Custom:
                         resultText = m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].m_fixedText ?? "-- NULL --";
                         break;
-                    case OwnNameContent.NextExitNumber:
-                        break;
-                    case OwnNameContent.NextExitDistanceMeters:
-                        break;
-                    case OwnNameContent.NextExitDistanceKilometers:
-                        break;
-                    case OwnNameContent.NextExitImmediateRoad:
-                        break;
-                    case OwnNameContent.NextExitNearestAvenue1:
-                        break;
-                    case OwnNameContent.NextExitNearestAvenue2:
-                        break;
-                    case OwnNameContent.NextExitNearestAvenue3:
-                        break;
-                    case OwnNameContent.NextExitCurrentDistrict:
-                        break;
-                    case OwnNameContent.NextExitDistrictDestination1A:
-                        break;
-                    case OwnNameContent.NextExitDistrictDestination1B:
-                        break;
-                    case OwnNameContent.NextExitDistrictDestination2A:
-                        break;
-                    case OwnNameContent.NextExitDistrictDestination2B:
-                        break;
-                    case OwnNameContent.NextExitDistrictDestination3A:
-                        break;
-                    case OwnNameContent.NextExitDistrictDestination3B:
-                        break;
+                    //case OwnNameContent.NextExitNumber:
+                    //    break;
+                    //case OwnNameContent.NextExitDistanceMeters:
+                    //    break;
+                    //case OwnNameContent.NextExitDistanceKilometers:
+                    //    break;
+                    //case OwnNameContent.NextExitImmediateRoad:
+                    //    break;
+                    //case OwnNameContent.NextExitNearestAvenue1:
+                    //    break;
+                    //case OwnNameContent.NextExitNearestAvenue2:
+                    //    break;
+                    //case OwnNameContent.NextExitNearestAvenue3:
+                    //    break;
+                    //case OwnNameContent.NextExitCurrentDistrict:
+                    //    break;
+                    //case OwnNameContent.NextExitDistrictDestination1A:
+                    //    break;
+                    //case OwnNameContent.NextExitDistrictDestination1B:
+                    //    break;
+                    //case OwnNameContent.NextExitDistrictDestination2A:
+                    //    break;
+                    //case OwnNameContent.NextExitDistrictDestination2B:
+                    //    break;
+                    //case OwnNameContent.NextExitDistrictDestination3A:
+                    //    break;
+                    //case OwnNameContent.NextExitDistrictDestination3B:
+                    //    break;
                 }
                 if (m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].m_allCaps)
                 {
@@ -360,8 +361,11 @@ namespace Klyte.DynamicTextBoards.Overrides
 
         public class CacheControlHighwaySign : CacheControl
         {
+            [XmlElement("descriptor")]
             public BoardDescriptorHigwaySign descriptor;
+            [XmlIgnore]
             public Vector3 cachedPosition;
+            [XmlIgnore]
             public Vector3 cachedRotation;
 
             public string Serialize()
@@ -408,7 +412,7 @@ namespace Klyte.DynamicTextBoards.Overrides
             }
         }
 
-        public class BoardDescriptorHigwaySign : BoardDescriptorParent<BoardDescriptorHigwaySign, BoardTextDescriptorHigwaySign>
+        public class BoardDescriptorHigwaySign : BoardDescriptorParent<BoardDescriptorHigwaySign, BoardTextDescriptorHigwaySign>, ILibable
         {
             [XmlAttribute("inverted")]
             public bool m_invertSign = false;
@@ -422,8 +426,10 @@ namespace Klyte.DynamicTextBoards.Overrides
                 get => ColorExtensions.ToRGB(m_color);
                 set => m_color = ColorExtensions.FromRGB(value);
             }
+            [XmlAttribute("saveName")]
+            public string SaveName { get; set; }
         }
-        public class BoardTextDescriptorHigwaySign : BoardTextDescriptorParent<BoardTextDescriptorHigwaySign>
+        public class BoardTextDescriptorHigwaySign : BoardTextDescriptorParent<BoardTextDescriptorHigwaySign>, ILibable
         {
             [XmlAttribute("nameContent")]
             public OwnNameContent m_ownTextContent;
@@ -432,31 +438,43 @@ namespace Klyte.DynamicTextBoards.Overrides
             [XmlAttribute("allCaps")]
             public bool m_allCaps;
 
+            [XmlAttribute("saveName")]
+            public string SaveName { get; set; }
         }
 
         public enum OwnNameContent
         {
             None,
             Custom,
-            NextExitNumber,
-            NextExitDistanceMeters,
-            NextExitDistanceKilometers,
-            NextExitImmediateRoad,
-            NextExitNearestAvenue1,
-            NextExitNearestAvenue2,
-            NextExitNearestAvenue3,
-            NextExitCurrentDistrict,
-            NextExitDistrictDestination1A,
-            NextExitDistrictDestination1B,
-            NextExitDistrictDestination2A,
-            NextExitDistrictDestination2B,
-            NextExitDistrictDestination3A,
-            NextExitDistrictDestination3B,
+            //NextExitNumber,
+            //NextExitDistanceMeters,
+            //NextExitDistanceKilometers,
+            //NextExitImmediateRoad,
+            //NextExitNearestAvenue1,
+            //NextExitNearestAvenue2,
+            //NextExitNearestAvenue3,
+            //NextExitCurrentDistrict,
+            //NextExitDistrictDestination1A,
+            //NextExitDistrictDestination1B,
+            //NextExitDistrictDestination2A,
+            //NextExitDistrictDestination2B,
+            //NextExitDistrictDestination3A,
+            //NextExitDistrictDestination3B,
         }
 
-        public class BoardBunchContainerHighwaySign : IBoardBunchContainer<CacheControlHighwaySign, BasicRenderInformation>
+        public class BoardBunchContainerHighwaySign : IBoardBunchContainer<CacheControlHighwaySign, BasicRenderInformation>, ILibable
         {
+            [XmlIgnore]
             public bool cached = false;
+            [XmlElement("descriptors")]
+            public ListWrapper<BoardDescriptorHigwaySign> Descriptors
+            {
+                get => new ListWrapper<BoardDescriptorHigwaySign> { listVal = m_boardsData.Select(x => x.descriptor).ToList() };
+                set => m_boardsData = value.listVal.Select(x => new CacheControlHighwaySign { descriptor = x }).ToArray();
+            }
+
+            [XmlAttribute("saveName")]
+            public string SaveName { get; set; }
         }
 
     }
