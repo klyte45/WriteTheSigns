@@ -19,7 +19,7 @@ namespace Klyte.DynamicTextBoards.Tools
             if (m_hoverSegment != 0)
             {
                 Color toolColor = m_hoverColor;
-                RenderOverlay(cameraInfo, toolColor, m_despawnColor, m_hoverSegment);
+                RenderOverlay(cameraInfo, toolColor,  m_hoverSegment);
                 return;
             }
 

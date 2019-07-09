@@ -34,17 +34,17 @@ namespace Klyte.DynamicTextBoards.Utils
         static AssetBundle memoryLoaded;
         public static void ReloadFromDisk()
         {
-            DTBUtils.doErrorLog("LOADING ");
+            LogUtils.DoErrorLog("LOADING ");
             memoryLoaded?.Unload(true);
             memoryLoaded = AssetBundle.LoadFromFile("Q:/SkylineMods/TesteLinha/TransportLinesManager/TextProp/TestProj/New Resource.unity3d");
             if (memoryLoaded != null)
             {
-                DTBUtils.doErrorLog("FOUND");
+                LogUtils.DoErrorLog("FOUND");
                 DTBResourceLoader.instance.ReadShaders(memoryLoaded, out m_loadedShaders);
             }
             else
             {
-                DTBUtils.doErrorLog("NOT FOUND");
+                LogUtils.DoErrorLog("NOT FOUND");
             }
         }
 

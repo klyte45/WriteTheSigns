@@ -3,7 +3,6 @@ using ColossalFramework.Globalization;
 using ColossalFramework.Math;
 using ColossalFramework.UI;
 using Klyte.Commons.Extensors;
-using Klyte.Commons.Overrides;
 using Klyte.Commons.Utils;
 using Klyte.DynamicTextBoards.Utils;
 using System;
@@ -12,7 +11,7 @@ using System.Linq;
 using System.Xml.Serialization;
 using UnityEngine;
 using static BuildingInfo;
-using static Klyte.Commons.Utils.KlyteUtils;
+using static Klyte.Commons.Utils.SegmentUtils;
 
 namespace Klyte.DynamicTextBoards.Overrides
 {
@@ -71,11 +70,11 @@ namespace Klyte.DynamicTextBoards.Overrides
             BuildSurfaceFont(out m_font, "Highway Gothic");
 
             #region Hooks
-            var postRenderMeshs = GetType().GetMethod("AfterRenderNode", allFlags);
-            var afterRenderSegment = GetType().GetMethod("AfterRenderSegment", allFlags);
-            doLog($"Patching=> {postRenderMeshs} {postRenderMeshs.IsStatic}");
-            AddRedirect(typeof(RoadBaseAI).GetMethod("RenderNode", allFlags), null, postRenderMeshs);
-            AddRedirect(typeof(NetSegment).GetMethod("RenderInstance", new Type[] { typeof(RenderManager.CameraInfo), typeof(ushort), typeof(int) }), null, afterRenderSegment);
+            var postRenderMeshs = GetType().GetMethod("AfterRenderNode", RedirectorUtils.allFlags);
+            var afterRenderSegment = GetType().GetMethod("AfterRenderSegment", RedirectorUtils.allFlags);
+            LogUtils.DoLog($"Patching=> {postRenderMeshs} {postRenderMeshs.IsStatic}");
+            RedirectorInstance.AddRedirect(typeof(RoadBaseAI).GetMethod("RenderNode", RedirectorUtils.allFlags), null, postRenderMeshs);
+            RedirectorInstance.AddRedirect(typeof(NetSegment).GetMethod("RenderInstance", new Type[] { typeof(RenderManager.CameraInfo), typeof(ushort), typeof(int) }), null, afterRenderSegment);
             #endregion
         }
 
@@ -136,13 +135,13 @@ namespace Klyte.DynamicTextBoards.Overrides
         public static void AfterRenderNode(RenderManager.CameraInfo cameraInfo, ushort nodeID, ref NetNode nodeData)
         {
 
-            instance.AfterRenderInstanceImpl(cameraInfo, nodeID, ref nodeData);
+            Instance.AfterRenderInstanceImpl(cameraInfo, nodeID, ref nodeData);
 
         }
         public static void AfterRenderSegment(RenderManager.CameraInfo cameraInfo, ushort segmentID, int layerMask)
         {
 
-            instance.AfterRenderSegmentImpl(cameraInfo, segmentID, layerMask);
+            Instance.AfterRenderSegmentImpl(cameraInfo, segmentID, layerMask);
 
         }
         public void AfterRenderInstanceImpl(RenderManager.CameraInfo cameraInfo, ushort nodeID, ref NetNode data)
@@ -170,7 +169,7 @@ namespace Klyte.DynamicTextBoards.Overrides
                     m_highwayMarksObjects.Remove(removeTarget);
                     m_destroyQueue.Remove(removeTarget);
 
-                    var segments = DTBUtils.GetSegmentRoadEdges(segmentId, false, false, false, out ComparableRoad start, out ComparableRoad end);
+                    var segments = SegmentUtils.GetSegmentRoadEdges(segmentId, false, false, false, out ComparableRoad start, out ComparableRoad end);
                     if (segments == null)
                     {
                         RoadIdentifier tuple = new RoadIdentifier(default(ComparableRoad), default(ComparableRoad), new ushort[] { segmentId });
@@ -194,7 +193,7 @@ namespace Klyte.DynamicTextBoards.Overrides
                                 NetManager.instance.m_segments.m_buffer[segmentRef.First].GetClosestPositionAndDirection(NetManager.instance.m_segments.m_buffer[segmentRef.First].m_middlePosition, out Vector3 pos, out Vector3 dir);
                                 var rotation = dir.GetAngleXZ();
                                 if (invert) rotation += 180;
-                                var cardinalDirection = KlyteUtils.GetCardinalDirection(start, end);
+                                var cardinalDirection = SegmentUtils.GetCardinalDirection(start, end);
                                 if (roadInverted)
                                 {
                                     cardinalDirection = (byte)((cardinalDirection + 4) % 8);
@@ -203,7 +202,7 @@ namespace Klyte.DynamicTextBoards.Overrides
                                 {
                                     segmentId = segmentRef.First,
                                     kilometer = oldMeterKm + 1,
-                                    position = segmentObj.m_middlePosition + VectorUtils.X_Y(DTBUtils.DegreeToVector2(rotation - 90)) * (segmentObj.Info.m_halfWidth - 1),
+                                    position = segmentObj.m_middlePosition + VectorUtils.X_Y(KlyteMathUtils.DegreeToVector2(rotation - 90)) * (segmentObj.Info.m_halfWidth - 1),
                                     cardinalDirection8 = cardinalDirection,
                                     rotation = rotation + 90
 
@@ -214,7 +213,7 @@ namespace Klyte.DynamicTextBoards.Overrides
                                     {
                                         segmentId = segmentRef.First,
                                         kilometer = oldMeterKm + 1,
-                                        position = segmentObj.m_middlePosition + VectorUtils.X_Y(DTBUtils.DegreeToVector2(rotation + 90)) * (segmentObj.Info.m_halfWidth - 1),
+                                        position = segmentObj.m_middlePosition + VectorUtils.X_Y(KlyteMathUtils.DegreeToVector2(rotation + 90)) * (segmentObj.Info.m_halfWidth - 1),
                                         cardinalDirection8 = (byte)((cardinalDirection + (segmentObj.Info.m_hasBackwardVehicleLanes && segmentObj.Info.m_hasForwardVehicleLanes ? 4 : 0)) % 8),
                                         rotation = segmentObj.Info.m_hasBackwardVehicleLanes && segmentObj.Info.m_hasForwardVehicleLanes ? rotation - 90 : rotation + 90
                                     });
@@ -264,7 +263,7 @@ namespace Klyte.DynamicTextBoards.Overrides
             var direction = m_highwayMarksObjects[id][boardIdx].cardinalDirection8;
             if (m_cachedDirectionMeshes[direction] == null || lastFontUpdateFrame > m_cachedDirectionMeshes[direction].m_frameDrawTime)
             {
-                doLog($"!nameUpdated Node1 {kilometers} ({direction})");
+                LogUtils.DoLog($"!nameUpdated Node1 {kilometers} ({direction})");
                 RefreshNameData(ref m_cachedDirectionMeshes[direction], Locale.Get("KCM_CARDINAL_POINT_LONG", direction.ToString()).ToUpper());
 
             }
@@ -280,7 +279,7 @@ namespace Klyte.DynamicTextBoards.Overrides
             }
             if (m_cachedKilometerMeshes[kilometers] == null || lastFontUpdateFrame > m_cachedKilometerMeshes[kilometers].m_frameDrawTime)
             {
-                doLog($"!nameUpdated Node1 {kilometers}");
+                LogUtils.DoLog($"!nameUpdated Node1 {kilometers}");
                 RefreshNameData(ref m_cachedKilometerMeshes[kilometers], $"km\n{kilometers}");
             }
             return m_cachedKilometerMeshes[kilometers];

@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using Klyte.DynamicTextBoards.Overrides;
+using Klyte.Commons.Utils;
 
 namespace Klyte.DynamicTextBoards.UI
 {
@@ -29,17 +30,17 @@ namespace Klyte.DynamicTextBoards.UI
 
             m_uiHelperDistrict = new UIHelperExtension(mainContainer);
 
-            ((UIScrollablePanel)m_uiHelperDistrict.self).autoLayoutDirection = LayoutDirection.Horizontal;
-            ((UIScrollablePanel)m_uiHelperDistrict.self).wrapLayout = true;
+            ((UIScrollablePanel)m_uiHelperDistrict.Self).autoLayoutDirection = LayoutDirection.Horizontal;
+            ((UIScrollablePanel)m_uiHelperDistrict.Self).wrapLayout = true;
 
-            CreateGroupFileSelect("DTB_FONT_STATIONS", (int idx) => Redirector<BoardGeneratorBuildings>.instance.ChangeFont(idx == 0 ? null : m_fontStationBuildings.items[idx]), out m_fontStationBuildings);
-            CreateGroupFileSelect("DTB_FONT_HIGHWAYS", (int idx) => Redirector<BoardGeneratorHighwayMileage>.instance.ChangeFont(idx == 0 ? null : m_fontHighwayProps.items[idx]), out m_fontHighwayProps);
-            CreateGroupFileSelect("DTB_FONT_ST_CORNERS", (int idx) => Redirector<BoardGeneratorRoadNodes>.instance.ChangeFont(idx == 0 ? null : m_fontStreetCorners.items[idx]), out m_fontStreetCorners);
+            CreateGroupFileSelect("DTB_FONT_STATIONS", (int idx) => BoardGeneratorBuildings.Instance.ChangeFont(idx == 0 ? null : m_fontStationBuildings.items[idx]), out m_fontStationBuildings);
+            CreateGroupFileSelect("DTB_FONT_HIGHWAYS", (int idx) => BoardGeneratorHighwayMileage.Instance.ChangeFont(idx == 0 ? null : m_fontHighwayProps.items[idx]), out m_fontHighwayProps);
+            CreateGroupFileSelect("DTB_FONT_ST_CORNERS", (int idx) => BoardGeneratorRoadNodes.Instance.ChangeFont(idx == 0 ? null : m_fontStreetCorners.items[idx]), out m_fontStreetCorners);
 
 
             m_uiHelperDistrict.AddSpace(1);
-            DTBUtils.LimitWidth((UIButton)m_uiHelperDistrict.AddButton(Locale.Get("DTB_RELOAD_FONTS"), reloadDropDownsFonts), 380);
-            DTBUtils.LimitWidth((UIButton)m_uiHelperDistrict.AddButton(Locale.Get("DTB_RELOAD_CONFIGS"), BoardGeneratorBuildings.instance.LoadAllBuildingConfigurations), 380);
+           KlyteMonoUtils.LimitWidth((UIButton)m_uiHelperDistrict.AddButton(Locale.Get("DTB_RELOAD_FONTS"), reloadDropDownsFonts), 380);
+           KlyteMonoUtils.LimitWidth((UIButton)m_uiHelperDistrict.AddButton(Locale.Get("DTB_RELOAD_CONFIGS"), BoardGeneratorBuildings.Instance.LoadAllBuildingConfigurations), 380);
             reloadDropDownsFonts();
 
         }

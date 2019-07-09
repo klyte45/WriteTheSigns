@@ -3,7 +3,7 @@ using ColossalFramework.Globalization;
 using ColossalFramework.Math;
 using ColossalFramework.UI;
 using Klyte.Commons.Extensors;
-using Klyte.Commons.Overrides;
+using Klyte.DynamicTextBoards.Overrides;
 using Klyte.Commons.Utils;
 using Klyte.DynamicTextBoards.Utils;
 using System;
@@ -14,8 +14,8 @@ using System.Xml;
 using System.Xml.Serialization;
 using UnityEngine;
 using static BuildingInfo;
-using static Klyte.Commons.Utils.KlyteUtils;
 using static Klyte.DynamicTextBoards.Overrides.BoardGeneratorBuildings;
+using static Klyte.Commons.Utils.StopSearchUtils;
 
 namespace Klyte.DynamicTextBoards.Overrides
 {
@@ -48,15 +48,15 @@ namespace Klyte.DynamicTextBoards.Overrides
             InstanceManagerOverrides.eventOnBuildingRenamed += onBuildingNameChanged;
 
             #region Hooks
-            var postRenderMeshs = GetType().GetMethod("AfterRenderMeshes", allFlags);
-            doLog($"Patching=> {postRenderMeshs}");
-            AddRedirect(typeof(BuildingAI).GetMethod("RenderMeshes", allFlags), null, postRenderMeshs);
+            var postRenderMeshs = GetType().GetMethod("AfterRenderMeshes", RedirectorUtils.allFlags);
+            LogUtils.DoLog($"Patching=> {postRenderMeshs}");
+            RedirectorInstance.AddRedirect(typeof(BuildingAI).GetMethod("RenderMeshes", RedirectorUtils.allFlags), null, postRenderMeshs);
             #endregion
         }
 
         public void LoadAllBuildingConfigurations()
         {
-            ScanPrefabsFolders($"{DynamicTextBoardsMod.defaultFileNameXml}.xml", LoadDescriptorsFromXml);
+            FileUtils.ScanPrefabsFolders($"{DynamicTextBoardsMod.defaultFileNameXml}.xml", LoadDescriptorsFromXml);
             foreach (var filename in Directory.GetFiles(DynamicTextBoardsMod.defaultBuildingsConfigurationFolder, "*.xml"))
             {
                 using (var stream = File.OpenRead(filename))
@@ -112,7 +112,7 @@ namespace Klyte.DynamicTextBoards.Overrides
 
         public static void AfterRenderMeshes(BuildingAI __instance, RenderManager.CameraInfo cameraInfo, ushort buildingID, ref Building data, int layerMask, ref RenderManager.Instance instance)
         {
-            BoardGeneratorBuildings.instance.AfterRenderMeshesImpl(cameraInfo, buildingID, ref data, layerMask, ref instance, __instance);
+            Instance.AfterRenderMeshesImpl(cameraInfo, buildingID, ref data, layerMask, ref instance, __instance);
         }
 
         public void AfterRenderMeshesImpl(RenderManager.CameraInfo cameraInfo, ushort buildingID, ref Building data, int layerMask, ref RenderManager.Instance renderInstance, BuildingAI __instance)
@@ -218,17 +218,17 @@ namespace Klyte.DynamicTextBoards.Overrides
                             }
                         }
                     }
-                    var nearStops = KlyteUtils.FindNearStops(data.m_position, ItemClass.Service.PublicTransport, ItemClass.Service.PublicTransport, VehicleInfo.VehicleType.None, true, 400f, out List<float> dist, out List<Vector3> absolutePos, boundaries);
+                    var nearStops = StopSearchUtils.FindNearStops(data.m_position, ItemClass.Service.PublicTransport, ItemClass.Service.PublicTransport, VehicleInfo.VehicleType.None, true, 400f, out List<float> dist, out List<Vector3> absolutePos, boundaries);
                     if (nearStops.Count > 0)
                     {
                         bbcb.m_platformToLine = new ushort[m_buildingStopsDescriptor[data.Info.name].Length][];
-                        var nearStopsParsed = nearStops.Select((x, i) => new { stopId = x, relPos = DTBUtils.CalculatePositionRelative(absolutePos[i], BuildingManager.instance.m_buildings.m_buffer[buildingID].m_angle, BuildingManager.instance.m_buildings.m_buffer[buildingID].m_position) })
+                        var nearStopsParsed = nearStops.Select((x, i) => new { stopId = x, relPos = MapUtils.CalculatePositionRelative(absolutePos[i], BuildingManager.instance.m_buildings.m_buffer[buildingID].m_angle, BuildingManager.instance.m_buildings.m_buffer[buildingID].m_position) })
                          .Select((y, i) => Tuple.New(platforms.Where((x, j) =>
                          {
                              if (x.Value.vehicleType != TransportManager.instance.m_lines.m_buffer[NetManager.instance.m_nodes.m_buffer[y.stopId].m_transportLine].Info.m_vehicleType) return false;
                              //var relOrg = CalculatePositionRelative(absolutePos[i], BuildingManager.instance.m_buildings.m_buffer[buildingID].m_angle, BuildingManager.instance.m_buildings.m_buffer[buildingID].m_position);
                              var distance = x.Value.platformLine.DistanceSqr(y.relPos, out float k);
-                             doLog($"[{BuildingManager.instance.m_buildings.m_buffer[buildingID].Info.name}]x = {x.Key} ({x.Value.platformLine.a} {x.Value.platformLine.b} {x.Value.platformLine.c} {x.Value.platformLine.d}) (w= {x.Value.width}) {x.Value.vehicleType}\t| relOrg {y.relPos} \t| {distance} \t|dy = { x.Value.platformLine.GetBounds().center.y - y.relPos.y}");
+                             LogUtils.DoLog($"[{BuildingManager.instance.m_buildings.m_buffer[buildingID].Info.name}]x = {x.Key} ({x.Value.platformLine.a} {x.Value.platformLine.b} {x.Value.platformLine.c} {x.Value.platformLine.d}) (w= {x.Value.width}) {x.Value.vehicleType}\t| relOrg {y.relPos} \t| {distance} \t|dy = { x.Value.platformLine.GetBounds().center.y - y.relPos.y}");
                              var sqrWidth = x.Value.width * x.Value.width;
 
                              return Mathf.Abs(distance - sqrWidth) < 0.1f * sqrWidth && x.Value.platformLine.GetBounds().center.y - y.relPos.y < 1f;
@@ -299,7 +299,7 @@ namespace Klyte.DynamicTextBoards.Overrides
                 m_lastUpdate = SimulationManager.instance.m_currentTickIndex
             };
 
-            m_linesDescriptors[lineId].m_contrastColor = KlyteUtils.contrastColor(m_linesDescriptors[lineId].m_lineColor);
+            m_linesDescriptors[lineId].m_contrastColor = KlyteMonoUtils.ContrastColor(m_linesDescriptors[lineId].m_lineColor);
 
         }
 

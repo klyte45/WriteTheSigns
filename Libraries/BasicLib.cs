@@ -3,7 +3,7 @@ using ColossalFramework.Globalization;
 using ColossalFramework.Math;
 using ColossalFramework.UI;
 using Klyte.Commons.Extensors;
-using Klyte.Commons.Overrides;
+using Klyte.DynamicTextBoards.Overrides;
 using Klyte.Commons.Utils;
 using Klyte.DynamicTextBoards.Utils;
 using System;
@@ -15,7 +15,7 @@ using ICities;
 using System.IO;
 using ColossalFramework.IO;
 using Klyte.DynamicTextBoards.Overrides;
-using static Klyte.Commons.Utils.KlyteUtils;
+using static Klyte.Commons.Utils.XmlUtils;
 
 namespace Klyte.DynamicTextBoards.Libraries
 {
@@ -36,7 +36,7 @@ namespace Klyte.DynamicTextBoards.Libraries
                     m_instance = new LIB();
                     if (File.Exists(m_instance.defaultXmlFileBaseFullPath))
                     {
-                        m_instance = DTBUtils.DefaultXmlDeserialize<LIB>(File.ReadAllText(m_instance.defaultXmlFileBaseFullPath));
+                        m_instance = XmlUtils.DefaultXmlDeserialize<LIB>(File.ReadAllText(m_instance.defaultXmlFileBaseFullPath));
                     }
                 }
                 return m_instance;
@@ -87,7 +87,7 @@ namespace Klyte.DynamicTextBoards.Libraries
 
         private void Save()
         {
-            File.WriteAllText(defaultXmlFileBaseFullPath, DTBUtils.DefaultXmlSerialize<LIB>((LIB)this));
+            File.WriteAllText(defaultXmlFileBaseFullPath, XmlUtils.DefaultXmlSerialize<LIB>((LIB)this));
         }
 
     }

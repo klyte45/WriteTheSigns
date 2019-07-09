@@ -9,7 +9,7 @@ namespace Klyte.DynamicTextBoards.Utils
 {
     public sealed class DTBResourceLoader : KlyteResourceLoader<DTBResourceLoader>
     {
-        protected override string prefix => "Klyte.DynamicTextBoards.";
+        protected override string Prefix => "Klyte.DynamicTextBoards.";
         public override Shader GetLoadedShader(string shaderName)
         {
             DTBShaderLibrary.GetShaders().TryGetValue(shaderName, out Shader result);
@@ -19,7 +19,7 @@ namespace Klyte.DynamicTextBoards.Utils
 
         public Dictionary<string, Shader> loadAllShaders(string assetBundleName)
         {
-            var bundle = loadBundle(assetBundleName);
+            var bundle = LoadBundle(assetBundleName);
             if (bundle != null)
             {
 
@@ -43,7 +43,7 @@ namespace Klyte.DynamicTextBoards.Utils
                     var effectiveName = filename.Split('.')[0].Split('/').Last();
                     if (effectiveName.StartsWith("klyte"))
                     {
-                        shader.name = $"{prefix.Replace(".", "/")}{effectiveName}";
+                        shader.name = $"{Prefix.Replace(".", "/")}{effectiveName}";
                         m_loadedShaders[shader.name] = (shader);
                         
                     }

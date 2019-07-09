@@ -28,7 +28,7 @@ namespace Klyte.DynamicTextBoards.UI
         {
             if (value)
             {
-                DynamicTextBoardsMod.instance.showVersionInfoPopup();
+                DynamicTextBoardsMod.Instance.ShowVersionInfoPopup();
             }
         }
 
@@ -46,17 +46,17 @@ namespace Klyte.DynamicTextBoards.UI
             controlContainer.isVisible = false;
             controlContainer.name = "DTBPanel";
 
-            DTBUtils.createUIElement(out mainPanel, controlContainer.transform, "DTBListPanel", new Vector4(0, 0, 875, 850));
+            KlyteMonoUtils.CreateUIElement(out mainPanel, controlContainer.transform, "DTBListPanel", new Vector4(0, 0, 875, 850));
             mainPanel.backgroundSprite = "MenuPanel2";
 
             CreateTitleBar();
 
 
-            DTBUtils.createUIElement(out m_StripMain, mainPanel.transform, "DTBTabstrip", new Vector4(5, 40, mainPanel.width - 10, 40));
+            KlyteMonoUtils.CreateUIElement(out m_StripMain, mainPanel.transform, "DTBTabstrip", new Vector4(5, 40, mainPanel.width - 10, 40));
             m_StripMain.startSelectedIndex = -1;
             m_StripMain.selectedIndex = -1;
 
-            DTBUtils.createUIElement(out UITabContainer tabContainer, mainPanel.transform, "DTBTabContainer", new Vector4(0, 80, mainPanel.width, mainPanel.height - 80));
+            KlyteMonoUtils.CreateUIElement(out UITabContainer tabContainer, mainPanel.transform, "DTBTabContainer", new Vector4(0, 80, mainPanel.width, mainPanel.height - 80));
             m_StripMain.tabPages = tabContainer;
 
 
@@ -66,30 +66,30 @@ namespace Klyte.DynamicTextBoards.UI
 
         private void CreateTitleBar()
         {
-            DTBUtils.createUIElement(out UILabel titlebar, mainPanel.transform, "DTBListPanel", new Vector4(75, 10, mainPanel.width - 150, 20));
+            KlyteMonoUtils.CreateUIElement(out UILabel titlebar, mainPanel.transform, "DTBListPanel", new Vector4(75, 10, mainPanel.width - 150, 20));
             titlebar.autoSize = false;
-            titlebar.text = DynamicTextBoardsMod.instance.GeneralName;
+            titlebar.text = DynamicTextBoardsMod.Instance.GeneralName;
             titlebar.textAlignment = UIHorizontalAlignment.Center;
-            DTBUtils.createDragHandle(titlebar, KlyteModsPanel.instance.mainPanel);
+            //KlyteMonoUtils.CreateDragHandle(titlebar, KlyteModsPanel.instance.mainPanel);
 
-            DTBUtils.createUIElement(out UIButton closeButton, mainPanel.transform, "CloseButton", new Vector4(mainPanel.width - 37, 5, 32, 32));
-            DTBUtils.initButton(closeButton, false, "buttonclose", true);
+            KlyteMonoUtils.CreateUIElement(out UIButton closeButton, mainPanel.transform, "CloseButton", new Vector4(mainPanel.width - 37, 5, 32, 32));
+            KlyteMonoUtils.InitButton(closeButton, false, "buttonclose", true);
             closeButton.hoveredBgSprite = "buttonclosehover";
             closeButton.eventClick += (x, y) =>
             {
-                KlyteCommonsMod.CloseKCPanel();
+                //KlyteCommonsMod.CloseKCPanel();
             };
 
-            DTBUtils.createUIElement(out UISprite logo, mainPanel.transform, "DTBLogo", new Vector4(22, 5f, 32, 32));
-            logo.atlas = DTBCommonTextureAtlas.instance.atlas;
+            KlyteMonoUtils.CreateUIElement(out UISprite logo, mainPanel.transform, "DTBLogo", new Vector4(22, 5f, 32, 32));
+            logo.atlas = DTBCommonTextureAtlas.instance.Atlas;
             logo.spriteName = "ServiceVehiclesManagerIcon";
-            DTBUtils.createDragHandle(logo, KlyteModsPanel.instance.mainPanel);
+            //KlyteMonoUtils.CreateDragHandle(logo, KlyteModsPanel.instance.mainPanel);
         }
 
         private static UIButton CreateTabTemplate()
         {
-            DTBUtils.createUIElement(out UIButton tabTemplate, null, "DTBTabTemplate");
-            DTBUtils.initButton(tabTemplate, false, "GenericTab");
+            KlyteMonoUtils.CreateUIElement(out UIButton tabTemplate, null, "DTBTabTemplate");
+            KlyteMonoUtils.InitButton(tabTemplate, false, "GenericTab");
             tabTemplate.autoSize = false;
             tabTemplate.width = 40;
             tabTemplate.height = 40;
@@ -103,12 +103,12 @@ namespace Klyte.DynamicTextBoards.UI
             tab.normalFgSprite = sprite;
             tab.tooltip = Locale.Get(localeKey);
 
-            DTBUtils.createUIElement(out UIPanel contentContainer, null);
+            KlyteMonoUtils.CreateUIElement(out UIPanel contentContainer, null);
             contentContainer.name = "Container";
             contentContainer.area = new Vector4(15, 0, mainPanel.width - 30, mainPanel.height - 70);
             m_StripMain.AddTab(objectName, tab.gameObject, contentContainer.gameObject);
 
-            DTBUtils.CreateScrollPanel(contentContainer, out UIScrollablePanel scrollablePanel, out UIScrollbar scrollbar, contentContainer.width - 20, contentContainer.height - 5, new Vector3()).self.gameObject.AddComponent<T>();
+            KlyteMonoUtils.CreateScrollPanel(contentContainer, out UIScrollablePanel scrollablePanel, out UIScrollbar scrollbar, contentContainer.width - 20, contentContainer.height - 5, new Vector3()).Self.gameObject.AddComponent<T>();
             scrollablePanel.scrollPadding = new RectOffset(10, 10, 10, 10);
         }
         #endregion

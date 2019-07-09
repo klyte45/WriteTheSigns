@@ -3,7 +3,6 @@ using ColossalFramework.Globalization;
 using ColossalFramework.Math;
 using ColossalFramework.UI;
 using Klyte.Commons.Extensors;
-using Klyte.Commons.Overrides;
 using Klyte.Commons.Utils;
 using Klyte.DynamicTextBoards.Utils;
 using System;
@@ -13,12 +12,12 @@ using System.Xml.Serialization;
 using UnityEngine;
 using ICities;
 using static BuildingInfo;
-using static Klyte.Commons.Utils.KlyteUtils;
 using static Klyte.DynamicTextBoards.Overrides.BoardGeneratorHighwaySigns;
 using System.IO;
 using ColossalFramework.IO;
 using System.Xml;
 using Klyte.DynamicTextBoards.Libraries;
+using static Klyte.Commons.Utils.XmlUtils;
 
 namespace Klyte.DynamicTextBoards.Overrides
 {
@@ -43,10 +42,11 @@ namespace Klyte.DynamicTextBoards.Overrides
         #region Initialize
         public override void Initialize()
         {
+            RedirectorInstance = KlyteMonoUtils.CreateElement<Redirector>(transform);
             m_cachedExitTitles = new BasicRenderInformation[50];
             m_cachedDistanceMeshes = new BasicRenderInformation[100];
             LoadedProps = new List<string>();
-            ForEachLoadedPrefab<PropInfo>((loaded) => LoadedProps.Add(loaded.name));
+            Commons.Utils.FileUtils.ForEachLoadedPrefab<PropInfo>((loaded) => LoadedProps.Add(loaded.name));
             LoadedProps.Sort((x, y) => Locale.Get("PROPS_TITLE", x).CompareTo(Locale.Get("PROPS_TITLE", y)));
 
             NetManagerOverrides.eventSegmentReleased += onSegmentReleased;
@@ -54,8 +54,8 @@ namespace Klyte.DynamicTextBoards.Overrides
             BuildSurfaceFont(out m_font, "Highway Gothic");
 
             #region Hooks
-            var afterRenderSegment = GetType().GetMethod("AfterRenderSegment", allFlags);
-            AddRedirect(typeof(NetSegment).GetMethod("RenderInstance", new Type[] { typeof(RenderManager.CameraInfo), typeof(ushort), typeof(int) }), null, afterRenderSegment);
+            var afterRenderSegment = GetType().GetMethod("AfterRenderSegment", RedirectorUtils .allFlags) ;
+            RedirectorInstance. AddRedirect(typeof(NetSegment).GetMethod("RenderInstance", new Type[] { typeof(RenderManager.CameraInfo), typeof(ushort), typeof(int) }), null, afterRenderSegment);
             #endregion
         }
 
@@ -86,7 +86,7 @@ namespace Klyte.DynamicTextBoards.Overrides
         public static void AfterRenderSegment(RenderManager.CameraInfo cameraInfo, ushort segmentID, int layerMask)
         {
 
-            instance.AfterRenderSegmentImpl(cameraInfo, segmentID, layerMask);
+            Instance.AfterRenderSegmentImpl(cameraInfo, segmentID, layerMask);
 
         }
 
@@ -137,8 +137,8 @@ namespace Klyte.DynamicTextBoards.Overrides
                 NetManager.instance.m_segments.m_buffer[segmentID].GetClosestPositionAndDirection(bezierPos, out Vector3 pos, out Vector3 dir);
                 var rotation = dir.GetAngleXZ();
                 if (sign.descriptor.m_invertSign != segmentInverted) rotation += 180;
-                var rotationVectorX = VectorUtils.X_Y(DTBUtils.DegreeToVector2(rotation - 90));
-                sign.cachedPosition = bezierPos + rotationVectorX * (NetManager.instance.m_segments.m_buffer[segmentID].Info.m_halfWidth + sign.descriptor.m_propPosition.x) + VectorUtils.X_Y(DTBUtils.DegreeToVector2(rotation)) * sign.descriptor.m_propPosition.z;
+                var rotationVectorX = VectorUtils.X_Y(KlyteMathUtils.DegreeToVector2(rotation - 90));
+                sign.cachedPosition = bezierPos + rotationVectorX * (NetManager.instance.m_segments.m_buffer[segmentID].Info.m_halfWidth + sign.descriptor.m_propPosition.x) + VectorUtils.X_Y(KlyteMathUtils.DegreeToVector2(rotation)) * sign.descriptor.m_propPosition.z;
                 sign.cachedPosition.y += sign.descriptor.m_propPosition.y;
                 sign.cachedRotation = sign.descriptor.m_propRotation + new Vector3(0, rotation + 90);
             }
@@ -195,7 +195,7 @@ namespace Klyte.DynamicTextBoards.Overrides
             using (MemoryStream memoryStream = new MemoryStream())
             {
                 var serialData = Serialize();
-                DTBUtils.doLog($"serialData: {serialData}");
+                LogUtils.DoLog($"serialData: {serialData}");
                 byte[] data = System.Text.Encoding.UTF8.GetBytes(serialData);
                 serializableDataManager.SaveData(ID, data);
             }
@@ -212,13 +212,13 @@ namespace Klyte.DynamicTextBoards.Overrides
 
         public void Deserialize(string data)
         {
-            DTBUtils.doLog($"STR: \"{data}\"");
+            LogUtils.DoLog($"STR: \"{data}\"");
             if (data.IsNullOrWhiteSpace()) return;
             var parsedData = ParseSerialization(data.Split(SERIALIZATION_ITM_SEPARATOR.ToCharArray()));
             s_loadedBoards = new BoardBunchContainerHighwaySign[NetManager.MAX_SEGMENT_COUNT];
             foreach (var item in parsedData)
             {
-                DTBUtils.doLog($"item: {item}");
+                LogUtils.DoLog($"item: {item}");
                 FillItem(item);
             }
         }
@@ -227,7 +227,7 @@ namespace Klyte.DynamicTextBoards.Overrides
         {
             if (item.Key == 0) return;
             var count = item.Count();
-            DTBUtils.doLog($"COUNT: {count}");
+            LogUtils.DoLog($"COUNT: {count}");
             s_loadedBoards[item.Key] = new BoardBunchContainerHighwaySign
             {
                 m_boardsData = new CacheControlHighwaySign[count]
@@ -253,9 +253,9 @@ namespace Klyte.DynamicTextBoards.Overrides
 
         public string Serialize()
         {
-            DTBUtils.doLog($"m_boardsContainers: \"{ m_boardsContainers}\"");
+            LogUtils.DoLog($"m_boardsContainers: \"{ m_boardsContainers}\"");
             var list = m_boardsContainers.SelectMany(SerializeSelectMany) ?? new List<string>();
-            DTBUtils.doLog($"list: \"{list?.Count()}\"");
+            LogUtils.DoLog($"list: \"{list?.Count()}\"");
             return string.Join(SERIALIZATION_ITM_SEPARATOR, list?.ToArray());
         }
         private static IEnumerable<string> SerializeSelectMany(BoardBunchContainerHighwaySign x, int i)
@@ -347,7 +347,7 @@ namespace Klyte.DynamicTextBoards.Overrides
             }
             if (m_cachedExitTitles[kilometers] == null || lastFontUpdateFrame > m_cachedExitTitles[kilometers].m_frameDrawTime)
             {
-                doLog($"!nameUpdated Node1 {kilometers}");
+                LogUtils.DoLog($"!nameUpdated Node1 {kilometers}");
                 RefreshNameData(ref m_cachedExitTitles[kilometers], $"Saída {kilometers}");
             }
             return m_cachedExitTitles[kilometers];
@@ -415,14 +415,14 @@ namespace Klyte.DynamicTextBoards.Overrides
                             }
                             else
                             {
-                                DTBUtils.doErrorLog($"CAN'T DESERIALIZE BOARD DESCRIPTOR!\nText : {s}");
+                                LogUtils.DoErrorLog($"CAN'T DESERIALIZE BOARD DESCRIPTOR!\nText : {s}");
                             }
                         }
                     }
                 }
                 catch (Exception e)
                 {
-                    DTBUtils.doErrorLog($"CAN'T DESERIALIZE BOARD DESCRIPTOR!\nText : {s}\n{e.Message}\n{e.StackTrace}");
+                    LogUtils.DoErrorLog($"CAN'T DESERIALIZE BOARD DESCRIPTOR!\nText : {s}\n{e.Message}\n{e.StackTrace}");
                 }
 
             }

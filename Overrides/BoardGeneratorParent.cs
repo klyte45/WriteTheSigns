@@ -3,7 +3,6 @@ using ColossalFramework.Globalization;
 using ColossalFramework.Math;
 using ColossalFramework.UI;
 using Klyte.Commons.Extensors;
-using Klyte.Commons.Overrides;
 using Klyte.Commons.Utils;
 using Klyte.DynamicTextBoards.Utils;
 using System;
@@ -18,11 +17,14 @@ using static BuildingInfo;
 namespace Klyte.DynamicTextBoards.Overrides
 {
 
-    public abstract class BoardGeneratorParent<BG> : Redirector<BG> where BG : BoardGeneratorParent<BG>
+    public abstract class BoardGeneratorParent<BG> : MonoBehaviour, IRedirectable where BG : BoardGeneratorParent<BG>
     {
         public abstract UIDynamicFont DrawFont { get; }
         protected uint lastFontUpdateFrame = SimulationManager.instance.m_currentTickIndex;
         protected static Shader TextShader => DTBResourceLoader.instance.GetLoadedShader("Klyte/DynamicTextBoards/klytetextboards") ?? DistrictManager.instance.m_properties.m_areaNameShader;
+
+        public static BG Instance { get; protected set; }
+        public Redirector RedirectorInstance { get ; set; }
 
         protected void BuildSurfaceFont(out UIDynamicFont font, string fontName)
         {
@@ -58,6 +60,12 @@ namespace Klyte.DynamicTextBoards.Overrides
             OnTextureRebuiltImpl(obj);
         }
         protected abstract void OnTextureRebuiltImpl(Font obj);
+
+        public void Awake()
+        {
+            Instance = this as BG;
+            RedirectorInstance = KlyteMonoUtils.CreateElement<Redirector>(transform);
+        }
     }
 
     public abstract class BoardGeneratorParent<BG, BBC, CC, BRI, BD, BTD, MRT> : BoardGeneratorParent<BG>
@@ -86,13 +94,13 @@ namespace Klyte.DynamicTextBoards.Overrides
         private const float m_textScale = 4;
         private readonly Vector2 scalingMatrix = new Vector2(0.015f, 0.015f);
 
-        public override void AwakeBody()
+        public  void Awake()
         {
             Font.textureRebuilt += OnTextureRebuilt;
             Initialize();
             m_boardsContainers = new BBC[ObjArraySize];
 
-            doLog($"Loading Boards Generator {typeof(BG)}");
+            LogUtils.DoLog($"Loading Boards Generator {typeof(BG)}");
 
 
         }
@@ -136,10 +144,6 @@ namespace Klyte.DynamicTextBoards.Overrides
         }
 
 
-        public override void doLog(string format, params object[] args)
-        {
-            DTBUtils.doLog(format, args);
-        }
 
         protected void RenderPropMesh(ref PropInfo propInfo, RenderManager.CameraInfo cameraInfo, ushort refId, int boardIdx, int secIdx, int layerMask, float refAngleRad, Vector3 position, Vector4 dataVector, ref string propName, Vector3 propAngle, Vector3 propScale, ref BD descriptor, out Matrix4x4 propMatrix, out bool rendered)
         {
@@ -150,7 +154,7 @@ namespace Klyte.DynamicTextBoards.Overrides
                     propInfo = PrefabCollection<PropInfo>.FindLoaded(propName);
                     if (propInfo == null)
                     {
-                        DTBUtils.doErrorLog($"PREFAB NOT FOUND: {propName}");
+                        LogUtils.DoErrorLog($"PREFAB NOT FOUND: {propName}");
                         propName = null;
                     }
                 }
@@ -299,51 +303,21 @@ namespace Klyte.DynamicTextBoards.Overrides
 
         protected void UpdateMeshStreetSuffix(ushort idx, ref BRI bri)
         {
-            doLog($"!UpdateMeshStreetSuffix {idx}");
-            Type t = Type.GetType("Klyte.Addresses.Overrides.NetManagerOverrides, Addresses");
+            LogUtils.DoLog($"!UpdateMeshStreetSuffix {idx}");
             string result = "";
-            result = GetStreetSuffix(idx);
+            result = DTBHookable.GetStreetSuffix(idx);
             RefreshNameData(ref bri, result);
         }
 
-        private static Func<ushort, string> GetStreetSuffix = (ushort idx) =>
-        {
-            string result;
-            if ((NetManager.instance.m_segments.m_buffer[idx].m_flags & NetSegment.Flags.CustomName) != 0)
-            {
-                DTBUtils.doLog($"!UpdateMeshStreetSuffix Custom");
-                InstanceID id = default(InstanceID);
-                id.NetSegment = idx;
-                result = Singleton<InstanceManager>.instance.GetName(id);
-            }
-            else
-            {
-                DTBUtils.doLog($"!UpdateMeshStreetSuffix NonCustom {NetManager.instance.m_segments.m_buffer[idx].m_nameSeed}");
-                if (NetManager.instance.m_segments.m_buffer[idx].Info.m_netAI is RoadBaseAI ai)
-                {
-                    Randomizer randomizer = new Randomizer((int)NetManager.instance.m_segments.m_buffer[idx].m_nameSeed);
-                    randomizer.Int32(12);
-                    result = DTBUtils.RunPrivateMethod<string>(ai, "GenerateStreetName", randomizer);
-                    //}
-                }
-                else
-                {
-                    result = "???";
-                }
-            }
-
-            return result;
-        };
 
         protected void UpdateMeshFullNameStreet(ushort idx, ref BRI bri)
         {
             //(ushort segmentID, ref string __result, ref List<ushort> usedQueue, bool defaultPrefix, bool removePrefix = false)
-            string name = GetStreetFullName(idx);
-            doLog($"!GenName {name} for {idx}");
+            string name = DTBHookable.GetStreetFullName(idx);
+            LogUtils.DoLog($"!GenName {name} for {idx}");
             RefreshNameData(ref bri, name);
         }
 
-        private static Func<ushort, string> GetStreetFullName = (ushort idx) => NetManager.instance.GetSegmentName(idx);
 
 
         protected void RefreshNameData(ref BRI result, string name, UIFont overrideFont = null)
@@ -387,7 +361,7 @@ namespace Klyte.DynamicTextBoards.Overrides
                 {
                     result.m_mesh = new Mesh();
                 }
-                doLog(uirenderData.ToString());
+                LogUtils.DoLog(uirenderData.ToString());
                 result.m_mesh.Clear();
                 result.m_mesh.vertices = vertices.ToArray();
                 result.m_mesh.colors32 = colors.Select(x => new Color32(x.a, x.a, x.a, x.a)).ToArray();
@@ -625,14 +599,14 @@ namespace Klyte.DynamicTextBoards.Overrides
                         }
                         else
                         {
-                            DTBUtils.doErrorLog($"CAN'T DESERIALIZE BOARD DESCRIPTOR!\nText : {s}");
+                            LogUtils.DoErrorLog($"CAN'T DESERIALIZE BOARD DESCRIPTOR!\nText : {s}");
                         }
                     }
                 }
             }
             catch (Exception e)
             {
-                DTBUtils.doErrorLog($"CAN'T DESERIALIZE BOARD DESCRIPTOR!\nText : {s}\n{e.Message}\n{e.StackTrace}");
+                LogUtils.DoErrorLog($"CAN'T DESERIALIZE BOARD DESCRIPTOR!\nText : {s}\n{e.Message}\n{e.StackTrace}");
             }
             return null;
         }
@@ -755,14 +729,14 @@ namespace Klyte.DynamicTextBoards.Overrides
                         }
                         else
                         {
-                            DTBUtils.doErrorLog($"CAN'T DESERIALIZE BOARD DESCRIPTOR!\nText : {s}");
+                            LogUtils.DoErrorLog($"CAN'T DESERIALIZE BOARD DESCRIPTOR!\nText : {s}");
                         }
                     }
                 }
             }
             catch (Exception e)
             {
-                DTBUtils.doErrorLog($"CAN'T DESERIALIZE BOARD DESCRIPTOR!\nText : {s}\n{e.Message}\n{e.StackTrace}");
+                LogUtils.DoErrorLog($"CAN'T DESERIALIZE BOARD DESCRIPTOR!\nText : {s}\n{e.Message}\n{e.StackTrace}");
             }
             return null;
         }
