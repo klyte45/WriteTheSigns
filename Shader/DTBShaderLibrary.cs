@@ -17,16 +17,16 @@ namespace Klyte.DynamicTextBoards.Utils
             {
                 if (Application.platform == RuntimePlatform.WindowsPlayer)
                 {
-                    m_loadedShaders = DTBResourceLoader.instance.loadAllShaders("Shader.ShaderTest.unity3d");
+                    m_loadedShaders = DTBResourceLoader.instance.LoadAllShaders("Shader.ShaderTest.unity3d");
                 }
                 else if (Application.platform == RuntimePlatform.LinuxPlayer)
                 {
-                    m_loadedShaders = DTBResourceLoader.instance.loadAllShaders("Shader.ShaderTest-linux.unity3d");
+                    m_loadedShaders = DTBResourceLoader.instance.LoadAllShaders("Shader.ShaderTest-linux.unity3d");
                 }
                 else if (Application.platform == RuntimePlatform.OSXPlayer)
                 {
 
-                    m_loadedShaders = DTBResourceLoader.instance.loadAllShaders("Shader.ShaderTest-macosx.unity3d");
+                    m_loadedShaders = DTBResourceLoader.instance.LoadAllShaders("Shader.ShaderTest-macosx.unity3d");
                 }
             }
             return m_loadedShaders;

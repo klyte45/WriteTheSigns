@@ -1,19 +1,18 @@
-﻿using ColossalFramework.Globalization;
+﻿using ColossalFramework;
+using ColossalFramework.Globalization;
 using ColossalFramework.UI;
 using ICities;
-using Klyte.DynamicTextBoards.Utils;
 using Klyte.Commons.Extensors;
 using Klyte.Commons.Utils;
+using Klyte.DynamicTextBoards.Libraries;
+using Klyte.DynamicTextBoards.Overrides;
+using Klyte.DynamicTextBoards.TextureAtlas;
+using Klyte.DynamicTextBoards.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using Klyte.DynamicTextBoards.Overrides;
-using Klyte.DynamicTextBoards.Tools;
-using Klyte.DynamicTextBoards.Libraries;
 using static Klyte.DynamicTextBoards.Overrides.BoardGeneratorHighwaySigns;
-using ColossalFramework;
-using Klyte.DynamicTextBoards.TextureAtlas;
 
 namespace Klyte.DynamicTextBoards.UI
 {
@@ -108,10 +107,10 @@ namespace Klyte.DynamicTextBoards.UI
 
             m_uiHelperHS = new UIHelperExtension(MainContainer);
 
-            AddDropdown(Locale.Get("DTB_FONT_PLACED_PROPS"), out m_fontSelect, m_uiHelperHS, new string[0], OnSetFont);
+            AddDropdown(Locale.Get("K45_DTB_FONT_PLACED_PROPS"), out m_fontSelect, m_uiHelperHS, new string[0], OnSetFont);
             m_fontSelect.width -= 40;
-            var parent = m_fontSelect.GetComponentInParent<UIPanel>();
-            var actionButton = ConfigureActionButton(parent);
+            UIPanel parent = m_fontSelect.GetComponentInParent<UIPanel>();
+            UIButton actionButton = ConfigureActionButton(parent);
             SetIcon(actionButton, "Reload", Color.white);
             actionButton.eventClick += (x, t) =>
             {
@@ -119,24 +118,28 @@ namespace Klyte.DynamicTextBoards.UI
             };
             DTBUtils.ReloadFontsOf<BoardGeneratorHighwaySigns>(m_fontSelect);
 
-            m_buttonTool = (UIButton)m_uiHelperHS.AddButton(Locale.Get("DTB_PICK_A_SEGMENT"), EnablePickTool);
-           KlyteMonoUtils.LimitWidth(m_buttonTool, m_uiHelperHS.Self.width - 20, true);
+            m_buttonTool = (UIButton) m_uiHelperHS.AddButton(Locale.Get("K45_DTB_PICK_A_SEGMENT"), EnablePickTool);
+            KlyteMonoUtils.LimitWidth(m_buttonTool, m_uiHelperHS.Self.width - 20, true);
 
-            m_contentContainer = m_uiHelperHS.AddGroupExtended(Locale.Get("DTB_PICKED_SEGMENT_DATA"));
-            ((UIPanel)m_contentContainer.Self).backgroundSprite = "";
+            m_contentContainer = m_uiHelperHS.AddGroupExtended(Locale.Get("K45_DTB_PICKED_SEGMENT_DATA"));
+            ((UIPanel) m_contentContainer.Self).backgroundSprite = "";
             m_contentContainer.Self.width = MainContainer.width - 30;
 
             m_selectionAddress = m_contentContainer.Self.parent.GetComponentInChildren<UILabel>();
-            m_selectionAddress.prefix = Locale.Get("DTB_ADDRESS_LABEL_PREFIX") + " ";
-           KlyteMonoUtils.LimitWidth(m_selectionAddress, m_contentContainer.Self.width, true);
+            m_selectionAddress.prefix = Locale.Get("K45_DTB_ADDRESS_LABEL_PREFIX") + " ";
+            KlyteMonoUtils.LimitWidth(m_selectionAddress, m_contentContainer.Self.width, true);
 
-            m_loadPropGroup = AddLibBox<DTBLibPropGroup, BoardBunchContainerHighwaySign>(Locale.Get("DTB_PROP_GROUP_LIB_TITLE"), m_contentContainer,
+            m_loadPropGroup = AddLibBox<DTBLibPropGroup, BoardBunchContainerHighwaySign>(Locale.Get("K45_DTB_PROP_GROUP_LIB_TITLE"), m_contentContainer,
             out m_copyGroupButton, DoCopyGroup,
             out m_pasteGroupButton, DoPasteGroup,
             out m_deleteGroupButton, DoDeleteGroup,
             (x) =>
                 {
-                    if (m_currentSelectedSegment == 0) return;
+                    if (m_currentSelectedSegment == 0)
+                    {
+                        return;
+                    }
+
                     BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment] = XmlUtils.DefaultXmlDeserialize<BoardBunchContainerHighwaySign>(XmlUtils.DefaultXmlSerialize(x));
                     ReloadSegment();
                 },
@@ -157,7 +160,7 @@ namespace Klyte.DynamicTextBoards.UI
             {
                 if (idx == m_pseudoTabstripProps.tabCount - 1)
                 {
-                    var nextIdx = BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment]?.m_boardsData?.Length ?? 0;
+                    int nextIdx = BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment]?.m_boardsData?.Length ?? 0;
                     LogUtils.DoLog($"nextIdx = {nextIdx}");
                     EnsureBoardsArrayIdx(nextIdx);
                     ReloadSegment();
@@ -169,40 +172,44 @@ namespace Klyte.DynamicTextBoards.UI
                 }
             };
 
-            m_pseudoTabPropsHelper = m_uiHelperHS.AddGroupExtended(Locale.Get("DTB_PROP_CONFIGURATION"), out UILabel lbl, out UIPanel voide3);
+            m_pseudoTabPropsHelper = m_uiHelperHS.AddGroupExtended(Locale.Get("K45_DTB_PROP_CONFIGURATION"), out UILabel lbl, out UIPanel voide3);
             Destroy(lbl);
-            ((UIPanel)m_pseudoTabPropsHelper.Self).backgroundSprite = "";
+            ((UIPanel) m_pseudoTabPropsHelper.Self).backgroundSprite = "";
 
-            m_pseudoTabPropsHelper.Self.eventVisibilityChanged += (x, y) => { if (y) ReloadTabInfo(); };
+            m_pseudoTabPropsHelper.Self.eventVisibilityChanged += (x, y) => { if (y) { ReloadTabInfo(); } };
             m_pseudoTabPropsHelper.Self.width = MainContainer.width - 30;
 
 
-            m_loadPropItem = AddLibBox<DTBLibPropSingle, BoardDescriptorHigwaySign>(Locale.Get("DTB_PROP_ITEM_LIB_TITLE"), m_pseudoTabPropsHelper,
+            m_loadPropItem = AddLibBox<DTBLibPropSingle, BoardDescriptorHigwaySign>(Locale.Get("K45_DTB_PROP_ITEM_LIB_TITLE"), m_pseudoTabPropsHelper,
                                     out m_copyButton, DoCopy,
                                     out m_pasteButton, DoPaste,
                                     out m_deleteButton, DoDelete,
                                     (x) =>
                                     {
-                                        if (m_currentSelectedSegment == 0 || CurrentTab < 0) return;
+                                        if (m_currentSelectedSegment == 0 || CurrentTab < 0)
+                                        {
+                                            return;
+                                        }
+
                                         BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[CurrentTab].descriptor = XmlUtils.DefaultXmlDeserialize<BoardDescriptorHigwaySign>(XmlUtils.DefaultXmlSerialize(x));
                                         ReloadSegment();
                                     },
                             () => BoardGeneratorHighwaySigns.m_boardsContainers?.ElementAtOrDefault(m_currentSelectedSegment)?.m_boardsData?.ElementAtOrDefault(CurrentTab)?.descriptor);
 
 
-            var groupProp = m_pseudoTabPropsHelper.AddTogglableGroup(Locale.Get("DTB_PROP_CONFIGURATION"));
-            AddTextField(Locale.Get("DTB_PROP_TAB_TITLE"), out m_propItemName, groupProp, SetPropItemName);
+            UIHelperExtension groupProp = m_pseudoTabPropsHelper.AddTogglableGroup(Locale.Get("K45_DTB_PROP_CONFIGURATION"));
+            AddTextField(Locale.Get("K45_DTB_PROP_TAB_TITLE"), out m_propItemName, groupProp, SetPropItemName);
 
-            AddDropdown(Locale.Get("DTB_PROP_MODEL_SELECT"), out m_propsDropdown, groupProp, new string[0], SetPropModel);
-            AddSlider(Locale.Get("DTB_SEGMENT_RELATIVE_POS"), out m_segmentPosition, groupProp, SetPropSegPosition, 0, 1, 0.01f);
-            m_invertOrientation = (UICheckBox)groupProp.AddCheckbox(Locale.Get("DTB_INVERT_SIGN_SIDE"), false, SetInvertSignSide);
+            AddDropdown(Locale.Get("K45_DTB_PROP_MODEL_SELECT"), out m_propsDropdown, groupProp, new string[0], SetPropModel);
+            AddSlider(Locale.Get("K45_DTB_SEGMENT_RELATIVE_POS"), out m_segmentPosition, groupProp, SetPropSegPosition, 0, 1, 0.01f);
+            m_invertOrientation = (UICheckBox) groupProp.AddCheckbox(Locale.Get("K45_DTB_INVERT_SIGN_SIDE"), false, SetInvertSignSide);
 
-            AddVector3Field(Locale.Get("DTB_RELATIVE_POS"), out m_posVectorEditor, groupProp, SetPropRelPosition);
-            AddVector3Field(Locale.Get("DTB_RELATIVE_ROT"), out m_rotVectorEditor, groupProp, SetPropRelRotation);
-            AddVector3Field(Locale.Get("DTB_RELATIVE_SCALE"), out m_scaleVectorEditor, groupProp, SetPropRelScale);
+            AddVector3Field(Locale.Get("K45_DTB_RELATIVE_POS"), out m_posVectorEditor, groupProp, SetPropRelPosition);
+            AddVector3Field(Locale.Get("K45_DTB_RELATIVE_ROT"), out m_rotVectorEditor, groupProp, SetPropRelRotation);
+            AddVector3Field(Locale.Get("K45_DTB_RELATIVE_SCALE"), out m_scaleVectorEditor, groupProp, SetPropRelScale);
 
-            m_colorEditor = groupProp.AddColorPicker(Locale.Get("DTB_PAINTING_COLOR"), Color.white, SetPropColor);
-           KlyteMonoUtils.LimitWidth(m_colorEditor.parent.GetComponentInChildren<UILabel>(), groupProp.Self.width / 2, true);
+            m_colorEditor = groupProp.AddColorPicker(Locale.Get("K45_DTB_PAINTING_COLOR"), Color.white, SetPropColor);
+            KlyteMonoUtils.LimitWidth(m_colorEditor.parent.GetComponentInChildren<UILabel>(), groupProp.Self.width / 2, true);
 
 
             KlyteMonoUtils.CreateHorizontalScrollPanel(m_pseudoTabPropsHelper.Self, out scrollTabs, out bar, m_pseudoTabPropsHelper.Self.width - 20, 40, Vector3.zero);
@@ -219,7 +226,7 @@ namespace Klyte.DynamicTextBoards.UI
             {
                 if (idx == m_pseudoTabstripTexts.tabCount - 1)
                 {
-                    var pos = MainContainer.verticalScrollbar.relativePosition;
+                    Vector3 pos = MainContainer.verticalScrollbar.relativePosition;
                     EnsureBoardsArrayIdx(-1, BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment]?.m_boardsData[CurrentTab]?.descriptor?.m_textDescriptors?.Length ?? 0);
                     ReloadTabInfo();
                     OnChangeTabTexts(BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[CurrentTab].descriptor.m_textDescriptors.Length - 1);
@@ -233,47 +240,51 @@ namespace Klyte.DynamicTextBoards.UI
 
             m_pseudoTabTextsContainer = m_pseudoTabPropsHelper.AddGroupExtended("))))");
             Destroy(m_pseudoTabTextsContainer.Self.parent.GetComponentInChildren<UILabel>().gameObject);
-            ((UIPanel)m_pseudoTabTextsContainer.Self).backgroundSprite = "";
+            ((UIPanel) m_pseudoTabTextsContainer.Self).backgroundSprite = "";
             m_pseudoTabTextsContainer.Self.isVisible = false;
             m_pseudoTabTextsContainer.Self.width = MainContainer.width - 50;
 
-            m_loadText = AddLibBox<DTBLibTextMesh, BoardTextDescriptorHigwaySign>(Locale.Get("DTB_PROP_TEXT_LIB_TITLE"), m_pseudoTabTextsContainer,
+            m_loadText = AddLibBox<DTBLibTextMesh, BoardTextDescriptorHigwaySign>(Locale.Get("K45_DTB_PROP_TEXT_LIB_TITLE"), m_pseudoTabTextsContainer,
                                     out m_copyButtonText, DoCopyText,
                                     out m_pasteButtonText, DoPasteText,
                                     out m_deleteButtonText, DoDeleteText,
                                     (x) =>
                                     {
-                                        if (m_currentSelectedSegment == 0 || CurrentTab < 0 || CurrentTabText < 0) return;
+                                        if (m_currentSelectedSegment == 0 || CurrentTab < 0 || CurrentTabText < 0)
+                                        {
+                                            return;
+                                        }
+
                                         BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[CurrentTab].descriptor.m_textDescriptors[CurrentTabText] = XmlUtils.DefaultXmlDeserialize<BoardTextDescriptorHigwaySign>(XmlUtils.DefaultXmlSerialize(x));
                                         ReloadSegment();
                                     },
                             () => BoardGeneratorHighwaySigns.m_boardsContainers?.ElementAtOrDefault(m_currentSelectedSegment)?.m_boardsData?.ElementAtOrDefault(CurrentTab)?.descriptor?.m_textDescriptors?.ElementAtOrDefault(CurrentTabText));
 
 
-            var groupTexts = m_pseudoTabTextsContainer.AddTogglableGroup(Locale.Get("DTB_TEXTS_COMMON_CONFIGURATION"), out UILabel lblTxt);
+            UIHelperExtension groupTexts = m_pseudoTabTextsContainer.AddTogglableGroup(Locale.Get("K45_DTB_TEXTS_COMMON_CONFIGURATION"), out UILabel lblTxt);
 
-            AddTextField(Locale.Get("DTB_TEXT_TAB_TITLE"), out m_textItemName, groupTexts, SetTextItemName);
-            m_colorEditorText = groupTexts.AddColorPicker(Locale.Get("DTB_TEXT_COLOR"), Color.white, SetTextColor);
-           KlyteMonoUtils.LimitWidth(m_colorEditorText.parent.GetComponentInChildren<UILabel>(), groupTexts.Self.width / 2, true);
-            AddDropdown(Locale.Get("DTB_TEXT_CONTENT"), out m_dropdownTextContent, groupTexts, Enum.GetNames(typeof(OwnNameContent)).Select(x => Locale.Get("DTB_OWN_NAME_CONTENT", x)).ToArray(), SetTextOwnNameContent);
-            AddTextField(Locale.Get("DTB_CUSTOM_TEXT"), out m_customText, groupTexts, SetTextCustom);
-            m_dropdownTextContent.eventSelectedIndexChanged += (e, idx) => m_customText.GetComponentInParent<UIPanel>().isVisible = idx == (int)OwnNameContent.Custom;
-            AddDropdown(Locale.Get("DTB_OVERRIDE_FONT"), out m_overrideFontText, groupTexts, new string[0], SetOverrideFont);
+            AddTextField(Locale.Get("K45_DTB_TEXT_TAB_TITLE"), out m_textItemName, groupTexts, SetTextItemName);
+            m_colorEditorText = groupTexts.AddColorPicker(Locale.Get("K45_DTB_TEXT_COLOR"), Color.white, SetTextColor);
+            KlyteMonoUtils.LimitWidth(m_colorEditorText.parent.GetComponentInChildren<UILabel>(), groupTexts.Self.width / 2, true);
+            AddDropdown(Locale.Get("K45_DTB_TEXT_CONTENT"), out m_dropdownTextContent, groupTexts, Enum.GetNames(typeof(OwnNameContent)).Select(x => Locale.Get("K45_DTB_OWN_NAME_CONTENT", x)).ToArray(), SetTextOwnNameContent);
+            AddTextField(Locale.Get("K45_DTB_CUSTOM_TEXT"), out m_customText, groupTexts, SetTextCustom);
+            m_dropdownTextContent.eventSelectedIndexChanged += (e, idx) => m_customText.GetComponentInParent<UIPanel>().isVisible = idx == (int) OwnNameContent.Custom;
+            AddDropdown(Locale.Get("K45_DTB_OVERRIDE_FONT"), out m_overrideFontText, groupTexts, new string[0], SetOverrideFont);
 
-            groupTexts = m_pseudoTabTextsContainer.AddTogglableGroup(Locale.Get("DTB_TEXTS_SIZE_POSITION"));
-            AddVector3Field(Locale.Get("DTB_RELATIVE_POS"), out m_posVectorEditorText, groupTexts, SetTextRelPosition);
-            AddVector3Field(Locale.Get("DTB_RELATIVE_ROT"), out m_rotVectorEditorText, groupTexts, SetTextRelRotation);
-            AddFloatField(Locale.Get("DTB_TEXT_SCALE"), out m_scaleText, groupTexts, SetTextScale, false);
-            AddFloatField(Locale.Get("DTB_MAX_WIDTH_METERS"), out m_maxWidthText, groupTexts, SetTextMaxWidth, false);
-            m_textResizeYOnOverflow = (UICheckBox)groupTexts.AddCheckbox(Locale.Get("DTB_RESIZE_Y_TEXT_OVERFLOW"), false, SetTextResizeYOnOverflow);
+            groupTexts = m_pseudoTabTextsContainer.AddTogglableGroup(Locale.Get("K45_DTB_TEXTS_SIZE_POSITION"));
+            AddVector3Field(Locale.Get("K45_DTB_RELATIVE_POS"), out m_posVectorEditorText, groupTexts, SetTextRelPosition);
+            AddVector3Field(Locale.Get("K45_DTB_RELATIVE_ROT"), out m_rotVectorEditorText, groupTexts, SetTextRelRotation);
+            AddFloatField(Locale.Get("K45_DTB_TEXT_SCALE"), out m_scaleText, groupTexts, SetTextScale, false);
+            AddFloatField(Locale.Get("K45_DTB_MAX_WIDTH_METERS"), out m_maxWidthText, groupTexts, SetTextMaxWidth, false);
+            m_textResizeYOnOverflow = (UICheckBox) groupTexts.AddCheckbox(Locale.Get("K45_DTB_RESIZE_Y_TEXT_OVERFLOW"), false, SetTextResizeYOnOverflow);
 
-            groupTexts = m_pseudoTabTextsContainer.AddTogglableGroup(Locale.Get("DTB_TEXTS_2D_ALIGNMENT"));
-            AddDropdown(Locale.Get("DTB_TEXT_ALIGN_HOR"), out m_dropdownTextAlignHorizontal, groupTexts, Enum.GetNames(typeof(UIHorizontalAlignment)).Select(x => Locale.Get("KCM_ALIGNMENT", x)).ToArray(), SetTextAlignmentHorizontal);
-            AddDropdown(Locale.Get("DTB_TEXT_ALIGN_VER"), out m_dropdownTextAlignVertical, groupTexts, Enum.GetNames(typeof(UIVerticalAlignment)).Select(x => Locale.Get("KCM_VERT_ALIGNMENT", x)).ToArray(), SetTextAlignmentVertical);
+            groupTexts = m_pseudoTabTextsContainer.AddTogglableGroup(Locale.Get("K45_DTB_TEXTS_2D_ALIGNMENT"));
+            AddDropdown(Locale.Get("K45_DTB_TEXT_ALIGN_HOR"), out m_dropdownTextAlignHorizontal, groupTexts, Enum.GetNames(typeof(UIHorizontalAlignment)).Select(x => Locale.Get("KCM_ALIGNMENT", x)).ToArray(), SetTextAlignmentHorizontal);
+            AddDropdown(Locale.Get("K45_DTB_TEXT_ALIGN_VER"), out m_dropdownTextAlignVertical, groupTexts, Enum.GetNames(typeof(UIVerticalAlignment)).Select(x => Locale.Get("KCM_VERT_ALIGNMENT", x)).ToArray(), SetTextAlignmentVertical);
 
-            groupTexts = m_pseudoTabTextsContainer.AddTogglableGroup(Locale.Get("DTB_TEXT_EFFECTS"));
-            AddSlider(Locale.Get("DTB_LUMINOSITY_DAY"), out m_textLuminosityDay, groupTexts, SetTextLumDay, 0, 10f, 0.25f);
-            AddSlider(Locale.Get("DTB_LUMINOSITY_NIGHT"), out m_textLuminosityNight, groupTexts, SetTextLumNight, 0, 10f, 0.25f);
+            groupTexts = m_pseudoTabTextsContainer.AddTogglableGroup(Locale.Get("K45_DTB_TEXT_EFFECTS"));
+            AddSlider(Locale.Get("K45_DTB_LUMINOSITY_DAY"), out m_textLuminosityDay, groupTexts, SetTextLumDay, 0, 10f, 0.25f);
+            AddSlider(Locale.Get("K45_DTB_LUMINOSITY_NIGHT"), out m_textLuminosityNight, groupTexts, SetTextLumNight, 0, 10f, 0.25f);
 
 
             OnSegmentSet(0);
@@ -285,19 +296,22 @@ namespace Klyte.DynamicTextBoards.UI
             out UIButton deleteButton, OnButtonClicked actionDelete,
             Action<DESC> onLoad, Func<DESC> getContentToSave) where LIB : BasicLib<LIB, DESC>, new() where DESC : ILibable
         {
-            var groupLibPropGroup = parentHelper.AddTogglableGroup(groupTitle);
+            UIHelperExtension groupLibPropGroup = parentHelper.AddTogglableGroup(groupTitle);
 
-            var subPanelActionsBar = groupLibPropGroup.AddGroupExtended("!!!!", out UILabel voide, out UIPanel voide2);
+            UIHelperExtension subPanelActionsBar = groupLibPropGroup.AddGroupExtended("!!!!", out UILabel voide, out UIPanel voide2);
             Destroy(voide);
-            ((UIPanel)subPanelActionsBar.Self).autoLayoutDirection = LayoutDirection.Horizontal;
-            ((UIPanel)subPanelActionsBar.Self).wrapLayout = false;
-            ((UIPanel)subPanelActionsBar.Self).autoLayout = true;
-            ((UIPanel)subPanelActionsBar.Self).autoFitChildrenHorizontally = true;
-            ((UIPanel)subPanelActionsBar.Self).autoFitChildrenVertically = true;
+            ((UIPanel) subPanelActionsBar.Self).autoLayoutDirection = LayoutDirection.Horizontal;
+            ((UIPanel) subPanelActionsBar.Self).wrapLayout = false;
+            ((UIPanel) subPanelActionsBar.Self).autoLayout = true;
+            ((UIPanel) subPanelActionsBar.Self).autoFitChildrenHorizontally = true;
+            ((UIPanel) subPanelActionsBar.Self).autoFitChildrenVertically = true;
 
-            copyButton = ConfigureActionButton(subPanelActionsBar.Self); copyButton.eventClick += (x, y) => actionCopy();
-            pasteButton = ConfigureActionButton(subPanelActionsBar.Self); pasteButton.eventClick += (x, y) => actionPaste();
-            deleteButton = ConfigureActionButton(subPanelActionsBar.Self); deleteButton.eventClick += (x, y) => actionDelete();
+            copyButton = ConfigureActionButton(subPanelActionsBar.Self);
+            copyButton.eventClick += (x, y) => actionCopy();
+            pasteButton = ConfigureActionButton(subPanelActionsBar.Self);
+            pasteButton.eventClick += (x, y) => actionPaste();
+            deleteButton = ConfigureActionButton(subPanelActionsBar.Self);
+            deleteButton.eventClick += (x, y) => actionDelete();
 
             SetIcon(copyButton, "Copy", Color.white);
             SetIcon(pasteButton, "Paste", Color.white);
@@ -308,7 +322,7 @@ namespace Klyte.DynamicTextBoards.UI
             pasteButton.isVisible = false;
 
 
-            AddDropdown(Locale.Get("DTB_LOAD_FROM_LIB"), out UIDropDown loadDD, groupLibPropGroup, DTBLibPropGroup.Instance.List().ToArray(), (x) => { });
+            AddDropdown(Locale.Get("K45_DTB_LOAD_FROM_LIB"), out UIDropDown loadDD, groupLibPropGroup, DTBLibPropGroup.Instance.List().ToArray(), (x) => { });
             loadDD.width -= 80;
             UIPanel parent = loadDD.GetComponentInParent<UIPanel>();
             UIButton actionButton = ConfigureActionButton(parent);
@@ -317,7 +331,7 @@ namespace Klyte.DynamicTextBoards.UI
             {
                 if (m_currentSelectedSegment > 0)
                 {
-                    var groupInfo = BasicLib<LIB, DESC>.Instance.Get(loadDD.selectedValue);
+                    DESC groupInfo = BasicLib<LIB, DESC>.Instance.Get(loadDD.selectedValue);
                     if (groupInfo != null)
                     {
                         onLoad(groupInfo);
@@ -332,7 +346,7 @@ namespace Klyte.DynamicTextBoards.UI
             {
                 if (m_currentSelectedSegment > 0)
                 {
-                    var groupInfo = BasicLib<LIB, DESC>.Instance.Get(loadDD.selectedValue);
+                    DESC groupInfo = BasicLib<LIB, DESC>.Instance.Get(loadDD.selectedValue);
                     if (groupInfo != null)
                     {
                         BasicLib<LIB, DESC>.Instance.Remove(loadDD.selectedValue);
@@ -341,7 +355,7 @@ namespace Klyte.DynamicTextBoards.UI
                 }
             };
 
-            AddTextField(Locale.Get("DTB_SAVE_TO_LIB"), out UITextField saveTxt, groupLibPropGroup, (x) => { });
+            AddTextField(Locale.Get("K45_DTB_SAVE_TO_LIB"), out UITextField saveTxt, groupLibPropGroup, (x) => { });
             saveTxt.width -= 40;
             parent = saveTxt.GetComponentInParent<UIPanel>();
             actionButton = ConfigureActionButton(parent);
@@ -361,7 +375,7 @@ namespace Klyte.DynamicTextBoards.UI
 
         private static void SetIcon(UIButton copyButton, string spriteName, Color color)
         {
-            var icon = copyButton.AddUIComponent<UISprite>();
+            UISprite icon = copyButton.AddUIComponent<UISprite>();
             icon.relativePosition = new Vector3(2, 2);
             icon.atlas = DTBCommonTextureAtlas.instance.Atlas;
             icon.width = 36;
@@ -384,51 +398,45 @@ namespace Klyte.DynamicTextBoards.UI
 
         private void AddSlider(string label, out UISlider slider, UIHelperExtension parentHelper, OnValueChanged onChange, float min, float max, float step)
         {
-            slider = (UISlider)parentHelper.AddSlider(label, min, max, step, min, onChange);
+            slider = (UISlider) parentHelper.AddSlider(label, min, max, step, min, onChange);
             slider.GetComponentInParent<UIPanel>().autoLayoutDirection = LayoutDirection.Horizontal;
             slider.GetComponentInParent<UIPanel>().autoFitChildrenVertically = true;
-           KlyteMonoUtils.LimitWidth(slider.parent.GetComponentInChildren<UILabel>(), parentHelper.Self.width / 2 - 10, true);
+            KlyteMonoUtils.LimitWidth(slider.parent.GetComponentInChildren<UILabel>(), (parentHelper.Self.width / 2) - 10, true);
         }
 
         private void AddVector3Field(string label, out UITextField[] fieldArray, UIHelperExtension parentHelper, Action<Vector3> onChange)
         {
             fieldArray = parentHelper.AddVector3Field(label, Vector3.zero, onChange);
-           KlyteMonoUtils.LimitWidth(fieldArray[0].parent.GetComponentInChildren<UILabel>(), parentHelper.Self.width / 2 - 10, true);
+            KlyteMonoUtils.LimitWidth(fieldArray[0].parent.GetComponentInChildren<UILabel>(), (parentHelper.Self.width / 2) - 10, true);
         }
 
         private void AddFloatField(string label, out UITextField field, UIHelperExtension parentHelper, Action<float> onChange, bool acceptNegative)
         {
             field = parentHelper.AddFloatField(label, 0, onChange, acceptNegative);
-           KlyteMonoUtils.LimitWidth(field.parent.GetComponentInChildren<UILabel>(), parentHelper.Self.width / 2 - 10, true);
+            KlyteMonoUtils.LimitWidth(field.parent.GetComponentInChildren<UILabel>(), (parentHelper.Self.width / 2) - 10, true);
         }
 
-        private void AddDropdown(string title, out UIDropDown dropdown, UIHelperExtension parentHelper, string[] options, OnDropdownSelectionChanged onChange)
-        {
-            AddDropdown(title, out dropdown, out UILabel label, parentHelper, options, onChange);
-        }
+        private void AddDropdown(string title, out UIDropDown dropdown, UIHelperExtension parentHelper, string[] options, OnDropdownSelectionChanged onChange) => AddDropdown(title, out dropdown, out UILabel label, parentHelper, options, onChange);
         private void AddDropdown(string title, out UIDropDown dropdown, out UILabel label, UIHelperExtension parentHelper, string[] options, OnDropdownSelectionChanged onChange)
         {
-            dropdown = (UIDropDown)parentHelper.AddDropdown(title, options, 0, onChange);
-            dropdown.width = parentHelper.Self.width / 2 - 10;
+            dropdown = (UIDropDown) parentHelper.AddDropdown(title, options, 0, onChange);
+            dropdown.width = (parentHelper.Self.width / 2) - 10;
             dropdown.GetComponentInParent<UIPanel>().autoLayoutDirection = LayoutDirection.Horizontal;
             dropdown.GetComponentInParent<UIPanel>().autoFitChildrenVertically = true;
             label = dropdown.parent.GetComponentInChildren<UILabel>();
-           KlyteMonoUtils.LimitWidth(label, parentHelper.Self.width / 2 - 10, true);
+            KlyteMonoUtils.LimitWidth(label, (parentHelper.Self.width / 2) - 10, true);
         }
 
-        private void AddTextField(string title, out UITextField textField, UIHelperExtension parentHelper, OnTextSubmitted onChange)
-        {
-            AddTextField(title, out textField, out UILabel label, parentHelper, onChange);
-        }
+        private void AddTextField(string title, out UITextField textField, UIHelperExtension parentHelper, OnTextSubmitted onChange) => AddTextField(title, out textField, out UILabel label, parentHelper, onChange);
 
         private void AddTextField(string title, out UITextField textField, out UILabel label, UIHelperExtension parentHelper, OnTextSubmitted onChange)
         {
             textField = parentHelper.AddTextField(title, (x) => { }, "", onChange);
-            textField.width = parentHelper.Self.width / 2 - 10;
+            textField.width = (parentHelper.Self.width / 2) - 10;
             textField.GetComponentInParent<UIPanel>().autoLayoutDirection = LayoutDirection.Horizontal;
             textField.GetComponentInParent<UIPanel>().autoFitChildrenVertically = true;
             label = textField.parent.GetComponentInChildren<UILabel>();
-           KlyteMonoUtils.LimitWidth(label, parentHelper.Self.width / 2 - 10, true);
+            KlyteMonoUtils.LimitWidth(label, (parentHelper.Self.width / 2) - 10, true);
         }
 
         private UIButton m_tabModel;
@@ -471,7 +479,7 @@ namespace Klyte.DynamicTextBoards.UI
             if (m_currentSelectedSegment > 0 && CurrentTab >= 0)
             {
                 LogUtils.DoLog($"  BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData.length = {  BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData.Length }");
-                var tempList = BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData.ToList();
+                List<CacheControlHighwaySign> tempList = BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData.ToList();
                 tempList.RemoveAt(CurrentTab);
                 BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData = tempList.ToArray();
                 LogUtils.DoLog($"  BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData.length pos = {  BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData.Length }");
@@ -529,7 +537,7 @@ namespace Klyte.DynamicTextBoards.UI
         {
             if (m_currentSelectedSegment > 0 && CurrentTab >= 0 && CurrentTabText >= 0)
             {
-                var tempList = BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[CurrentTab].descriptor.m_textDescriptors.ToList();
+                List<BoardTextDescriptorHigwaySign> tempList = BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[CurrentTab].descriptor.m_textDescriptors.ToList();
                 tempList.RemoveAt(CurrentTabText);
                 BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[CurrentTab].descriptor.m_textDescriptors = tempList.ToArray();
                 ReloadTabInfo();
@@ -537,14 +545,14 @@ namespace Klyte.DynamicTextBoards.UI
             }
         }
 
-        private void Start()
-        {
-            m_propsDropdown.items = BoardGeneratorHighwaySigns.Instance.LoadedProps.Select(x => Locale.Get("PROPS_TITLE", x)).ToArray();
-        }
+        private void Start() => m_propsDropdown.items = BoardGeneratorHighwaySigns.Instance.LoadedProps.Select(x => Locale.Get("PROPS_TITLE", x)).ToArray();
 
         private void SetPropModel(int idx)
         {
-            if (idx > 0) SafeActionInBoard(descriptor => descriptor.m_propName = BoardGeneratorHighwaySigns.Instance.LoadedProps[idx]);
+            if (idx > 0)
+            {
+                SafeActionInBoard(descriptor => descriptor.m_propName = BoardGeneratorHighwaySigns.Instance.LoadedProps[idx]);
+            }
         }
 
         private void SetPropItemName(string txt)
@@ -555,51 +563,30 @@ namespace Klyte.DynamicTextBoards.UI
                 EnsureTabQuantity(BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment]?.m_boardsData?.Length ?? -1);
             });
         }
-        private void SetPropColor(Color color)
-        {
-            SafeActionInBoard(descriptor => descriptor.m_color = color);
-        }
-        private void SetPropSegPosition(float value)
-        {
-            SafeActionInBoard(descriptor => descriptor.m_segmentPosition = value);
-        }
-        private void SetPropRelPosition(Vector3 value)
-        {
-            SafeActionInBoard(descriptor => descriptor.m_propPosition = value);
-        }
-        private void SetPropRelRotation(Vector3 value)
-        {
-            SafeActionInBoard(descriptor => descriptor.m_propRotation = value);
-        }
-        private void SetPropRelScale(Vector3 value)
-        {
-            SafeActionInBoard(descriptor => descriptor.PropScale = value);
-        }
-        private void SetInvertSignSide(bool value)
-        {
-            SafeActionInBoard(descriptor => descriptor.m_invertSign = value);
-        }
+        private void SetPropColor(Color color) => SafeActionInBoard(descriptor => descriptor.m_color = color);
+        private void SetPropSegPosition(float value) => SafeActionInBoard(descriptor => descriptor.m_segmentPosition = value);
+        private void SetPropRelPosition(Vector3 value) => SafeActionInBoard(descriptor => descriptor.m_propPosition = value);
+        private void SetPropRelRotation(Vector3 value) => SafeActionInBoard(descriptor => descriptor.m_propRotation = value);
+        private void SetPropRelScale(Vector3 value) => SafeActionInBoard(descriptor => descriptor.PropScale = value);
+        private void SetInvertSignSide(bool value) => SafeActionInBoard(descriptor => descriptor.m_invertSign = value);
         private void SafeActionInBoard(Action<BoardDescriptorHigwaySign> toDo)
         {
             if (m_currentSelectedSegment != 0 && !m_isLoading)
             {
                 EnsureBoardsArrayIdx(CurrentTab);
                 BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].cached = false;
-                var descriptor = BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[CurrentTab].descriptor;
+                BoardDescriptorHigwaySign descriptor = BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[CurrentTab].descriptor;
                 toDo(descriptor);
             }
         }
 
-        private void SetTextOwnNameContent(int idx)
-        {
-            SafeActionInTextBoard(descriptor => descriptor.m_ownTextContent = (OwnNameContent)idx);
-        }
+        private void SetTextOwnNameContent(int idx) => SafeActionInTextBoard(descriptor => descriptor.m_ownTextContent = (OwnNameContent) idx);
         private void SetTextCustom(string txt)
         {
             SafeActionInTextBoard(descriptor =>
             {
                 descriptor.m_fixedText = txt?.Replace("\\n", "\n");
-                descriptor.m_cachedTextContent = (OwnNameContent)(-1);
+                descriptor.m_cachedTextContent = (OwnNameContent) (-1);
             });
         }
         private void SetTextItemName(string txt)
@@ -611,63 +598,36 @@ namespace Klyte.DynamicTextBoards.UI
             });
         }
 
-        private void SetTextRelPosition(Vector3 value)
-        {
-            SafeActionInTextBoard(descriptor => descriptor.m_textRelativePosition = value);
-        }
-        private void SetTextRelRotation(Vector3 value)
-        {
-            SafeActionInTextBoard(descriptor => descriptor.m_textRelativeRotation = value);
-        }
+        private void SetTextRelPosition(Vector3 value) => SafeActionInTextBoard(descriptor => descriptor.m_textRelativePosition = value);
+        private void SetTextRelRotation(Vector3 value) => SafeActionInTextBoard(descriptor => descriptor.m_textRelativeRotation = value);
 
-        private void SetTextColor(Color color)
-        {
-            SafeActionInTextBoard(descriptor => descriptor.m_defaultColor = color);
-        }
+        private void SetTextColor(Color color) => SafeActionInTextBoard(descriptor => descriptor.m_defaultColor = color);
 
-        private void SetTextAlignmentHorizontal(int idx)
-        {
-            SafeActionInTextBoard(descriptor => descriptor.m_textAlign = (UIHorizontalAlignment)idx);
-        }
+        private void SetTextAlignmentHorizontal(int idx) => SafeActionInTextBoard(descriptor => descriptor.m_textAlign = (UIHorizontalAlignment) idx);
 
-        private void SetTextAlignmentVertical(int idx)
-        {
-            SafeActionInTextBoard(descriptor => descriptor.m_verticalAlign = (UIVerticalAlignment)idx);
-        }
+        private void SetTextAlignmentVertical(int idx) => SafeActionInTextBoard(descriptor => descriptor.m_verticalAlign = (UIVerticalAlignment) idx);
 
-        private void SetTextMaxWidth(float val)
-        {
-            SafeActionInTextBoard(descriptor => descriptor.m_maxWidthMeters = val);
-        }
-        private void SetTextScale(float val)
-        {
-            SafeActionInTextBoard(descriptor => descriptor.m_textScale = val);
-        }
-        private void SetTextResizeYOnOverflow(bool value)
-        {
-            SafeActionInTextBoard(descriptor => descriptor.m_applyOverflowResizingOnY = value);
-        }
-        private void SetTextLumDay(float val)
-        {
-            SafeActionInTextBoard(descriptor => descriptor.m_dayEmissiveMultiplier = val);
-        }
-        private void SetTextLumNight(float val)
-        {
-            SafeActionInTextBoard(descriptor => descriptor.m_nightEmissiveMultiplier = val);
-        }
+        private void SetTextMaxWidth(float val) => SafeActionInTextBoard(descriptor => descriptor.m_maxWidthMeters = val);
+        private void SetTextScale(float val) => SafeActionInTextBoard(descriptor => descriptor.m_textScale = val);
+        private void SetTextResizeYOnOverflow(bool value) => SafeActionInTextBoard(descriptor => descriptor.m_applyOverflowResizingOnY = value);
+        private void SetTextLumDay(float val) => SafeActionInTextBoard(descriptor => descriptor.m_dayEmissiveMultiplier = val);
+        private void SetTextLumNight(float val) => SafeActionInTextBoard(descriptor => descriptor.m_nightEmissiveMultiplier = val);
 
         private void SetOverrideFont(int idx)
         {
             SafeActionInTextBoard(descriptor =>
             {
                 descriptor.m_overrideFont = idx > 0 ? m_overrideFontText.selectedValue : null;
-                descriptor.m_cachedTextContent = (OwnNameContent)(-1);
+                descriptor.m_cachedTextContent = (OwnNameContent) (-1);
             });
         }
 
         private void OnSetFont(int idx)
         {
-            if (idx >= 0) BoardGeneratorHighwaySigns.Instance.ChangeFont(idx == 0 ? null : m_fontSelect.items[idx]);
+            if (idx >= 0)
+            {
+                BoardGeneratorHighwaySigns.Instance.ChangeFont(idx == 0 ? null : m_fontSelect.items[idx]);
+            }
         }
 
         private void SafeActionInTextBoard(Action<BoardTextDescriptorHigwaySign> toDo)
@@ -676,7 +636,7 @@ namespace Klyte.DynamicTextBoards.UI
             {
                 EnsureBoardsArrayIdx(CurrentTab, CurrentTabText);
                 BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].cached = false;
-                var descriptor = BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[CurrentTab].descriptor.m_textDescriptors[CurrentTabText];
+                BoardTextDescriptorHigwaySign descriptor = BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[CurrentTab].descriptor.m_textDescriptors[CurrentTabText];
                 toDo(descriptor);
             }
         }
@@ -691,7 +651,7 @@ namespace Klyte.DynamicTextBoards.UI
                 }
                 if (BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData == null || BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData.Length <= idx)
                 {
-                    var oldArr = BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData;
+                    CacheControlHighwaySign[] oldArr = BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData;
                     BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData = new BoardGeneratorHighwaySigns.CacheControlHighwaySign[idx + 1];
                     if (oldArr != null && oldArr.Length > 0)
                     {
@@ -712,13 +672,24 @@ namespace Klyte.DynamicTextBoards.UI
 
                 EnsureTabQuantity(idx + 1);
             }
-            if (textIdx < 0) return;
-            if (idx < 0) idx = CurrentTab;
-            if (idx < 0) return;
+            if (textIdx < 0)
+            {
+                return;
+            }
+
+            if (idx < 0)
+            {
+                idx = CurrentTab;
+            }
+
+            if (idx < 0)
+            {
+                return;
+            }
 
             if (BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[idx].descriptor.m_textDescriptors == null || BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[idx].descriptor.m_textDescriptors.Length <= textIdx)
             {
-                var oldArr = BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[idx].descriptor.m_textDescriptors;
+                BoardTextDescriptorHigwaySign[] oldArr = BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[idx].descriptor.m_textDescriptors;
                 BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[idx].descriptor.m_textDescriptors = new BoardTextDescriptorHigwaySign[textIdx + 1];
                 if (oldArr != null && oldArr.Length > 0)
                 {
@@ -741,7 +712,7 @@ namespace Klyte.DynamicTextBoards.UI
 
         private void EnsureTabQuantity(int size)
         {
-            var targetCount = Mathf.Max(m_pseudoTabstripProps.tabCount, size + 1);
+            int targetCount = Mathf.Max(m_pseudoTabstripProps.tabCount, size + 1);
             for (int i = 0; i < targetCount; i++)
             {
                 if (i >= m_pseudoTabstripProps.tabCount)
@@ -750,15 +721,15 @@ namespace Klyte.DynamicTextBoards.UI
                 }
                 if (i == targetCount - 1)
                 {
-                    ((UIButton)m_pseudoTabstripProps.tabs[i]).text = "+";
+                    ((UIButton) m_pseudoTabstripProps.tabs[i]).text = "+";
                 }
                 else if (m_currentSelectedSegment > 0 && i < (BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment]?.m_boardsData?.Length ?? 0))
                 {
-                    ((UIButton)m_pseudoTabstripProps.tabs[i]).text = (BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment]?.m_boardsData[i]?.descriptor?.SaveName).IsNullOrWhiteSpace() ? $"P{i + 1}" : BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment]?.m_boardsData[i]?.descriptor?.SaveName;
+                    ((UIButton) m_pseudoTabstripProps.tabs[i]).text = (BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment]?.m_boardsData[i]?.descriptor?.SaveName).IsNullOrWhiteSpace() ? $"P{i + 1}" : BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment]?.m_boardsData[i]?.descriptor?.SaveName;
                 }
                 else
                 {
-                    ((UIButton)m_pseudoTabstripProps.tabs[i]).text = $"P{i + 1}";
+                    ((UIButton) m_pseudoTabstripProps.tabs[i]).text = $"P{i + 1}";
                 }
 
             }
@@ -766,7 +737,7 @@ namespace Klyte.DynamicTextBoards.UI
 
         private void EnsureTabQuantityTexts(int size)
         {
-            var targetCount = Mathf.Max(m_pseudoTabstripTexts.tabCount, size + 1);
+            int targetCount = Mathf.Max(m_pseudoTabstripTexts.tabCount, size + 1);
             for (int i = 0; i < targetCount; i++)
             {
                 if (i >= m_pseudoTabstripTexts.tabCount)
@@ -775,15 +746,15 @@ namespace Klyte.DynamicTextBoards.UI
                 }
                 if (i == targetCount - 1)
                 {
-                    ((UIButton)m_pseudoTabstripTexts.tabs[i]).text = "+";
+                    ((UIButton) m_pseudoTabstripTexts.tabs[i]).text = "+";
                 }
                 else if (m_currentSelectedSegment > 0 && CurrentTab >= 0 && i < (BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment]?.m_boardsData?.ElementAtOrDefault(CurrentTab)?.descriptor.m_textDescriptors?.Length ?? 0))
                 {
-                    ((UIButton)m_pseudoTabstripTexts.tabs[i]).text = (BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment]?.m_boardsData[CurrentTab]?.descriptor.m_textDescriptors?.ElementAtOrDefault(i)?.SaveName).IsNullOrWhiteSpace() ? $"T{i + 1}" : (BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment]?.m_boardsData[CurrentTab]?.descriptor.m_textDescriptors[i]?.SaveName);
+                    ((UIButton) m_pseudoTabstripTexts.tabs[i]).text = (BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment]?.m_boardsData[CurrentTab]?.descriptor.m_textDescriptors?.ElementAtOrDefault(i)?.SaveName).IsNullOrWhiteSpace() ? $"T{i + 1}" : (BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment]?.m_boardsData[CurrentTab]?.descriptor.m_textDescriptors[i]?.SaveName);
                 }
                 else
                 {
-                    ((UIButton)m_pseudoTabstripTexts.tabs[i]).text = $"T{i + 1}";
+                    ((UIButton) m_pseudoTabstripTexts.tabs[i]).text = $"T{i + 1}";
                 }
             }
         }
@@ -828,8 +799,8 @@ namespace Klyte.DynamicTextBoards.UI
             if (m_currentSelectedSegment > 0)
             {
                 m_isLoading = true;
-                var endNodeNum = SegmentUtils.GetNumberAt(m_currentSelectedSegment, false);
-                var startNodeNum = SegmentUtils.GetNumberAt(m_currentSelectedSegment, true);
+                int endNodeNum = SegmentUtils.GetNumberAt(m_currentSelectedSegment, false);
+                int startNodeNum = SegmentUtils.GetNumberAt(m_currentSelectedSegment, true);
                 m_selectionAddress.text = $"{NetManager.instance.GetSegmentName(m_currentSelectedSegment)}, {Mathf.Min(startNodeNum, endNodeNum)} - {Mathf.Max(startNodeNum, endNodeNum)}";
 
                 EnsureTabQuantity(BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment]?.m_boardsData?.Length ?? -1);
@@ -857,7 +828,11 @@ namespace Klyte.DynamicTextBoards.UI
         private void ReloadTabInfo()
         {
             m_pseudoTabPropsHelper.Self.isVisible = m_currentSelectedSegment > 0 && CurrentTab >= 0;
-            if (m_currentSelectedSegment <= 0 || CurrentTab < 0 || CurrentTab >= (BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment]?.m_boardsData?.Length ?? 0)) return;
+            if (m_currentSelectedSegment <= 0 || CurrentTab < 0 || CurrentTab >= (BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment]?.m_boardsData?.Length ?? 0))
+            {
+                return;
+            }
+
             m_isLoading = true;
             LoadTabInfo(BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment]?.m_boardsData[CurrentTab]?.descriptor);
             EnsureTabQuantityTexts(BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment]?.m_boardsData[CurrentTab]?.descriptor?.m_textDescriptors?.Length ?? 0);
@@ -886,7 +861,11 @@ namespace Klyte.DynamicTextBoards.UI
         private void ReloadTabInfoText()
         {
             m_pseudoTabTextsContainer.Self.isVisible = CurrentTabText >= 0;
-            if (m_currentSelectedSegment <= 0 || CurrentTab < 0 || CurrentTabText < 0) return;
+            if (m_currentSelectedSegment <= 0 || CurrentTab < 0 || CurrentTabText < 0)
+            {
+                return;
+            }
+
             m_isLoading = true;
             LoadTabTextInfo(BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment]?.m_boardsData[CurrentTab]?.descriptor.m_textDescriptors[CurrentTabText]);
             m_loadText.items = DTBLibTextMesh.Instance.List().ToArray();
@@ -896,7 +875,7 @@ namespace Klyte.DynamicTextBoards.UI
         private void LoadTabTextInfo(BoardTextDescriptorHigwaySign descriptor)
         {
             m_textItemName.text = descriptor?.SaveName ?? "";
-            m_dropdownTextContent.selectedIndex = (int)(descriptor?.m_ownTextContent ?? OwnNameContent.None);
+            m_dropdownTextContent.selectedIndex = (int) (descriptor?.m_ownTextContent ?? OwnNameContent.None);
             m_customText.text = (descriptor?.m_fixedText?.Replace("\n", "\\n") ?? "");
             m_posVectorEditorText[0].text = (descriptor?.m_textRelativePosition.x ?? 0).ToString();
             m_posVectorEditorText[1].text = (descriptor?.m_textRelativePosition.y ?? 0).ToString();
@@ -905,8 +884,8 @@ namespace Klyte.DynamicTextBoards.UI
             m_rotVectorEditorText[1].text = (descriptor?.m_textRelativeRotation.y ?? 0).ToString();
             m_rotVectorEditorText[2].text = (descriptor?.m_textRelativeRotation.z ?? 0).ToString();
             m_colorEditorText.selectedColor = descriptor?.m_defaultColor ?? Color.white;
-            m_dropdownTextAlignHorizontal.selectedIndex = (int)(descriptor?.m_textAlign ?? UIHorizontalAlignment.Center);
-            m_dropdownTextAlignVertical.selectedIndex = (int)(descriptor?.m_verticalAlign ?? UIVerticalAlignment.Middle);
+            m_dropdownTextAlignHorizontal.selectedIndex = (int) (descriptor?.m_textAlign ?? UIHorizontalAlignment.Center);
+            m_dropdownTextAlignVertical.selectedIndex = (int) (descriptor?.m_verticalAlign ?? UIVerticalAlignment.Middle);
             m_maxWidthText.text = (descriptor?.m_maxWidthMeters ?? 0).ToString();
             m_scaleText.text = (descriptor?.m_textScale ?? 0).ToString();
             m_textResizeYOnOverflow.isChecked = (descriptor?.m_applyOverflowResizingOnY ?? false);
@@ -917,7 +896,7 @@ namespace Klyte.DynamicTextBoards.UI
 
         private void CreateGroupFileSelect(string i18n, OnDropdownSelectionChanged onChanged, out UIDropDown dropDown)
         {
-            dropDown = m_uiHelperHS.AddDropdownLocalized(i18n, new String[0], -1, onChanged);
+            dropDown = m_uiHelperHS.AddDropdownLocalized(i18n, new string[0], -1, onChanged);
             dropDown.width = 370;
             m_uiHelperHS.AddSpace(20);
         }
@@ -927,7 +906,7 @@ namespace Klyte.DynamicTextBoards.UI
         private void ReloadFontsOverride(UIDropDown target, string currentVal)
         {
             List<string> items = Font.GetOSInstalledFontNames().ToList();
-            items.Insert(0, Locale.Get("DTB_USE_DEFAULT_FONT_HS"));
+            items.Insert(0, Locale.Get("K45_DTB_USE_DEFAULT_FONT_HS"));
             target.items = items.ToArray();
             if (items.Contains(currentVal))
             {

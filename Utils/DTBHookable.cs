@@ -1,13 +1,7 @@
 using ColossalFramework;
-using ColossalFramework.Globalization;
 using ColossalFramework.Math;
-using ColossalFramework.UI;
-using Klyte.Commons.Extensors;
 using Klyte.Commons.Utils;
-using Klyte.DynamicTextBoards.Overrides;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 namespace Klyte.DynamicTextBoards.Utils
@@ -31,10 +25,10 @@ namespace Klyte.DynamicTextBoards.Utils
                 LogUtils.DoLog($"!UpdateMeshStreetSuffix NonCustom {NetManager.instance.m_segments.m_buffer[idx].m_nameSeed}");
                 if (NetManager.instance.m_segments.m_buffer[idx].Info.m_netAI is RoadBaseAI ai)
                 {
-                    Randomizer randomizer = new Randomizer((int)NetManager.instance.m_segments.m_buffer[idx].m_nameSeed);
+                    Randomizer randomizer = new Randomizer(NetManager.instance.m_segments.m_buffer[idx].m_nameSeed);
                     randomizer.Int32(12);
-                    var getter = ReflectionUtils.GetMethodDelegate("GenerateStreetName", ai.GetType(), typeof(Action<RoadBaseAI, Randomizer, string>));
-                    result = getter.Method.Invoke(ai, new object[] { randomizer }) as String;
+                    result = ReflectionUtils.RunPrivateMethod<string>(ai, "GenerateStreetName", randomizer);
+                    //}
                 }
                 else
                 {
@@ -46,7 +40,7 @@ namespace Klyte.DynamicTextBoards.Utils
         };
 
         private static Vector2? m_cachedPos;
-        private static Color[] randomColors = { Color.black, Color.gray, Color.white, Color.red, new Color32(0xFF, 0x88, 0, 0xFf), Color.yellow, Color.green, Color.cyan, Color.blue, Color.magenta };
+        private static readonly Color[] randomColors = { Color.black, Color.gray, Color.white, Color.red, new Color32(0xFF, 0x88, 0, 0xFf), Color.yellow, Color.green, Color.cyan, Color.blue, Color.magenta };
 
 
         public static Func<ushort, Color> GetDistrictColor = (ushort districtId) => randomColors[districtId % randomColors.Length];

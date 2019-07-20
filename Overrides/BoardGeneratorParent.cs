@@ -12,7 +12,6 @@ using System.Linq;
 using System.Xml;
 using System.Xml.Serialization;
 using UnityEngine;
-using static BuildingInfo;
 
 namespace Klyte.DynamicTextBoards.Overrides
 {
@@ -24,7 +23,7 @@ namespace Klyte.DynamicTextBoards.Overrides
         protected static Shader TextShader => DTBResourceLoader.instance.GetLoadedShader("Klyte/DynamicTextBoards/klytetextboards") ?? DistrictManager.instance.m_properties.m_areaNameShader;
 
         public static BG Instance { get; protected set; }
-        public Redirector RedirectorInstance { get ; set; }
+        public Redirector RedirectorInstance { get; set; }
 
         protected void BuildSurfaceFont(out UIDynamicFont font, string fontName)
         {
@@ -43,7 +42,7 @@ namespace Klyte.DynamicTextBoards.Overrides
 
         public void ChangeFont(string newFont)
         {
-            var fontList = new List<String> { newFont };
+            List<string> fontList = new List<string> { newFont };
             fontList.AddRange(DistrictManager.instance.m_properties.m_areaNameFont.baseFont.fontNames.ToList());
             DrawFont.baseFont = Font.CreateDynamicFontFromOSFont(fontList.ToArray(), 16);
             lastFontUpdateFrame = SimulationManager.instance.m_currentTickIndex;
@@ -61,7 +60,7 @@ namespace Klyte.DynamicTextBoards.Overrides
         }
         protected abstract void OnTextureRebuiltImpl(Font obj);
 
-        public void Awake()
+        public virtual void Awake()
         {
             Instance = this as BG;
             RedirectorInstance = KlyteMonoUtils.CreateElement<Redirector>(transform);
@@ -92,10 +91,11 @@ namespace Klyte.DynamicTextBoards.Overrides
         private const float m_pixelRatio = 0.5f;
         //private const float m_scaleY = 1.2f;
         private const float m_textScale = 4;
-        private readonly Vector2 scalingMatrix = new Vector2(0.015f, 0.015f);
+        private readonly Vector2 m_scalingMatrix = new Vector2(0.015f, 0.015f);
 
-        public  void Awake()
+        public override void Awake()
         {
+            base.Awake();
             Font.textureRebuilt += OnTextureRebuilt;
             Initialize();
             m_boardsContainers = new BBC[ObjArraySize];
@@ -115,7 +115,7 @@ namespace Klyte.DynamicTextBoards.Overrides
             vector *= width * 4f;
             vector2 *= length * 4f;
             Vector2 a = VectorUtils.XZ(data.m_position);
-            Quad2 quad = default(Quad2);
+            Quad2 quad = default;
             quad.a = a - vector - vector2;
             quad.b = a + vector - vector2;
             quad.c = a + vector + vector2;
@@ -124,18 +124,18 @@ namespace Klyte.DynamicTextBoards.Overrides
         }
         protected Quad2 GetBounds(Vector3 ref1, Vector3 ref2, float halfWidth)
         {
-            var ref1v2 = VectorUtils.XZ(ref1);
-            var ref2v2 = VectorUtils.XZ(ref2);
-            var halfLength = (ref1v2 - ref2v2).magnitude / 2;
-            var center = (ref1v2 + ref2v2) / 2;
-            var angle = Vector2.Angle(ref1v2, ref2v2);
+            Vector2 ref1v2 = VectorUtils.XZ(ref1);
+            Vector2 ref2v2 = VectorUtils.XZ(ref2);
+            float halfLength = (ref1v2 - ref2v2).magnitude / 2;
+            Vector2 center = (ref1v2 + ref2v2) / 2;
+            float angle = Vector2.Angle(ref1v2, ref2v2);
 
 
             Vector2 vector = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
             Vector2 vector2 = new Vector2(vector.y, -vector.x);
             vector *= halfWidth;
             vector2 *= halfLength;
-            Quad2 quad = default(Quad2);
+            Quad2 quad = default;
             quad.a = center - vector - vector2;
             quad.b = center + vector - vector2;
             quad.c = center + vector + vector2;
@@ -166,33 +166,37 @@ namespace Klyte.DynamicTextBoards.Overrides
 
 
         #region Rendering
-        private Matrix4x4 RenderProp(ushort refId, float refAngleRad, RenderManager.CameraInfo cameraInfo, PropInfo propInfo, Vector3 position, Vector4 dataVector, int idx, int layerMask, Vector3 rotation, Vector3 scale, out bool rendered)
+        private Matrix4x4 RenderProp(ushort refId, float refAngleRad, RenderManager.CameraInfo cameraInfo,
+#pragma warning disable IDE0060 // Remover o parâmetro não utilizado
+                                     PropInfo propInfo, Vector3 position, Vector4 dataVector, int idx, int layerMask,
+#pragma warning restore IDE0060 // Remover o parâmetro não utilizado
+                                     Vector3 rotation, Vector3 scale, out bool rendered)
         {
             rendered = false;
-            DistrictManager instance2 = Singleton<DistrictManager>.instance;
-            Randomizer randomizer = new Randomizer((int)refId << 6 | (idx + 32));
-            Matrix4x4 matrix = default(Matrix4x4);
-            matrix.SetTRS(position, Quaternion.AngleAxis(rotation.y + refAngleRad * Mathf.Rad2Deg, Vector3.down) * Quaternion.AngleAxis(rotation.x, Vector3.left) * Quaternion.AngleAxis(rotation.z, Vector3.back), scale);
+       //     DistrictManager instance2 = Singleton<DistrictManager>.instance;
+            Randomizer randomizer = new Randomizer((refId << 6) | (idx + 32));
+            Matrix4x4 matrix = default;
+            matrix.SetTRS(position, Quaternion.AngleAxis(rotation.y + (refAngleRad * Mathf.Rad2Deg), Vector3.down) * Quaternion.AngleAxis(rotation.x, Vector3.left) * Quaternion.AngleAxis(rotation.z, Vector3.back), scale);
             if (propInfo != null)
             {
                 //scale = propInfo.m_minScale + (float)randomizer.Int32(10000u) * (propInfo.m_maxScale - propInfo.m_minScale) * 0.0001f;
-                byte district = instance2.GetDistrict(position);
-                byte park = instance2.GetPark(position);
+               // byte district = instance2.GetDistrict(position);
+             //   byte park = instance2.GetPark(position);
                 propInfo = propInfo.GetVariation(ref randomizer);//, park, ref instance2.m_districts.m_buffer[(int)district]);
                 Color color = propInfo.m_color0;
-                var magn = scale.magnitude;
+          //      float magn = scale.magnitude;
                 //if ((layerMask & 1 << propInfo.m_prefabDataLayer) != 0 || propInfo.m_hasEffects)
                 //{
                 if (cameraInfo.CheckRenderDistance(position, propInfo.m_maxRenderDistance * scale.sqrMagnitude))
                 {
-                    InstanceID propRenderID2 = this.GetPropRenderID(refId);
-                    var oldLayerMask = cameraInfo.m_layerMask;
-                    var oldRenderDist = propInfo.m_lodRenderDistance;
+                    InstanceID propRenderID2 = GetPropRenderID(refId);
+                    int oldLayerMask = cameraInfo.m_layerMask;
+                    float oldRenderDist = propInfo.m_lodRenderDistance;
                     propInfo.m_lodRenderDistance *= scale.sqrMagnitude;
                     cameraInfo.m_layerMask = 0x7FFFFFFF;
                     try
                     {
-                        PropInstance.RenderInstance(cameraInfo, propInfo, propRenderID2, matrix, position, scale.y, refAngleRad + rotation.y * Mathf.Deg2Rad, color, dataVector, true);
+                        PropInstance.RenderInstance(cameraInfo, propInfo, propRenderID2, matrix, position, scale.y, refAngleRad + (rotation.y * Mathf.Deg2Rad), color, dataVector, true);
                     }
                     finally
                     {
@@ -242,15 +246,19 @@ namespace Klyte.DynamicTextBoards.Overrides
                     renderInfo = GetMeshCustom3(refID, boardIdx, secIdx, out targetFont);
                     break;
             }
-            if (renderInfo == null || targetFont == null) return;
-            var overflowScaleX = 1f;
-            var overflowScaleY = 1f;
-            var defaultMultiplierX = textDescriptor.m_textScale * scalingMatrix.x;
-            var defaultMultiplierY = textDescriptor.m_textScale * scalingMatrix.y;
-            var realWidth = defaultMultiplierX * renderInfo.m_sizeMetersUnscaled.x;
-            var realHeight = defaultMultiplierY * renderInfo.m_sizeMetersUnscaled.y;
+            if (renderInfo == null || targetFont == null)
+            {
+                return;
+            }
+
+            float overflowScaleX = 1f;
+            float overflowScaleY = 1f;
+            float defaultMultiplierX = textDescriptor.m_textScale * m_scalingMatrix.x;
+            float defaultMultiplierY = textDescriptor.m_textScale * m_scalingMatrix.y;
+            float realWidth = defaultMultiplierX * renderInfo.m_sizeMetersUnscaled.x;
+            float realHeight = defaultMultiplierY * renderInfo.m_sizeMetersUnscaled.y;
             //doLog($"[{GetType().Name},{refID},{boardIdx},{secIdx}] realWidth = {realWidth}; realHeight = {realHeight}");
-            var targetRelativePosition = textDescriptor.m_textRelativePosition;
+            Vector3 targetRelativePosition = textDescriptor.m_textRelativePosition;
             if (textDescriptor.m_maxWidthMeters > 0 && textDescriptor.m_maxWidthMeters < realWidth)
             {
                 overflowScaleX = textDescriptor.m_maxWidthMeters / realWidth;
@@ -263,20 +271,20 @@ namespace Klyte.DynamicTextBoards.Overrides
             {
                 if (textDescriptor.m_maxWidthMeters > 0 && textDescriptor.m_textAlign != UIHorizontalAlignment.Center)
                 {
-                    var factor = (textDescriptor.m_textAlign == UIHorizontalAlignment.Left) == (((textDescriptor.m_textRelativeRotation.y) % 360 + 810) % 360 > 180) ? 0.5f : -0.5f;
+                    float factor = textDescriptor.m_textAlign == UIHorizontalAlignment.Left == (((textDescriptor.m_textRelativeRotation.y % 360) + 810) % 360 > 180) ? 0.5f : -0.5f;
                     targetRelativePosition += new Vector3((textDescriptor.m_maxWidthMeters - realWidth) * factor / descriptor.ScaleX, 0, 0);
                 }
             }
             if (textDescriptor.m_verticalAlign != UIVerticalAlignment.Middle)
             {
-                var factor = (textDescriptor.m_verticalAlign == UIVerticalAlignment.Bottom) != (((textDescriptor.m_textRelativeRotation.x) % 360 + 810) % 360 > 180) ? 0.5f : -0.5f;
-                targetRelativePosition += new Vector3(0, (realHeight) * factor, 0);
+                float factor = textDescriptor.m_verticalAlign == UIVerticalAlignment.Bottom != (((textDescriptor.m_textRelativeRotation.x % 360) + 810) % 360 > 180) ? 0.5f : -0.5f;
+                targetRelativePosition += new Vector3(0, realHeight * factor, 0);
             }
 
 
 
 
-            var matrix = propMatrix * Matrix4x4.TRS(
+            Matrix4x4 matrix = propMatrix * Matrix4x4.TRS(
                 targetRelativePosition,
                 Quaternion.AngleAxis(textDescriptor.m_textRelativeRotation.x, Vector3.left) * Quaternion.AngleAxis(textDescriptor.m_textRelativeRotation.y, Vector3.down) * Quaternion.AngleAxis(textDescriptor.m_textRelativeRotation.z, Vector3.back),
                 new Vector3(defaultMultiplierX * overflowScaleX / descriptor.ScaleX, defaultMultiplierY * overflowScaleY / descriptor.PropScale.y, 1));
@@ -322,7 +330,11 @@ namespace Klyte.DynamicTextBoards.Overrides
 
         protected void RefreshNameData(ref BRI result, string name, UIFont overrideFont = null)
         {
-            if (result == null) result = new BRI();
+            if (result == null)
+            {
+                result = new BRI();
+            }
+
             UIFontManager.Invalidate(overrideFont ?? DrawFont);
             UIRenderData uirenderData = UIRenderData.Obtain();
             try
@@ -352,7 +364,7 @@ namespace Klyte.DynamicTextBoards.Overrides
                     uifontRenderer.shadowColor = Color.black;
                     uifontRenderer.shadowOffset = Vector2.zero;
                     uifontRenderer.outline = false;
-                    var sizeMeters = uifontRenderer.MeasureString(name) * m_pixelRatio;
+                    Vector2 sizeMeters = uifontRenderer.MeasureString(name) * m_pixelRatio;
                     uifontRenderer.vectorOffset = new Vector3(width * m_pixelRatio * -0.5f, sizeMeters.y * 0.5f, 0f);
                     uifontRenderer.Render(name, uirenderData);
                     result.m_sizeMetersUnscaled = sizeMeters;
@@ -394,7 +406,7 @@ namespace Klyte.DynamicTextBoards.Overrides
             targetFont = DrawFont;
             if (textDescriptor.GeneratedFixedTextRenderInfo == null || textDescriptor.GeneratedFixedTextRenderInfoTick < lastFontUpdateFrame)
             {
-                var result = textDescriptor.GeneratedFixedTextRenderInfo as BRI;
+                BRI result = textDescriptor.GeneratedFixedTextRenderInfo as BRI;
                 RefreshNameData(ref result, textDescriptor.m_isFixedTextLocalized ? Locale.Get(textDescriptor.m_fixedText, textDescriptor.m_fixedTextLocaleKey) : textDescriptor.m_fixedText);
                 textDescriptor.GeneratedFixedTextRenderInfo = result;
             }
@@ -405,14 +417,8 @@ namespace Klyte.DynamicTextBoards.Overrides
         protected static string A_ShaderNameTest = "Klyte/DynamicTextBoards/klytetextboards";
         protected static IEnumerable<string> A_Shaders => DTBShaderLibrary.m_loadedShaders.Keys;
 
-        protected void A_ReloadFromDisk()
-        {
-            DTBShaderLibrary.ReloadFromDisk();
-        }
-        protected void A_CopyToFont()
-        {
-            DrawFont.shader = DTBResourceLoader.instance.GetLoadedShader(A_ShaderNameTest);
-        }
+        protected void A_ReloadFromDisk() => DTBShaderLibrary.ReloadFromDisk();
+        protected void A_CopyToFont() => DrawFont.shader = DTBResourceLoader.instance.GetLoadedShader(A_ShaderNameTest);
 
     }
 
@@ -440,10 +446,7 @@ namespace Klyte.DynamicTextBoards.Overrides
         public virtual void Deserialize(string input)
         {
         }
-        public virtual string Serialize()
-        {
-            return null;
-        }
+        public virtual string Serialize() => null;
 
         public static CCS New(CC sign)
         {
@@ -564,44 +567,36 @@ namespace Klyte.DynamicTextBoards.Overrides
         public float? ScaleZ;
 
 
-        public Matrix4x4 m_textMatrixTranslation(int idx) => Matrix4x4.Translate(m_textDescriptors[idx].m_textRelativePosition);
-        public Matrix4x4 m_textMatrixRotation(int idx) => Matrix4x4.TRS(Vector3.zero, Quaternion.Euler(m_textDescriptors[idx].m_textRelativeRotation), Vector3.one);
+        public Matrix4x4 TextMatrixTranslation(int idx) => Matrix4x4.Translate(m_textDescriptors[idx].m_textRelativePosition);
+        public Matrix4x4 TextMatrixRotation(int idx) => Matrix4x4.TRS(Vector3.zero, Quaternion.Euler(m_textDescriptors[idx].m_textRelativeRotation), Vector3.one);
 
 
         public string Serialize()
         {
             XmlSerializer xmlser = new XmlSerializer(typeof(BD));
             XmlWriterSettings settings = new XmlWriterSettings { Indent = false };
-            using (StringWriter textWriter = new StringWriter())
-            {
-                using (XmlWriter xw = XmlWriter.Create(textWriter, settings))
-                {
-                    XmlSerializerNamespaces ns = new XmlSerializerNamespaces();
-                    ns.Add("", "");
-                    xmlser.Serialize(xw, this, ns);
-                    return textWriter.ToString();
-                }
-            }
+            using StringWriter textWriter = new StringWriter();
+            using XmlWriter xw = XmlWriter.Create(textWriter, settings);
+            XmlSerializerNamespaces ns = new XmlSerializerNamespaces();
+            ns.Add("", "");
+            xmlser.Serialize(xw, this, ns);
+            return textWriter.ToString();
         }
 
-        public static BD Deserialize(String s)
+        public static BD Deserialize(string s)
         {
             XmlSerializer xmlser = new XmlSerializer(typeof(BD));
             try
             {
-                using (TextReader tr = new StringReader(s))
+                using TextReader tr = new StringReader(s);
+                using XmlReader reader = XmlReader.Create(tr);
+                if (xmlser.CanDeserialize(reader))
                 {
-                    using (XmlReader reader = XmlReader.Create(tr))
-                    {
-                        if (xmlser.CanDeserialize(reader))
-                        {
-                            return (BD)xmlser.Deserialize(reader);
-                        }
-                        else
-                        {
-                            LogUtils.DoErrorLog($"CAN'T DESERIALIZE BOARD DESCRIPTOR!\nText : {s}");
-                        }
-                    }
+                    return (BD) xmlser.Deserialize(reader);
+                }
+                else
+                {
+                    LogUtils.DoErrorLog($"CAN'T DESERIALIZE BOARD DESCRIPTOR!\nText : {s}");
                 }
             }
             catch (Exception e)
@@ -666,13 +661,17 @@ namespace Klyte.DynamicTextBoards.Overrides
         public float RotationZ { get => m_textRelativeRotation.z; set => m_textRelativeRotation.z = value; }
 
         [XmlAttribute("forceColor")]
-        public string ForceColor { get => m_defaultColor == Color.clear ? null : ColorExtensions.ToRGB(m_defaultColor); set => m_defaultColor = value.IsNullOrWhiteSpace() ? Color.clear : (Color)ColorExtensions.FromRGB(value); }
+        public string ForceColor { get => m_defaultColor == Color.clear ? null : ColorExtensions.ToRGB(m_defaultColor); set => m_defaultColor = value.IsNullOrWhiteSpace() ? Color.clear : (Color) ColorExtensions.FromRGB(value); }
 
         [XmlIgnore]
         public Shader ShaderOverride
         {
             get {
-                if (m_shader == null) return null;
+                if (m_shader == null)
+                {
+                    return null;
+                }
+
                 if (m_shaderOverride == null)
                 {
                     m_shaderOverride = Shader.Find(m_shader) ?? DTBResourceLoader.instance.GetLoadedShader(m_shader);
@@ -687,9 +686,7 @@ namespace Klyte.DynamicTextBoards.Overrides
         [XmlIgnore]
         public BasicRenderInformation GeneratedFixedTextRenderInfo
         {
-            get {
-                return m_generatedFixedTextRenderInfo;
-            }
+            get => m_generatedFixedTextRenderInfo;
             set {
                 m_generatedFixedTextRenderInfo = value;
                 GeneratedFixedTextRenderInfoTick = SimulationManager.instance.m_currentTickIndex;
@@ -702,36 +699,28 @@ namespace Klyte.DynamicTextBoards.Overrides
         {
             XmlSerializer xmlser = new XmlSerializer(typeof(T));
             XmlWriterSettings settings = new XmlWriterSettings { Indent = false };
-            using (StringWriter textWriter = new StringWriter())
-            {
-                using (XmlWriter xw = XmlWriter.Create(textWriter, settings))
-                {
-                    XmlSerializerNamespaces ns = new XmlSerializerNamespaces();
-                    ns.Add("", "");
-                    xmlser.Serialize(xw, this, ns);
-                    return textWriter.ToString();
-                }
-            }
+            using StringWriter textWriter = new StringWriter();
+            using XmlWriter xw = XmlWriter.Create(textWriter, settings);
+            XmlSerializerNamespaces ns = new XmlSerializerNamespaces();
+            ns.Add("", "");
+            xmlser.Serialize(xw, this, ns);
+            return textWriter.ToString();
         }
 
-        public static T Deserialize(String s)
+        public static T Deserialize(string s)
         {
             XmlSerializer xmlser = new XmlSerializer(typeof(T));
             try
             {
-                using (TextReader tr = new StringReader(s))
+                using TextReader tr = new StringReader(s);
+                using XmlReader reader = XmlReader.Create(tr);
+                if (xmlser.CanDeserialize(reader))
                 {
-                    using (XmlReader reader = XmlReader.Create(tr))
-                    {
-                        if (xmlser.CanDeserialize(reader))
-                        {
-                            return (T)xmlser.Deserialize(reader);
-                        }
-                        else
-                        {
-                            LogUtils.DoErrorLog($"CAN'T DESERIALIZE BOARD DESCRIPTOR!\nText : {s}");
-                        }
-                    }
+                    return (T) xmlser.Deserialize(reader);
+                }
+                else
+                {
+                    LogUtils.DoErrorLog($"CAN'T DESERIALIZE BOARD DESCRIPTOR!\nText : {s}");
                 }
             }
             catch (Exception e)

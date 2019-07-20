@@ -1,21 +1,16 @@
 ﻿using ColossalFramework;
-using ColossalFramework.Globalization;
 using ColossalFramework.Math;
 using ColossalFramework.UI;
 using Klyte.Commons.Extensors;
-using Klyte.DynamicTextBoards.Overrides;
 using Klyte.Commons.Utils;
-using Klyte.DynamicTextBoards.Utils;
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Xml;
 using System.Xml.Serialization;
 using UnityEngine;
-using static BuildingInfo;
-using static Klyte.DynamicTextBoards.Overrides.BoardGeneratorBuildings;
 using static Klyte.Commons.Utils.StopSearchUtils;
+using static Klyte.DynamicTextBoards.Overrides.BoardGeneratorBuildings;
 
 namespace Klyte.DynamicTextBoards.Overrides
 {
@@ -23,11 +18,11 @@ namespace Klyte.DynamicTextBoards.Overrides
     public class BoardGeneratorBuildings : BoardGeneratorParent<BoardGeneratorBuildings, BoardBunchContainerBuilding, CacheControlTransportBuilding, BasicRenderInformation, BoardDescriptorStations, BoardTextDescriptor, ushort>
     {
 
-        private Dictionary<String, BoardDescriptorStations[]> loadedDescriptors;
+        private Dictionary<string, BoardDescriptorStations[]> m_loadedDescriptors;
 
         private LineDescriptor[] m_linesDescriptors;
         private UpdateFlagsBuildings[] m_updateData;
-        private Dictionary<string, StopPointDescriptorLanes[]> m_buildingStopsDescriptor = new Dictionary<string, StopPointDescriptorLanes[]>();
+        private readonly Dictionary<string, StopPointDescriptorLanes[]> m_buildingStopsDescriptor = new Dictionary<string, StopPointDescriptorLanes[]>();
 
         public override int ObjArraySize => BuildingManager.MAX_BUILDING_COUNT;
 
@@ -42,13 +37,13 @@ namespace Klyte.DynamicTextBoards.Overrides
             LoadAllBuildingConfigurations();
 
 
-            TransportManagerOverrides.eventOnLineUpdated += onLineUpdated;
-            NetManagerOverrides.eventNodeChanged += onNodeChanged;
-            TransportManager.instance.eventLineColorChanged += onLineUpdated;
-            InstanceManagerOverrides.eventOnBuildingRenamed += onBuildingNameChanged;
+            TransportManagerOverrides.eventOnLineUpdated += OnLineUpdated;
+            NetManagerOverrides.eventNodeChanged += OnNodeChanged;
+            TransportManager.instance.eventLineColorChanged += OnLineUpdated;
+            InstanceManagerOverrides.eventOnBuildingRenamed += OnBuildingNameChanged;
 
             #region Hooks
-            var postRenderMeshs = GetType().GetMethod("AfterRenderMeshes", RedirectorUtils.allFlags);
+            System.Reflection.MethodInfo postRenderMeshs = GetType().GetMethod("AfterRenderMeshes", RedirectorUtils.allFlags);
             LogUtils.DoLog($"Patching=> {postRenderMeshs}");
             RedirectorInstance.AddRedirect(typeof(BuildingAI).GetMethod("RenderMeshes", RedirectorUtils.allFlags), null, postRenderMeshs);
             #endregion
@@ -56,13 +51,11 @@ namespace Klyte.DynamicTextBoards.Overrides
 
         public void LoadAllBuildingConfigurations()
         {
-            FileUtils.ScanPrefabsFolders($"{DynamicTextBoardsMod.defaultFileNameXml}.xml", LoadDescriptorsFromXml);
-            foreach (var filename in Directory.GetFiles(DynamicTextBoardsMod.defaultBuildingsConfigurationFolder, "*.xml"))
+            FileUtils.ScanPrefabsFolders($"{DynamicTextBoardsMod.m_defaultFileNameXml}.xml", LoadDescriptorsFromXml);
+            foreach (string filename in Directory.GetFiles(DynamicTextBoardsMod.DefaultBuildingsConfigurationFolder, "*.xml"))
             {
-                using (var stream = File.OpenRead(filename))
-                {
-                    LoadDescriptorsFromXml(stream);
-                }
+                using FileStream stream = File.OpenRead(filename);
+                LoadDescriptorsFromXml(stream);
             }
 
             m_updateData = new UpdateFlagsBuildings[BuildingManager.MAX_BUILDING_COUNT];
@@ -72,19 +65,23 @@ namespace Klyte.DynamicTextBoards.Overrides
 
         private void LoadDescriptorsFromXml(FileStream stream)
         {
-            var serializer = new XmlSerializer(typeof(BuildingConfigurationSerializer<BoardDescriptorStations, BoardTextDescriptor>));
+            XmlSerializer serializer = new XmlSerializer(typeof(BuildingConfigurationSerializer<BoardDescriptorStations, BoardTextDescriptor>));
 
 
             if (serializer.Deserialize(stream) is BuildingConfigurationSerializer<BoardDescriptorStations, BoardTextDescriptor> config)
             {
-                if (loadedDescriptors == null) loadedDescriptors = new Dictionary<string, BoardDescriptorStations[]>();
-                loadedDescriptors[config.m_buildingName] = config.m_boardDescriptors;
+                if (m_loadedDescriptors == null)
+                {
+                    m_loadedDescriptors = new Dictionary<string, BoardDescriptorStations[]>();
+                }
+
+                m_loadedDescriptors[config.m_buildingName] = config.m_boardDescriptors;
             }
         }
 
-        private void onNodeChanged(ushort id)
+        private void OnNodeChanged(ushort id)
         {
-            var buildingId = NetNode.FindOwnerBuilding(id, 56f);
+            ushort buildingId = NetNode.FindOwnerBuilding(id, 56f);
             if (buildingId > 0 && m_boardsContainers[buildingId] != null)
             {
                 m_boardsContainers[buildingId].m_linesUpdateFrame = 0;
@@ -93,16 +90,19 @@ namespace Klyte.DynamicTextBoards.Overrides
 
         protected override void OnTextureRebuiltImpl(Font obj)
         {
-            if (obj == DrawFont.baseFont) m_updateData = new UpdateFlagsBuildings[BuildingManager.MAX_BUILDING_COUNT];
+            if (obj == DrawFont.baseFont)
+            {
+                m_updateData = new UpdateFlagsBuildings[BuildingManager.MAX_BUILDING_COUNT];
+            }
         }
 
 
-        private void onLineUpdated(ushort lineId)
+        private void OnLineUpdated(ushort lineId)
         {
             //doLog("onLineUpdated");
-            m_linesDescriptors[lineId] = default(LineDescriptor);
+            m_linesDescriptors[lineId] = default;
         }
-        private void onBuildingNameChanged(ushort id)
+        private void OnBuildingNameChanged(ushort id)
         {
             //doLog("onBuildingNameChanged");
             m_updateData[id].m_nameMesh = false;
@@ -110,14 +110,11 @@ namespace Klyte.DynamicTextBoards.Overrides
         #endregion
 
 
-        public static void AfterRenderMeshes(BuildingAI __instance, RenderManager.CameraInfo cameraInfo, ushort buildingID, ref Building data, int layerMask, ref RenderManager.Instance instance)
-        {
-            Instance.AfterRenderMeshesImpl(cameraInfo, buildingID, ref data, layerMask, ref instance, __instance);
-        }
+        public static void AfterRenderMeshes(RenderManager.CameraInfo cameraInfo, ushort buildingID, ref Building data, int layerMask, ref RenderManager.Instance instance) => Instance.AfterRenderMeshesImpl(cameraInfo, buildingID, ref data, layerMask, ref instance);
 
-        public void AfterRenderMeshesImpl(RenderManager.CameraInfo cameraInfo, ushort buildingID, ref Building data, int layerMask, ref RenderManager.Instance renderInstance, BuildingAI __instance)
+        public void AfterRenderMeshesImpl(RenderManager.CameraInfo cameraInfo, ushort buildingID, ref Building data, int layerMask, ref RenderManager.Instance renderInstance)
         {
-            if (!loadedDescriptors.ContainsKey(data.Info.name) || loadedDescriptors[data.Info.name].Length == 0)
+            if (!m_loadedDescriptors.ContainsKey(data.Info.name) || m_loadedDescriptors[data.Info.name].Length == 0)
             {
                 return;
             }
@@ -125,17 +122,21 @@ namespace Klyte.DynamicTextBoards.Overrides
             {
                 m_boardsContainers[buildingID] = new BoardBunchContainerBuilding();
             }
-            if (m_boardsContainers[buildingID]?.m_boardsData?.Count() != loadedDescriptors[data.Info.name].Length)
+            if (m_boardsContainers[buildingID]?.m_boardsData?.Count() != m_loadedDescriptors[data.Info.name].Length)
             {
-                m_boardsContainers[buildingID].m_boardsData = new CacheControlTransportBuilding[loadedDescriptors[data.Info.name].Length];
+                m_boardsContainers[buildingID].m_boardsData = new CacheControlTransportBuilding[m_loadedDescriptors[data.Info.name].Length];
                 m_updateData[buildingID].m_nameMesh = false;
             }
 
             UpdateLinesBuilding(buildingID, ref data, m_boardsContainers[buildingID]);
-            for (var i = 0; i < loadedDescriptors[data.Info.name].Length; i++)
+            for (int i = 0; i < m_loadedDescriptors[data.Info.name].Length; i++)
             {
-                var descriptor = loadedDescriptors[data.Info.name][i];
-                if (m_boardsContainers[buildingID].m_boardsData[i] == null) m_boardsContainers[buildingID].m_boardsData[i] = new CacheControlTransportBuilding();
+                BoardDescriptorStations descriptor = m_loadedDescriptors[data.Info.name][i];
+                if (m_boardsContainers[buildingID].m_boardsData[i] == null)
+                {
+                    m_boardsContainers[buildingID].m_boardsData[i] = new CacheControlTransportBuilding();
+                }
+
                 RenderPropMesh(ref m_boardsContainers[buildingID].m_boardsData[i].m_cachedProp, cameraInfo, buildingID, i, 0, layerMask, data.m_angle, renderInstance.m_dataMatrix1.MultiplyPoint(descriptor.m_propPosition), renderInstance.m_dataVector3, ref descriptor.m_propName, descriptor.m_propRotation, descriptor.PropScale, ref descriptor, out Matrix4x4 propMatrix, out bool rendered);
                 if (rendered && descriptor.m_textDescriptors != null)
                 {
@@ -174,7 +175,7 @@ namespace Klyte.DynamicTextBoards.Overrides
                     //m_buildingStopsDescriptor[data.Info.name + "PLAT"] = GetAllPlatforms(data.Info.m_buildingAI);
                 }
 
-                var platforms = m_buildingStopsDescriptor[data.Info.name].Select((v, i) => new { Key = i, Value = v }).ToDictionary(o => o.Key, o => o.Value);
+                Dictionary<int, StopPointDescriptorLanes> platforms = m_buildingStopsDescriptor[data.Info.name].Select((v, i) => new { Key = i, Value = v }).ToDictionary(o => o.Key, o => o.Value);
                 //var platformsPlat = m_buildingStopsDescriptor[data.Info.name + "PLAT"].Select((v, i) => new { Key = i, Value = v }).ToDictionary(o => o.Key, o => o.Value);
                 if (platforms.Count == 0)
                 {
@@ -185,12 +186,12 @@ namespace Klyte.DynamicTextBoards.Overrides
                 {
 
                     List<Quad2> boundaries = new List<Quad2>();
-                    var subBuilding = buildingID;
-                    var allnodes = new List<ushort>();
+                    ushort subBuilding = buildingID;
+                    List<ushort> allnodes = new List<ushort>();
                     while (subBuilding > 0)
                     {
                         boundaries.Add(GetBounds(ref BuildingManager.instance.m_buildings.m_buffer[subBuilding]));
-                        var node = BuildingManager.instance.m_buildings.m_buffer[subBuilding].m_netNode;
+                        ushort node = BuildingManager.instance.m_buildings.m_buffer[subBuilding].m_netNode;
                         while (node > 0)
                         {
                             allnodes.Add(node);
@@ -202,9 +203,9 @@ namespace Klyte.DynamicTextBoards.Overrides
                     {
                         if (!boundaries.Any(x => x.Intersect(NetManager.instance.m_nodes.m_buffer[node].m_position)))
                         {
-                            for (var segIdx = 0; segIdx < 8; segIdx++)
+                            for (int segIdx = 0; segIdx < 8; segIdx++)
                             {
-                                var segmentId = NetManager.instance.m_nodes.m_buffer[node].GetSegment(segIdx);
+                                ushort segmentId = NetManager.instance.m_nodes.m_buffer[node].GetSegment(segIdx);
                                 if (segmentId != 0 && allnodes.Contains(NetManager.instance.m_segments.m_buffer[segmentId].GetOtherNode(node)))
                                 {
 
@@ -218,27 +219,30 @@ namespace Klyte.DynamicTextBoards.Overrides
                             }
                         }
                     }
-                    var nearStops = StopSearchUtils.FindNearStops(data.m_position, ItemClass.Service.PublicTransport, ItemClass.Service.PublicTransport, VehicleInfo.VehicleType.None, true, 400f, out List<float> dist, out List<Vector3> absolutePos, boundaries);
+                    List<ushort> nearStops = StopSearchUtils.FindNearStops(data.m_position, ItemClass.Service.PublicTransport, ItemClass.Service.PublicTransport, VehicleInfo.VehicleType.None, true, 400f, out List<float> dist, out List<Vector3> absolutePos, boundaries);
                     if (nearStops.Count > 0)
                     {
                         bbcb.m_platformToLine = new ushort[m_buildingStopsDescriptor[data.Info.name].Length][];
-                        var nearStopsParsed = nearStops.Select((x, i) => new { stopId = x, relPos = MapUtils.CalculatePositionRelative(absolutePos[i], BuildingManager.instance.m_buildings.m_buffer[buildingID].m_angle, BuildingManager.instance.m_buildings.m_buffer[buildingID].m_position) })
+                        IEnumerable<Tuple<int, ushort>> nearStopsParsed = nearStops.Select((x, i) => new { stopId = x, relPos = MapUtils.CalculatePositionRelative(absolutePos[i], BuildingManager.instance.m_buildings.m_buffer[buildingID].m_angle, BuildingManager.instance.m_buildings.m_buffer[buildingID].m_position) })
                          .Select((y, i) => Tuple.New(platforms.Where((x, j) =>
                          {
-                             if (x.Value.vehicleType != TransportManager.instance.m_lines.m_buffer[NetManager.instance.m_nodes.m_buffer[y.stopId].m_transportLine].Info.m_vehicleType) return false;
+                             if (x.Value.vehicleType != TransportManager.instance.m_lines.m_buffer[NetManager.instance.m_nodes.m_buffer[y.stopId].m_transportLine].Info.m_vehicleType)
+                             {
+                                 return false;
+                             }
                              //var relOrg = CalculatePositionRelative(absolutePos[i], BuildingManager.instance.m_buildings.m_buffer[buildingID].m_angle, BuildingManager.instance.m_buildings.m_buffer[buildingID].m_position);
-                             var distance = x.Value.platformLine.DistanceSqr(y.relPos, out float k);
+                             float distance = x.Value.platformLine.DistanceSqr(y.relPos, out float k);
                              LogUtils.DoLog($"[{BuildingManager.instance.m_buildings.m_buffer[buildingID].Info.name}]x = {x.Key} ({x.Value.platformLine.a} {x.Value.platformLine.b} {x.Value.platformLine.c} {x.Value.platformLine.d}) (w= {x.Value.width}) {x.Value.vehicleType}\t| relOrg {y.relPos} \t| {distance} \t|dy = { x.Value.platformLine.GetBounds().center.y - y.relPos.y}");
-                             var sqrWidth = x.Value.width * x.Value.width;
+                             float sqrWidth = x.Value.width * x.Value.width;
 
                              return Mathf.Abs(distance - sqrWidth) < 0.1f * sqrWidth && x.Value.platformLine.GetBounds().center.y - y.relPos.y < 1f;
                          }).FirstOrDefault().Key, NetManager.instance.m_nodes.m_buffer[y.stopId].m_transportLine));
 
-                        foreach (var nearStopsParsedItem in nearStopsParsed.Select(x => x.First).Distinct())
+                        foreach (int nearStopsParsedItem in nearStopsParsed.Select(x => x.First).Distinct())
                         {
                             bbcb.m_platformToLine[nearStopsParsedItem] = nearStopsParsed.Where(x => x.First == nearStopsParsedItem).Select(x => x.Second).ToArray();
                         }
-                        var uniqueLines = nearStopsParsed.Select(x => x.Second).Distinct().ToList();
+                        List<ushort> uniqueLines = nearStopsParsed.Select(x => x.Second).Distinct().ToList();
                         uniqueLines.Sort((a, b) => VehicleToPriority(TransportManager.instance.m_lines.m_buffer[a].Info.m_vehicleType).CompareTo(VehicleToPriority(TransportManager.instance.m_lines.m_buffer[b].Info.m_vehicleType)));
                         bbcb.m_ordenedLines = uniqueLines.ToArray();
                         //doLog($"updatedIdsColors {nearStops.Count} [{string.Join(",", nearStops.Select(x => x.ToString()).ToArray())}], [{string.Join(",", dist.Select(x => x.ToString()).ToArray())}], ");
@@ -252,12 +256,12 @@ namespace Klyte.DynamicTextBoards.Overrides
 
         public override Color GetColor(ushort buildingID, int boardIdx, int textIdx, BoardDescriptorStations descriptor)
         {
-            var targetPlatforms = descriptor.m_platforms;
-            foreach (var platform in targetPlatforms)
+            int[] targetPlatforms = descriptor.m_platforms;
+            foreach (int platform in targetPlatforms)
             {
                 if (m_boardsContainers[buildingID].m_platformToLine != null && m_boardsContainers[buildingID].m_platformToLine.ElementAtOrDefault(platform) != null)
                 {
-                    var line = m_boardsContainers[buildingID].m_platformToLine[platform].ElementAtOrDefault(0);
+                    ushort line = m_boardsContainers[buildingID].m_platformToLine[platform].ElementAtOrDefault(0);
                     if (line != 0)
                     {
                         if (m_linesDescriptors[line] == null)
@@ -272,12 +276,12 @@ namespace Klyte.DynamicTextBoards.Overrides
         }
         public override Color GetContrastColor(ushort buildingID, int boardIdx, int textIdx, BoardDescriptorStations descriptor)
         {
-            var targetPlatforms = descriptor.m_platforms;
-            foreach (var platform in targetPlatforms)
+            int[] targetPlatforms = descriptor.m_platforms;
+            foreach (int platform in targetPlatforms)
             {
                 if (m_boardsContainers[buildingID].m_platformToLine != null && m_boardsContainers[buildingID].m_platformToLine.ElementAtOrDefault(platform) != null && m_boardsContainers[buildingID].m_platformToLine[platform].Length > 0)
                 {
-                    var line = m_boardsContainers[buildingID].m_platformToLine[platform].ElementAtOrDefault(0);
+                    ushort line = m_boardsContainers[buildingID].m_platformToLine[platform].ElementAtOrDefault(0);
                     if (line != 0)
                     {
                         if (m_linesDescriptors[line] == null)
@@ -305,7 +309,7 @@ namespace Klyte.DynamicTextBoards.Overrides
 
         protected override InstanceID GetPropRenderID(ushort buildingID)
         {
-            InstanceID result = default(InstanceID);
+            InstanceID result = default;
             result.Building = buildingID;
             return result;
         }
@@ -314,8 +318,8 @@ namespace Klyte.DynamicTextBoards.Overrides
         {
             public Color m_lineColor;
             public Color m_contrastColor;
-            public BasicRenderInformation m_lineName;
-            public BasicRenderInformation m_lineNumber;
+            //public BasicRenderInformation m_lineName;
+            //public BasicRenderInformation m_lineNumber;
             public uint m_lastUpdate;
         }
 
@@ -337,14 +341,14 @@ namespace Klyte.DynamicTextBoards.Overrides
 
         public static void GenerateDefaultBuildingsConfiguration()
         {
-            var fileContent = GenerateDefaultDictionary().Select(x => new BuildingConfigurationSerializer<BoardDescriptorStations, BoardTextDescriptor> { m_buildingName = x.Key, m_boardDescriptors = x.Value.ToArray() }).ToArray();
-            var serializer = new XmlSerializer(typeof(BuildingConfigurationSerializer<BoardDescriptorStations, BoardTextDescriptor>));
-            foreach (var item in fileContent)
+            BuildingConfigurationSerializer<BoardDescriptorStations, BoardTextDescriptor>[] fileContent = GenerateDefaultDictionary().Select(x => new BuildingConfigurationSerializer<BoardDescriptorStations, BoardTextDescriptor> { m_buildingName = x.Key, m_boardDescriptors = x.Value.ToArray() }).ToArray();
+            XmlSerializer serializer = new XmlSerializer(typeof(BuildingConfigurationSerializer<BoardDescriptorStations, BoardTextDescriptor>));
+            foreach (BuildingConfigurationSerializer<BoardDescriptorStations, BoardTextDescriptor> item in fileContent)
             {
-                var filePath = DynamicTextBoardsMod.defaultBuildingsConfigurationFolder + Path.DirectorySeparatorChar + $"{DynamicTextBoardsMod.defaultFileNameXml}_{item.m_buildingName}.xml";
+                string filePath = DynamicTextBoardsMod.DefaultBuildingsConfigurationFolder + Path.DirectorySeparatorChar + $"{DynamicTextBoardsMod.m_defaultFileNameXml}_{item.m_buildingName}.xml";
                 if (!File.Exists(filePath))
                 {
-                    var stream = File.OpenWrite(filePath);
+                    FileStream stream = File.OpenWrite(filePath);
                     try
                     {
                         XmlSerializerNamespaces ns = new XmlSerializerNamespaces();
@@ -363,7 +367,7 @@ namespace Klyte.DynamicTextBoards.Overrides
         private static Dictionary<string, List<BoardDescriptorStations>> GenerateDefaultDictionary()
         {
 
-            var basicEOLTextDescriptor = new BoardTextDescriptor[]{
+            BoardTextDescriptor[] basicEOLTextDescriptor = new BoardTextDescriptor[]{
                              new BoardTextDescriptor{
                                 m_textRelativePosition = new Vector3(0,4.7f, -0.13f) ,
                                 m_textRelativeRotation = Vector3.zero,
@@ -375,14 +379,14 @@ namespace Klyte.DynamicTextBoards.Overrides
                                 m_maxWidthMeters = 15.5f
                              },
                         };
-            var basicWallTextDescriptor = new BoardTextDescriptor[]{
+            BoardTextDescriptor[] basicWallTextDescriptor = new BoardTextDescriptor[]{
                              new BoardTextDescriptor{
                                 m_textRelativePosition =new Vector3(0,0.4F,-0.08f) ,
                                 m_textRelativeRotation = Vector3.zero,
                                 m_maxWidthMeters = 15.5f
                              },
                         };
-            var basicTotem = new BoardTextDescriptor[]{
+            BoardTextDescriptor[] basicTotem = new BoardTextDescriptor[]{
                              new BoardTextDescriptor{
                                 m_textRelativePosition =new Vector3(-0.01f,2.2f,-0.09f) ,
                                 m_textRelativeRotation = new Vector3(0,330,270),

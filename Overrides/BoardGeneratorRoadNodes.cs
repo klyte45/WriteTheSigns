@@ -1,5 +1,4 @@
 ﻿using ColossalFramework;
-using ColossalFramework.Globalization;
 using ColossalFramework.Math;
 using ColossalFramework.UI;
 using Klyte.Commons.Extensors;
@@ -9,10 +8,7 @@ using Klyte.DynamicTextBoards.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
-using System.Xml.Serialization;
 using UnityEngine;
-using static BuildingInfo;
 
 namespace Klyte.DynamicTextBoards.Overrides
 {
@@ -31,7 +27,7 @@ namespace Klyte.DynamicTextBoards.Overrides
         public override UIDynamicFont DrawFont => m_font;
         private UIDynamicFont m_font;
 
-        private Func<RenderManager, uint> GetCurrentFrame = ReflectionUtils.GetGetFieldDelegate<RenderManager, uint>("m_currentFrame", typeof(RenderManager));
+        private readonly Func<RenderManager, uint> m_getCurrentFrame = ReflectionUtils.GetGetFieldDelegate<RenderManager, uint>("m_currentFrame", typeof(RenderManager));
 
         #region Initialize
         public override void Initialize()
@@ -44,14 +40,14 @@ namespace Klyte.DynamicTextBoards.Overrides
 
             BuildSurfaceFont(out m_font, "Gidole");
 
-            NetManagerOverrides.eventNodeChanged += onNodeChanged;
-            DistrictManagerOverrides.eventOnDistrictChanged += onDistrictChanged;
-            NetManagerOverrides.eventSegmentNameChanged += onNameSeedChanged;
-            AdrEvents.eventZeroMarkerBuildingChange += onZeroMarkChanged;
+            NetManagerOverrides.eventNodeChanged += OnNodeChanged;
+            DistrictManagerOverrides.eventOnDistrictChanged += OnDistrictChanged;
+            NetManagerOverrides.eventSegmentNameChanged += OnNameSeedChanged;
+            AdrEvents.eventZeroMarkerBuildingChange += OnZeroMarkChanged;
 
             #region Hooks
-            var postRenderMeshs = GetType().GetMethod("AfterRenderSegment", RedirectorUtils.allFlags);
-            var orig = typeof(NetSegment).GetMethod("RenderInstance", new Type[] { typeof(RenderManager.CameraInfo), typeof(ushort), typeof(int) });
+            System.Reflection.MethodInfo postRenderMeshs = GetType().GetMethod("AfterRenderSegment", RedirectorUtils.allFlags);
+            System.Reflection.MethodInfo orig = typeof(NetSegment).GetMethod("RenderInstance", new Type[] { typeof(RenderManager.CameraInfo), typeof(ushort), typeof(int) });
             LogUtils.DoLog($"Patching: {orig} => {postRenderMeshs} {postRenderMeshs.IsStatic}");
             RedirectorInstance.AddRedirect(orig, null, postRenderMeshs);
             #endregion
@@ -76,49 +72,53 @@ namespace Klyte.DynamicTextBoards.Overrides
             m_cachedDistrictsNames = new BasicRenderInformation[DistrictManager.MAX_DISTRICT_COUNT];
         }
 
-        private void onNodeChanged(ushort nodeId)
+        private void OnNodeChanged(ushort nodeId)
         {
             //doLog($"onNodeChanged { System.Environment.StackTrace }");
             m_updatedStreetPositions[nodeId] = false;
         }
-        private void onNameSeedChanged(ushort segmentId)
+        private void OnNameSeedChanged(ushort segmentId)
         {
             LogUtils.DoLog("onNameSeedChanged");
             m_updatedStreetPositions[NetManager.instance.m_segments.m_buffer[segmentId].m_endNode] = false;
             m_updatedStreetPositions[NetManager.instance.m_segments.m_buffer[segmentId].m_startNode] = false;
         }
-        private void onSegmentChanged(ushort segmentId)
-        {
-            //doLog("onSegmentChanged");
-            m_updatedStreetPositions[NetManager.instance.m_segments.m_buffer[segmentId].m_endNode] = false;
-            m_updatedStreetPositions[NetManager.instance.m_segments.m_buffer[segmentId].m_startNode] = false;
-            m_updateDataSegments[segmentId] = new UpdateFlagsSegments();
-        }
-        private void onDistrictChanged()
+        //private void OnSegmentChanged(ushort segmentId)
+        //{
+        //    //doLog("onSegmentChanged");
+        //    m_updatedStreetPositions[NetManager.instance.m_segments.m_buffer[segmentId].m_endNode] = false;
+        //    m_updatedStreetPositions[NetManager.instance.m_segments.m_buffer[segmentId].m_startNode] = false;
+        //    m_updateDataSegments[segmentId] = new UpdateFlagsSegments();
+        //}
+        private void OnDistrictChanged()
         {
             LogUtils.DoLog("onDistrictChanged");
             m_cachedDistrictsNames = new BasicRenderInformation[DistrictManager.MAX_DISTRICT_COUNT];
             m_updatedStreetPositions = new bool[NetManager.MAX_NODE_COUNT];
         }
-        private void onZeroMarkChanged()
+        private void OnZeroMarkChanged()
         {
             LogUtils.DoLog("onZeroMarkChanged");
             m_updatedStreetPositions = new bool[NetManager.MAX_NODE_COUNT];
         }
         #endregion
 
-        public static void AfterRenderSegment(RenderManager.CameraInfo cameraInfo, ushort segmentID, int layerMask)
+        public static void AfterRenderSegment(RenderManager.CameraInfo cameraInfo, ushort segmentID)
         {
             Instance.AfterRenderInstanceImpl(cameraInfo, NetManager.instance.m_segments.m_buffer[segmentID].m_startNode, ref NetManager.instance.m_nodes.m_buffer[NetManager.instance.m_segments.m_buffer[segmentID].m_startNode]);
             Instance.AfterRenderInstanceImpl(cameraInfo, NetManager.instance.m_segments.m_buffer[segmentID].m_endNode, ref NetManager.instance.m_nodes.m_buffer[NetManager.instance.m_segments.m_buffer[segmentID].m_endNode]);
         }
 
-        private uint LastTickUpdate = 0;
+        private uint m_lastTickUpdate = 0;
 
         public void AfterRenderInstanceImpl(RenderManager.CameraInfo cameraInfo, ushort nodeID, ref NetNode data)
         {
-            if (m_lastFrameUpdate[nodeID] >= GetCurrentFrame(RenderManager.instance)) return;
-            m_lastFrameUpdate[nodeID] = GetCurrentFrame(RenderManager.instance);
+            if (m_lastFrameUpdate[nodeID] >= m_getCurrentFrame(RenderManager.instance))
+            {
+                return;
+            }
+
+            m_lastFrameUpdate[nodeID] = m_getCurrentFrame(RenderManager.instance);
             if (!cameraInfo.CheckRenderDistance(data.m_position, 400))
             {
                 return;
@@ -134,24 +134,24 @@ namespace Klyte.DynamicTextBoards.Overrides
             //m_streetPlatePrefab
             if (m_boardsContainers[nodeID]?.m_boardsData?.Count() != data.CountSegments() || !m_updatedStreetPositions[nodeID])
             {
-                if (LastTickUpdate == SimulationManager.instance.m_currentTickIndex) return;
-                LastTickUpdate = SimulationManager.instance.m_currentTickIndex;
+                if (m_lastTickUpdate == SimulationManager.instance.m_currentTickIndex)
+                {
+                    return;
+                }
+
+                m_lastTickUpdate = SimulationManager.instance.m_currentTickIndex;
 
                 LogUtils.DoLog($"updatedStreets! {nodeID} {data.CountSegments()}");
                 m_boardsContainers[nodeID].m_boardsData = new CacheControlStreetPlate[data.CountSegments()];
-                var controlBoardIdx = 0;
+                int controlBoardIdx = 0;
                 for (int i = 0; i < 8; i++)
                 {
                     ushort segmentIid = data.GetSegment(i);
                     if (segmentIid != 0)
                     {
-                        NetSegment netSegmentI = Singleton<NetManager>.instance.m_segments.m_buffer[(int)segmentIid];
+                        NetSegment netSegmentI = Singleton<NetManager>.instance.m_segments.m_buffer[segmentIid];
                         if (netSegmentI.Info != null && netSegmentI.Info.m_netAI is RoadBaseAI roadAiI)
                         {
-                            Vector3 startPos = Vector3.zero;
-                            Vector3 startAng = Vector3.zero;
-                            Vector3 endPos = Vector3.zero;
-                            Vector3 endAng = Vector3.zero;
                             Vector3 segmentIDirection = (nodeID != netSegmentI.m_startNode) ? netSegmentI.m_endDirection : netSegmentI.m_startDirection;
                             Vector3 otherSegmentDirection = Vector3.zero;
                             float resultAngle = -4f;
@@ -161,12 +161,12 @@ namespace Klyte.DynamicTextBoards.Overrides
                                 ushort segmentJid = data.GetSegment(j);
                                 if (segmentJid != 0 && segmentJid != segmentIid)
                                 {
-                                    NetSegment netSegmentCand = Singleton<NetManager>.instance.m_segments.m_buffer[(int)segmentJid];
+                                    NetSegment netSegmentCand = Singleton<NetManager>.instance.m_segments.m_buffer[segmentJid];
                                     if (netSegmentCand.Info != null)
                                     {
                                         Vector3 segmentJDirection = (nodeID != netSegmentCand.m_startNode) ? netSegmentCand.m_endDirection : netSegmentCand.m_startDirection;
-                                        float angle = segmentIDirection.x * segmentJDirection.x + segmentIDirection.z * segmentJDirection.z;
-                                        if (segmentJDirection.z * segmentIDirection.x - segmentJDirection.x * segmentIDirection.z < 0f)
+                                        float angle = (segmentIDirection.x * segmentJDirection.x) + (segmentIDirection.z * segmentJDirection.z);
+                                        if ((segmentJDirection.z * segmentIDirection.x) - (segmentJDirection.x * segmentIDirection.z) < 0f)
                                         {
                                             if (angle > resultAngle)
                                             {
@@ -189,7 +189,7 @@ namespace Klyte.DynamicTextBoards.Overrides
                                 }
                             }
                             if (resultOtherSegment == 0
-                                || !(Singleton<NetManager>.instance.m_segments.m_buffer[(int)resultOtherSegment].Info.m_netAI is RoadBaseAI roadAiJ)
+                                || !(Singleton<NetManager>.instance.m_segments.m_buffer[resultOtherSegment].Info.m_netAI is RoadBaseAI roadAiJ)
                                 || SegmentUtils.IsSameName(resultOtherSegment, segmentIid, false, false, true, true, true)
                                 || (roadAiJ.m_highwayRules && roadAiI.m_highwayRules)
                                 || roadAiI.GenerateName(segmentIid, ref Singleton<NetManager>.instance.m_segments.m_buffer[segmentIid]).IsNullOrWhiteSpace()
@@ -198,19 +198,24 @@ namespace Klyte.DynamicTextBoards.Overrides
                                 continue;
                             }
                             bool start = netSegmentI.m_startNode == nodeID;
-                            netSegmentI.CalculateCorner(segmentIid, true, start, false, out startPos, out startAng, out bool flag);
-                            NetSegment netSegmentJ = Singleton<NetManager>.instance.m_segments.m_buffer[(int)resultOtherSegment];
+
+                            netSegmentI.CalculateCorner(segmentIid, true, start, false, out Vector3 startPos, out Vector3 startAng, out _);
+                            NetSegment netSegmentJ = Singleton<NetManager>.instance.m_segments.m_buffer[resultOtherSegment];
                             start = (netSegmentJ.m_startNode == nodeID);
-                            netSegmentJ.CalculateCorner(resultOtherSegment, true, start, true, out endPos, out endAng, out flag);
+
+                            netSegmentJ.CalculateCorner(resultOtherSegment, true, start, true, out Vector3 endPos, out Vector3 endAng, out bool flag);
 
                             NetSegment.CalculateMiddlePoints(startPos, -startAng, endPos, -endAng, true, true, out Vector3 rhs, out Vector3 lhs);
-                            var relativePos = ((rhs + lhs) * 0.5f - data.m_position);
-                            var platePos = (relativePos - relativePos.normalized) + data.m_position;
+                            Vector3 relativePos = (((rhs + lhs) * 0.5f) - data.m_position);
+                            Vector3 platePos = relativePos - relativePos.normalized + data.m_position;
 
-                            if (m_boardsContainers[nodeID].m_boardsData[controlBoardIdx] == null) m_boardsContainers[nodeID].m_boardsData[controlBoardIdx] = new CacheControlStreetPlate();
+                            if (m_boardsContainers[nodeID].m_boardsData[controlBoardIdx] == null)
+                            {
+                                m_boardsContainers[nodeID].m_boardsData[controlBoardIdx] = new CacheControlStreetPlate();
+                            }
 
-                            var dir1 = Vector2.zero.GetAngleToPoint(VectorUtils.XZ(segmentIDirection));
-                            var dir2 = Vector2.zero.GetAngleToPoint(VectorUtils.XZ(otherSegmentDirection));
+                            float dir1 = Vector2.zero.GetAngleToPoint(VectorUtils.XZ(segmentIDirection));
+                            float dir2 = Vector2.zero.GetAngleToPoint(VectorUtils.XZ(otherSegmentDirection));
                             m_boardsContainers[nodeID].m_boardsData[controlBoardIdx].m_streetDirection1 = -dir1;
                             m_boardsContainers[nodeID].m_boardsData[controlBoardIdx].m_streetDirection2 = -dir2;
 
@@ -257,7 +262,7 @@ namespace Klyte.DynamicTextBoards.Overrides
                     {
                         for (int j = 0; j < m_baseDescriptorStreetPlate.m_textDescriptors.Length; j++)
                         {
-                            var properties = PropManager.instance.m_materialBlock;
+                            MaterialPropertyBlock properties = PropManager.instance.m_materialBlock;
                             properties.Clear();
                             RenderTextMesh(cameraInfo, nodeID, boardIdx, 0, ref m_baseDescriptorStreetPlate, propMatrix, ref m_baseDescriptorStreetPlate.m_textDescriptors[j], ref m_boardsContainers[nodeID].m_boardsData[boardIdx], properties);
                         }
@@ -268,7 +273,7 @@ namespace Klyte.DynamicTextBoards.Overrides
 
                         for (int j = 0; j < m_baseDescriptorStreetPlate.m_textDescriptors.Length; j++)
                         {
-                            var properties = PropManager.instance.m_materialBlock;
+                            MaterialPropertyBlock properties = PropManager.instance.m_materialBlock;
                             properties.Clear();
                             RenderTextMesh(cameraInfo, nodeID, boardIdx, 1, ref m_baseDescriptorStreetPlate, propMatrix, ref m_baseDescriptorStreetPlate.m_textDescriptors[j], ref m_boardsContainers[nodeID].m_boardsData[boardIdx], properties);
                         }
@@ -377,11 +382,11 @@ namespace Klyte.DynamicTextBoards.Overrides
         protected override BasicRenderInformation GetMeshCustom2(ushort idx, int boardIdx, int secIdx, out UIFont font)
         {
             font = DrawFont;
-            int distanceRef = (int)Mathf.Floor(m_boardsContainers[idx].m_boardsData[boardIdx].m_distanceRef / 1000);
+            int distanceRef = (int) Mathf.Floor(m_boardsContainers[idx].m_boardsData[boardIdx].m_distanceRef / 1000);
             while (m_cachedNumber.Length <= distanceRef + 1)
             {
                 LogUtils.DoLog($"!Length {m_cachedNumber.Length }/{distanceRef}");
-                var newArray = m_cachedNumber.ToList();
+                List<BasicRenderInformation> newArray = m_cachedNumber.ToList();
                 newArray.Add(null);
                 m_cachedNumber = newArray.ToArray();
             }
@@ -429,8 +434,6 @@ namespace Klyte.DynamicTextBoards.Overrides
             result.NetNode = nodeId;
             return result;
         }
-
-        private static Vector2? m_cachedPos;
 
         private struct UpdateFlagsSegments
         {

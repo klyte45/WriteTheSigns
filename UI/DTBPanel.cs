@@ -60,8 +60,8 @@ namespace Klyte.DynamicTextBoards.UI
             m_StripMain.tabPages = tabContainer;
 
 
-            CreateTab<DTBFontConfigTab>("ToolbarIconZoomOutGlobe", "DTB_FONT_CONFIG_TAB", "DTBFonts");
-            CreateTab<DTBHighwaySignTab>("ToolbarIconZoomOutGlobe", "DTB_HIGHWAY_SIGN_CONFIG_TAB", "DTBHighwaySign");
+            CreateTab<DTBFontConfigTab>("ToolbarIconZoomOutGlobe", "K45_DTB_FONT_CONFIG_TAB", "DTBFonts");
+            CreateTab<DTBHighwaySignTab>("ToolbarIconZoomOutGlobe", "K45_DTB_HIGHWAY_SIGN_CONFIG_TAB", "DTBHighwaySign");
         }
 
         private void CreateTitleBar()

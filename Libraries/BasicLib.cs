@@ -1,20 +1,9 @@
-﻿using ColossalFramework;
-using ColossalFramework.Globalization;
-using ColossalFramework.Math;
-using ColossalFramework.UI;
-using Klyte.Commons.Extensors;
+﻿using Klyte.Commons.Utils;
 using Klyte.DynamicTextBoards.Overrides;
-using Klyte.Commons.Utils;
-using Klyte.DynamicTextBoards.Utils;
-using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Xml.Serialization;
-using UnityEngine;
-using ICities;
-using System.IO;
-using ColossalFramework.IO;
-using Klyte.DynamicTextBoards.Overrides;
 using static Klyte.Commons.Utils.XmlUtils;
 
 namespace Klyte.DynamicTextBoards.Libraries
@@ -24,8 +13,8 @@ namespace Klyte.DynamicTextBoards.Libraries
         where DESC : ILibable
     {
         protected abstract string XmlName { get; }
-        private static string defaultXmlFileBasePath => DynamicTextBoardsMod.FOLDER_NAME + Path.DirectorySeparatorChar;
-        private string defaultXmlFileBaseFullPath => $"{defaultXmlFileBasePath}{XmlName}.xml";
+        private static string DefaultXmlFileBasePath => DynamicTextBoardsMod.FOLDER_NAME + Path.DirectorySeparatorChar;
+        private string DefaultXmlFileBaseFullPath => $"{DefaultXmlFileBasePath}{XmlName}.xml";
 
         private static LIB m_instance;
         public static LIB Instance
@@ -34,61 +23,56 @@ namespace Klyte.DynamicTextBoards.Libraries
                 if (m_instance == null)
                 {
                     m_instance = new LIB();
-                    if (File.Exists(m_instance.defaultXmlFileBaseFullPath))
+                    if (File.Exists(m_instance.DefaultXmlFileBaseFullPath))
                     {
-                        m_instance = XmlUtils.DefaultXmlDeserialize<LIB>(File.ReadAllText(m_instance.defaultXmlFileBaseFullPath));
+                        m_instance = XmlUtils.DefaultXmlDeserialize<LIB>(File.ReadAllText(m_instance.DefaultXmlFileBaseFullPath));
                     }
                 }
                 return m_instance;
             }
         }
 
-        public static void Reload()
-        {
-            m_instance = null;
-        }
+        public static void Reload() => m_instance = null;
 
         [XmlElement("descriptorsData")]
         public ListWrapper<DESC> SavedDescriptorsSerialized
         {
-            get {
-                return new ListWrapper<DESC>() { listVal = m_SavedDescriptors.Values.ToList() };
-            }
+            get => new ListWrapper<DESC>() { listVal = m_savedDescriptors.Values.ToList() };
             set {
-                if (value != null) m_SavedDescriptors = value.listVal.ToDictionary(x => x.SaveName, x => x);
+                if (value != null)
+                {
+                    m_savedDescriptors = value.listVal.ToDictionary(x => x.SaveName, x => x);
+                }
             }
         }
 
         [XmlIgnore]
-        private Dictionary<string, DESC> m_SavedDescriptors = new Dictionary<string, DESC>();
+        private Dictionary<string, DESC> m_savedDescriptors = new Dictionary<string, DESC>();
 
         public void Add(string indexName, DESC descriptor)
         {
             descriptor.SaveName = indexName;
-            m_SavedDescriptors[indexName] = descriptor;
+            m_savedDescriptors[indexName] = descriptor;
             Save();
         }
         public DESC Get(string indexName)
         {
-            m_SavedDescriptors.TryGetValue(indexName, out DESC descriptor);
+            m_savedDescriptors.TryGetValue(indexName, out DESC descriptor);
             return descriptor;
         }
 
-        public IEnumerable<string> List()
-        {
-            return m_SavedDescriptors.Keys;
-        }
+        public IEnumerable<string> List() => m_savedDescriptors.Keys;
 
         public void Remove(string indexName)
         {
-            var removed = m_SavedDescriptors.Remove(indexName);
-            if (removed) Save();
+            bool removed = m_savedDescriptors.Remove(indexName);
+            if (removed)
+            {
+                Save();
+            }
         }
 
-        private void Save()
-        {
-            File.WriteAllText(defaultXmlFileBaseFullPath, XmlUtils.DefaultXmlSerialize<LIB>((LIB)this));
-        }
+        private void Save() => File.WriteAllText(DefaultXmlFileBaseFullPath, XmlUtils.DefaultXmlSerialize<LIB>((LIB) this));
 
     }
 
