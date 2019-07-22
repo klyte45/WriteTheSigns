@@ -1,8 +1,5 @@
 ﻿using Klyte.Commons.Utils;
-using Klyte.DynamicTextBoards.Overrides;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using UnityEngine;
 
 namespace Klyte.DynamicTextBoards.Utils
@@ -31,16 +28,17 @@ namespace Klyte.DynamicTextBoards.Utils
             }
             return m_loadedShaders;
         }
-        static AssetBundle memoryLoaded;
+
+        private static AssetBundle m_memoryLoaded;
         public static void ReloadFromDisk()
         {
             LogUtils.DoErrorLog("LOADING ");
-            memoryLoaded?.Unload(true);
-            memoryLoaded = AssetBundle.LoadFromFile("Q:/SkylineMods/TesteLinha/TransportLinesManager/TextProp/TestProj/New Resource.unity3d");
-            if (memoryLoaded != null)
+            m_memoryLoaded?.Unload(true);
+            m_memoryLoaded = AssetBundle.LoadFromFile("Q:/SkylineMods/TesteLinha/TransportLinesManager/TextProp/TestProj/New Resource.unity3d");
+            if (m_memoryLoaded != null)
             {
                 LogUtils.DoErrorLog("FOUND");
-                DTBResourceLoader.instance.ReadShaders(memoryLoaded, out m_loadedShaders);
+                DTBResourceLoader.instance.ReadShaders(m_memoryLoaded, out m_loadedShaders);
             }
             else
             {

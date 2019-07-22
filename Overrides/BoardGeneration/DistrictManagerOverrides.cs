@@ -1,7 +1,6 @@
 ﻿using Klyte.Commons.Extensors;
 using Klyte.Commons.Utils;
 using System;
-using System.Collections;
 using System.Reflection;
 using UnityEngine;
 
@@ -13,21 +12,18 @@ namespace Klyte.DynamicTextBoards.Overrides
         public Redirector RedirectorInstance { get; private set; }
 
         #region Events
-        public static event Action eventOnDistrictChanged;
+        public static event Action EventOnDistrictChanged;
         private static int m_cooldown;
 
 
-        public static void OnDistrictChanged()
-        {
-            m_cooldown = 15;
-        }
+        public static void OnDistrictChanged() => m_cooldown = 15;
 
-        private void Update()
+        public void Update()
         {
             if (m_cooldown == 1)
             {
 
-                eventOnDistrictChanged?.Invoke();
+                EventOnDistrictChanged?.Invoke();
 
             }
             if (m_cooldown > 0)

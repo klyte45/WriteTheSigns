@@ -1,8 +1,10 @@
 ﻿using ColossalFramework;
+using ColossalFramework.DataBinding;
 using ColossalFramework.Math;
 using ColossalFramework.UI;
 using Klyte.Commons.Extensors;
 using Klyte.Commons.Utils;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -15,7 +17,7 @@ using static Klyte.DynamicTextBoards.Overrides.BoardGeneratorBuildings;
 namespace Klyte.DynamicTextBoards.Overrides
 {
 
-    public class BoardGeneratorBuildings : BoardGeneratorParent<BoardGeneratorBuildings, BoardBunchContainerBuilding, CacheControlTransportBuilding, BasicRenderInformation, BoardDescriptorStations, BoardTextDescriptor, ushort>
+    public class BoardGeneratorBuildings : BoardGeneratorParent<BoardGeneratorBuildings, BoardBunchContainerBuilding, CacheControlTransportBuilding, BasicRenderInformation, BoardDescriptorStations, BoardTextDescriptorXml, ushort>
     {
 
         private Dictionary<string, BoardDescriptorStations[]> m_loadedDescriptors;
@@ -30,6 +32,7 @@ namespace Klyte.DynamicTextBoards.Overrides
 
         public override UIDynamicFont DrawFont => m_font;
 
+
         #region Initialize
         public override void Initialize()
         {
@@ -37,10 +40,10 @@ namespace Klyte.DynamicTextBoards.Overrides
             LoadAllBuildingConfigurations();
 
 
-            TransportManagerOverrides.eventOnLineUpdated += OnLineUpdated;
-            NetManagerOverrides.eventNodeChanged += OnNodeChanged;
+            TransportManagerOverrides.EventOnLineUpdated += OnLineUpdated;
+            NetManagerOverrides.EventNodeChanged += OnNodeChanged;
             TransportManager.instance.eventLineColorChanged += OnLineUpdated;
-            InstanceManagerOverrides.eventOnBuildingRenamed += OnBuildingNameChanged;
+            InstanceManagerOverrides.EventOnBuildingRenamed += OnBuildingNameChanged;
 
             #region Hooks
             System.Reflection.MethodInfo postRenderMeshs = GetType().GetMethod("AfterRenderMeshes", RedirectorUtils.allFlags);
@@ -52,23 +55,60 @@ namespace Klyte.DynamicTextBoards.Overrides
         public void LoadAllBuildingConfigurations()
         {
             FileUtils.ScanPrefabsFolders($"{DynamicTextBoardsMod.m_defaultFileNameXml}.xml", LoadDescriptorsFromXml);
+            List<string> errorList = new List<string>();
             foreach (string filename in Directory.GetFiles(DynamicTextBoardsMod.DefaultBuildingsConfigurationFolder, "*.xml"))
             {
-                using FileStream stream = File.OpenRead(filename);
-                LoadDescriptorsFromXml(stream);
+                try
+                {
+                    using FileStream stream = File.OpenRead(filename);
+                    LoadDescriptorsFromXml(stream);
+                }
+                catch (Exception e)
+                {
+                    errorList.Add($"Error Loading file \"{filename}\" ({e.GetType()}): {e.Message}");
+                }
             }
 
             m_updateData = new UpdateFlagsBuildings[BuildingManager.MAX_BUILDING_COUNT];
             m_linesDescriptors = new LineDescriptor[TransportManager.MAX_LINE_COUNT];
             m_boardsContainers = new BoardBunchContainerBuilding[BuildingManager.MAX_BUILDING_COUNT];
+            if (errorList.Count > 0)
+            {
+                UIComponent uIComponent = UIView.library.ShowModal("ExceptionPanel");
+                if (uIComponent != null)
+                {
+                    Cursor.lockState = CursorLockMode.None;
+                    Cursor.visible = true;
+                    BindPropertyByKey component = uIComponent.GetComponent<BindPropertyByKey>();
+                    if (component != null)
+                    {
+                        string title = $"Errors loading Files";
+                        string text = string.Join("\r\n", errorList.ToArray());
+                        string img = "IconError";
+                        component.SetProperties(TooltipHelper.Format(new string[]
+                        {
+                            "title",
+                            title,
+                            "message",
+                            text,
+                            "img",
+                            img
+                        }));
+                    }
+                }
+                else
+                {
+                    LogUtils.DoErrorLog("PANEL NOT FOUND!!!!");
+                }
+            }
         }
 
         private void LoadDescriptorsFromXml(FileStream stream)
         {
-            XmlSerializer serializer = new XmlSerializer(typeof(BuildingConfigurationSerializer<BoardDescriptorStations, BoardTextDescriptor>));
+            XmlSerializer serializer = new XmlSerializer(typeof(BuildingConfigurationSerializeXml<BoardDescriptorStations, BoardTextDescriptorXml>));
 
 
-            if (serializer.Deserialize(stream) is BuildingConfigurationSerializer<BoardDescriptorStations, BoardTextDescriptor> config)
+            if (serializer.Deserialize(stream) is BuildingConfigurationSerializeXml<BoardDescriptorStations, BoardTextDescriptorXml> config)
             {
                 if (m_loadedDescriptors == null)
                 {
@@ -341,9 +381,9 @@ namespace Klyte.DynamicTextBoards.Overrides
 
         public static void GenerateDefaultBuildingsConfiguration()
         {
-            BuildingConfigurationSerializer<BoardDescriptorStations, BoardTextDescriptor>[] fileContent = GenerateDefaultDictionary().Select(x => new BuildingConfigurationSerializer<BoardDescriptorStations, BoardTextDescriptor> { m_buildingName = x.Key, m_boardDescriptors = x.Value.ToArray() }).ToArray();
-            XmlSerializer serializer = new XmlSerializer(typeof(BuildingConfigurationSerializer<BoardDescriptorStations, BoardTextDescriptor>));
-            foreach (BuildingConfigurationSerializer<BoardDescriptorStations, BoardTextDescriptor> item in fileContent)
+            BuildingConfigurationSerializeXml<BoardDescriptorStations, BoardTextDescriptorXml>[] fileContent = GenerateDefaultDictionary().Select(x => new BuildingConfigurationSerializeXml<BoardDescriptorStations, BoardTextDescriptorXml> { m_buildingName = x.Key, m_boardDescriptors = x.Value.ToArray() }).ToArray();
+            XmlSerializer serializer = new XmlSerializer(typeof(BuildingConfigurationSerializeXml<BoardDescriptorStations, BoardTextDescriptorXml>));
+            foreach (BuildingConfigurationSerializeXml<BoardDescriptorStations, BoardTextDescriptorXml> item in fileContent)
             {
                 string filePath = DynamicTextBoardsMod.DefaultBuildingsConfigurationFolder + Path.DirectorySeparatorChar + $"{DynamicTextBoardsMod.m_defaultFileNameXml}_{item.m_buildingName}.xml";
                 if (!File.Exists(filePath))
@@ -367,27 +407,27 @@ namespace Klyte.DynamicTextBoards.Overrides
         private static Dictionary<string, List<BoardDescriptorStations>> GenerateDefaultDictionary()
         {
 
-            BoardTextDescriptor[] basicEOLTextDescriptor = new BoardTextDescriptor[]{
-                             new BoardTextDescriptor{
+            BoardTextDescriptorXml[] basicEOLTextDescriptor = new BoardTextDescriptorXml[]{
+                             new BoardTextDescriptorXml{
                                 m_textRelativePosition = new Vector3(0,4.7f, -0.13f) ,
                                 m_textRelativeRotation = Vector3.zero,
                                 m_maxWidthMeters = 15.5f
                              },
-                             new BoardTextDescriptor{
+                             new BoardTextDescriptorXml{
                                 m_textRelativePosition = new Vector3(0,4.7f,0.02f),
                                 m_textRelativeRotation = new Vector3(0,180,0),
                                 m_maxWidthMeters = 15.5f
                              },
                         };
-            BoardTextDescriptor[] basicWallTextDescriptor = new BoardTextDescriptor[]{
-                             new BoardTextDescriptor{
+            BoardTextDescriptorXml[] basicWallTextDescriptor = new BoardTextDescriptorXml[]{
+                             new BoardTextDescriptorXml{
                                 m_textRelativePosition =new Vector3(0,0.4F,-0.08f) ,
                                 m_textRelativeRotation = Vector3.zero,
                                 m_maxWidthMeters = 15.5f
                              },
                         };
-            BoardTextDescriptor[] basicTotem = new BoardTextDescriptor[]{
-                             new BoardTextDescriptor{
+            BoardTextDescriptorXml[] basicTotem = new BoardTextDescriptorXml[]{
+                             new BoardTextDescriptorXml{
                                 m_textRelativePosition =new Vector3(-0.01f,2.2f,-0.09f) ,
                                 m_textRelativeRotation = new Vector3(0,330,270),
                                 m_maxWidthMeters = 2.5f,
@@ -397,7 +437,7 @@ namespace Klyte.DynamicTextBoards.Overrides
                                 m_useContrastColor = false,
                                 m_defaultColor = Color.white
                              },
-                             new BoardTextDescriptor{
+                             new BoardTextDescriptorXml{
                                 m_textRelativePosition =new Vector3(-0.01f,2.2f,0.09f) ,
                                 m_textRelativeRotation = new Vector3(0,210,270),
                                 m_maxWidthMeters = 2.5f,
@@ -407,7 +447,7 @@ namespace Klyte.DynamicTextBoards.Overrides
                                 m_useContrastColor = false,
                                 m_defaultColor = Color.white
                              },
-                             new BoardTextDescriptor{
+                             new BoardTextDescriptorXml{
                                 m_textRelativePosition =new Vector3(0.14f,2.2f,0f) ,
                                 m_textRelativeRotation = new Vector3(0,90,270),
                                 m_maxWidthMeters = 2.5f,
@@ -1252,12 +1292,18 @@ namespace Klyte.DynamicTextBoards.Overrides
             };
         }
 
+        #region Serialization
+        protected override string ID => null;
+        public override void Deserialize(string data) { }
+        public override string Serialize() => null;
+        #endregion
     }
 
-    public class BoardDescriptorStations : BoardDescriptorParent<BoardDescriptorStations, BoardTextDescriptor>
+    public class BoardDescriptorStations : BoardDescriptorParentXml<BoardDescriptorStations, BoardTextDescriptorXml>
 
     {
-        [XmlAttribute("platforms")]
+        [XmlArray("platformOrder")]
+        [XmlArrayItem("p")]
         public int[] m_platforms = new int[0];
         [XmlAttribute("showIfNoLine")]
         public bool m_showIfNoLine = true;

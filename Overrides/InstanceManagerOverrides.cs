@@ -13,9 +13,9 @@ namespace Klyte.DynamicTextBoards.Overrides
 
         #region Events
         public delegate void OnBuildingNameChanged(ushort buildingID);
-        public static event OnBuildingNameChanged eventOnBuildingRenamed;
+        public static event OnBuildingNameChanged EventOnBuildingRenamed;
 
-        private static void OnInstanceRenamed(ref InstanceID id)
+        public static void OnInstanceRenamed(ref InstanceID id)
         {
             if (id.Building > 0)
             {
@@ -27,23 +27,20 @@ namespace Klyte.DynamicTextBoards.Overrides
 
         #region Hooking
 
-        public  void Awake()
+        public void Awake()
         {
             RedirectorInstance = KlyteMonoUtils.CreateElement<Redirector>(transform);
             LogUtils.DoLog("Loading Instance Manager Overrides");
             #region Release Line Hooks
             MethodInfo posRename = typeof(InstanceManagerOverrides).GetMethod("OnInstanceRenamed", RedirectorUtils.allFlags);
 
-            RedirectorInstance. AddRedirect(typeof(InstanceManager).GetMethod("SetName", RedirectorUtils.allFlags), null, posRename);
+            RedirectorInstance.AddRedirect(typeof(InstanceManager).GetMethod("SetName", RedirectorUtils.allFlags), null, posRename);
             #endregion
 
         }
         #endregion
 
-        public static void CallBuildRenamedEvent(ushort building)
-        {
-            BuildingManager.instance.StartCoroutine(CallBuildRenamedEvent_impl(building));
-        }
+        public static void CallBuildRenamedEvent(ushort building) => BuildingManager.instance.StartCoroutine(CallBuildRenamedEvent_impl(building));
         private static IEnumerator CallBuildRenamedEvent_impl(ushort building)
         {
 
@@ -53,7 +50,7 @@ namespace Klyte.DynamicTextBoards.Overrides
 
             //code goes here
 
-            eventOnBuildingRenamed?.Invoke(building);
+            EventOnBuildingRenamed?.Invoke(building);
         }
 
     }

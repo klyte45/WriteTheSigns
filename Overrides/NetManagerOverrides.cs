@@ -1,7 +1,6 @@
 ﻿using Klyte.Commons.Extensors;
 using Klyte.Commons.Utils;
 using System;
-using System.Collections;
 using System.Reflection;
 using UnityEngine;
 
@@ -13,51 +12,45 @@ namespace Klyte.DynamicTextBoards.Overrides
 
 
         #region Events
-        public static event Action<ushort> eventNodeChanged;
-        public static event Action<ushort> eventSegmentChanged;
-        public static event Action<ushort> eventSegmentReleased;
-        public static event Action<ushort> eventSegmentNameChanged;
+        public static event Action<ushort> EventNodeChanged;
+        public static event Action<ushort> EventSegmentChanged;
+        public static event Action<ushort> EventSegmentReleased;
+        public static event Action<ushort> EventSegmentNameChanged;
 
 #pragma warning disable IDE0051 // Remover membros privados não utilizados
         private static void OnNodeChanged(ref ushort node)
         {
-            var node_ = node;
-            new AsyncAction(() =>
-            {
-                eventNodeChanged?.Invoke(node_);
-            }).Execute();
+            ushort node_ = node;
+            new AsyncAction(() => EventNodeChanged?.Invoke(node_)).Execute();
         }
         private static void OnSegmentCreated(ref ushort segment, ref ushort startNode, ref ushort endNode)
         {
-            var startNode_ = startNode;
-            var segment_ = segment;
-            var endNode_ = endNode;
+            ushort startNode_ = startNode;
+            ushort segment_ = segment;
+            ushort endNode_ = endNode;
 
             new AsyncAction(() =>
             {
-                eventNodeChanged?.Invoke(startNode_);
-                eventNodeChanged?.Invoke(endNode_);
-                eventSegmentChanged?.Invoke(segment_);
+                EventNodeChanged?.Invoke(startNode_);
+                EventNodeChanged?.Invoke(endNode_);
+                EventSegmentChanged?.Invoke(segment_);
             }).Execute();
         }
         private static void OnSegmentReleased(ref ushort segment)
         {
-            var segment_ = segment;
+            ushort segment_ = segment;
             new AsyncAction(() =>
             {
-                eventNodeChanged?.Invoke(NetManager.instance.m_segments.m_buffer[segment_].m_startNode);
-                eventNodeChanged?.Invoke(NetManager.instance.m_segments.m_buffer[segment_].m_endNode);
-                eventSegmentChanged?.Invoke(segment_);
-                eventSegmentReleased?.Invoke(segment_);
+                EventNodeChanged?.Invoke(NetManager.instance.m_segments.m_buffer[segment_].m_startNode);
+                EventNodeChanged?.Invoke(NetManager.instance.m_segments.m_buffer[segment_].m_endNode);
+                EventSegmentChanged?.Invoke(segment_);
+                EventSegmentReleased?.Invoke(segment_);
             }).Execute();
         }
         private static void OnSegmentNameChanged(ref ushort segmentID)
         {
-            var segment_ = segmentID;
-            new AsyncAction(() =>
-            {
-                eventSegmentNameChanged?.Invoke(segment_);
-            }).Execute();
+            ushort segment_ = segmentID;
+            new AsyncAction(() => EventSegmentNameChanged?.Invoke(segment_)).Execute();
         }
         #endregion
 #pragma warning restore IDE0051 // Remover membros privados não utilizados

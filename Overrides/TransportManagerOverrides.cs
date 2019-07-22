@@ -12,26 +12,23 @@ namespace Klyte.DynamicTextBoards.Overrides
 
 
         #region Events
-        public static event Action<ushort> eventOnLineUpdated;
+        public static event Action<ushort> EventOnLineUpdated;
 
-        private static void RunOnLineUpdated(ushort lineID)
+        public static void RunOnLineUpdated(ushort lineID)
         {
-            var lineID_ = lineID;
-            new AsyncAction(() =>
-            {
-                eventOnLineUpdated?.Invoke(lineID_);
-            }).Execute();
+            ushort lineID_ = lineID;
+            new AsyncAction(() => EventOnLineUpdated?.Invoke(lineID_)).Execute();
         }
         #endregion
 
         #region Hooking
 
-        public  void Awake()
+        public void Awake()
         {
             RedirectorInstance = KlyteMonoUtils.CreateElement<Redirector>(transform);
             LogUtils.DoLog("Loading Transport Manager Overrides");
             #region Release Line Hooks
-            MethodInfo posUpdate = typeof(TransportManagerOverrides).GetMethod("RunOnLineUpdated",RedirectorUtils. allFlags);
+            MethodInfo posUpdate = typeof(TransportManagerOverrides).GetMethod("RunOnLineUpdated", RedirectorUtils.allFlags);
 
             RedirectorInstance.AddRedirect(typeof(TransportManager).GetMethod("UpdateLine", RedirectorUtils.allFlags), null, posUpdate);
             #endregion

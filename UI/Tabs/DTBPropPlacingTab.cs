@@ -17,7 +17,7 @@ using static Klyte.DynamicTextBoards.Overrides.BoardGeneratorHighwaySigns;
 namespace Klyte.DynamicTextBoards.UI
 {
 
-    internal class DTBHighwaySignTab : UICustomControl
+    internal class DTBPropPlacingTab : UICustomControl
     {
         public UIScrollablePanel MainContainer { get; private set; }
 
@@ -45,13 +45,9 @@ namespace Klyte.DynamicTextBoards.UI
         private UITextField[] m_scaleVectorEditor;
         private UIColorField m_colorEditor;
 
-        private UIButton m_copyGroupButton;
         private UIButton m_pasteGroupButton;
-        private UIButton m_deleteGroupButton;
 
-        private UIButton m_copyButton;
         private UIButton m_pasteButton;
-        private UIButton m_deleteButton;
 
 
         private UIHelperExtension m_pseudoTabTextsContainer;
@@ -72,10 +68,7 @@ namespace Klyte.DynamicTextBoards.UI
         private UISlider m_textLuminosityDay;
         private UISlider m_textLuminosityNight;
 
-
-        private UIButton m_copyButtonText;
         private UIButton m_pasteButtonText;
-        private UIButton m_deleteButtonText;
 
         private UIDropDown m_loadPropGroup;
         private UIDropDown m_loadPropItem;
@@ -101,7 +94,7 @@ namespace Klyte.DynamicTextBoards.UI
         private bool m_isLoading = false;
 
         #region Awake
-        private void Awake()
+        public void Awake()
         {
             MainContainer = GetComponent<UIScrollablePanel>();
 
@@ -112,10 +105,7 @@ namespace Klyte.DynamicTextBoards.UI
             UIPanel parent = m_fontSelect.GetComponentInParent<UIPanel>();
             UIButton actionButton = ConfigureActionButton(parent);
             SetIcon(actionButton, "Reload", Color.white);
-            actionButton.eventClick += (x, t) =>
-            {
-                DTBUtils.ReloadFontsOf<BoardGeneratorHighwaySigns>(m_fontSelect);
-            };
+            actionButton.eventClick += (x, t) => DTBUtils.ReloadFontsOf<BoardGeneratorHighwaySigns>(m_fontSelect);
             DTBUtils.ReloadFontsOf<BoardGeneratorHighwaySigns>(m_fontSelect);
 
             m_buttonTool = (UIButton) m_uiHelperHS.AddButton(Locale.Get("K45_DTB_PICK_A_SEGMENT"), EnablePickTool);
@@ -129,10 +119,10 @@ namespace Klyte.DynamicTextBoards.UI
             m_selectionAddress.prefix = Locale.Get("K45_DTB_ADDRESS_LABEL_PREFIX") + " ";
             KlyteMonoUtils.LimitWidth(m_selectionAddress, m_contentContainer.Self.width, true);
 
-            m_loadPropGroup = AddLibBox<DTBLibPropGroup, BoardBunchContainerHighwaySign>(Locale.Get("K45_DTB_PROP_GROUP_LIB_TITLE"), m_contentContainer,
-            out m_copyGroupButton, DoCopyGroup,
+            m_loadPropGroup = AddLibBox<DTBLibPropGroup, BoardBunchContainerHighwaySignXml>(Locale.Get("K45_DTB_PROP_GROUP_LIB_TITLE"), m_contentContainer,
+            out UIButton m_copyGroupButton, DoCopyGroup,
             out m_pasteGroupButton, DoPasteGroup,
-            out m_deleteGroupButton, DoDeleteGroup,
+            out UIButton m_deleteGroupButton, DoDeleteGroup,
             (x) =>
                 {
                     if (m_currentSelectedSegment == 0)
@@ -140,7 +130,7 @@ namespace Klyte.DynamicTextBoards.UI
                         return;
                     }
 
-                    BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment] = XmlUtils.DefaultXmlDeserialize<BoardBunchContainerHighwaySign>(XmlUtils.DefaultXmlSerialize(x));
+                    BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment] = XmlUtils.DefaultXmlDeserialize<BoardBunchContainerHighwaySignXml>(XmlUtils.DefaultXmlSerialize(x));
                     ReloadSegment();
                 },
                 () => BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment]);
@@ -180,10 +170,10 @@ namespace Klyte.DynamicTextBoards.UI
             m_pseudoTabPropsHelper.Self.width = MainContainer.width - 30;
 
 
-            m_loadPropItem = AddLibBox<DTBLibPropSingle, BoardDescriptorHigwaySign>(Locale.Get("K45_DTB_PROP_ITEM_LIB_TITLE"), m_pseudoTabPropsHelper,
-                                    out m_copyButton, DoCopy,
+            m_loadPropItem = AddLibBox<DTBLibPropSingle, BoardDescriptorHigwaySignXml>(Locale.Get("K45_DTB_PROP_ITEM_LIB_TITLE"), m_pseudoTabPropsHelper,
+                                    out UIButton m_copyButton, DoCopy,
                                     out m_pasteButton, DoPaste,
-                                    out m_deleteButton, DoDelete,
+                                    out UIButton m_deleteButton, DoDelete,
                                     (x) =>
                                     {
                                         if (m_currentSelectedSegment == 0 || CurrentTab < 0)
@@ -191,7 +181,7 @@ namespace Klyte.DynamicTextBoards.UI
                                             return;
                                         }
 
-                                        BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[CurrentTab].descriptor = XmlUtils.DefaultXmlDeserialize<BoardDescriptorHigwaySign>(XmlUtils.DefaultXmlSerialize(x));
+                                        BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[CurrentTab].descriptor = XmlUtils.DefaultXmlDeserialize<BoardDescriptorHigwaySignXml>(XmlUtils.DefaultXmlSerialize(x));
                                         ReloadSegment();
                                     },
                             () => BoardGeneratorHighwaySigns.m_boardsContainers?.ElementAtOrDefault(m_currentSelectedSegment)?.m_boardsData?.ElementAtOrDefault(CurrentTab)?.descriptor);
@@ -244,10 +234,10 @@ namespace Klyte.DynamicTextBoards.UI
             m_pseudoTabTextsContainer.Self.isVisible = false;
             m_pseudoTabTextsContainer.Self.width = MainContainer.width - 50;
 
-            m_loadText = AddLibBox<DTBLibTextMesh, BoardTextDescriptorHigwaySign>(Locale.Get("K45_DTB_PROP_TEXT_LIB_TITLE"), m_pseudoTabTextsContainer,
-                                    out m_copyButtonText, DoCopyText,
+            m_loadText = AddLibBox<DTBLibTextMeshHighwaySigns, BoardTextDescriptorHighwaySignsXml>(Locale.Get("K45_DTB_PROP_TEXT_LIB_TITLE"), m_pseudoTabTextsContainer,
+                                    out UIButton m_copyButtonText, DoCopyText,
                                     out m_pasteButtonText, DoPasteText,
-                                    out m_deleteButtonText, DoDeleteText,
+                                    out UIButton m_deleteButtonText, DoDeleteText,
                                     (x) =>
                                     {
                                         if (m_currentSelectedSegment == 0 || CurrentTab < 0 || CurrentTabText < 0)
@@ -255,7 +245,7 @@ namespace Klyte.DynamicTextBoards.UI
                                             return;
                                         }
 
-                                        BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[CurrentTab].descriptor.m_textDescriptors[CurrentTabText] = XmlUtils.DefaultXmlDeserialize<BoardTextDescriptorHigwaySign>(XmlUtils.DefaultXmlSerialize(x));
+                                        BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[CurrentTab].descriptor.m_textDescriptors[CurrentTabText] = XmlUtils.DefaultXmlDeserialize<BoardTextDescriptorHighwaySignsXml>(XmlUtils.DefaultXmlSerialize(x));
                                         ReloadSegment();
                                     },
                             () => BoardGeneratorHighwaySigns.m_boardsContainers?.ElementAtOrDefault(m_currentSelectedSegment)?.m_boardsData?.ElementAtOrDefault(CurrentTab)?.descriptor?.m_textDescriptors?.ElementAtOrDefault(CurrentTabText));
@@ -279,8 +269,8 @@ namespace Klyte.DynamicTextBoards.UI
             m_textResizeYOnOverflow = (UICheckBox) groupTexts.AddCheckbox(Locale.Get("K45_DTB_RESIZE_Y_TEXT_OVERFLOW"), false, SetTextResizeYOnOverflow);
 
             groupTexts = m_pseudoTabTextsContainer.AddTogglableGroup(Locale.Get("K45_DTB_TEXTS_2D_ALIGNMENT"));
-            AddDropdown(Locale.Get("K45_DTB_TEXT_ALIGN_HOR"), out m_dropdownTextAlignHorizontal, groupTexts, Enum.GetNames(typeof(UIHorizontalAlignment)).Select(x => Locale.Get("KCM_ALIGNMENT", x)).ToArray(), SetTextAlignmentHorizontal);
-            AddDropdown(Locale.Get("K45_DTB_TEXT_ALIGN_VER"), out m_dropdownTextAlignVertical, groupTexts, Enum.GetNames(typeof(UIVerticalAlignment)).Select(x => Locale.Get("KCM_VERT_ALIGNMENT", x)).ToArray(), SetTextAlignmentVertical);
+            AddDropdown(Locale.Get("K45_DTB_TEXT_ALIGN_HOR"), out m_dropdownTextAlignHorizontal, groupTexts, Enum.GetNames(typeof(UIHorizontalAlignment)).Select(x => Locale.Get("K45_ALIGNMENT", x)).ToArray(), SetTextAlignmentHorizontal);
+            AddDropdown(Locale.Get("K45_DTB_TEXT_ALIGN_VER"), out m_dropdownTextAlignVertical, groupTexts, Enum.GetNames(typeof(UIVerticalAlignment)).Select(x => Locale.Get("K45_VERT_ALIGNMENT", x)).ToArray(), SetTextAlignmentVertical);
 
             groupTexts = m_pseudoTabTextsContainer.AddTogglableGroup(Locale.Get("K45_DTB_TEXT_EFFECTS"));
             AddSlider(Locale.Get("K45_DTB_LUMINOSITY_DAY"), out m_textLuminosityDay, groupTexts, SetTextLumDay, 0, 10f, 0.25f);
@@ -322,7 +312,7 @@ namespace Klyte.DynamicTextBoards.UI
             pasteButton.isVisible = false;
 
 
-            AddDropdown(Locale.Get("K45_DTB_LOAD_FROM_LIB"), out UIDropDown loadDD, groupLibPropGroup, DTBLibPropGroup.Instance.List().ToArray(), (x) => { });
+            AddDropdown(Locale.Get("K45_DTB_LOAD_FROM_LIB"), out UIDropDown loadDD, groupLibPropGroup, BasicLib<LIB, DESC>.Instance.List().ToArray(), (x) => { });
             loadDD.width -= 80;
             UIPanel parent = loadDD.GetComponentInParent<UIPanel>();
             UIButton actionButton = ConfigureActionButton(parent);
@@ -500,7 +490,7 @@ namespace Klyte.DynamicTextBoards.UI
         {
             if (m_currentSelectedSegment > 0 && m_clipboardGroup != null)
             {
-                BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment] = XmlUtils.DefaultXmlDeserialize<BoardBunchContainerHighwaySign>(m_clipboardGroup);
+                BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment] = XmlUtils.DefaultXmlDeserialize<BoardBunchContainerHighwaySignXml>(m_clipboardGroup);
                 ReloadSegment();
             }
         }
@@ -509,7 +499,7 @@ namespace Klyte.DynamicTextBoards.UI
         {
             if (m_currentSelectedSegment > 0)
             {
-                BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment] = new BoardBunchContainerHighwaySign();
+                BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment] = new BoardBunchContainerHighwaySignXml();
                 OnSegmentSet(m_currentSelectedSegment);
             }
         }
@@ -528,7 +518,7 @@ namespace Klyte.DynamicTextBoards.UI
             if (m_currentSelectedSegment > 0 && CurrentTab >= 0 && CurrentTabText >= 0 && m_clipboardText != null)
             {
                 BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].cached = false;
-                BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[CurrentTab].descriptor.m_textDescriptors[CurrentTabText] = BoardTextDescriptorHigwaySign.Deserialize(m_clipboardText);
+                BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[CurrentTab].descriptor.m_textDescriptors[CurrentTabText] = BoardTextDescriptorHighwaySignsXml.Deserialize(m_clipboardText);
                 ReloadTabInfoText();
             }
         }
@@ -537,7 +527,7 @@ namespace Klyte.DynamicTextBoards.UI
         {
             if (m_currentSelectedSegment > 0 && CurrentTab >= 0 && CurrentTabText >= 0)
             {
-                List<BoardTextDescriptorHigwaySign> tempList = BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[CurrentTab].descriptor.m_textDescriptors.ToList();
+                List<BoardTextDescriptorHighwaySignsXml> tempList = BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[CurrentTab].descriptor.m_textDescriptors.ToList();
                 tempList.RemoveAt(CurrentTabText);
                 BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[CurrentTab].descriptor.m_textDescriptors = tempList.ToArray();
                 ReloadTabInfo();
@@ -545,11 +535,11 @@ namespace Klyte.DynamicTextBoards.UI
             }
         }
 
-        private void Start() => m_propsDropdown.items = BoardGeneratorHighwaySigns.Instance.LoadedProps.Select(x => Locale.Get("PROPS_TITLE", x)).ToArray();
+        public void Start() => m_propsDropdown.items = BoardGeneratorHighwaySigns.Instance.LoadedProps.Select(x => x.EndsWith("_Data") ? Locale.Get("PROPS_TITLE", x) : x).ToArray();
 
         private void SetPropModel(int idx)
         {
-            if (idx > 0)
+            if (idx >= 0)
             {
                 SafeActionInBoard(descriptor => descriptor.m_propName = BoardGeneratorHighwaySigns.Instance.LoadedProps[idx]);
             }
@@ -569,13 +559,13 @@ namespace Klyte.DynamicTextBoards.UI
         private void SetPropRelRotation(Vector3 value) => SafeActionInBoard(descriptor => descriptor.m_propRotation = value);
         private void SetPropRelScale(Vector3 value) => SafeActionInBoard(descriptor => descriptor.PropScale = value);
         private void SetInvertSignSide(bool value) => SafeActionInBoard(descriptor => descriptor.m_invertSign = value);
-        private void SafeActionInBoard(Action<BoardDescriptorHigwaySign> toDo)
+        private void SafeActionInBoard(Action<BoardDescriptorHigwaySignXml> toDo)
         {
             if (m_currentSelectedSegment != 0 && !m_isLoading)
             {
                 EnsureBoardsArrayIdx(CurrentTab);
                 BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].cached = false;
-                BoardDescriptorHigwaySign descriptor = BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[CurrentTab].descriptor;
+                BoardDescriptorHigwaySignXml descriptor = BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[CurrentTab].descriptor;
                 toDo(descriptor);
             }
         }
@@ -630,13 +620,13 @@ namespace Klyte.DynamicTextBoards.UI
             }
         }
 
-        private void SafeActionInTextBoard(Action<BoardTextDescriptorHigwaySign> toDo)
+        private void SafeActionInTextBoard(Action<BoardTextDescriptorHighwaySignsXml> toDo)
         {
             if (m_currentSelectedSegment != 0 && !m_isLoading)
             {
                 EnsureBoardsArrayIdx(CurrentTab, CurrentTabText);
                 BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].cached = false;
-                BoardTextDescriptorHigwaySign descriptor = BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[CurrentTab].descriptor.m_textDescriptors[CurrentTabText];
+                BoardTextDescriptorHighwaySignsXml descriptor = BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[CurrentTab].descriptor.m_textDescriptors[CurrentTabText];
                 toDo(descriptor);
             }
         }
@@ -647,7 +637,7 @@ namespace Klyte.DynamicTextBoards.UI
             {
                 if (BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment] == null)
                 {
-                    BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment] = new BoardGeneratorHighwaySigns.BoardBunchContainerHighwaySign();
+                    BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment] = new BoardGeneratorHighwaySigns.BoardBunchContainerHighwaySignXml();
                 }
                 if (BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData == null || BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData.Length <= idx)
                 {
@@ -667,7 +657,7 @@ namespace Klyte.DynamicTextBoards.UI
                 }
                 if (BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[idx].descriptor == null)
                 {
-                    BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[idx].descriptor = new BoardGeneratorHighwaySigns.BoardDescriptorHigwaySign();
+                    BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[idx].descriptor = new BoardGeneratorHighwaySigns.BoardDescriptorHigwaySignXml();
                 }
 
                 EnsureTabQuantity(idx + 1);
@@ -689,8 +679,8 @@ namespace Klyte.DynamicTextBoards.UI
 
             if (BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[idx].descriptor.m_textDescriptors == null || BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[idx].descriptor.m_textDescriptors.Length <= textIdx)
             {
-                BoardTextDescriptorHigwaySign[] oldArr = BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[idx].descriptor.m_textDescriptors;
-                BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[idx].descriptor.m_textDescriptors = new BoardTextDescriptorHigwaySign[textIdx + 1];
+                BoardTextDescriptorHighwaySignsXml[] oldArr = BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[idx].descriptor.m_textDescriptors;
+                BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[idx].descriptor.m_textDescriptors = new BoardTextDescriptorHighwaySignsXml[textIdx + 1];
                 if (oldArr != null && oldArr.Length > 0)
                 {
                     for (int i = 0; i < oldArr.Length && i <= textIdx; i++)
@@ -701,7 +691,7 @@ namespace Klyte.DynamicTextBoards.UI
             }
             if (BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[idx].descriptor.m_textDescriptors[textIdx] == null)
             {
-                BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[idx].descriptor.m_textDescriptors[textIdx] = new BoardTextDescriptorHigwaySign
+                BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[idx].descriptor.m_textDescriptors[textIdx] = new BoardTextDescriptorHighwaySignsXml
                 {
                     m_defaultColor = Color.white,
                     m_useContrastColor = false
@@ -841,7 +831,7 @@ namespace Klyte.DynamicTextBoards.UI
             m_loadPropItem.items = DTBLibPropSingle.Instance.List().ToArray();
             OnChangeTabTexts(-1);
         }
-        private void LoadTabInfo(BoardDescriptorHigwaySign descriptor)
+        private void LoadTabInfo(BoardDescriptorHigwaySignXml descriptor)
         {
             m_propsDropdown.selectedIndex = BoardGeneratorHighwaySigns.Instance.LoadedProps.IndexOf(descriptor?.m_propName);
             m_segmentPosition.value = descriptor?.m_segmentPosition ?? 0.5f;
@@ -868,11 +858,11 @@ namespace Klyte.DynamicTextBoards.UI
 
             m_isLoading = true;
             LoadTabTextInfo(BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment]?.m_boardsData[CurrentTab]?.descriptor.m_textDescriptors[CurrentTabText]);
-            m_loadText.items = DTBLibTextMesh.Instance.List().ToArray();
+            m_loadText.items = DTBLibTextMeshHighwaySigns.Instance.List().ToArray();
             m_isLoading = false;
         }
 
-        private void LoadTabTextInfo(BoardTextDescriptorHigwaySign descriptor)
+        private void LoadTabTextInfo(BoardTextDescriptorHighwaySignsXml descriptor)
         {
             m_textItemName.text = descriptor?.SaveName ?? "";
             m_dropdownTextContent.selectedIndex = (int) (descriptor?.m_ownTextContent ?? OwnNameContent.None);
@@ -893,15 +883,6 @@ namespace Klyte.DynamicTextBoards.UI
             m_textLuminosityNight.value = (descriptor?.m_nightEmissiveMultiplier ?? 0);
             ReloadFontsOverride(m_overrideFontText, descriptor?.m_overrideFont);
         }
-
-        private void CreateGroupFileSelect(string i18n, OnDropdownSelectionChanged onChanged, out UIDropDown dropDown)
-        {
-            dropDown = m_uiHelperHS.AddDropdownLocalized(i18n, new string[0], -1, onChanged);
-            dropDown.width = 370;
-            m_uiHelperHS.AddSpace(20);
-        }
-
-
 
         private void ReloadFontsOverride(UIDropDown target, string currentVal)
         {

@@ -40,10 +40,10 @@ namespace Klyte.DynamicTextBoards.Utils
         };
 
         private static Vector2? m_cachedPos;
-        private static readonly Color[] randomColors = { Color.black, Color.gray, Color.white, Color.red, new Color32(0xFF, 0x88, 0, 0xFf), Color.yellow, Color.green, Color.cyan, Color.blue, Color.magenta };
+        private static readonly Color[] m_randomColors = { Color.black, Color.gray, Color.white, Color.red, new Color32(0xFF, 0x88, 0, 0xFf), Color.yellow, Color.green, Color.cyan, Color.blue, Color.magenta };
 
 
-        public static Func<ushort, Color> GetDistrictColor = (ushort districtId) => randomColors[districtId % randomColors.Length];
+        public static Func<ushort, Color> GetDistrictColor = (ushort districtId) => m_randomColors[districtId % m_randomColors.Length];
         public static Func<Vector2> GetStartPoint = () =>
         {
             if (m_cachedPos == null)

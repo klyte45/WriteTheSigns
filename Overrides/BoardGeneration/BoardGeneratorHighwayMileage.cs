@@ -1,22 +1,18 @@
-﻿using ColossalFramework;
-using ColossalFramework.Globalization;
+﻿using ColossalFramework.Globalization;
 using ColossalFramework.Math;
 using ColossalFramework.UI;
 using Klyte.Commons.Extensors;
 using Klyte.Commons.Utils;
-using Klyte.DynamicTextBoards.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Xml.Serialization;
 using UnityEngine;
-using static BuildingInfo;
 using static Klyte.Commons.Utils.SegmentUtils;
 
 namespace Klyte.DynamicTextBoards.Overrides
 {
 
-    public class BoardGeneratorHighwayMileage : BoardGeneratorParent<BoardGeneratorHighwayMileage, IBoardBunchContainer<CacheControl, BasicRenderInformation>, CacheControl, BasicRenderInformation, BoardDescriptor, BoardTextDescriptor, BoardGeneratorHighwayMileage.RoadIdentifier>
+    public partial class BoardGeneratorHighwayMileage : BoardGeneratorParent<BoardGeneratorHighwayMileage, IBoardBunchContainer<CacheControl, BasicRenderInformation>, CacheControl, BasicRenderInformation, BoardDescriptorXml, BoardTextDescriptorXml, BoardGeneratorHighwayMileage.RoadIdentifier>
     {
 
         public Dictionary<RoadIdentifier, List<MileagePlateDescriptor>> m_highwayMarksObjects;
@@ -31,18 +27,20 @@ namespace Klyte.DynamicTextBoards.Overrides
         public override int ObjArraySize => 0;
         public override UIDynamicFont DrawFont => m_font;
 
-        private BoardDescriptor m_baseDescriptorMileagePlate = new BoardDescriptor
+
+        private BoardDescriptorXml m_baseDescriptorMileagePlate = new BoardDescriptorXml
         {
             m_propName = "1679681061.Mileage Marker_Data",
-            m_textDescriptors = new BoardTextDescriptor[]{
-                new BoardTextDescriptor{
+            m_textDescriptors = new BoardTextDescriptorXml[]{
+                new BoardTextDescriptorXml{
                     m_textRelativePosition =new Vector3(0f,1.78f,0.066f) ,
                     m_maxWidthMeters = 0.45f,
                     m_textScale = .375f,
                     m_useContrastColor = false,
-                    m_textRelativeRotation = new Vector3(0,180,0)
+                    m_textRelativeRotation = new Vector3(0,180,0),
+                    m_textType = TextType.Custom1
                 },
-                new BoardTextDescriptor{
+                new BoardTextDescriptorXml{
                     m_textRelativePosition =new Vector3(0f,1.33f,0.066f) ,
                     m_textRelativeRotation = new Vector3(0,180,0),
                     m_maxWidthMeters = 0.45f,
@@ -52,7 +50,7 @@ namespace Klyte.DynamicTextBoards.Overrides
                 },
             }
         };
-        private PropInfo cachedDefaultInfo;
+        private PropInfo m_cachedDefaultInfo;
 
         #region Initialize
         public override void Initialize()
@@ -62,16 +60,16 @@ namespace Klyte.DynamicTextBoards.Overrides
             m_cachedKilometerMeshes = new BasicRenderInformation[100];
             m_cachedDirectionMeshes = new BasicRenderInformation[9];
 
-            NetManagerOverrides.eventNodeChanged += onNodeChanged;
-            NetManagerOverrides.eventSegmentChanged += onSegmentChanged;
-            NetManagerOverrides.eventSegmentNameChanged += onNameSeedChanged;
-            DistrictManagerOverrides.eventOnDistrictChanged += onDistrictChanged;
+            NetManagerOverrides.EventNodeChanged += onNodeChanged;
+            NetManagerOverrides.EventSegmentChanged += onSegmentChanged;
+            NetManagerOverrides.EventSegmentNameChanged += onNameSeedChanged;
+            DistrictManagerOverrides.EventOnDistrictChanged += onDistrictChanged;
 
             BuildSurfaceFont(out m_font, "Highway Gothic");
 
             #region Hooks
-            var postRenderMeshs = GetType().GetMethod("AfterRenderNode", RedirectorUtils.allFlags);
-            var afterRenderSegment = GetType().GetMethod("AfterRenderSegment", RedirectorUtils.allFlags);
+            System.Reflection.MethodInfo postRenderMeshs = GetType().GetMethod("AfterRenderNode", RedirectorUtils.allFlags);
+            System.Reflection.MethodInfo afterRenderSegment = GetType().GetMethod("AfterRenderSegment", RedirectorUtils.allFlags);
             LogUtils.DoLog($"Patching=> {postRenderMeshs} {postRenderMeshs.IsStatic}");
             RedirectorInstance.AddRedirect(typeof(RoadBaseAI).GetMethod("RenderNode", RedirectorUtils.allFlags), null, postRenderMeshs);
             RedirectorInstance.AddRedirect(typeof(NetSegment).GetMethod("RenderInstance", new Type[] { typeof(RenderManager.CameraInfo), typeof(ushort), typeof(int) }), null, afterRenderSegment);
@@ -79,10 +77,6 @@ namespace Klyte.DynamicTextBoards.Overrides
         }
 
 
-
-        private void Font_textureRebuilt(Font obj)
-        {
-        }
 
         protected override void OnTextureRebuiltImpl(Font obj)
         {
@@ -93,7 +87,7 @@ namespace Klyte.DynamicTextBoards.Overrides
             //doLog($"onNodeChanged { System.Environment.StackTrace }");
             for (int i = 0; i < 8; i++)
             {
-                var segmentId = NetManager.instance.m_nodes.m_buffer[nodeId].GetSegment(i);
+                ushort segmentId = NetManager.instance.m_nodes.m_buffer[nodeId].GetSegment(i);
                 //if (NetManager.instance.m_segments.m_buffer[segmentId].Info.m_netAI is RoadBaseAI)
                 //{
                 //    onDistrictChanged();
@@ -118,10 +112,13 @@ namespace Klyte.DynamicTextBoards.Overrides
             //    onDistrictChanged();
             //}
 
-            if ((m_segmentToHighway[segmentId]) != default(RoadIdentifier))
+            if (m_segmentToHighway[segmentId] != default(RoadIdentifier))
             {
-                var target = m_segmentToHighway[segmentId];
-                if (!m_destroyQueue.Contains(target)) m_destroyQueue.Add(target);
+                RoadIdentifier target = m_segmentToHighway[segmentId];
+                if (!m_destroyQueue.Contains(target))
+                {
+                    m_destroyQueue.Add(target);
+                }
             }
         }
         private void onDistrictChanged()
@@ -150,26 +147,33 @@ namespace Klyte.DynamicTextBoards.Overrides
 
             for (int i = 0; i < 8; i++)
             {
-                var segmentId = NetManager.instance.m_nodes.m_buffer[nodeID].GetSegment(i);
-                if (segmentId == 0) continue;
+                ushort segmentId = NetManager.instance.m_nodes.m_buffer[nodeID].GetSegment(i);
+                if (segmentId == 0)
+                {
+                    continue;
+                }
+
                 if (!(NetManager.instance.m_segments.m_buffer[segmentId].Info.m_netAI is RoadBaseAI baseAI) || !baseAI.m_highwayRules)
                 {
                     continue;
                 }
                 if (m_segmentToHighway[segmentId] == default(RoadIdentifier) || m_destroyQueue.Contains(m_segmentToHighway[segmentId]))
                 {
-                    var removeTarget = m_segmentToHighway[segmentId];
+                    RoadIdentifier removeTarget = m_segmentToHighway[segmentId];
                     if (removeTarget.segments != null)
                     {
-                        foreach (var id in removeTarget.segments)
+                        foreach (ushort id in removeTarget.segments)
                         {
-                            if (m_segmentToHighway[id] == removeTarget) m_segmentToHighway[id] = default(RoadIdentifier);
+                            if (m_segmentToHighway[id] == removeTarget)
+                            {
+                                m_segmentToHighway[id] = default(RoadIdentifier);
+                            }
                         }
                     }
                     m_highwayMarksObjects.Remove(removeTarget);
                     m_destroyQueue.Remove(removeTarget);
 
-                    var segments = SegmentUtils.GetSegmentRoadEdges(segmentId, false, false, false, out ComparableRoad start, out ComparableRoad end);
+                    IEnumerable<Tuple<ushort, float>> segments = SegmentUtils.GetSegmentRoadEdges(segmentId, false, false, false, out ComparableRoad start, out ComparableRoad end);
                     if (segments == null)
                     {
                         RoadIdentifier tuple = new RoadIdentifier(default(ComparableRoad), default(ComparableRoad), new ushort[] { segmentId });
@@ -177,32 +181,36 @@ namespace Klyte.DynamicTextBoards.Overrides
                     }
                     else
                     {
-                        var tupleIdentifier = new RoadIdentifier(start, end, segments.Select(x => x.First).ToArray());
-                        var roadInverted = (tupleIdentifier.start.nodeReference == NetManager.instance.m_segments.m_buffer[tupleIdentifier.segments[0]].m_endNode) == ((NetManager.instance.m_segments.m_buffer[tupleIdentifier.segments[0]].m_flags & NetSegment.Flags.Invert) == 0);
-                        var entry = new List<MileagePlateDescriptor>();
-                        var meterCount = 0f;
-                        foreach (var segmentRef in segments)
+                        RoadIdentifier tupleIdentifier = new RoadIdentifier(start, end, segments.Select(x => x.First).ToArray());
+                        bool roadInverted = tupleIdentifier.start.nodeReference == NetManager.instance.m_segments.m_buffer[tupleIdentifier.segments[0]].m_endNode == ((NetManager.instance.m_segments.m_buffer[tupleIdentifier.segments[0]].m_flags & NetSegment.Flags.Invert) == 0);
+                        List<MileagePlateDescriptor> entry = new List<MileagePlateDescriptor>();
+                        float meterCount = 0f;
+                        foreach (Tuple<ushort, float> segmentRef in segments)
                         {
                             m_segmentToHighway[segmentRef.First] = tupleIdentifier;
-                            int oldMeterKm = (int)meterCount / 1000;
+                            int oldMeterKm = (int) meterCount / 1000;
                             meterCount += segmentRef.Second;
-                            if (oldMeterKm != (int)meterCount / 1000)
+                            if (oldMeterKm != (int) meterCount / 1000)
                             {
-                                var segmentObj = NetManager.instance.m_segments.m_buffer[segmentRef.First];
+                                NetSegment segmentObj = NetManager.instance.m_segments.m_buffer[segmentRef.First];
                                 bool invert = (NetManager.instance.m_segments.m_buffer[segmentRef.First].m_flags & NetSegment.Flags.Invert) > 0;
                                 NetManager.instance.m_segments.m_buffer[segmentRef.First].GetClosestPositionAndDirection(NetManager.instance.m_segments.m_buffer[segmentRef.First].m_middlePosition, out Vector3 pos, out Vector3 dir);
-                                var rotation = dir.GetAngleXZ();
-                                if (invert) rotation += 180;
-                                var cardinalDirection = SegmentUtils.GetCardinalDirection(start, end);
+                                float rotation = dir.GetAngleXZ();
+                                if (invert)
+                                {
+                                    rotation += 180;
+                                }
+
+                                byte cardinalDirection = SegmentUtils.GetCardinalDirection(start, end);
                                 if (roadInverted)
                                 {
-                                    cardinalDirection = (byte)((cardinalDirection + 4) % 8);
+                                    cardinalDirection = (byte) ((cardinalDirection + 4) % 8);
                                 }
                                 entry.Add(new MileagePlateDescriptor
                                 {
                                     segmentId = segmentRef.First,
                                     kilometer = oldMeterKm + 1,
-                                    position = segmentObj.m_middlePosition + VectorUtils.X_Y(KlyteMathUtils.DegreeToVector2(rotation - 90)) * (segmentObj.Info.m_halfWidth - 1),
+                                    position = segmentObj.m_middlePosition + (VectorUtils.X_Y(KlyteMathUtils.DegreeToVector2(rotation - 90)) * (segmentObj.Info.m_halfWidth - 1)),
                                     cardinalDirection8 = cardinalDirection,
                                     rotation = rotation + 90
 
@@ -213,8 +221,8 @@ namespace Klyte.DynamicTextBoards.Overrides
                                     {
                                         segmentId = segmentRef.First,
                                         kilometer = oldMeterKm + 1,
-                                        position = segmentObj.m_middlePosition + VectorUtils.X_Y(KlyteMathUtils.DegreeToVector2(rotation + 90)) * (segmentObj.Info.m_halfWidth - 1),
-                                        cardinalDirection8 = (byte)((cardinalDirection + (segmentObj.Info.m_hasBackwardVehicleLanes && segmentObj.Info.m_hasForwardVehicleLanes ? 4 : 0)) % 8),
+                                        position = segmentObj.m_middlePosition + (VectorUtils.X_Y(KlyteMathUtils.DegreeToVector2(rotation + 90)) * (segmentObj.Info.m_halfWidth - 1)),
+                                        cardinalDirection8 = (byte) ((cardinalDirection + (segmentObj.Info.m_hasBackwardVehicleLanes && segmentObj.Info.m_hasForwardVehicleLanes ? 4 : 0)) % 8),
                                         rotation = segmentObj.Info.m_hasBackwardVehicleLanes && segmentObj.Info.m_hasForwardVehicleLanes ? rotation - 90 : rotation + 90
                                     });
                                 }
@@ -233,17 +241,17 @@ namespace Klyte.DynamicTextBoards.Overrides
         }
         public void AfterRenderSegmentImpl(RenderManager.CameraInfo cameraInfo, ushort segmentID, int layerMask)
         {
-            var renderQueue = m_highwayMarksObjects.SelectMany(x => x.Value.Where(y => y.segmentId == segmentID).Select((y, j) => Tuple.New(x.Key, j, y)));
+            IEnumerable<Tuple<RoadIdentifier, int, MileagePlateDescriptor>> renderQueue = m_highwayMarksObjects.SelectMany(x => x.Value.Where(y => y.segmentId == segmentID).Select((y, j) => Tuple.New(x.Key, j, y)));
 
-            foreach (var plate in renderQueue)
+            foreach (Tuple<RoadIdentifier, int, MileagePlateDescriptor> plate in renderQueue)
             {
-                RenderPropMesh(ref cachedDefaultInfo, cameraInfo, segmentID, plate.Second, plate.Third.kilometer, layerMask, 0, plate.Third.position, Vector4.zero, ref m_baseDescriptorMileagePlate.m_propName, new Vector3(0, plate.Third.rotation) + m_baseDescriptorMileagePlate.m_propRotation, m_baseDescriptorMileagePlate.PropScale, ref m_baseDescriptorMileagePlate, out Matrix4x4 propMatrix, out bool rendered);
+                RenderPropMesh(ref m_cachedDefaultInfo, cameraInfo, segmentID, plate.Second, plate.Third.kilometer, layerMask, 0, plate.Third.position, Vector4.zero, ref m_baseDescriptorMileagePlate.m_propName, new Vector3(0, plate.Third.rotation) + m_baseDescriptorMileagePlate.m_propRotation, m_baseDescriptorMileagePlate.PropScale, ref m_baseDescriptorMileagePlate, out Matrix4x4 propMatrix, out bool rendered);
                 if (rendered)
                 {
                     for (int j = 0; j < m_baseDescriptorMileagePlate.m_textDescriptors.Length; j++)
                     {
                         CacheControl c = null;
-                        var block = NetManager.instance.m_materialBlock;
+                        MaterialPropertyBlock block = NetManager.instance.m_materialBlock;
                         block.Clear();
                         RenderTextMesh(cameraInfo, plate.First, plate.Second, plate.Third.kilometer, ref m_baseDescriptorMileagePlate, propMatrix, ref m_baseDescriptorMileagePlate.m_textDescriptors[j], ref c, block);
                     }
@@ -256,15 +264,15 @@ namespace Klyte.DynamicTextBoards.Overrides
 
 
         #region Upadate Data
-        protected override BasicRenderInformation GetOwnNameMesh(RoadIdentifier id, int boardIdx, int kilometers, out UIFont font)
+        protected override BasicRenderInformation GetMeshCustom1(RoadIdentifier id, int boardIdx, int kilometers, out UIFont font)
         {
             font = DrawFont;
             //doLog($"GetOwnNameMesh segmentId {id} (boardIdx {boardIdx}|kilometers {kilometers})");
-            var direction = m_highwayMarksObjects[id][boardIdx].cardinalDirection8;
+            byte direction = m_highwayMarksObjects[id][boardIdx].cardinalDirection8;
             if (m_cachedDirectionMeshes[direction] == null || lastFontUpdateFrame > m_cachedDirectionMeshes[direction].m_frameDrawTime)
             {
                 LogUtils.DoLog($"!nameUpdated Node1 {kilometers} ({direction})");
-                RefreshNameData(ref m_cachedDirectionMeshes[direction], Locale.Get("KCM_CARDINAL_POINT_LONG", direction.ToString()).ToUpper());
+                RefreshNameData(ref m_cachedDirectionMeshes[direction], Locale.Get("K45_CARDINAL_POINT_LONG", direction.ToString()).ToUpper());
 
             }
             return m_cachedDirectionMeshes[direction];
@@ -287,79 +295,23 @@ namespace Klyte.DynamicTextBoards.Overrides
         }
         #endregion
 
-        public override Color GetColor(ushort buildingID, int idx, int secIdx, BoardDescriptor descriptor)
-        {
-            return Color.white;
-
-        }
+        public override Color GetColor(ushort buildingID, int idx, int secIdx, BoardDescriptorXml descriptor) => Color.white;
 
         protected override InstanceID GetPropRenderID(ushort nodeId)
         {
-            InstanceID result = default(InstanceID);
+            InstanceID result = default;
             result.NetNode = nodeId;
             return result;
         }
 
-        public override Color GetContrastColor(RoadIdentifier refID, int boardIdx, int secIdx, BoardDescriptor descriptor)
-        {
-            return Color.black;
-        }
+        public override Color GetContrastColor(RoadIdentifier refID, int boardIdx, int secIdx, BoardDescriptorXml descriptor) => Color.black;
 
-        private static Func<ushort, Color> GetDistrictColor = (ushort districtId) => Color.gray;
+        #region Serialize
+        public override void Deserialize(string data) { }
+        public override string Serialize() => null;
+        protected override string ID => "";
 
-
-        public struct MileagePlateDescriptor
-        {
-            public ushort segmentId;
-            public int kilometer;
-            public Vector3 position;
-            public float rotation;
-            public byte cardinalDirection8;
-        }
-
-        public struct RoadIdentifier
-        {
-            public RoadIdentifier(ComparableRoad start, ComparableRoad end, ushort[] segments)
-            {
-                this.start = start;
-                this.end = end;
-                this.segments = segments;
-            }
-
-            public ComparableRoad start;
-            public ComparableRoad end;
-            public ushort[] segments;
-
-            public static bool operator ==(RoadIdentifier id, RoadIdentifier other)
-            {
-                return (other.start.ToString() == id.start.ToString() && other.end.ToString() == id.end.ToString()) || (other.end.ToString() == id.start.ToString() && other.start.ToString() == id.end.ToString());
-            }
-            public static bool operator !=(RoadIdentifier id, RoadIdentifier other)
-            {
-                return !(id == other);
-            }
-
-            public override bool Equals(object obj)
-            {
-                if (!(obj is RoadIdentifier))
-                {
-                    return false;
-                }
-
-                var identifier = (RoadIdentifier)obj;
-                return EqualityComparer<ComparableRoad>.Default.Equals(start, identifier.start) &&
-                       EqualityComparer<ComparableRoad>.Default.Equals(end, identifier.end);
-            }
-
-            public override int GetHashCode()
-            {
-                var hashCode = 1075529825;
-                hashCode = hashCode * -1521134295 + base.GetHashCode();
-                hashCode = hashCode * -1521134295 + EqualityComparer<ComparableRoad>.Default.GetHashCode(start);
-                hashCode = hashCode * -1521134295 + EqualityComparer<ComparableRoad>.Default.GetHashCode(end);
-                return hashCode;
-            }
-        }
+        #endregion
 
     }
 }

@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Xml.Serialization;
 using static Klyte.Commons.Utils.XmlUtils;
+using static Klyte.DynamicTextBoards.Overrides.BoardGeneratorRoadNodes;
 
 namespace Klyte.DynamicTextBoards.Libraries
 {
@@ -82,8 +83,10 @@ namespace Klyte.DynamicTextBoards.Libraries
     }
 
 
-    [XmlRoot("LibTextMesh")] public class DTBLibTextMesh : BasicLib<DTBLibTextMesh, BoardGeneratorHighwaySigns.BoardTextDescriptorHigwaySign> { protected override string XmlName => "LibTextMesh"; }
-    [XmlRoot("LibPropSingle")] public class DTBLibPropSingle : BasicLib<DTBLibPropSingle, BoardGeneratorHighwaySigns.BoardDescriptorHigwaySign> { protected override string XmlName => "LibPropSingle"; }
-    [XmlRoot("LibPropGroup")] public class DTBLibPropGroup : BasicLib<DTBLibPropGroup, BoardGeneratorHighwaySigns.BoardBunchContainerHighwaySign> { protected override string XmlName => "LibPropGroup"; }
+    [XmlRoot("LibTextMesh")] public class DTBLibTextMeshHighwaySigns : BasicLib<DTBLibTextMeshHighwaySigns, BoardGeneratorHighwaySigns.BoardTextDescriptorHighwaySignsXml> { protected override string XmlName => "LibTextMesh"; }
+    [XmlRoot("LibTextStreetPlate")] public class DTBLibTextMeshStreetPlate : BasicLib<DTBLibTextMeshStreetPlate, BoardTextDescriptorSteetSignXml> { protected override string XmlName => "LibTextStreetPlate"; }
+    [XmlRoot("LibPropSingle")] public class DTBLibPropSingle : BasicLib<DTBLibPropSingle, BoardGeneratorHighwaySigns.BoardDescriptorHigwaySignXml> { protected override string XmlName => "LibPropSingle"; }
+    [XmlRoot("LibPropGroup")] public class DTBLibPropGroup : BasicLib<DTBLibPropGroup, BoardGeneratorHighwaySigns.BoardBunchContainerHighwaySignXml> { protected override string XmlName => "LibPropGroup"; }
+    [XmlRoot("LibStreetPropGroup")] public class DTBLibStreetPropGroup : BasicLib<DTBLibStreetPropGroup, BoardDescriptorStreetSignXml> { protected override string XmlName => "LibStreetPropGroup"; }
 
 }

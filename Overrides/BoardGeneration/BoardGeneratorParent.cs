@@ -2,6 +2,7 @@
 using ColossalFramework.Globalization;
 using ColossalFramework.Math;
 using ColossalFramework.UI;
+using ICities;
 using Klyte.Commons.Extensors;
 using Klyte.Commons.Utils;
 using Klyte.DynamicTextBoards.Utils;
@@ -9,8 +10,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Xml;
-using System.Xml.Serialization;
 using UnityEngine;
 
 namespace Klyte.DynamicTextBoards.Overrides
@@ -67,11 +66,11 @@ namespace Klyte.DynamicTextBoards.Overrides
         }
     }
 
-    public abstract class BoardGeneratorParent<BG, BBC, CC, BRI, BD, BTD, MRT> : BoardGeneratorParent<BG>
+    public abstract class BoardGeneratorParent<BG, BBC, CC, BRI, BD, BTD, MRT> : BoardGeneratorParent<BG>, ISerializableDataExtension
         where BG : BoardGeneratorParent<BG, BBC, CC, BRI, BD, BTD, MRT>
         where BBC : IBoardBunchContainer<CC, BRI>
-        where BD : BoardDescriptorParent<BD, BTD>
-        where BTD : BoardTextDescriptorParent<BTD>
+        where BD : BoardDescriptorParentXml<BD, BTD>
+        where BTD : BoardTextDescriptorParentXml<BTD>
         where CC : CacheControl
         where BRI : BasicRenderInformation, new()
     {
@@ -173,18 +172,18 @@ namespace Klyte.DynamicTextBoards.Overrides
                                      Vector3 rotation, Vector3 scale, out bool rendered)
         {
             rendered = false;
-       //     DistrictManager instance2 = Singleton<DistrictManager>.instance;
+            //     DistrictManager instance2 = Singleton<DistrictManager>.instance;
             Randomizer randomizer = new Randomizer((refId << 6) | (idx + 32));
             Matrix4x4 matrix = default;
             matrix.SetTRS(position, Quaternion.AngleAxis(rotation.y + (refAngleRad * Mathf.Rad2Deg), Vector3.down) * Quaternion.AngleAxis(rotation.x, Vector3.left) * Quaternion.AngleAxis(rotation.z, Vector3.back), scale);
             if (propInfo != null)
             {
                 //scale = propInfo.m_minScale + (float)randomizer.Int32(10000u) * (propInfo.m_maxScale - propInfo.m_minScale) * 0.0001f;
-               // byte district = instance2.GetDistrict(position);
-             //   byte park = instance2.GetPark(position);
+                // byte district = instance2.GetDistrict(position);
+                //   byte park = instance2.GetPark(position);
                 propInfo = propInfo.GetVariation(ref randomizer);//, park, ref instance2.m_districts.m_buffer[(int)district]);
                 Color color = propInfo.m_color0;
-          //      float magn = scale.magnitude;
+                //      float magn = scale.magnitude;
                 //if ((layerMask & 1 << propInfo.m_prefabDataLayer) != 0 || propInfo.m_hasEffects)
                 //{
                 if (cameraInfo.CheckRenderDistance(position, propInfo.m_maxRenderDistance * scale.sqrMagnitude))
@@ -407,12 +406,54 @@ namespace Klyte.DynamicTextBoards.Overrides
             if (textDescriptor.GeneratedFixedTextRenderInfo == null || textDescriptor.GeneratedFixedTextRenderInfoTick < lastFontUpdateFrame)
             {
                 BRI result = textDescriptor.GeneratedFixedTextRenderInfo as BRI;
-                RefreshNameData(ref result, textDescriptor.m_isFixedTextLocalized ? Locale.Get(textDescriptor.m_fixedText, textDescriptor.m_fixedTextLocaleKey) : textDescriptor.m_fixedText);
+                RefreshNameData(ref result, (textDescriptor.m_isFixedTextLocalized ? Locale.Get(textDescriptor.m_fixedText, textDescriptor.m_fixedTextLocaleKey) : textDescriptor.m_fixedText) ?? "");
                 textDescriptor.GeneratedFixedTextRenderInfo = result;
             }
             return textDescriptor.GeneratedFixedTextRenderInfo as BRI;
         }
         #endregion
+
+        #region Serialization
+        protected abstract string ID { get; }
+        public IManagers Managers => SerializableDataManager?.managers;
+
+        public ISerializableData SerializableDataManager { get; private set; }
+
+        public void OnCreated(ISerializableData serializableData) => SerializableDataManager = serializableData;
+        public void OnLoadData()
+        {
+            if (ID == null || Singleton<ToolManager>.instance.m_properties.m_mode != ItemClass.Availability.Game)
+            {
+                return;
+            }
+            if (!SerializableDataManager.EnumerateData().Contains(ID))
+            {
+                return;
+            }
+            using MemoryStream memoryStream = new MemoryStream(SerializableDataManager.LoadData(ID));
+            byte[] storage = memoryStream.ToArray();
+            Deserialize(System.Text.Encoding.UTF8.GetString(storage));
+        }
+
+        // Token: 0x0600003B RID: 59 RVA: 0x00004020 File Offset: 0x00002220
+        public void OnSaveData()
+        {
+            if (ID == null || Singleton<ToolManager>.instance.m_properties.m_mode != ItemClass.Availability.Game)
+            {
+                return;
+            }
+
+            string serialData = Serialize();
+            LogUtils.DoLog($"serialData: {serialData}");
+            byte[] data = System.Text.Encoding.UTF8.GetBytes(serialData);
+            SerializableDataManager.SaveData(ID, data);
+        }
+
+        public abstract void Deserialize(string data);
+        public abstract string Serialize();
+        public void OnReleased() { }
+        #endregion
+
 
         protected static string A_ShaderNameTest = "Klyte/DynamicTextBoards/klytetextboards";
         protected static IEnumerable<string> A_Shaders => DTBShaderLibrary.m_loadedShaders.Keys;
@@ -420,332 +461,6 @@ namespace Klyte.DynamicTextBoards.Overrides
         protected void A_ReloadFromDisk() => DTBShaderLibrary.ReloadFromDisk();
         protected void A_CopyToFont() => DrawFont.shader = DTBResourceLoader.instance.GetLoadedShader(A_ShaderNameTest);
 
-    }
-
-    public class IBoardBunchContainer<CC, BRI> where CC : CacheControl where BRI : BasicRenderInformation
-    {
-        [XmlIgnore]
-        internal BRI m_nameSubInfo;
-        [XmlIgnore]
-        internal CC[] m_boardsData;
-    }
-
-    public class CacheControl
-    {
-        [XmlIgnore]
-        public PropInfo m_cachedProp;
-
-
-    }
-
-    public abstract class CacheControlSerializer<CCS, CC> where CC : CacheControl where CCS : CacheControlSerializer<CCS, CC>, new()
-    {
-        protected CC cc;
-
-
-        public virtual void Deserialize(string input)
-        {
-        }
-        public virtual string Serialize() => null;
-
-        public static CCS New(CC sign)
-        {
-            return new CCS
-            {
-                cc = sign
-            };
-        }
-
-    }
-
-    public class BasicRenderInformation
-    {
-        public Mesh m_mesh;
-        public Vector2 m_sizeMetersUnscaled;
-        public uint m_frameDrawTime;
-    }
-    [XmlRoot("buildingConfig")]
-    public class BuildingConfigurationSerializer<BD, BTD>
-        where BD : BoardDescriptorParent<BD, BTD>
-        where BTD : BoardTextDescriptorParent<BTD>
-    {
-        [XmlAttribute("buildingName")]
-        public string m_buildingName;
-        [XmlElement("boardDescriptor")]
-        public BD[] m_boardDescriptors;
-    }
-
-    /*
-     *    public string Serialize()
-            {
-                XmlSerializer xmlser = new XmlSerializer(typeof(BoardDescriptorHigwaySign));
-                XmlWriterSettings settings = new XmlWriterSettings { Indent = false };
-                using (StringWriter textWriter = new StringWriter())
-                {
-                    using (XmlWriter xw = XmlWriter.Create(textWriter, settings))
-                    {
-                        XmlSerializerNamespaces ns = new XmlSerializerNamespaces();
-                        ns.Add("", "");
-                        xmlser.Serialize(xw, descriptor, ns);
-                        return textWriter.ToString();
-                    }
-                }
-            }
-
-            public void Deserialize(String s)
-            {
-                XmlSerializer xmlser = new XmlSerializer(typeof(BoardDescriptorHigwaySign));
-                try
-                {
-                    using (TextReader tr = new StringReader(s))
-                    {
-                        using (XmlReader reader = XmlReader.Create(tr))
-                        {
-                            if (xmlser.CanDeserialize(reader))
-                            {
-                                descriptor = (BoardDescriptorHigwaySign)xmlser.Deserialize(reader);
-                            }
-                            else
-                            {
-                                DTBUtils.doErrorLog($"CAN'T DESERIALIZE BOARD DESCRIPTOR!\nText : {s}");
-                            }
-                        }
-                    }
-                }
-                catch (Exception e)
-                {
-                    DTBUtils.doErrorLog($"CAN'T DESERIALIZE BOARD DESCRIPTOR!\nText : {s}\n{e.Message}\n{e.StackTrace}");
-                }
-
-            }
-     * */
-
-    public abstract class BoardDescriptorParent<BD, BTD>
-        where BD : BoardDescriptorParent<BD, BTD>
-        where BTD : BoardTextDescriptorParent<BTD>
-    {
-        [XmlAttribute("propName")]
-        public string m_propName;
-        [XmlIgnore]
-        public Vector3 m_propPosition;
-        [XmlIgnore]
-        public Vector3 PropScale
-        {
-            get => new Vector3(ScaleX, ScaleY ?? ScaleX, ScaleZ ?? ScaleX);
-            set {
-                ScaleX = value.x;
-                ScaleY = value.y;
-                ScaleZ = value.z;
-            }
-        }
-        [XmlIgnore]
-        public Vector3 m_propRotation;
-        [XmlElement("textDescriptor")]
-        public BTD[] m_textDescriptors;
-
-
-        [XmlAttribute("positionX")]
-        public float PropPositionX { get => m_propPosition.x; set => m_propPosition.x = value; }
-        [XmlAttribute("positionY")]
-        public float PropPositionY { get => m_propPosition.y; set => m_propPosition.y = value; }
-        [XmlAttribute("positionZ")]
-        public float PropPositionZ { get => m_propPosition.z; set => m_propPosition.z = value; }
-
-
-        [XmlAttribute("rotationX")]
-        public float PropRotationX { get => m_propRotation.x; set => m_propRotation.x = value; }
-        [XmlAttribute("rotationY")]
-        public float PropRotationY { get => m_propRotation.y; set => m_propRotation.y = value; }
-        [XmlAttribute("rotationZ")]
-        public float PropRotationZ { get => m_propRotation.z; set => m_propRotation.z = value; }
-
-        [XmlAttribute("scaleX")]
-        public float ScaleX = 1;
-        [XmlAttribute("scaleY")]
-        public float? ScaleY;
-        [XmlAttribute("scaleZ")]
-        public float? ScaleZ;
-
-
-        public Matrix4x4 TextMatrixTranslation(int idx) => Matrix4x4.Translate(m_textDescriptors[idx].m_textRelativePosition);
-        public Matrix4x4 TextMatrixRotation(int idx) => Matrix4x4.TRS(Vector3.zero, Quaternion.Euler(m_textDescriptors[idx].m_textRelativeRotation), Vector3.one);
-
-
-        public string Serialize()
-        {
-            XmlSerializer xmlser = new XmlSerializer(typeof(BD));
-            XmlWriterSettings settings = new XmlWriterSettings { Indent = false };
-            using StringWriter textWriter = new StringWriter();
-            using XmlWriter xw = XmlWriter.Create(textWriter, settings);
-            XmlSerializerNamespaces ns = new XmlSerializerNamespaces();
-            ns.Add("", "");
-            xmlser.Serialize(xw, this, ns);
-            return textWriter.ToString();
-        }
-
-        public static BD Deserialize(string s)
-        {
-            XmlSerializer xmlser = new XmlSerializer(typeof(BD));
-            try
-            {
-                using TextReader tr = new StringReader(s);
-                using XmlReader reader = XmlReader.Create(tr);
-                if (xmlser.CanDeserialize(reader))
-                {
-                    return (BD) xmlser.Deserialize(reader);
-                }
-                else
-                {
-                    LogUtils.DoErrorLog($"CAN'T DESERIALIZE BOARD DESCRIPTOR!\nText : {s}");
-                }
-            }
-            catch (Exception e)
-            {
-                LogUtils.DoErrorLog($"CAN'T DESERIALIZE BOARD DESCRIPTOR!\nText : {s}\n{e.Message}\n{e.StackTrace}");
-            }
-            return null;
-        }
-    }
-
-    public class BoardDescriptor : BoardDescriptorParent<BoardDescriptor, BoardTextDescriptor> { }
-
-    public abstract class BoardTextDescriptorParent<T> where T : BoardTextDescriptorParent<T>
-    {
-        [XmlIgnore]
-        public Vector3 m_textRelativePosition;
-        [XmlIgnore]
-        public Vector3 m_textRelativeRotation;
-        [XmlAttribute("textScale")]
-        public float m_textScale = 1f;
-        [XmlAttribute("maxWidth")]
-        public float m_maxWidthMeters = 0;
-        [XmlAttribute("applyOverflowResizingOnY")]
-        public bool m_applyOverflowResizingOnY = false;
-        [XmlAttribute("useContrastColor")]
-        public bool m_useContrastColor = true;
-        [XmlIgnore]
-        public Color m_defaultColor = Color.clear;
-        [XmlAttribute("textType")]
-        public TextType m_textType = TextType.OwnName;
-        [XmlAttribute("fixedText")]
-        public string m_fixedText = null;
-        [XmlAttribute("fixedTextLocaleCategory")]
-        public string m_fixedTextLocaleKey = null;
-        [XmlAttribute("fixedTextLocalized")]
-        public bool m_isFixedTextLocalized = false;
-        [XmlAttribute("nightEmissiveMultiplier")]
-        public float m_nightEmissiveMultiplier = 0f;
-        [XmlAttribute("dayEmissiveMultiplier")]
-        public float m_dayEmissiveMultiplier = 0f;
-        [XmlAttribute("textAlign")]
-        public UIHorizontalAlignment m_textAlign = UIHorizontalAlignment.Center;
-        [XmlAttribute("verticalAlign")]
-        public UIVerticalAlignment m_verticalAlign = UIVerticalAlignment.Middle;
-        [XmlAttribute("shader")]
-        public string m_shader = null;
-
-
-
-        [XmlAttribute("relativePositionX")]
-        public float RelPositionX { get => m_textRelativePosition.x; set => m_textRelativePosition.x = value; }
-        [XmlAttribute("relativePositionY")]
-        public float RelPositionY { get => m_textRelativePosition.y; set => m_textRelativePosition.y = value; }
-        [XmlAttribute("relativePositionZ")]
-        public float RelPositionZ { get => m_textRelativePosition.z; set => m_textRelativePosition.z = value; }
-
-        [XmlAttribute("relativeRotationX")]
-        public float RotationX { get => m_textRelativeRotation.x; set => m_textRelativeRotation.x = value; }
-        [XmlAttribute("relativeRotationY")]
-        public float RotationY { get => m_textRelativeRotation.y; set => m_textRelativeRotation.y = value; }
-        [XmlAttribute("relativeRotationZ")]
-        public float RotationZ { get => m_textRelativeRotation.z; set => m_textRelativeRotation.z = value; }
-
-        [XmlAttribute("forceColor")]
-        public string ForceColor { get => m_defaultColor == Color.clear ? null : ColorExtensions.ToRGB(m_defaultColor); set => m_defaultColor = value.IsNullOrWhiteSpace() ? Color.clear : (Color) ColorExtensions.FromRGB(value); }
-
-        [XmlIgnore]
-        public Shader ShaderOverride
-        {
-            get {
-                if (m_shader == null)
-                {
-                    return null;
-                }
-
-                if (m_shaderOverride == null)
-                {
-                    m_shaderOverride = Shader.Find(m_shader) ?? DTBResourceLoader.instance.GetLoadedShader(m_shader);
-                }
-                return m_shaderOverride;
-            }
-        }
-        [XmlIgnore]
-        private Shader m_shaderOverride;
-        [XmlIgnore]
-        private BasicRenderInformation m_generatedFixedTextRenderInfo;
-        [XmlIgnore]
-        public BasicRenderInformation GeneratedFixedTextRenderInfo
-        {
-            get => m_generatedFixedTextRenderInfo;
-            set {
-                m_generatedFixedTextRenderInfo = value;
-                GeneratedFixedTextRenderInfoTick = SimulationManager.instance.m_currentTickIndex;
-            }
-        }
-        [XmlIgnore]
-        public uint GeneratedFixedTextRenderInfoTick { get; private set; }
-
-        public string Serialize()
-        {
-            XmlSerializer xmlser = new XmlSerializer(typeof(T));
-            XmlWriterSettings settings = new XmlWriterSettings { Indent = false };
-            using StringWriter textWriter = new StringWriter();
-            using XmlWriter xw = XmlWriter.Create(textWriter, settings);
-            XmlSerializerNamespaces ns = new XmlSerializerNamespaces();
-            ns.Add("", "");
-            xmlser.Serialize(xw, this, ns);
-            return textWriter.ToString();
-        }
-
-        public static T Deserialize(string s)
-        {
-            XmlSerializer xmlser = new XmlSerializer(typeof(T));
-            try
-            {
-                using TextReader tr = new StringReader(s);
-                using XmlReader reader = XmlReader.Create(tr);
-                if (xmlser.CanDeserialize(reader))
-                {
-                    return (T) xmlser.Deserialize(reader);
-                }
-                else
-                {
-                    LogUtils.DoErrorLog($"CAN'T DESERIALIZE BOARD DESCRIPTOR!\nText : {s}");
-                }
-            }
-            catch (Exception e)
-            {
-                LogUtils.DoErrorLog($"CAN'T DESERIALIZE BOARD DESCRIPTOR!\nText : {s}\n{e.Message}\n{e.StackTrace}");
-            }
-            return null;
-        }
-    }
-
-    public class BoardTextDescriptor : BoardTextDescriptorParent<BoardTextDescriptor> { }
-
-
-
-    public enum TextType
-    {
-        OwnName,
-        Fixed,
-        StreetPrefix,
-        StreetSuffix,
-        StreetNameComplete,
-        BuildingNumber,
-        Custom1,
-        Custom2,
-        Custom3,
     }
 
 
