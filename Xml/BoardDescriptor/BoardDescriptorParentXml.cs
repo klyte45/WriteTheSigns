@@ -29,7 +29,7 @@ namespace Klyte.DynamicTextBoards.Overrides
         [XmlIgnore]
         public Vector3 m_propRotation;
         [XmlElement("textDescriptor")]
-        public BTD[] m_textDescriptors;
+        public BTD[] m_textDescriptors = new BTD[0];
 
 
         [XmlAttribute("positionX")]

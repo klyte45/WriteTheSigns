@@ -4,6 +4,7 @@ using ColossalFramework.UI;
 using ICities;
 using Klyte.Commons.Extensors;
 using Klyte.Commons.Utils;
+using Klyte.DynamicTextBoards.Libraries;
 using Klyte.DynamicTextBoards.ModShared;
 using Klyte.DynamicTextBoards.Utils;
 using System;
@@ -40,7 +41,7 @@ namespace Klyte.DynamicTextBoards.Overrides
             m_cachedDistrictsNames = new BasicRenderInformation[DistrictManager.MAX_DISTRICT_COUNT];
             m_cachedNumber = new BasicRenderInformation[10];
 
-            BuildSurfaceFont(out m_font, "Gidole");
+            BuildSurfaceFont(out m_font, m_loadedStreetSignDescriptor.FontName);
 
             NetManagerOverrides.EventNodeChanged += OnNodeChanged;
             DistrictManagerOverrides.EventOnDistrictChanged += OnDistrictChanged;
@@ -64,6 +65,8 @@ namespace Klyte.DynamicTextBoards.Overrides
             }
         }
 
+        protected override void OnChangeFont(string fontName) => LoadedStreetSignDescriptor.FontName = fontName;
+
         protected void Reset()
         {
             m_boardsContainers = new BoardBunchContainerStreetPlateXml[ObjArraySize];
@@ -77,7 +80,6 @@ namespace Klyte.DynamicTextBoards.Overrides
         public void SoftReset()
         {
             m_testTextInfo = null;
-            m_updateDataSegments = new UpdateFlagsSegments[NetManager.MAX_SEGMENT_COUNT];
             m_cachedNumber = new BasicRenderInformation[10];
             m_updatedStreetPositions = new bool[ObjArraySize];
             m_cachedDistrictsNames = new BasicRenderInformation[DistrictManager.MAX_DISTRICT_COUNT];
@@ -129,7 +131,7 @@ namespace Klyte.DynamicTextBoards.Overrides
             {
                 LoadedStreetSignDescriptor = new BoardDescriptorStreetSignXml();
             }
-            if (LoadedStreetSignDescriptor.m_propName == null || m_lastFrameUpdate[nodeID] >= m_getCurrentFrame(RenderManager.instance))
+            if (LoadedStreetSignDescriptor?.m_propName == null || m_lastFrameUpdate[nodeID] >= m_getCurrentFrame(RenderManager.instance))
             {
                 return;
             }
@@ -242,8 +244,8 @@ namespace Klyte.DynamicTextBoards.Overrides
 
                             m_boardsContainers[nodeID].m_boardsData[controlBoardIdx].m_platePosition = platePos;
                             m_boardsContainers[nodeID].m_boardsData[controlBoardIdx].m_renderPlate = true;
-                            m_boardsContainers[nodeID].m_boardsData[controlBoardIdx].m_cachedColor = DTBHookable.GetDistrictColor(m_boardsContainers[nodeID].m_boardsData[controlBoardIdx].m_districtId1);
-                            m_boardsContainers[nodeID].m_boardsData[controlBoardIdx].m_cachedColor2 = DTBHookable.GetDistrictColor(m_boardsContainers[nodeID].m_boardsData[controlBoardIdx].m_districtId2);
+                            m_boardsContainers[nodeID].m_boardsData[controlBoardIdx].m_cachedColor = LoadedStreetSignDescriptor.UseDistrictColor ? DTBHookable.GetDistrictColor(m_boardsContainers[nodeID].m_boardsData[controlBoardIdx].m_districtId1) : LoadedStreetSignDescriptor.PropColor;
+                            m_boardsContainers[nodeID].m_boardsData[controlBoardIdx].m_cachedColor2 = LoadedStreetSignDescriptor.UseDistrictColor ? DTBHookable.GetDistrictColor(m_boardsContainers[nodeID].m_boardsData[controlBoardIdx].m_districtId2) : LoadedStreetSignDescriptor.PropColor;
                             m_boardsContainers[nodeID].m_boardsData[controlBoardIdx].m_cachedContrastColor = KlyteMonoUtils.ContrastColor(m_boardsContainers[nodeID].m_boardsData[controlBoardIdx].m_cachedColor);
                             m_boardsContainers[nodeID].m_boardsData[controlBoardIdx].m_cachedContrastColor2 = KlyteMonoUtils.ContrastColor(m_boardsContainers[nodeID].m_boardsData[controlBoardIdx].m_cachedColor2);
                             m_boardsContainers[nodeID].m_boardsData[controlBoardIdx].m_distanceRef = Vector2.Distance(VectorUtils.XZ(m_boardsContainers[nodeID].m_boardsData[controlBoardIdx].m_platePosition), DTBHookable.GetStartPoint());
@@ -260,6 +262,10 @@ namespace Klyte.DynamicTextBoards.Overrides
             {
                 if (m_boardsContainers[nodeID].m_boardsData[boardIdx]?.m_renderPlate ?? false)
                 {
+                    if (m_boardsContainers[nodeID].m_boardsData[boardIdx]?.m_cachedProp?.name != LoadedStreetSignDescriptor?.m_propName)
+                    {
+                        m_boardsContainers[nodeID].m_boardsData[boardIdx].m_cachedProp = null;
+                    }
 
                     RenderPropMesh(ref m_boardsContainers[nodeID].m_boardsData[boardIdx].m_cachedProp, cameraInfo, nodeID, boardIdx, 0, 0xFFFFFFF, 0, m_boardsContainers[nodeID].m_boardsData[boardIdx].m_platePosition, Vector4.zero, ref LoadedStreetSignDescriptor.m_propName, new Vector3(0, m_boardsContainers[nodeID].m_boardsData[boardIdx].m_streetDirection1) + LoadedStreetSignDescriptor.m_propRotation, LoadedStreetSignDescriptor.PropScale, ref m_loadedStreetSignDescriptor, out Matrix4x4 propMatrix, out bool rendered);
                     if (rendered)
@@ -476,11 +482,16 @@ namespace Klyte.DynamicTextBoards.Overrides
         public void CleanDescriptor() => m_loadedStreetSignDescriptor = new BoardDescriptorStreetSignXml();
 
 
-        private BoardDescriptorStreetSignXml m_loadedStreetSignDescriptor = new BoardDescriptorStreetSignXml
+        private BoardDescriptorStreetSignXml m_loadedStreetSignDescriptor = new BoardDescriptorStreetSignXml();
+        public static void GenerateDefaultSignModelAtLibrary()
         {
-            m_propName = "1679673551.Street Plate_Data",
-            m_propRotation = new Vector3(0, 90, 0),
-            m_textDescriptors = new BoardTextDescriptorSteetSignXml[]{
+            BoardDescriptorStreetSignXml defaultModel = new BoardDescriptorStreetSignXml
+            {
+                FontName = null,
+                m_propName = "1679673551.Street Plate_Data",
+                m_propRotation = new Vector3(0, 90, 0),
+                UseDistrictColor = true,
+                m_textDescriptors = new BoardTextDescriptorSteetSignXml[]{
                 new BoardTextDescriptorSteetSignXml{
                     m_textRelativePosition =new Vector3(0.53f,2.25f,-0.001f) ,
                     m_textRelativeRotation = Vector3.zero,
@@ -572,19 +583,17 @@ namespace Klyte.DynamicTextBoards.Overrides
                     SaveName = "[B] Distance"
                 }
             }
-        };
+            };
+            DTBLibStreetPropGroup.Instance.Add("<DEFAULT>", defaultModel);
+        }
+
 
         #region Serialize
         protected override string ID { get; } = "K45_DTB_SS";
 
-
-        // Token: 0x0600003A RID: 58 RVA: 0x00003F98 File Offset: 0x00002198
-
-        // Token: 0x04000019 RID: 25
-
         public override void Deserialize(string data)
         {
-            LogUtils.DoLog($"STR: \"{data}\"");
+            LogUtils.DoLog($"{GetType()} STR: \"{data}\"");
             if (data.IsNullOrWhiteSpace())
             {
                 return;

@@ -31,9 +31,11 @@ namespace Klyte.DynamicTextBoards.Overrides
             font.material = new Material(Singleton<DistrictManager>.instance.m_properties.m_areaNameFont.material);
             font.shader = TextShader;
             font.baseline = (Singleton<DistrictManager>.instance.m_properties.m_areaNameFont as UIDynamicFont).baseline;
-            font.size = (Singleton<DistrictManager>.instance.m_properties.m_areaNameFont as UIDynamicFont).size;
+            font.size = (Singleton<DistrictManager>.instance.m_properties.m_areaNameFont as UIDynamicFont).size * 4;
             font.lineHeight = (Singleton<DistrictManager>.instance.m_properties.m_areaNameFont as UIDynamicFont).lineHeight;
-            font.baseFont = Font.CreateDynamicFontFromOSFont(fontName, 16);
+            List<string> fontList = new List<string> { fontName };
+            fontList.AddRange(DistrictManager.instance.m_properties?.m_areaNameFont?.baseFont?.fontNames?.ToList());
+            font.baseFont = Font.CreateDynamicFontFromOSFont(fontList.ToArray(), 64);
 
 
             font.material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.EmissiveIsBlack | MaterialGlobalIlluminationFlags.RealtimeEmissive;
@@ -41,13 +43,18 @@ namespace Klyte.DynamicTextBoards.Overrides
 
         public void ChangeFont(string newFont)
         {
-            List<string> fontList = new List<string> { newFont };
+            List<string> fontList = new List<string>();
+            if (newFont != null)
+            {
+                fontList.Add(newFont);
+            }
             fontList.AddRange(DistrictManager.instance.m_properties.m_areaNameFont.baseFont.fontNames.ToList());
-            DrawFont.baseFont = Font.CreateDynamicFontFromOSFont(fontList.ToArray(), 16);
+            DrawFont.baseFont = Font.CreateDynamicFontFromOSFont(fontList.ToArray(), 64);
             lastFontUpdateFrame = SimulationManager.instance.m_currentTickIndex;
+            OnChangeFont(DrawFont.baseFont.name != newFont ? null : newFont);
             OnTextureRebuilt(DrawFont.baseFont);
         }
-
+        protected virtual void OnChangeFont(string fontName) { }
 
         protected void OnTextureRebuilt(Font obj)
         {
@@ -87,9 +94,9 @@ namespace Klyte.DynamicTextBoards.Overrides
         public static BBC[] m_boardsContainers;
 
 
-        private const float m_pixelRatio = 0.5f;
+        private readonly float m_pixelRatio = 0.5f;
         //private const float m_scaleY = 1.2f;
-        private const float m_textScale = 4;
+        private readonly float m_textScale = 1;
         private readonly Vector2 m_scalingMatrix = new Vector2(0.015f, 0.015f);
 
         public override void Awake()
@@ -276,7 +283,7 @@ namespace Klyte.DynamicTextBoards.Overrides
             }
             if (textDescriptor.m_verticalAlign != UIVerticalAlignment.Middle)
             {
-                float factor = textDescriptor.m_verticalAlign == UIVerticalAlignment.Bottom != (((textDescriptor.m_textRelativeRotation.x % 360) + 810) % 360 > 180) ? 0.5f : -0.5f;
+                float factor = textDescriptor.m_verticalAlign == UIVerticalAlignment.Bottom == (((textDescriptor.m_textRelativeRotation.x % 360) + 810) % 360 > 180) ? 0.5f : -0.5f;
                 targetRelativePosition += new Vector3(0, realHeight * factor, 0);
             }
 
