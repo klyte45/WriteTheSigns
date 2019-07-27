@@ -492,97 +492,97 @@ namespace Klyte.DynamicTextBoards.Overrides
                 m_propRotation = new Vector3(0, 90, 0),
                 UseDistrictColor = true,
                 m_textDescriptors = new BoardTextDescriptorSteetSignXml[]{
-                new BoardTextDescriptorSteetSignXml{
-                    m_textRelativePosition =new Vector3(0.53f,2.25f,-0.001f) ,
-                    m_textRelativeRotation = Vector3.zero,
-                    m_maxWidthMeters = 0.92f,
-                    m_textScale = .5f,
-                    m_useContrastColor = false,
-                    m_defaultColor = Color.white,
-                    m_textType = TextType.StreetSuffix,
-                    m_textAlign = UIHorizontalAlignment.Left,
-                    m_verticalAlign = UIVerticalAlignment.Bottom,
-                    SaveName = "[A] Street Suffix"
-                },
-                new BoardTextDescriptorSteetSignXml{
-                    m_textRelativePosition =new Vector3(0.53f,2.25f,-0.001f) ,
-                    m_textRelativeRotation = Vector3.zero,
-                    m_maxWidthMeters = 0.92f,
-                    m_textScale = .2f,
-                    m_useContrastColor = false,
-                    m_defaultColor = Color.white,
-                    m_textType = TextType.StreetNameComplete,
-                    m_textAlign = UIHorizontalAlignment.Left,
-                    m_verticalAlign = UIVerticalAlignment.Top,
-                    SaveName = "[B] Street Name Complete"
-                },
-                new BoardTextDescriptorSteetSignXml{
-                    m_textRelativePosition =new Vector3(0.47f,2.05f,-0.001f) ,
-                    m_textRelativeRotation = Vector3.zero,
-                    m_maxWidthMeters = 0.8f,
-                    m_textScale = .2f,
-                    m_useContrastColor = true,
-                    m_textType = TextType.Custom1,// District
-                    m_verticalAlign =  UIVerticalAlignment.Middle,
-                    SaveName = "[A] District"
-                },
-                new BoardTextDescriptorSteetSignXml{
-                    m_textRelativePosition =new Vector3(0.94f,2.06f,-0.001f) ,
-                    m_textRelativeRotation = Vector3.zero,
-                    m_maxWidthMeters = 0.1f,
-                    m_textScale = .25f,
-                    m_useContrastColor = false,
-                    m_defaultColor = Color.black,
-                    m_textType = TextType.Custom2, //Distance
-                    m_verticalAlign = UIVerticalAlignment.Middle,
-                    SaveName = "[A] Distance"
-                },
-                new BoardTextDescriptorSteetSignXml{
-                    m_textRelativePosition =new Vector3(0.53f,2.25f,0.001f) ,
-                    m_textRelativeRotation = new Vector3(0,180,0),
-                    m_maxWidthMeters = 0.92f,
-                    m_textScale = .5f,
-                    m_useContrastColor = false,
-                    m_defaultColor = Color.white,
-                    m_textType = TextType.StreetSuffix,
-                    m_textAlign = UIHorizontalAlignment.Left,
-                    m_verticalAlign = UIVerticalAlignment.Bottom,
-                    SaveName = "[B] Street Suffix"
-                },
-                new BoardTextDescriptorSteetSignXml{
-                    m_textRelativePosition =new Vector3(0.53f,2.25f,0.001f) ,
-                    m_textRelativeRotation = new Vector3(0,180,0),
-                    m_maxWidthMeters = 0.92f,
-                    m_textScale = .2f,
-                    m_useContrastColor = false,
-                    m_defaultColor = Color.white,
-                    m_textType = TextType.StreetNameComplete,
-                    m_textAlign = UIHorizontalAlignment.Left,
-                    m_verticalAlign = UIVerticalAlignment.Top,
-                    SaveName = "[B] Street Name Complete"
-                },
-                new BoardTextDescriptorSteetSignXml{
-                    m_textRelativePosition =new Vector3(0.47f,2.05f,0.001f) ,
-                    m_textRelativeRotation = new Vector3(0,180,0),
-                    m_maxWidthMeters = 0.8f,
-                    m_textScale = .2f,
-                    m_useContrastColor = true,
-                    m_textType = TextType.Custom1,// District
-                    m_verticalAlign =  UIVerticalAlignment.Middle,
-                    SaveName = "[B] District"
-                },
-                new BoardTextDescriptorSteetSignXml{
-                    m_textRelativePosition =new Vector3(0.94f,2.06f,0.001f) ,
-                    m_textRelativeRotation = new Vector3(0,180,0),
-                    m_maxWidthMeters = 0.1f,
-                    m_textScale = .25f,
-                    m_useContrastColor = false,
-                    m_defaultColor = Color.black,
-                    m_textType = TextType.Custom2, //Distance
-                    m_verticalAlign = UIVerticalAlignment.Middle,
-                    SaveName = "[B] Distance"
+                    new BoardTextDescriptorSteetSignXml{
+                        m_textRelativePosition =new Vector3(0.53f,2.35f,-0.001f) ,
+                        m_textRelativeRotation = Vector3.zero,
+                        m_maxWidthMeters = 0.92f,
+                        m_textScale = .4f,
+                        m_useContrastColor = false,
+                        m_defaultColor = Color.white,
+                        m_textType = TextType.StreetSuffix,
+                        m_textAlign = UIHorizontalAlignment.Left,
+                        m_verticalAlign = UIVerticalAlignment.Middle,
+                        SaveName = "[A] Street Suffix"
+                    },
+                    new BoardTextDescriptorSteetSignXml{
+                        m_textRelativePosition =new Vector3(0.53f,2.19f,-0.001f) ,
+                        m_textRelativeRotation = Vector3.zero,
+                        m_maxWidthMeters = 0.92f,
+                        m_textScale = .15f,
+                        m_useContrastColor = false,
+                        m_defaultColor = Color.white,
+                        m_textType = TextType.StreetNameComplete,
+                        m_textAlign = UIHorizontalAlignment.Left,
+                        m_verticalAlign = UIVerticalAlignment.Middle,
+                        SaveName = "[A] Street Name Complete"
+                    },
+                    new BoardTextDescriptorSteetSignXml{
+                        m_textRelativePosition =new Vector3(0.47f,2.05f,-0.001f) ,
+                        m_textRelativeRotation = Vector3.zero,
+                        m_maxWidthMeters = 0.8f,
+                        m_textScale = .2f,
+                        m_useContrastColor = true,
+                        m_textType = TextType.Custom1,// District
+                        m_verticalAlign =  UIVerticalAlignment.Middle,
+                        SaveName = "[A] District"
+                    },
+                    new BoardTextDescriptorSteetSignXml{
+                        m_textRelativePosition =new Vector3(0.94f,2.065f,-0.001f) ,
+                        m_textRelativeRotation = Vector3.zero,
+                        m_maxWidthMeters = 0.1f,
+                        m_textScale = .25f,
+                        m_useContrastColor = false,
+                        m_defaultColor = Color.black,
+                        m_textType = TextType.Custom2, //Distance
+                        m_verticalAlign = UIVerticalAlignment.Middle,
+                        SaveName = "[A] Distance"
+                    },
+                    new BoardTextDescriptorSteetSignXml{
+                        m_textRelativePosition =new Vector3(0.53f,2.35f,0.001f) ,
+                        m_textRelativeRotation = new Vector3(0,180,0),
+                        m_maxWidthMeters = 0.92f,
+                        m_textScale = .4f,
+                        m_useContrastColor = false,
+                        m_defaultColor = Color.white,
+                        m_textType = TextType.StreetSuffix,
+                        m_textAlign = UIHorizontalAlignment.Left,
+                        m_verticalAlign = UIVerticalAlignment.Middle,
+                        SaveName = "[B] Street Suffix"
+                    },
+                    new BoardTextDescriptorSteetSignXml{
+                        m_textRelativePosition =new Vector3(0.53f,2.19f,0.001f) ,
+                        m_textRelativeRotation = new Vector3(0,180,0),
+                        m_maxWidthMeters = 0.92f,
+                        m_textScale = .15f,
+                        m_useContrastColor = false,
+                        m_defaultColor = Color.white,
+                        m_textType = TextType.StreetNameComplete,
+                        m_textAlign = UIHorizontalAlignment.Left,
+                        m_verticalAlign = UIVerticalAlignment.Middle,
+                        SaveName = "[B] Street Name Complete"
+                    },
+                    new BoardTextDescriptorSteetSignXml{
+                        m_textRelativePosition =new Vector3(0.47f,2.05f,0.001f) ,
+                        m_textRelativeRotation = new Vector3(0,180,0),
+                        m_maxWidthMeters = 0.8f,
+                        m_textScale = .2f,
+                        m_useContrastColor = true,
+                        m_textType = TextType.Custom1,// District
+                        m_verticalAlign =  UIVerticalAlignment.Middle,
+                        SaveName = "[B] District"
+                    },
+                    new BoardTextDescriptorSteetSignXml{
+                        m_textRelativePosition =new Vector3(0.94f,2.065f,0.001f) ,
+                        m_textRelativeRotation = new Vector3(0,180,0),
+                        m_maxWidthMeters = 0.1f,
+                        m_textScale = .25f,
+                        m_useContrastColor = false,
+                        m_defaultColor = Color.black,
+                        m_textType = TextType.Custom2, //Distance
+                        m_verticalAlign = UIVerticalAlignment.Middle,
+                        SaveName = "[B] Distance"
+                    }
                 }
-            }
             };
             DTBLibStreetPropGroup.Instance.Add("<DEFAULT>", defaultModel);
         }

@@ -50,6 +50,7 @@ namespace Klyte.DynamicTextBoards.UI
         private UIButton m_pasteButtonText;
 
         private UIDropDown m_loadPropGroup;
+        private UIDropDown m_loadTextDD;
 
         private UIColorField m_propColorPicker;
 
@@ -113,8 +114,7 @@ namespace Klyte.DynamicTextBoards.UI
                 if (idx == m_pseudoTabstripTexts.tabCount - 1)
                 {
                     Vector3 pos = MainContainer.verticalScrollbar.relativePosition;
-                    EnsureBoardsArrayIdx(BoardGeneratorRoadNodes.Instance.LoadedStreetSignDescriptor.m_textDescriptors?.Length ?? 0);
-                    OnChangeTabTexts(BoardGeneratorRoadNodes.Instance.LoadedStreetSignDescriptor.m_textDescriptors.Length - 1);
+                    OnChangeTabTexts(BoardGeneratorRoadNodes.Instance.LoadedStreetSignDescriptor.m_textDescriptors?.Length ?? 0);
                     MainContainer.verticalScrollbar.relativePosition = pos;
                 }
                 else
@@ -128,7 +128,7 @@ namespace Klyte.DynamicTextBoards.UI
             ((UIPanel) m_pseudoTabTextsContainer.Self).backgroundSprite = "";
             m_pseudoTabTextsContainer.Self.width = MainContainer.width - 50;
 
-            AddLibBox<DTBLibTextMeshStreetPlate, BoardTextDescriptorSteetSignXml>(Locale.Get("K45_DTB_PROP_TEXT_LIB_TITLE"), m_pseudoTabTextsContainer,
+            m_loadTextDD = AddLibBox<DTBLibTextMeshStreetPlate, BoardTextDescriptorSteetSignXml>(Locale.Get("K45_DTB_PROP_TEXT_LIB_TITLE"), m_pseudoTabTextsContainer,
                                     out _, DoCopyText,
                                     out m_pasteButtonText, DoPasteText,
                                     out _, DoDeleteText,
@@ -278,6 +278,7 @@ namespace Klyte.DynamicTextBoards.UI
         }
 
         public void ReloadGroupLib() => ReloadLib<DTBLibStreetPropGroup, BoardDescriptorStreetSignXml>(m_loadPropGroup);
+        public void ReloadTextLib() => ReloadLib<DTBLibTextMeshStreetPlate, BoardTextDescriptorSteetSignXml>(m_loadTextDD);
 
         private static void ReloadLib<LIB, DESC>(UIDropDown loadDD)
             where LIB : BasicLib<LIB, DESC>, new()
@@ -479,37 +480,6 @@ namespace Klyte.DynamicTextBoards.UI
                 BoardGeneratorRoadNodes.Instance.SoftReset();
             }
         }
-
-        private void EnsureBoardsArrayIdx(int textIdx)
-        {
-
-            if (textIdx < 0)
-            {
-                return;
-            }
-
-            if (BoardGeneratorRoadNodes.Instance.LoadedStreetSignDescriptor.m_textDescriptors == null || BoardGeneratorRoadNodes.Instance.LoadedStreetSignDescriptor.m_textDescriptors.Length <= textIdx)
-            {
-                BoardTextDescriptorSteetSignXml[] oldArr = BoardGeneratorRoadNodes.Instance.LoadedStreetSignDescriptor.m_textDescriptors;
-                BoardGeneratorRoadNodes.Instance.LoadedStreetSignDescriptor.m_textDescriptors = new BoardTextDescriptorSteetSignXml[textIdx + 1];
-                if (oldArr != null && oldArr.Length > 0)
-                {
-                    for (int i = 0; i < oldArr.Length && i <= textIdx; i++)
-                    {
-                        BoardGeneratorRoadNodes.Instance.LoadedStreetSignDescriptor.m_textDescriptors[i] = oldArr[i];
-                    }
-                }
-            }
-            if (BoardGeneratorRoadNodes.Instance.LoadedStreetSignDescriptor.m_textDescriptors[textIdx] == null)
-            {
-                BoardGeneratorRoadNodes.Instance.LoadedStreetSignDescriptor.m_textDescriptors[textIdx] = new BoardTextDescriptorSteetSignXml
-                {
-                    m_defaultColor = Color.white,
-                    m_useContrastColor = false
-                };
-            }
-            EnsureTabQuantityTexts(textIdx + 1);
-        }
         private void EnsureTabQuantityTexts(int size)
         {
             int targetCount = Mathf.Max(m_pseudoTabstripTexts.tabCount, size + 1);
@@ -553,6 +523,8 @@ namespace Klyte.DynamicTextBoards.UI
         {
 
             m_isLoading = true;
+            ReloadTextLib();
+            ReloadGroupLib();
             EnsureTabQuantityTexts(BoardGeneratorRoadNodes.Instance.LoadedStreetSignDescriptor.m_textDescriptors?.Length ?? -1);
             ConfigureTabsShownText(BoardGeneratorRoadNodes.Instance.LoadedStreetSignDescriptor.m_textDescriptors?.Length ?? 0);
             m_pseudoTabTextsContainer.Self.isVisible = CurrentTabText >= 0;

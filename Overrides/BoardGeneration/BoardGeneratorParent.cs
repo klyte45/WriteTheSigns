@@ -263,8 +263,8 @@ namespace Klyte.DynamicTextBoards.Overrides
             float defaultMultiplierY = textDescriptor.m_textScale * m_scalingMatrix.y;
             float realWidth = defaultMultiplierX * renderInfo.m_sizeMetersUnscaled.x;
             float realHeight = defaultMultiplierY * renderInfo.m_sizeMetersUnscaled.y;
-            //doLog($"[{GetType().Name},{refID},{boardIdx},{secIdx}] realWidth = {realWidth}; realHeight = {realHeight}");
             Vector3 targetRelativePosition = textDescriptor.m_textRelativePosition;
+            LogUtils.DoLog($"[{GetType().Name},{refID},{boardIdx},{secIdx}] realWidth = {realWidth}; realHeight = {realHeight}; renderInfo.m_mesh.bounds = {renderInfo.m_mesh.bounds};");
             if (textDescriptor.m_maxWidthMeters > 0 && textDescriptor.m_maxWidthMeters < realWidth)
             {
                 overflowScaleX = textDescriptor.m_maxWidthMeters / realWidth;
@@ -281,11 +281,14 @@ namespace Klyte.DynamicTextBoards.Overrides
                     targetRelativePosition += new Vector3((textDescriptor.m_maxWidthMeters - realWidth) * factor / descriptor.ScaleX, 0, 0);
                 }
             }
+
+
             if (textDescriptor.m_verticalAlign != UIVerticalAlignment.Middle)
             {
-                float factor = textDescriptor.m_verticalAlign == UIVerticalAlignment.Bottom == (((textDescriptor.m_textRelativeRotation.x % 360) + 810) % 360 > 180) ? 0.5f : -0.5f;
+                float factor = textDescriptor.m_verticalAlign == UIVerticalAlignment.Bottom == (((textDescriptor.m_textRelativeRotation.x % 360) + 810) % 360 > 180) ? -1f : 1f;
                 targetRelativePosition += new Vector3(0, realHeight * factor, 0);
             }
+
 
 
 
@@ -350,6 +353,7 @@ namespace Klyte.DynamicTextBoards.Overrides
                 PoolList<Color32> colors = uirenderData.colors;
                 PoolList<Vector2> uvs = uirenderData.uvs;
                 PoolList<int> triangles = uirenderData.triangles;
+                Vector2 sizeMeters;
                 using (UIFontRenderer uifontRenderer = (overrideFont ?? DrawFont).ObtainRenderer())
                 {
 
@@ -370,10 +374,8 @@ namespace Klyte.DynamicTextBoards.Overrides
                     uifontRenderer.shadowColor = Color.black;
                     uifontRenderer.shadowOffset = Vector2.zero;
                     uifontRenderer.outline = false;
-                    Vector2 sizeMeters = uifontRenderer.MeasureString(name) * m_pixelRatio;
-                    uifontRenderer.vectorOffset = new Vector3(width * m_pixelRatio * -0.5f, sizeMeters.y * 0.5f, 0f);
+                    sizeMeters = uifontRenderer.MeasureString(name);
                     uifontRenderer.Render(name, uirenderData);
-                    result.m_sizeMetersUnscaled = sizeMeters;
                 }
                 if (result.m_mesh == null)
                 {
@@ -381,17 +383,27 @@ namespace Klyte.DynamicTextBoards.Overrides
                 }
                 LogUtils.DoLog(uirenderData.ToString());
                 result.m_mesh.Clear();
-                result.m_mesh.vertices = vertices.ToArray();
+                result.m_mesh.vertices = CenterVertices(vertices);
                 result.m_mesh.colors32 = colors.Select(x => new Color32(x.a, x.a, x.a, x.a)).ToArray();
                 result.m_mesh.uv = uvs.ToArray();
                 result.m_mesh.triangles = triangles.ToArray();
                 result.m_frameDrawTime = lastFontUpdateFrame;
+                result.m_sizeMetersUnscaled = new Vector2(sizeMeters.x * m_pixelRatio, result.m_mesh.bounds.extents.y);
             }
             finally
             {
                 uirenderData.Release();
             }
 
+        }
+
+        private Vector3[] CenterVertices(PoolList<Vector3> points)
+        {
+            Vector3 max = new Vector3(points.Select(x => x.x).Max(), points.Select(x => x.y).Max(), points.Select(x => x.z).Max());
+            Vector3 min = new Vector3(points.Select(x => x.x).Min(), points.Select(x => x.y).Min(), points.Select(x => x.z).Min());
+            Vector3 center = (max + min) / 2;
+
+            return points.Select(x => x - center).ToArray();
         }
 
         #endregion
