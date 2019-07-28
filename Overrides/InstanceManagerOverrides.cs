@@ -4,7 +4,7 @@ using System.Collections;
 using System.Reflection;
 using UnityEngine;
 
-namespace Klyte.DynamicTextBoards.Overrides
+namespace Klyte.DynamicTextProps.Overrides
 {
     public class InstanceManagerOverrides : MonoBehaviour, IRedirectable
     {

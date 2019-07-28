@@ -7,8 +7,8 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{BE788EF8-D9ED-4409-826B-8C859CC18C88}</ProjectGuid>
     <OutputType>Library</OutputType>
-    <RootNamespace>Klyte.DynamicTextBoards</RootNamespace>
-    <AssemblyName>KlyteDynamicTextBoards</AssemblyName>
+    <RootNamespace>Klyte.DynamicTextProps</RootNamespace>
+    <AssemblyName>KlyteDynamicTextProps</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <TargetFrameworkProfile />
     <LangVersion>8.0</LangVersion>
@@ -135,8 +135,8 @@
     <Compile Include="Overrides\BoardGeneration\BoardGeneratorRoadNodes.cs" />
     <Compile Include="Overrides\BoardGeneration\BoardGeneratorParent.cs" />
     <Compile Include="Overrides\BoardGeneration\BoardGeneratorBuildings.cs" />
-    <Compile Include="DynamicTextBoardsMod.cs" />
-    <Compile Include="DTBController.cs" />
+    <Compile Include="DynamicTextPropsMod.cs" />
+    <Compile Include="DTPController.cs" />
     <Compile Include="Xml\BoardTextDescriptor\BoardTextDescriptorParentXml.cs" />
     <Compile Include="Xml\BuildingConfigurationSerializeXml.cs" />
     <Compile Include="Xml\Cache\CacheControl.cs" />
@@ -148,16 +148,16 @@
     <Compile Include="Overrides\NetManagerOverrides.cs" />
     <Compile Include="Xml\Enums\OwnNameContent.cs" />
     <Compile Include="Xml\Enums\TextType.cs" />
-    <Compile Include="Shader\DTBShaderLibrary.cs" />
-    <Compile Include="TextureAtlas\DTBCommonTextureAtlas.cs" />
+    <Compile Include="Shader\DTPShaderLibrary.cs" />
+    <Compile Include="TextureAtlas\DTPCommonTextureAtlas.cs" />
     <Compile Include="Tools\RoadSegmentTool.cs" />
-    <Compile Include="UI\DTBPanel.cs" />
-    <Compile Include="UI\Tabs\DTBStreetSignTab.cs" />
-    <Compile Include="UI\Tabs\DTBPropPlacingTab.cs" />
-    <Compile Include="UI\Tabs\DTBFontConfigTab.cs" />
-    <Compile Include="Utils\DTBResourceLoader.cs" />
-    <Compile Include="Utils\DTBHookable.cs" />
-    <Compile Include="Utils\DTBUtils.cs" />
+    <Compile Include="UI\DTPPanel.cs" />
+    <Compile Include="UI\Tabs\DTPStreetSignTab.cs" />
+    <Compile Include="UI\Tabs\DTPPropPlacingTab.cs" />
+    <Compile Include="UI\Tabs\DTPFontConfigTab.cs" />
+    <Compile Include="Utils\DTPResourceLoader.cs" />
+    <Compile Include="Utils\DTPHookable.cs" />
+    <Compile Include="Utils\DTPUtils.cs" />
   </ItemGroup>
   <ProjectExtensions>
     <MonoDevelop>

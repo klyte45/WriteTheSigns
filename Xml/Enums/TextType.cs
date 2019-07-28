@@ -1,4 +1,4 @@
-﻿namespace Klyte.DynamicTextBoards.Overrides
+﻿namespace Klyte.DynamicTextProps.Overrides
 {
     public enum TextType
     {

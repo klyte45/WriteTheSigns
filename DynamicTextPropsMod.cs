@@ -3,23 +3,23 @@ using ColossalFramework.UI;
 using Klyte.Commons.Extensors;
 using Klyte.Commons.Interfaces;
 using Klyte.Commons.Utils;
-using Klyte.DynamicTextBoards.Overrides;
-using Klyte.DynamicTextBoards.TextureAtlas;
-using Klyte.DynamicTextBoards.UI;
-using Klyte.DynamicTextBoards.Utils;
+using Klyte.DynamicTextProps.Overrides;
+using Klyte.DynamicTextProps.TextureAtlas;
+using Klyte.DynamicTextProps.UI;
+using Klyte.DynamicTextProps.Utils;
 using System.IO;
 using System.Reflection;
 using UnityEngine;
-using static Klyte.DynamicTextBoards.TextureAtlas.DTBCommonTextureAtlas;
+using static Klyte.DynamicTextProps.TextureAtlas.DTPCommonTextureAtlas;
 
 [assembly: AssemblyVersion("0.0.0.0")]
-namespace Klyte.DynamicTextBoards
+namespace Klyte.DynamicTextProps
 {
-    public class DynamicTextBoardsMod : BasicIUserMod<DynamicTextBoardsMod, DTBResourceLoader, DTBController, DTBCommonTextureAtlas, DTBPanel, SpriteNames>
+    public class DynamicTextPropsMod : BasicIUserMod<DynamicTextPropsMod, DTPResourceLoader, DTPController, DTPCommonTextureAtlas, DTPPanel, SpriteNames>
     {
-        public DynamicTextBoardsMod() => Construct();
+        public DynamicTextPropsMod() => Construct();
 
-        public override string SimpleName => "Klyte's Dynamic Text Boards";
+        public override string SimpleName => "Klyte's Dynamic Text Props";
 
         public override string Description => "This mod allows creating dynamic text boards in the city";
 
@@ -35,9 +35,9 @@ namespace Klyte.DynamicTextBoards
 
         public override void TopSettingsUI(UIHelperExtension helper)
         {
-            UIHelperExtension group8 = helper.AddGroupExtended(Locale.Get("K45_DTB_GENERAL_INFO"));
-            AddFolderButton(DefaultBuildingsConfigurationFolder, group8, "K45_DTB_DEFAULT_BUILDINGS_CONFIG_PATH_TITLE");
-            UIButton namesFilesButton = ((UIButton) helper.AddButton(Locale.Get("K45_DTB_GENERATE_DEFAULT_BUILDINGS_FILE"), BoardGeneratorBuildings.GenerateDefaultBuildingsConfiguration));
+            UIHelperExtension group8 = helper.AddGroupExtended(Locale.Get("K45_DTP_GENERAL_INFO"));
+            AddFolderButton(DefaultBuildingsConfigurationFolder, group8, "K45_DTP_DEFAULT_BUILDINGS_CONFIG_PATH_TITLE");
+            UIButton namesFilesButton = ((UIButton) helper.AddButton(Locale.Get("K45_DTP_GENERATE_DEFAULT_BUILDINGS_FILE"), BoardGeneratorBuildings.GenerateDefaultBuildingsConfiguration));
         }
 
         private static void AddFolderButton(string filePath, UIHelperExtension helper, string localeId)
@@ -51,7 +51,7 @@ namespace Klyte.DynamicTextBoards
         }
 
 
-        public static readonly string FOLDER_NAME = FileUtils.BASE_FOLDER_PATH + "DynamicTextBoards";
+        public static readonly string FOLDER_NAME = FileUtils.BASE_FOLDER_PATH + "DynamicTextProps";
         internal static readonly string m_defaultFileNameXml = "DefaultBuildingsConfig";
         public const string DEFAULT_GAME_BUILDINGS_CONFIG_FOLDER = "BuildingsDefaultPlacing";
 

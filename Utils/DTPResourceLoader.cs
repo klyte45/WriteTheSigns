@@ -3,14 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace Klyte.DynamicTextBoards.Utils
+namespace Klyte.DynamicTextProps.Utils
 {
-    public sealed class DTBResourceLoader : KlyteResourceLoader<DTBResourceLoader>
+    public sealed class DTPResourceLoader : KlyteResourceLoader<DTPResourceLoader>
     {
-        public override string Prefix { get; } = "Klyte.DynamicTextBoards.";
+        public override string Prefix { get; } = "Klyte.DynamicTextProps.";
         public override Shader GetLoadedShader(string shaderName)
         {
-            DTBShaderLibrary.GetShaders().TryGetValue(shaderName, out Shader result);
+            DTPShaderLibrary.GetShaders().TryGetValue(shaderName, out Shader result);
             return result;
         }
 

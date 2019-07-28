@@ -1,11 +1,11 @@
 ﻿using ColossalFramework;
 using Klyte.Commons.Utils;
-using Klyte.DynamicTextBoards.Libraries;
+using Klyte.DynamicTextProps.Libraries;
 using System.Xml.Serialization;
 using UnityEngine;
-using static Klyte.DynamicTextBoards.Overrides.BoardGeneratorRoadNodes;
+using static Klyte.DynamicTextProps.Overrides.BoardGeneratorRoadNodes;
 
-namespace Klyte.DynamicTextBoards.Overrides
+namespace Klyte.DynamicTextProps.Overrides
 {
     [XmlRoot("streetSignDescriptor")]
     public class BoardDescriptorStreetSignXml : BoardDescriptorParentXml<BoardDescriptorStreetSignXml, BoardTextDescriptorSteetSignXml>, ILibable

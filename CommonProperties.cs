@@ -1,14 +1,14 @@
-using Klyte.DynamicTextBoards;
-using Klyte.DynamicTextBoards.Utils;
+using Klyte.DynamicTextProps;
+using Klyte.DynamicTextProps.Utils;
 
 namespace Klyte.Commons
 {
     public static class CommonProperties
     {
-        public static bool DebugMode => DynamicTextBoardsMod.DebugMode;
-        public static string Version => DynamicTextBoardsMod.Version;
-        public static string ModName => DynamicTextBoardsMod.Instance.SimpleName;
-        public static string ResourceBasePath => DTBResourceLoader.instance.Prefix;
-        public static string Acronym => "DTB";
+        public static bool DebugMode => DynamicTextPropsMod.DebugMode;
+        public static string Version => DynamicTextPropsMod.Version;
+        public static string ModName => DynamicTextPropsMod.Instance.SimpleName;
+        public static string ResourceBasePath => DTPResourceLoader.instance.Prefix;
+        public static string Acronym => "DTP";
     }
 }

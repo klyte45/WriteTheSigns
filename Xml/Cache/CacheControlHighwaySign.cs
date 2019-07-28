@@ -5,7 +5,7 @@ using System.Xml;
 using System.Xml.Serialization;
 using UnityEngine;
 
-namespace Klyte.DynamicTextBoards.Overrides
+namespace Klyte.DynamicTextProps.Overrides
 {
 
     public partial class BoardGeneratorHighwaySigns

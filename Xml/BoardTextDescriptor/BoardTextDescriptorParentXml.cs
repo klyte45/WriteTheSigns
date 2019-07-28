@@ -1,14 +1,14 @@
 ﻿using ColossalFramework;
 using ColossalFramework.UI;
 using Klyte.Commons.Utils;
-using Klyte.DynamicTextBoards.Utils;
+using Klyte.DynamicTextProps.Utils;
 using System;
 using System.IO;
 using System.Xml;
 using System.Xml.Serialization;
 using UnityEngine;
 
-namespace Klyte.DynamicTextBoards.Overrides
+namespace Klyte.DynamicTextProps.Overrides
 {
     public abstract class BoardTextDescriptorParentXml<T> where T : BoardTextDescriptorParentXml<T>
     {
@@ -75,7 +75,7 @@ namespace Klyte.DynamicTextBoards.Overrides
 
                 if (m_shaderOverride == null)
                 {
-                    m_shaderOverride = Shader.Find(m_shader) ?? DTBResourceLoader.instance.GetLoadedShader(m_shader);
+                    m_shaderOverride = Shader.Find(m_shader) ?? DTPResourceLoader.instance.GetLoadedShader(m_shader);
                 }
                 return m_shaderOverride;
             }

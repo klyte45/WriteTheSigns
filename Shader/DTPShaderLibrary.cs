@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Klyte.DynamicTextBoards.Utils
+namespace Klyte.DynamicTextProps.Utils
 {
-    internal static class DTBShaderLibrary
+    internal static class DTPShaderLibrary
     {
         internal static Dictionary<string, Shader> m_loadedShaders = null;
 
@@ -14,16 +14,16 @@ namespace Klyte.DynamicTextBoards.Utils
             {
                 if (Application.platform == RuntimePlatform.WindowsPlayer)
                 {
-                    m_loadedShaders = DTBResourceLoader.instance.LoadAllShaders("Shader.ShaderTest.unity3d");
+                    m_loadedShaders = DTPResourceLoader.instance.LoadAllShaders("Shader.ShaderTest.unity3d");
                 }
                 else if (Application.platform == RuntimePlatform.LinuxPlayer)
                 {
-                    m_loadedShaders = DTBResourceLoader.instance.LoadAllShaders("Shader.ShaderTest-linux.unity3d");
+                    m_loadedShaders = DTPResourceLoader.instance.LoadAllShaders("Shader.ShaderTest-linux.unity3d");
                 }
                 else if (Application.platform == RuntimePlatform.OSXPlayer)
                 {
 
-                    m_loadedShaders = DTBResourceLoader.instance.LoadAllShaders("Shader.ShaderTest-macosx.unity3d");
+                    m_loadedShaders = DTPResourceLoader.instance.LoadAllShaders("Shader.ShaderTest-macosx.unity3d");
                 }
             }
             return m_loadedShaders;
@@ -38,7 +38,7 @@ namespace Klyte.DynamicTextBoards.Utils
             if (m_memoryLoaded != null)
             {
                 LogUtils.DoErrorLog("FOUND");
-                DTBResourceLoader.instance.ReadShaders(m_memoryLoaded, out m_loadedShaders);
+                DTPResourceLoader.instance.ReadShaders(m_memoryLoaded, out m_loadedShaders);
             }
             else
             {

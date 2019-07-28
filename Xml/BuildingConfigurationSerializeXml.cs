@@ -1,7 +1,7 @@
 ﻿using System.Xml;
 using System.Xml.Serialization;
 
-namespace Klyte.DynamicTextBoards.Overrides
+namespace Klyte.DynamicTextProps.Overrides
 {
     [XmlRoot("buildingConfig")]
     public class BuildingConfigurationSerializeXml<BD, BTD>

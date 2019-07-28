@@ -4,16 +4,16 @@ using ColossalFramework.UI;
 using ICities;
 using Klyte.Commons.Extensors;
 using Klyte.Commons.Utils;
-using Klyte.DynamicTextBoards.Libraries;
-using Klyte.DynamicTextBoards.ModShared;
-using Klyte.DynamicTextBoards.Utils;
+using Klyte.DynamicTextProps.Libraries;
+using Klyte.DynamicTextProps.ModShared;
+using Klyte.DynamicTextProps.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using static Klyte.DynamicTextBoards.Overrides.BoardGeneratorRoadNodes;
+using static Klyte.DynamicTextProps.Overrides.BoardGeneratorRoadNodes;
 
-namespace Klyte.DynamicTextBoards.Overrides
+namespace Klyte.DynamicTextProps.Overrides
 {
 
     public partial class BoardGeneratorRoadNodes : BoardGeneratorParent<BoardGeneratorRoadNodes, BoardBunchContainerStreetPlateXml, CacheControlStreetPlate, BasicRenderInformation, BoardDescriptorStreetSignXml, BoardTextDescriptorSteetSignXml, ushort>, ISerializableDataExtension
@@ -57,7 +57,7 @@ namespace Klyte.DynamicTextBoards.Overrides
             NetManagerOverrides.EventNodeChanged += OnNodeChanged;
             DistrictManagerOverrides.EventOnDistrictChanged += OnDistrictChanged;
             NetManagerOverrides.EventSegmentNameChanged += OnNameSeedChanged;
-            AdrEvents.eventZeroMarkerBuildingChange += OnZeroMarkChanged;
+            AdrEvents.EventZeroMarkerBuildingChange += OnZeroMarkChanged;
 
             #region Hooks
             System.Reflection.MethodInfo postRenderMeshs = GetType().GetMethod("AfterRenderSegment", RedirectorUtils.allFlags);
@@ -255,11 +255,11 @@ namespace Klyte.DynamicTextBoards.Overrides
 
                             m_boardsContainers[nodeID].m_boardsData[controlBoardIdx].m_platePosition = platePos;
                             m_boardsContainers[nodeID].m_boardsData[controlBoardIdx].m_renderPlate = true;
-                            m_boardsContainers[nodeID].m_boardsData[controlBoardIdx].m_cachedColor = LoadedStreetSignDescriptor.UseDistrictColor ? DTBHookable.GetDistrictColor(m_boardsContainers[nodeID].m_boardsData[controlBoardIdx].m_districtId1) : LoadedStreetSignDescriptor.PropColor;
-                            m_boardsContainers[nodeID].m_boardsData[controlBoardIdx].m_cachedColor2 = LoadedStreetSignDescriptor.UseDistrictColor ? DTBHookable.GetDistrictColor(m_boardsContainers[nodeID].m_boardsData[controlBoardIdx].m_districtId2) : LoadedStreetSignDescriptor.PropColor;
+                            m_boardsContainers[nodeID].m_boardsData[controlBoardIdx].m_cachedColor = LoadedStreetSignDescriptor.UseDistrictColor ? DTPHookable.GetDistrictColor(m_boardsContainers[nodeID].m_boardsData[controlBoardIdx].m_districtId1) : LoadedStreetSignDescriptor.PropColor;
+                            m_boardsContainers[nodeID].m_boardsData[controlBoardIdx].m_cachedColor2 = LoadedStreetSignDescriptor.UseDistrictColor ? DTPHookable.GetDistrictColor(m_boardsContainers[nodeID].m_boardsData[controlBoardIdx].m_districtId2) : LoadedStreetSignDescriptor.PropColor;
                             m_boardsContainers[nodeID].m_boardsData[controlBoardIdx].m_cachedContrastColor = KlyteMonoUtils.ContrastColor(m_boardsContainers[nodeID].m_boardsData[controlBoardIdx].m_cachedColor);
                             m_boardsContainers[nodeID].m_boardsData[controlBoardIdx].m_cachedContrastColor2 = KlyteMonoUtils.ContrastColor(m_boardsContainers[nodeID].m_boardsData[controlBoardIdx].m_cachedColor2);
-                            m_boardsContainers[nodeID].m_boardsData[controlBoardIdx].m_distanceRef = Vector2.Distance(VectorUtils.XZ(m_boardsContainers[nodeID].m_boardsData[controlBoardIdx].m_platePosition), DTBHookable.GetStartPoint());
+                            m_boardsContainers[nodeID].m_boardsData[controlBoardIdx].m_distanceRef = Vector2.Distance(VectorUtils.XZ(m_boardsContainers[nodeID].m_boardsData[controlBoardIdx].m_platePosition), DTPHookable.GetStartPoint());
                             controlBoardIdx++;
                         }
                     }
@@ -598,12 +598,12 @@ namespace Klyte.DynamicTextBoards.Overrides
                     }
                 }
             };
-            DTBLibStreetPropGroup.Instance.Add("<DEFAULT>", defaultModel);
+            DTPLibStreetPropGroup.Instance.Add("<DEFAULT>", defaultModel);
         }
 
 
         #region Serialize
-        protected override string ID { get; } = "K45_DTB_SS";
+        protected override string ID { get; } = "K45_DTP_SS";
 
         public override void Deserialize(string data)
         {

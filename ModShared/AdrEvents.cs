@@ -4,15 +4,12 @@ using Klyte.Commons.Utils;
 using System;
 using UnityEngine;
 
-namespace Klyte.DynamicTextBoards.ModShared
+namespace Klyte.DynamicTextProps.ModShared
 {
     public static class AdrEvents
     {
-        public static event Action eventZeroMarkerBuildingChange;
+        public static event Action EventZeroMarkerBuildingChange;
 
-        public static void TriggerZeroMarkerBuildingChange()
-        {
-            eventZeroMarkerBuildingChange?.Invoke();
-        }
+        public static void TriggerZeroMarkerBuildingChange() => EventZeroMarkerBuildingChange?.Invoke();
     }
 }

@@ -5,21 +5,21 @@ using ColossalFramework.UI;
 using ICities;
 using Klyte.Commons.Extensors;
 using Klyte.Commons.Utils;
-using Klyte.DynamicTextBoards.Utils;
+using Klyte.DynamicTextProps.Utils;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEngine;
 
-namespace Klyte.DynamicTextBoards.Overrides
+namespace Klyte.DynamicTextProps.Overrides
 {
 
     public abstract class BoardGeneratorParent<BG> : MonoBehaviour, IRedirectable where BG : BoardGeneratorParent<BG>
     {
         public abstract UIDynamicFont DrawFont { get; }
         protected uint lastFontUpdateFrame = SimulationManager.instance.m_currentTickIndex;
-        protected static Shader TextShader => DTBResourceLoader.instance.GetLoadedShader("Klyte/DynamicTextBoards/klytetextboards") ?? DistrictManager.instance.m_properties.m_areaNameShader;
+        protected static Shader TextShader => DTPResourceLoader.instance.GetLoadedShader("Klyte/DynamicTextProps/klytetextboards") ?? DistrictManager.instance.m_properties.m_areaNameShader;
 
         public static BG Instance { get; protected set; }
         public Redirector RedirectorInstance { get; set; }
@@ -322,7 +322,7 @@ namespace Klyte.DynamicTextBoards.Overrides
         {
             LogUtils.DoLog($"!UpdateMeshStreetSuffix {idx}");
             string result = "";
-            result = DTBHookable.GetStreetSuffix(idx);
+            result = DTPHookable.GetStreetSuffix(idx);
             RefreshNameData(ref bri, result);
         }
 
@@ -330,7 +330,7 @@ namespace Klyte.DynamicTextBoards.Overrides
         protected void UpdateMeshFullNameStreet(ushort idx, ref BRI bri)
         {
             //(ushort segmentID, ref string __result, ref List<ushort> usedQueue, bool defaultPrefix, bool removePrefix = false)
-            string name = DTBHookable.GetStreetFullName(idx);
+            string name = DTPHookable.GetStreetFullName(idx);
             LogUtils.DoLog($"!GenName {name} for {idx}");
             RefreshNameData(ref bri, name);
         }
@@ -484,11 +484,11 @@ namespace Klyte.DynamicTextBoards.Overrides
         #endregion
 
 
-        protected static string A_ShaderNameTest = "Klyte/DynamicTextBoards/klytetextboards";
-        protected static IEnumerable<string> A_Shaders => DTBShaderLibrary.m_loadedShaders.Keys;
+        protected static string A_ShaderNameTest = "Klyte/DynamicTextProps/klytetextboards";
+        protected static IEnumerable<string> A_Shaders => DTPShaderLibrary.m_loadedShaders.Keys;
 
-        protected void A_ReloadFromDisk() => DTBShaderLibrary.ReloadFromDisk();
-        protected void A_CopyToFont() => DrawFont.shader = DTBResourceLoader.instance.GetLoadedShader(A_ShaderNameTest);
+        protected void A_ReloadFromDisk() => DTPShaderLibrary.ReloadFromDisk();
+        protected void A_CopyToFont() => DrawFont.shader = DTPResourceLoader.instance.GetLoadedShader(A_ShaderNameTest);
 
     }
 

@@ -12,9 +12,9 @@ using System.Xml;
 using System.Xml.Serialization;
 using UnityEngine;
 using static Klyte.Commons.Utils.StopSearchUtils;
-using static Klyte.DynamicTextBoards.Overrides.BoardGeneratorBuildings;
+using static Klyte.DynamicTextProps.Overrides.BoardGeneratorBuildings;
 
-namespace Klyte.DynamicTextBoards.Overrides
+namespace Klyte.DynamicTextProps.Overrides
 {
 
     public class BoardGeneratorBuildings : BoardGeneratorParent<BoardGeneratorBuildings, BoardBunchContainerBuilding, CacheControlTransportBuilding, BasicRenderInformation, BoardDescriptorStations, BoardTextDescriptorXml, ushort>
@@ -54,9 +54,9 @@ namespace Klyte.DynamicTextBoards.Overrides
 
         public void LoadAllBuildingConfigurations()
         {
-            FileUtils.ScanPrefabsFolders($"{DynamicTextBoardsMod.m_defaultFileNameXml}.xml", LoadDescriptorsFromXml);
+            FileUtils.ScanPrefabsFolders($"{DynamicTextPropsMod.m_defaultFileNameXml}.xml", LoadDescriptorsFromXml);
             List<string> errorList = new List<string>();
-            foreach (string filename in Directory.GetFiles(DynamicTextBoardsMod.DefaultBuildingsConfigurationFolder, "*.xml"))
+            foreach (string filename in Directory.GetFiles(DynamicTextPropsMod.DefaultBuildingsConfigurationFolder, "*.xml"))
             {
                 try
                 {
@@ -385,7 +385,7 @@ namespace Klyte.DynamicTextBoards.Overrides
             XmlSerializer serializer = new XmlSerializer(typeof(BuildingConfigurationSerializeXml<BoardDescriptorStations, BoardTextDescriptorXml>));
             foreach (BuildingConfigurationSerializeXml<BoardDescriptorStations, BoardTextDescriptorXml> item in fileContent)
             {
-                string filePath = DynamicTextBoardsMod.DefaultBuildingsConfigurationFolder + Path.DirectorySeparatorChar + $"{DynamicTextBoardsMod.m_defaultFileNameXml}_{item.m_buildingName}.xml";
+                string filePath = DynamicTextPropsMod.DefaultBuildingsConfigurationFolder + Path.DirectorySeparatorChar + $"{DynamicTextPropsMod.m_defaultFileNameXml}_{item.m_buildingName}.xml";
                 if (!File.Exists(filePath))
                 {
                     FileStream stream = File.OpenWrite(filePath);

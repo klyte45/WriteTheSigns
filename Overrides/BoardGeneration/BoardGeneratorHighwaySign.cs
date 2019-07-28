@@ -8,9 +8,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using static Klyte.DynamicTextBoards.Overrides.BoardGeneratorHighwaySigns;
+using static Klyte.DynamicTextProps.Overrides.BoardGeneratorHighwaySigns;
 
-namespace Klyte.DynamicTextBoards.Overrides
+namespace Klyte.DynamicTextProps.Overrides
 {
 
     public partial class BoardGeneratorHighwaySigns : BoardGeneratorParent<BoardGeneratorHighwaySigns, BoardBunchContainerHighwaySignXml, CacheControlHighwaySign, BasicRenderInformation, BoardDescriptorHigwaySignXml, BoardTextDescriptorHighwaySignsXml, ushort>
@@ -155,7 +155,7 @@ namespace Klyte.DynamicTextBoards.Overrides
         #region Serialize
 
         // Token: 0x04000019 RID: 25
-        protected override string ID { get; } = "K45_DTB_HS";
+        protected override string ID { get; } = "K45_DTP_HS";
         private static BoardBunchContainerHighwaySignXml[] m_loadedBoards;
 
         public override void Deserialize(string data)

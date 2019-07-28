@@ -4,9 +4,9 @@ using Klyte.Commons.Utils;
 using System;
 using UnityEngine;
 
-namespace Klyte.DynamicTextBoards.Utils
+namespace Klyte.DynamicTextProps.Utils
 {
-    internal static class DTBHookable
+    internal static class DTPHookable
     {
         public static Func<ushort, string> GetStreetFullName = (ushort idx) => NetManager.instance.GetSegmentName(idx);
 

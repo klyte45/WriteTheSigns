@@ -1,4 +1,4 @@
-﻿namespace Klyte.DynamicTextBoards.Overrides
+﻿namespace Klyte.DynamicTextProps.Overrides
 {
     public abstract class CacheControlSerializer<CCS, CC> where CC : CacheControl where CCS : CacheControlSerializer<CCS, CC>, new()
     {

@@ -1,6 +1,6 @@
 ﻿using System.Xml.Serialization;
 
-namespace Klyte.DynamicTextBoards.Overrides
+namespace Klyte.DynamicTextProps.Overrides
 {
     [XmlRoot("basicBoardDescriptor")]
     public class BoardDescriptorXml : BoardDescriptorParentXml<BoardDescriptorXml, BoardTextDescriptorXml> { }

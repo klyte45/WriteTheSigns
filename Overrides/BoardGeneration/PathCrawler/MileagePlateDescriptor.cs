@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Klyte.DynamicTextBoards.Overrides
+namespace Klyte.DynamicTextProps.Overrides
 {
 
     public partial class BoardGeneratorHighwayMileage

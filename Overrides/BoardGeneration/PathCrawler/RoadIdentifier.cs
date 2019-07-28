@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using static Klyte.Commons.Utils.SegmentUtils;
 
-namespace Klyte.DynamicTextBoards.Overrides
+namespace Klyte.DynamicTextProps.Overrides
 {
 
     public partial class BoardGeneratorHighwayMileage

@@ -1,8 +1,8 @@
-﻿using Klyte.DynamicTextBoards.Libraries;
+﻿using Klyte.DynamicTextProps.Libraries;
 using System.Xml;
 using System.Xml.Serialization;
 
-namespace Klyte.DynamicTextBoards.Overrides
+namespace Klyte.DynamicTextProps.Overrides
 {
 
     public partial class BoardGeneratorHighwaySigns

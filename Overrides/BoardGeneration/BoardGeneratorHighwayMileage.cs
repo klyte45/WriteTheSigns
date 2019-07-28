@@ -9,7 +9,7 @@ using System.Linq;
 using UnityEngine;
 using static Klyte.Commons.Utils.SegmentUtils;
 
-namespace Klyte.DynamicTextBoards.Overrides
+namespace Klyte.DynamicTextProps.Overrides
 {
 
     public partial class BoardGeneratorHighwayMileage : BoardGeneratorParent<BoardGeneratorHighwayMileage, IBoardBunchContainer<CacheControl, BasicRenderInformation>, CacheControl, BasicRenderInformation, BoardDescriptorXml, BoardTextDescriptorXml, BoardGeneratorHighwayMileage.RoadIdentifier>
@@ -129,10 +129,10 @@ namespace Klyte.DynamicTextBoards.Overrides
         }
         #endregion
 
-        public static void AfterRenderNode(RenderManager.CameraInfo cameraInfo, ushort nodeID, ref NetNode nodeData)
+        public static void AfterRenderNode(RenderManager.CameraInfo cameraInfo, ushort nodeID)
         {
 
-            Instance.AfterRenderInstanceImpl(cameraInfo, nodeID, ref nodeData);
+            Instance.AfterRenderInstanceImpl(cameraInfo, nodeID);
 
         }
         public static void AfterRenderSegment(RenderManager.CameraInfo cameraInfo, ushort segmentID, int layerMask)
@@ -141,7 +141,7 @@ namespace Klyte.DynamicTextBoards.Overrides
             Instance.AfterRenderSegmentImpl(cameraInfo, segmentID, layerMask);
 
         }
-        public void AfterRenderInstanceImpl(RenderManager.CameraInfo cameraInfo, ushort nodeID, ref NetNode data)
+        public void AfterRenderInstanceImpl(RenderManager.CameraInfo cameraInfo, ushort nodeID)
         {
             if (cameraInfo == null)
             {

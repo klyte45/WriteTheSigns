@@ -1,10 +1,10 @@
 ﻿using Klyte.Commons.Utils;
-using Klyte.DynamicTextBoards.Libraries;
+using Klyte.DynamicTextProps.Libraries;
 using System.Xml;
 using System.Xml.Serialization;
 using UnityEngine;
 
-namespace Klyte.DynamicTextBoards.Overrides
+namespace Klyte.DynamicTextProps.Overrides
 {
 
     public partial class BoardGeneratorHighwaySigns
