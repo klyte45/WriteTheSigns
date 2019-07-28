@@ -154,23 +154,7 @@ namespace Klyte.DynamicTextProps.Overrides
         private static void OnApplyModificationTool(ref NetAdjust __instance) => Instance.OnSegmentChanged(m_getLastInstanceAdjust(__instance).NetSegment);
 #pragma warning restore IDE0051 // Remover membros privados não utilizados
 
-        private void OnSegmentChanged(ushort segmentId)
-        {
-            //doLog("onSegmentChanged");
-            //if (NetManager.instance.m_segments.m_buffer[segmentId].Info.m_netAI is RoadBaseAI)
-            //{
-            //    onDistrictChanged();
-            //}
-            if (m_segmentCachedInfo[segmentId] != null)
-            {
-                RoadIdentifier target = m_segmentCachedInfo[segmentId].First;
-                int[] segmentList = m_segmentCachedInfo.Select((x, i) => Tuple.New(i, x)).Where(x => x.Second?.First == target).Select(x => x.First).ToArray();
-                for (int i = 0; i < segmentList.Length; i++)
-                {
-                    m_segmentCachedInfo[segmentList[i]] = null;
-                }
-            }
-        }
+        private void OnSegmentChanged(ushort segmentId) => m_segmentCachedInfo = new Tuple<RoadIdentifier, MileageMarkerDescriptor, MileageMarkerDescriptor>[NetManager.MAX_SEGMENT_COUNT];
         #endregion
         protected override void OnChangeFont(string fontName) => LoadedMileageMarkerModel.FontName = fontName;
 
