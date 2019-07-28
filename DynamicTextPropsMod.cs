@@ -21,7 +21,7 @@ namespace Klyte.DynamicTextProps
 
         public override string SimpleName => "Klyte's Dynamic Text Props";
 
-        public override string Description => "This mod allows creating dynamic text boards in the city";
+        public override string Description => "This mod allows creating dynamic text props in the city";
 
         public override void DoErrorLog(string fmt, params object[] args) => LogUtils.DoErrorLog(fmt, args);
 
