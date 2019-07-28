@@ -74,8 +74,8 @@ namespace Klyte.DynamicTextProps.Overrides
         }
     }
 
-    public abstract class BoardGeneratorParent<BG, BBC, CC, BRI, BD, BTD, MRT> : BoardGeneratorParent<BG>, ISerializableDataExtension
-        where BG : BoardGeneratorParent<BG, BBC, CC, BRI, BD, BTD, MRT>
+    public abstract class BoardGeneratorParent<BG, BBC, CC, BRI, BD, BTD> : BoardGeneratorParent<BG>, ISerializableDataExtension
+        where BG : BoardGeneratorParent<BG, BBC, CC, BRI, BD, BTD>
         where BBC : IBoardBunchContainer<CC, BRI>
         where BD : BoardDescriptorParentXml<BD, BTD>
         where BTD : BoardTextDescriptorParentXml<BTD>
@@ -219,7 +219,7 @@ namespace Klyte.DynamicTextProps.Overrides
 
         protected abstract InstanceID GetPropRenderID(ushort refID);
 
-        protected void RenderTextMesh(RenderManager.CameraInfo cameraInfo, MRT refID, int boardIdx, int secIdx, ref BD descriptor, Matrix4x4 propMatrix, ref BTD textDescriptor, ref CC ctrl, MaterialPropertyBlock materialPropertyBlock)
+        protected void RenderTextMesh(RenderManager.CameraInfo cameraInfo, ushort refID, int boardIdx, int secIdx, ref BD descriptor, Matrix4x4 propMatrix, ref BTD textDescriptor, ref CC ctrl, MaterialPropertyBlock materialPropertyBlock)
         {
             BRI renderInfo = null;
             UIFont targetFont = null;
@@ -413,18 +413,18 @@ namespace Klyte.DynamicTextProps.Overrides
 
         #endregion
         public abstract Color GetColor(ushort buildingID, int idx, int secIdx, BD descriptor);
-        public abstract Color GetContrastColor(MRT refID, int boardIdx, int secIdx, BD descriptor);
+        public abstract Color GetContrastColor(ushort refID, int boardIdx, int secIdx, BD descriptor);
 
         #region UpdateData
-        protected virtual BRI GetOwnNameMesh(MRT refID, int boardIdx, int secIdx, out UIFont targetFont) { targetFont = DrawFont; return null; }
-        protected virtual BRI GetMeshCurrentNumber(MRT refID, int boardIdx, int secIdx, out UIFont targetFont) { targetFont = DrawFont; return null; }
-        protected virtual BRI GetMeshFullStreetName(MRT refID, int boardIdx, int secIdx, out UIFont targetFont) { targetFont = DrawFont; return null; }
-        protected virtual BRI GetMeshStreetSuffix(MRT refID, int boardIdx, int secIdx, out UIFont targetFont) { targetFont = DrawFont; return null; }
-        protected virtual BRI GetMeshStreetPrefix(MRT refID, int boardIdx, int secIdx, out UIFont targetFont) { targetFont = DrawFont; return null; }
-        protected virtual BRI GetMeshCustom1(MRT refID, int boardIdx, int secIdx, out UIFont targetFont) { targetFont = DrawFont; return null; }
-        protected virtual BRI GetMeshCustom2(MRT refID, int boardIdx, int secIdx, out UIFont targetFont) { targetFont = DrawFont; return null; }
-        protected virtual BRI GetMeshCustom3(MRT refID, int boardIdx, int secIdx, out UIFont targetFont) { targetFont = DrawFont; return null; }
-        protected virtual BRI GetFixedTextMesh(ref BTD textDescriptor, MRT refID, out UIFont targetFont)
+        protected virtual BRI GetOwnNameMesh(ushort refID, int boardIdx, int secIdx, out UIFont targetFont) { targetFont = DrawFont; return null; }
+        protected virtual BRI GetMeshCurrentNumber(ushort refID, int boardIdx, int secIdx, out UIFont targetFont) { targetFont = DrawFont; return null; }
+        protected virtual BRI GetMeshFullStreetName(ushort refID, int boardIdx, int secIdx, out UIFont targetFont) { targetFont = DrawFont; return null; }
+        protected virtual BRI GetMeshStreetSuffix(ushort refID, int boardIdx, int secIdx, out UIFont targetFont) { targetFont = DrawFont; return null; }
+        protected virtual BRI GetMeshStreetPrefix(ushort refID, int boardIdx, int secIdx, out UIFont targetFont) { targetFont = DrawFont; return null; }
+        protected virtual BRI GetMeshCustom1(ushort refID, int boardIdx, int secIdx, out UIFont targetFont) { targetFont = DrawFont; return null; }
+        protected virtual BRI GetMeshCustom2(ushort refID, int boardIdx, int secIdx, out UIFont targetFont) { targetFont = DrawFont; return null; }
+        protected virtual BRI GetMeshCustom3(ushort refID, int boardIdx, int secIdx, out UIFont targetFont) { targetFont = DrawFont; return null; }
+        protected virtual BRI GetFixedTextMesh(ref BTD textDescriptor, ushort refID, out UIFont targetFont)
         {
             targetFont = DrawFont;
             if (textDescriptor.GeneratedFixedTextRenderInfo == null || textDescriptor.GeneratedFixedTextRenderInfoTick < lastFontUpdateFrame)

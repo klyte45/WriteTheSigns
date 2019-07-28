@@ -17,7 +17,7 @@ using static Klyte.DynamicTextProps.Overrides.BoardGeneratorBuildings;
 namespace Klyte.DynamicTextProps.Overrides
 {
 
-    public class BoardGeneratorBuildings : BoardGeneratorParent<BoardGeneratorBuildings, BoardBunchContainerBuilding, CacheControlTransportBuilding, BasicRenderInformation, BoardDescriptorStations, BoardTextDescriptorXml, ushort>
+    public class BoardGeneratorBuildings : BoardGeneratorParent<BoardGeneratorBuildings, BoardBunchContainerBuilding, CacheControlTransportBuilding, BasicRenderInformation, BoardDescriptorStations, BoardTextDescriptorXml>
     {
 
         private Dictionary<string, BoardDescriptorStations[]> m_loadedDescriptors;

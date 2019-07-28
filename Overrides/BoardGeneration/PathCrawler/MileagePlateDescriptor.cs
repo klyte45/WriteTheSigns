@@ -5,7 +5,7 @@ namespace Klyte.DynamicTextProps.Overrides
 
     public partial class BoardGeneratorHighwayMileage
     {
-        public struct MileagePlateDescriptor
+        public struct MileageMarkerDescriptor
         {
             public ushort segmentId;
             public int kilometer;

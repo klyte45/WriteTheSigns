@@ -16,7 +16,7 @@ using static Klyte.DynamicTextProps.Overrides.BoardGeneratorRoadNodes;
 namespace Klyte.DynamicTextProps.Overrides
 {
 
-    public partial class BoardGeneratorRoadNodes : BoardGeneratorParent<BoardGeneratorRoadNodes, BoardBunchContainerStreetPlateXml, CacheControlStreetPlate, BasicRenderInformation, BoardDescriptorStreetSignXml, BoardTextDescriptorSteetSignXml, ushort>, ISerializableDataExtension
+    public partial class BoardGeneratorRoadNodes : BoardGeneratorParent<BoardGeneratorRoadNodes, BoardBunchContainerStreetPlateXml, CacheControlStreetPlate, BasicRenderInformation, BoardDescriptorStreetSignXml, BoardTextDescriptorSteetSignXml>, ISerializableDataExtension
     {
 
         private UpdateFlagsSegments[] m_updateDataSegments;
@@ -492,11 +492,11 @@ namespace Klyte.DynamicTextProps.Overrides
         }
 
         private static BoardDescriptorStreetSignXml m_loadedXml = null;
-        
+
         public void CleanDescriptor() => m_loadedStreetSignDescriptor = new BoardDescriptorStreetSignXml();
 
 
-        private BoardDescriptorStreetSignXml m_loadedStreetSignDescriptor =null;
+        private BoardDescriptorStreetSignXml m_loadedStreetSignDescriptor = null;
         public static void GenerateDefaultSignModelAtLibrary()
         {
             BoardDescriptorStreetSignXml defaultModel = new BoardDescriptorStreetSignXml
@@ -614,9 +614,10 @@ namespace Klyte.DynamicTextProps.Overrides
             }
             try
             {
-                m_loadedXml = XmlUtils.DefaultXmlDeserialize<BoardDescriptorStreetSignXml>(data);                
+                m_loadedXml = XmlUtils.DefaultXmlDeserialize<BoardDescriptorStreetSignXml>(data);
             }
-            catch (Exception e){
+            catch (Exception e)
+            {
                 LogUtils.DoErrorLog($"Error deserializing: {e.Message}\n{e.StackTrace}");
             }
         }
