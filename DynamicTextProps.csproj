@@ -121,6 +121,10 @@
     <Compile Include="Overrides\BoardGeneration\BasicRenderInformation.cs" />
     <Compile Include="Overrides\BoardGeneration\PathCrawler\MileagePlateDescriptor.cs" />
     <Compile Include="Overrides\BoardGeneration\PathCrawler\RoadIdentifier.cs" />
+    <Compile Include="UI\Tabs\DTPMileageMarkerTab.cs" />
+    <Compile Include="Xml\BoardDescriptor\BoardDescriptorMileageMarkerXml.cs" />
+    <Compile Include="Xml\BoardTextDescriptor\BoardTextDescriptorMileageMarkerXml.cs" />
+    <Compile Include="Xml\BoardTextDescriptor\BoardTextDescriptorSteetSignXml.cs" />
     <Compile Include="Xml\Containers\BoardBunchContainerStreetPlateXml.cs" />
     <Compile Include="Xml\Cache\CacheControlStreetPlate.cs" />
     <Compile Include="Xml\Containers\BoardBunchContainerHighwaySignXml.cs" />

@@ -621,12 +621,7 @@ namespace Klyte.DynamicTextProps.Overrides
             }
         }
 
-        public override string Serialize()
-        {
-            string xml = XmlUtils.DefaultXmlSerialize(Instance.LoadedStreetSignDescriptor, false);
-            LogUtils.DoLog($"{GetType()} STR SAVE: \"{xml}\"");
-            return xml;
-        }
+        public override string Serialize() => XmlUtils.DefaultXmlSerialize(Instance.LoadedStreetSignDescriptor, false);
 
         #endregion
 

@@ -22,14 +22,4 @@ namespace Klyte.DynamicTextProps.Overrides
 
     }
     public class BoardTextDescriptorXml : BoardTextDescriptorParentXml<BoardTextDescriptorXml> { }
-    public partial class BoardGeneratorRoadNodes
-    {
-        public class BoardTextDescriptorSteetSignXml : BoardTextDescriptorParentXml<BoardTextDescriptorSteetSignXml>, ILibable
-        {
-            [XmlAttribute("saveName")]
-            public string SaveName { get; set; }
-        }
-
-    }
-
 }

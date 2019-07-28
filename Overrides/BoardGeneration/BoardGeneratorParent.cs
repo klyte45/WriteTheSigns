@@ -36,7 +36,8 @@ namespace Klyte.DynamicTextProps.Overrides
             List<string> fontList = new List<string> { fontName };
             fontList.AddRange(DistrictManager.instance.m_properties?.m_areaNameFont?.baseFont?.fontNames?.ToList());
             font.baseFont = Font.CreateDynamicFontFromOSFont(fontList.ToArray(), 64);
-
+            font.lineHeight = 70;
+            font.baseline = 66;
 
             font.material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.EmissiveIsBlack | MaterialGlobalIlluminationFlags.RealtimeEmissive;
         }
@@ -364,11 +365,10 @@ namespace Klyte.DynamicTextProps.Overrides
                     uifontRenderer.textScale = m_textScale;
                     uifontRenderer.pixelRatio = m_pixelRatio;
                     uifontRenderer.processMarkup = true;
-                    uifontRenderer.multiLine = false;
                     uifontRenderer.wordWrap = false;
                     uifontRenderer.textAlign = UIHorizontalAlignment.Center;
                     uifontRenderer.maxSize = new Vector2(width, height);
-                    uifontRenderer.multiLine = false;
+                    uifontRenderer.multiLine = true;
                     uifontRenderer.opacity = 1;
                     uifontRenderer.shadow = false;
                     uifontRenderer.shadowColor = Color.black;

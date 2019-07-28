@@ -85,8 +85,10 @@ namespace Klyte.DynamicTextProps.Libraries
 
     [XmlRoot("LibTextMesh")] public class DTPLibTextMeshHighwaySigns : BasicLib<DTPLibTextMeshHighwaySigns, BoardGeneratorHighwaySigns.BoardTextDescriptorHighwaySignsXml> { protected override string XmlName => "LibTextMesh"; }
     [XmlRoot("LibTextStreetPlate")] public class DTPLibTextMeshStreetPlate : BasicLib<DTPLibTextMeshStreetPlate, BoardTextDescriptorSteetSignXml> { protected override string XmlName => "LibTextStreetPlate"; }
+    [XmlRoot("LibTextMileageMarker")] public class DTPLibTextMeshMileageMarker : BasicLib<DTPLibTextMeshMileageMarker, BoardTextDescriptorMileageMarkerXml> { protected override string XmlName => "LibTextMileageMarker"; }
     [XmlRoot("LibPropSingle")] public class DTPLibPropSingle : BasicLib<DTPLibPropSingle, BoardGeneratorHighwaySigns.BoardDescriptorHigwaySignXml> { protected override string XmlName => "LibPropSingle"; }
     [XmlRoot("LibPropGroup")] public class DTPLibPropGroup : BasicLib<DTPLibPropGroup, BoardGeneratorHighwaySigns.BoardBunchContainerHighwaySignXml> { protected override string XmlName => "LibPropGroup"; }
     [XmlRoot("LibStreetPropGroup")] public class DTPLibStreetPropGroup : BasicLib<DTPLibStreetPropGroup, BoardDescriptorStreetSignXml> { protected override string XmlName => "LibStreetPropGroup"; }
+    [XmlRoot("LibMileageMarkerPropGroup")] public class DTPLibMileageMarkerGroup : BasicLib<DTPLibMileageMarkerGroup, BoardDescriptorMileageMarkerXml> { protected override string XmlName => "LibMileageMarkerPropGroup"; }
 
 }
