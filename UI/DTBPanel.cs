@@ -70,7 +70,7 @@ namespace Klyte.DynamicTextBoards.UI
             closeButton.hoveredBgSprite = "buttonclosehover";
             closeButton.eventClick += (x, y) =>
             {
-                //KlyteCommonsMod.CloseKCPanel();
+                DynamicTextBoardsMod.Instance.ClosePanel();
             };
 
             KlyteMonoUtils.CreateUIElement(out UISprite logo, m_mainPanel.transform, "DTBLogo", new Vector4(22, 5f, 32, 32));

@@ -1,7 +1,4 @@
-﻿using Klyte.Commons.Utils;
-using System;
-using System.IO;
-using System.Xml;
+﻿using System.Xml;
 using System.Xml.Serialization;
 using UnityEngine;
 
@@ -58,41 +55,6 @@ namespace Klyte.DynamicTextBoards.Overrides
         public Matrix4x4 TextMatrixTranslation(int idx) => Matrix4x4.Translate(m_textDescriptors[idx].m_textRelativePosition);
         public Matrix4x4 TextMatrixRotation(int idx) => Matrix4x4.TRS(Vector3.zero, Quaternion.Euler(m_textDescriptors[idx].m_textRelativeRotation), Vector3.one);
 
-
-        public string Serialize()
-        {
-            XmlSerializer xmlser = new XmlSerializer(typeof(BD));
-            XmlWriterSettings settings = new XmlWriterSettings { Indent = false };
-            using StringWriter textWriter = new StringWriter();
-            using XmlWriter xw = XmlWriter.Create(textWriter, settings);
-            XmlSerializerNamespaces ns = new XmlSerializerNamespaces();
-            ns.Add("", "");
-            xmlser.Serialize(xw, this, ns);
-            return textWriter.ToString();
-        }
-
-        public static BD Deserialize(string s)
-        {
-            XmlSerializer xmlser = new XmlSerializer(typeof(BD));
-            try
-            {
-                using TextReader tr = new StringReader(s);
-                using XmlReader reader = XmlReader.Create(tr);
-                if (xmlser.CanDeserialize(reader))
-                {
-                    return (BD) xmlser.Deserialize(reader);
-                }
-                else
-                {
-                    LogUtils.DoErrorLog($"CAN'T DESERIALIZE BOARD DESCRIPTOR!\nText : {s}");
-                }
-            }
-            catch (Exception e)
-            {
-                LogUtils.DoErrorLog($"CAN'T DESERIALIZE BOARD DESCRIPTOR!\nText : {s}\n{e.Message}\n{e.StackTrace}");
-            }
-            return null;
-        }
     }
 
 

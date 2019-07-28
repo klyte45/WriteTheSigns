@@ -60,10 +60,10 @@ namespace Klyte.DynamicTextBoards.Overrides
             m_cachedKilometerMeshes = new BasicRenderInformation[100];
             m_cachedDirectionMeshes = new BasicRenderInformation[9];
 
-            NetManagerOverrides.EventNodeChanged += onNodeChanged;
-            NetManagerOverrides.EventSegmentChanged += onSegmentChanged;
-            NetManagerOverrides.EventSegmentNameChanged += onNameSeedChanged;
-            DistrictManagerOverrides.EventOnDistrictChanged += onDistrictChanged;
+            NetManagerOverrides.EventNodeChanged += OnNodeChanged;
+            NetManagerOverrides.EventSegmentChanged += OnSegmentChanged;
+            NetManagerOverrides.EventSegmentNameChanged += OnNameSeedChanged;
+            DistrictManagerOverrides.EventOnDistrictChanged += OnDistrictChanged;
 
             BuildSurfaceFont(out m_font, "Highway Gothic");
 
@@ -82,7 +82,7 @@ namespace Klyte.DynamicTextBoards.Overrides
         {
         }
 
-        private void onNodeChanged(ushort nodeId)
+        private void OnNodeChanged(ushort nodeId)
         {
             //doLog($"onNodeChanged { System.Environment.StackTrace }");
             for (int i = 0; i < 8; i++)
@@ -95,16 +95,16 @@ namespace Klyte.DynamicTextBoards.Overrides
                 //}
                 if (segmentId > 0)
                 {
-                    onSegmentChanged(segmentId);
+                    OnSegmentChanged(segmentId);
                 }
             }
         }
-        private void onNameSeedChanged(ushort segmentId)
+        private void OnNameSeedChanged(ushort segmentId)
         {
             //doLog("onNameSeedChanged");
-            onSegmentChanged(segmentId);
+            OnSegmentChanged(segmentId);
         }
-        private void onSegmentChanged(ushort segmentId)
+        private void OnSegmentChanged(ushort segmentId)
         {
             //doLog("onSegmentChanged");
             //if (NetManager.instance.m_segments.m_buffer[segmentId].Info.m_netAI is RoadBaseAI)
@@ -112,7 +112,7 @@ namespace Klyte.DynamicTextBoards.Overrides
             //    onDistrictChanged();
             //}
 
-            if (m_segmentToHighway[segmentId] != default(RoadIdentifier))
+            if (m_segmentToHighway[segmentId] != default)
             {
                 RoadIdentifier target = m_segmentToHighway[segmentId];
                 if (!m_destroyQueue.Contains(target))
@@ -121,7 +121,7 @@ namespace Klyte.DynamicTextBoards.Overrides
                 }
             }
         }
-        private void onDistrictChanged()
+        private void OnDistrictChanged()
         {
             //doLog("onDistrictChanged");
             m_segmentToHighway = new RoadIdentifier[NetManager.MAX_SEGMENT_COUNT];
@@ -143,7 +143,10 @@ namespace Klyte.DynamicTextBoards.Overrides
         }
         public void AfterRenderInstanceImpl(RenderManager.CameraInfo cameraInfo, ushort nodeID, ref NetNode data)
         {
-
+            if (cameraInfo == null)
+            {
+                throw new ArgumentNullException(nameof(cameraInfo));
+            }
 
             for (int i = 0; i < 8; i++)
             {
@@ -157,7 +160,7 @@ namespace Klyte.DynamicTextBoards.Overrides
                 {
                     continue;
                 }
-                if (m_segmentToHighway[segmentId] == default(RoadIdentifier) || m_destroyQueue.Contains(m_segmentToHighway[segmentId]))
+                if (m_segmentToHighway[segmentId] == default || m_destroyQueue.Contains(m_segmentToHighway[segmentId]))
                 {
                     RoadIdentifier removeTarget = m_segmentToHighway[segmentId];
                     if (removeTarget.segments != null)
@@ -166,7 +169,7 @@ namespace Klyte.DynamicTextBoards.Overrides
                         {
                             if (m_segmentToHighway[id] == removeTarget)
                             {
-                                m_segmentToHighway[id] = default(RoadIdentifier);
+                                m_segmentToHighway[id] = default;
                             }
                         }
                     }
@@ -176,7 +179,7 @@ namespace Klyte.DynamicTextBoards.Overrides
                     IEnumerable<Tuple<ushort, float>> segments = SegmentUtils.GetSegmentRoadEdges(segmentId, false, false, false, out ComparableRoad start, out ComparableRoad end);
                     if (segments == null)
                     {
-                        RoadIdentifier tuple = new RoadIdentifier(default(ComparableRoad), default(ComparableRoad), new ushort[] { segmentId });
+                        RoadIdentifier tuple = new RoadIdentifier(default, default, new ushort[] { segmentId });
                         m_segmentToHighway[segmentId] = tuple;
                     }
                     else

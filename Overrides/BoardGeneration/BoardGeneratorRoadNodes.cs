@@ -32,6 +32,17 @@ namespace Klyte.DynamicTextBoards.Overrides
 
         private readonly Func<RenderManager, uint> m_getCurrentFrame = ReflectionUtils.GetGetFieldDelegate<RenderManager, uint>("m_currentFrame", typeof(RenderManager));
 
+        public static readonly TextType[] AVAILABLE_TEXT_TYPES = new TextType[]
+        {
+            TextType.OwnName,
+            TextType.Fixed,
+            TextType.StreetPrefix,
+            TextType.StreetSuffix,
+            TextType.StreetNameComplete,
+            TextType.Custom1,
+            TextType.Custom2
+        };
+
         #region Initialize
         public override void Initialize()
         {
@@ -41,7 +52,7 @@ namespace Klyte.DynamicTextBoards.Overrides
             m_cachedDistrictsNames = new BasicRenderInformation[DistrictManager.MAX_DISTRICT_COUNT];
             m_cachedNumber = new BasicRenderInformation[10];
 
-            BuildSurfaceFont(out m_font, m_loadedStreetSignDescriptor.FontName);
+            BuildSurfaceFont(out m_font, LoadedStreetSignDescriptor.FontName);
 
             NetManagerOverrides.EventNodeChanged += OnNodeChanged;
             DistrictManagerOverrides.EventOnDistrictChanged += OnDistrictChanged;
@@ -471,7 +482,8 @@ namespace Klyte.DynamicTextBoards.Overrides
             get {
                 if (m_loadedStreetSignDescriptor == null)
                 {
-                    m_loadedStreetSignDescriptor = new BoardDescriptorStreetSignXml();
+                    m_loadedStreetSignDescriptor = m_loadedXml ?? new BoardDescriptorStreetSignXml();
+                    m_loadedXml = null;
                 }
                 return m_loadedStreetSignDescriptor;
             }
@@ -479,10 +491,12 @@ namespace Klyte.DynamicTextBoards.Overrides
             set => m_loadedStreetSignDescriptor = value;
         }
 
+        private static BoardDescriptorStreetSignXml m_loadedXml = null;
+        
         public void CleanDescriptor() => m_loadedStreetSignDescriptor = new BoardDescriptorStreetSignXml();
 
 
-        private BoardDescriptorStreetSignXml m_loadedStreetSignDescriptor = new BoardDescriptorStreetSignXml();
+        private BoardDescriptorStreetSignXml m_loadedStreetSignDescriptor =null;
         public static void GenerateDefaultSignModelAtLibrary()
         {
             BoardDescriptorStreetSignXml defaultModel = new BoardDescriptorStreetSignXml
@@ -600,12 +614,19 @@ namespace Klyte.DynamicTextBoards.Overrides
             }
             try
             {
-                LoadedStreetSignDescriptor = BoardDescriptorStreetSignXml.Deserialize(data);
+                m_loadedXml = XmlUtils.DefaultXmlDeserialize<BoardDescriptorStreetSignXml>(data);                
             }
-            catch { }
+            catch (Exception e){
+                LogUtils.DoErrorLog($"Error deserializing: {e.Message}\n{e.StackTrace}");
+            }
         }
 
-        public override string Serialize() => LoadedStreetSignDescriptor.Serialize();
+        public override string Serialize()
+        {
+            string xml = XmlUtils.DefaultXmlSerialize(Instance.LoadedStreetSignDescriptor, false);
+            LogUtils.DoLog($"{GetType()} STR SAVE: \"{xml}\"");
+            return xml;
+        }
 
         #endregion
 

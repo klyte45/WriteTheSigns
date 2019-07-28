@@ -7,6 +7,7 @@ using static Klyte.DynamicTextBoards.Overrides.BoardGeneratorRoadNodes;
 
 namespace Klyte.DynamicTextBoards.Overrides
 {
+    [XmlRoot("streetSignDescriptor")]
     public class BoardDescriptorStreetSignXml : BoardDescriptorParentXml<BoardDescriptorStreetSignXml, BoardTextDescriptorSteetSignXml>, ILibable
     {
         [XmlAttribute("fontName")]
@@ -16,7 +17,7 @@ namespace Klyte.DynamicTextBoards.Overrides
         public string SaveName { get; set; }
 
         [XmlAttribute("useDistrictColor")]
-        public bool UseDistrictColor { get; set; } = false;
+        public bool UseDistrictColor = false;
         [XmlIgnore]
         public Color PropColor { get => m_cachedColor == default ? Color.white : m_cachedColor; set => m_cachedColor = value; }
         [XmlIgnore]

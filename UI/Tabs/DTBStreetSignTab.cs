@@ -51,7 +51,7 @@ namespace Klyte.DynamicTextBoards.UI
 
         private UIDropDown m_loadPropGroup;
         private UIDropDown m_loadTextDD;
-
+        private UICheckBox m_useDistrictColorCheck;
         private UIColorField m_propColorPicker;
 
         private int CurrentTabText
@@ -80,7 +80,7 @@ namespace Klyte.DynamicTextBoards.UI
             DTBUtils.ReloadFontsOf<BoardGeneratorRoadNodes>(m_fontSelect);
             BoardGeneratorRoadNodes.GenerateDefaultSignModelAtLibrary();
 
-            m_loadPropGroup = AddLibBox<DTBLibStreetPropGroup, BoardDescriptorStreetSignXml>(Locale.Get("K45_DTB_GROUP_TEXT_LIB_TITLE"), m_uiHelperHS,
+            m_loadPropGroup = AddLibBox<DTBLibStreetPropGroup, BoardDescriptorStreetSignXml>(Locale.Get("K45_DTB_STREET_SIGNS_LIB_TITLE"), m_uiHelperHS,
                         out _, null,
                         out _, null,
                         out _, null,
@@ -96,7 +96,8 @@ namespace Klyte.DynamicTextBoards.UI
             buttonErase.color = Color.red;
 
             AddDropdown(Locale.Get("K45_DTB_PROP_MODEL_SELECT"), out m_propsDropdown, m_uiHelperHS, new string[0], SetPropModel);
-            m_uiHelperHS.AddCheckboxLocale("K45_DTB_USE_DISTRICT_COLOR", BoardGeneratorRoadNodes.Instance.LoadedStreetSignDescriptor.UseDistrictColor, OnChangeUseDistrictColor);
+            m_useDistrictColorCheck = m_uiHelperHS.AddCheckboxLocale("K45_DTB_USE_DISTRICT_COLOR", BoardGeneratorRoadNodes.Instance.LoadedStreetSignDescriptor.UseDistrictColor, OnChangeUseDistrictColor);
+            KlyteMonoUtils.LimitWidth(m_useDistrictColorCheck.label, m_uiHelperHS.Self.width - 50);
             m_propColorPicker = m_uiHelperHS.AddColorPicker(Locale.Get("K45_DTB_PROP_COLOR"), BoardGeneratorRoadNodes.Instance.LoadedStreetSignDescriptor.PropColor, OnChangePropColor);
 
             KlyteMonoUtils.CreateHorizontalScrollPanel(m_uiHelperHS.Self, out UIScrollablePanel scrollTabs, out _, m_uiHelperHS.Self.width - 20, 40, Vector3.zero);
@@ -151,7 +152,7 @@ namespace Klyte.DynamicTextBoards.UI
             m_colorEditorText = groupTexts.AddColorPicker(Locale.Get("K45_DTB_TEXT_COLOR"), Color.white, SetTextColor);
             m_useContrastColorTextCheckbox = groupTexts.AddCheckboxLocale("K45_DTB_USE_CONTRAST_COLOR", false, SetUseContrastColor);
             KlyteMonoUtils.LimitWidth(m_colorEditorText.parent.GetComponentInChildren<UILabel>(), groupTexts.Self.width / 2, true);
-            AddDropdown(Locale.Get("K45_DTB_TEXT_CONTENT"), out m_dropdownTextContent, groupTexts, Enum.GetNames(typeof(TextType)).Select(x => Locale.Get("K45_DTB_OWN_NAME_CONTENT", x)).ToArray(), SetTextOwnNameContent);
+            AddDropdown(Locale.Get("K45_DTB_TEXT_CONTENT"), out m_dropdownTextContent, groupTexts, AVAILABLE_TEXT_TYPES.Select(x => Locale.Get("K45_DTB_OWN_NAME_CONTENT", x.ToString())).ToArray(), SetTextOwnNameContent);
             AddTextField(Locale.Get("K45_DTB_CUSTOM_TEXT"), out m_customText, groupTexts, SetTextCustom);
             m_dropdownTextContent.eventSelectedIndexChanged += (e, idx) => m_customText.GetComponentInParent<UIPanel>().isVisible = idx == (int) TextType.Fixed;
 
@@ -405,6 +406,8 @@ namespace Klyte.DynamicTextBoards.UI
         {
             m_propsDropdown.items = BoardGeneratorHighwaySigns.Instance.LoadedProps.Select(x => x.EndsWith("_Data") ? Locale.Get("PROPS_TITLE", x) : x).ToArray();
             m_propsDropdown.selectedIndex = BoardGeneratorHighwaySigns.Instance.LoadedProps.IndexOf(BoardGeneratorRoadNodes.Instance.LoadedStreetSignDescriptor.m_propName);
+            m_useDistrictColorCheck.isChecked = BoardGeneratorRoadNodes.Instance.LoadedStreetSignDescriptor.UseDistrictColor;
+            m_propColorPicker.parent.isVisible = !m_useDistrictColorCheck.isChecked;
             BoardGeneratorRoadNodes.Instance.ChangeFont(BoardGeneratorRoadNodes.Instance.LoadedStreetSignDescriptor.FontName);
             DTBUtils.ReloadFontsOf<BoardGeneratorRoadNodes>(m_fontSelect);
             OnChangeUseDistrictColor(BoardGeneratorRoadNodes.Instance.LoadedStreetSignDescriptor.UseDistrictColor);
@@ -422,7 +425,7 @@ namespace Klyte.DynamicTextBoards.UI
         }
         private void SetTextOwnNameContent(int idx) => SafeActionInTextBoard(descriptor =>
         {
-            descriptor.m_textType = (TextType) idx;
+            descriptor.m_textType = AVAILABLE_TEXT_TYPES[idx];
             m_customText.parent.isVisible = descriptor.m_textType == TextType.Fixed;
             descriptor.GeneratedFixedTextRenderInfo = null;
         });
@@ -523,8 +526,6 @@ namespace Klyte.DynamicTextBoards.UI
         {
 
             m_isLoading = true;
-            ReloadTextLib();
-            ReloadGroupLib();
             EnsureTabQuantityTexts(BoardGeneratorRoadNodes.Instance.LoadedStreetSignDescriptor.m_textDescriptors?.Length ?? -1);
             ConfigureTabsShownText(BoardGeneratorRoadNodes.Instance.LoadedStreetSignDescriptor.m_textDescriptors?.Length ?? 0);
             m_pseudoTabTextsContainer.Self.isVisible = CurrentTabText >= 0;
@@ -534,6 +535,8 @@ namespace Klyte.DynamicTextBoards.UI
                 m_loadPropGroup.items = DTBLibTextMeshStreetPlate.Instance.List().ToArray();
             }
             m_isLoading = false;
+            ReloadTextLib();
+            ReloadGroupLib();
         }
 
         private void LoadTabTextInfo(BoardTextDescriptorSteetSignXml descriptor)

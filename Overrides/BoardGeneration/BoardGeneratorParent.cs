@@ -264,7 +264,7 @@ namespace Klyte.DynamicTextBoards.Overrides
             float realWidth = defaultMultiplierX * renderInfo.m_sizeMetersUnscaled.x;
             float realHeight = defaultMultiplierY * renderInfo.m_sizeMetersUnscaled.y;
             Vector3 targetRelativePosition = textDescriptor.m_textRelativePosition;
-            LogUtils.DoLog($"[{GetType().Name},{refID},{boardIdx},{secIdx}] realWidth = {realWidth}; realHeight = {realHeight}; renderInfo.m_mesh.bounds = {renderInfo.m_mesh.bounds};");
+        //    LogUtils.DoLog($"[{GetType().Name},{refID},{boardIdx},{secIdx}] realWidth = {realWidth}; realHeight = {realHeight}; renderInfo.m_mesh.bounds = {renderInfo.m_mesh.bounds};");
             if (textDescriptor.m_maxWidthMeters > 0 && textDescriptor.m_maxWidthMeters < realWidth)
             {
                 overflowScaleX = textDescriptor.m_maxWidthMeters / realWidth;
@@ -399,6 +399,11 @@ namespace Klyte.DynamicTextBoards.Overrides
 
         private Vector3[] CenterVertices(PoolList<Vector3> points)
         {
+            if (points.Count == 0)
+            {
+                return points.ToArray();
+            }
+
             Vector3 max = new Vector3(points.Select(x => x.x).Max(), points.Select(x => x.y).Max(), points.Select(x => x.z).Max());
             Vector3 min = new Vector3(points.Select(x => x.x).Min(), points.Select(x => x.y).Min(), points.Select(x => x.z).Min());
             Vector3 center = (max + min) / 2;
@@ -463,7 +468,12 @@ namespace Klyte.DynamicTextBoards.Overrides
             }
 
             string serialData = Serialize();
-            LogUtils.DoLog($"serialData: {serialData}");
+            LogUtils.DoLog($"serialData: {serialData ?? "<NULL>"}");
+            if (serialData == null)
+            {
+                return;
+            }
+
             byte[] data = System.Text.Encoding.UTF8.GetBytes(serialData);
             SerializableDataManager.SaveData(ID, data);
         }

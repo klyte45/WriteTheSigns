@@ -1,14 +1,15 @@
 ﻿using Klyte.Commons.Utils;
+using Klyte.DynamicTextBoards.Libraries;
+using System.Xml;
 using System.Xml.Serialization;
 using UnityEngine;
-using System.Xml;
-using Klyte.DynamicTextBoards.Libraries;
 
 namespace Klyte.DynamicTextBoards.Overrides
 {
 
     public partial class BoardGeneratorHighwaySigns
     {
+        [XmlRoot("highwaySignDescriptor")]
         public class BoardDescriptorHigwaySignXml : BoardDescriptorParentXml<BoardDescriptorHigwaySignXml, BoardTextDescriptorHighwaySignsXml>, ILibable
         {
             [XmlAttribute("inverted")]
