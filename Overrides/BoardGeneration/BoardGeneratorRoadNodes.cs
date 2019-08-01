@@ -5,7 +5,6 @@ using ICities;
 using Klyte.Commons.Extensors;
 using Klyte.Commons.Utils;
 using Klyte.DynamicTextProps.Libraries;
-using Klyte.DynamicTextProps.ModShared;
 using Klyte.DynamicTextProps.Utils;
 using System;
 using System.Collections.Generic;
@@ -25,6 +24,8 @@ namespace Klyte.DynamicTextProps.Overrides
 
         public BasicRenderInformation[] m_cachedDistrictsNames;
         public BasicRenderInformation[] m_cachedNumber;
+
+
 
         public override int ObjArraySize => NetManager.MAX_NODE_COUNT;
         public override UIDynamicFont DrawFont => m_font;
@@ -57,7 +58,18 @@ namespace Klyte.DynamicTextProps.Overrides
             NetManagerOverrides.EventNodeChanged += OnNodeChanged;
             DistrictManagerOverrides.EventOnDistrictChanged += OnDistrictChanged;
             NetManagerOverrides.EventSegmentNameChanged += OnNameSeedChanged;
-            AdrEvents.EventZeroMarkerBuildingChange += OnZeroMarkChanged;
+
+            Type adrEventsType = Type.GetType("Klyte.Addresses.ModShared.AdrEvents, KlyteAddresses");
+            if (adrEventsType != null)
+            {
+                static void RegisterEvent(string eventName, Type adrEventsType, Action action) => adrEventsType.GetEvent(eventName)?.AddEventHandler(null, action);
+                RegisterEvent("EventZeroMarkerBuildingChange", adrEventsType, new Action(OnZeroMarkChanged));
+                RegisterEvent("EventRoadNamingChange", adrEventsType, new Action(OnZeroMarkChanged));
+                RegisterEvent("EventDistrictColorChanged", adrEventsType, new Action(OnZeroMarkChanged));
+                RegisterEvent("EventBuildingNameStrategyChanged", adrEventsType, new Action(OnZeroMarkChanged));
+            }
+
+
 
             #region Hooks
             System.Reflection.MethodInfo postRenderMeshs = GetType().GetMethod("AfterRenderSegment", RedirectorUtils.allFlags);
@@ -66,7 +78,6 @@ namespace Klyte.DynamicTextProps.Overrides
             RedirectorInstance.AddRedirect(orig, null, postRenderMeshs);
             #endregion
         }
-
 
         protected override void OnTextureRebuiltImpl(Font obj)
         {

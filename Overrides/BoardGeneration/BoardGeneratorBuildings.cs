@@ -49,9 +49,16 @@ namespace Klyte.DynamicTextProps.Overrides
             System.Reflection.MethodInfo postRenderMeshs = GetType().GetMethod("AfterRenderMeshes", RedirectorUtils.allFlags);
             LogUtils.DoLog($"Patching=> {postRenderMeshs}");
             RedirectorInstance.AddRedirect(typeof(BuildingAI).GetMethod("RenderMeshes", RedirectorUtils.allFlags), null, postRenderMeshs);
+
+            Type adrEventsType = Type.GetType("Klyte.Addresses.ModShared.AdrEvents, KlyteAddresses");
+            if (adrEventsType != null)
+            {
+                static void RegisterEvent(string eventName, Type adrEventsType, Action action) => adrEventsType.GetEvent(eventName)?.AddEventHandler(null, action);
+                RegisterEvent("EventBuildingNameStrategyChanged", adrEventsType, ()=> OnTextureRebuiltImpl(DrawFont.baseFont));
+            }
+
             #endregion
         }
-
         public void LoadAllBuildingConfigurations()
         {
             FileUtils.ScanPrefabsFolders($"{DynamicTextPropsMod.m_defaultFileNameXml}.xml", LoadDescriptorsFromXml);

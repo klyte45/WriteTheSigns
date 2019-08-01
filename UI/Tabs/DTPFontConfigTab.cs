@@ -45,10 +45,7 @@ namespace Klyte.DynamicTextProps.UI
 
         #endregion
 
-        private void ReloadDropDownsFonts()
-        {
-            DTPUtils.ReloadFontsOf<BoardGeneratorBuildings>(m_fontStationBuildings);
-        }
+        private void ReloadDropDownsFonts() => DTPUtils.ReloadFontsOf<BoardGeneratorBuildings>(m_fontStationBuildings);
 
 
 

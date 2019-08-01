@@ -95,10 +95,10 @@ namespace Klyte.DynamicTextProps.Overrides
         public static BBC[] m_boardsContainers;
 
 
-        private readonly float m_pixelRatio = 0.5f;
+        private const float m_pixelRatio = 2;
         //private const float m_scaleY = 1.2f;
-        private readonly float m_textScale = 1;
-        private readonly Vector2 m_scalingMatrix = new Vector2(0.015f, 0.015f);
+        private const float m_textScale = 0.75f;
+        private readonly Vector2 m_scalingMatrix = new Vector2(0.005f, 0.005f);
 
         public override void Awake()
         {
@@ -265,7 +265,7 @@ namespace Klyte.DynamicTextProps.Overrides
             float realWidth = defaultMultiplierX * renderInfo.m_sizeMetersUnscaled.x;
             float realHeight = defaultMultiplierY * renderInfo.m_sizeMetersUnscaled.y;
             Vector3 targetRelativePosition = textDescriptor.m_textRelativePosition;
-        //    LogUtils.DoLog($"[{GetType().Name},{refID},{boardIdx},{secIdx}] realWidth = {realWidth}; realHeight = {realHeight}; renderInfo.m_mesh.bounds = {renderInfo.m_mesh.bounds};");
+            //    LogUtils.DoLog($"[{GetType().Name},{refID},{boardIdx},{secIdx}] realWidth = {realWidth}; realHeight = {realHeight}; renderInfo.m_mesh.bounds = {renderInfo.m_mesh.bounds};");
             if (textDescriptor.m_maxWidthMeters > 0 && textDescriptor.m_maxWidthMeters < realWidth)
             {
                 overflowScaleX = textDescriptor.m_maxWidthMeters / realWidth;

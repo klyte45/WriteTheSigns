@@ -51,7 +51,6 @@ namespace Klyte.DynamicTextProps.UI
 
         private UIDropDown m_loadPropGroup;
         private UIDropDown m_loadTextDD;
-        private UIColorField m_propColorPicker;
 
         private int CurrentTabText
         {
@@ -95,7 +94,7 @@ namespace Klyte.DynamicTextProps.UI
             buttonErase.color = Color.red;
 
             AddDropdown(Locale.Get("K45_DTP_PROP_MODEL_SELECT"), out m_propsDropdown, m_uiHelperHS, new string[0], SetPropModel);
-            m_propColorPicker = m_uiHelperHS.AddColorPicker(Locale.Get("K45_DTP_PROP_COLOR"), BoardGeneratorHighwayMileage.LoadedMileageMarkerModel.PropColor, OnChangePropColor);
+            UIColorField m_propColorPicker = m_uiHelperHS.AddColorPicker(Locale.Get("K45_DTP_PROP_COLOR"), BoardGeneratorHighwayMileage.LoadedMileageMarkerModel.PropColor, OnChangePropColor);
 
             KlyteMonoUtils.CreateHorizontalScrollPanel(m_uiHelperHS.Self, out UIScrollablePanel scrollTabs, out _, m_uiHelperHS.Self.width - 20, 40, Vector3.zero);
 

@@ -117,7 +117,6 @@
     <Compile Include="commons\Utils\VehicleUtils.cs" />
     <Compile Include="commons\Utils\XmlUtils.cs" />
     <Compile Include="Libraries\BasicLib.cs" />
-    <Compile Include="ModShared\AdrEvents.cs" />
     <Compile Include="Overrides\BoardGeneration\BasicRenderInformation.cs" />
     <Compile Include="Overrides\BoardGeneration\PathCrawler\MileagePlateDescriptor.cs" />
     <Compile Include="Overrides\BoardGeneration\PathCrawler\RoadIdentifier.cs" />
@@ -212,7 +211,6 @@
     </MonoDevelop>
   </ProjectExtensions>
   <ItemGroup>
-    <Folder Include="AI\" />
     <Folder Include="Properties\" />
   </ItemGroup>
   <ItemGroup>
@@ -263,11 +261,10 @@
     <EmbeddedResource Include="UI\Images\sprites.png" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="TLMVersion.txt" />
     <EmbeddedResource Include="commons\UI\Images\sprites.png" />
     <Content Include="commons\UI\Images\sprites.psd" />
     <Content Include="commons\UI\VersionNotes.txt" />
-    <Content Include="UI\Images\sprites.psd" />
+    <None Include="UI\Images\sprites.psd" />
     <EmbeddedResource Include="UI\VersionNotes.txt" />
   </ItemGroup>
   <ItemGroup>
@@ -277,7 +274,6 @@
     <EmbeddedResource Include="UI\i18n\pt.properties" />
     <None Include="commons\README.md" />
     <None Include="packages.config" />
-    <None Include="updateVersionTLM.bat" />
   </ItemGroup>
   <PropertyGroup>
     <PostBuildEvent>rem xcopy /Y "$(TargetPath)" "Q:\Steam\steamapps\workshop\content\255710\1312735149\"
