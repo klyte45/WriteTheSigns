@@ -9,17 +9,17 @@ using UnityEngine;
 namespace Klyte.DynamicTextProps.Tools
 {
 
-    public class RoadSegmentTool : BasicNetTool<RoadSegmentTool>
+    public class BuildingEditorTool : BasicBuildingTool<BuildingEditorTool>
     {
-        public event Action<ushort> OnSelectSegment;
+        public event Action<ushort> OnBuildingSelect;
 
         public override void RenderOverlay(RenderManager.CameraInfo cameraInfo)
         {
 
-            if (m_hoverSegment != 0)
+            if (m_hoverBuilding != 0)
             {
                 Color toolColor = m_hoverColor;
-                RenderOverlay(cameraInfo, toolColor,  m_hoverSegment);
+                RenderOverlay(cameraInfo, toolColor, m_hoverBuilding);
                 return;
             }
 
@@ -27,16 +27,16 @@ namespace Klyte.DynamicTextProps.Tools
 
         protected override void OnLeftClick()
         {
-            if (m_hoverSegment != 0)
+            if (m_hoverBuilding != 0)
             {
-                OnSelectSegment?.Invoke(m_hoverSegment);
+                OnBuildingSelect?.Invoke(m_hoverBuilding);
                 GetComponent<DefaultTool>().enabled = true;
             }
         }
 
         protected override void OnDisable()
         {
-            OnSelectSegment = null;
+            OnBuildingSelect = null;
             base.OnDisable();
         }
 

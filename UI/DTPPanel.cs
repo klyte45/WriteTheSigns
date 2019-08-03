@@ -46,6 +46,7 @@ namespace Klyte.DynamicTextProps.UI
             CreateTab<DTPPropPlacingTab>("ToolbarIconZoomOutGlobe", "K45_DTP_HIGHWAY_SIGN_CONFIG_TAB", "DTPHighwaySign");
             CreateTab<DTPStreetSignTab>("ToolbarIconZoomOutGlobe", "K45_DTP_STREET_SIGN_CONFIG_TAB", "DTPStreetSign");
             CreateTab<DTPMileageMarkerTab>("ToolbarIconZoomOutGlobe", "K45_DTP_MILEAGE_MARKERS_CONFIG_TAB", "DTPMileageMarkerTab");
+            CreateTab<DTPBuildingEditorTab>("ToolbarIconZoomOutGlobe", "K45_DTP_BUILDING_CONFIG_TAB", "DTPBuildingEditorTab");
         }
 
         private void CreateTitleBar()

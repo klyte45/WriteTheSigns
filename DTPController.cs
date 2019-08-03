@@ -8,15 +8,21 @@ namespace Klyte.DynamicTextProps
     public class DTPController : MonoBehaviour
     {
         public RoadSegmentTool RoadSegmentToolInstance => FindObjectOfType<RoadSegmentTool>();
+        public BuildingEditorTool BuildingEditorToolInstance => FindObjectOfType<BuildingEditorTool>();
 
-        public DTPLibPropGroup GroupInstance => DTPLibPropGroup.Instance;
+        public DTPLibPropGroupHigwaySigns GroupInstance => DTPLibPropGroupHigwaySigns.Instance;
 
         public void Awake()
         {
-            FindObjectOfType<ToolController>().gameObject.AddComponent<RoadSegmentTool>();
-            DTPLibPropGroup.Reload();
-            DTPLibPropSingle.Reload();
-            DTPLibTextMeshHighwaySigns.Reload();
+            if (RoadSegmentToolInstance == null)
+            {
+                FindObjectOfType<ToolController>().gameObject.AddComponent<RoadSegmentTool>();
+            }
+
+            if (BuildingEditorToolInstance == null)
+            {
+                FindObjectOfType<ToolController>().gameObject.AddComponent<BuildingEditorTool>();
+            }
         }
 
     }

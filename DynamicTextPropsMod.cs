@@ -54,8 +54,10 @@ namespace Klyte.DynamicTextProps
         public static readonly string FOLDER_NAME = FileUtils.BASE_FOLDER_PATH + "DynamicTextProps";
         internal static readonly string m_defaultFileNameXml = "DefaultBuildingsConfig";
         public const string DEFAULT_GAME_BUILDINGS_CONFIG_FOLDER = "BuildingsDefaultPlacing";
+        public const string DEFAULT_GAME_VEHICLES_CONFIG_FOLDER = "VehiclesDefaultPlacing";
 
         public static string DefaultBuildingsConfigurationFolder { get; } = FOLDER_NAME + Path.DirectorySeparatorChar + DEFAULT_GAME_BUILDINGS_CONFIG_FOLDER;
+        public static string DefaultVehiclesConfigurationFolder { get; } = FOLDER_NAME + Path.DirectorySeparatorChar + DEFAULT_GAME_VEHICLES_CONFIG_FOLDER;
 
     }
 }

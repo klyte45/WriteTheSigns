@@ -80,6 +80,7 @@
     <Compile Include="commons\Interfaces\BasicIUserModSimplified.cs" />
     <Compile Include="commons\Interfaces\TextureAtlasDescriptor.cs" />
     <Compile Include="commons\TextureAtlas\CommonTextureAtlas.cs" />
+    <Compile Include="commons\Tools\BasicBuildingTool.cs" />
     <Compile Include="commons\Tools\BasicNetTool.cs" />
     <Compile Include="commons\UI\AVOPreviewRenderer.cs" />
     <Compile Include="commons\UI\i18n\KlyteLocaleManager.cs" />
@@ -118,9 +119,16 @@
     <Compile Include="commons\Utils\XmlUtils.cs" />
     <Compile Include="Libraries\BasicLib.cs" />
     <Compile Include="Overrides\BoardGeneration\BasicRenderInformation.cs" />
+    <Compile Include="Tools\BuildingTool.cs" />
+    <Compile Include="Xml\BoardDescriptor\BoardDescriptorBuildingXml.cs" />
+    <Compile Include="Xml\BoardGeneratorBuildingConfigXml.cs" />
+    <Compile Include="Xml\BoardTextDescriptor\BoardTextDescriptorBuildingsXml.cs" />
+    <Compile Include="Xml\Containers\BuildingGroupDescriptorXml.cs" />
+    <Compile Include="Xml\Containers\BoardBunchContainerBuilding.cs" />
     <Compile Include="Overrides\BoardGeneration\PathCrawler\MileagePlateDescriptor.cs" />
     <Compile Include="Overrides\BoardGeneration\PathCrawler\RoadIdentifier.cs" />
     <Compile Include="UI\Tabs\DTPMileageMarkerTab.cs" />
+    <Compile Include="UI\Tabs\DTPBuildingEditorTab.cs" />
     <Compile Include="Xml\BoardDescriptor\BoardDescriptorMileageMarkerXml.cs" />
     <Compile Include="Xml\BoardTextDescriptor\BoardTextDescriptorMileageMarkerXml.cs" />
     <Compile Include="Xml\BoardTextDescriptor\BoardTextDescriptorSteetSignXml.cs" />
@@ -131,7 +139,6 @@
     <Compile Include="Overrides\TransportManagerOverrides.cs" />
     <Compile Include="Xml\BoardDescriptor\BoardDescriptorStreetSignXml.cs" />
     <Compile Include="Xml\BoardTextDescriptor\BoardTextDescriptorHigwaySignXml.cs" />
-    <Compile Include="Xml\BoardDescriptor\BoardDescriptorXml.cs" />
     <Compile Include="Xml\BoardDescriptor\BoardDescriptorParentXml.cs" />
     <Compile Include="Overrides\BoardGeneration\BoardGeneratorHighwaySign.cs" />
     <Compile Include="Overrides\BoardGeneration\BoardGeneratorHighwayMileage.cs" />
@@ -141,12 +148,11 @@
     <Compile Include="DynamicTextPropsMod.cs" />
     <Compile Include="DTPController.cs" />
     <Compile Include="Xml\BoardTextDescriptor\BoardTextDescriptorParentXml.cs" />
-    <Compile Include="Xml\BuildingConfigurationSerializeXml.cs" />
     <Compile Include="Xml\Cache\CacheControl.cs" />
     <Compile Include="Xml\Cache\CacheControlHighwaySign.cs" />
     <Compile Include="Xml\Cache\CacheControlSerializer.cs" />
     <Compile Include="Overrides\BoardGeneration\DistrictManagerOverrides.cs" />
-    <Compile Include="Xml\Cache\IBoardBunchContainer.cs" />
+    <Compile Include="Xml\Containers\IBoardBunchContainer.cs" />
     <Compile Include="Overrides\InstanceManagerOverrides.cs" />
     <Compile Include="Overrides\NetManagerOverrides.cs" />
     <Compile Include="Xml\Enums\OwnNameContent.cs" />

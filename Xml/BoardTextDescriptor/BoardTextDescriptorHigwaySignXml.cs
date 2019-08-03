@@ -21,5 +21,4 @@ namespace Klyte.DynamicTextProps.Overrides
         }
 
     }
-    public class BoardTextDescriptorXml : BoardTextDescriptorParentXml<BoardTextDescriptorXml> { }
 }
