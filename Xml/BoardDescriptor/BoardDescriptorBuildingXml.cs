@@ -60,7 +60,8 @@ namespace Klyte.DynamicTextProps.Overrides
     public enum ColoringMode
     {
         ByPlatform,
-        Fixed
+        Fixed,
+        ByDistrict
     }
 }
 

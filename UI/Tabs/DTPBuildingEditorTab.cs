@@ -9,6 +9,7 @@ using Klyte.DynamicTextProps.Overrides;
 using Klyte.DynamicTextProps.TextureAtlas;
 using Klyte.DynamicTextProps.Utils;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
@@ -28,6 +29,7 @@ namespace Klyte.DynamicTextProps.UI
 
         private UIButton m_buttonTool;
 
+        private UIButton m_saveOnAssetFolderButton;
 
 
         private UIHelperExtension m_contentContainer;
@@ -38,6 +40,7 @@ namespace Klyte.DynamicTextProps.UI
 
         private UITextField m_propItemName;
         private UIDropDown m_propsDropdown;
+        private UICheckBox m_showIfNoLineCheck;
         private UITextField[] m_posVectorEditor;
         private UITextField[] m_rotVectorEditor;
         private UITextField[] m_scaleVectorEditor;
@@ -45,6 +48,7 @@ namespace Klyte.DynamicTextProps.UI
 
         private UIDropDown m_colorModeDropdown;
         private UIColorField m_colorEditor;
+        private CheckboxOrdernatedListPlatformItem m_checkboxOrdernatedListPlatform;
 
         private UIButton m_pasteGroupButton;
 
@@ -134,7 +138,12 @@ namespace Klyte.DynamicTextProps.UI
                     BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName] = XmlUtils.DefaultXmlDeserialize<BuildingGroupDescriptorXml>(XmlUtils.DefaultXmlSerialize(x));
                     ReloadBuilding();
                 },
-                () => BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName]);
+                () => BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName],
+                (helper) =>
+                {
+                    helper.AddButton(Locale.Get("K45_DTP_SAVE_OVERRIDE_FOLDER"), () => BoardGeneratorBuildings.SaveInCommonFolder(m_currentBuildingName));
+                    m_saveOnAssetFolderButton = (UIButton) helper.AddButton(Locale.Get("K45_DTP_SAVE_ASSET_FOLDER"), () => BoardGeneratorBuildings.SaveInAssetFolder(m_currentBuildingName));
+                });
 
             KlyteMonoUtils.CreateHorizontalScrollPanel(m_contentContainer.Self, out UIScrollablePanel scrollTabs, out UIScrollbar bar, m_contentContainer.Self.width - 20, 40, Vector3.zero);
 
@@ -201,10 +210,18 @@ namespace Klyte.DynamicTextProps.UI
 
 
             UIHelperExtension groupPropColorMode = m_pseudoTabPropsHelper.AddTogglableGroup(Locale.Get("K45_DTP_PROP_COLOR"));
-            AddDropdown(Locale.Get("K45_DTP_PROP_MODEL_SELECT"), out m_colorModeDropdown, groupPropColorMode, Enum.GetNames(typeof(ColoringMode)).Select(x => Locale.Get("K45_DTP_PROP_COLOR_MODE", x)).ToArray(), SetColoringMode);
+            AddDropdown(Locale.Get("K45_DTP_COLOR_MODE_SELECT"), out m_colorModeDropdown, groupPropColorMode, Enum.GetNames(typeof(ColoringMode)).Select(x => Locale.Get("K45_DTP_PROP_COLOR_MODE", x)).ToArray(), SetColoringMode);
+            m_colorModeDropdown.selectedIndex = -1;
             m_colorEditor = groupPropColorMode.AddColorPicker(Locale.Get("K45_DTP_PAINTING_COLOR"), Color.white, SetPropColor);
             KlyteMonoUtils.LimitWidth(m_colorEditor.parent.GetComponentInChildren<UILabel>(), groupPropColorMode.Self.width / 2, true);
-            m_colorModeDropdown.eventSelectedIndexChanged += (e, idx) => m_colorEditor.GetComponentInParent<UIPanel>().isVisible = idx == (int) ColoringMode.Fixed;
+            groupPropColorMode.AddCheckboxOrdenatedList<CheckboxOrdernatedListPlatformItem, PlatformItem>(out m_checkboxOrdernatedListPlatform, Locale.Get("K45_DTP_PLATFORM_ORDER_SELECTION"), SetPlatformOrder);
+            m_showIfNoLineCheck = groupPropColorMode.AddCheckboxLocale("K45_DTP_SHOW_IF_NO_LINE", false, SetShowIfNoLine);
+            m_colorModeDropdown.eventSelectedIndexChanged += (e, idx) =>
+            {
+                m_colorEditor.GetComponentInParent<UIPanel>().isVisible = idx == (int) ColoringMode.Fixed;
+                m_showIfNoLineCheck.isVisible = idx == (int) ColoringMode.ByPlatform;
+                m_checkboxOrdernatedListPlatform.transform.parent.GetComponentInParent<UIPanel>().isVisible = idx == (int) ColoringMode.ByPlatform;
+            };
 
 
             KlyteMonoUtils.CreateHorizontalScrollPanel(m_pseudoTabPropsHelper.Self, out scrollTabs, out bar, m_pseudoTabPropsHelper.Self.width - 20, 40, Vector3.zero);
@@ -263,6 +280,7 @@ namespace Klyte.DynamicTextProps.UI
             KlyteMonoUtils.LimitWidth(m_colorEditorText.parent.GetComponentInChildren<UILabel>(), groupTexts.Self.width / 2, true);
             AddDropdown(Locale.Get("K45_DTP_TEXT_CONTENT"), out m_dropdownTextContent, groupTexts, BoardGeneratorBuildings.AVAILABLE_TEXT_TYPES.Select(x => Locale.Get("K45_DTP_OWN_NAME_CONTENT_BUILDING", x.ToString())).ToArray(), SetTextOwnNameContent);
             AddTextField(Locale.Get("K45_DTP_CUSTOM_TEXT"), out m_customText, groupTexts, SetTextCustom);
+            m_dropdownTextContent.selectedIndex = -1;
             m_dropdownTextContent.eventSelectedIndexChanged += (e, idx) => m_customText.GetComponentInParent<UIPanel>().isVisible = BoardGeneratorBuildings.AVAILABLE_TEXT_TYPES[idx] == TextType.Fixed;
 
             groupTexts = m_pseudoTabTextsContainer.AddTogglableGroup(Locale.Get("K45_DTP_TEXTS_SIZE_POSITION"));
@@ -283,12 +301,14 @@ namespace Klyte.DynamicTextProps.UI
 
             OnBuildingSet(null);
         }
+        #endregion
 
+        #region Utils
         private UIDropDown AddLibBox<LIB, DESC>(string groupTitle, UIHelperExtension parentHelper,
             out UIButton copyButton, OnButtonClicked actionCopy,
             out UIButton pasteButton, OnButtonClicked actionPaste,
             out UIButton deleteButton, OnButtonClicked actionDelete,
-            Action<DESC> onLoad, Func<DESC> getContentToSave) where LIB : BasicLib<LIB, DESC>, new() where DESC : ILibable
+            Action<DESC> onLoad, Func<DESC> getContentToSave, Action<UIHelperExtension> doWithLibGroup = null) where LIB : BasicLib<LIB, DESC>, new() where DESC : ILibable
         {
             UIHelperExtension groupLibPropGroup = parentHelper.AddTogglableGroup(groupTitle);
 
@@ -363,7 +383,7 @@ namespace Klyte.DynamicTextProps.UI
                     loadDD.selectedValue = saveTxt.text;
                 }
             };
-
+            doWithLibGroup?.Invoke(groupLibPropGroup);
             return loadDD;
         }
 
@@ -448,7 +468,8 @@ namespace Klyte.DynamicTextProps.UI
             }
             return m_tabModel;
         }
-
+        #endregion
+        #region Lib Actions
         private void DoCopy()
         {
             if (m_currentBuildingName != null && CurrentTab >= 0)
@@ -541,15 +562,23 @@ namespace Klyte.DynamicTextProps.UI
             }
         }
 
-        public void Start() => m_propsDropdown.items = BoardGeneratorHighwaySigns.Instance.LoadedProps.Select(x => x.EndsWith("_Data") ? Locale.Get("PROPS_TITLE", x) : x).ToArray();
+        #endregion
+        public void Start() => m_propsDropdown.items = new string[] { Locale.Get("K45_DTP_NONE_PROP_ITEM") }.Concat(BoardGeneratorHighwaySigns.Instance.LoadedProps.Select(x => x.EndsWith("_Data") ? Locale.Get("PROPS_TITLE", x) : x)).ToArray();
+        #region UI Actions
 
         private void SetPropModel(int idx)
         {
-            if (idx >= 0)
+            if (idx > 0)
             {
-                SafeActionInBoard(descriptor => descriptor.m_propName = BoardGeneratorHighwaySigns.Instance.LoadedProps[idx]);
+                SafeActionInBoard(descriptor => descriptor.m_propName = BoardGeneratorHighwaySigns.Instance.LoadedProps[idx - 1]);
+            }
+            else if (idx == 0)
+            {
+                SafeActionInBoard(descriptor => descriptor.m_propName = null);
             }
         }
+        private void SetShowIfNoLine(bool val) => SafeActionInBoard(descriptor => descriptor.m_showIfNoLine = val);
+        private void SetPlatformOrder(List<PlatformItem> val) => SafeActionInBoard(descriptor => descriptor.m_platforms = val.Select(x => x.index).ToArray());
 
         private void SetPropItemName(string txt)
         {
@@ -619,6 +648,8 @@ namespace Klyte.DynamicTextProps.UI
             }
         }
 
+        #endregion
+        #region Load Data Ensure
         private void EnsureBoardsArrayIdx(int idx, int textIdx = -1)
         {
             if (idx >= 0)
@@ -752,6 +783,8 @@ namespace Klyte.DynamicTextProps.UI
 
         }
 
+        #endregion
+        #region Selection Action
         private void EnablePickTool()
         {
             OnBuildingSet(null);
@@ -775,7 +808,7 @@ namespace Klyte.DynamicTextProps.UI
             if (m_currentBuildingName != null)
             {
                 m_isLoading = true;
-                m_buildingName.text = m_currentBuildingName.EndsWith("_Data") ? Locale.Get("BUILDING_NAME", m_currentBuildingName) : m_currentBuildingName;
+                m_buildingName.text = m_currentBuildingName.EndsWith("_Data") ? Locale.Get("BUILDING_TITLE", m_currentBuildingName) : m_currentBuildingName;
                 if (!BoardGeneratorBuildings.m_loadedDescriptors.ContainsKey(m_currentBuildingName))
                 {
                     BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName] = new BuildingGroupDescriptorXml();
@@ -786,7 +819,8 @@ namespace Klyte.DynamicTextProps.UI
             }
             m_pseudoTabPropsHelper.Self.isVisible = m_currentBuildingName != null && CurrentTab >= 0;
             m_contentContainer.Self.isVisible = m_currentBuildingName != null;
-            m_loadPropGroup.items = DTPLibPropGroupHigwaySigns.Instance.List().ToArray();
+            m_loadPropGroup.items = DTPLibPropGroupBuildingSigns.Instance.List().ToArray();
+            m_saveOnAssetFolderButton.isVisible = m_currentBuildingName?.EndsWith("_Data") ?? false;
         }
 
         private void OnChangeTab(int tabVal)
@@ -802,6 +836,8 @@ namespace Klyte.DynamicTextProps.UI
             CurrentTabText = tabVal;
         }
 
+        #endregion
+        #region Load Data copy
         private void ReloadTabInfo()
         {
             m_pseudoTabPropsHelper.Self.isVisible = m_currentBuildingName != null && CurrentTab >= 0;
@@ -815,13 +851,14 @@ namespace Klyte.DynamicTextProps.UI
             EnsureTabQuantityTexts(BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName]?.BoardDescriptors[CurrentTab]?.m_textDescriptors?.Length ?? 0);
             ConfigureTabsShownText(BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName]?.BoardDescriptors[CurrentTab]?.m_textDescriptors?.Length ?? 0);
             m_isLoading = false;
-            m_loadPropItem.items = DTPLibPropSingleHighwaySigns.Instance.List().ToArray();
+            m_loadPropItem.items = DTPLibPropSingleBuildingSigns.Instance.List().ToArray();
             OnChangeTabTexts(-1);
         }
         private void LoadTabInfo(BoardDescriptorBuildingXml descriptor)
         {
-            m_propsDropdown.selectedIndex = BoardGeneratorHighwaySigns.Instance.LoadedProps.IndexOf(descriptor?.m_propName);
+            m_propsDropdown.selectedIndex = BoardGeneratorHighwaySigns.Instance.LoadedProps.IndexOf(descriptor?.m_propName ?? "") + 1;
             m_propItemName.text = descriptor?.SaveName ?? "";
+            m_showIfNoLineCheck.isChecked = descriptor?.m_showIfNoLine ?? false;
             m_posVectorEditor[0].text = (descriptor?.PropPositionX ?? 0).ToString();
             m_posVectorEditor[1].text = (descriptor?.PropPositionY ?? 0).ToString();
             m_posVectorEditor[2].text = (descriptor?.PropPositionZ ?? 0).ToString();
@@ -832,6 +869,8 @@ namespace Klyte.DynamicTextProps.UI
             m_scaleVectorEditor[1].text = (descriptor?.ScaleY ?? 1).ToString();
             m_scaleVectorEditor[2].text = (descriptor?.ScaleZ ?? 1).ToString();
             m_colorEditor.selectedColor = descriptor?.FixedColor ?? Color.white;
+            m_colorModeDropdown.selectedIndex = (int) (descriptor?.ColorModeProp ?? 0);
+            m_checkboxOrdernatedListPlatform.SetData(PlatformItem.CreateFrom(BoardGeneratorBuildings.GetStopPointsDescriptorFor(m_currentBuildingName), descriptor?.m_platforms ?? new int[0]));
         }
         private void ReloadTabInfoText()
         {
@@ -870,6 +909,46 @@ namespace Klyte.DynamicTextProps.UI
 
         #endregion
 
+        private class PlatformItem : ICheckable
+        {
+            public bool IsChecked { get; set; }
+
+            private Color32 OwnColor => BoardGeneratorBuildings.m_colorOrder[index % BoardGeneratorBuildings.m_colorOrder.Length];
+
+            public StopSearchUtils.StopPointDescriptorLanes descriptorLane;
+            public int index;
+            public override string ToString() => $"<color #{OwnColor.ToRGB()}><sprite EmptySprite></color> #{index} - {descriptorLane.vehicleType} @ {descriptorLane.platformLine.GetBounds().center}";
+
+            public static List<PlatformItem> CreateFrom(IEnumerable<StopSearchUtils.StopPointDescriptorLanes> list, int[] order)
+            {
+                var result = list.Select((x, i) => new PlatformItem
+                {
+                    descriptorLane = x,
+                    index = i,
+                    IsChecked = Array.IndexOf(order, i) > -1
+                }).ToList();
+
+                result.Sort((x, y) =>
+                 {
+                     if (x.IsChecked != y.IsChecked)
+                     {
+                         return x.IsChecked ? 1 : -1;
+                     }
+                     else if (x.IsChecked)
+                     {
+                         return Array.IndexOf(order, x.index).CompareTo(Array.IndexOf(order, y.index));
+                     }
+                     else
+                     {
+                         return x.index.CompareTo(y.index);
+                     }
+                 });
+
+                return result;
+            }
+        }
+
+        private class CheckboxOrdernatedListPlatformItem : CheckboxOrdernatedList<PlatformItem> { }
     }
 
 

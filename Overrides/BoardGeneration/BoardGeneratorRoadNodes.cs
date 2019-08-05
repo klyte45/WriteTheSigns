@@ -435,7 +435,7 @@ namespace Klyte.DynamicTextProps.Overrides
 
         #endregion
 
-        public override Color GetColor(ushort buildingID, int idx, int secIdx, BoardDescriptorStreetSignXml descriptor)
+        public override Color? GetColor(ushort buildingID, int idx, int secIdx, BoardDescriptorStreetSignXml descriptor)
         {
             if (secIdx == 0)
             {

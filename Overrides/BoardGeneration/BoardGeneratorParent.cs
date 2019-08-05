@@ -33,7 +33,7 @@ namespace Klyte.DynamicTextProps.Overrides
             font.baseline = (Singleton<DistrictManager>.instance.m_properties.m_areaNameFont as UIDynamicFont).baseline;
             font.size = (Singleton<DistrictManager>.instance.m_properties.m_areaNameFont as UIDynamicFont).size * 4;
             font.lineHeight = (Singleton<DistrictManager>.instance.m_properties.m_areaNameFont as UIDynamicFont).lineHeight;
-            List<string> fontList = new List<string> { fontName };
+            var fontList = new List<string> { fontName };
             fontList.AddRange(DistrictManager.instance.m_properties?.m_areaNameFont?.baseFont?.fontNames?.ToList());
             font.baseFont = Font.CreateDynamicFontFromOSFont(fontList.ToArray(), 64);
             font.lineHeight = 70;
@@ -44,7 +44,7 @@ namespace Klyte.DynamicTextProps.Overrides
 
         public void ChangeFont(string newFont)
         {
-            List<string> fontList = new List<string>();
+            var fontList = new List<string>();
             if (newFont != null)
             {
                 fontList.Add(newFont);
@@ -115,10 +115,10 @@ namespace Klyte.DynamicTextProps.Overrides
 
         protected Quad2 GetBounds(ref Building data)
         {
-            int width = data.Width;
-            int length = data.Length;
-            Vector2 vector = new Vector2(Mathf.Cos(data.m_angle), Mathf.Sin(data.m_angle));
-            Vector2 vector2 = new Vector2(vector.y, -vector.x);
+            var width = data.Width;
+            var length = data.Length;
+            var vector = new Vector2(Mathf.Cos(data.m_angle), Mathf.Sin(data.m_angle));
+            var vector2 = new Vector2(vector.y, -vector.x);
             vector *= width * 4f;
             vector2 *= length * 4f;
             Vector2 a = VectorUtils.XZ(data.m_position);
@@ -133,13 +133,13 @@ namespace Klyte.DynamicTextProps.Overrides
         {
             Vector2 ref1v2 = VectorUtils.XZ(ref1);
             Vector2 ref2v2 = VectorUtils.XZ(ref2);
-            float halfLength = (ref1v2 - ref2v2).magnitude / 2;
+            var halfLength = (ref1v2 - ref2v2).magnitude / 2;
             Vector2 center = (ref1v2 + ref2v2) / 2;
-            float angle = Vector2.Angle(ref1v2, ref2v2);
+            var angle = Vector2.Angle(ref1v2, ref2v2);
 
 
-            Vector2 vector = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
-            Vector2 vector2 = new Vector2(vector.y, -vector.x);
+            var vector = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
+            var vector2 = new Vector2(vector.y, -vector.x);
             vector *= halfWidth;
             vector2 *= halfLength;
             Quad2 quad = default;
@@ -154,9 +154,17 @@ namespace Klyte.DynamicTextProps.Overrides
 
         protected void RenderPropMesh(ref PropInfo propInfo, RenderManager.CameraInfo cameraInfo, ushort refId, int boardIdx, int secIdx, int layerMask, float refAngleRad, Vector3 position, Vector4 dataVector, ref string propName, Vector3 propAngle, Vector3 propScale, ref BD descriptor, out Matrix4x4 propMatrix, out bool rendered)
         {
+            Color? propColor = GetColor(refId, boardIdx, secIdx, descriptor);
+            if (propColor == null)
+            {
+                rendered = false;
+                propMatrix = new Matrix4x4();
+                return;
+            }
+
             if (!string.IsNullOrEmpty(propName))
             {
-                if (propInfo == null)
+                if (propInfo == null || propInfo.name != propName)
                 {
                     propInfo = PrefabCollection<PropInfo>.FindLoaded(propName);
                     if (propInfo == null)
@@ -165,7 +173,11 @@ namespace Klyte.DynamicTextProps.Overrides
                         propName = null;
                     }
                 }
-                propInfo.m_color0 = GetColor(refId, boardIdx, secIdx, descriptor);
+                propInfo.m_color0 = propColor.GetValueOrDefault();
+            }
+            else
+            {
+                propInfo = null;
             }
             propMatrix = RenderProp(refId, refAngleRad, cameraInfo, propInfo, position, dataVector, boardIdx, layerMask, propAngle, propScale, out rendered);
         }
@@ -181,7 +193,7 @@ namespace Klyte.DynamicTextProps.Overrides
         {
             rendered = false;
             //     DistrictManager instance2 = Singleton<DistrictManager>.instance;
-            Randomizer randomizer = new Randomizer((refId << 6) | (idx + 32));
+            var randomizer = new Randomizer((refId << 6) | (idx + 32));
             Matrix4x4 matrix = default;
             matrix.SetTRS(position, Quaternion.AngleAxis(rotation.y + (refAngleRad * Mathf.Rad2Deg), Vector3.down) * Quaternion.AngleAxis(rotation.x, Vector3.left) * Quaternion.AngleAxis(rotation.z, Vector3.back), scale);
             if (propInfo != null)
@@ -197,8 +209,8 @@ namespace Klyte.DynamicTextProps.Overrides
                 if (cameraInfo.CheckRenderDistance(position, propInfo.m_maxRenderDistance * scale.sqrMagnitude))
                 {
                     InstanceID propRenderID2 = GetPropRenderID(refId);
-                    int oldLayerMask = cameraInfo.m_layerMask;
-                    float oldRenderDist = propInfo.m_lodRenderDistance;
+                    var oldLayerMask = cameraInfo.m_layerMask;
+                    var oldRenderDist = propInfo.m_lodRenderDistance;
                     propInfo.m_lodRenderDistance *= scale.sqrMagnitude;
                     cameraInfo.m_layerMask = 0x7FFFFFFF;
                     try
@@ -258,12 +270,12 @@ namespace Klyte.DynamicTextProps.Overrides
                 return;
             }
 
-            float overflowScaleX = 1f;
-            float overflowScaleY = 1f;
-            float defaultMultiplierX = textDescriptor.m_textScale * m_scalingMatrix.x;
-            float defaultMultiplierY = textDescriptor.m_textScale * m_scalingMatrix.y;
-            float realWidth = defaultMultiplierX * renderInfo.m_sizeMetersUnscaled.x;
-            float realHeight = defaultMultiplierY * renderInfo.m_sizeMetersUnscaled.y;
+            var overflowScaleX = 1f;
+            var overflowScaleY = 1f;
+            var defaultMultiplierX = textDescriptor.m_textScale * m_scalingMatrix.x;
+            var defaultMultiplierY = textDescriptor.m_textScale * m_scalingMatrix.y;
+            var realWidth = defaultMultiplierX * renderInfo.m_sizeMetersUnscaled.x;
+            var realHeight = defaultMultiplierY * renderInfo.m_sizeMetersUnscaled.y;
             Vector3 targetRelativePosition = textDescriptor.m_textRelativePosition;
             //    LogUtils.DoLog($"[{GetType().Name},{refID},{boardIdx},{secIdx}] realWidth = {realWidth}; realHeight = {realHeight}; renderInfo.m_mesh.bounds = {renderInfo.m_mesh.bounds};");
             if (textDescriptor.m_maxWidthMeters > 0 && textDescriptor.m_maxWidthMeters < realWidth)
@@ -278,7 +290,7 @@ namespace Klyte.DynamicTextProps.Overrides
             {
                 if (textDescriptor.m_maxWidthMeters > 0 && textDescriptor.m_textAlign != UIHorizontalAlignment.Center)
                 {
-                    float factor = textDescriptor.m_textAlign == UIHorizontalAlignment.Left == (((textDescriptor.m_textRelativeRotation.y % 360) + 810) % 360 > 180) ? 0.5f : -0.5f;
+                    var factor = textDescriptor.m_textAlign == UIHorizontalAlignment.Left == (((textDescriptor.m_textRelativeRotation.y % 360) + 810) % 360 > 180) ? 0.5f : -0.5f;
                     targetRelativePosition += new Vector3((textDescriptor.m_maxWidthMeters - realWidth) * factor / descriptor.ScaleX, 0, 0);
                 }
             }
@@ -286,7 +298,7 @@ namespace Klyte.DynamicTextProps.Overrides
 
             if (textDescriptor.m_verticalAlign != UIVerticalAlignment.Middle)
             {
-                float factor = textDescriptor.m_verticalAlign == UIVerticalAlignment.Bottom == (((textDescriptor.m_textRelativeRotation.x % 360) + 810) % 360 > 180) ? -1f : 1f;
+                var factor = textDescriptor.m_verticalAlign == UIVerticalAlignment.Bottom == (((textDescriptor.m_textRelativeRotation.x % 360) + 810) % 360 > 180) ? -1f : 1f;
                 targetRelativePosition += new Vector3(0, realHeight * factor, 0);
             }
 
@@ -322,7 +334,7 @@ namespace Klyte.DynamicTextProps.Overrides
         protected void UpdateMeshStreetSuffix(ushort idx, ref BRI bri)
         {
             LogUtils.DoLog($"!UpdateMeshStreetSuffix {idx}");
-            string result = "";
+            var result = "";
             result = DTPHookable.GetStreetSuffix(idx);
             RefreshNameData(ref bri, result);
         }
@@ -331,7 +343,7 @@ namespace Klyte.DynamicTextProps.Overrides
         protected void UpdateMeshFullNameStreet(ushort idx, ref BRI bri)
         {
             //(ushort segmentID, ref string __result, ref List<ushort> usedQueue, bool defaultPrefix, bool removePrefix = false)
-            string name = DTPHookable.GetStreetFullName(idx);
+            var name = DTPHookable.GetStreetFullName(idx);
             LogUtils.DoLog($"!GenName {name} for {idx}");
             RefreshNameData(ref bri, name);
         }
@@ -346,7 +358,7 @@ namespace Klyte.DynamicTextProps.Overrides
             }
 
             UIFontManager.Invalidate(overrideFont ?? DrawFont);
-            UIRenderData uirenderData = UIRenderData.Obtain();
+            var uirenderData = UIRenderData.Obtain();
             try
             {
                 uirenderData.Clear();
@@ -358,8 +370,8 @@ namespace Klyte.DynamicTextProps.Overrides
                 using (UIFontRenderer uifontRenderer = (overrideFont ?? DrawFont).ObtainRenderer())
                 {
 
-                    float width = 10000f;
-                    float height = 900f;
+                    var width = 10000f;
+                    var height = 900f;
                     uifontRenderer.colorizeSprites = true;
                     uifontRenderer.defaultColor = Color.white;
                     uifontRenderer.textScale = m_textScale;
@@ -404,15 +416,15 @@ namespace Klyte.DynamicTextProps.Overrides
                 return points.ToArray();
             }
 
-            Vector3 max = new Vector3(points.Select(x => x.x).Max(), points.Select(x => x.y).Max(), points.Select(x => x.z).Max());
-            Vector3 min = new Vector3(points.Select(x => x.x).Min(), points.Select(x => x.y).Min(), points.Select(x => x.z).Min());
+            var max = new Vector3(points.Select(x => x.x).Max(), points.Select(x => x.y).Max(), points.Select(x => x.z).Max());
+            var min = new Vector3(points.Select(x => x.x).Min(), points.Select(x => x.y).Min(), points.Select(x => x.z).Min());
             Vector3 center = (max + min) / 2;
 
             return points.Select(x => x - center).ToArray();
         }
 
         #endregion
-        public abstract Color GetColor(ushort buildingID, int idx, int secIdx, BD descriptor);
+        public abstract Color? GetColor(ushort buildingID, int idx, int secIdx, BD descriptor);
         public abstract Color GetContrastColor(ushort refID, int boardIdx, int secIdx, BD descriptor);
 
         #region UpdateData
@@ -429,7 +441,7 @@ namespace Klyte.DynamicTextProps.Overrides
             targetFont = DrawFont;
             if (textDescriptor.GeneratedFixedTextRenderInfo == null || textDescriptor.GeneratedFixedTextRenderInfoTick < lastFontUpdateFrame)
             {
-                BRI result = textDescriptor.GeneratedFixedTextRenderInfo as BRI;
+                var result = textDescriptor.GeneratedFixedTextRenderInfo as BRI;
                 RefreshNameData(ref result, (textDescriptor.m_isFixedTextLocalized ? Locale.Get(textDescriptor.m_fixedText, textDescriptor.m_fixedTextLocaleKey) : textDescriptor.m_fixedText) ?? "");
                 textDescriptor.GeneratedFixedTextRenderInfo = result;
             }
@@ -454,8 +466,8 @@ namespace Klyte.DynamicTextProps.Overrides
             {
                 return;
             }
-            using MemoryStream memoryStream = new MemoryStream(SerializableDataManager.LoadData(ID));
-            byte[] storage = memoryStream.ToArray();
+            using var memoryStream = new MemoryStream(SerializableDataManager.LoadData(ID));
+            var storage = memoryStream.ToArray();
             Deserialize(System.Text.Encoding.UTF8.GetString(storage));
         }
 
@@ -467,14 +479,14 @@ namespace Klyte.DynamicTextProps.Overrides
                 return;
             }
 
-            string serialData = Serialize();
+            var serialData = Serialize();
             LogUtils.DoLog($"serialData: {serialData ?? "<NULL>"}");
             if (serialData == null)
             {
                 return;
             }
 
-            byte[] data = System.Text.Encoding.UTF8.GetBytes(serialData);
+            var data = System.Text.Encoding.UTF8.GetBytes(serialData);
             SerializableDataManager.SaveData(ID, data);
         }
 

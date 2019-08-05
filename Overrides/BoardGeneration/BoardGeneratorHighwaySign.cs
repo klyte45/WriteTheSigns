@@ -314,7 +314,7 @@ namespace Klyte.DynamicTextProps.Overrides
         }
         #endregion
 
-        public override Color GetColor(ushort segmentId, int idx, int secIdx, BoardDescriptorHigwaySignXml descriptor) => m_boardsContainers[segmentId].m_boardsData[idx].descriptor.m_color;
+        public override Color? GetColor(ushort segmentId, int idx, int secIdx, BoardDescriptorHigwaySignXml descriptor) => m_boardsContainers[segmentId].m_boardsData[idx].descriptor.m_color;
 
         protected override InstanceID GetPropRenderID(ushort nodeId)
         {

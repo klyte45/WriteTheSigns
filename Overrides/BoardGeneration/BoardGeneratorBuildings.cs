@@ -1,10 +1,12 @@
 ﻿using ColossalFramework;
 using ColossalFramework.DataBinding;
 using ColossalFramework.Math;
+using ColossalFramework.Packaging;
 using ColossalFramework.UI;
 using Klyte.Commons.Extensors;
 using Klyte.Commons.Utils;
 using Klyte.DynamicTextProps.UI;
+using Klyte.DynamicTextProps.Utils;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -25,6 +27,7 @@ namespace Klyte.DynamicTextProps.Overrides
         private DTPBuildingEditorTab EditorInstance => DTPBuildingEditorTab.Instance;
 
         private LineDescriptor[] m_linesDescriptors;
+        private DistrictDescriptor[] m_districtDescriptors;
         private UpdateFlagsBuildings[] m_updateData;
         private readonly Dictionary<string, StopPointDescriptorLanes[]> m_buildingStopsDescriptor = new Dictionary<string, StopPointDescriptorLanes[]>();
 
@@ -56,6 +59,7 @@ namespace Klyte.DynamicTextProps.Overrides
             NetManagerOverrides.EventNodeChanged += OnNodeChanged;
             TransportManager.instance.eventLineColorChanged += OnLineUpdated;
             InstanceManagerOverrides.EventOnBuildingRenamed += OnBuildingNameChanged;
+            DistrictManagerOverrides.EventOnDistrictChanged += () => m_districtDescriptors = new DistrictDescriptor[DistrictManager.MAX_DISTRICT_COUNT];
 
             #region Hooks
             System.Reflection.MethodInfo postRenderMeshs = GetType().GetMethod("AfterRenderMeshes", RedirectorUtils.allFlags);
@@ -73,16 +77,19 @@ namespace Klyte.DynamicTextProps.Overrides
 
             #endregion
         }
+        protected override void OnChangeFont(string fontName) => LoadedConfig.DefaultFont = fontName;
+
+        private static string DefaultFilename { get; } = $"{DynamicTextPropsMod.m_defaultFileNameXml}.xml";
         public void LoadAllBuildingConfigurations()
         {
-            FileUtils.ScanPrefabsFolders($"{DynamicTextPropsMod.m_defaultFileNameXml}.xml", LoadDescriptorsFromXml);
+            FileUtils.ScanPrefabsFolders(DefaultFilename, LoadDescriptorsFromXml);
             var errorList = new List<string>();
             foreach (var filename in Directory.GetFiles(DynamicTextPropsMod.DefaultBuildingsConfigurationFolder, "*.xml"))
             {
                 try
                 {
                     using FileStream stream = File.OpenRead(filename);
-                    LoadDescriptorsFromXml(stream);
+                    LoadDescriptorsFromXml(stream, null);
                 }
                 catch (Exception e)
                 {
@@ -92,6 +99,7 @@ namespace Klyte.DynamicTextProps.Overrides
 
             m_updateData = new UpdateFlagsBuildings[BuildingManager.MAX_BUILDING_COUNT];
             m_linesDescriptors = new LineDescriptor[TransportManager.MAX_LINE_COUNT];
+            m_districtDescriptors = new DistrictDescriptor[DistrictManager.MAX_DISTRICT_COUNT];
             m_boardsContainers = new BoardBunchContainerBuilding[BuildingManager.MAX_BUILDING_COUNT];
             if (errorList.Count > 0)
             {
@@ -124,7 +132,7 @@ namespace Klyte.DynamicTextProps.Overrides
             }
         }
 
-        private void LoadDescriptorsFromXml(FileStream stream)
+        private void LoadDescriptorsFromXml(FileStream stream, BuildingInfo info)
         {
             var serializer = new XmlSerializer(typeof(BuildingGroupDescriptorXml));
 
@@ -135,7 +143,15 @@ namespace Klyte.DynamicTextProps.Overrides
                 {
                     m_loadedDescriptors = new Dictionary<string, BuildingGroupDescriptorXml>();
                 }
-
+                if (info != null)
+                {
+                    var propEffName = info.name.Split(".".ToCharArray(), 2);
+                    var xmlEffName = config.BuildingName.Split(".".ToCharArray(), 2);
+                    if (propEffName.Length == 2 && xmlEffName.Length == 2 && xmlEffName[1] == propEffName[1])
+                    {
+                        config.BuildingName = info.name;
+                    }
+                }
                 m_loadedDescriptors[config.BuildingName] = config;
             }
         }
@@ -194,6 +210,15 @@ namespace Klyte.DynamicTextProps.Overrides
 
         public static void AfterRenderMeshes(RenderManager.CameraInfo cameraInfo, ushort buildingID, ref Building data, int layerMask, ref RenderManager.Instance instance) => Instance.AfterRenderMeshesImpl(cameraInfo, buildingID, ref data, layerMask, ref instance);
 
+        public static StopPointDescriptorLanes[] GetStopPointsDescriptorFor(string building)
+        {
+            if (!Instance.m_buildingStopsDescriptor.ContainsKey(building))
+            {
+                Instance.m_buildingStopsDescriptor[building] = MapStopPoints(PrefabCollection<BuildingInfo>.FindLoaded(building));
+            }
+            return Instance.m_buildingStopsDescriptor[building];
+        }
+
         public void AfterRenderMeshesImpl(RenderManager.CameraInfo cameraInfo, ushort buildingID, ref Building data, int layerMask, ref RenderManager.Instance renderInstance)
         {
             if (EditorInstance.component.isVisible && EditorInstance.m_currentBuildingName == data.Info.name)
@@ -204,8 +229,8 @@ namespace Klyte.DynamicTextProps.Overrides
                 }
                 for (var i = 0; i < m_buildingStopsDescriptor[data.Info.name].Length; i++)
                 {
-                    m_onOverlayRenderQueue.Add(Tuple.New(renderInstance.m_dataMatrix1.MultiplyPoint(m_buildingStopsDescriptor[data.Info.name][i].platformLine.GetBounds().center),
-                           m_buildingStopsDescriptor[data.Info.name][i].width / 2, colorOrder[i % 10]));
+                    m_onOverlayRenderQueue.Add(Tuple.New(renderInstance.m_dataMatrix1.MultiplyPoint(m_buildingStopsDescriptor[data.Info.name][i].platformLine.Position(0.5f)),
+                           m_buildingStopsDescriptor[data.Info.name][i].width / 2, m_colorOrder[i % m_colorOrder.Length]));
                 }
             }
             if (!m_loadedDescriptors.ContainsKey(data.Info.name) || (m_loadedDescriptors[data.Info.name]?.BoardDescriptors?.Length ?? 0) == 0)
@@ -342,7 +367,7 @@ namespace Klyte.DynamicTextProps.Overrides
                                 {
                                     Vector3 relPos = inverseMatrix.MultiplyPoint(NetManager.instance.m_nodes.m_buffer[x].m_position);
                                     var dist = m_buildingStopsDescriptor[buildingName][i].platformLine.DistanceSqr(relPos, out _);
-                                    var diffY = Mathf.Abs(relPos.y - m_buildingStopsDescriptor[buildingName][i].platformLine.GetBounds().center.y);
+                                    var diffY = Mathf.Abs(relPos.y - m_buildingStopsDescriptor[buildingName][i].platformLine.Position(0.5f).y);
                                     if (DynamicTextPropsMod.DebugMode)
                                     {
                                         LogUtils.DoLog($"stop {x} => relPos = {relPos}; dist = {dist}; diffY = {diffY}");
@@ -369,7 +394,7 @@ namespace Klyte.DynamicTextProps.Overrides
         }
         #endregion
 
-        public override Color GetColor(ushort buildingID, int boardIdx, int textIdx, BoardDescriptorBuildingXml descriptor)
+        public override Color? GetColor(ushort buildingID, int boardIdx, int textIdx, BoardDescriptorBuildingXml descriptor)
         {
             switch (descriptor.ColorModeProp)
             {
@@ -390,26 +415,23 @@ namespace Klyte.DynamicTextProps.Overrides
                                 }
                                 return m_linesDescriptors[line].m_lineColor;
                             }
+                            else if (!descriptor.m_showIfNoLine)
+                            {
+                                return null;
+                            }
                         }
                     }
                     break;
+                case ColoringMode.ByDistrict:
+                    var districtId = DistrictManager.instance.GetDistrict(BuildingManager.instance.m_buildings.m_buffer[buildingID].m_position);
+                    if (m_districtDescriptors[districtId] == null)
+                    {
+                        UpdateDistrict(districtId);
+                    }
+                    return m_districtDescriptors[districtId].m_districtColor;
             }
             return Color.white;
         }
-
-        private readonly Color[] colorOrder = new Color[]
-        {
-            Color.red,
-            Color.Lerp(Color.red, Color.yellow,0.5f),
-            Color.yellow,
-            Color.green,
-            Color.cyan,
-            Color.blue,
-            Color.Lerp(Color.blue, Color.magenta,0.5f),
-            Color.magenta,
-            Color.white,
-            Color.black,
-        };
         public override Color GetContrastColor(ushort buildingID, int boardIdx, int textIdx, BoardDescriptorBuildingXml descriptor)
         {
             switch (descriptor.ColorModeProp)
@@ -434,6 +456,13 @@ namespace Klyte.DynamicTextProps.Overrides
                         }
                     }
                     break;
+                case ColoringMode.ByDistrict:
+                    var districtId = DistrictManager.instance.GetDistrict(BuildingManager.instance.m_buildings.m_buffer[buildingID].m_position);
+                    if (m_districtDescriptors[districtId] == null)
+                    {
+                        UpdateDistrict(districtId);
+                    }
+                    return m_districtDescriptors[districtId].m_contrastColor;
 
             }
             return Color.black;
@@ -448,6 +477,18 @@ namespace Klyte.DynamicTextProps.Overrides
             };
 
             m_linesDescriptors[lineId].m_contrastColor = KlyteMonoUtils.ContrastColor(m_linesDescriptors[lineId].m_lineColor);
+
+        }
+
+        private void UpdateDistrict(ushort districtId)
+        {
+            m_districtDescriptors[districtId] = new DistrictDescriptor
+            {
+                m_districtColor = DTPHookable.GetDistrictColor(districtId),
+                m_lastUpdate = SimulationManager.instance.m_currentTickIndex
+            };
+
+            m_districtDescriptors[districtId].m_contrastColor = KlyteMonoUtils.ContrastColor(m_districtDescriptors[districtId].m_districtColor);
 
         }
 
@@ -466,7 +507,39 @@ namespace Klyte.DynamicTextProps.Overrides
             //public BasicRenderInformation m_lineNumber;
             public uint m_lastUpdate;
         }
+        private class DistrictDescriptor
+        {
+            public Color m_districtColor;
+            public Color m_contrastColor;
+            //public BasicRenderInformation m_lineName;
+            //public BasicRenderInformation m_lineNumber;
+            public uint m_lastUpdate;
+        }
 
+
+        internal static readonly Color[] m_colorOrder = new Color[]
+        {
+            Color.red,
+            Color.Lerp(Color.red, Color.yellow,0.5f),
+            Color.yellow,
+            Color.green,
+            Color.cyan,
+            Color.blue,
+            Color.Lerp(Color.blue, Color.magenta,0.5f),
+            Color.magenta,
+            Color.white,
+            Color.black,
+            Color.Lerp( Color.red,                                    Color.black,0.5f),
+            Color.Lerp( Color.Lerp(Color.red, Color.yellow,0.5f),     Color.black,0.5f),
+            Color.Lerp( Color.yellow,                                 Color.black,0.5f),
+            Color.Lerp( Color.green,                                  Color.black,0.5f),
+            Color.Lerp( Color.cyan,                                   Color.black,0.5f),
+            Color.Lerp( Color.blue,                                   Color.black,0.5f),
+            Color.Lerp( Color.Lerp(Color.blue, Color.magenta,0.5f),   Color.black,0.5f),
+            Color.Lerp( Color.magenta,                                Color.black,0.5f),
+            Color.Lerp( Color.white,                                  Color.black,0.25f),
+            Color.Lerp( Color.white,                                  Color.black,0.75f)
+        };
         protected struct UpdateFlagsBuildings
         {
             public bool m_nameMesh;
@@ -479,21 +552,63 @@ namespace Klyte.DynamicTextProps.Overrides
             var serializer = new XmlSerializer(typeof(BuildingGroupDescriptorXml));
             foreach (BuildingGroupDescriptorXml item in fileContent)
             {
-                var filePath = DynamicTextPropsMod.DefaultBuildingsConfigurationFolder + Path.DirectorySeparatorChar + $"{DynamicTextPropsMod.m_defaultFileNameXml}_{item.BuildingName}.xml";
-                if (!File.Exists(filePath))
+                SaveInCommonFolder(serializer, item);
+            }
+        }
+        public static bool SaveInCommonFolder(string buildingName)
+        {
+            if (m_loadedDescriptors.ContainsKey(buildingName))
+            {
+                BuildingGroupDescriptorXml item = m_loadedDescriptors[buildingName];
+                item.BuildingName = buildingName;
+                SaveInCommonFolder(new XmlSerializer(typeof(BuildingGroupDescriptorXml)), item, true);
+                return true;
+            }
+            return false;
+        }
+
+        private static void SaveInCommonFolder(XmlSerializer serializer, BuildingGroupDescriptorXml item, bool force = false)
+        {
+            var filePath = DynamicTextPropsMod.DefaultBuildingsConfigurationFolder + Path.DirectorySeparatorChar + $"{DynamicTextPropsMod.m_defaultFileNameXml}_{item.BuildingName}.xml";
+            SaveInPath(serializer, item, force, filePath);
+        }
+        public static bool SaveInAssetFolder(string buildingName)
+        {
+            if (m_loadedDescriptors.ContainsKey(buildingName))
+            {
+                BuildingGroupDescriptorXml item = m_loadedDescriptors[buildingName];
+                Package.Asset asset = PackageManager.FindAssetByName(buildingName);
+                if (!(asset == null) && !(asset.package == null))
                 {
-                    FileStream stream = File.OpenWrite(filePath);
-                    try
+                    var packagePath = asset.package.packagePath;
+                    if (packagePath != null)
                     {
-                        var ns = new XmlSerializerNamespaces();
-                        ns.Add("", "");
-                        stream.SetLength(0);
-                        serializer.Serialize(stream, item, ns);
+                        var filePath = Path.Combine(Path.GetDirectoryName(packagePath), DefaultFilename);
+                        item.BuildingName = buildingName;
+                        SaveInPath(new XmlSerializer(typeof(BuildingGroupDescriptorXml)), item, true, filePath);
+
                     }
-                    finally
-                    {
-                        stream.Close();
-                    }
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private static void SaveInPath(XmlSerializer serializer, BuildingGroupDescriptorXml item, bool force, string filePath)
+        {
+            if (force || !File.Exists(filePath))
+            {
+                FileStream stream = File.OpenWrite(filePath);
+                try
+                {
+                    var ns = new XmlSerializerNamespaces();
+                    ns.Add("", "");
+                    stream.SetLength(0);
+                    serializer.Serialize(stream, item, ns);
+                }
+                finally
+                {
+                    stream.Close();
                 }
             }
         }
@@ -1406,8 +1521,9 @@ namespace Klyte.DynamicTextProps.Overrides
         }
 
         public override string Serialize() => XmlUtils.DefaultXmlSerialize(LoadedConfig, false);
-        #endregion
+
         public static BoardGeneratorBuildingConfigXml LoadedConfig = new BoardGeneratorBuildingConfigXml();
+        #endregion
 
     }
 }

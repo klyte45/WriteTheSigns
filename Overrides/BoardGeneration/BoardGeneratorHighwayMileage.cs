@@ -353,7 +353,7 @@ namespace Klyte.DynamicTextProps.Overrides
         }
         #endregion
 
-        public override Color GetColor(ushort buildingID, int idx, int secIdx, BoardDescriptorMileageMarkerXml descriptor) => descriptor.PropColor;
+        public override Color? GetColor(ushort buildingID, int idx, int secIdx, BoardDescriptorMileageMarkerXml descriptor) => descriptor.PropColor;
 
         protected override InstanceID GetPropRenderID(ushort nodeId)
         {

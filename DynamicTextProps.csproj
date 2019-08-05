@@ -73,6 +73,7 @@
     <Compile Include="CommonProperties.cs" />
     <Compile Include="commons\Extensors\Redirector.cs" />
     <Compile Include="commons\Extensors\UI\NumberedColorList.cs" />
+    <Compile Include="commons\Extensors\UI\CheckboxOrdernatedList.cs" />
     <Compile Include="commons\Extensors\UI\TextList.cs" />
     <Compile Include="commons\Extensors\UI\UIHelperExtended.cs" />
     <Compile Include="commons\Extensors\UI\UITabstripAutoResize.cs" />
