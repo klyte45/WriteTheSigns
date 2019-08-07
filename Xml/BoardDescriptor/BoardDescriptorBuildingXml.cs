@@ -61,7 +61,8 @@ namespace Klyte.DynamicTextProps.Overrides
     {
         ByPlatform,
         Fixed,
-        ByDistrict
+        ByDistrict,
+        FromBuilding
     }
 }
 

@@ -429,6 +429,8 @@ namespace Klyte.DynamicTextProps.Overrides
                         UpdateDistrict(districtId);
                     }
                     return m_districtDescriptors[districtId].m_districtColor;
+                case ColoringMode.FromBuilding:
+                    return BuildingManager.instance.m_buildings.m_buffer[buildingID].Info.m_buildingAI.GetColor(buildingID, ref BuildingManager.instance.m_buildings.m_buffer[buildingID], InfoManager.InfoMode.None);
             }
             return Color.white;
         }
@@ -463,6 +465,8 @@ namespace Klyte.DynamicTextProps.Overrides
                         UpdateDistrict(districtId);
                     }
                     return m_districtDescriptors[districtId].m_contrastColor;
+                case ColoringMode.FromBuilding:
+                    return KlyteMonoUtils.ContrastColor(BuildingManager.instance.m_buildings.m_buffer[buildingID].Info.m_buildingAI.GetColor(buildingID, ref BuildingManager.instance.m_buildings.m_buffer[buildingID],InfoManager.InfoMode.None));
 
             }
             return Color.black;
