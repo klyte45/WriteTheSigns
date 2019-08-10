@@ -105,7 +105,7 @@ namespace Klyte.DynamicTextProps.UI
 
             m_uiHelperHS = new UIHelperExtension(MainContainer);
 
-            AddDropdown(Locale.Get("K45_DTP_FONT_PLACED_PROPS"), out m_fontSelect, m_uiHelperHS, new string[0], OnSetFont);
+            AddDropdown(Locale.Get("K45_DTP_FONT_STATIONS"), out m_fontSelect, m_uiHelperHS, new string[0], OnSetFont);
             m_fontSelect.width -= 40;
             UIPanel parent = m_fontSelect.GetComponentInParent<UIPanel>();
             UIButton actionButton = ConfigureActionButton(parent);
@@ -114,7 +114,9 @@ namespace Klyte.DynamicTextProps.UI
             DTPUtils.ReloadFontsOf<BoardGeneratorBuildings>(m_fontSelect);
 
             m_buttonTool = (UIButton) m_uiHelperHS.AddButton(Locale.Get("K45_DTP_PICK_A_BUILDING"), EnablePickTool);
-            KlyteMonoUtils.LimitWidth(m_buttonTool, m_uiHelperHS.Self.width - 20, true);
+            KlyteMonoUtils.LimitWidth(m_buttonTool, (m_uiHelperHS.Self.width - 20)/2, true);
+
+            KlyteMonoUtils.LimitWidth((UIButton) m_uiHelperHS.AddButton(Locale.Get("K45_DTP_RELOAD_CONFIGS"), LoadAllBuildingConfigurations), (m_uiHelperHS.Self.width - 20) / 2);
 
             m_contentContainer = m_uiHelperHS.AddGroupExtended(Locale.Get("K45_DTP_PICKED_BUILDING_DATA"));
             ((UIPanel) m_contentContainer.Self).backgroundSprite = "";
@@ -566,6 +568,7 @@ namespace Klyte.DynamicTextProps.UI
         public void Start() => m_propsDropdown.items = new string[] { Locale.Get("K45_DTP_NONE_PROP_ITEM") }.Concat(BoardGeneratorHighwaySigns.Instance.LoadedProps.Select(x => x.EndsWith("_Data") ? Locale.Get("PROPS_TITLE", x) : x)).ToArray();
         #region UI Actions
 
+        private void LoadAllBuildingConfigurations() => BoardGeneratorBuildings.Instance.LoadAllBuildingConfigurations();
         private void SetPropModel(int idx)
         {
             if (idx > 0)

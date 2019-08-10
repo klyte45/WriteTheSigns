@@ -164,7 +164,6 @@
     <Compile Include="UI\DTPPanel.cs" />
     <Compile Include="UI\Tabs\DTPStreetSignTab.cs" />
     <Compile Include="UI\Tabs\DTPPropPlacingTab.cs" />
-    <Compile Include="UI\Tabs\DTPFontConfigTab.cs" />
     <Compile Include="Utils\DTPResourceLoader.cs" />
     <Compile Include="Utils\DTPHookable.cs" />
     <Compile Include="Utils\DTPUtils.cs" />
@@ -271,6 +270,7 @@
     <EmbeddedResource Include="commons\UI\Images\sprites.png" />
     <Content Include="commons\UI\Images\sprites.psd" />
     <Content Include="commons\UI\VersionNotes.txt" />
+    <None Include="README.md" />
     <None Include="UI\Images\sprites.psd" />
     <EmbeddedResource Include="UI\VersionNotes.txt" />
   </ItemGroup>

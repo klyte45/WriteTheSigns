@@ -12,6 +12,8 @@ namespace Klyte.DynamicTextProps.Overrides
     {
         [XmlAttribute("fontName")]
         public string FontName { get; set; }
+        [XmlAttribute("placeOnDistrictBorder")]
+        public bool PlaceOnDistrictBorder { get; set; } = true;
 
         [XmlAttribute("saveName")]
         public string SaveName { get; set; }

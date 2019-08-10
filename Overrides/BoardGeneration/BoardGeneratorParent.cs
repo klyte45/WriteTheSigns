@@ -367,6 +367,7 @@ namespace Klyte.DynamicTextProps.Overrides
                 PoolList<Vector2> uvs = uirenderData.uvs;
                 PoolList<int> triangles = uirenderData.triangles;
                 Vector2 sizeMeters;
+
                 using (UIFontRenderer uifontRenderer = (overrideFont ?? DrawFont).ObtainRenderer())
                 {
 

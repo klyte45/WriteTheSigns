@@ -98,6 +98,7 @@ namespace Klyte.DynamicTextProps.UI
             AddDropdown(Locale.Get("K45_DTP_PROP_MODEL_SELECT"), out m_propsDropdown, m_uiHelperHS, new string[0], SetPropModel);
             m_useDistrictColorCheck = m_uiHelperHS.AddCheckboxLocale("K45_DTP_USE_DISTRICT_COLOR", BoardGeneratorRoadNodes.Instance.LoadedStreetSignDescriptor.UseDistrictColor, OnChangeUseDistrictColor);
             KlyteMonoUtils.LimitWidth(m_useDistrictColorCheck.label, m_uiHelperHS.Self.width - 50);
+            KlyteMonoUtils.LimitWidth(m_uiHelperHS.AddCheckboxLocale("K45_DTP_PLACE_ON_DISTRICT_BORDER", BoardGeneratorRoadNodes.Instance.LoadedStreetSignDescriptor.PlaceOnDistrictBorder, SetPlaceOnDistrictBorder).label, m_uiHelperHS.Self.width - 50);
             m_propColorPicker = m_uiHelperHS.AddColorPicker(Locale.Get("K45_DTP_PROP_COLOR"), BoardGeneratorRoadNodes.Instance.LoadedStreetSignDescriptor.PropColor, OnChangePropColor);
 
             KlyteMonoUtils.CreateHorizontalScrollPanel(m_uiHelperHS.Self, out UIScrollablePanel scrollTabs, out _, m_uiHelperHS.Self.width - 20, 40, Vector3.zero);
@@ -177,6 +178,10 @@ namespace Klyte.DynamicTextProps.UI
             BoardGeneratorRoadNodes.Instance.LoadedStreetSignDescriptor.UseDistrictColor = isChecked;
             m_propColorPicker.parent.isVisible = !isChecked;
             BoardGeneratorRoadNodes.Instance.SoftReset();
+        }
+        private void SetPlaceOnDistrictBorder(bool isChecked)
+        {
+            BoardGeneratorRoadNodes.Instance.LoadedStreetSignDescriptor.PlaceOnDistrictBorder = isChecked;
         }
         private void OnChangePropColor(Color c)
         {

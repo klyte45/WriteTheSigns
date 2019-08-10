@@ -41,12 +41,10 @@ namespace Klyte.DynamicTextProps.UI
             KlyteMonoUtils.CreateUIElement(out UITabContainer tabContainer, m_mainPanel.transform, "DTPTabContainer", new Vector4(0, 80, m_mainPanel.width, m_mainPanel.height - 80));
             m_stripMain.tabPages = tabContainer;
 
-
-            CreateTab<DTPFontConfigTab>("ToolbarIconZoomOutGlobe", "K45_DTP_FONT_CONFIG_TAB", "DTPFonts");
-            CreateTab<DTPPropPlacingTab>("ToolbarIconZoomOutGlobe", "K45_DTP_HIGHWAY_SIGN_CONFIG_TAB", "DTPHighwaySign");
-            CreateTab<DTPStreetSignTab>("ToolbarIconZoomOutGlobe", "K45_DTP_STREET_SIGN_CONFIG_TAB", "DTPStreetSign");
-            CreateTab<DTPMileageMarkerTab>("ToolbarIconZoomOutGlobe", "K45_DTP_MILEAGE_MARKERS_CONFIG_TAB", "DTPMileageMarkerTab");
-            CreateTab<DTPBuildingEditorTab>("ToolbarIconZoomOutGlobe", "K45_DTP_BUILDING_CONFIG_TAB", "DTPBuildingEditorTab");
+            CreateTab<DTPPropPlacingTab>("InfoIconEscapeRoutes", "K45_DTP_HIGHWAY_SIGN_CONFIG_TAB", "DTPHighwaySign");
+            CreateTab<DTPStreetSignTab>("InfoIconTrafficRoutes", "K45_DTP_STREET_SIGN_CONFIG_TAB", "DTPStreetSign");
+            CreateTab<DTPMileageMarkerTab>("LocationMarkerNormal", "K45_DTP_MILEAGE_MARKERS_CONFIG_TAB", "DTPMileageMarkerTab");
+            CreateTab<DTPBuildingEditorTab>("IconAssetBuilding", "K45_DTP_BUILDING_CONFIG_TAB", "DTPBuildingEditorTab");
         }
 
         private void CreateTitleBar()

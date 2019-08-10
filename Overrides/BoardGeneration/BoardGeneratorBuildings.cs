@@ -27,8 +27,8 @@ namespace Klyte.DynamicTextProps.Overrides
         private DTPBuildingEditorTab EditorInstance => DTPBuildingEditorTab.Instance;
 
         private LineDescriptor[] m_linesDescriptors;
+        private ulong[] m_lineLastUpdate;
         private DistrictDescriptor[] m_districtDescriptors;
-        private UpdateFlagsBuildings[] m_updateData;
         private readonly Dictionary<string, StopPointDescriptorLanes[]> m_buildingStopsDescriptor = new Dictionary<string, StopPointDescriptorLanes[]>();
 
         public override int ObjArraySize => BuildingManager.MAX_BUILDING_COUNT;
@@ -59,6 +59,7 @@ namespace Klyte.DynamicTextProps.Overrides
             NetManagerOverrides.EventNodeChanged += OnNodeChanged;
             TransportManager.instance.eventLineColorChanged += OnLineUpdated;
             InstanceManagerOverrides.EventOnBuildingRenamed += OnBuildingNameChanged;
+            TransportManagerOverrides.EventOnLineBuildingUpdated += OnBuildingLineChanged;
             DistrictManagerOverrides.EventOnDistrictChanged += () => m_districtDescriptors = new DistrictDescriptor[DistrictManager.MAX_DISTRICT_COUNT];
 
             #region Hooks
@@ -97,8 +98,8 @@ namespace Klyte.DynamicTextProps.Overrides
                 }
             }
 
-            m_updateData = new UpdateFlagsBuildings[BuildingManager.MAX_BUILDING_COUNT];
             m_linesDescriptors = new LineDescriptor[TransportManager.MAX_LINE_COUNT];
+            m_lineLastUpdate = new ulong[TransportManager.MAX_LINE_COUNT];
             m_districtDescriptors = new DistrictDescriptor[DistrictManager.MAX_DISTRICT_COUNT];
             m_boardsContainers = new BoardBunchContainerBuilding[BuildingManager.MAX_BUILDING_COUNT];
             if (errorList.Count > 0)
@@ -169,25 +170,16 @@ namespace Klyte.DynamicTextProps.Overrides
         {
             if (obj == DrawFont.baseFont)
             {
-                m_updateData.ForEach(x => x.m_nameMesh = false);
+                m_boardsContainers.ForEach(x => x.m_nameSubInfo = null);
             }
         }
 
 
-        private void OnLineUpdated(ushort lineId)
-        {
-            //doLog("onLineUpdated");
-            m_linesDescriptors[lineId] = default;
-            m_updateData.ForEach(x => x.m_platformLines = false);
+        private void OnLineUpdated(ushort lineId) => m_linesDescriptors[lineId] = default;
+        private void OnBuildingNameChanged(ushort id) => m_boardsContainers[id].m_nameSubInfo = null;
+        private void OnBuildingLineChanged(ushort id) => m_boardsContainers[id].m_platformToLine = null;
 
-        }
-        private void OnBuildingNameChanged(ushort id)
-        {
-            //doLog("onBuildingNameChanged");
-            m_updateData[id].m_nameMesh = false;
-        }
-
-        public void OnDescriptorChanged() => m_updateData = new UpdateFlagsBuildings[BuildingManager.MAX_BUILDING_COUNT];
+        public void OnDescriptorChanged() => m_boardsContainers = new BoardBunchContainerBuilding[BuildingManager.MAX_BUILDING_COUNT];
         #endregion
 
         public static void AfterEndOverlayImpl(RenderManager.CameraInfo cameraInfo)
@@ -244,10 +236,10 @@ namespace Klyte.DynamicTextProps.Overrides
             if (m_boardsContainers[buildingID]?.m_boardsData?.Count() != m_loadedDescriptors[data.Info.name].BoardDescriptors.Length)
             {
                 m_boardsContainers[buildingID].m_boardsData = new CacheControl[m_loadedDescriptors[data.Info.name].BoardDescriptors.Length];
-                m_updateData[buildingID].m_nameMesh = false;
+                m_boardsContainers[buildingID].m_nameSubInfo = null;
             }
 
-            UpdateLinesBuilding(buildingID, ref data, m_boardsContainers[buildingID], ref m_updateData[buildingID], ref renderInstance.m_dataMatrix1);
+            UpdateLinesBuilding(buildingID, ref data, m_boardsContainers[buildingID], ref renderInstance.m_dataMatrix1);
             for (var i = 0; i < m_loadedDescriptors[data.Info.name].BoardDescriptors.Length; i++)
             {
                 BoardDescriptorBuildingXml descriptor = m_loadedDescriptors[data.Info.name].BoardDescriptors[i];
@@ -276,17 +268,16 @@ namespace Klyte.DynamicTextProps.Overrides
         protected override BasicRenderInformation GetOwnNameMesh(ushort buildingID, int boardIdx, int secIdx, out UIFont font)
         {
             font = DrawFont;
-            if (m_boardsContainers[buildingID].m_nameSubInfo == null || !m_updateData[buildingID].m_nameMesh)
+            if (m_boardsContainers[buildingID].m_nameSubInfo == null)
             {
                 RefreshNameData(ref m_boardsContainers[buildingID].m_nameSubInfo, BuildingManager.instance.GetBuildingName(buildingID, new InstanceID()) ?? "DUMMY!!!!!");
-                m_updateData[buildingID].m_nameMesh = true;
             }
             return m_boardsContainers[buildingID].m_nameSubInfo;
 
         }
-        protected void UpdateLinesBuilding(ushort buildingID, ref Building data, BoardBunchContainerBuilding bbcb, ref UpdateFlagsBuildings updateFlags, ref Matrix4x4 refMatrix)
+        protected void UpdateLinesBuilding(ushort buildingID, ref Building data, BoardBunchContainerBuilding bbcb, ref Matrix4x4 refMatrix)
         {
-            if (!updateFlags.m_platformLines || bbcb.m_platformToLine == null || (bbcb.m_ordenedLines?.Length > 0 && bbcb.m_linesUpdateFrame < bbcb.m_ordenedLines.Select((x) => m_linesDescriptors[x]?.m_lastUpdate ?? 0).Max()))
+            if (bbcb.m_platformToLine == null || (bbcb.m_platformToLine?.Length > 0 && bbcb.m_platformToLine.SelectMany((x) => x?.Select(y => bbcb.m_linesUpdateFrame < m_lineLastUpdate[y])).Any(x => x)))
             {
                 LogUtils.DoLog("--------------- UpdateLinesBuilding");
                 bbcb.m_platformToLine = null;
@@ -300,7 +291,6 @@ namespace Klyte.DynamicTextProps.Overrides
 
                 if (platforms.Count == 0)
                 {
-                    bbcb.m_ordenedLines = new ushort[0];
                     bbcb.m_platformToLine = new ushort[0][];
                 }
                 else
@@ -388,7 +378,6 @@ namespace Klyte.DynamicTextProps.Overrides
                     }
                 }
                 bbcb.m_linesUpdateFrame = SimulationManager.instance.m_currentTickIndex;
-                updateFlags.m_platformLines = true;
                 LogUtils.DoLog("--------------- end UpdateLinesBuilding");
             }
         }
@@ -409,7 +398,7 @@ namespace Klyte.DynamicTextProps.Overrides
                             var line = m_boardsContainers[buildingID].m_platformToLine[platform].ElementAtOrDefault(0);
                             if (line != 0)
                             {
-                                if (m_linesDescriptors[line] == null)
+                                if (m_linesDescriptors[line].m_lineColor == default)
                                 {
                                     UpdateLine(line);
                                 }
@@ -449,7 +438,7 @@ namespace Klyte.DynamicTextProps.Overrides
                             var line = m_boardsContainers[buildingID].m_platformToLine[platform].ElementAtOrDefault(0);
                             if (line != 0)
                             {
-                                if (m_linesDescriptors[line] == null)
+                                if (m_linesDescriptors[line].m_lineColor == default)
                                 {
                                     UpdateLine(line);
                                 }
@@ -466,7 +455,7 @@ namespace Klyte.DynamicTextProps.Overrides
                     }
                     return m_districtDescriptors[districtId].m_contrastColor;
                 case ColoringMode.FromBuilding:
-                    return KlyteMonoUtils.ContrastColor(BuildingManager.instance.m_buildings.m_buffer[buildingID].Info.m_buildingAI.GetColor(buildingID, ref BuildingManager.instance.m_buildings.m_buffer[buildingID],InfoManager.InfoMode.None));
+                    return KlyteMonoUtils.ContrastColor(BuildingManager.instance.m_buildings.m_buffer[buildingID].Info.m_buildingAI.GetColor(buildingID, ref BuildingManager.instance.m_buildings.m_buffer[buildingID], InfoManager.InfoMode.None));
 
             }
             return Color.black;
@@ -476,11 +465,11 @@ namespace Klyte.DynamicTextProps.Overrides
         {
             m_linesDescriptors[lineId] = new LineDescriptor
             {
-                m_lineColor = TransportManager.instance.GetLineColor(lineId),
-                m_lastUpdate = SimulationManager.instance.m_currentTickIndex
+                m_lineColor = TransportManager.instance.GetLineColor(lineId)
             };
-
+            m_lineLastUpdate[lineId] = SimulationManager.instance.m_currentTickIndex;
             m_linesDescriptors[lineId].m_contrastColor = KlyteMonoUtils.ContrastColor(m_linesDescriptors[lineId].m_lineColor);
+
 
         }
 
@@ -503,20 +492,15 @@ namespace Klyte.DynamicTextProps.Overrides
             return result;
         }
 
-        private class LineDescriptor
+        private struct LineDescriptor
         {
             public Color m_lineColor;
             public Color m_contrastColor;
-            //public BasicRenderInformation m_lineName;
-            //public BasicRenderInformation m_lineNumber;
-            public uint m_lastUpdate;
         }
         private class DistrictDescriptor
         {
             public Color m_districtColor;
             public Color m_contrastColor;
-            //public BasicRenderInformation m_lineName;
-            //public BasicRenderInformation m_lineNumber;
             public uint m_lastUpdate;
         }
 
@@ -544,11 +528,6 @@ namespace Klyte.DynamicTextProps.Overrides
             Color.Lerp( Color.white,                                  Color.black,0.25f),
             Color.Lerp( Color.white,                                  Color.black,0.75f)
         };
-        protected struct UpdateFlagsBuildings
-        {
-            public bool m_nameMesh;
-            public bool m_platformLines;
-        }
 
         public static void GenerateDefaultBuildingsConfiguration()
         {
