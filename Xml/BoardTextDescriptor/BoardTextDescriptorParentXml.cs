@@ -61,7 +61,7 @@ namespace Klyte.DynamicTextProps.Overrides
         [XmlAttribute("relativeRotationZ")]
         public float RotationZ { get => m_textRelativeRotation.z; set => m_textRelativeRotation.z = value; }
 
-        [XmlAttribute("forceColor")]
+        [XmlAttribute("color")]
         public string ForceColor { get => m_defaultColor == Color.clear ? null : ColorExtensions.ToRGB(m_defaultColor); set => m_defaultColor = value.IsNullOrWhiteSpace() ? Color.clear : (Color) ColorExtensions.FromRGB(value); }
 
         [XmlIgnore]

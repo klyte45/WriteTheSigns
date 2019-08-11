@@ -220,7 +220,7 @@ namespace Klyte.DynamicTextProps.Overrides
                     Singleton<RenderManager>.instance.OverlayEffect.DrawCircle(cameraInfo,
                        tuple.Third,
                        tuple.First,
-                       tuple.Second,
+                       tuple.Second * 2,
                        -1, 1280f, false, true);
                 }
                 Instance.m_onOverlayRenderQueue.Clear();

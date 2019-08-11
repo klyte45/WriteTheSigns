@@ -23,7 +23,7 @@ namespace Klyte.DynamicTextProps.Overrides
         [XmlIgnore]
         private Color m_cachedColor;
 
-        [XmlAttribute("propColor")]
+        [XmlAttribute("color")]
         public string PropColorStr { get => m_cachedColor == default ? null : ColorExtensions.ToRGB(PropColor); set => m_cachedColor = value.IsNullOrWhiteSpace() ? default : (Color) ColorExtensions.FromRGB(value); }
     }
 

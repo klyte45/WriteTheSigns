@@ -83,24 +83,24 @@ namespace Klyte.DynamicTextProps.Libraries
     }
 
     #region Mileage Marker
-    [XmlRoot("LibMileageMarkerPropGroup")] public class DTPLibMileageMarkerGroup : BasicLib<DTPLibMileageMarkerGroup, BoardDescriptorMileageMarkerXml> { protected override string XmlName => "LibMileageMarkerPropGroup"; }
-    [XmlRoot("LibTextMileageMarker")] public class DTPLibTextMeshMileageMarker : BasicLib<DTPLibTextMeshMileageMarker, BoardTextDescriptorMileageMarkerXml> { protected override string XmlName => "LibTextMileageMarker"; }
+    [XmlRoot("LibMileageMarkerProp")] public class DTPLibMileageMarkerGroup : BasicLib<DTPLibMileageMarkerGroup, BoardDescriptorMileageMarkerXml> { protected override string XmlName => "LibMileageMarkerProp"; }
+    [XmlRoot("LibMileageMarkerText")] public class DTPLibTextMeshMileageMarker : BasicLib<DTPLibTextMeshMileageMarker, BoardTextDescriptorMileageMarkerXml> { protected override string XmlName => "LibMileageMarkerText"; }
     #endregion
 
     #region Corner Signs
-    [XmlRoot("LibTextStreetPlate")] public class DTPLibTextMeshStreetPlate : BasicLib<DTPLibTextMeshStreetPlate, BoardTextDescriptorSteetSignXml> { protected override string XmlName => "LibTextStreetPlate"; }
-    [XmlRoot("LibStreetPropGroup")] public class DTPLibStreetPropGroup : BasicLib<DTPLibStreetPropGroup, BoardDescriptorStreetSignXml> { protected override string XmlName => "LibStreetPropGroup"; }
+    [XmlRoot("LibCornerSignProp")] public class DTPLibStreetPropGroup : BasicLib<DTPLibStreetPropGroup, BoardDescriptorStreetSignXml> { protected override string XmlName => "LibCornerSignProp"; }
+    [XmlRoot("LibCornerSignText")] public class DTPLibTextMeshStreetPlate : BasicLib<DTPLibTextMeshStreetPlate, BoardTextDescriptorSteetSignXml> { protected override string XmlName => "LibCornerSignText"; }
     #endregion
 
     #region In Segment props
-    [XmlRoot("LibTextMesh")] public class DTPLibTextMeshHighwaySigns : BasicLib<DTPLibTextMeshHighwaySigns, BoardGeneratorHighwaySigns.BoardTextDescriptorHighwaySignsXml> { protected override string XmlName => "LibTextMesh"; }
-    [XmlRoot("LibPropSingle")] public class DTPLibPropSingleHighwaySigns : BasicLib<DTPLibPropSingleHighwaySigns, BoardGeneratorHighwaySigns.BoardDescriptorHigwaySignXml> { protected override string XmlName => "LibPropSingle"; }
-    [XmlRoot("LibPropGroup")] public class DTPLibPropGroupHigwaySigns : BasicLib<DTPLibPropGroupHigwaySigns, BoardGeneratorHighwaySigns.BoardBunchContainerHighwaySignXml> { protected override string XmlName => "LibPropGroup"; }
+    [XmlRoot("LibSegmentPropGroup")] public class DTPLibPropGroupHigwaySigns : BasicLib<DTPLibPropGroupHigwaySigns, BoardGeneratorHighwaySigns.BoardBunchContainerHighwaySignXml> { protected override string XmlName => "LibSegmentPropGroup"; }
+    [XmlRoot("LibSegmentProp")] public class DTPLibPropSingleHighwaySigns : BasicLib<DTPLibPropSingleHighwaySigns, BoardGeneratorHighwaySigns.BoardDescriptorHigwaySignXml> { protected override string XmlName => "LibSegmentProp"; }
+    [XmlRoot("LibSegmentText")] public class DTPLibTextMeshHighwaySigns : BasicLib<DTPLibTextMeshHighwaySigns, BoardGeneratorHighwaySigns.BoardTextDescriptorHighwaySignsXml> { protected override string XmlName => "LibSegmentText"; }
     #endregion
 
     #region Building extra props
-    [XmlRoot("LibTextMeshBuildings")] public class DTPLibTextMeshBuildingSigns : BasicLib<DTPLibTextMeshBuildingSigns, BoardTextDescriptorBuildingsXml> { protected override string XmlName => "LibTextMeshBuildings"; }
-    [XmlRoot("LibPropSingleBuildings")] public class DTPLibPropSingleBuildingSigns : BasicLib<DTPLibPropSingleBuildingSigns, BoardDescriptorBuildingXml> { protected override string XmlName => "LibPropSingleBuildings"; }
-    [XmlRoot("LibPropGroupBuildings")] public class DTPLibPropGroupBuildingSigns : BasicLib<DTPLibPropGroupBuildingSigns, BuildingGroupDescriptorXml> { protected override string XmlName => "LibPropGroupBuildings"; }
+    [XmlRoot("LibBuildingsPropGroup")] public class DTPLibPropGroupBuildingSigns : BasicLib<DTPLibPropGroupBuildingSigns, BuildingGroupDescriptorXml> { protected override string XmlName => "LibBuildingsPropGroup"; }
+    [XmlRoot("LibBuildingsProp")] public class DTPLibPropSingleBuildingSigns : BasicLib<DTPLibPropSingleBuildingSigns, BoardDescriptorBuildingXml> { protected override string XmlName => "LibBuildingsProp"; }
+    [XmlRoot("LibBuildingsText")] public class DTPLibTextMeshBuildingSigns : BasicLib<DTPLibTextMeshBuildingSigns, BoardTextDescriptorBuildingsXml> { protected override string XmlName => "LibBuildingsText"; }
     #endregion
 }
