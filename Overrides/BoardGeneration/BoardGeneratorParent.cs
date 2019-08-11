@@ -238,31 +238,31 @@ namespace Klyte.DynamicTextProps.Overrides
             switch (textDescriptor.m_textType)
             {
                 case TextType.OwnName:
-                    renderInfo = GetOwnNameMesh(refID, boardIdx, secIdx, out targetFont);
+                    renderInfo = GetOwnNameMesh(refID, boardIdx, secIdx, out targetFont, ref descriptor);
                     break;
                 case TextType.Fixed:
-                    renderInfo = GetFixedTextMesh(ref textDescriptor, refID, out targetFont);
+                    renderInfo = GetFixedTextMesh(ref textDescriptor, refID, out targetFont, ref descriptor);
                     break;
                 case TextType.StreetPrefix:
-                    renderInfo = GetMeshStreetPrefix(refID, boardIdx, secIdx, out targetFont);
+                    renderInfo = GetMeshStreetPrefix(refID, boardIdx, secIdx, out targetFont, ref descriptor);
                     break;
                 case TextType.StreetSuffix:
-                    renderInfo = GetMeshStreetSuffix(refID, boardIdx, secIdx, out targetFont);
+                    renderInfo = GetMeshStreetSuffix(refID, boardIdx, secIdx, out targetFont, ref descriptor);
                     break;
                 case TextType.StreetNameComplete:
-                    renderInfo = GetMeshFullStreetName(refID, boardIdx, secIdx, out targetFont);
+                    renderInfo = GetMeshFullStreetName(refID, boardIdx, secIdx, out targetFont, ref descriptor);
                     break;
                 case TextType.BuildingNumber:
-                    renderInfo = GetMeshCurrentNumber(refID, boardIdx, secIdx, out targetFont);
+                    renderInfo = GetMeshCurrentNumber(refID, boardIdx, secIdx, out targetFont, ref descriptor);
                     break;
                 case TextType.Custom1:
-                    renderInfo = GetMeshCustom1(refID, boardIdx, secIdx, out targetFont);
+                    renderInfo = GetMeshCustom1(refID, boardIdx, secIdx, out targetFont, ref descriptor);
                     break;
                 case TextType.Custom2:
-                    renderInfo = GetMeshCustom2(refID, boardIdx, secIdx, out targetFont);
+                    renderInfo = GetMeshCustom2(refID, boardIdx, secIdx, out targetFont, ref descriptor);
                     break;
                 case TextType.Custom3:
-                    renderInfo = GetMeshCustom3(refID, boardIdx, secIdx, out targetFont);
+                    renderInfo = GetMeshCustom3(refID, boardIdx, secIdx, out targetFont, ref descriptor);
                     break;
             }
             if (renderInfo == null || targetFont == null)
@@ -312,13 +312,13 @@ namespace Klyte.DynamicTextProps.Overrides
                 new Vector3(defaultMultiplierX * overflowScaleX / descriptor.ScaleX, defaultMultiplierY * overflowScaleY / descriptor.PropScale.y, 1));
             if (cameraInfo.CheckRenderDistance(matrix.MultiplyPoint(Vector3.zero), Math.Min(3000, 200 * textDescriptor.m_textScale)))
             {
-                if (textDescriptor.m_defaultColor != Color.clear)
-                {
-                    materialPropertyBlock.SetColor(m_shaderPropColor, textDescriptor.m_defaultColor);
-                }
-                else if (textDescriptor.m_useContrastColor)
+                if (textDescriptor.m_useContrastColor)
                 {
                     materialPropertyBlock.SetColor(m_shaderPropColor, GetContrastColor(refID, boardIdx, secIdx, descriptor));
+                }
+                else if (textDescriptor.m_defaultColor != Color.clear)
+                {
+                    materialPropertyBlock.SetColor(m_shaderPropColor, textDescriptor.m_defaultColor);
                 }
                 else
                 {
@@ -336,7 +336,7 @@ namespace Klyte.DynamicTextProps.Overrides
             LogUtils.DoLog($"!UpdateMeshStreetSuffix {idx}");
             var result = "";
             result = DTPHookable.GetStreetSuffix(idx);
-            RefreshNameData(ref bri, result);
+            RefreshTextData(ref bri, result);
         }
 
 
@@ -345,12 +345,18 @@ namespace Klyte.DynamicTextProps.Overrides
             //(ushort segmentID, ref string __result, ref List<ushort> usedQueue, bool defaultPrefix, bool removePrefix = false)
             var name = DTPHookable.GetStreetFullName(idx);
             LogUtils.DoLog($"!GenName {name} for {idx}");
-            RefreshNameData(ref bri, name);
+            RefreshTextData(ref bri, name);
         }
 
 
+        protected BRI RefreshTextData(string text, UIFont overrideFont = null)
+        {
+            var result = new BRI();
+            RefreshTextData(ref result, text, overrideFont);
+            return result;
+        }
 
-        protected void RefreshNameData(ref BRI result, string name, UIFont overrideFont = null)
+        protected void RefreshTextData(ref BRI result, string text, UIFont overrideFont = null)
         {
             if (result == null)
             {
@@ -387,8 +393,12 @@ namespace Klyte.DynamicTextProps.Overrides
                     uifontRenderer.shadowColor = Color.black;
                     uifontRenderer.shadowOffset = Vector2.zero;
                     uifontRenderer.outline = false;
-                    sizeMeters = uifontRenderer.MeasureString(name);
-                    uifontRenderer.Render(name, uirenderData);
+                    if(uifontRenderer is UIDynamicFont.DynamicFontRenderer dynamicRenderer)
+                    {
+                        dynamicRenderer.spriteAtlas = UIView.GetAView().defaultAtlas;                    
+                    }
+                    sizeMeters = uifontRenderer.MeasureString(text);
+                    uifontRenderer.Render(text, uirenderData);
                 }
                 if (result.m_mesh == null)
                 {
@@ -429,21 +439,21 @@ namespace Klyte.DynamicTextProps.Overrides
         public abstract Color GetContrastColor(ushort refID, int boardIdx, int secIdx, BD descriptor);
 
         #region UpdateData
-        protected virtual BRI GetOwnNameMesh(ushort refID, int boardIdx, int secIdx, out UIFont targetFont) { targetFont = DrawFont; return null; }
-        protected virtual BRI GetMeshCurrentNumber(ushort refID, int boardIdx, int secIdx, out UIFont targetFont) { targetFont = DrawFont; return null; }
-        protected virtual BRI GetMeshFullStreetName(ushort refID, int boardIdx, int secIdx, out UIFont targetFont) { targetFont = DrawFont; return null; }
-        protected virtual BRI GetMeshStreetSuffix(ushort refID, int boardIdx, int secIdx, out UIFont targetFont) { targetFont = DrawFont; return null; }
-        protected virtual BRI GetMeshStreetPrefix(ushort refID, int boardIdx, int secIdx, out UIFont targetFont) { targetFont = DrawFont; return null; }
-        protected virtual BRI GetMeshCustom1(ushort refID, int boardIdx, int secIdx, out UIFont targetFont) { targetFont = DrawFont; return null; }
-        protected virtual BRI GetMeshCustom2(ushort refID, int boardIdx, int secIdx, out UIFont targetFont) { targetFont = DrawFont; return null; }
-        protected virtual BRI GetMeshCustom3(ushort refID, int boardIdx, int secIdx, out UIFont targetFont) { targetFont = DrawFont; return null; }
-        protected virtual BRI GetFixedTextMesh(ref BTD textDescriptor, ushort refID, out UIFont targetFont)
+        protected virtual BRI GetOwnNameMesh(ushort refID, int boardIdx, int secIdx, out UIFont targetFont, ref BD descriptor) { targetFont = DrawFont; return null; }
+        protected virtual BRI GetMeshCurrentNumber(ushort refID, int boardIdx, int secIdx, out UIFont targetFont, ref BD descriptor) { targetFont = DrawFont; return null; }
+        protected virtual BRI GetMeshFullStreetName(ushort refID, int boardIdx, int secIdx, out UIFont targetFont, ref BD descriptor) { targetFont = DrawFont; return null; }
+        protected virtual BRI GetMeshStreetSuffix(ushort refID, int boardIdx, int secIdx, out UIFont targetFont, ref BD descriptor) { targetFont = DrawFont; return null; }
+        protected virtual BRI GetMeshStreetPrefix(ushort refID, int boardIdx, int secIdx, out UIFont targetFont, ref BD descriptor) { targetFont = DrawFont; return null; }
+        protected virtual BRI GetMeshCustom1(ushort refID, int boardIdx, int secIdx, out UIFont targetFont, ref BD descriptor) { targetFont = DrawFont; return null; }
+        protected virtual BRI GetMeshCustom2(ushort refID, int boardIdx, int secIdx, out UIFont targetFont, ref BD descriptor) { targetFont = DrawFont; return null; }
+        protected virtual BRI GetMeshCustom3(ushort refID, int boardIdx, int secIdx, out UIFont targetFont, ref BD descriptor) { targetFont = DrawFont; return null; }
+        protected virtual BRI GetFixedTextMesh(ref BTD textDescriptor, ushort refID, out UIFont targetFont, ref BD descriptor)
         {
             targetFont = DrawFont;
             if (textDescriptor.GeneratedFixedTextRenderInfo == null || textDescriptor.GeneratedFixedTextRenderInfoTick < lastFontUpdateFrame)
             {
                 var result = textDescriptor.GeneratedFixedTextRenderInfo as BRI;
-                RefreshNameData(ref result, (textDescriptor.m_isFixedTextLocalized ? Locale.Get(textDescriptor.m_fixedText, textDescriptor.m_fixedTextLocaleKey) : textDescriptor.m_fixedText) ?? "");
+                RefreshTextData(ref result, (textDescriptor.m_isFixedTextLocalized ? Locale.Get(textDescriptor.m_fixedText, textDescriptor.m_fixedTextLocaleKey) : textDescriptor.m_fixedText) ?? "");
                 textDescriptor.GeneratedFixedTextRenderInfo = result;
             }
             return textDescriptor.GeneratedFixedTextRenderInfo as BRI;

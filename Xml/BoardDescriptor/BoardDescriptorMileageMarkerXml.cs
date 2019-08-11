@@ -15,6 +15,9 @@ namespace Klyte.DynamicTextProps.Overrides
         [XmlAttribute("saveName")]
         public string SaveName { get; set; }
 
+        [XmlAttribute("useMiles")]
+        public bool UseMiles { get; set; }
+
         [XmlIgnore]
         public Color PropColor { get => m_cachedColor == default ? Color.white : m_cachedColor; set => m_cachedColor = value; }
         [XmlIgnore]

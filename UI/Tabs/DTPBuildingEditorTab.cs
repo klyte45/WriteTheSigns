@@ -64,6 +64,7 @@ namespace Klyte.DynamicTextProps.UI
         private UITextField[] m_posVectorEditorText;
         private UITextField[] m_rotVectorEditorText;
         private UIColorField m_colorEditorText;
+        private UICheckBox m_useContrastColorTextCheckbox;
         private UIDropDown m_dropdownTextAlignHorizontal;
         private UIDropDown m_dropdownTextAlignVertical;
         private UITextField m_maxWidthText;
@@ -114,7 +115,7 @@ namespace Klyte.DynamicTextProps.UI
             DTPUtils.ReloadFontsOf<BoardGeneratorBuildings>(m_fontSelect);
 
             m_buttonTool = (UIButton) m_uiHelperHS.AddButton(Locale.Get("K45_DTP_PICK_A_BUILDING"), EnablePickTool);
-            KlyteMonoUtils.LimitWidth(m_buttonTool, (m_uiHelperHS.Self.width - 20)/2, true);
+            KlyteMonoUtils.LimitWidth(m_buttonTool, (m_uiHelperHS.Self.width - 20) / 2, true);
 
             KlyteMonoUtils.LimitWidth((UIButton) m_uiHelperHS.AddButton(Locale.Get("K45_DTP_RELOAD_CONFIGS"), LoadAllBuildingConfigurations), (m_uiHelperHS.Self.width - 20) / 2);
 
@@ -167,6 +168,7 @@ namespace Klyte.DynamicTextProps.UI
                     EnsureBoardsArrayIdx(nextIdx);
                     ReloadBuilding();
                     OnChangeTab(nextIdx);
+                    ReloadTabInfo();
                 }
                 else
                 {
@@ -280,6 +282,7 @@ namespace Klyte.DynamicTextProps.UI
             AddTextField(Locale.Get("K45_DTP_TEXT_TAB_TITLE"), out m_textItemName, groupTexts, SetTextItemName);
             m_colorEditorText = groupTexts.AddColorPicker(Locale.Get("K45_DTP_TEXT_COLOR"), Color.white, SetTextColor);
             KlyteMonoUtils.LimitWidth(m_colorEditorText.parent.GetComponentInChildren<UILabel>(), groupTexts.Self.width / 2, true);
+            m_useContrastColorTextCheckbox = groupTexts.AddCheckboxLocale("K45_DTP_USE_CONTRAST_COLOR", false, SetUseContrastColor);
             AddDropdown(Locale.Get("K45_DTP_TEXT_CONTENT"), out m_dropdownTextContent, groupTexts, BoardGeneratorBuildings.AVAILABLE_TEXT_TYPES.Select(x => Locale.Get("K45_DTP_OWN_NAME_CONTENT_BUILDING", x.ToString())).ToArray(), SetTextOwnNameContent);
             AddTextField(Locale.Get("K45_DTP_CUSTOM_TEXT"), out m_customText, groupTexts, SetTextCustom);
             m_dropdownTextContent.selectedIndex = -1;
@@ -618,10 +621,15 @@ namespace Klyte.DynamicTextProps.UI
         private void SetTextRelPosition(Vector3 value) => SafeActionInTextBoard(descriptor => descriptor.m_textRelativePosition = value);
         private void SetTextRelRotation(Vector3 value) => SafeActionInTextBoard(descriptor => descriptor.m_textRelativeRotation = value);
 
-        private void SetTextOwnNameContent(int idx) => SafeActionInTextBoard(descriptor => descriptor.m_textType = (TextType) idx);
+        private void SetTextOwnNameContent(int idx) => SafeActionInTextBoard(descriptor => descriptor.m_textType = BoardGeneratorBuildings.AVAILABLE_TEXT_TYPES[idx]);
         private void SetTextCustom(string txt) => SafeActionInTextBoard(descriptor => descriptor.m_fixedText = txt?.Replace("\\n", "\n"));
 
         private void SetTextColor(Color color) => SafeActionInTextBoard(descriptor => descriptor.m_defaultColor = color);
+        private void SetUseContrastColor(bool val) => SafeActionInTextBoard(descriptor =>
+        {
+            descriptor.m_useContrastColor = val;
+            m_colorEditorText.parent.isVisible = !val;
+        });
 
         private void SetTextAlignmentHorizontal(int idx) => SafeActionInTextBoard(descriptor => descriptor.m_textAlign = (UIHorizontalAlignment) idx);
 
@@ -797,9 +805,9 @@ namespace Klyte.DynamicTextProps.UI
 
         private void OnBuildingSet(ushort id) => OnBuildingSet(BuildingManager.instance.m_buildings.m_buffer[id].Info.name);
 
-        private void OnBuildingSet(string segmentId)
+        private void OnBuildingSet(string buildingId)
         {
-            m_currentBuildingName = segmentId;
+            m_currentBuildingName = buildingId;
             ReloadBuilding();
             OnChangeTab(-1);
         }
@@ -900,7 +908,7 @@ namespace Klyte.DynamicTextProps.UI
             m_rotVectorEditorText[0].text = (descriptor?.m_textRelativeRotation.x ?? 0).ToString();
             m_rotVectorEditorText[1].text = (descriptor?.m_textRelativeRotation.y ?? 0).ToString();
             m_rotVectorEditorText[2].text = (descriptor?.m_textRelativeRotation.z ?? 0).ToString();
-            m_colorEditorText.selectedColor = descriptor?.m_defaultColor ?? Color.white;
+            m_colorEditorText.selectedColor = descriptor?.m_defaultColor ?? default;
             m_dropdownTextAlignHorizontal.selectedIndex = (int) (descriptor?.m_textAlign ?? UIHorizontalAlignment.Center);
             m_dropdownTextAlignVertical.selectedIndex = (int) (descriptor?.m_verticalAlign ?? UIVerticalAlignment.Middle);
             m_maxWidthText.text = (descriptor?.m_maxWidthMeters ?? 0).ToString();
@@ -908,6 +916,8 @@ namespace Klyte.DynamicTextProps.UI
             m_textResizeYOnOverflow.isChecked = (descriptor?.m_applyOverflowResizingOnY ?? false);
             m_textLuminosityDay.value = (descriptor?.m_dayEmissiveMultiplier ?? 0);
             m_textLuminosityNight.value = (descriptor?.m_nightEmissiveMultiplier ?? 0);
+            m_useContrastColorTextCheckbox.isChecked = descriptor?.m_useContrastColor ?? false;
+            m_colorEditorText.parent.isVisible = !m_useContrastColorTextCheckbox.isChecked;
         }
 
         #endregion

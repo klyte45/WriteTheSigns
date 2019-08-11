@@ -36,7 +36,7 @@ namespace Klyte.DynamicTextProps.Overrides
 
         private static BoardDescriptorMileageMarkerXml m_loadedDescriptor = new BoardDescriptorMileageMarkerXml();
 
-        public static BoardDescriptorMileageMarkerXml LoadedMileageMarkerModel
+        public static BoardDescriptorMileageMarkerXml LoadedMileageMarkerConfig
         {
             get {
                 if (m_loadedDescriptor == null)
@@ -50,7 +50,7 @@ namespace Klyte.DynamicTextProps.Overrides
 
         internal static void GenerateDefaultSignModelAtLibrary()
         {
-            BoardDescriptorMileageMarkerXml defaultModel = new BoardDescriptorMileageMarkerXml
+            var defaultModel = new BoardDescriptorMileageMarkerXml
             {
                 m_propName = "1679681061.Mileage Marker_Data",
                 m_textDescriptors = new BoardTextDescriptorMileageMarkerXml[]{
@@ -98,7 +98,7 @@ namespace Klyte.DynamicTextProps.Overrides
             NetManagerOverrides.EventNodeChanged += OnNodeChanged;
             NetManagerOverrides.EventSegmentChanged += OnSegmentChanged;
 
-            BuildSurfaceFont(out m_font, LoadedMileageMarkerModel.FontName);
+            BuildSurfaceFont(out m_font, LoadedMileageMarkerConfig.FontName);
 
             #region Hooks
             System.Reflection.MethodInfo postRenderMeshs = GetType().GetMethod("AfterRenderNode", RedirectorUtils.allFlags);
@@ -133,9 +133,9 @@ namespace Klyte.DynamicTextProps.Overrides
         private void OnNodeChanged(ushort nodeId)
         {
             //doLog($"onNodeChanged { System.Environment.StackTrace }");
-            for (int i = 0; i < 8; i++)
+            for (var i = 0; i < 8; i++)
             {
-                ushort segmentId = NetManager.instance.m_nodes.m_buffer[nodeId].GetSegment(i);
+                var segmentId = NetManager.instance.m_nodes.m_buffer[nodeId].GetSegment(i);
                 //if (NetManager.instance.m_segments.m_buffer[segmentId].Info.m_netAI is RoadBaseAI)
                 //{
                 //    onDistrictChanged();
@@ -156,7 +156,7 @@ namespace Klyte.DynamicTextProps.Overrides
 
         private void OnSegmentChanged(ushort segmentId) => m_segmentCachedInfo = new Tuple<RoadIdentifier, MileageMarkerDescriptor, MileageMarkerDescriptor>[NetManager.MAX_SEGMENT_COUNT];
         #endregion
-        protected override void OnChangeFont(string fontName) => LoadedMileageMarkerModel.FontName = fontName;
+        protected override void OnChangeFont(string fontName) => LoadedMileageMarkerConfig.FontName = fontName;
 
         public static void AfterRenderNode(ushort nodeID)
         {
@@ -173,9 +173,9 @@ namespace Klyte.DynamicTextProps.Overrides
         public void ComputeNode(ushort nodeID)
         {
 
-            for (int i = 0; i < 8; i++)
+            for (var i = 0; i < 8; i++)
             {
-                ushort segmentId = NetManager.instance.m_nodes.m_buffer[nodeID].GetSegment(i);
+                var segmentId = NetManager.instance.m_nodes.m_buffer[nodeID].GetSegment(i);
                 if (segmentId == 0)
                 {
                     continue;
@@ -188,40 +188,41 @@ namespace Klyte.DynamicTextProps.Overrides
                 }
                 if (m_segmentCachedInfo[segmentId] == null)
                 {
+                    var divisor = LoadedMileageMarkerConfig.UseMiles ? 1609 : 1000;
                     IEnumerable<Tuple<ushort, float>> segments = SegmentUtils.GetSegmentRoadEdges(segmentId, false, false, false, out ComparableRoad start, out ComparableRoad end);
                     if (segments == null)
                     {
                         MileageMarkerDescriptor defaultMM = default;
-                        RoadIdentifier identifier = new RoadIdentifier(default, default, new ushort[] { segmentId });
+                        var identifier = new RoadIdentifier(default, default, new ushort[] { segmentId });
                         m_segmentCachedInfo[segmentId] = Tuple.NewRef(ref identifier, ref defaultMM, ref defaultMM);
                     }
                     else
                     {
-                        RoadIdentifier tupleIdentifier = new RoadIdentifier(start, end, segments.Select(x => x.First).ToArray());
-                        bool roadInverted = tupleIdentifier.start.nodeReference == NetManager.instance.m_segments.m_buffer[tupleIdentifier.segments[0]].m_endNode == ((NetManager.instance.m_segments.m_buffer[tupleIdentifier.segments[0]].m_flags & NetSegment.Flags.Invert) == 0);
-                        List<MileageMarkerDescriptor> entry = new List<MileageMarkerDescriptor>();
-                        float meterCount = 0f;
+                        var tupleIdentifier = new RoadIdentifier(start, end, segments.Select(x => x.First).ToArray());
+                        var roadInverted = tupleIdentifier.start.nodeReference == NetManager.instance.m_segments.m_buffer[tupleIdentifier.segments[0]].m_endNode == ((NetManager.instance.m_segments.m_buffer[tupleIdentifier.segments[0]].m_flags & NetSegment.Flags.Invert) == 0);
+                        var entry = new List<MileageMarkerDescriptor>();
+                        var meterCount = 0f;
                         foreach (Tuple<ushort, float> segmentRef in segments)
                         {
-                            int oldMeterKm = (int) meterCount / 1000;
+                            var oldMeterKm = (int) meterCount / divisor;
                             meterCount += segmentRef.Second;
-                            if (oldMeterKm != (int) meterCount / 1000)
+                            if (oldMeterKm != (int) meterCount / divisor)
                             {
                                 NetSegment segmentObj = NetManager.instance.m_segments.m_buffer[segmentRef.First];
-                                bool invert = (NetManager.instance.m_segments.m_buffer[segmentRef.First].m_flags & NetSegment.Flags.Invert) > 0;
+                                var invert = (NetManager.instance.m_segments.m_buffer[segmentRef.First].m_flags & NetSegment.Flags.Invert) > 0;
                                 NetManager.instance.m_segments.m_buffer[segmentRef.First].GetClosestPositionAndDirection(NetManager.instance.m_segments.m_buffer[segmentRef.First].m_middlePosition, out Vector3 pos, out Vector3 dir);
-                                float rotation = dir.GetAngleXZ();
+                                var rotation = dir.GetAngleXZ();
                                 if (invert)
                                 {
                                     rotation += 180;
                                 }
 
-                                byte cardinalDirection = SegmentUtils.GetCardinalDirection(start, end);
+                                var cardinalDirection = SegmentUtils.GetCardinalDirection(start, end);
                                 if (roadInverted)
                                 {
                                     cardinalDirection = (byte) ((cardinalDirection + 4) % 8);
                                 }
-                                MileageMarkerDescriptor marker1 = new MileageMarkerDescriptor
+                                var marker1 = new MileageMarkerDescriptor
                                 {
                                     segmentId = segmentRef.First,
                                     kilometer = oldMeterKm + 1,
@@ -232,7 +233,7 @@ namespace Klyte.DynamicTextProps.Overrides
                                 };
                                 if (segmentObj.Info.m_backwardVehicleLaneCount + segmentObj.Info.m_forwardVehicleLaneCount >= 2)
                                 {
-                                    MileageMarkerDescriptor marker2 = new MileageMarkerDescriptor
+                                    var marker2 = new MileageMarkerDescriptor
                                     {
                                         segmentId = segmentRef.First,
                                         kilometer = oldMeterKm + 1,
@@ -256,11 +257,6 @@ namespace Klyte.DynamicTextProps.Overrides
                                 m_segmentCachedInfo[segmentRef.First] = Tuple.NewRef(ref tupleIdentifier, ref defaultMM, ref defaultMM);
                             }
                         }
-
-
-
-
-
                     }
                 }
             }
@@ -279,8 +275,8 @@ namespace Klyte.DynamicTextProps.Overrides
                 ComputeNode(NetManager.instance.m_segments.m_buffer[segmentID].m_startNode);
             }
 
-            MileageMarkerDescriptor[] markers = new MileageMarkerDescriptor[] { m_segmentCachedInfo[segmentID].Second, m_segmentCachedInfo[segmentID].Third };
-            for (int i = 0; i < markers.Length; i++)
+            var markers = new MileageMarkerDescriptor[] { m_segmentCachedInfo[segmentID]?.Second ?? default, m_segmentCachedInfo[segmentID]?.Third ?? default };
+            for (var i = 0; i < markers.Length; i++)
             {
                 MileageMarkerDescriptor marker = markers[i];
                 if (marker.segmentId == default)
@@ -288,15 +284,15 @@ namespace Klyte.DynamicTextProps.Overrides
                     continue;
                 }
 
-                RenderPropMesh(ref m_cachedPropInfo, cameraInfo, segmentID, i, marker.kilometer, layerMask, 0, marker.position, Vector4.zero, ref LoadedMileageMarkerModel.m_propName, new Vector3(0, marker.rotation) + LoadedMileageMarkerModel.m_propRotation, LoadedMileageMarkerModel.PropScale, ref m_loadedDescriptor, out Matrix4x4 propMatrix, out bool rendered);
+                RenderPropMesh(ref m_cachedPropInfo, cameraInfo, segmentID, i, marker.kilometer, layerMask, 0, marker.position, Vector4.zero, ref LoadedMileageMarkerConfig.m_propName, new Vector3(0, marker.rotation) + LoadedMileageMarkerConfig.m_propRotation, LoadedMileageMarkerConfig.PropScale, ref m_loadedDescriptor, out Matrix4x4 propMatrix, out var rendered);
                 if (rendered)
                 {
-                    for (int j = 0; j < LoadedMileageMarkerModel.m_textDescriptors.Length; j++)
+                    for (var j = 0; j < LoadedMileageMarkerConfig.m_textDescriptors.Length; j++)
                     {
                         CacheControl c = null;
                         MaterialPropertyBlock block = NetManager.instance.m_materialBlock;
                         block.Clear();
-                        RenderTextMesh(cameraInfo, segmentID, i, marker.kilometer, ref m_loadedDescriptor, propMatrix, ref LoadedMileageMarkerModel.m_textDescriptors[j], ref c, block);
+                        RenderTextMesh(cameraInfo, segmentID, i, marker.kilometer, ref m_loadedDescriptor, propMatrix, ref LoadedMileageMarkerConfig.m_textDescriptors[j], ref c, block);
                     }
                 }
             }
@@ -306,20 +302,20 @@ namespace Klyte.DynamicTextProps.Overrides
 
 
         #region Upadate Data
-        protected override BasicRenderInformation GetMeshCustom1(ushort id, int boardIdx, int kilometers, out UIFont font)
+        protected override BasicRenderInformation GetMeshCustom1(ushort id, int boardIdx, int kilometers, out UIFont font, ref BoardDescriptorMileageMarkerXml descriptor)
         {
             font = DrawFont;
-            byte direction = (boardIdx == 1 ? m_segmentCachedInfo[id].Third : m_segmentCachedInfo[id].Second).cardinalDirection8;
+            var direction = (boardIdx == 1 ? m_segmentCachedInfo[id].Third : m_segmentCachedInfo[id].Second).cardinalDirection8;
             if (m_cachedDirectionMeshes[direction] == null || lastFontUpdateFrame > m_cachedDirectionMeshes[direction].m_frameDrawTime)
             {
                 LogUtils.DoLog($"!nameUpdated Node1 {kilometers} ({direction})");
-                RefreshNameData(ref m_cachedDirectionMeshes[direction], Locale.Get("K45_CARDINAL_POINT_LONG", direction.ToString()).ToUpper());
+                RefreshTextData(ref m_cachedDirectionMeshes[direction], Locale.Get("K45_CARDINAL_POINT_LONG", direction.ToString()).ToUpper());
 
             }
             return m_cachedDirectionMeshes[direction];
 
         }
-        protected override BasicRenderInformation GetMeshCurrentNumber(ushort id, int boardIdx, int kilometers, out UIFont font)
+        protected override BasicRenderInformation GetMeshCurrentNumber(ushort id, int boardIdx, int kilometers, out UIFont font, ref BoardDescriptorMileageMarkerXml descriptor)
         {
             font = DrawFont;
             if (m_cachedKilometerMeshes.Length <= kilometers + 1)
@@ -329,7 +325,7 @@ namespace Klyte.DynamicTextProps.Overrides
             if (m_cachedKilometerMeshes[kilometers] == null || lastFontUpdateFrame > m_cachedKilometerMeshes[kilometers].m_frameDrawTime)
             {
                 LogUtils.DoLog($"!nameUpdated Node1 {kilometers}");
-                RefreshNameData(ref m_cachedKilometerMeshes[kilometers], $"{kilometers}");
+                RefreshTextData(ref m_cachedKilometerMeshes[kilometers], $"{kilometers}");
             }
             return m_cachedKilometerMeshes[kilometers];
 
@@ -339,14 +335,14 @@ namespace Klyte.DynamicTextProps.Overrides
         private long m_testTextInfoTime = 0;
         private PropInfo m_cachedPropInfo;
 
-        protected override BasicRenderInformation GetOwnNameMesh(ushort id, int boardIdx, int secIdx, out UIFont font)
+        protected override BasicRenderInformation GetOwnNameMesh(ushort id, int boardIdx, int secIdx, out UIFont font, ref BoardDescriptorMileageMarkerXml descriptor)
         {
             font = DrawFont;
             if (m_testTextInfo == null || m_testTextInfoTime < lastFontUpdateFrame)
             {
-                string resultText = "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW";
+                var resultText = "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW";
                 UIFont overrideFont = null;
-                RefreshNameData(ref m_testTextInfo, resultText, overrideFont);
+                RefreshTextData(ref m_testTextInfo, resultText, overrideFont);
                 m_testTextInfoTime = lastFontUpdateFrame;
             }
             return m_testTextInfo;
@@ -374,19 +370,19 @@ namespace Klyte.DynamicTextProps.Overrides
             }
             try
             {
-                LoadedMileageMarkerModel = XmlUtils.DefaultXmlDeserialize<BoardDescriptorMileageMarkerXml>(data);
+                LoadedMileageMarkerConfig = XmlUtils.DefaultXmlDeserialize<BoardDescriptorMileageMarkerXml>(data);
             }
             catch (Exception e)
             {
                 LogUtils.DoErrorLog($"Error deserializing: {e.Message}\n{e.StackTrace}");
             }
         }
-        public override string Serialize() => XmlUtils.DefaultXmlSerialize(LoadedMileageMarkerModel, false);
+        public override string Serialize() => XmlUtils.DefaultXmlSerialize(LoadedMileageMarkerConfig, false);
         protected override string ID { get; } = "K45_DTP_MM";
 
         internal void CleanDescriptor()
         {
-            LoadedMileageMarkerModel = new BoardDescriptorMileageMarkerXml();
+            LoadedMileageMarkerConfig = new BoardDescriptorMileageMarkerXml();
             SoftReset();
         }
 

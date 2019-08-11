@@ -1,5 +1,6 @@
 ﻿using ColossalFramework;
 using ColossalFramework.DataBinding;
+using ColossalFramework.Globalization;
 using ColossalFramework.Math;
 using ColossalFramework.Packaging;
 using ColossalFramework.UI;
@@ -30,6 +31,7 @@ namespace Klyte.DynamicTextProps.Overrides
         private ulong[] m_lineLastUpdate;
         private DistrictDescriptor[] m_districtDescriptors;
         private readonly Dictionary<string, StopPointDescriptorLanes[]> m_buildingStopsDescriptor = new Dictionary<string, StopPointDescriptorLanes[]>();
+        private readonly Dictionary<string, BasicRenderInformation> m_textCache = new Dictionary<string, BasicRenderInformation>();
 
         public override int ObjArraySize => BuildingManager.MAX_BUILDING_COUNT;
 
@@ -44,8 +46,9 @@ namespace Klyte.DynamicTextProps.Overrides
             //TextType.StreetPrefix,
             //TextType.StreetSuffix,
             //TextType.StreetNameComplete,
-            //TextType.Custom1,
-            //TextType.Custom2
+            TextType.Custom1, // Next Station Line
+            TextType.Custom2, // Previous Station Line
+            TextType.Custom3  // Line Destination (Last stop before get back)
         };
 
         #region Initialize
@@ -170,14 +173,34 @@ namespace Klyte.DynamicTextProps.Overrides
         {
             if (obj == DrawFont.baseFont)
             {
-                m_boardsContainers.ForEach(x => x.m_nameSubInfo = null);
+                m_boardsContainers.ForEach(x =>
+                {
+                    if (x != null)
+                    {
+                        x.m_nameSubInfo = null;
+                    }
+                });
+                m_textCache.Clear();
             }
         }
 
 
         private void OnLineUpdated(ushort lineId) => m_linesDescriptors[lineId] = default;
-        private void OnBuildingNameChanged(ushort id) => m_boardsContainers[id].m_nameSubInfo = null;
-        private void OnBuildingLineChanged(ushort id) => m_boardsContainers[id].m_platformToLine = null;
+        private void OnBuildingNameChanged(ushort id)
+        {
+            if (m_boardsContainers[id] != null)
+            {
+                m_boardsContainers[id].m_nameSubInfo = null;
+            }
+        }
+
+        private void OnBuildingLineChanged(ushort id)
+        {
+            if (m_boardsContainers[id] != null)
+            {
+                m_boardsContainers[id].m_platformToLine = null;
+            }
+        }
 
         public void OnDescriptorChanged() => m_boardsContainers = new BoardBunchContainerBuilding[BuildingManager.MAX_BUILDING_COUNT];
         #endregion
@@ -265,19 +288,84 @@ namespace Klyte.DynamicTextProps.Overrides
 
 
         #region Upadate Data
-        protected override BasicRenderInformation GetOwnNameMesh(ushort buildingID, int boardIdx, int secIdx, out UIFont font)
+        protected override BasicRenderInformation GetOwnNameMesh(ushort buildingID, int boardIdx, int secIdx, out UIFont font, ref BoardDescriptorBuildingXml descriptor) => GetOwnNameMesh(buildingID, out font, ref descriptor, false);
+        private  BasicRenderInformation GetOwnNameMesh(ushort buildingID, out UIFont font, ref BoardDescriptorBuildingXml descriptor, bool getFromGlobalCache)
         {
             font = DrawFont;
+            if (getFromGlobalCache)
+            {
+                return GetCachedText(BuildingManager.instance.GetBuildingName(buildingID, new InstanceID()) ?? "DUMMY!!!!!");
+            }
+            if (m_boardsContainers[buildingID] == null)
+            {
+                m_boardsContainers[buildingID] = new BoardBunchContainerBuilding();
+            }
+
             if (m_boardsContainers[buildingID].m_nameSubInfo == null)
             {
-                RefreshNameData(ref m_boardsContainers[buildingID].m_nameSubInfo, BuildingManager.instance.GetBuildingName(buildingID, new InstanceID()) ?? "DUMMY!!!!!");
+                RefreshTextData(ref m_boardsContainers[buildingID].m_nameSubInfo, BuildingManager.instance.GetBuildingName(buildingID, new InstanceID()) ?? "DUMMY!!!!!");
             }
             return m_boardsContainers[buildingID].m_nameSubInfo;
 
         }
+        protected override BasicRenderInformation GetMeshCustom1(ushort buildingID, int boardIdx, int secIdx, out UIFont targetFont, ref BoardDescriptorBuildingXml descriptor)
+        {
+            if (descriptor.m_platforms.Length > 0)
+            {
+                StopInformation stop = GetTargetStopInfo(buildingID, descriptor);
+                if (stop.m_nextStopBuilding > 0)
+                {
+                    return GetOwnNameMesh(stop.m_nextStopBuilding, out targetFont, ref descriptor, true);
+                }
+            }
+            targetFont = DrawFont;
+            return null;
+        }
+        protected override BasicRenderInformation GetMeshCustom2(ushort buildingID, int boardIdx, int secIdx, out UIFont targetFont, ref BoardDescriptorBuildingXml descriptor)
+        {
+            if (descriptor.m_platforms.Length > 0)
+            {
+                StopInformation stop = GetTargetStopInfo(buildingID, descriptor);
+                if (stop.m_nextStopBuilding > 0)
+                {
+                    return GetOwnNameMesh(stop.m_previousStopBuilding, out targetFont, ref descriptor, true);
+                }
+            }
+            targetFont = DrawFont;
+            return null;
+        }
+        protected override BasicRenderInformation GetMeshCustom3(ushort buildingID, int boardIdx, int secIdx, out UIFont targetFont, ref BoardDescriptorBuildingXml descriptor)
+        {
+            if (descriptor.m_platforms.Length > 0)
+            {
+                StopInformation stop = GetTargetStopInfo(buildingID, descriptor);
+                if (stop.m_destinationBuilding > 0)
+                {
+                    return GetOwnNameMesh(stop.m_destinationBuilding, out targetFont, ref descriptor, true);
+                }
+            }
+            targetFont = DrawFont;
+            return null;
+        }
+        protected override BasicRenderInformation GetFixedTextMesh(ref BoardTextDescriptorBuildingsXml textDescriptor, ushort refID, out UIFont targetFont, ref BoardDescriptorBuildingXml descriptor)
+        {
+            targetFont = DrawFont;
+            var txt = (textDescriptor.m_isFixedTextLocalized ? Locale.Get(textDescriptor.m_fixedText, textDescriptor.m_fixedTextLocaleKey) : textDescriptor.m_fixedText) ?? "";
+            return GetCachedText(txt);
+        }
+
+        private BasicRenderInformation GetCachedText(string txt)
+        {
+            if (!m_textCache.ContainsKey(txt))
+            {
+                m_textCache[txt] = RefreshTextData(txt);
+            }
+            return m_textCache[txt];
+        }
+
         protected void UpdateLinesBuilding(ushort buildingID, ref Building data, BoardBunchContainerBuilding bbcb, ref Matrix4x4 refMatrix)
         {
-            if (bbcb.m_platformToLine == null || (bbcb.m_platformToLine?.Length > 0 && bbcb.m_platformToLine.SelectMany((x) => x?.Select(y => bbcb.m_linesUpdateFrame < m_lineLastUpdate[y])).Any(x => x)))
+            if (bbcb.m_platformToLine == null || (bbcb.m_platformToLine?.Length > 0 && bbcb.m_platformToLine.SelectMany((x) => x?.Select(y => bbcb.m_linesUpdateFrame < m_lineLastUpdate[y.m_lineId])).Any(x => x)))
             {
                 LogUtils.DoLog("--------------- UpdateLinesBuilding");
                 bbcb.m_platformToLine = null;
@@ -291,7 +379,7 @@ namespace Klyte.DynamicTextProps.Overrides
 
                 if (platforms.Count == 0)
                 {
-                    bbcb.m_platformToLine = new ushort[0][];
+                    bbcb.m_platformToLine = new StopInformation[0][];
                 }
                 else
                 {
@@ -334,7 +422,7 @@ namespace Klyte.DynamicTextProps.Overrides
 
                     if (nearStops.Count > 0)
                     {
-                        bbcb.m_platformToLine = new ushort[m_buildingStopsDescriptor[data.Info.name].Length][];
+                        bbcb.m_platformToLine = new StopInformation[m_buildingStopsDescriptor[data.Info.name].Length][];
 
                         if (DynamicTextPropsMod.DebugMode)
                         {
@@ -365,7 +453,23 @@ namespace Klyte.DynamicTextProps.Overrides
 
                                     return dist < maxDist && diffY < maxHeightDiff;
                                 })
-                                .Select(x => NetManager.instance.m_nodes.m_buffer[x].m_transportLine).ToArray();
+                                .Select(x =>
+                                {
+                                    var result = new StopInformation
+                                    {
+                                        m_lineId = NetManager.instance.m_nodes.m_buffer[x].m_transportLine,
+                                        m_stopId = x
+                                    };
+                                    result.m_previousStopBuilding = GetPrevStop(x);
+                                    result.m_nextStopBuilding = GetNextStop(x);
+                                    if (result.m_previousStopBuilding == result.m_nextStopBuilding)
+                                    {
+                                        result.m_nextStopBuilding = 0;
+                                    }
+                                    result.m_destinationBuilding = FindDestinationBuilding(x);
+
+                                    return result;
+                                }).ToArray();
                             if (DynamicTextPropsMod.DebugMode)
                             {
                                 LogUtils.DoLog($"NearLines ({i}) = [{string.Join(",", bbcb.m_platformToLine[i].Select(x => x.ToString()).ToArray())}]");
@@ -381,6 +485,62 @@ namespace Klyte.DynamicTextProps.Overrides
                 LogUtils.DoLog("--------------- end UpdateLinesBuilding");
             }
         }
+
+        private readonly TransportInfo.TransportType[] m_allowedTypesNextPreviousStations =
+        {
+            TransportInfo.TransportType.Metro,
+            TransportInfo.TransportType.Monorail,
+            TransportInfo.TransportType.Train,
+        };
+
+        private ushort GetNextStop(ushort stopId)
+        {
+            if (m_allowedTypesNextPreviousStations.Contains(TransportManager.instance.m_lines.m_buffer[NetManager.instance.m_nodes.m_buffer[stopId].m_transportLine].Info.m_transportType))
+            {
+                return BuildingManager.instance.FindBuilding(NetManager.instance.m_nodes.m_buffer[TransportLine.GetNextStop(stopId)].m_position, 100f, ItemClass.Service.None, ItemClass.SubService.None, Building.Flags.None, Building.Flags.None);
+            }
+            return 0;
+        }
+        private ushort GetPrevStop(ushort stopId)
+        {
+            if (m_allowedTypesNextPreviousStations.Contains(TransportManager.instance.m_lines.m_buffer[NetManager.instance.m_nodes.m_buffer[stopId].m_transportLine].Info.m_transportType))
+            {
+                return BuildingManager.instance.FindBuilding(NetManager.instance.m_nodes.m_buffer[TransportLine.GetPrevStop(stopId)].m_position, 100f, ItemClass.Service.None, ItemClass.SubService.None, Building.Flags.None, Building.Flags.None);
+            }
+            return 0;
+        }
+        private ushort FindDestinationBuilding(ushort stopId)
+        {
+            if (m_allowedTypesNextPreviousStations.Contains(TransportManager.instance.m_lines.m_buffer[NetManager.instance.m_nodes.m_buffer[stopId].m_transportLine].Info.m_transportType))
+            {
+                var currentStop = stopId;
+                float diff;
+                do
+                {
+                    currentStop = TransportLine.GetNextStop(currentStop);
+                    var segment0 = NetManager.instance.m_nodes.m_buffer[currentStop].m_segment0;
+                    var segment1 = NetManager.instance.m_nodes.m_buffer[currentStop].m_segment1;
+
+                    Vector3 dir0 = NetManager.instance.m_segments.m_buffer[segment0].m_endNode == currentStop ? NetManager.instance.m_segments.m_buffer[segment0].m_endDirection : NetManager.instance.m_segments.m_buffer[segment0].m_startDirection;
+                    Vector3 dir1 = NetManager.instance.m_segments.m_buffer[segment1].m_endNode == currentStop ? NetManager.instance.m_segments.m_buffer[segment1].m_endDirection : NetManager.instance.m_segments.m_buffer[segment1].m_startDirection;
+
+                    diff = Math.Abs(dir0.GetAngleXZ() - dir1.GetAngleXZ());
+                    LogUtils.DoLog($"{currentStop}=> {dir0.GetAngleXZ()} x {dir1.GetAngleXZ()}");
+
+
+                    if (currentStop == stopId || currentStop == 0)
+                    {
+                        LogUtils.DoLog($"Thats a loop line: { NetManager.instance.m_nodes.m_buffer[currentStop].m_transportLine}");
+                        return 0;
+                    }
+                } while (diff > 90);
+
+                return BuildingManager.instance.FindBuilding(NetManager.instance.m_nodes.m_buffer[currentStop].m_position, 100f, ItemClass.Service.None, ItemClass.SubService.None, Building.Flags.None, Building.Flags.None);
+
+            }
+            return 0;
+        }
+
         #endregion
 
         public override Color? GetColor(ushort buildingID, int boardIdx, int textIdx, BoardDescriptorBuildingXml descriptor)
@@ -390,25 +550,18 @@ namespace Klyte.DynamicTextProps.Overrides
                 case ColoringMode.Fixed:
                     return descriptor.FixedColor;
                 case ColoringMode.ByPlatform:
-                    var targetPlatforms = descriptor.m_platforms;
-                    foreach (var platform in targetPlatforms)
+                    StopInformation stop = GetTargetStopInfo(buildingID, descriptor);
+                    if (stop.m_lineId != 0)
                     {
-                        if (m_boardsContainers[buildingID].m_platformToLine != null && m_boardsContainers[buildingID].m_platformToLine.ElementAtOrDefault(platform) != null)
+                        if (m_linesDescriptors[stop.m_lineId].m_lineColor == default)
                         {
-                            var line = m_boardsContainers[buildingID].m_platformToLine[platform].ElementAtOrDefault(0);
-                            if (line != 0)
-                            {
-                                if (m_linesDescriptors[line].m_lineColor == default)
-                                {
-                                    UpdateLine(line);
-                                }
-                                return m_linesDescriptors[line].m_lineColor;
-                            }
-                            else if (!descriptor.m_showIfNoLine)
-                            {
-                                return null;
-                            }
+                            UpdateLine(stop.m_lineId);
                         }
+                        return m_linesDescriptors[stop.m_lineId].m_lineColor;
+                    }
+                    if (!descriptor.m_showIfNoLine)
+                    {
+                        return null;
                     }
                     break;
                 case ColoringMode.ByDistrict:
@@ -423,6 +576,23 @@ namespace Klyte.DynamicTextProps.Overrides
             }
             return Color.white;
         }
+
+        private StopInformation GetTargetStopInfo(ushort buildingID, BoardDescriptorBuildingXml descriptor)
+        {
+            foreach (var platform in descriptor.m_platforms)
+            {
+                if (m_boardsContainers[buildingID].m_platformToLine != null && m_boardsContainers[buildingID].m_platformToLine.ElementAtOrDefault(platform) != null)
+                {
+                    StopInformation line = m_boardsContainers[buildingID].m_platformToLine[platform].ElementAtOrDefault(0);
+                    if (line.m_lineId != 0)
+                    {
+                        return line;
+                    }
+                }
+            }
+            return default;
+        }
+
         public override Color GetContrastColor(ushort buildingID, int boardIdx, int textIdx, BoardDescriptorBuildingXml descriptor)
         {
             switch (descriptor.ColorModeProp)
@@ -435,14 +605,14 @@ namespace Klyte.DynamicTextProps.Overrides
                     {
                         if (m_boardsContainers[buildingID].m_platformToLine != null && m_boardsContainers[buildingID].m_platformToLine.ElementAtOrDefault(platform) != null && m_boardsContainers[buildingID].m_platformToLine[platform].Length > 0)
                         {
-                            var line = m_boardsContainers[buildingID].m_platformToLine[platform].ElementAtOrDefault(0);
-                            if (line != 0)
+                            StopInformation line = m_boardsContainers[buildingID].m_platformToLine[platform].ElementAtOrDefault(0);
+                            if (line.m_lineId != 0)
                             {
-                                if (m_linesDescriptors[line].m_lineColor == default)
+                                if (m_linesDescriptors[line.m_lineId].m_lineColor == default)
                                 {
-                                    UpdateLine(line);
+                                    UpdateLine(line.m_lineId);
                                 }
-                                return m_linesDescriptors[line].m_contrastColor;
+                                return m_linesDescriptors[line.m_lineId].m_contrastColor;
                             }
                         }
                     }

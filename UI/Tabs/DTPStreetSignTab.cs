@@ -9,7 +9,6 @@ using Klyte.DynamicTextProps.Overrides;
 using Klyte.DynamicTextProps.TextureAtlas;
 using Klyte.DynamicTextProps.Utils;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using static Klyte.DynamicTextProps.Overrides.BoardGeneratorRoadNodes;
@@ -91,7 +90,7 @@ namespace Klyte.DynamicTextProps.UI
                         },
                 () => BoardGeneratorRoadNodes.Instance.LoadedStreetSignDescriptor);
 
-            UIButton buttonErase = (UIButton) m_uiHelperHS.AddButton(Locale.Get("K45_DTP_ERASE_CURRENT_CONFIG"), DoDeleteGroup);
+            var buttonErase = (UIButton) m_uiHelperHS.AddButton(Locale.Get("K45_DTP_ERASE_CURRENT_CONFIG"), DoDeleteGroup);
             KlyteMonoUtils.LimitWidth(buttonErase, m_uiHelperHS.Self.width - 20, true);
             buttonErase.color = Color.red;
 
@@ -182,6 +181,7 @@ namespace Klyte.DynamicTextProps.UI
         private void SetPlaceOnDistrictBorder(bool isChecked)
         {
             BoardGeneratorRoadNodes.Instance.LoadedStreetSignDescriptor.PlaceOnDistrictBorder = isChecked;
+            BoardGeneratorRoadNodes.Instance.SoftReset();
         }
         private void OnChangePropColor(Color c)
         {
@@ -393,7 +393,7 @@ namespace Klyte.DynamicTextProps.UI
         {
             if (CurrentTabText >= 0)
             {
-                List<BoardTextDescriptorSteetSignXml> tempList = BoardGeneratorRoadNodes.Instance.LoadedStreetSignDescriptor.m_textDescriptors.ToList();
+                var tempList = BoardGeneratorRoadNodes.Instance.LoadedStreetSignDescriptor.m_textDescriptors.ToList();
                 tempList.RemoveAt(CurrentTabText);
                 BoardGeneratorRoadNodes.Instance.LoadedStreetSignDescriptor.m_textDescriptors = tempList.ToArray();
                 ReloadTabInfoText();
@@ -490,8 +490,8 @@ namespace Klyte.DynamicTextProps.UI
         }
         private void EnsureTabQuantityTexts(int size)
         {
-            int targetCount = Mathf.Max(m_pseudoTabstripTexts.tabCount, size + 1);
-            for (int i = 0; i < targetCount; i++)
+            var targetCount = Mathf.Max(m_pseudoTabstripTexts.tabCount, size + 1);
+            for (var i = 0; i < targetCount; i++)
             {
                 if (i >= m_pseudoTabstripTexts.tabCount)
                 {
@@ -515,7 +515,7 @@ namespace Klyte.DynamicTextProps.UI
         private void ConfigureTabsShownText(int quantity)
         {
 
-            for (int i = 0; i < m_pseudoTabstripTexts.tabCount; i++)
+            for (var i = 0; i < m_pseudoTabstripTexts.tabCount; i++)
             {
                 m_pseudoTabstripTexts.tabs[i].isVisible = i < quantity || i == m_pseudoTabstripTexts.tabCount - 1;
             }
@@ -563,8 +563,8 @@ namespace Klyte.DynamicTextProps.UI
             m_textResizeYOnOverflow.isChecked = (descriptor?.m_applyOverflowResizingOnY ?? false);
             m_textLuminosityDay.value = (descriptor?.m_dayEmissiveMultiplier ?? 0);
             m_textLuminosityNight.value = (descriptor?.m_nightEmissiveMultiplier ?? 0);
-            m_useContrastColorTextCheckbox.isChecked = descriptor.m_useContrastColor;
-            m_colorEditorText.parent.isVisible = !descriptor.m_useContrastColor;
+            m_useContrastColorTextCheckbox.isChecked = descriptor?.m_useContrastColor ?? false;
+            m_colorEditorText.parent.isVisible = !m_useContrastColorTextCheckbox.isChecked;
             m_customText.parent.isVisible = descriptor?.m_textType == TextType.Fixed;
         }
 

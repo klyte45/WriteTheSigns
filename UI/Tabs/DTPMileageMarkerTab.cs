@@ -9,7 +9,6 @@ using Klyte.DynamicTextProps.Overrides;
 using Klyte.DynamicTextProps.TextureAtlas;
 using Klyte.DynamicTextProps.Utils;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using static Klyte.DynamicTextProps.Overrides.BoardGeneratorHighwayMileage;
@@ -84,17 +83,19 @@ namespace Klyte.DynamicTextProps.UI
                         out _, null,
                         (x) =>
                         {
-                            BoardGeneratorHighwayMileage.LoadedMileageMarkerModel = XmlUtils.DefaultXmlDeserialize<BoardDescriptorMileageMarkerXml>(XmlUtils.DefaultXmlSerialize(x));
+                            BoardGeneratorHighwayMileage.LoadedMileageMarkerConfig = XmlUtils.DefaultXmlDeserialize<BoardDescriptorMileageMarkerXml>(XmlUtils.DefaultXmlSerialize(x));
                             Start();
                         },
-                () => BoardGeneratorHighwayMileage.LoadedMileageMarkerModel);
+                () => BoardGeneratorHighwayMileage.LoadedMileageMarkerConfig);
 
-            UIButton buttonErase = (UIButton) m_uiHelperHS.AddButton(Locale.Get("K45_DTP_ERASE_CURRENT_CONFIG"), DoDeleteGroup);
+            var buttonErase = (UIButton) m_uiHelperHS.AddButton(Locale.Get("K45_DTP_ERASE_CURRENT_CONFIG"), DoDeleteGroup);
             KlyteMonoUtils.LimitWidth(buttonErase, m_uiHelperHS.Self.width - 20, true);
             buttonErase.color = Color.red;
 
             AddDropdown(Locale.Get("K45_DTP_PROP_MODEL_SELECT"), out m_propsDropdown, m_uiHelperHS, new string[0], SetPropModel);
-            UIColorField m_propColorPicker = m_uiHelperHS.AddColorPicker(Locale.Get("K45_DTP_PROP_COLOR"), BoardGeneratorHighwayMileage.LoadedMileageMarkerModel.PropColor, OnChangePropColor);
+            UIColorField m_propColorPicker = m_uiHelperHS.AddColorPicker(Locale.Get("K45_DTP_PROP_COLOR"), BoardGeneratorHighwayMileage.LoadedMileageMarkerConfig.PropColor, OnChangePropColor);
+            KlyteMonoUtils.LimitWidth(m_uiHelperHS.AddCheckboxLocale("K45_DTP_USE_MILES", BoardGeneratorHighwayMileage.LoadedMileageMarkerConfig.UseMiles, OnSetUseMiles).label, m_uiHelperHS.Self.width - 50);
+
 
             KlyteMonoUtils.CreateHorizontalScrollPanel(m_uiHelperHS.Self, out UIScrollablePanel scrollTabs, out _, m_uiHelperHS.Self.width - 20, 40, Vector3.zero);
 
@@ -111,7 +112,7 @@ namespace Klyte.DynamicTextProps.UI
                 if (idx == m_pseudoTabstripTexts.tabCount - 1)
                 {
                     Vector3 pos = MainContainer.verticalScrollbar.relativePosition;
-                    OnChangeTabTexts(BoardGeneratorHighwayMileage.LoadedMileageMarkerModel.m_textDescriptors?.Length ?? 0);
+                    OnChangeTabTexts(BoardGeneratorHighwayMileage.LoadedMileageMarkerConfig.m_textDescriptors?.Length ?? 0);
                     MainContainer.verticalScrollbar.relativePosition = pos;
                 }
                 else
@@ -136,10 +137,10 @@ namespace Klyte.DynamicTextProps.UI
                                             return;
                                         }
 
-                                        BoardGeneratorHighwayMileage.LoadedMileageMarkerModel.m_textDescriptors[CurrentTabText] = XmlUtils.DefaultXmlDeserialize<BoardTextDescriptorMileageMarkerXml>(XmlUtils.DefaultXmlSerialize(x));
+                                        BoardGeneratorHighwayMileage.LoadedMileageMarkerConfig.m_textDescriptors[CurrentTabText] = XmlUtils.DefaultXmlDeserialize<BoardTextDescriptorMileageMarkerXml>(XmlUtils.DefaultXmlSerialize(x));
                                         ReloadTabInfoText();
                                     },
-                            () => BoardGeneratorHighwayMileage.LoadedMileageMarkerModel.m_textDescriptors?.ElementAtOrDefault(CurrentTabText));
+                            () => BoardGeneratorHighwayMileage.LoadedMileageMarkerConfig.m_textDescriptors?.ElementAtOrDefault(CurrentTabText));
 
 
             UIHelperExtension groupTexts = m_pseudoTabTextsContainer.AddTogglableGroup(Locale.Get("K45_DTP_TEXTS_COMMON_CONFIGURATION"), out UILabel lblTxt);
@@ -170,7 +171,12 @@ namespace Klyte.DynamicTextProps.UI
 
         private void OnChangePropColor(Color c)
         {
-            BoardGeneratorHighwayMileage.LoadedMileageMarkerModel.PropColor = c;
+            BoardGeneratorHighwayMileage.LoadedMileageMarkerConfig.PropColor = c;
+            BoardGeneratorHighwayMileage.Instance.SoftReset();
+        }
+        private void OnSetUseMiles(bool value)
+        {
+            BoardGeneratorHighwayMileage.LoadedMileageMarkerConfig.UseMiles = value;
             BoardGeneratorHighwayMileage.Instance.SoftReset();
         }
 
@@ -359,7 +365,7 @@ namespace Klyte.DynamicTextProps.UI
         {
             if (CurrentTabText >= 0)
             {
-                m_clipboardText = (BoardGeneratorHighwayMileage.LoadedMileageMarkerModel.m_textDescriptors[CurrentTabText].Serialize());
+                m_clipboardText = (BoardGeneratorHighwayMileage.LoadedMileageMarkerConfig.m_textDescriptors[CurrentTabText].Serialize());
                 m_pasteButtonText.isVisible = true;
             }
         }
@@ -368,7 +374,7 @@ namespace Klyte.DynamicTextProps.UI
         {
             if (CurrentTabText >= 0 && m_clipboardText != null)
             {
-                BoardGeneratorHighwayMileage.LoadedMileageMarkerModel.m_textDescriptors[CurrentTabText] = BoardTextDescriptorMileageMarkerXml.Deserialize(m_clipboardText);
+                BoardGeneratorHighwayMileage.LoadedMileageMarkerConfig.m_textDescriptors[CurrentTabText] = BoardTextDescriptorMileageMarkerXml.Deserialize(m_clipboardText);
                 ReloadTabInfoText();
                 BoardGeneratorHighwayMileage.Instance.SoftReset();
             }
@@ -378,9 +384,9 @@ namespace Klyte.DynamicTextProps.UI
         {
             if (CurrentTabText >= 0)
             {
-                List<BoardTextDescriptorMileageMarkerXml> tempList = LoadedMileageMarkerModel.m_textDescriptors.ToList();
+                var tempList = LoadedMileageMarkerConfig.m_textDescriptors.ToList();
                 tempList.RemoveAt(CurrentTabText);
-                LoadedMileageMarkerModel.m_textDescriptors = tempList.ToArray();
+                LoadedMileageMarkerConfig.m_textDescriptors = tempList.ToArray();
                 ReloadTabInfoText();
             }
         }
@@ -395,10 +401,10 @@ namespace Klyte.DynamicTextProps.UI
         public void Start()
         {
             m_propsDropdown.items = BoardGeneratorHighwaySigns.Instance.LoadedProps.Select(x => x.EndsWith("_Data") ? Locale.Get("PROPS_TITLE", x) : x).ToArray();
-            m_propsDropdown.selectedIndex = BoardGeneratorHighwaySigns.Instance.LoadedProps.IndexOf(BoardGeneratorHighwayMileage.LoadedMileageMarkerModel.m_propName);
-            BoardGeneratorHighwayMileage.Instance.ChangeFont(BoardGeneratorHighwayMileage.LoadedMileageMarkerModel.FontName);
+            m_propsDropdown.selectedIndex = BoardGeneratorHighwaySigns.Instance.LoadedProps.IndexOf(BoardGeneratorHighwayMileage.LoadedMileageMarkerConfig.m_propName);
+            BoardGeneratorHighwayMileage.Instance.ChangeFont(BoardGeneratorHighwayMileage.LoadedMileageMarkerConfig.FontName);
             DTPUtils.ReloadFontsOf<BoardGeneratorHighwayMileage>(m_fontSelect);
-            OnChangePropColor(BoardGeneratorHighwayMileage.LoadedMileageMarkerModel.PropColor);
+            OnChangePropColor(BoardGeneratorHighwayMileage.LoadedMileageMarkerConfig.PropColor);
             OnChangeTabTexts(-1);
         }
 
@@ -406,7 +412,7 @@ namespace Klyte.DynamicTextProps.UI
         {
             if (!m_isLoading && idx >= 0)
             {
-                BoardGeneratorHighwayMileage.LoadedMileageMarkerModel.m_propName = BoardGeneratorHighwaySigns.Instance.LoadedProps[idx];
+                BoardGeneratorHighwayMileage.LoadedMileageMarkerConfig.m_propName = BoardGeneratorHighwaySigns.Instance.LoadedProps[idx];
                 BoardGeneratorHighwayMileage.Instance.SoftReset();
             }
         }
@@ -429,7 +435,7 @@ namespace Klyte.DynamicTextProps.UI
             SafeActionInTextBoard(descriptor =>
             {
                 descriptor.SaveName = txt;
-                EnsureTabQuantityTexts(BoardGeneratorHighwayMileage.LoadedMileageMarkerModel.m_textDescriptors?.Length ?? -1);
+                EnsureTabQuantityTexts(BoardGeneratorHighwayMileage.LoadedMileageMarkerConfig.m_textDescriptors?.Length ?? -1);
             });
         }
 
@@ -465,15 +471,15 @@ namespace Klyte.DynamicTextProps.UI
         {
             if (!m_isLoading)
             {
-                BoardTextDescriptorMileageMarkerXml descriptor = LoadedMileageMarkerModel.m_textDescriptors[CurrentTabText];
+                BoardTextDescriptorMileageMarkerXml descriptor = LoadedMileageMarkerConfig.m_textDescriptors[CurrentTabText];
                 toDo(descriptor);
                 BoardGeneratorHighwayMileage.Instance.SoftReset();
             }
         }
         private void EnsureTabQuantityTexts(int size)
         {
-            int targetCount = Mathf.Max(m_pseudoTabstripTexts.tabCount, size + 1);
-            for (int i = 0; i < targetCount; i++)
+            var targetCount = Mathf.Max(m_pseudoTabstripTexts.tabCount, size + 1);
+            for (var i = 0; i < targetCount; i++)
             {
                 if (i >= m_pseudoTabstripTexts.tabCount)
                 {
@@ -483,9 +489,9 @@ namespace Klyte.DynamicTextProps.UI
                 {
                     ((UIButton) m_pseudoTabstripTexts.tabs[i]).text = "+";
                 }
-                else if (i < (BoardGeneratorHighwayMileage.LoadedMileageMarkerModel.m_textDescriptors?.Length ?? 0))
+                else if (i < (BoardGeneratorHighwayMileage.LoadedMileageMarkerConfig.m_textDescriptors?.Length ?? 0))
                 {
-                    ((UIButton) m_pseudoTabstripTexts.tabs[i]).text = (BoardGeneratorHighwayMileage.LoadedMileageMarkerModel.m_textDescriptors?.ElementAtOrDefault(i)?.SaveName).IsNullOrWhiteSpace() ? $"T{i + 1}" : (BoardGeneratorHighwayMileage.LoadedMileageMarkerModel.m_textDescriptors[i]?.SaveName);
+                    ((UIButton) m_pseudoTabstripTexts.tabs[i]).text = (BoardGeneratorHighwayMileage.LoadedMileageMarkerConfig.m_textDescriptors?.ElementAtOrDefault(i)?.SaveName).IsNullOrWhiteSpace() ? $"T{i + 1}" : (BoardGeneratorHighwayMileage.LoadedMileageMarkerConfig.m_textDescriptors[i]?.SaveName);
                 }
                 else
                 {
@@ -497,7 +503,7 @@ namespace Klyte.DynamicTextProps.UI
         private void ConfigureTabsShownText(int quantity)
         {
 
-            for (int i = 0; i < m_pseudoTabstripTexts.tabCount; i++)
+            for (var i = 0; i < m_pseudoTabstripTexts.tabCount; i++)
             {
                 m_pseudoTabstripTexts.tabs[i].isVisible = i < quantity || i == m_pseudoTabstripTexts.tabCount - 1;
             }
@@ -513,12 +519,12 @@ namespace Klyte.DynamicTextProps.UI
         {
 
             m_isLoading = true;
-            EnsureTabQuantityTexts(LoadedMileageMarkerModel.m_textDescriptors?.Length ?? -1);
-            ConfigureTabsShownText(LoadedMileageMarkerModel.m_textDescriptors?.Length ?? 0);
+            EnsureTabQuantityTexts(LoadedMileageMarkerConfig.m_textDescriptors?.Length ?? -1);
+            ConfigureTabsShownText(LoadedMileageMarkerConfig.m_textDescriptors?.Length ?? 0);
             m_pseudoTabTextsContainer.Self.isVisible = CurrentTabText >= 0;
             if (CurrentTabText >= 0)
             {
-                LoadTabTextInfo(LoadedMileageMarkerModel.m_textDescriptors[CurrentTabText]);
+                LoadTabTextInfo(LoadedMileageMarkerConfig.m_textDescriptors[CurrentTabText]);
                 m_loadPropGroup.items = DTPLibTextMeshStreetPlate.Instance.List().ToArray();
             }
             m_isLoading = false;

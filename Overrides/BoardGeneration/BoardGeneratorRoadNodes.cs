@@ -320,7 +320,7 @@ namespace Klyte.DynamicTextProps.Overrides
 
         #region Upadate Data
 
-        protected override BasicRenderInformation GetMeshStreetSuffix(ushort idx, int boardIdx, int secIdx, out UIFont font)
+        protected override BasicRenderInformation GetMeshStreetSuffix(ushort idx, int boardIdx, int secIdx, out UIFont font, ref BoardDescriptorStreetSignXml descriptor)
         {
             font = DrawFont;
             if (!m_updateDataSegments[idx].m_streetSuffixMesh)
@@ -351,7 +351,7 @@ namespace Klyte.DynamicTextProps.Overrides
             }
         }
 
-        protected override BasicRenderInformation GetMeshFullStreetName(ushort idx, int boardIdx, int secIdx, out UIFont font)
+        protected override BasicRenderInformation GetMeshFullStreetName(ushort idx, int boardIdx, int secIdx, out UIFont font, ref BoardDescriptorStreetSignXml descriptor)
         {
             font = DrawFont;
             if (!m_updateDataSegments[idx].m_nameMesh)
@@ -382,7 +382,7 @@ namespace Klyte.DynamicTextProps.Overrides
             }
         }
 
-        protected override BasicRenderInformation GetMeshCustom1(ushort idx, int boardIdx, int secIdx, out UIFont font)
+        protected override BasicRenderInformation GetMeshCustom1(ushort idx, int boardIdx, int secIdx, out UIFont font, ref BoardDescriptorStreetSignXml descriptor)
         {
             font = DrawFont;
             byte districtId;
@@ -406,12 +406,12 @@ namespace Klyte.DynamicTextProps.Overrides
                 {
                     name = DistrictManager.instance.GetDistrictName(districtId);
                 }
-                RefreshNameData(ref m_cachedDistrictsNames[districtId], name);
+                RefreshTextData(ref m_cachedDistrictsNames[districtId], name);
             }
             return m_cachedDistrictsNames[districtId];
 
         }
-        protected override BasicRenderInformation GetMeshCustom2(ushort idx, int boardIdx, int secIdx, out UIFont font)
+        protected override BasicRenderInformation GetMeshCustom2(ushort idx, int boardIdx, int secIdx, out UIFont font, ref BoardDescriptorStreetSignXml descriptor)
         {
             font = DrawFont;
             int distanceRef = (int) Mathf.Floor(m_boardsContainers[idx].m_boardsData[boardIdx].m_distanceRef / 1000);
@@ -425,7 +425,7 @@ namespace Klyte.DynamicTextProps.Overrides
             if (m_cachedNumber[distanceRef] == null)
             {
                 LogUtils.DoLog($"!m_cachedNumber {distanceRef}");
-                RefreshNameData(ref m_cachedNumber[distanceRef], distanceRef.ToString());
+                RefreshTextData(ref m_cachedNumber[distanceRef], distanceRef.ToString());
             }
             return m_cachedNumber[distanceRef];
 
@@ -475,14 +475,14 @@ namespace Klyte.DynamicTextProps.Overrides
 
         private BasicRenderInformation m_testTextInfo = null;
         private long m_testTextInfoTime = 0;
-        protected override BasicRenderInformation GetOwnNameMesh(ushort buildingID, int boardIdx, int secIdx, out UIFont font)
+        protected override BasicRenderInformation GetOwnNameMesh(ushort buildingID, int boardIdx, int secIdx, out UIFont font, ref BoardDescriptorStreetSignXml descriptor)
         {
             font = DrawFont;
             if (m_testTextInfo == null || m_testTextInfoTime < lastFontUpdateFrame)
             {
                 string resultText = "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW";
                 UIFont overrideFont = null;
-                RefreshNameData(ref m_testTextInfo, resultText, overrideFont);
+                RefreshTextData(ref m_testTextInfo, resultText, overrideFont);
                 m_testTextInfoTime = lastFontUpdateFrame;
             }
             return m_testTextInfo;

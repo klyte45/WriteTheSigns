@@ -223,7 +223,7 @@ namespace Klyte.DynamicTextProps.Overrides
 
 
         #region Upadate Data
-        protected override BasicRenderInformation GetOwnNameMesh(ushort buildingID, int boardIdx, int secIdx, out UIFont font)
+        protected override BasicRenderInformation GetOwnNameMesh(ushort buildingID, int boardIdx, int secIdx, out UIFont font, ref BoardDescriptorHigwaySignXml descriptor)
         {
             font = m_fontCache.TryGetValue(m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].m_overrideFont ?? "", out Tuple<UIFont, uint> fontCacheVal) ? fontCacheVal.First : DrawFont;
             if (m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].GeneratedFixedTextRenderInfo == null
@@ -290,14 +290,14 @@ namespace Klyte.DynamicTextProps.Overrides
                     }
                     overrideFont = m_fontCache[m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].m_overrideFont].First;
                 }
-                RefreshNameData(ref result, resultText, overrideFont);
+                RefreshTextData(ref result, resultText, overrideFont);
                 m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].GeneratedFixedTextRenderInfo = result;
                 m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].m_cachedTextContent = m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].m_ownTextContent;
             }
             return m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].GeneratedFixedTextRenderInfo;
         }
 
-        protected override BasicRenderInformation GetMeshCurrentNumber(ushort id, int boardIdx, int kilometers, out UIFont font)
+        protected override BasicRenderInformation GetMeshCurrentNumber(ushort id, int boardIdx, int kilometers, out UIFont font, ref BoardDescriptorHigwaySignXml descriptor)
         {
             font = DrawFont;
             if (m_cachedExitTitles.Length <= kilometers + 1)
@@ -307,7 +307,7 @@ namespace Klyte.DynamicTextProps.Overrides
             if (m_cachedExitTitles[kilometers] == null || lastFontUpdateFrame > m_cachedExitTitles[kilometers].m_frameDrawTime)
             {
                 LogUtils.DoLog($"!nameUpdated Node1 {kilometers}");
-                RefreshNameData(ref m_cachedExitTitles[kilometers], $"Saída {kilometers}");
+                RefreshTextData(ref m_cachedExitTitles[kilometers], $"Saída {kilometers}");
             }
             return m_cachedExitTitles[kilometers];
 

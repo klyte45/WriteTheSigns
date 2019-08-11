@@ -155,6 +155,7 @@ namespace Klyte.DynamicTextProps.UI
                     EnsureBoardsArrayIdx(nextIdx);
                     ReloadSegment();
                     OnChangeTab(nextIdx);
+                    ReloadTabInfo();
                 }
                 else
                 {
@@ -221,6 +222,7 @@ namespace Klyte.DynamicTextProps.UI
                     ReloadTabInfo();
                     OnChangeTabTexts(BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[CurrentTab].descriptor.m_textDescriptors.Length - 1);
                     MainContainer.verticalScrollbar.relativePosition = pos;
+                    ReloadTabInfoText();
                 }
                 else
                 {
