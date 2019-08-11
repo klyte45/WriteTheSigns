@@ -23,6 +23,7 @@ namespace Klyte.DynamicTextProps.Overrides
     public partial class BoardGeneratorBuildings : BoardGeneratorParent<BoardGeneratorBuildings, BoardBunchContainerBuilding, CacheControl, BasicRenderInformation, BoardDescriptorBuildingXml, BoardTextDescriptorBuildingsXml>
     {
 
+        public Dictionary<string, Tuple<UIFont, uint>> m_fontCache = new Dictionary<string, Tuple<UIFont, uint>>();
         internal static Dictionary<string, BuildingGroupDescriptorXml> m_loadedDescriptors;
 
         private DTPBuildingEditorTab EditorInstance => DTPBuildingEditorTab.Instance;
@@ -77,6 +78,7 @@ namespace Klyte.DynamicTextProps.Overrides
             {
                 static void RegisterEvent(string eventName, Type adrEventsType, Action action) => adrEventsType.GetEvent(eventName)?.AddEventHandler(null, action);
                 RegisterEvent("EventBuildingNameStrategyChanged", adrEventsType, () => OnTextureRebuiltImpl(DrawFont.baseFont));
+                RegisterEvent("EventRoadNamingChange", adrEventsType, () => OnTextureRebuiltImpl(DrawFont.baseFont));
             }
 
             #endregion
@@ -181,6 +183,10 @@ namespace Klyte.DynamicTextProps.Overrides
                     }
                 });
                 m_textCache.Clear();
+            }
+            if (m_fontCache.ContainsKey(obj?.fontNames?.ElementAtOrDefault(0)))
+            {
+                m_fontCache[obj.fontNames[0]] = Tuple.New(m_fontCache[obj.fontNames[0]].First, SimulationManager.instance.m_currentTickIndex);
             }
         }
 
@@ -288,23 +294,21 @@ namespace Klyte.DynamicTextProps.Overrides
 
 
         #region Upadate Data
-        protected override BasicRenderInformation GetOwnNameMesh(ushort buildingID, int boardIdx, int secIdx, out UIFont font, ref BoardDescriptorBuildingXml descriptor) => GetOwnNameMesh(buildingID, out font, ref descriptor, false);
-        private  BasicRenderInformation GetOwnNameMesh(ushort buildingID, out UIFont font, ref BoardDescriptorBuildingXml descriptor, bool getFromGlobalCache)
+        protected override BasicRenderInformation GetOwnNameMesh(ushort buildingID, int boardIdx, int secIdx, out UIFont font, ref BoardDescriptorBuildingXml descriptor) => GetOwnNameMesh(buildingID, secIdx, out font, ref descriptor, false);
+        private BasicRenderInformation GetOwnNameMesh(ushort buildingID, int secIdx, out UIFont font, ref BoardDescriptorBuildingXml descriptor, bool getFromGlobalCache)
         {
-            font = DrawFont;
             if (getFromGlobalCache)
             {
+                font = DrawFont;
                 return GetCachedText(BuildingManager.instance.GetBuildingName(buildingID, new InstanceID()) ?? "DUMMY!!!!!");
             }
-            if (m_boardsContainers[buildingID] == null)
+            if (descriptor.m_textDescriptors[secIdx].m_cachedType != TextType.OwnName)
             {
-                m_boardsContainers[buildingID] = new BoardBunchContainerBuilding();
+                descriptor.m_textDescriptors[secIdx].GeneratedFixedTextRenderInfo = null;
+                descriptor.m_textDescriptors[secIdx].m_cachedType = TextType.OwnName;
             }
+            m_boardsContainers[buildingID].m_nameSubInfo = GetTextRendered(secIdx, out font, descriptor, BuildingManager.instance.GetBuildingName(buildingID, new InstanceID()) ?? "DUMMY!!!!!");
 
-            if (m_boardsContainers[buildingID].m_nameSubInfo == null)
-            {
-                RefreshTextData(ref m_boardsContainers[buildingID].m_nameSubInfo, BuildingManager.instance.GetBuildingName(buildingID, new InstanceID()) ?? "DUMMY!!!!!");
-            }
             return m_boardsContainers[buildingID].m_nameSubInfo;
 
         }
@@ -315,7 +319,7 @@ namespace Klyte.DynamicTextProps.Overrides
                 StopInformation stop = GetTargetStopInfo(buildingID, descriptor);
                 if (stop.m_nextStopBuilding > 0)
                 {
-                    return GetOwnNameMesh(stop.m_nextStopBuilding, out targetFont, ref descriptor, true);
+                    return GetOwnNameMesh(stop.m_nextStopBuilding, secIdx, out targetFont, ref descriptor, true);
                 }
             }
             targetFont = DrawFont;
@@ -328,7 +332,7 @@ namespace Klyte.DynamicTextProps.Overrides
                 StopInformation stop = GetTargetStopInfo(buildingID, descriptor);
                 if (stop.m_nextStopBuilding > 0)
                 {
-                    return GetOwnNameMesh(stop.m_previousStopBuilding, out targetFont, ref descriptor, true);
+                    return GetOwnNameMesh(stop.m_previousStopBuilding, secIdx, out targetFont, ref descriptor, true);
                 }
             }
             targetFont = DrawFont;
@@ -341,17 +345,56 @@ namespace Klyte.DynamicTextProps.Overrides
                 StopInformation stop = GetTargetStopInfo(buildingID, descriptor);
                 if (stop.m_destinationBuilding > 0)
                 {
-                    return GetOwnNameMesh(stop.m_destinationBuilding, out targetFont, ref descriptor, true);
+                    return GetOwnNameMesh(stop.m_destinationBuilding, secIdx, out targetFont, ref descriptor, true);
                 }
             }
             targetFont = DrawFont;
             return null;
         }
-        protected override BasicRenderInformation GetFixedTextMesh(ref BoardTextDescriptorBuildingsXml textDescriptor, ushort refID, out UIFont targetFont, ref BoardDescriptorBuildingXml descriptor)
+        protected override BasicRenderInformation GetFixedTextMesh(ref BoardTextDescriptorBuildingsXml textDescriptor, ushort refID, int boardIdx, int secIdx, out UIFont targetFont, ref BoardDescriptorBuildingXml descriptor)
         {
-            targetFont = DrawFont;
             var txt = (textDescriptor.m_isFixedTextLocalized ? Locale.Get(textDescriptor.m_fixedText, textDescriptor.m_fixedTextLocaleKey) : textDescriptor.m_fixedText) ?? "";
-            return GetCachedText(txt);
+            if (descriptor.m_textDescriptors[secIdx].m_cachedType != TextType.Fixed)
+            {
+                descriptor.m_textDescriptors[secIdx].GeneratedFixedTextRenderInfo = null;
+                descriptor.m_textDescriptors[secIdx].m_cachedType = TextType.Fixed;
+            }
+            return GetTextRendered(secIdx, out targetFont, descriptor, txt);
+        }
+
+        private BasicRenderInformation GetTextRendered(int secIdx, out UIFont targetFont, BoardDescriptorBuildingXml descriptor, string txt)
+        {
+            if (!descriptor.m_textDescriptors[secIdx].m_overrideFont.IsNullOrWhiteSpace())
+            {
+
+                if (!m_fontCache.ContainsKey(descriptor.m_textDescriptors[secIdx].m_overrideFont))
+                {
+                    BuildSurfaceFont(out UIDynamicFont surfaceFont, descriptor.m_textDescriptors[secIdx].m_overrideFont);
+                    if (surfaceFont.baseFont == null)
+                    {
+                        descriptor.m_textDescriptors[secIdx].m_overrideFont = null;
+                        targetFont = DrawFont;
+                        return GetCachedText(txt);
+                    }
+                    else
+                    {
+                        m_fontCache[descriptor.m_textDescriptors[secIdx].m_overrideFont] = Tuple.New((UIFont) surfaceFont, 0u);
+                    }
+                }
+                Tuple<UIFont, uint> overrideFont = m_fontCache[descriptor.m_textDescriptors[secIdx].m_overrideFont];
+
+                targetFont = overrideFont.First;
+                if (descriptor.m_textDescriptors[secIdx].GeneratedFixedTextRenderInfo == null || descriptor.m_textDescriptors[secIdx].GeneratedFixedTextRenderInfoTick < overrideFont.Second)
+                {
+                    descriptor.m_textDescriptors[secIdx].GeneratedFixedTextRenderInfo = RefreshTextData(txt, targetFont);
+                }
+                return descriptor.m_textDescriptors[secIdx].GeneratedFixedTextRenderInfo;
+            }
+            else
+            {
+                targetFont = DrawFont;
+                return GetCachedText(txt);
+            }
         }
 
         private BasicRenderInformation GetCachedText(string txt)
@@ -639,8 +682,6 @@ namespace Klyte.DynamicTextProps.Overrides
             };
             m_lineLastUpdate[lineId] = SimulationManager.instance.m_currentTickIndex;
             m_linesDescriptors[lineId].m_contrastColor = KlyteMonoUtils.ContrastColor(m_linesDescriptors[lineId].m_lineColor);
-
-
         }
 
         private void UpdateDistrict(ushort districtId)
@@ -699,15 +740,6 @@ namespace Klyte.DynamicTextProps.Overrides
             Color.Lerp( Color.white,                                  Color.black,0.75f)
         };
 
-        public static void GenerateDefaultBuildingsConfiguration()
-        {
-            BuildingGroupDescriptorXml[] fileContent = GenerateDefaultDictionary().Select(x => new BuildingGroupDescriptorXml { BuildingName = x.Key, BoardDescriptors = x.Value.ToArray() }).ToArray();
-            var serializer = new XmlSerializer(typeof(BuildingGroupDescriptorXml));
-            foreach (BuildingGroupDescriptorXml item in fileContent)
-            {
-                SaveInCommonFolder(serializer, item);
-            }
-        }
         public static bool SaveInCommonFolder(string buildingName)
         {
             if (m_loadedDescriptors.ContainsKey(buildingName))
@@ -764,894 +796,6 @@ namespace Klyte.DynamicTextProps.Overrides
                     stream.Close();
                 }
             }
-        }
-
-        private static Dictionary<string, List<BoardDescriptorBuildingXml>> GenerateDefaultDictionary()
-        {
-
-            var basicEOLTextDescriptor = new BoardTextDescriptorBuildingsXml[]{
-                             new BoardTextDescriptorBuildingsXml{
-                                m_textRelativePosition = new Vector3(0,4.7f, -0.13f) ,
-                                m_textRelativeRotation = Vector3.zero,
-                                m_maxWidthMeters = 15.5f
-                             },
-                             new BoardTextDescriptorBuildingsXml{
-                                m_textRelativePosition = new Vector3(0,4.7f,0.02f),
-                                m_textRelativeRotation = new Vector3(0,180,0),
-                                m_maxWidthMeters = 15.5f
-                             },
-                        };
-            var basicWallTextDescriptor = new BoardTextDescriptorBuildingsXml[]{
-                             new BoardTextDescriptorBuildingsXml{
-                                m_textRelativePosition =new Vector3(0,0.4F,-0.08f) ,
-                                m_textRelativeRotation = Vector3.zero,
-                                m_maxWidthMeters = 15.5f
-                             },
-                        };
-            var basicTotem = new BoardTextDescriptorBuildingsXml[]{
-                             new BoardTextDescriptorBuildingsXml{
-                                m_textRelativePosition =new Vector3(-0.01f,2.2f,-0.09f) ,
-                                m_textRelativeRotation = new Vector3(0,330,270),
-                                m_maxWidthMeters = 2.5f,
-                                m_textScale = 0.5f,
-                                m_dayEmissiveMultiplier = 0f,
-                                m_nightEmissiveMultiplier = 7f,
-                                m_useContrastColor = false,
-                                m_defaultColor = Color.white
-                             },
-                             new BoardTextDescriptorBuildingsXml{
-                                m_textRelativePosition =new Vector3(-0.01f,2.2f,0.09f) ,
-                                m_textRelativeRotation = new Vector3(0,210,270),
-                                m_maxWidthMeters = 2.5f,
-                                m_textScale = 0.5f,
-                                m_dayEmissiveMultiplier = 0f,
-                                m_nightEmissiveMultiplier = 7f,
-                                m_useContrastColor = false,
-                                m_defaultColor = Color.white
-                             },
-                             new BoardTextDescriptorBuildingsXml{
-                                m_textRelativePosition =new Vector3(0.14f,2.2f,0f) ,
-                                m_textRelativeRotation = new Vector3(0,90,270),
-                                m_maxWidthMeters = 2.5f,
-                                m_textScale = 0.5f,
-                                m_dayEmissiveMultiplier = 0f,
-                                m_nightEmissiveMultiplier = 7f,
-                                m_useContrastColor = false,
-                                m_defaultColor = Color.white
-                             },
-                        };
-
-            return new Dictionary<string, List<BoardDescriptorBuildingXml>>
-            {
-                ["Train Station"] = new List<BoardDescriptorBuildingXml>
-                {
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679674753.BoardV6_Data",
-                        m_propPosition= new Vector3(8f,6f,0.5F),
-                        m_propRotation= new Vector3(0,0,0),
-                        m_textDescriptors =basicWallTextDescriptor,
-                        m_platforms = new int[]{ 0 }
-},
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679674753.BoardV6_Data",
-                        m_propPosition= new Vector3(-13.5f,6f,0.5F),
-                        m_propRotation= new Vector3(0,0,0),
-                        m_textDescriptors =basicWallTextDescriptor,
-                        m_platforms = new int[]{ 0 }
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679674753.BoardV6_Data",
-                        m_propPosition= new Vector3(0,5f,-16),
-                        m_propRotation= new Vector3(0,180,0),
-                        m_textDescriptors =basicWallTextDescriptor,
-                        m_platforms = new int[]{ 1 }
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName = "1679674753.BoardV6_Data",
-                        m_propPosition = new Vector3(-14, 8f, 22),
-                        m_propRotation= new Vector3(0,180,0),
-                        m_textDescriptors =basicWallTextDescriptor,
-
-                        m_platforms = new int[]{ 0,1 }
-                    },
-                },
-                ["End of the line Trainstation"] = new List<BoardDescriptorBuildingXml>
-                {
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(48,-1.5f,-48),
-                        m_propRotation= new Vector3(0,90,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-
-                        m_platforms = new int[]{ 2 }
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(32,-1.5f,-48),
-                        m_propRotation= new Vector3(0,90,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-
-                        m_platforms = new int[]{3,4 }
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(16,-1.5f,-48),
-                        m_propRotation= new Vector3(0,90,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-
-                        m_platforms = new int[]{5,6}
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(0,-1.5f,-48),
-                        m_propRotation= new Vector3(0,90,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-
-                        m_platforms = new int[]{ 7,8 }
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(-48,-1.5f,-48),
-                        m_propRotation= new Vector3(0,90,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-
-                        m_platforms = new int[]{ 13 }
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(-32,-1.5f,-48),
-                        m_propRotation= new Vector3(0,90,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-
-                        m_platforms = new int[]{ 11,12 }
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(-16,-1.5f,-48),
-                        m_propRotation= new Vector3(0,90,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-
-                        m_platforms = new int[]{ 9, 10 }
-                    },
-
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(48,-1.5f,-80),
-                        m_propRotation= new Vector3(0,90,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-
-                        m_platforms = new int[]{2 }
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(32,-1.5f,-80),
-                        m_propRotation= new Vector3(0,90,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-
-                        m_platforms = new int[]{ 3,4 }
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(16,-1.5f,-80),
-                        m_propRotation= new Vector3(0,90,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-
-                        m_platforms = new int[]{ 5,6 }
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(0,-1.5f,-80),
-                        m_propRotation= new Vector3(0,90,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-
-                        m_platforms = new int[]{ 7,8 }
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(-48,-1.5f,-80),
-                        m_propRotation= new Vector3(0,90,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-
-                        m_platforms = new int[]{ 13 }
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(-32,-1.5f,-80),
-                        m_propRotation= new Vector3(0,90,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-
-                        m_platforms = new int[]{ 11,12 }
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(-16,-1.5f,-80),
-                        m_propRotation= new Vector3(0,90,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-
-                        m_platforms = new int[]{ 9, 10 }
-                    },
-                     new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(48,-1.5f,-106),
-                        m_propRotation= new Vector3(0,90,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-
-                        m_platforms = new int[]{ 2 }
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(32,-1.5f,-106),
-                        m_propRotation= new Vector3(0,90,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-
-                        m_platforms = new int[]{ 3,4 }
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(16,-1.5f,-106),
-                        m_propRotation= new Vector3(0,90,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-
-                        m_platforms = new int[]{5,6 }
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(0,-1.5f,-106),
-                        m_propRotation= new Vector3(0,90,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-
-                        m_platforms = new int[]{ 7,8 }
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(-48,-1.5f,-106),
-                        m_propRotation= new Vector3(0,90,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-
-                        m_platforms = new int[]{ 13 }
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(-32,-1.5f,-106),
-                        m_propRotation= new Vector3(0,90,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-
-                        m_platforms = new int[]{ 11,12 }
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(-16,-1.5f,-106),
-                        m_propRotation= new Vector3(0,90,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-
-                        m_platforms = new int[]{ 9, 10 }
-                    },
-                     new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(48,-1.5f,-133),
-                        m_propRotation= new Vector3(0,90,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-
-                        m_platforms = new int[]{2 }
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(32,-1.5f,-133),
-                        m_propRotation= new Vector3(0,90,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-
-                        m_platforms = new int[]{ 3,4 }
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(16,-1.5f,-133),
-                        m_propRotation= new Vector3(0,90,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-
-                        m_platforms = new int[]{ 5,6 }
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(0,-1.5f,-133),
-                        m_propRotation= new Vector3(0,90,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-
-                        m_platforms = new int[]{ 7,8 }
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(-48,-1.5f,-133),
-                        m_propRotation= new Vector3(0,90,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-
-                        m_platforms = new int[]{13 }
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(-32,-1.5f,-133),
-                        m_propRotation= new Vector3(0,90,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-
-                        m_platforms = new int[]{11,12 }
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(-16,-1.5f,-133),
-                        m_propRotation= new Vector3(0,90,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-
-                        m_platforms = new int[]{ 9,10 }
-                    },
-                },
-                ["Large Trainstation"] = new List<BoardDescriptorBuildingXml>
-                {
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(41,-1.5f,-0),
-                        m_propRotation= new Vector3(0,0,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-                        m_platforms = new int[]{2},
-
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(41,-1.5f,-16),
-                        m_propRotation= new Vector3(0,0,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-                        m_platforms = new int[]{3,4},
-
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(41,-1.5f,-32),
-                        m_propRotation= new Vector3(0,0,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-                        m_platforms = new int[]{5,6 },
-
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(41,-1.5f,-48),
-                        m_propRotation= new Vector3(0,0,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-                        m_platforms = new int[]{7,8},
-
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(41,-1.5f,-64),
-                        m_propRotation= new Vector3(0,0,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-                        m_platforms = new int[]{9,10},
-
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(41,-1.5f,-80),
-                        m_propRotation= new Vector3(0,0,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-                        m_platforms = new int[]{11,12},
-
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(41,-1.5f,-95.5f),
-                        m_propRotation= new Vector3(0,0,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-                        m_platforms = new int[]{13},
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(17,-1.5f,-0),
-                        m_propRotation= new Vector3(0,0,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-                        m_platforms = new int[]{2},
-
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(17,-1.5f,-16),
-                        m_propRotation= new Vector3(0,0,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-                        m_platforms = new int[]{4,3},
-
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(17,-1.5f,-32),
-                        m_propRotation= new Vector3(0,0,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-                        m_platforms = new int[]{6,5},
-
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(17,-1.5f,-48),
-                        m_propRotation= new Vector3(0,0,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-                        m_platforms = new int[]{8,7},
-
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(17,-1.5f,-64),
-                        m_propRotation= new Vector3(0,0,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-                        m_platforms = new int[]{10,9},
-
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(17,-1.5f,-80),
-                        m_propRotation= new Vector3(0,0,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-                        m_platforms = new int[]{12,11},
-
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(17,-1.5f,-95.5f),
-                        m_propRotation= new Vector3(0,0,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-                        m_platforms = new int[]{13},
-
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(-41,-1.5f,-0),
-                        m_propRotation= new Vector3(0,0,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-                        m_platforms = new int[]{2},
-
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(-41,-1.5f,-16),
-                        m_propRotation= new Vector3(0,0,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-                        m_platforms = new int[]{3,4},
-
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(-41,-1.5f,-32),
-                        m_propRotation= new Vector3(0,0,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-                        m_platforms = new int[]{5,6},
-
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(-41,-1.5f,-48),
-                        m_propRotation= new Vector3(0,0,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-                        m_platforms = new int[]{7,8},
-
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(-41,-1.5f,-64),
-                        m_propRotation= new Vector3(0,0,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-                        m_platforms = new int[]{9,10},
-
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(-41,-1.5f,-80),
-                        m_propRotation= new Vector3(0,0,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-                        m_platforms = new int[]{11,12},
-
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(-41,-1.5f,-95.5f),
-                        m_propRotation= new Vector3(0,0,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-                        m_platforms = new int[]{13},
-
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(-17,-1.5f,-0),
-                        m_propRotation= new Vector3(0,0,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-                        m_platforms = new int[]{2},
-
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(-17,-1.5f,-16),
-                        m_propRotation= new Vector3(0,0,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-                        m_platforms = new int[]{4,3},
-
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(-17,-1.5f,-32),
-                        m_propRotation= new Vector3(0,0,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-                        m_platforms = new int[]{6,5},
-
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(-17,-1.5f,-48),
-                        m_propRotation= new Vector3(0,0,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-                        m_platforms = new int[]{8,7},
-
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(-17,-1.5f,-64),
-                        m_propRotation= new Vector3(0,0,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-                        m_platforms = new int[]{10,9},
-
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(-17,-1.5f,-80),
-                        m_propRotation= new Vector3(0,0,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-                        m_platforms = new int[]{12,11},
-
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(-17,-1.5f,-95.5f),
-                        m_propRotation= new Vector3(0,0,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-                        m_platforms = new int[]{13},
-
-                    },
-                },
-                ["Metro Entrance"] = new List<BoardDescriptorBuildingXml>
-                {
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679686240.Metro Totem_Data",
-                        m_propPosition= new Vector3(4,0,4),
-                        m_propRotation= new Vector3(0,0,0),
-                        m_textDescriptors =basicTotem,
-                        m_platforms = new int[]{0,1},
-
-                    },
-                },
-                ["Monorail Station Standalone"] = new List<BoardDescriptorBuildingXml>
-                {
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(0,6,-0.05f),
-                        m_propRotation= new Vector3(0,0,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-                        m_platforms = new int[]{0,1},
-
-                    },
-                },
-                ["Monorail Station Avenue"] = new List<BoardDescriptorBuildingXml>
-                {
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(0.05f,6,0),
-                        m_propRotation= new Vector3(0,270,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-                        m_platforms = new int[]{0,1},
-
-                    },
-                },
-                ["Monorail Bus Hub"] = new List<BoardDescriptorBuildingXml>
-                {
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(0.05f,6,0),
-                        m_propRotation= new Vector3(0,270,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-                        m_platforms = new int[]{0,1},
-
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(29.5f,-1,4),
-                        m_propRotation= new Vector3(0,0,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-                        m_platforms = new int[]{6,8,10},
-
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(29.5f,-1,-4),
-                        m_propRotation= new Vector3(0,0,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-                        m_platforms = new int[]{6,4,2},
-
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(-29.5f,-1,4),
-                        m_propRotation= new Vector3(0,0,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-                        m_platforms = new int[]{7,9,11},
-
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(-29.5f,-1,-4),
-                        m_propRotation= new Vector3(0,0,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-                        m_platforms = new int[]{7,5,3},
-
-                    },
-                },
-                ["Monorail Train Metro Hub"] = new List<BoardDescriptorBuildingXml>
-                {
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(0,8f,-3),
-                        m_propRotation= new Vector3(0,0,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-                        m_platforms = new int[]{5},
-
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(0,5.5f,12),
-                        m_propRotation= new Vector3(0,0,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-                        m_platforms = new int[]{2,3},
-
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(0,8f,27),
-                        m_propRotation= new Vector3(0,0,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-                        m_platforms = new int[]{0},
-
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName = "1679674753.BoardV6_Data",
-                        m_propPosition = new Vector3(16, 4f, -0.75f),
-                        m_propRotation= new Vector3(0,0,0),
-                        m_textDescriptors =basicWallTextDescriptor,
-                        m_platforms = new int[]{6},
-
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName = "1679674753.BoardV6_Data",
-                        m_propPosition = new Vector3(-16, 4f, -0.75f),
-                        m_propRotation= new Vector3(0,0,0),
-                        m_textDescriptors =basicWallTextDescriptor,
-                        m_platforms = new int[]{6},
-
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName = "1679674753.BoardV6_Data",
-                        m_propPosition = new Vector3(44, 4f, -0.75f),
-                        m_propRotation= new Vector3(0,0,0),
-                        m_textDescriptors =basicWallTextDescriptor,
-                        m_platforms = new int[]{6},
-
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName = "1679674753.BoardV6_Data",
-                        m_propPosition = new Vector3(-44, 4f, -0.75f),
-                        m_propRotation= new Vector3(0,0,0),
-                        m_textDescriptors =basicWallTextDescriptor,
-                        m_platforms = new int[]{6},
-
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(52,-2.5f,-16),
-                        m_propRotation= new Vector3(0,0,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-                        m_platforms = new int[]{7,8},
-
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(-52,-2.5f,-16),
-                        m_propRotation= new Vector3(0,0,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-                        m_platforms = new int[]{8,7},
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(0,-2.5f,-16),
-                        m_propRotation= new Vector3(0,0,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-                        m_platforms = new int[]{7,8},
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(52,-2.5f,-31.5f),
-                        m_propRotation= new Vector3(0,0,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-                        m_platforms = new int[]{9},
-
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(-52,-2.5f,-31.5f),
-                        m_propRotation= new Vector3(0,0,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-                        m_platforms = new int[]{9}
-                    },
-                    new BoardDescriptorBuildingXml
-
-                    {
-                        m_propName=    "1679676810.BoardV6plat_Data",
-                        m_propPosition= new Vector3(0,-2.5f,-31.5f),
-                        m_propRotation= new Vector3(0,0,0),
-                        m_textDescriptors =basicEOLTextDescriptor,
-                        m_platforms = new int[]{9}
-
-                    }
-                }
-            };
         }
 
         #region Serialization

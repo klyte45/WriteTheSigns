@@ -61,6 +61,7 @@ namespace Klyte.DynamicTextProps.UI
         private UITextField m_textItemName;
         private UIDropDown m_dropdownTextContent;
         private UITextField m_customText;
+        private UIDropDown m_overrideFontText;
         private UITextField[] m_posVectorEditorText;
         private UITextField[] m_rotVectorEditorText;
         private UIColorField m_colorEditorText;
@@ -114,10 +115,10 @@ namespace Klyte.DynamicTextProps.UI
             actionButton.eventClick += (x, t) => DTPUtils.ReloadFontsOf<BoardGeneratorBuildings>(m_fontSelect);
             DTPUtils.ReloadFontsOf<BoardGeneratorBuildings>(m_fontSelect);
 
-            m_buttonTool = (UIButton) m_uiHelperHS.AddButton(Locale.Get("K45_DTP_PICK_A_BUILDING"), EnablePickTool);
-            KlyteMonoUtils.LimitWidth(m_buttonTool, (m_uiHelperHS.Self.width - 20) / 2, true);
+ 
 
-            KlyteMonoUtils.LimitWidth((UIButton) m_uiHelperHS.AddButton(Locale.Get("K45_DTP_RELOAD_CONFIGS"), LoadAllBuildingConfigurations), (m_uiHelperHS.Self.width - 20) / 2);
+            m_buttonTool = (UIButton) m_uiHelperHS.AddButton(Locale.Get("K45_DTP_PICK_A_BUILDING"), EnablePickTool);
+            KlyteMonoUtils.LimitWidth(m_buttonTool, (m_uiHelperHS.Self.width - 20), true);
 
             m_contentContainer = m_uiHelperHS.AddGroupExtended(Locale.Get("K45_DTP_PICKED_BUILDING_DATA"));
             ((UIPanel) m_contentContainer.Self).backgroundSprite = "";
@@ -146,6 +147,7 @@ namespace Klyte.DynamicTextProps.UI
                 {
                     helper.AddButton(Locale.Get("K45_DTP_SAVE_OVERRIDE_FOLDER"), () => BoardGeneratorBuildings.SaveInCommonFolder(m_currentBuildingName));
                     m_saveOnAssetFolderButton = (UIButton) helper.AddButton(Locale.Get("K45_DTP_SAVE_ASSET_FOLDER"), () => BoardGeneratorBuildings.SaveInAssetFolder(m_currentBuildingName));
+                    helper.AddButton(Locale.Get("K45_DTP_RELOAD_CONFIGS"), LoadAllBuildingConfigurations);
                 });
 
             KlyteMonoUtils.CreateHorizontalScrollPanel(m_contentContainer.Self, out UIScrollablePanel scrollTabs, out UIScrollbar bar, m_contentContainer.Self.width - 20, 40, Vector3.zero);
@@ -286,7 +288,13 @@ namespace Klyte.DynamicTextProps.UI
             AddDropdown(Locale.Get("K45_DTP_TEXT_CONTENT"), out m_dropdownTextContent, groupTexts, BoardGeneratorBuildings.AVAILABLE_TEXT_TYPES.Select(x => Locale.Get("K45_DTP_OWN_NAME_CONTENT_BUILDING", x.ToString())).ToArray(), SetTextOwnNameContent);
             AddTextField(Locale.Get("K45_DTP_CUSTOM_TEXT"), out m_customText, groupTexts, SetTextCustom);
             m_dropdownTextContent.selectedIndex = -1;
-            m_dropdownTextContent.eventSelectedIndexChanged += (e, idx) => m_customText.GetComponentInParent<UIPanel>().isVisible = BoardGeneratorBuildings.AVAILABLE_TEXT_TYPES[idx] == TextType.Fixed;
+            m_dropdownTextContent.eventSelectedIndexChanged += (e, idx) =>
+            {
+                m_customText.GetComponentInParent<UIPanel>().isVisible = BoardGeneratorBuildings.AVAILABLE_TEXT_TYPES[idx] == TextType.Fixed;
+                m_overrideFontText.parent.isVisible = BoardGeneratorBuildings.AVAILABLE_TEXT_TYPES[idx] == TextType.OwnName || BoardGeneratorBuildings.AVAILABLE_TEXT_TYPES[idx] == TextType.Fixed;
+            };
+
+            AddDropdown(Locale.Get("K45_DTP_OVERRIDE_FONT"), out m_overrideFontText, groupTexts, new string[0], SetOverrideFont);
 
             groupTexts = m_pseudoTabTextsContainer.AddTogglableGroup(Locale.Get("K45_DTP_TEXTS_SIZE_POSITION"));
             AddVector3Field(Locale.Get("K45_DTP_RELATIVE_POS"), out m_posVectorEditorText, groupTexts, SetTextRelPosition);
@@ -623,7 +631,14 @@ namespace Klyte.DynamicTextProps.UI
 
         private void SetTextOwnNameContent(int idx) => SafeActionInTextBoard(descriptor => descriptor.m_textType = BoardGeneratorBuildings.AVAILABLE_TEXT_TYPES[idx]);
         private void SetTextCustom(string txt) => SafeActionInTextBoard(descriptor => descriptor.m_fixedText = txt?.Replace("\\n", "\n"));
-
+        private void SetOverrideFont(int idx)
+        {
+            SafeActionInTextBoard(descriptor =>
+            {
+                descriptor.m_overrideFont = idx > 0 ? m_overrideFontText.selectedValue : null;
+                descriptor.GeneratedFixedTextRenderInfo = null;
+            });
+        }
         private void SetTextColor(Color color) => SafeActionInTextBoard(descriptor => descriptor.m_defaultColor = color);
         private void SetUseContrastColor(bool val) => SafeActionInTextBoard(descriptor =>
         {
@@ -900,7 +915,8 @@ namespace Klyte.DynamicTextProps.UI
         private void LoadTabTextInfo(BoardTextDescriptorBuildingsXml descriptor)
         {
             m_textItemName.text = descriptor?.SaveName ?? "";
-            m_dropdownTextContent.selectedIndex = (int) (descriptor?.m_textType ?? TextType.OwnName);
+            TextType textType = descriptor?.m_textType ?? TextType.OwnName;
+            m_dropdownTextContent.selectedIndex = Array.IndexOf(BoardGeneratorBuildings.AVAILABLE_TEXT_TYPES, textType);
             m_customText.text = (descriptor?.m_fixedText?.Replace("\n", "\\n") ?? "");
             m_posVectorEditorText[0].text = (descriptor?.m_textRelativePosition.x ?? 0).ToString();
             m_posVectorEditorText[1].text = (descriptor?.m_textRelativePosition.y ?? 0).ToString();
@@ -918,8 +934,23 @@ namespace Klyte.DynamicTextProps.UI
             m_textLuminosityNight.value = (descriptor?.m_nightEmissiveMultiplier ?? 0);
             m_useContrastColorTextCheckbox.isChecked = descriptor?.m_useContrastColor ?? false;
             m_colorEditorText.parent.isVisible = !m_useContrastColorTextCheckbox.isChecked;
+            ReloadFontsOverride(m_overrideFontText, descriptor?.m_overrideFont);
+            m_overrideFontText.parent.isVisible = textType == TextType.OwnName || textType == TextType.Fixed;
         }
-
+        private void ReloadFontsOverride(UIDropDown target, string currentVal)
+        {
+            var items = Font.GetOSInstalledFontNames().ToList();
+            items.Insert(0, Locale.Get("K45_DTP_USE_DEFAULT_FONT_HS"));
+            target.items = items.ToArray();
+            if (items.Contains(currentVal))
+            {
+                target.selectedIndex = items.IndexOf(currentVal);
+            }
+            else
+            {
+                target.selectedIndex = 0;
+            }
+        }
         #endregion
 
         private class PlatformItem : ICheckable

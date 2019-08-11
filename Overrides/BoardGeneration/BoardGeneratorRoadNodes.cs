@@ -230,7 +230,7 @@ namespace Klyte.DynamicTextProps.Overrides
                             }
                             if (resultOtherSegment == 0
                                 || !(Singleton<NetManager>.instance.m_segments.m_buffer[resultOtherSegment].Info.m_netAI is RoadBaseAI roadAiJ)
-                                || SegmentUtils.IsSameName(resultOtherSegment, segmentIid, false, false, true, !LoadedStreetSignDescriptor.PlaceOnDistrictBorder, true)
+                                || SegmentUtils.IsSameName(resultOtherSegment, segmentIid, false, false, true, LoadedStreetSignDescriptor.PlaceOnDistrictBorder, true)
                                 || (roadAiJ.m_highwayRules && roadAiI.m_highwayRules)
                                 || roadAiI.GenerateName(segmentIid, ref Singleton<NetManager>.instance.m_segments.m_buffer[segmentIid]).IsNullOrWhiteSpace()
                                 || roadAiJ.GenerateName(resultOtherSegment, ref Singleton<NetManager>.instance.m_segments.m_buffer[resultOtherSegment]).IsNullOrWhiteSpace())

@@ -241,7 +241,7 @@ namespace Klyte.DynamicTextProps.Overrides
                     renderInfo = GetOwnNameMesh(refID, boardIdx, secIdx, out targetFont, ref descriptor);
                     break;
                 case TextType.Fixed:
-                    renderInfo = GetFixedTextMesh(ref textDescriptor, refID, out targetFont, ref descriptor);
+                    renderInfo = GetFixedTextMesh(ref textDescriptor, refID, boardIdx, secIdx, out targetFont, ref descriptor);
                     break;
                 case TextType.StreetPrefix:
                     renderInfo = GetMeshStreetPrefix(refID, boardIdx, secIdx, out targetFont, ref descriptor);
@@ -447,7 +447,7 @@ namespace Klyte.DynamicTextProps.Overrides
         protected virtual BRI GetMeshCustom1(ushort refID, int boardIdx, int secIdx, out UIFont targetFont, ref BD descriptor) { targetFont = DrawFont; return null; }
         protected virtual BRI GetMeshCustom2(ushort refID, int boardIdx, int secIdx, out UIFont targetFont, ref BD descriptor) { targetFont = DrawFont; return null; }
         protected virtual BRI GetMeshCustom3(ushort refID, int boardIdx, int secIdx, out UIFont targetFont, ref BD descriptor) { targetFont = DrawFont; return null; }
-        protected virtual BRI GetFixedTextMesh(ref BTD textDescriptor, ushort refID, out UIFont targetFont, ref BD descriptor)
+        protected virtual BRI GetFixedTextMesh(ref BTD textDescriptor, ushort refID, int boardIdx, int secIdx, out UIFont targetFont, ref BD descriptor)
         {
             targetFont = DrawFont;
             if (textDescriptor.GeneratedFixedTextRenderInfo == null || textDescriptor.GeneratedFixedTextRenderInfoTick < lastFontUpdateFrame)

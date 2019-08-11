@@ -12,7 +12,7 @@ using System.Reflection;
 using UnityEngine;
 using static Klyte.DynamicTextProps.TextureAtlas.DTPCommonTextureAtlas;
 
-[assembly: AssemblyVersion("0.0.0.10002")]
+[assembly: AssemblyVersion("0.0.0.10003")]
 namespace Klyte.DynamicTextProps
 {
     public class DynamicTextPropsMod : BasicIUserMod<DynamicTextPropsMod, DTPResourceLoader, DTPController, DTPCommonTextureAtlas, DTPPanel, SpriteNames>
@@ -37,7 +37,8 @@ namespace Klyte.DynamicTextProps
         {
             UIHelperExtension group8 = helper.AddGroupExtended(Locale.Get("K45_DTP_GENERAL_INFO"));
             AddFolderButton(DefaultBuildingsConfigurationFolder, group8, "K45_DTP_DEFAULT_BUILDINGS_CONFIG_PATH_TITLE");
-            UIButton namesFilesButton = ((UIButton) helper.AddButton(Locale.Get("K45_DTP_GENERATE_DEFAULT_BUILDINGS_FILE"), BoardGeneratorBuildings.GenerateDefaultBuildingsConfiguration));
+            group8.AddLabel(Locale.Get("K45_DTP_GET_FILES_GITHUB"));
+            group8.AddButton(Locale.Get("K45_DTP_GO_TO_GITHUB"), () => Application.OpenURL("https://github.com/klyte45/DynamicTextPropsFiles"));
         }
 
         private static void AddFolderButton(string filePath, UIHelperExtension helper, string localeId)
