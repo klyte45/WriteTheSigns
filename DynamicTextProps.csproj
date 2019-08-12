@@ -283,12 +283,14 @@
     <None Include="packages.config" />
   </ItemGroup>
   <PropertyGroup>
-    <PostBuildEvent>rem xcopy /Y "$(TargetPath)" "Q:\Steam\steamapps\workshop\content\255710\1312735149\"
-xcopy /Y "$(TargetDir)0Harmony.dll" "$(ProjectDir)\_requiredDLLs\"
+    <PostBuildEvent>xcopy /Y "$(TargetDir)0Harmony.dll" "$(ProjectDir)\_requiredDLLs\"
 xcopy /Y "$(TargetPath)" "$(ProjectDir)\_requiredDLLs\"
-xcopy /Y "$(ProjectDir)\_requiredDLLs\*" "C:\Users\Leandro\AppData\Local\Colossal Order\Cities_Skylines\Addons\Mods\DTB\"</PostBuildEvent>
+xcopy /Y "$(ProjectDir)\_requiredDLLs\*" "C:\Users\Leandro\AppData\Local\Colossal Order\Cities_Skylines\Addons\Mods\DTB\"
+xcopy /Y "$(ProjectDir)\_requiredDLLs\*"  "S:\Steam\steamapps\workshop\content\255710\1831805509\"</PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <PreBuildEvent>del /q "C:\Users\Leandro\AppData\Local\Colossal Order\Cities_Skylines\Addons\Mods\DTB"</PreBuildEvent>
+    <PreBuildEvent>del /Q "S:\Steam\steamapps\workshop\content\255710\1831805509\*"
+del /Q "C:\Users\Leandro\AppData\Local\Colossal Order\Cities_Skylines\Addons\Mods\DTB\*"
+del /Q "$(ProjectDir)\_requiredDLLs"</PreBuildEvent>
   </PropertyGroup>
 </Project>

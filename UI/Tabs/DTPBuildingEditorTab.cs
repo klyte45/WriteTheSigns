@@ -139,10 +139,10 @@ namespace Klyte.DynamicTextProps.UI
                         return;
                     }
 
-                    BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName] = XmlUtils.DefaultXmlDeserialize<BuildingGroupDescriptorXml>(XmlUtils.DefaultXmlSerialize(x));
+                    BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName] = XmlUtils.DefaultXmlDeserialize<BuildingGroupDescriptorXml>(XmlUtils.DefaultXmlSerialize(x));
                     ReloadBuilding();
                 },
-                () => BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName],
+                () => BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName],
                 (helper) =>
                 {
                     helper.AddButton(Locale.Get("K45_DTP_SAVE_OVERRIDE_FOLDER"), () => BoardGeneratorBuildings.SaveInCommonFolder(m_currentBuildingName));
@@ -165,7 +165,7 @@ namespace Klyte.DynamicTextProps.UI
             {
                 if (idx == m_pseudoTabstripProps.tabCount - 1)
                 {
-                    var nextIdx = BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName]?.BoardDescriptors?.Length ?? 0;
+                    var nextIdx = BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName]?.BoardDescriptors?.Length ?? 0;
                     LogUtils.DoLog($"nextIdx = {nextIdx}");
                     EnsureBoardsArrayIdx(nextIdx);
                     ReloadBuilding();
@@ -197,10 +197,10 @@ namespace Klyte.DynamicTextProps.UI
                                             return;
                                         }
 
-                                        BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName].BoardDescriptors[CurrentTab] = XmlUtils.DefaultXmlDeserialize<BoardDescriptorBuildingXml>(XmlUtils.DefaultXmlSerialize(x));
+                                        BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName].BoardDescriptors[CurrentTab] = XmlUtils.DefaultXmlDeserialize<BoardDescriptorBuildingXml>(XmlUtils.DefaultXmlSerialize(x));
                                         ReloadBuilding();
                                     },
-                            () => BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName].BoardDescriptors?.ElementAtOrDefault(CurrentTab));
+                            () => BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName].BoardDescriptors?.ElementAtOrDefault(CurrentTab));
 
 
             UIHelperExtension groupProp = m_pseudoTabPropsHelper.AddTogglableGroup(Locale.Get("K45_DTP_PROP_CONFIGURATION"));
@@ -245,9 +245,9 @@ namespace Klyte.DynamicTextProps.UI
                 if (idx == m_pseudoTabstripTexts.tabCount - 1)
                 {
                     Vector3 pos = MainContainer.verticalScrollbar.relativePosition;
-                    EnsureBoardsArrayIdx(-1, BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName]?.BoardDescriptors?.ElementAtOrDefault(CurrentTab)?.m_textDescriptors?.Length ?? 0);
+                    EnsureBoardsArrayIdx(-1, BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName]?.BoardDescriptors?.ElementAtOrDefault(CurrentTab)?.m_textDescriptors?.Length ?? 0);
                     ReloadTabInfo();
-                    OnChangeTabTexts(BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName].BoardDescriptors.ElementAtOrDefault(CurrentTab).m_textDescriptors.Length - 1);
+                    OnChangeTabTexts(BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName].BoardDescriptors.ElementAtOrDefault(CurrentTab).m_textDescriptors.Length - 1);
                     MainContainer.verticalScrollbar.relativePosition = pos;
                 }
                 else
@@ -273,10 +273,10 @@ namespace Klyte.DynamicTextProps.UI
                                             return;
                                         }
 
-                                        BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName].BoardDescriptors[CurrentTab].m_textDescriptors[CurrentTabText] = XmlUtils.DefaultXmlDeserialize<BoardTextDescriptorBuildingsXml>(XmlUtils.DefaultXmlSerialize(x));
+                                        BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName].BoardDescriptors[CurrentTab].m_textDescriptors[CurrentTabText] = XmlUtils.DefaultXmlDeserialize<BoardTextDescriptorBuildingsXml>(XmlUtils.DefaultXmlSerialize(x));
                                         ReloadBuilding();
                                     },
-                            () => BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName]?.BoardDescriptors?.ElementAtOrDefault(CurrentTab)?.m_textDescriptors?.ElementAtOrDefault(CurrentTabText));
+                            () => BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName]?.BoardDescriptors?.ElementAtOrDefault(CurrentTab)?.m_textDescriptors?.ElementAtOrDefault(CurrentTabText));
 
 
             UIHelperExtension groupTexts = m_pseudoTabTextsContainer.AddTogglableGroup(Locale.Get("K45_DTP_TEXTS_COMMON_CONFIGURATION"), out UILabel lblTxt);
@@ -487,7 +487,7 @@ namespace Klyte.DynamicTextProps.UI
         {
             if (m_currentBuildingName != null && CurrentTab >= 0)
             {
-                m_clipboard = XmlUtils.DefaultXmlSerialize(BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName].BoardDescriptors[CurrentTab]);
+                m_clipboard = XmlUtils.DefaultXmlSerialize(BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName].BoardDescriptors[CurrentTab]);
                 m_pasteButton.isVisible = true;
             }
         }
@@ -496,7 +496,7 @@ namespace Klyte.DynamicTextProps.UI
         {
             if (m_currentBuildingName != null && CurrentTab >= 0 && m_clipboard != null)
             {
-                BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName].BoardDescriptors[CurrentTab] = XmlUtils.DefaultXmlDeserialize<BoardDescriptorBuildingXml>(m_clipboard);
+                BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName].BoardDescriptors[CurrentTab] = XmlUtils.DefaultXmlDeserialize<BoardDescriptorBuildingXml>(m_clipboard);
                 BoardGeneratorBuildings.Instance.OnDescriptorChanged();
                 ReloadTabInfo();
             }
@@ -506,11 +506,11 @@ namespace Klyte.DynamicTextProps.UI
         {
             if (m_currentBuildingName != null && CurrentTab >= 0)
             {
-                LogUtils.DoLog($"  BoardGeneratorBuildings.m_loadedDescriptors[m_currentSelectedSegment].m_boardsData.length = {  BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName].BoardDescriptors.Length }");
-                var tempList = BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName].BoardDescriptors.ToList();
+                LogUtils.DoLog($"  BoardGeneratorBuildings.m_loadedDescriptors[m_currentSelectedSegment].m_boardsData.length = {  BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName].BoardDescriptors.Length }");
+                var tempList = BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName].BoardDescriptors.ToList();
                 tempList.RemoveAt(CurrentTab);
-                BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName].BoardDescriptors = tempList.ToArray();
-                LogUtils.DoLog($"  BoardGeneratorBuildings.m_loadedDescriptors[m_currentSelectedSegment].m_boardsData.length pos = {  BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName].BoardDescriptors.Length }");
+                BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName].BoardDescriptors = tempList.ToArray();
+                LogUtils.DoLog($"  BoardGeneratorBuildings.m_loadedDescriptors[m_currentSelectedSegment].m_boardsData.length pos = {  BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName].BoardDescriptors.Length }");
 
                 BoardGeneratorBuildings.Instance.OnDescriptorChanged();
                 OnBuildingSet(m_currentBuildingName);
@@ -521,7 +521,7 @@ namespace Klyte.DynamicTextProps.UI
         {
             if (m_currentBuildingName != null)
             {
-                m_clipboardGroup = XmlUtils.DefaultXmlSerialize(BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName]);
+                m_clipboardGroup = XmlUtils.DefaultXmlSerialize(BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName]);
                 m_pasteGroupButton.isVisible = true;
             }
         }
@@ -530,7 +530,7 @@ namespace Klyte.DynamicTextProps.UI
         {
             if (m_currentBuildingName != null && m_clipboardGroup != null)
             {
-                BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName] = XmlUtils.DefaultXmlDeserialize<BuildingGroupDescriptorXml>(m_clipboardGroup);
+                BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName] = XmlUtils.DefaultXmlDeserialize<BuildingGroupDescriptorXml>(m_clipboardGroup);
                 ReloadBuilding();
             }
         }
@@ -539,7 +539,7 @@ namespace Klyte.DynamicTextProps.UI
         {
             if (m_currentBuildingName != null)
             {
-                BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName] = new BuildingGroupDescriptorXml();
+                BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName] = new BuildingGroupDescriptorXml();
                 OnBuildingSet(m_currentBuildingName);
             }
         }
@@ -548,7 +548,7 @@ namespace Klyte.DynamicTextProps.UI
         {
             if (m_currentBuildingName != null && CurrentTab >= 0 && CurrentTabText >= 0)
             {
-                m_clipboardText = XmlUtils.DefaultXmlSerialize(BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName].BoardDescriptors[CurrentTab].m_textDescriptors[CurrentTabText]);
+                m_clipboardText = XmlUtils.DefaultXmlSerialize(BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName].BoardDescriptors[CurrentTab].m_textDescriptors[CurrentTabText]);
                 m_pasteButtonText.isVisible = true;
             }
         }
@@ -557,7 +557,7 @@ namespace Klyte.DynamicTextProps.UI
         {
             if (m_currentBuildingName != null && CurrentTab >= 0 && CurrentTabText >= 0 && m_clipboardText != null)
             {
-                BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName].BoardDescriptors[CurrentTab].m_textDescriptors[CurrentTabText] = XmlUtils.DefaultXmlDeserialize<BoardTextDescriptorBuildingsXml>(m_clipboardText);
+                BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName].BoardDescriptors[CurrentTab].m_textDescriptors[CurrentTabText] = XmlUtils.DefaultXmlDeserialize<BoardTextDescriptorBuildingsXml>(m_clipboardText);
 
                 ReloadTabInfoText();
             }
@@ -567,9 +567,9 @@ namespace Klyte.DynamicTextProps.UI
         {
             if (m_currentBuildingName != null && CurrentTab >= 0 && CurrentTabText >= 0)
             {
-                var tempList = BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName].BoardDescriptors[CurrentTab].m_textDescriptors.ToList();
+                var tempList = BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName].BoardDescriptors[CurrentTab].m_textDescriptors.ToList();
                 tempList.RemoveAt(CurrentTabText);
-                BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName].BoardDescriptors[CurrentTab].m_textDescriptors = tempList.ToArray();
+                BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName].BoardDescriptors[CurrentTab].m_textDescriptors = tempList.ToArray();
                 ReloadTabInfo();
 
             }
@@ -599,7 +599,7 @@ namespace Klyte.DynamicTextProps.UI
             SafeActionInBoard(descriptor =>
             {
                 descriptor.SaveName = txt;
-                EnsureTabQuantity(BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName]?.BoardDescriptors?.Length ?? -1);
+                EnsureTabQuantity(BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName]?.BoardDescriptors?.Length ?? -1);
             });
         }
         private void SetColoringMode(int mode) => SafeActionInBoard(descriptor => descriptor.ColorModeProp = (ColoringMode) mode);
@@ -612,7 +612,7 @@ namespace Klyte.DynamicTextProps.UI
             if (m_currentBuildingName != null && !m_isLoading)
             {
                 EnsureBoardsArrayIdx(CurrentTab);
-                BoardDescriptorBuildingXml descriptor = BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName]?.BoardDescriptors[CurrentTab];
+                BoardDescriptorBuildingXml descriptor = BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName]?.BoardDescriptors[CurrentTab];
                 toDo(descriptor);
             }
         }
@@ -622,7 +622,7 @@ namespace Klyte.DynamicTextProps.UI
             SafeActionInTextBoard(descriptor =>
             {
                 descriptor.SaveName = txt;
-                EnsureTabQuantityTexts(BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName]?.BoardDescriptors?.ElementAtOrDefault(CurrentTab).m_textDescriptors?.Length ?? -1);
+                EnsureTabQuantityTexts(BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName]?.BoardDescriptors?.ElementAtOrDefault(CurrentTab).m_textDescriptors?.Length ?? -1);
             });
         }
 
@@ -669,7 +669,7 @@ namespace Klyte.DynamicTextProps.UI
             if (m_currentBuildingName != null && !m_isLoading)
             {
                 EnsureBoardsArrayIdx(CurrentTab, CurrentTabText);
-                BoardTextDescriptorBuildingsXml descriptor = BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName]?.BoardDescriptors[CurrentTab].m_textDescriptors[CurrentTabText];
+                BoardTextDescriptorBuildingsXml descriptor = BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName]?.BoardDescriptors[CurrentTab].m_textDescriptors[CurrentTabText];
                 toDo(descriptor);
             }
         }
@@ -680,25 +680,25 @@ namespace Klyte.DynamicTextProps.UI
         {
             if (idx >= 0)
             {
-                if (BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName] == null)
+                if (BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName] == null)
                 {
-                    BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName] = new BuildingGroupDescriptorXml();
+                    BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName] = new BuildingGroupDescriptorXml();
                 }
-                if (BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName].BoardDescriptors == null || BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName].BoardDescriptors.Length <= idx)
+                if (BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName].BoardDescriptors == null || BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName].BoardDescriptors.Length <= idx)
                 {
-                    BoardDescriptorBuildingXml[] oldArr = BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName].BoardDescriptors;
-                    BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName].BoardDescriptors = new BoardDescriptorBuildingXml[idx + 1];
+                    BoardDescriptorBuildingXml[] oldArr = BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName].BoardDescriptors;
+                    BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName].BoardDescriptors = new BoardDescriptorBuildingXml[idx + 1];
                     if (oldArr != null && oldArr.Length > 0)
                     {
                         for (var i = 0; i < oldArr.Length && i <= idx; i++)
                         {
-                            BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName].BoardDescriptors[i] = oldArr[i];
+                            BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName].BoardDescriptors[i] = oldArr[i];
                         }
                     }
                 }
-                if (BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName].BoardDescriptors[idx] == null)
+                if (BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName].BoardDescriptors[idx] == null)
                 {
-                    BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName].BoardDescriptors[idx] = new BoardDescriptorBuildingXml();
+                    BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName].BoardDescriptors[idx] = new BoardDescriptorBuildingXml();
                 }
 
                 EnsureTabQuantity(idx + 1);
@@ -718,21 +718,21 @@ namespace Klyte.DynamicTextProps.UI
                 return;
             }
 
-            if (BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName].BoardDescriptors[idx].m_textDescriptors == null || BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName].BoardDescriptors[idx].m_textDescriptors.Length <= textIdx)
+            if (BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName].BoardDescriptors[idx].m_textDescriptors == null || BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName].BoardDescriptors[idx].m_textDescriptors.Length <= textIdx)
             {
-                BoardTextDescriptorBuildingsXml[] oldArr = BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName].BoardDescriptors[idx].m_textDescriptors;
-                BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName].BoardDescriptors[idx].m_textDescriptors = new BoardTextDescriptorBuildingsXml[textIdx + 1];
+                BoardTextDescriptorBuildingsXml[] oldArr = BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName].BoardDescriptors[idx].m_textDescriptors;
+                BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName].BoardDescriptors[idx].m_textDescriptors = new BoardTextDescriptorBuildingsXml[textIdx + 1];
                 if (oldArr != null && oldArr.Length > 0)
                 {
                     for (var i = 0; i < oldArr.Length && i <= textIdx; i++)
                     {
-                        BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName].BoardDescriptors[idx].m_textDescriptors[i] = oldArr[i];
+                        BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName].BoardDescriptors[idx].m_textDescriptors[i] = oldArr[i];
                     }
                 }
             }
-            if (BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName].BoardDescriptors[idx].m_textDescriptors[textIdx] == null)
+            if (BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName].BoardDescriptors[idx].m_textDescriptors[textIdx] == null)
             {
-                BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName].BoardDescriptors[idx].m_textDescriptors[textIdx] = new BoardTextDescriptorBuildingsXml
+                BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName].BoardDescriptors[idx].m_textDescriptors[textIdx] = new BoardTextDescriptorBuildingsXml
                 {
                     m_defaultColor = Color.white,
                     m_useContrastColor = false
@@ -754,9 +754,9 @@ namespace Klyte.DynamicTextProps.UI
                 {
                     ((UIButton) m_pseudoTabstripProps.tabs[i]).text = "+";
                 }
-                else if (m_currentBuildingName != null && i < (BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName]?.BoardDescriptors?.Length ?? 0))
+                else if (m_currentBuildingName != null && i < (BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName]?.BoardDescriptors?.Length ?? 0))
                 {
-                    ((UIButton) m_pseudoTabstripProps.tabs[i]).text = (BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName]?.BoardDescriptors[i]?.SaveName).IsNullOrWhiteSpace() ? $"P{i + 1}" : BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName]?.BoardDescriptors[i]?.SaveName;
+                    ((UIButton) m_pseudoTabstripProps.tabs[i]).text = (BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName]?.BoardDescriptors[i]?.SaveName).IsNullOrWhiteSpace() ? $"P{i + 1}" : BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName]?.BoardDescriptors[i]?.SaveName;
                 }
                 else
                 {
@@ -779,9 +779,9 @@ namespace Klyte.DynamicTextProps.UI
                 {
                     ((UIButton) m_pseudoTabstripTexts.tabs[i]).text = "+";
                 }
-                else if (m_currentBuildingName != null && CurrentTab >= 0 && i < (BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName]?.BoardDescriptors?.ElementAtOrDefault(CurrentTab)?.m_textDescriptors?.Length ?? 0))
+                else if (m_currentBuildingName != null && CurrentTab >= 0 && i < (BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName]?.BoardDescriptors?.ElementAtOrDefault(CurrentTab)?.m_textDescriptors?.Length ?? 0))
                 {
-                    ((UIButton) m_pseudoTabstripTexts.tabs[i]).text = (BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName]?.BoardDescriptors[CurrentTab]?.m_textDescriptors?.ElementAtOrDefault(i)?.SaveName).IsNullOrWhiteSpace() ? $"T{i + 1}" : (BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName]?.BoardDescriptors[CurrentTab]?.m_textDescriptors[i]?.SaveName);
+                    ((UIButton) m_pseudoTabstripTexts.tabs[i]).text = (BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName]?.BoardDescriptors[CurrentTab]?.m_textDescriptors?.ElementAtOrDefault(i)?.SaveName).IsNullOrWhiteSpace() ? $"T{i + 1}" : (BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName]?.BoardDescriptors[CurrentTab]?.m_textDescriptors[i]?.SaveName);
                 }
                 else
                 {
@@ -835,12 +835,12 @@ namespace Klyte.DynamicTextProps.UI
             {
                 m_isLoading = true;
                 m_buildingName.text = m_currentBuildingName.EndsWith("_Data") ? Locale.Get("BUILDING_TITLE", m_currentBuildingName) : m_currentBuildingName;
-                if (!BoardGeneratorBuildings.m_loadedDescriptors.ContainsKey(m_currentBuildingName))
+                if (!BoardGeneratorBuildings.LoadedDescriptors.ContainsKey(m_currentBuildingName))
                 {
-                    BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName] = new BuildingGroupDescriptorXml();
+                    BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName] = new BuildingGroupDescriptorXml();
                 }
-                EnsureTabQuantity(BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName]?.BoardDescriptors?.Length ?? -1);
-                ConfigureTabsShown(BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName]?.BoardDescriptors?.Length ?? -1);
+                EnsureTabQuantity(BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName]?.BoardDescriptors?.Length ?? -1);
+                ConfigureTabsShown(BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName]?.BoardDescriptors?.Length ?? -1);
                 m_isLoading = false;
             }
             m_pseudoTabPropsHelper.Self.isVisible = m_currentBuildingName != null && CurrentTab >= 0;
@@ -867,15 +867,15 @@ namespace Klyte.DynamicTextProps.UI
         private void ReloadTabInfo()
         {
             m_pseudoTabPropsHelper.Self.isVisible = m_currentBuildingName != null && CurrentTab >= 0;
-            if (m_currentBuildingName == null || CurrentTab < 0 || CurrentTab >= (BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName]?.BoardDescriptors?.Length ?? 0))
+            if (m_currentBuildingName == null || CurrentTab < 0 || CurrentTab >= (BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName]?.BoardDescriptors?.Length ?? 0))
             {
                 return;
             }
 
             m_isLoading = true;
-            LoadTabInfo(BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName]?.BoardDescriptors[CurrentTab]);
-            EnsureTabQuantityTexts(BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName]?.BoardDescriptors[CurrentTab]?.m_textDescriptors?.Length ?? 0);
-            ConfigureTabsShownText(BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName]?.BoardDescriptors[CurrentTab]?.m_textDescriptors?.Length ?? 0);
+            LoadTabInfo(BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName]?.BoardDescriptors[CurrentTab]);
+            EnsureTabQuantityTexts(BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName]?.BoardDescriptors[CurrentTab]?.m_textDescriptors?.Length ?? 0);
+            ConfigureTabsShownText(BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName]?.BoardDescriptors[CurrentTab]?.m_textDescriptors?.Length ?? 0);
             m_isLoading = false;
             m_loadPropItem.items = DTPLibPropSingleBuildingSigns.Instance.List().ToArray();
             OnChangeTabTexts(-1);
@@ -907,7 +907,7 @@ namespace Klyte.DynamicTextProps.UI
             }
 
             m_isLoading = true;
-            LoadTabTextInfo(BoardGeneratorBuildings.m_loadedDescriptors[m_currentBuildingName]?.BoardDescriptors[CurrentTab]?.m_textDescriptors[CurrentTabText]);
+            LoadTabTextInfo(BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName]?.BoardDescriptors[CurrentTab]?.m_textDescriptors[CurrentTabText]);
             m_loadText.items = DTPLibTextMeshBuildingSigns.Instance.List().ToArray();
             m_isLoading = false;
         }

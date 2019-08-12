@@ -1,2 +1,4 @@
-﻿v1
+﻿v1.0.1
+	- Fixed flashing buildings on mod first use.
+v1
 	- Initial release version

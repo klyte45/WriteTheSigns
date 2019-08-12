@@ -24,7 +24,18 @@ namespace Klyte.DynamicTextProps.Overrides
     {
 
         public Dictionary<string, Tuple<UIFont, uint>> m_fontCache = new Dictionary<string, Tuple<UIFont, uint>>();
-        internal static Dictionary<string, BuildingGroupDescriptorXml> m_loadedDescriptors;
+        private static Dictionary<string, BuildingGroupDescriptorXml> m_loadedDescriptors;
+        internal static Dictionary<string, BuildingGroupDescriptorXml> LoadedDescriptors
+        {
+            get {
+
+                if (m_loadedDescriptors == null)
+                {
+                    m_loadedDescriptors = new Dictionary<string, BuildingGroupDescriptorXml>();
+                }
+                return m_loadedDescriptors;
+            }
+        }
 
         private DTPBuildingEditorTab EditorInstance => DTPBuildingEditorTab.Instance;
 
@@ -145,10 +156,6 @@ namespace Klyte.DynamicTextProps.Overrides
 
             if (serializer.Deserialize(stream) is BuildingGroupDescriptorXml config)
             {
-                if (m_loadedDescriptors == null)
-                {
-                    m_loadedDescriptors = new Dictionary<string, BuildingGroupDescriptorXml>();
-                }
                 if (info != null)
                 {
                     var propEffName = info.name.Split(".".ToCharArray(), 2);
@@ -158,7 +165,7 @@ namespace Klyte.DynamicTextProps.Overrides
                         config.BuildingName = info.name;
                     }
                 }
-                m_loadedDescriptors[config.BuildingName] = config;
+                LoadedDescriptors[config.BuildingName] = config;
             }
         }
 
@@ -254,7 +261,7 @@ namespace Klyte.DynamicTextProps.Overrides
                            m_buildingStopsDescriptor[data.Info.name][i].width / 2, m_colorOrder[i % m_colorOrder.Length]));
                 }
             }
-            if (!m_loadedDescriptors.ContainsKey(data.Info.name) || (m_loadedDescriptors[data.Info.name]?.BoardDescriptors?.Length ?? 0) == 0)
+            if (!LoadedDescriptors.ContainsKey(data.Info.name) || (LoadedDescriptors[data.Info.name]?.BoardDescriptors?.Length ?? 0) == 0)
             {
                 return;
             }
@@ -262,16 +269,16 @@ namespace Klyte.DynamicTextProps.Overrides
             {
                 m_boardsContainers[buildingID] = new BoardBunchContainerBuilding();
             }
-            if (m_boardsContainers[buildingID]?.m_boardsData?.Count() != m_loadedDescriptors[data.Info.name].BoardDescriptors.Length)
+            if (m_boardsContainers[buildingID]?.m_boardsData?.Count() != LoadedDescriptors[data.Info.name].BoardDescriptors.Length)
             {
-                m_boardsContainers[buildingID].m_boardsData = new CacheControl[m_loadedDescriptors[data.Info.name].BoardDescriptors.Length];
+                m_boardsContainers[buildingID].m_boardsData = new CacheControl[LoadedDescriptors[data.Info.name].BoardDescriptors.Length];
                 m_boardsContainers[buildingID].m_nameSubInfo = null;
             }
 
             UpdateLinesBuilding(buildingID, ref data, m_boardsContainers[buildingID], ref renderInstance.m_dataMatrix1);
-            for (var i = 0; i < m_loadedDescriptors[data.Info.name].BoardDescriptors.Length; i++)
+            for (var i = 0; i < LoadedDescriptors[data.Info.name].BoardDescriptors.Length; i++)
             {
-                BoardDescriptorBuildingXml descriptor = m_loadedDescriptors[data.Info.name].BoardDescriptors[i];
+                BoardDescriptorBuildingXml descriptor = LoadedDescriptors[data.Info.name].BoardDescriptors[i];
                 if (m_boardsContainers[buildingID].m_boardsData[i] == null)
                 {
                     m_boardsContainers[buildingID].m_boardsData[i] = new CacheControl();
@@ -475,7 +482,7 @@ namespace Klyte.DynamicTextProps.Overrides
                         for (var i = 0; i < m_buildingStopsDescriptor[buildingName].Length; i++)
                         {
                             Matrix4x4 inverseMatrix = refMatrix.inverse;
-                            var maxDist = (m_buildingStopsDescriptor[buildingName][i].width * m_buildingStopsDescriptor[buildingName][i].width) + 1f;
+                            var maxDist = m_buildingStopsDescriptor[buildingName][i].width * m_buildingStopsDescriptor[buildingName][i].width * 2;
                             var maxHeightDiff = m_buildingStopsDescriptor[buildingName][i].width / 2;
                             if (DynamicTextPropsMod.DebugMode)
                             {
@@ -742,9 +749,9 @@ namespace Klyte.DynamicTextProps.Overrides
 
         public static bool SaveInCommonFolder(string buildingName)
         {
-            if (m_loadedDescriptors.ContainsKey(buildingName))
+            if (LoadedDescriptors.ContainsKey(buildingName))
             {
-                BuildingGroupDescriptorXml item = m_loadedDescriptors[buildingName];
+                BuildingGroupDescriptorXml item = LoadedDescriptors[buildingName];
                 item.BuildingName = buildingName;
                 SaveInCommonFolder(new XmlSerializer(typeof(BuildingGroupDescriptorXml)), item, true);
                 return true;
@@ -759,9 +766,9 @@ namespace Klyte.DynamicTextProps.Overrides
         }
         public static bool SaveInAssetFolder(string buildingName)
         {
-            if (m_loadedDescriptors.ContainsKey(buildingName))
+            if (LoadedDescriptors.ContainsKey(buildingName))
             {
-                BuildingGroupDescriptorXml item = m_loadedDescriptors[buildingName];
+                BuildingGroupDescriptorXml item = LoadedDescriptors[buildingName];
                 Package.Asset asset = PackageManager.FindAssetByName(buildingName);
                 if (!(asset == null) && !(asset.package == null))
                 {
@@ -800,6 +807,8 @@ namespace Klyte.DynamicTextProps.Overrides
 
         #region Serialization
         protected override string ID => "K45_DTP_BGB";
+
+
         public override void Deserialize(string data)
         {
             LogUtils.DoLog($"{GetType()} STR: \"{data}\"");
