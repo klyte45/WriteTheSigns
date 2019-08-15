@@ -3,6 +3,7 @@ using ColossalFramework.Globalization;
 using ColossalFramework.UI;
 using ICities;
 using Klyte.Commons.Extensors;
+using Klyte.Commons.Interfaces;
 using Klyte.Commons.Utils;
 using Klyte.DynamicTextProps.Libraries;
 using Klyte.DynamicTextProps.Overrides;
@@ -115,7 +116,7 @@ namespace Klyte.DynamicTextProps.UI
             actionButton.eventClick += (x, t) => DTPUtils.ReloadFontsOf<BoardGeneratorBuildings>(m_fontSelect);
             DTPUtils.ReloadFontsOf<BoardGeneratorBuildings>(m_fontSelect);
 
- 
+
 
             m_buttonTool = (UIButton) m_uiHelperHS.AddButton(Locale.Get("K45_DTP_PICK_A_BUILDING"), EnablePickTool);
             KlyteMonoUtils.LimitWidth(m_buttonTool, (m_uiHelperHS.Self.width - 20), true);

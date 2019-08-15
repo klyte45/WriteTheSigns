@@ -12,7 +12,7 @@ using System.Reflection;
 using UnityEngine;
 using static Klyte.DynamicTextProps.TextureAtlas.DTPCommonTextureAtlas;
 
-[assembly: AssemblyVersion("1.0.1.0")]
+[assembly: AssemblyVersion("1.0.1.10000")]
 namespace Klyte.DynamicTextProps
 {
     public class DynamicTextPropsMod : BasicIUserMod<DynamicTextPropsMod, DTPResourceLoader, DTPController, DTPCommonTextureAtlas, DTPPanel, SpriteNames>

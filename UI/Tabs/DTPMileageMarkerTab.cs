@@ -4,7 +4,7 @@ using ColossalFramework.UI;
 using ICities;
 using Klyte.Commons.Extensors;
 using Klyte.Commons.Utils;
-using Klyte.DynamicTextProps.Libraries;
+using Klyte.Commons.Interfaces;
 using Klyte.DynamicTextProps.Overrides;
 using Klyte.DynamicTextProps.TextureAtlas;
 using Klyte.DynamicTextProps.Utils;
@@ -12,6 +12,7 @@ using System;
 using System.Linq;
 using UnityEngine;
 using static Klyte.DynamicTextProps.Overrides.BoardGeneratorHighwayMileage;
+using Klyte.DynamicTextProps.Libraries;
 
 namespace Klyte.DynamicTextProps.UI
 {

@@ -1,7 +1,7 @@
 ﻿using System.Linq;
 using System.Xml.Serialization;
 using System.Xml;
-using Klyte.DynamicTextProps.Libraries;
+using Klyte.Commons.Interfaces;
 using static Klyte.Commons.Utils.XmlUtils;
 
 namespace Klyte.DynamicTextProps.Overrides

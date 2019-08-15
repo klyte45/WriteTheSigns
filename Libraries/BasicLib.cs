@@ -1,4 +1,5 @@
-﻿using Klyte.Commons.Utils;
+﻿using Klyte.Commons.Interfaces;
+using Klyte.Commons.Utils;
 using Klyte.DynamicTextProps.Overrides;
 using System.Collections.Generic;
 using System.IO;
@@ -66,7 +67,7 @@ namespace Klyte.DynamicTextProps.Libraries
 
         public void Remove(string indexName)
         {
-            bool removed = m_savedDescriptors.Remove(indexName);
+            var removed = m_savedDescriptors.Remove(indexName);
             if (removed)
             {
                 Save();
@@ -75,11 +76,6 @@ namespace Klyte.DynamicTextProps.Libraries
 
         private void Save() => File.WriteAllText(DefaultXmlFileBaseFullPath, XmlUtils.DefaultXmlSerialize<LIB>((LIB) this));
 
-    }
-
-    public interface ILibable
-    {
-        string SaveName { get; set; }
     }
 
     #region Mileage Marker

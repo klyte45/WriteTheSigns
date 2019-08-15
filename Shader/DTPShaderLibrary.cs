@@ -15,15 +15,22 @@ namespace Klyte.DynamicTextProps.Utils
                 if (Application.platform == RuntimePlatform.WindowsPlayer)
                 {
                     m_loadedShaders = DTPResourceLoader.instance.LoadAllShaders("Shader.ShaderTest.unity3d");
+                    LogUtils.DoLog($"Shaders loaded for {Application.platform}!");
                 }
                 else if (Application.platform == RuntimePlatform.LinuxPlayer)
                 {
                     m_loadedShaders = DTPResourceLoader.instance.LoadAllShaders("Shader.ShaderTest-linux.unity3d");
+                    LogUtils.DoLog($"Shaders loaded for {Application.platform}!");
                 }
                 else if (Application.platform == RuntimePlatform.OSXPlayer)
                 {
 
                     m_loadedShaders = DTPResourceLoader.instance.LoadAllShaders("Shader.ShaderTest-macosx.unity3d");
+                    LogUtils.DoLog($"Shaders loaded for {Application.platform}!");
+                }
+                else
+                {
+                    LogUtils.DoErrorLog($"WARNING: Shaders not found for {Application.platform}!");
                 }
             }
             return m_loadedShaders;

@@ -1,5 +1,5 @@
 ﻿using Klyte.Commons.Utils;
-using Klyte.DynamicTextProps.Libraries;
+using Klyte.Commons.Interfaces;
 using System.Xml;
 using System.Xml.Serialization;
 using UnityEngine;
