@@ -1,4 +1,6 @@
-﻿v1.0.1
+﻿v1.0.2
+	- Fixed flashing props when editing a building with no stop points
+v1.0.1
 	- Fixed flashing buildings on mod first use.
 v1
 	- Initial release version
