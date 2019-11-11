@@ -8,11 +8,6 @@ namespace Klyte.DynamicTextProps.Utils
     public sealed class DTPResourceLoader : KlyteResourceLoader<DTPResourceLoader>
     {
         public override string Prefix { get; } = "Klyte.DynamicTextProps.";
-        public override Shader GetLoadedShader(string shaderName)
-        {
-            DTPShaderLibrary.GetShaders().TryGetValue(shaderName, out Shader result);
-            return result;
-        }
 
 
         public Dictionary<string, Shader> LoadAllShaders(string assetBundleName)

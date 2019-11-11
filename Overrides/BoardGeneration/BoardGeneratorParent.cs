@@ -4,6 +4,7 @@ using ColossalFramework.Math;
 using ColossalFramework.UI;
 using ICities;
 using Klyte.Commons.Extensors;
+using Klyte.Commons.Redirectors;
 using Klyte.Commons.Utils;
 using Klyte.DynamicTextProps.Utils;
 using System;
@@ -11,6 +12,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEngine;
+using static Klyte.Commons.Redirectors.UIDynamicFontRendererRedirector;
 
 namespace Klyte.DynamicTextProps.Overrides
 {
@@ -19,7 +21,7 @@ namespace Klyte.DynamicTextProps.Overrides
     {
         public abstract UIDynamicFont DrawFont { get; }
         protected uint lastFontUpdateFrame = SimulationManager.instance.m_currentTickIndex;
-        protected static Shader TextShader => DTPResourceLoader.instance.GetLoadedShader("Klyte/DynamicTextProps/klytetextboards") ?? DistrictManager.instance.m_properties.m_areaNameShader;
+        protected static Shader TextShader = Shader.Find("Custom/Props/Prop/Default") ?? DistrictManager.instance.m_properties.m_areaNameShader;
 
         public static BG Instance { get; protected set; }
         public Redirector RedirectorInstance { get; set; }
@@ -28,18 +30,12 @@ namespace Klyte.DynamicTextProps.Overrides
         {
             font = ScriptableObject.CreateInstance<UIDynamicFont>();
 
-            font.material = new Material(Singleton<DistrictManager>.instance.m_properties.m_areaNameFont.material);
-            font.shader = TextShader;
-            font.baseline = (Singleton<DistrictManager>.instance.m_properties.m_areaNameFont as UIDynamicFont).baseline;
-            font.size = (Singleton<DistrictManager>.instance.m_properties.m_areaNameFont as UIDynamicFont).size * 4;
-            font.lineHeight = (Singleton<DistrictManager>.instance.m_properties.m_areaNameFont as UIDynamicFont).lineHeight;
             var fontList = new List<string> { fontName };
             fontList.AddRange(DistrictManager.instance.m_properties?.m_areaNameFont?.baseFont?.fontNames?.ToList());
             font.baseFont = Font.CreateDynamicFontFromOSFont(fontList.ToArray(), 64);
             font.lineHeight = 70;
             font.baseline = 66;
-
-            font.material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.EmissiveIsBlack | MaterialGlobalIlluminationFlags.RealtimeEmissive;
+            font.size = 64;
         }
 
         public void ChangeFont(string newFont)
@@ -53,19 +49,17 @@ namespace Klyte.DynamicTextProps.Overrides
             DrawFont.baseFont = Font.CreateDynamicFontFromOSFont(fontList.ToArray(), 64);
             lastFontUpdateFrame = SimulationManager.instance.m_currentTickIndex;
             OnChangeFont(DrawFont.baseFont.name != newFont ? null : newFont);
-            OnTextureRebuilt(DrawFont.baseFont);
+            Reset();
         }
         protected virtual void OnChangeFont(string fontName) { }
 
-        protected void OnTextureRebuilt(Font obj)
+        protected void Reset()
         {
-            if (obj == DrawFont.baseFont)
-            {
-                lastFontUpdateFrame = SimulationManager.instance.m_currentTickIndex;
-            }
-            OnTextureRebuiltImpl(obj);
+           lastFontUpdateFrame = SimulationManager.instance.m_currentTickIndex;
+
+            ResetImpl();
         }
-        protected abstract void OnTextureRebuiltImpl(Font obj);
+        protected abstract void ResetImpl();
 
         public virtual void Awake()
         {
@@ -88,7 +82,11 @@ namespace Klyte.DynamicTextProps.Overrides
 
 
         public static readonly int m_shaderPropColor = Shader.PropertyToID("_Color");
-        public static readonly int m_shaderPropEmissive = Shader.PropertyToID("_Emission");
+        public static readonly int m_shaderPropColor0 = Shader.PropertyToID("_ColorV0");
+        public static readonly int m_shaderPropColor1 = Shader.PropertyToID("_ColorV1");
+        public static readonly int m_shaderPropColor2 = Shader.PropertyToID("_ColorV2");
+        public static readonly int m_shaderPropColor3 = Shader.PropertyToID("_ColorV3");
+        public static readonly int m_shaderPropEmissive = Shader.PropertyToID("_SpecColor");
         public abstract void Initialize();
 
 
@@ -103,7 +101,6 @@ namespace Klyte.DynamicTextProps.Overrides
         public override void Awake()
         {
             base.Awake();
-            Font.textureRebuilt += OnTextureRebuilt;
             Initialize();
             m_boardsContainers = new BBC[ObjArraySize];
 
@@ -115,8 +112,8 @@ namespace Klyte.DynamicTextProps.Overrides
 
         protected Quad2 GetBounds(ref Building data)
         {
-            var width = data.Width;
-            var length = data.Length;
+            int width = data.Width;
+            int length = data.Length;
             var vector = new Vector2(Mathf.Cos(data.m_angle), Mathf.Sin(data.m_angle));
             var vector2 = new Vector2(vector.y, -vector.x);
             vector *= width * 4f;
@@ -133,9 +130,9 @@ namespace Klyte.DynamicTextProps.Overrides
         {
             Vector2 ref1v2 = VectorUtils.XZ(ref1);
             Vector2 ref2v2 = VectorUtils.XZ(ref2);
-            var halfLength = (ref1v2 - ref2v2).magnitude / 2;
+            float halfLength = (ref1v2 - ref2v2).magnitude / 2;
             Vector2 center = (ref1v2 + ref2v2) / 2;
-            var angle = Vector2.Angle(ref1v2, ref2v2);
+            float angle = Vector2.Angle(ref1v2, ref2v2);
 
 
             var vector = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
@@ -209,8 +206,8 @@ namespace Klyte.DynamicTextProps.Overrides
                 if (cameraInfo.CheckRenderDistance(position, propInfo.m_maxRenderDistance * scale.sqrMagnitude))
                 {
                     InstanceID propRenderID2 = GetPropRenderID(refId);
-                    var oldLayerMask = cameraInfo.m_layerMask;
-                    var oldRenderDist = propInfo.m_lodRenderDistance;
+                    int oldLayerMask = cameraInfo.m_layerMask;
+                    float oldRenderDist = propInfo.m_lodRenderDistance;
                     propInfo.m_lodRenderDistance *= scale.sqrMagnitude;
                     cameraInfo.m_layerMask = 0x7FFFFFFF;
                     try
@@ -270,12 +267,12 @@ namespace Klyte.DynamicTextProps.Overrides
                 return;
             }
 
-            var overflowScaleX = 1f;
-            var overflowScaleY = 1f;
-            var defaultMultiplierX = textDescriptor.m_textScale * m_scalingMatrix.x;
-            var defaultMultiplierY = textDescriptor.m_textScale * m_scalingMatrix.y;
-            var realWidth = defaultMultiplierX * renderInfo.m_sizeMetersUnscaled.x;
-            var realHeight = defaultMultiplierY * renderInfo.m_sizeMetersUnscaled.y;
+            float overflowScaleX = 1f;
+            float overflowScaleY = 1f;
+            float defaultMultiplierX = textDescriptor.m_textScale * m_scalingMatrix.x;
+            float defaultMultiplierY = textDescriptor.m_textScale * m_scalingMatrix.y;
+            float realWidth = defaultMultiplierX * renderInfo.m_sizeMetersUnscaled.x;
+            float realHeight = defaultMultiplierY * renderInfo.m_sizeMetersUnscaled.y;
             Vector3 targetRelativePosition = textDescriptor.m_textRelativePosition;
             //    LogUtils.DoLog($"[{GetType().Name},{refID},{boardIdx},{secIdx}] realWidth = {realWidth}; realHeight = {realHeight}; renderInfo.m_mesh.bounds = {renderInfo.m_mesh.bounds};");
             if (textDescriptor.m_maxWidthMeters > 0 && textDescriptor.m_maxWidthMeters < realWidth)
@@ -290,7 +287,7 @@ namespace Klyte.DynamicTextProps.Overrides
             {
                 if (textDescriptor.m_maxWidthMeters > 0 && textDescriptor.m_textAlign != UIHorizontalAlignment.Center)
                 {
-                    var factor = textDescriptor.m_textAlign == UIHorizontalAlignment.Left == (((textDescriptor.m_textRelativeRotation.y % 360) + 810) % 360 > 180) ? 0.5f : -0.5f;
+                    float factor = textDescriptor.m_textAlign == UIHorizontalAlignment.Left == (((textDescriptor.m_textRelativeRotation.y % 360) + 810) % 360 > 180) ? 0.5f : -0.5f;
                     targetRelativePosition += new Vector3((textDescriptor.m_maxWidthMeters - realWidth) * factor / descriptor.ScaleX, 0, 0);
                 }
             }
@@ -298,7 +295,7 @@ namespace Klyte.DynamicTextProps.Overrides
 
             if (textDescriptor.m_verticalAlign != UIVerticalAlignment.Middle)
             {
-                var factor = textDescriptor.m_verticalAlign == UIVerticalAlignment.Bottom == (((textDescriptor.m_textRelativeRotation.x % 360) + 810) % 360 > 180) ? -1f : 1f;
+                float factor = textDescriptor.m_verticalAlign == UIVerticalAlignment.Bottom == (((textDescriptor.m_textRelativeRotation.x % 360) + 810) % 360 > 180) ? -1f : 1f;
                 targetRelativePosition += new Vector3(0, realHeight * factor, 0);
             }
 
@@ -312,29 +309,38 @@ namespace Klyte.DynamicTextProps.Overrides
                 new Vector3(defaultMultiplierX * overflowScaleX / descriptor.ScaleX, defaultMultiplierY * overflowScaleY / descriptor.PropScale.y, 1));
             if (cameraInfo.CheckRenderDistance(matrix.MultiplyPoint(Vector3.zero), Math.Min(3000, 200 * textDescriptor.m_textScale)))
             {
+                Color colorToSet = Color.white;
                 if (textDescriptor.m_useContrastColor)
                 {
-                    materialPropertyBlock.SetColor(m_shaderPropColor, GetContrastColor(refID, boardIdx, secIdx, descriptor));
+                    colorToSet = GetContrastColor(refID, boardIdx, secIdx, descriptor);
                 }
                 else if (textDescriptor.m_defaultColor != Color.clear)
                 {
-                    materialPropertyBlock.SetColor(m_shaderPropColor, textDescriptor.m_defaultColor);
+                    colorToSet = textDescriptor.m_defaultColor;
                 }
-                else
-                {
-                    materialPropertyBlock.SetColor(m_shaderPropColor, Color.white);
-                }
+                materialPropertyBlock.Clear();
+                materialPropertyBlock.SetColor(m_shaderPropColor, colorToSet);
+                materialPropertyBlock.SetColor(m_shaderPropColor0, colorToSet);
+                materialPropertyBlock.SetColor(m_shaderPropColor1, colorToSet);
+                materialPropertyBlock.SetColor(m_shaderPropColor2, colorToSet);
+                materialPropertyBlock.SetColor(m_shaderPropColor3, colorToSet);
 
-                materialPropertyBlock.SetFloat(m_shaderPropEmissive, 1.4f * (SimulationManager.instance.m_isNightTime ? textDescriptor.m_nightEmissiveMultiplier : textDescriptor.m_dayEmissiveMultiplier));
-                targetFont.material.shader = textDescriptor.ShaderOverride ?? TextShader;
-                Graphics.DrawMesh(renderInfo.m_mesh, matrix, targetFont.material, ctrl?.m_cachedProp?.m_prefabDataLayer ?? 10, cameraInfo.m_camera, 0, materialPropertyBlock, false, true, true);
+
+                materialPropertyBlock.SetColor(m_shaderPropEmissive, Color.white * (SimulationManager.instance.m_isNightTime ? textDescriptor.m_nightEmissiveMultiplier : textDescriptor.m_dayEmissiveMultiplier));
+                renderInfo.m_generatedMaterial.shader = textDescriptor.ShaderOverride ?? TextShader;
+                Graphics.DrawMesh(renderInfo.m_mesh, matrix, renderInfo.m_generatedMaterial, A_layer, cameraInfo.m_camera, 0, materialPropertyBlock, A_castShadows, A_receiveShadows, A_useLightProbes);
             }
         }
+
+        private static int A_layer = 10;
+        private static bool A_castShadows = false;
+        private static bool A_receiveShadows = true;
+        private static bool A_useLightProbes = true;
 
         protected void UpdateMeshStreetSuffix(ushort idx, ref BRI bri)
         {
             LogUtils.DoLog($"!UpdateMeshStreetSuffix {idx}");
-            var result = "";
+            string result = "";
             result = DTPHookable.GetStreetSuffix(idx);
             RefreshTextData(ref bri, result);
         }
@@ -343,7 +349,7 @@ namespace Klyte.DynamicTextProps.Overrides
         protected void UpdateMeshFullNameStreet(ushort idx, ref BRI bri)
         {
             //(ushort segmentID, ref string __result, ref List<ushort> usedQueue, bool defaultPrefix, bool removePrefix = false)
-            var name = DTPHookable.GetStreetFullName(idx);
+            string name = DTPHookable.GetStreetFullName(idx);
             LogUtils.DoLog($"!GenName {name} for {idx}");
             RefreshTextData(ref bri, name);
         }
@@ -372,46 +378,62 @@ namespace Klyte.DynamicTextProps.Overrides
                 PoolList<Color32> colors = uirenderData.colors;
                 PoolList<Vector2> uvs = uirenderData.uvs;
                 PoolList<int> triangles = uirenderData.triangles;
-                Vector2 sizeMeters;
 
-                using (UIFontRenderer uifontRenderer = (overrideFont ?? DrawFont).ObtainRenderer())
+                Texture2D tex = TextureRenderUtils.RenderTextToTexture((UIDynamicFont) (overrideFont ?? DrawFont), text.IsNullOrWhiteSpace() ? " " : text, Color.white, out Vector2 realSize);
+
+                var options = new RenderOptions
                 {
-
-                    var width = 10000f;
-                    var height = 900f;
-                    uifontRenderer.colorizeSprites = true;
-                    uifontRenderer.defaultColor = Color.white;
-                    uifontRenderer.textScale = m_textScale;
-                    uifontRenderer.pixelRatio = m_pixelRatio;
-                    uifontRenderer.processMarkup = true;
-                    uifontRenderer.wordWrap = false;
-                    uifontRenderer.textAlign = UIHorizontalAlignment.Center;
-                    uifontRenderer.maxSize = new Vector2(width, height);
-                    uifontRenderer.multiLine = true;
-                    uifontRenderer.opacity = 1;
-                    uifontRenderer.shadow = false;
-                    uifontRenderer.shadowColor = Color.black;
-                    uifontRenderer.shadowOffset = Vector2.zero;
-                    uifontRenderer.outline = false;
-                    if(uifontRenderer is UIDynamicFont.DynamicFontRenderer dynamicRenderer)
+                    color = Color.white,
+                    fillAmount = 1f,
+                    flip = UISpriteFlip.None,
+                    offset = Vector3.zero,
+                    pixelsToUnits = 1,
+                    size = realSize,
+                    spriteInfo = new UITextureAtlas.SpriteInfo()
                     {
-                        dynamicRenderer.spriteAtlas = UIView.GetAView().defaultAtlas;                    
+                        region = new Rect(0, 0, 1, 1)
                     }
-                    sizeMeters = uifontRenderer.MeasureString(text);
-                    uifontRenderer.Render(text, uirenderData);
-                }
+                };
+                UIDynamicFontRendererRedirector.RenderSprite(uirenderData, options);
+
+
                 if (result.m_mesh == null)
                 {
                     result.m_mesh = new Mesh();
                 }
-                LogUtils.DoLog(uirenderData.ToString());
                 result.m_mesh.Clear();
-                result.m_mesh.vertices = CenterVertices(vertices);
-                result.m_mesh.colors32 = colors.Select(x => new Color32(x.a, x.a, x.a, x.a)).ToArray();
+                result.m_mesh.vertices = CenterVertices(vertices).ToArray();
+                result.m_mesh.colors32 = colors.ToArray();
                 result.m_mesh.uv = uvs.ToArray();
                 result.m_mesh.triangles = triangles.ToArray();
+                result.m_mesh.RecalculateBounds();
+                result.m_mesh.RecalculateNormals();
+                result.m_mesh.RecalculateTangents();
                 result.m_frameDrawTime = lastFontUpdateFrame;
-                result.m_sizeMetersUnscaled = new Vector2(sizeMeters.x * m_pixelRatio, result.m_mesh.bounds.extents.y);
+                result.m_sizeMetersUnscaled = new Vector2(realSize.x, result.m_mesh.bounds.extents.y);
+                var mainTex = new Texture2D(tex.width, tex.height);
+                mainTex.SetPixels(new Color[tex.width * tex.height].Select(x => Color.white).ToArray());
+                mainTex.Apply();
+                if (result.m_generatedMaterial == null)
+                {
+                    result.m_generatedMaterial = new Material(Shader.Find("Custom/Buildings/Building/NoBase"))
+                    {
+                        mainTexture = mainTex
+                    };
+                }
+                else
+                {
+                    result.m_generatedMaterial.mainTexture = mainTex;
+                }
+                //LogUtils.DoErrorLog($"TEX SIZE= {tex.width},{tex.height} text = {text}");
+                var aciTex = new Texture2D(tex.width, tex.height);
+                aciTex.SetPixels(tex.GetPixels().Select(x => new Color(1 - x.r, 0, 0, 1)).ToArray());
+                aciTex.Apply();
+                result.m_generatedMaterial.SetTexture("_ACIMap", aciTex);
+                var xysTex = new Texture2D(tex.width, tex.height);
+                xysTex.SetPixels(tex.GetPixels().Select(x => new Color(0.732F, 0.732F,1, 1)).ToArray());
+                xysTex.Apply();
+                result.m_generatedMaterial.SetTexture("_XYSMap", xysTex);
             }
             finally
             {
@@ -478,7 +500,7 @@ namespace Klyte.DynamicTextProps.Overrides
                 return;
             }
             using var memoryStream = new MemoryStream(SerializableDataManager.LoadData(ID));
-            var storage = memoryStream.ToArray();
+            byte[] storage = memoryStream.ToArray();
             Deserialize(System.Text.Encoding.UTF8.GetString(storage));
         }
 
@@ -490,14 +512,14 @@ namespace Klyte.DynamicTextProps.Overrides
                 return;
             }
 
-            var serialData = Serialize();
+            string serialData = Serialize();
             LogUtils.DoLog($"serialData: {serialData ?? "<NULL>"}");
             if (serialData == null)
             {
                 return;
             }
 
-            var data = System.Text.Encoding.UTF8.GetBytes(serialData);
+            byte[] data = System.Text.Encoding.UTF8.GetBytes(serialData);
             SerializableDataManager.SaveData(ID, data);
         }
 
@@ -505,13 +527,6 @@ namespace Klyte.DynamicTextProps.Overrides
         public abstract string Serialize();
         public void OnReleased() { }
         #endregion
-
-
-        protected static string A_ShaderNameTest = "Klyte/DynamicTextProps/klytetextboards";
-        protected static IEnumerable<string> A_Shaders => DTPShaderLibrary.m_loadedShaders.Keys;
-
-        protected void A_ReloadFromDisk() => DTPShaderLibrary.ReloadFromDisk();
-        protected void A_CopyToFont() => DrawFont.shader = DTPResourceLoader.instance.GetLoadedShader(A_ShaderNameTest);
 
     }
 

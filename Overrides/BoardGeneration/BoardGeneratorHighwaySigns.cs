@@ -16,7 +16,7 @@ namespace Klyte.DynamicTextProps.Overrides
     public partial class BoardGeneratorHighwaySigns : BoardGeneratorParent<BoardGeneratorHighwaySigns, BoardBunchContainerHighwaySignXml, CacheControlHighwaySign, BasicRenderInformation, BoardDescriptorHigwaySignXml, BoardTextDescriptorHighwaySignsXml>
     {
 
-        public Dictionary<string, Tuple<UIFont, uint>> m_fontCache = new Dictionary<string, Tuple<UIFont, uint>>();
+        public Dictionary<string, UIFont> m_fontCache = new Dictionary<string, UIFont>();
         public BasicRenderInformation[] m_cachedExitTitles;
         //public BasicRenderInformation[] m_cachedDistanceMeshes;
         public List<ushort> m_destroyQueue = new List<ushort>();
@@ -62,12 +62,8 @@ namespace Klyte.DynamicTextProps.Overrides
         }
 
 
-        protected override void OnTextureRebuiltImpl(Font obj)
+        protected override void ResetImpl()
         {
-            if (m_fontCache.ContainsKey(obj?.fontNames?.ElementAtOrDefault(0)))
-            {
-                m_fontCache[obj.fontNames[0]] = Tuple.New(m_fontCache[obj.fontNames[0]].First, SimulationManager.instance.m_currentTickIndex);
-            }
         }
 
         private void OnSegmentReleased(ushort segmentId) => m_boardsContainers[segmentId] = null;
@@ -225,10 +221,9 @@ namespace Klyte.DynamicTextProps.Overrides
         #region Upadate Data
         protected override BasicRenderInformation GetOwnNameMesh(ushort buildingID, int boardIdx, int secIdx, out UIFont font, ref BoardDescriptorHigwaySignXml descriptor)
         {
-            font = m_fontCache.TryGetValue(m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].m_overrideFont ?? "", out Tuple<UIFont, uint> fontCacheVal) ? fontCacheVal.First : DrawFont;
+            font = m_fontCache.TryGetValue(m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].m_overrideFont ?? "", out UIFont fontCacheVal) ? fontCacheVal : DrawFont;
             if (m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].GeneratedFixedTextRenderInfo == null
-                || m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].m_cachedTextContent != m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].m_ownTextContent
-                || m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].GeneratedFixedTextRenderInfoTick < (fontCacheVal?.Second ?? lastFontUpdateFrame))
+                || m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].m_cachedTextContent != m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].m_ownTextContent)
             {
                 BasicRenderInformation result = m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].GeneratedFixedTextRenderInfo;
                 string resultText = "X";
@@ -285,10 +280,10 @@ namespace Klyte.DynamicTextProps.Overrides
                         }
                         else
                         {
-                            m_fontCache[m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].m_overrideFont] = Tuple.New((UIFont) surfaceFont, 0u);
+                            m_fontCache[m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].m_overrideFont] =  surfaceFont;
                         }
                     }
-                    overrideFont = m_fontCache[m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].m_overrideFont].First;
+                    overrideFont = m_fontCache[m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].m_overrideFont];
                 }
                 RefreshTextData(ref result, resultText, overrideFont);
                 m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].GeneratedFixedTextRenderInfo = result;

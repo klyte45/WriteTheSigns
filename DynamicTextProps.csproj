@@ -79,6 +79,8 @@
     <Compile Include="commons\Extensors\UI\UITabstripAutoResize.cs" />
     <Compile Include="commons\Interfaces\BasicIUserMod.cs" />
     <Compile Include="commons\Interfaces\BasicIUserModSimplified.cs" />
+    <Compile Include="commons\Interfaces\IIdentifiable.cs" />
+    <Compile Include="commons\Interfaces\ITimeable.cs" />
     <Compile Include="commons\Interfaces\TextureAtlasDescriptor.cs" />
     <Compile Include="commons\Redirectors\UIDynamicFontRendererRedirector.cs" />
     <Compile Include="commons\TextureAtlas\CommonTextureAtlas.cs" />
@@ -116,8 +118,12 @@
     <Compile Include="commons\Utils\StructExtensions\Vector3Extensions.cs" />
     <Compile Include="commons\Utils\TextureScaler.cs" />
     <Compile Include="commons\Utils\UtilitiesClasses\CardinalPoint .cs" />
+    <Compile Include="commons\Utils\UtilitiesClasses\ColorList.cs" />
+    <Compile Include="commons\Utils\UtilitiesClasses\LibableList.cs" />
+    <Compile Include="commons\Utils\UtilitiesClasses\NonSequentialList.cs" />
     <Compile Include="commons\Utils\UtilitiesClasses\NumberArrays.cs" />
     <Compile Include="commons\Utils\UtilitiesClasses\Range.cs" />
+    <Compile Include="commons\Utils\UtilitiesClasses\TimeableList.cs" />
     <Compile Include="commons\Utils\UtilitiesClasses\Tuple.cs" />
     <Compile Include="commons\Utils\VehicleUtils.cs" />
     <Compile Include="commons\Utils\XmlUtils.cs" />
@@ -146,7 +152,7 @@
     <Compile Include="Xml\BoardDescriptor\BoardDescriptorStreetSignXml.cs" />
     <Compile Include="Xml\BoardTextDescriptor\BoardTextDescriptorHigwaySignXml.cs" />
     <Compile Include="Xml\BoardDescriptor\BoardDescriptorParentXml.cs" />
-    <Compile Include="Overrides\BoardGeneration\BoardGeneratorHighwaySign.cs" />
+    <Compile Include="Overrides\BoardGeneration\BoardGeneratorHighwaySigns.cs" />
     <Compile Include="Overrides\BoardGeneration\BoardGeneratorHighwayMileage.cs" />
     <Compile Include="Overrides\BoardGeneration\BoardGeneratorRoadNodes.cs" />
     <Compile Include="Overrides\BoardGeneration\BoardGeneratorParent.cs" />
@@ -163,7 +169,6 @@
     <Compile Include="Overrides\NetManagerOverrides.cs" />
     <Compile Include="Xml\Enums\OwnNameContent.cs" />
     <Compile Include="Xml\Enums\TextType.cs" />
-    <Compile Include="Shader\DTPShaderLibrary.cs" />
     <Compile Include="TextureAtlas\DTPCommonTextureAtlas.cs" />
     <Compile Include="Tools\RoadSegmentTool.cs" />
     <Compile Include="UI\DTPPanel.cs" />
@@ -282,9 +287,6 @@
     <EmbeddedResource Include="UI\VersionNotes.txt" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Shader\ShaderTest-linux.unity3d" />
-    <EmbeddedResource Include="Shader\ShaderTest-macosx.unity3d" />
-    <EmbeddedResource Include="Shader\ShaderTest.unity3d" />
     <EmbeddedResource Include="UI\i18n\pt.properties" />
     <None Include="commons\README.md" />
     <None Include="packages.config" />

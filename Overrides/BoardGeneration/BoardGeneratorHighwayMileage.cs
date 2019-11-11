@@ -4,13 +4,12 @@ using ColossalFramework.Math;
 using ColossalFramework.UI;
 using Klyte.Commons.Extensors;
 using Klyte.Commons.Utils;
-using Klyte.Commons.Interfaces;
+using Klyte.DynamicTextProps.Libraries;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using static Klyte.Commons.Utils.SegmentUtils;
-using Klyte.DynamicTextProps.Libraries;
 
 namespace Klyte.DynamicTextProps.Overrides
 {
@@ -114,13 +113,7 @@ namespace Klyte.DynamicTextProps.Overrides
 
 
 
-        protected override void OnTextureRebuiltImpl(Font obj)
-        {
-            if (obj.name == DrawFont.baseFont.name)
-            {
-                SoftReset();
-            }
-        }
+        protected override void ResetImpl() => SoftReset();
 
         public void SoftReset()
         {
@@ -134,9 +127,9 @@ namespace Klyte.DynamicTextProps.Overrides
         private void OnNodeChanged(ushort nodeId)
         {
             //doLog($"onNodeChanged { System.Environment.StackTrace }");
-            for (var i = 0; i < 8; i++)
+            for (int i = 0; i < 8; i++)
             {
-                var segmentId = NetManager.instance.m_nodes.m_buffer[nodeId].GetSegment(i);
+                ushort segmentId = NetManager.instance.m_nodes.m_buffer[nodeId].GetSegment(i);
                 //if (NetManager.instance.m_segments.m_buffer[segmentId].Info.m_netAI is RoadBaseAI)
                 //{
                 //    onDistrictChanged();
@@ -174,9 +167,9 @@ namespace Klyte.DynamicTextProps.Overrides
         public void ComputeNode(ushort nodeID)
         {
 
-            for (var i = 0; i < 8; i++)
+            for (int i = 0; i < 8; i++)
             {
-                var segmentId = NetManager.instance.m_nodes.m_buffer[nodeID].GetSegment(i);
+                ushort segmentId = NetManager.instance.m_nodes.m_buffer[nodeID].GetSegment(i);
                 if (segmentId == 0)
                 {
                     continue;
@@ -189,7 +182,7 @@ namespace Klyte.DynamicTextProps.Overrides
                 }
                 if (m_segmentCachedInfo[segmentId] == null)
                 {
-                    var divisor = LoadedMileageMarkerConfig.UseMiles ? 1609 : 1000;
+                    int divisor = LoadedMileageMarkerConfig.UseMiles ? 1609 : 1000;
                     IEnumerable<Tuple<ushort, float>> segments = SegmentUtils.GetSegmentRoadEdges(segmentId, false, false, false, out ComparableRoad start, out ComparableRoad end);
                     if (segments == null)
                     {
@@ -200,25 +193,25 @@ namespace Klyte.DynamicTextProps.Overrides
                     else
                     {
                         var tupleIdentifier = new RoadIdentifier(start, end, segments.Select(x => x.First).ToArray());
-                        var roadInverted = tupleIdentifier.start.nodeReference == NetManager.instance.m_segments.m_buffer[tupleIdentifier.segments[0]].m_endNode == ((NetManager.instance.m_segments.m_buffer[tupleIdentifier.segments[0]].m_flags & NetSegment.Flags.Invert) == 0);
+                        bool roadInverted = tupleIdentifier.start.nodeReference == NetManager.instance.m_segments.m_buffer[tupleIdentifier.segments[0]].m_endNode == ((NetManager.instance.m_segments.m_buffer[tupleIdentifier.segments[0]].m_flags & NetSegment.Flags.Invert) == 0);
                         var entry = new List<MileageMarkerDescriptor>();
-                        var meterCount = 0f;
+                        float meterCount = 0f;
                         foreach (Tuple<ushort, float> segmentRef in segments)
                         {
-                            var oldMeterKm = (int) meterCount / divisor;
+                            int oldMeterKm = (int) meterCount / divisor;
                             meterCount += segmentRef.Second;
                             if (oldMeterKm != (int) meterCount / divisor)
                             {
                                 NetSegment segmentObj = NetManager.instance.m_segments.m_buffer[segmentRef.First];
-                                var invert = (NetManager.instance.m_segments.m_buffer[segmentRef.First].m_flags & NetSegment.Flags.Invert) > 0;
+                                bool invert = (NetManager.instance.m_segments.m_buffer[segmentRef.First].m_flags & NetSegment.Flags.Invert) > 0;
                                 NetManager.instance.m_segments.m_buffer[segmentRef.First].GetClosestPositionAndDirection(NetManager.instance.m_segments.m_buffer[segmentRef.First].m_middlePosition, out Vector3 pos, out Vector3 dir);
-                                var rotation = dir.GetAngleXZ();
+                                float rotation = dir.GetAngleXZ();
                                 if (invert)
                                 {
                                     rotation += 180;
                                 }
 
-                                var cardinalDirection = SegmentUtils.GetCardinalDirection(start, end);
+                                byte cardinalDirection = SegmentUtils.GetCardinalDirection(start, end);
                                 if (roadInverted)
                                 {
                                     cardinalDirection = (byte) ((cardinalDirection + 4) % 8);
@@ -277,7 +270,7 @@ namespace Klyte.DynamicTextProps.Overrides
             }
 
             var markers = new MileageMarkerDescriptor[] { m_segmentCachedInfo[segmentID]?.Second ?? default, m_segmentCachedInfo[segmentID]?.Third ?? default };
-            for (var i = 0; i < markers.Length; i++)
+            for (int i = 0; i < markers.Length; i++)
             {
                 MileageMarkerDescriptor marker = markers[i];
                 if (marker.segmentId == default)
@@ -285,10 +278,10 @@ namespace Klyte.DynamicTextProps.Overrides
                     continue;
                 }
 
-                RenderPropMesh(ref m_cachedPropInfo, cameraInfo, segmentID, i, marker.kilometer, layerMask, 0, marker.position, Vector4.zero, ref LoadedMileageMarkerConfig.m_propName, new Vector3(0, marker.rotation) + LoadedMileageMarkerConfig.m_propRotation, LoadedMileageMarkerConfig.PropScale, ref m_loadedDescriptor, out Matrix4x4 propMatrix, out var rendered);
+                RenderPropMesh(ref m_cachedPropInfo, cameraInfo, segmentID, i, marker.kilometer, layerMask, 0, marker.position, Vector4.zero, ref LoadedMileageMarkerConfig.m_propName, new Vector3(0, marker.rotation) + LoadedMileageMarkerConfig.m_propRotation, LoadedMileageMarkerConfig.PropScale, ref m_loadedDescriptor, out Matrix4x4 propMatrix, out bool rendered);
                 if (rendered)
                 {
-                    for (var j = 0; j < LoadedMileageMarkerConfig.m_textDescriptors.Length; j++)
+                    for (int j = 0; j < LoadedMileageMarkerConfig.m_textDescriptors.Length; j++)
                     {
                         CacheControl c = null;
                         MaterialPropertyBlock block = NetManager.instance.m_materialBlock;
@@ -306,7 +299,7 @@ namespace Klyte.DynamicTextProps.Overrides
         protected override BasicRenderInformation GetMeshCustom1(ushort id, int boardIdx, int kilometers, out UIFont font, ref BoardDescriptorMileageMarkerXml descriptor)
         {
             font = DrawFont;
-            var direction = (boardIdx == 1 ? m_segmentCachedInfo[id].Third : m_segmentCachedInfo[id].Second).cardinalDirection8;
+            byte direction = (boardIdx == 1 ? m_segmentCachedInfo[id].Third : m_segmentCachedInfo[id].Second).cardinalDirection8;
             if (m_cachedDirectionMeshes[direction] == null || lastFontUpdateFrame > m_cachedDirectionMeshes[direction].m_frameDrawTime)
             {
                 LogUtils.DoLog($"!nameUpdated Node1 {kilometers} ({direction})");
@@ -341,7 +334,7 @@ namespace Klyte.DynamicTextProps.Overrides
             font = DrawFont;
             if (m_testTextInfo == null || m_testTextInfoTime < lastFontUpdateFrame)
             {
-                var resultText = "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW";
+                string resultText = "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW";
                 UIFont overrideFont = null;
                 RefreshTextData(ref m_testTextInfo, resultText, overrideFont);
                 m_testTextInfoTime = lastFontUpdateFrame;
