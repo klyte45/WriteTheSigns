@@ -80,6 +80,7 @@
     <Compile Include="commons\Interfaces\BasicIUserMod.cs" />
     <Compile Include="commons\Interfaces\BasicIUserModSimplified.cs" />
     <Compile Include="commons\Interfaces\TextureAtlasDescriptor.cs" />
+    <Compile Include="commons\Redirectors\UIDynamicFontRendererRedirector.cs" />
     <Compile Include="commons\TextureAtlas\CommonTextureAtlas.cs" />
     <Compile Include="commons\Tools\BasicBuildingTool.cs" />
     <Compile Include="commons\Tools\BasicNetTool.cs" />
@@ -95,6 +96,7 @@
     <Compile Include="commons\Utils\GeneralUtils.cs" />
     <Compile Include="commons\Utils\KlyteMathUtils.cs" />
     <Compile Include="commons\Utils\KlyteMonoUtils.cs" />
+    <Compile Include="commons\Utils\RenderUtils.cs" />
     <Compile Include="commons\Utils\LogUtils.cs" />
     <Compile Include="commons\Utils\MapUtils.cs" />
     <Compile Include="commons\Utils\NumberingUtils.cs" />
@@ -112,6 +114,7 @@
     <Compile Include="commons\Utils\StructExtensions\NetSegmentExtensions.cs" />
     <Compile Include="commons\Utils\StructExtensions\Vector2Extensions.cs" />
     <Compile Include="commons\Utils\StructExtensions\Vector3Extensions.cs" />
+    <Compile Include="commons\Utils\TextureScaler.cs" />
     <Compile Include="commons\Utils\UtilitiesClasses\CardinalPoint .cs" />
     <Compile Include="commons\Utils\UtilitiesClasses\NumberArrays.cs" />
     <Compile Include="commons\Utils\UtilitiesClasses\Range.cs" />
@@ -121,6 +124,7 @@
     <Compile Include="Libraries\BasicLib.cs" />
     <Compile Include="commons\Interfaces\ILibable.cs" />
     <Compile Include="Overrides\BoardGeneration\BasicRenderInformation.cs" />
+    <Compile Include="TextureAtlas\LineIconsTextureAtlas.cs" />
     <Compile Include="Tools\BuildingTool.cs" />
     <Compile Include="Xml\BoardDescriptor\BoardDescriptorBuildingXml.cs" />
     <Compile Include="Xml\BoardGeneratorBuildingConfigXml.cs" />
@@ -268,10 +272,12 @@
     <EmbeddedResource Include="UI\Images\sprites.png" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="UI\Images\lineFormats.png" />
     <EmbeddedResource Include="commons\UI\Images\sprites.png" />
     <Content Include="commons\UI\Images\sprites.psd" />
     <Content Include="commons\UI\VersionNotes.txt" />
     <None Include="README.md" />
+    <None Include="UI\Images\lineFormats.psd" />
     <None Include="UI\Images\sprites.psd" />
     <EmbeddedResource Include="UI\VersionNotes.txt" />
   </ItemGroup>

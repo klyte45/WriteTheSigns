@@ -3,16 +3,16 @@ using ColossalFramework.UI;
 using Klyte.Commons.Extensors;
 using Klyte.Commons.Interfaces;
 using Klyte.Commons.Utils;
-using Klyte.DynamicTextProps.Overrides;
 using Klyte.DynamicTextProps.TextureAtlas;
 using Klyte.DynamicTextProps.UI;
 using Klyte.DynamicTextProps.Utils;
+using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using UnityEngine;
 using static Klyte.DynamicTextProps.TextureAtlas.DTPCommonTextureAtlas;
 
-[assembly: AssemblyVersion("1.0.2.0")]
+[assembly: AssemblyVersion("1.0.2.*")]
 namespace Klyte.DynamicTextProps
 {
     public class DynamicTextPropsMod : BasicIUserMod<DynamicTextPropsMod, DTPResourceLoader, DTPController, DTPCommonTextureAtlas, DTPPanel, SpriteNames>
@@ -40,12 +40,22 @@ namespace Klyte.DynamicTextProps
             group8.AddLabel(Locale.Get("K45_DTP_GET_FILES_GITHUB"));
             group8.AddButton(Locale.Get("K45_DTP_GO_TO_GITHUB"), () => Application.OpenURL("https://github.com/klyte45/DynamicTextPropsFiles"));
         }
+        protected void BuildSurfaceFont(out UIDynamicFont font, string fontName)
+        {
+            font = ScriptableObject.CreateInstance<UIDynamicFont>();
+
+            var fontList = new List<string> { fontName };
+            font.baseFont = Font.CreateDynamicFontFromOSFont(fontList.ToArray(), 64);
+            font.lineHeight = 70;
+            font.baseline = 66;
+            font.size = 64;
+        }
 
         private static void AddFolderButton(string filePath, UIHelperExtension helper, string localeId)
         {
             FileInfo fileInfo = FileUtils.EnsureFolderCreation(filePath);
             helper.AddLabel(Locale.Get(localeId) + ":");
-            UIButton namesFilesButton = ((UIButton) helper.AddButton("/", () => ColossalFramework.Utils.OpenInFileBrowser(fileInfo.FullName)));
+            var namesFilesButton = ((UIButton) helper.AddButton("/", () => ColossalFramework.Utils.OpenInFileBrowser(fileInfo.FullName)));
             namesFilesButton.textColor = Color.yellow;
             KlyteMonoUtils.LimitWidth(namesFilesButton, 710);
             namesFilesButton.text = fileInfo.FullName + Path.DirectorySeparatorChar;
@@ -54,6 +64,7 @@ namespace Klyte.DynamicTextProps
 
         public static readonly string FOLDER_NAME = FileUtils.BASE_FOLDER_PATH + "DynamicTextProps";
         internal static readonly string m_defaultFileNameXml = "DefaultBuildingsConfig";
+        private UILabel refBut;
         public const string DEFAULT_GAME_BUILDINGS_CONFIG_FOLDER = "BuildingsDefaultPlacing";
         public const string DEFAULT_GAME_VEHICLES_CONFIG_FOLDER = "VehiclesDefaultPlacing";
 
