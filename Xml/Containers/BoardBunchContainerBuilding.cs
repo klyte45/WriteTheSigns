@@ -13,9 +13,10 @@
         {
             public ushort m_stopId;
             public ushort m_lineId;
-            public ushort m_nextStopBuilding;
-            public ushort m_previousStopBuilding;
-            public ushort m_destinationBuilding;
+            public ushort m_nextStopId;
+            public ushort m_previousStopId;
+            public ushort m_destinationId;
+            public bool m_isEndOfLine;
         }
     }
 }

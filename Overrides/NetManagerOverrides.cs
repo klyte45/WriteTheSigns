@@ -1,5 +1,6 @@
 ﻿using Klyte.Commons.Extensors;
 using Klyte.Commons.Utils;
+using Klyte.DynamicTextProps.Utils;
 using System;
 using System.Reflection;
 using UnityEngine;
@@ -22,6 +23,8 @@ namespace Klyte.DynamicTextProps.Overrides
         {
             ushort node_ = node;
             new AsyncAction(() => EventNodeChanged?.Invoke(node_)).Execute();
+
+            DTPLineUtils.PurgeStopCache(node);
         }
         private static void OnSegmentCreated(ref ushort segment, ref ushort startNode, ref ushort endNode)
         {

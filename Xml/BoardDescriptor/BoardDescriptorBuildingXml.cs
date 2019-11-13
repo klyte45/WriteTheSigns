@@ -1,6 +1,6 @@
 ﻿using ColossalFramework;
-using Klyte.Commons.Utils;
 using Klyte.Commons.Interfaces;
+using Klyte.Commons.Utils;
 using System.Xml;
 using System.Xml.Serialization;
 using UnityEngine;
@@ -15,6 +15,22 @@ namespace Klyte.DynamicTextProps.Overrides
         public int[] m_platforms = new int[0];
         [XmlAttribute("showIfNoLine")]
         public bool m_showIfNoLine = true;
+
+
+        [XmlIgnore]
+        private Vector3 m_arrayRepeat;
+        [XmlIgnore]
+        public Vector3 ArrayRepeat { get => m_arrayRepeat; set => m_arrayRepeat = value; }
+
+        [XmlAttribute("arrayRepeatX")]
+        public float ArrayRepeatX { get => m_arrayRepeat.x; set => m_arrayRepeat.x = value; }
+        [XmlAttribute("arrayRepeatY")]
+        public float ArrayRepeatY { get => m_arrayRepeat.y; set => m_arrayRepeat.y = value; }
+        [XmlAttribute("arrayRepeatZ")]
+        public float ArrayRepeatZ { get => m_arrayRepeat.z; set => m_arrayRepeat.z = value; }
+
+        [XmlAttribute("arrayRepeatTimes")]
+        public int m_arrayRepeatTimes = 0;
 
         [XmlAttribute("coloringMode")]
         public ColoringMode ColorModeProp

@@ -296,9 +296,8 @@ namespace Klyte.DynamicTextProps.Overrides
 
 
         #region Upadate Data
-        protected override BasicRenderInformation GetMeshCustom1(ushort id, int boardIdx, int kilometers, out UIFont font, ref BoardDescriptorMileageMarkerXml descriptor)
+        protected override BasicRenderInformation GetMeshCustom1(ushort id, int boardIdx, int kilometers,  ref BoardDescriptorMileageMarkerXml descriptor)
         {
-            font = DrawFont;
             byte direction = (boardIdx == 1 ? m_segmentCachedInfo[id].Third : m_segmentCachedInfo[id].Second).cardinalDirection8;
             if (m_cachedDirectionMeshes[direction] == null || lastFontUpdateFrame > m_cachedDirectionMeshes[direction].m_frameDrawTime)
             {
@@ -309,9 +308,8 @@ namespace Klyte.DynamicTextProps.Overrides
             return m_cachedDirectionMeshes[direction];
 
         }
-        protected override BasicRenderInformation GetMeshCurrentNumber(ushort id, int boardIdx, int kilometers, out UIFont font, ref BoardDescriptorMileageMarkerXml descriptor)
+        protected override BasicRenderInformation GetMeshCurrentNumber(ushort id, int boardIdx, int kilometers,  ref BoardDescriptorMileageMarkerXml descriptor)
         {
-            font = DrawFont;
             if (m_cachedKilometerMeshes.Length <= kilometers + 1)
             {
                 m_cachedKilometerMeshes = new BasicRenderInformation[kilometers + 1];
@@ -329,9 +327,8 @@ namespace Klyte.DynamicTextProps.Overrides
         private long m_testTextInfoTime = 0;
         private PropInfo m_cachedPropInfo;
 
-        protected override BasicRenderInformation GetOwnNameMesh(ushort id, int boardIdx, int secIdx, out UIFont font, ref BoardDescriptorMileageMarkerXml descriptor)
+        protected override BasicRenderInformation GetOwnNameMesh(ushort id, int boardIdx, int secIdx,  ref BoardDescriptorMileageMarkerXml descriptor)
         {
-            font = DrawFont;
             if (m_testTextInfo == null || m_testTextInfoTime < lastFontUpdateFrame)
             {
                 string resultText = "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW";

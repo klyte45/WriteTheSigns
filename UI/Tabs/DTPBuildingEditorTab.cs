@@ -45,6 +45,8 @@ namespace Klyte.DynamicTextProps.UI
         private UITextField[] m_posVectorEditor;
         private UITextField[] m_rotVectorEditor;
         private UITextField[] m_scaleVectorEditor;
+        private UITextField[] m_arrayRepeatEditor;
+        private UITextField m_arrayTimes;
 
 
         private UIDropDown m_colorModeDropdown;
@@ -166,7 +168,7 @@ namespace Klyte.DynamicTextProps.UI
             {
                 if (idx == m_pseudoTabstripProps.tabCount - 1)
                 {
-                    var nextIdx = BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName]?.BoardDescriptors?.Length ?? 0;
+                    int nextIdx = BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName]?.BoardDescriptors?.Length ?? 0;
                     LogUtils.DoLog($"nextIdx = {nextIdx}");
                     EnsureBoardsArrayIdx(nextIdx);
                     ReloadBuilding();
@@ -213,6 +215,8 @@ namespace Klyte.DynamicTextProps.UI
             AddVector3Field(Locale.Get("K45_DTP_RELATIVE_POS"), out m_posVectorEditor, groupProp, SetPropRelPosition);
             AddVector3Field(Locale.Get("K45_DTP_RELATIVE_ROT"), out m_rotVectorEditor, groupProp, SetPropRelRotation);
             AddVector3Field(Locale.Get("K45_DTP_RELATIVE_SCALE"), out m_scaleVectorEditor, groupProp, SetPropRelScale);
+            AddIntField(Locale.Get("K45_DTP_ARRAY_REPEAT_TIMES"), out m_arrayTimes, groupProp, SetArrayRepeatTimes, false);
+            AddVector3Field(Locale.Get("K45_DTP_ARRAY_REPEAT_DISTANCE"), out m_arrayRepeatEditor, groupProp, SetArrayRepeatDistance);
 
 
 
@@ -443,6 +447,11 @@ namespace Klyte.DynamicTextProps.UI
             field = parentHelper.AddFloatField(label, 0, onChange, acceptNegative);
             KlyteMonoUtils.LimitWidth(field.parent.GetComponentInChildren<UILabel>(), (parentHelper.Self.width / 2) - 10, true);
         }
+        private void AddIntField(string label, out UITextField field, UIHelperExtension parentHelper, Action<int> onChange, bool acceptNegative)
+        {
+            field = parentHelper.AddIntField(label, 0, onChange, acceptNegative);
+            KlyteMonoUtils.LimitWidth(field.parent.GetComponentInChildren<UILabel>(), (parentHelper.Self.width / 2) - 10, true);
+        }
 
         private void AddDropdown(string title, out UIDropDown dropdown, UIHelperExtension parentHelper, string[] options, OnDropdownSelectionChanged onChange) => AddDropdown(title, out dropdown, out UILabel label, parentHelper, options, onChange);
         private void AddDropdown(string title, out UIDropDown dropdown, out UILabel label, UIHelperExtension parentHelper, string[] options, OnDropdownSelectionChanged onChange)
@@ -608,6 +617,8 @@ namespace Klyte.DynamicTextProps.UI
         private void SetPropRelPosition(Vector3 value) => SafeActionInBoard(descriptor => descriptor.m_propPosition = value);
         private void SetPropRelRotation(Vector3 value) => SafeActionInBoard(descriptor => descriptor.m_propRotation = value);
         private void SetPropRelScale(Vector3 value) => SafeActionInBoard(descriptor => descriptor.PropScale = value);
+        private void SetArrayRepeatDistance(Vector3 value) => SafeActionInBoard(descriptor => descriptor.ArrayRepeat = value);
+        private void SetArrayRepeatTimes(int value) => SafeActionInBoard(descriptor => descriptor.m_arrayRepeatTimes = value);
         private void SafeActionInBoard(Action<BoardDescriptorBuildingXml> toDo)
         {
             if (m_currentBuildingName != null && !m_isLoading)
@@ -691,7 +702,7 @@ namespace Klyte.DynamicTextProps.UI
                     BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName].BoardDescriptors = new BoardDescriptorBuildingXml[idx + 1];
                     if (oldArr != null && oldArr.Length > 0)
                     {
-                        for (var i = 0; i < oldArr.Length && i <= idx; i++)
+                        for (int i = 0; i < oldArr.Length && i <= idx; i++)
                         {
                             BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName].BoardDescriptors[i] = oldArr[i];
                         }
@@ -725,7 +736,7 @@ namespace Klyte.DynamicTextProps.UI
                 BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName].BoardDescriptors[idx].m_textDescriptors = new BoardTextDescriptorBuildingsXml[textIdx + 1];
                 if (oldArr != null && oldArr.Length > 0)
                 {
-                    for (var i = 0; i < oldArr.Length && i <= textIdx; i++)
+                    for (int i = 0; i < oldArr.Length && i <= textIdx; i++)
                     {
                         BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName].BoardDescriptors[idx].m_textDescriptors[i] = oldArr[i];
                     }
@@ -744,8 +755,8 @@ namespace Klyte.DynamicTextProps.UI
 
         private void EnsureTabQuantity(int size)
         {
-            var targetCount = Mathf.Max(m_pseudoTabstripProps.tabCount, size + 1);
-            for (var i = 0; i < targetCount; i++)
+            int targetCount = Mathf.Max(m_pseudoTabstripProps.tabCount, size + 1);
+            for (int i = 0; i < targetCount; i++)
             {
                 if (i >= m_pseudoTabstripProps.tabCount)
                 {
@@ -769,8 +780,8 @@ namespace Klyte.DynamicTextProps.UI
 
         private void EnsureTabQuantityTexts(int size)
         {
-            var targetCount = Mathf.Max(m_pseudoTabstripTexts.tabCount, size + 1);
-            for (var i = 0; i < targetCount; i++)
+            int targetCount = Mathf.Max(m_pseudoTabstripTexts.tabCount, size + 1);
+            for (int i = 0; i < targetCount; i++)
             {
                 if (i >= m_pseudoTabstripTexts.tabCount)
                 {
@@ -794,7 +805,7 @@ namespace Klyte.DynamicTextProps.UI
         private void ConfigureTabsShown(int quantity)
         {
 
-            for (var i = 0; i < m_pseudoTabstripProps.tabCount; i++)
+            for (int i = 0; i < m_pseudoTabstripProps.tabCount; i++)
             {
                 m_pseudoTabstripProps.tabs[i].isVisible = i < quantity || i == m_pseudoTabstripProps.tabCount - 1;
             }
@@ -803,7 +814,7 @@ namespace Klyte.DynamicTextProps.UI
         private void ConfigureTabsShownText(int quantity)
         {
 
-            for (var i = 0; i < m_pseudoTabstripTexts.tabCount; i++)
+            for (int i = 0; i < m_pseudoTabstripTexts.tabCount; i++)
             {
                 m_pseudoTabstripTexts.tabs[i].isVisible = i < quantity || i == m_pseudoTabstripTexts.tabCount - 1;
             }
@@ -819,7 +830,7 @@ namespace Klyte.DynamicTextProps.UI
             DynamicTextPropsMod.Instance.Controller.BuildingEditorToolInstance.enabled = true;
         }
 
-        private void OnBuildingSet(ushort id) => OnBuildingSet(BuildingManager.instance.m_buildings.m_buffer[id].Info.name);
+        private void OnBuildingSet(ushort id) => OnBuildingSet(BoardGeneratorBuildings.GetReferenceModelName(ref BuildingManager.instance.m_buildings.m_buffer[id]));
 
         private void OnBuildingSet(string buildingId)
         {
@@ -895,6 +906,10 @@ namespace Klyte.DynamicTextProps.UI
             m_scaleVectorEditor[0].text = (descriptor?.ScaleX ?? 1).ToString();
             m_scaleVectorEditor[1].text = (descriptor?.ScaleY ?? 1).ToString();
             m_scaleVectorEditor[2].text = (descriptor?.ScaleZ ?? 1).ToString();
+            m_arrayRepeatEditor[0].text = (descriptor?.ArrayRepeatX ?? 0).ToString();
+            m_arrayRepeatEditor[1].text = (descriptor?.ArrayRepeatY ?? 0).ToString();
+            m_arrayRepeatEditor[2].text = (descriptor?.ArrayRepeatZ ?? 0).ToString();
+            m_arrayTimes.text = (descriptor?.m_arrayRepeatTimes ?? 0).ToString();
             m_colorEditor.selectedColor = descriptor?.FixedColor ?? Color.white;
             m_colorModeDropdown.selectedIndex = (int) (descriptor?.ColorModeProp ?? 0);
             m_checkboxOrdernatedListPlatform.SetData(PlatformItem.CreateFrom(BoardGeneratorBuildings.GetStopPointsDescriptorFor(m_currentBuildingName), descriptor?.m_platforms ?? new int[0]));

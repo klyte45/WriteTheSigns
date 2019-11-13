@@ -7,7 +7,6 @@ using Klyte.Commons.Extensors;
 using Klyte.Commons.Redirectors;
 using Klyte.Commons.Utils;
 using Klyte.DynamicTextProps.Utils;
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -55,7 +54,7 @@ namespace Klyte.DynamicTextProps.Overrides
 
         protected void Reset()
         {
-           lastFontUpdateFrame = SimulationManager.instance.m_currentTickIndex;
+            lastFontUpdateFrame = SimulationManager.instance.m_currentTickIndex;
 
             ResetImpl();
         }
@@ -231,38 +230,37 @@ namespace Klyte.DynamicTextProps.Overrides
         protected void RenderTextMesh(RenderManager.CameraInfo cameraInfo, ushort refID, int boardIdx, int secIdx, ref BD descriptor, Matrix4x4 propMatrix, ref BTD textDescriptor, ref CC ctrl, MaterialPropertyBlock materialPropertyBlock)
         {
             BRI renderInfo = null;
-            UIFont targetFont = null;
             switch (textDescriptor.m_textType)
             {
                 case TextType.OwnName:
-                    renderInfo = GetOwnNameMesh(refID, boardIdx, secIdx, out targetFont, ref descriptor);
+                    renderInfo = GetOwnNameMesh(refID, boardIdx, secIdx, ref descriptor);
                     break;
                 case TextType.Fixed:
-                    renderInfo = GetFixedTextMesh(ref textDescriptor, refID, boardIdx, secIdx, out targetFont, ref descriptor);
+                    renderInfo = GetFixedTextMesh(ref textDescriptor, refID, boardIdx, secIdx, ref descriptor);
                     break;
                 case TextType.StreetPrefix:
-                    renderInfo = GetMeshStreetPrefix(refID, boardIdx, secIdx, out targetFont, ref descriptor);
+                    renderInfo = GetMeshStreetPrefix(refID, boardIdx, secIdx, ref descriptor);
                     break;
                 case TextType.StreetSuffix:
-                    renderInfo = GetMeshStreetSuffix(refID, boardIdx, secIdx, out targetFont, ref descriptor);
+                    renderInfo = GetMeshStreetSuffix(refID, boardIdx, secIdx, ref descriptor);
                     break;
                 case TextType.StreetNameComplete:
-                    renderInfo = GetMeshFullStreetName(refID, boardIdx, secIdx, out targetFont, ref descriptor);
+                    renderInfo = GetMeshFullStreetName(refID, boardIdx, secIdx, ref descriptor);
                     break;
                 case TextType.BuildingNumber:
-                    renderInfo = GetMeshCurrentNumber(refID, boardIdx, secIdx, out targetFont, ref descriptor);
+                    renderInfo = GetMeshCurrentNumber(refID, boardIdx, secIdx, ref descriptor);
                     break;
                 case TextType.Custom1:
-                    renderInfo = GetMeshCustom1(refID, boardIdx, secIdx, out targetFont, ref descriptor);
+                    renderInfo = GetMeshCustom1(refID, boardIdx, secIdx, ref descriptor);
                     break;
                 case TextType.Custom2:
-                    renderInfo = GetMeshCustom2(refID, boardIdx, secIdx, out targetFont, ref descriptor);
+                    renderInfo = GetMeshCustom2(refID, boardIdx, secIdx, ref descriptor);
                     break;
                 case TextType.Custom3:
-                    renderInfo = GetMeshCustom3(refID, boardIdx, secIdx, out targetFont, ref descriptor);
+                    renderInfo = GetMeshCustom3(refID, boardIdx, secIdx, ref descriptor);
                     break;
             }
-            if (renderInfo == null || targetFont == null)
+            if (renderInfo == null)
             {
                 return;
             }
@@ -307,29 +305,28 @@ namespace Klyte.DynamicTextProps.Overrides
                 targetRelativePosition,
                 Quaternion.AngleAxis(textDescriptor.m_textRelativeRotation.x, Vector3.left) * Quaternion.AngleAxis(textDescriptor.m_textRelativeRotation.y, Vector3.down) * Quaternion.AngleAxis(textDescriptor.m_textRelativeRotation.z, Vector3.back),
                 new Vector3(defaultMultiplierX * overflowScaleX / descriptor.ScaleX, defaultMultiplierY * overflowScaleY / descriptor.PropScale.y, 1));
-            if (cameraInfo.CheckRenderDistance(matrix.MultiplyPoint(Vector3.zero), Math.Min(3000, 200 * textDescriptor.m_textScale)))
+
+            Color colorToSet = Color.white;
+            if (textDescriptor.m_useContrastColor)
             {
-                Color colorToSet = Color.white;
-                if (textDescriptor.m_useContrastColor)
-                {
-                    colorToSet = GetContrastColor(refID, boardIdx, secIdx, descriptor);
-                }
-                else if (textDescriptor.m_defaultColor != Color.clear)
-                {
-                    colorToSet = textDescriptor.m_defaultColor;
-                }
-                materialPropertyBlock.Clear();
-                materialPropertyBlock.SetColor(m_shaderPropColor, colorToSet);
-                materialPropertyBlock.SetColor(m_shaderPropColor0, colorToSet);
-                materialPropertyBlock.SetColor(m_shaderPropColor1, colorToSet);
-                materialPropertyBlock.SetColor(m_shaderPropColor2, colorToSet);
-                materialPropertyBlock.SetColor(m_shaderPropColor3, colorToSet);
-
-
-                materialPropertyBlock.SetColor(m_shaderPropEmissive, Color.white * (SimulationManager.instance.m_isNightTime ? textDescriptor.m_nightEmissiveMultiplier : textDescriptor.m_dayEmissiveMultiplier));
-                renderInfo.m_generatedMaterial.shader = textDescriptor.ShaderOverride ?? TextShader;
-                Graphics.DrawMesh(renderInfo.m_mesh, matrix, renderInfo.m_generatedMaterial, A_layer, cameraInfo.m_camera, 0, materialPropertyBlock, A_castShadows, A_receiveShadows, A_useLightProbes);
+                colorToSet = GetContrastColor(refID, boardIdx, secIdx, descriptor);
             }
+            else if (textDescriptor.m_defaultColor != Color.clear)
+            {
+                colorToSet = textDescriptor.m_defaultColor;
+            }
+            materialPropertyBlock.Clear();
+            materialPropertyBlock.SetColor(m_shaderPropColor, colorToSet);
+            materialPropertyBlock.SetColor(m_shaderPropColor0, colorToSet);
+            materialPropertyBlock.SetColor(m_shaderPropColor1, colorToSet);
+            materialPropertyBlock.SetColor(m_shaderPropColor2, colorToSet);
+            materialPropertyBlock.SetColor(m_shaderPropColor3, colorToSet);
+
+
+            materialPropertyBlock.SetColor(m_shaderPropEmissive, Color.white * (SimulationManager.instance.m_isNightTime ? textDescriptor.m_nightEmissiveMultiplier : textDescriptor.m_dayEmissiveMultiplier));
+            renderInfo.m_generatedMaterial.shader = textDescriptor.ShaderOverride ?? TextShader;
+            Graphics.DrawMesh(renderInfo.m_mesh, matrix, renderInfo.m_generatedMaterial, A_layer, cameraInfo.m_camera, 0, materialPropertyBlock, A_castShadows, A_receiveShadows, A_useLightProbes);
+
         }
 
         private static int A_layer = 10;
@@ -431,7 +428,7 @@ namespace Klyte.DynamicTextProps.Overrides
                 aciTex.Apply();
                 result.m_generatedMaterial.SetTexture("_ACIMap", aciTex);
                 var xysTex = new Texture2D(tex.width, tex.height);
-                xysTex.SetPixels(tex.GetPixels().Select(x => new Color(0.732F, 0.732F,1, 1)).ToArray());
+                xysTex.SetPixels(tex.GetPixels().Select(x => new Color(0.732F, 0.732F, 1, 1)).ToArray());
                 xysTex.Apply();
                 result.m_generatedMaterial.SetTexture("_XYSMap", xysTex);
             }
@@ -461,17 +458,17 @@ namespace Klyte.DynamicTextProps.Overrides
         public abstract Color GetContrastColor(ushort refID, int boardIdx, int secIdx, BD descriptor);
 
         #region UpdateData
-        protected virtual BRI GetOwnNameMesh(ushort refID, int boardIdx, int secIdx, out UIFont targetFont, ref BD descriptor) { targetFont = DrawFont; return null; }
-        protected virtual BRI GetMeshCurrentNumber(ushort refID, int boardIdx, int secIdx, out UIFont targetFont, ref BD descriptor) { targetFont = DrawFont; return null; }
-        protected virtual BRI GetMeshFullStreetName(ushort refID, int boardIdx, int secIdx, out UIFont targetFont, ref BD descriptor) { targetFont = DrawFont; return null; }
-        protected virtual BRI GetMeshStreetSuffix(ushort refID, int boardIdx, int secIdx, out UIFont targetFont, ref BD descriptor) { targetFont = DrawFont; return null; }
-        protected virtual BRI GetMeshStreetPrefix(ushort refID, int boardIdx, int secIdx, out UIFont targetFont, ref BD descriptor) { targetFont = DrawFont; return null; }
-        protected virtual BRI GetMeshCustom1(ushort refID, int boardIdx, int secIdx, out UIFont targetFont, ref BD descriptor) { targetFont = DrawFont; return null; }
-        protected virtual BRI GetMeshCustom2(ushort refID, int boardIdx, int secIdx, out UIFont targetFont, ref BD descriptor) { targetFont = DrawFont; return null; }
-        protected virtual BRI GetMeshCustom3(ushort refID, int boardIdx, int secIdx, out UIFont targetFont, ref BD descriptor) { targetFont = DrawFont; return null; }
-        protected virtual BRI GetFixedTextMesh(ref BTD textDescriptor, ushort refID, int boardIdx, int secIdx, out UIFont targetFont, ref BD descriptor)
+        protected virtual BRI GetOwnNameMesh(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;
+        protected virtual BRI GetMeshCurrentNumber(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;
+        protected virtual BRI GetMeshFullStreetName(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;
+        protected virtual BRI GetMeshStreetSuffix(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;
+        protected virtual BRI GetMeshStreetPrefix(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;
+        protected virtual BRI GetMeshCustom1(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;
+        protected virtual BRI GetMeshCustom2(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;
+        protected virtual BRI GetMeshCustom3(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;
+        protected virtual BRI GetFixedTextMesh(ref BTD textDescriptor, ushort refID, int boardIdx, int secIdx, ref BD descriptor)
         {
-            targetFont = DrawFont;
+
             if (textDescriptor.GeneratedFixedTextRenderInfo == null || textDescriptor.GeneratedFixedTextRenderInfoTick < lastFontUpdateFrame)
             {
                 var result = textDescriptor.GeneratedFixedTextRenderInfo as BRI;

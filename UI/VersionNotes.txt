@@ -1,6 +1,7 @@
-﻿v1.0.2
-	- Fixed flashing props when editing a building with no stop points
-v1.0.1
-	- Fixed flashing buildings on mod first use.
-v1
-	- Initial release version
+﻿v2
+	- NEW RENDERING SYSTEM: Now interacts with game lights
+	- Support to dynamic train/metro MOM stations
+	- Repeat prop feature in buildings: useful for same-config group replication
+	- Fixed stop names for use in stations
+	- Fixed next/prev station name show
+	- Fixed stop points mapping

@@ -22,10 +22,6 @@ namespace Klyte.DynamicTextProps.Overrides
         internal uint m_nameSubInfoDrawTime;
         internal Color m_cachedContrastColor;
         internal Color m_cachedContrastColor2;
-        internal BasicRenderInformation m_nameSubInfo;
-        internal BasicRenderInformation m_nameSubInfo2;
-        internal BasicRenderInformation m_fullNameSubInfo;
-        internal BasicRenderInformation m_fullNameSubInfo2;
     }
 
 }

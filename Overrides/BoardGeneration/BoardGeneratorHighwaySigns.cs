@@ -64,6 +64,7 @@ namespace Klyte.DynamicTextProps.Overrides
 
         protected override void ResetImpl()
         {
+            m_fontCache = new Dictionary<string, UIFont>();
         }
 
         private void OnSegmentReleased(ushort segmentId) => m_boardsContainers[segmentId] = null;
@@ -219,9 +220,8 @@ namespace Klyte.DynamicTextProps.Overrides
 
 
         #region Upadate Data
-        protected override BasicRenderInformation GetOwnNameMesh(ushort buildingID, int boardIdx, int secIdx, out UIFont font, ref BoardDescriptorHigwaySignXml descriptor)
+        protected override BasicRenderInformation GetOwnNameMesh(ushort buildingID, int boardIdx, int secIdx,  ref BoardDescriptorHigwaySignXml descriptor)
         {
-            font = m_fontCache.TryGetValue(m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].m_overrideFont ?? "", out UIFont fontCacheVal) ? fontCacheVal : DrawFont;
             if (m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].GeneratedFixedTextRenderInfo == null
                 || m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].m_cachedTextContent != m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].m_ownTextContent)
             {
@@ -292,9 +292,8 @@ namespace Klyte.DynamicTextProps.Overrides
             return m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].GeneratedFixedTextRenderInfo;
         }
 
-        protected override BasicRenderInformation GetMeshCurrentNumber(ushort id, int boardIdx, int kilometers, out UIFont font, ref BoardDescriptorHigwaySignXml descriptor)
+        protected override BasicRenderInformation GetMeshCurrentNumber(ushort id, int boardIdx, int kilometers,  ref BoardDescriptorHigwaySignXml descriptor)
         {
-            font = DrawFont;
             if (m_cachedExitTitles.Length <= kilometers + 1)
             {
                 m_cachedExitTitles = new BasicRenderInformation[kilometers + 1];

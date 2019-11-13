@@ -17,7 +17,6 @@ namespace Klyte.DynamicTextProps.Overrides
     public partial class BoardGeneratorRoadNodes : BoardGeneratorParent<BoardGeneratorRoadNodes, BoardBunchContainerStreetPlateXml, CacheControlStreetPlate, BasicRenderInformation, BoardDescriptorStreetSignXml, BoardTextDescriptorSteetSignXml>, ISerializableDataExtension
     {
 
-        private UpdateFlagsSegments[] m_updateDataSegments;
         public bool[] m_updatedStreetPositions;
         public uint[] m_lastFrameUpdate;
 
@@ -46,7 +45,6 @@ namespace Klyte.DynamicTextProps.Overrides
         #region Initialize
         public override void Initialize()
         {
-            m_updateDataSegments = new UpdateFlagsSegments[NetManager.MAX_SEGMENT_COUNT];
             m_lastFrameUpdate = new uint[NetManager.MAX_NODE_COUNT];
             m_updatedStreetPositions = new bool[ObjArraySize];
             m_cachedDistrictsNames = new BasicRenderInformation[DistrictManager.MAX_DISTRICT_COUNT];
@@ -82,15 +80,6 @@ namespace Klyte.DynamicTextProps.Overrides
 
         protected override void OnChangeFont(string fontName) => LoadedStreetSignDescriptor.FontName = fontName;
 
-        protected void Reset()
-        {
-            m_boardsContainers = new BoardBunchContainerStreetPlateXml[ObjArraySize];
-            m_cachedNumber = new BasicRenderInformation[10];
-            m_updateDataSegments = new UpdateFlagsSegments[NetManager.MAX_SEGMENT_COUNT];
-            m_updatedStreetPositions = new bool[ObjArraySize];
-            m_cachedDistrictsNames = new BasicRenderInformation[DistrictManager.MAX_DISTRICT_COUNT];
-            m_testTextInfo = null;
-        }
 
         public void SoftReset()
         {
@@ -98,6 +87,8 @@ namespace Klyte.DynamicTextProps.Overrides
             m_cachedNumber = new BasicRenderInformation[10];
             m_updatedStreetPositions = new bool[ObjArraySize];
             m_cachedDistrictsNames = new BasicRenderInformation[DistrictManager.MAX_DISTRICT_COUNT];
+            m_cachedStreetNameInformation_Full = new BasicRenderInformation[NetManager.MAX_SEGMENT_COUNT];
+            m_cachedStreetNameInformation_End = new BasicRenderInformation[NetManager.MAX_SEGMENT_COUNT];
         }
 
 
@@ -111,14 +102,10 @@ namespace Klyte.DynamicTextProps.Overrides
             LogUtils.DoLog("onNameSeedChanged");
             m_updatedStreetPositions[NetManager.instance.m_segments.m_buffer[segmentId].m_endNode] = false;
             m_updatedStreetPositions[NetManager.instance.m_segments.m_buffer[segmentId].m_startNode] = false;
+            m_cachedStreetNameInformation_Full[segmentId] = null;
+            m_cachedStreetNameInformation_End[segmentId] = null;
         }
-        //private void OnSegmentChanged(ushort segmentId)
-        //{
-        //    //doLog("onSegmentChanged");
-        //    m_updatedStreetPositions[NetManager.instance.m_segments.m_buffer[segmentId].m_endNode] = false;
-        //    m_updatedStreetPositions[NetManager.instance.m_segments.m_buffer[segmentId].m_startNode] = false;
-        //    m_updateDataSegments[segmentId] = new UpdateFlagsSegments();
-        //}
+
         private void OnDistrictChanged()
         {
             LogUtils.DoLog("onDistrictChanged");
@@ -139,6 +126,7 @@ namespace Klyte.DynamicTextProps.Overrides
         }
 
         private uint m_lastTickUpdate = 0;
+        private uint m_lastTickTextureGen = 0;
 
         public void AfterRenderInstanceImpl(RenderManager.CameraInfo cameraInfo, ushort nodeID, ref NetNode data)
         {
@@ -309,75 +297,36 @@ namespace Klyte.DynamicTextProps.Overrides
 
         }
 
-
+        private BasicRenderInformation[] m_cachedStreetNameInformation_Full = new BasicRenderInformation[NetManager.MAX_SEGMENT_COUNT];
+        private BasicRenderInformation[] m_cachedStreetNameInformation_End = new BasicRenderInformation[NetManager.MAX_SEGMENT_COUNT];
 
         #region Upadate Data
 
-        protected override BasicRenderInformation GetMeshStreetSuffix(ushort idx, int boardIdx, int secIdx, out UIFont font, ref BoardDescriptorStreetSignXml descriptor)
+        private BasicRenderInformation GetFromCacheArray(ushort segmentId, ref BasicRenderInformation[] cacheArray, int type)
         {
-            font = DrawFont;
-            if (!m_updateDataSegments[idx].m_streetSuffixMesh)
+            if (m_lastTickTextureGen < SimulationManager.instance.m_currentTickIndex && (cacheArray[segmentId] == null || lastFontUpdateFrame > cacheArray[segmentId].m_frameDrawTime))
             {
-                m_boardsContainers[idx].m_boardsData[boardIdx].m_nameSubInfo = null;
-                m_boardsContainers[idx].m_boardsData[boardIdx].m_nameSubInfo2 = null;
-                m_updateDataSegments[idx].m_streetSuffixMesh = true;
-            }
-            if (secIdx == 0)
-            {
-                if (m_boardsContainers[idx].m_boardsData[boardIdx].m_nameSubInfo == null || lastFontUpdateFrame > m_boardsContainers[idx].m_boardsData[boardIdx].m_nameSubInfoDrawTime)
+                LogUtils.DoLog($"!nameUpdated segmentId {segmentId}");
+                switch (type)
                 {
-                    LogUtils.DoLog($"!nameUpdated Node1 {idx}");
-                    UpdateMeshStreetSuffix(m_boardsContainers[idx].m_boardsData[boardIdx].m_segmentId1, ref m_boardsContainers[idx].m_boardsData[boardIdx].m_nameSubInfo);
-                    m_boardsContainers[idx].m_boardsData[boardIdx].m_nameSubInfoDrawTime = lastFontUpdateFrame;
+                    case 1:
+                        UpdateMeshStreetSuffix(segmentId, ref cacheArray[segmentId]);
+                        break;
+                    case 2:
+                        UpdateMeshFullNameStreet(segmentId, ref cacheArray[segmentId]);
+                        break;
                 }
-                return m_boardsContainers[idx].m_boardsData[boardIdx].m_nameSubInfo;
+                m_lastTickTextureGen = SimulationManager.instance.m_currentTickIndex;
             }
-            else
-            {
-                if (m_boardsContainers[idx].m_boardsData[boardIdx].m_nameSubInfo2 == null || lastFontUpdateFrame > m_boardsContainers[idx].m_boardsData[boardIdx].m_nameSubInfoDrawTime2)
-                {
-                    LogUtils.DoLog($"!nameUpdated Node2 {idx}");
-                    UpdateMeshStreetSuffix(m_boardsContainers[idx].m_boardsData[boardIdx].m_segmentId2, ref m_boardsContainers[idx].m_boardsData[boardIdx].m_nameSubInfo2);
-                    m_boardsContainers[idx].m_boardsData[boardIdx].m_nameSubInfoDrawTime2 = lastFontUpdateFrame;
-                }
-                return m_boardsContainers[idx].m_boardsData[boardIdx].m_nameSubInfo2;
-            }
+            return cacheArray[segmentId];
+
         }
 
-        protected override BasicRenderInformation GetMeshFullStreetName(ushort idx, int boardIdx, int secIdx, out UIFont font, ref BoardDescriptorStreetSignXml descriptor)
-        {
-            font = DrawFont;
-            if (!m_updateDataSegments[idx].m_nameMesh)
-            {
-                m_boardsContainers[idx].m_boardsData[boardIdx].m_fullNameSubInfo = null;
-                m_boardsContainers[idx].m_boardsData[boardIdx].m_fullNameSubInfo2 = null;
-                m_updateDataSegments[idx].m_nameMesh = true;
-            }
-            if (secIdx == 0)
-            {
-                if (m_boardsContainers[idx].m_boardsData[boardIdx].m_fullNameSubInfo == null || lastFontUpdateFrame > m_boardsContainers[idx].m_boardsData[boardIdx].m_fullNameSubInfoDrawTime)
-                {
-                    LogUtils.DoLog($"!GetMeshFullStreetName Node1 {idx}");
-                    UpdateMeshFullNameStreet(m_boardsContainers[idx].m_boardsData[boardIdx].m_segmentId1, ref m_boardsContainers[idx].m_boardsData[boardIdx].m_fullNameSubInfo);
-                    m_boardsContainers[idx].m_boardsData[boardIdx].m_fullNameSubInfoDrawTime = lastFontUpdateFrame;
-                }
-                return m_boardsContainers[idx].m_boardsData[boardIdx].m_fullNameSubInfo;
-            }
-            else
-            {
-                if (m_boardsContainers[idx].m_boardsData[boardIdx].m_fullNameSubInfo2 == null || lastFontUpdateFrame > m_boardsContainers[idx].m_boardsData[boardIdx].m_fullNameSubInfoDrawTime2)
-                {
-                    LogUtils.DoLog($"!GetMeshFullStreetName Node2 {idx}");
-                    UpdateMeshFullNameStreet(m_boardsContainers[idx].m_boardsData[boardIdx].m_segmentId2, ref m_boardsContainers[idx].m_boardsData[boardIdx].m_fullNameSubInfo2);
-                    m_boardsContainers[idx].m_boardsData[boardIdx].m_fullNameSubInfoDrawTime2 = lastFontUpdateFrame;
-                }
-                return m_boardsContainers[idx].m_boardsData[boardIdx].m_fullNameSubInfo2;
-            }
-        }
+        protected override BasicRenderInformation GetMeshStreetSuffix(ushort idx, int boardIdx, int secIdx, ref BoardDescriptorStreetSignXml descriptor) => GetFromCacheArray((secIdx == 0 ? m_boardsContainers[idx].m_boardsData[boardIdx].m_segmentId1 : m_boardsContainers[idx].m_boardsData[boardIdx].m_segmentId2), ref m_cachedStreetNameInformation_End, 1);
+        protected override BasicRenderInformation GetMeshFullStreetName(ushort idx, int boardIdx, int secIdx, ref BoardDescriptorStreetSignXml descriptor) => GetFromCacheArray((secIdx == 0 ? m_boardsContainers[idx].m_boardsData[boardIdx].m_segmentId1 : m_boardsContainers[idx].m_boardsData[boardIdx].m_segmentId2), ref m_cachedStreetNameInformation_Full, 2);
 
-        protected override BasicRenderInformation GetMeshCustom1(ushort idx, int boardIdx, int secIdx, out UIFont font, ref BoardDescriptorStreetSignXml descriptor)
+        protected override BasicRenderInformation GetMeshCustom1(ushort idx, int boardIdx, int secIdx, ref BoardDescriptorStreetSignXml descriptor)
         {
-            font = DrawFont;
             byte districtId;
             if (secIdx == 0)
             {
@@ -404,9 +353,8 @@ namespace Klyte.DynamicTextProps.Overrides
             return m_cachedDistrictsNames[districtId];
 
         }
-        protected override BasicRenderInformation GetMeshCustom2(ushort idx, int boardIdx, int secIdx, out UIFont font, ref BoardDescriptorStreetSignXml descriptor)
+        protected override BasicRenderInformation GetMeshCustom2(ushort idx, int boardIdx, int secIdx, ref BoardDescriptorStreetSignXml descriptor)
         {
-            font = DrawFont;
             int distanceRef = (int) Mathf.Floor(m_boardsContainers[idx].m_boardsData[boardIdx].m_distanceRef / 1000);
             while (m_cachedNumber.Length <= distanceRef + 1)
             {
@@ -468,9 +416,8 @@ namespace Klyte.DynamicTextProps.Overrides
 
         private BasicRenderInformation m_testTextInfo = null;
         private long m_testTextInfoTime = 0;
-        protected override BasicRenderInformation GetOwnNameMesh(ushort buildingID, int boardIdx, int secIdx, out UIFont font, ref BoardDescriptorStreetSignXml descriptor)
+        protected override BasicRenderInformation GetOwnNameMesh(ushort buildingID, int boardIdx, int secIdx, ref BoardDescriptorStreetSignXml descriptor)
         {
-            font = DrawFont;
             if (m_testTextInfo == null || m_testTextInfoTime < lastFontUpdateFrame)
             {
                 string resultText = "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW";
