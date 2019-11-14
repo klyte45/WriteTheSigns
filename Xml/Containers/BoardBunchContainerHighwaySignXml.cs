@@ -3,12 +3,14 @@ using System.Xml.Serialization;
 using System.Xml;
 using Klyte.Commons.Interfaces;
 using static Klyte.Commons.Utils.XmlUtils;
+using System.Collections.Generic;
 
 namespace Klyte.DynamicTextProps.Overrides
 {
 
     public partial class BoardGeneratorHighwaySigns
     {
+
         public class BoardBunchContainerHighwaySignXml : IBoardBunchContainer<CacheControlHighwaySign, BasicRenderInformation>, ILibable
         {
             [XmlIgnore]

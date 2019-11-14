@@ -135,6 +135,7 @@
     <Compile Include="UI\Images\CommonSpriteNames.cs" />
     <Compile Include="UI\Images\LineIconSpriteNames.cs" />
     <Compile Include="UI\Tabs\DTPBuildingEditorTab2.cs" />
+    <Compile Include="UI\Tabs\DTPPropPlacingTab2.cs" />
     <Compile Include="UI\Tabs\DTPXmlEditorParentTab.cs" />
     <Compile Include="Utils\DTPLineUtils.cs" />
     <Compile Include="Xml\BoardDescriptor\BoardDescriptorBuildingXml.cs" />
@@ -171,12 +172,10 @@
     <Compile Include="Xml\Containers\IBoardBunchContainer.cs" />
     <Compile Include="Overrides\InstanceManagerOverrides.cs" />
     <Compile Include="Overrides\NetManagerOverrides.cs" />
-    <Compile Include="Xml\Enums\OwnNameContent.cs" />
     <Compile Include="Xml\Enums\TextType.cs" />
     <Compile Include="Tools\RoadSegmentTool.cs" />
     <Compile Include="UI\DTPPanel.cs" />
     <Compile Include="UI\Tabs\DTPStreetSignTab.cs" />
-    <Compile Include="UI\Tabs\DTPPropPlacingTab.cs" />
     <Compile Include="Utils\DTPResourceLoader.cs" />
     <Compile Include="Utils\DTPHookable.cs" />
     <Compile Include="Utils\DTPUtils.cs" />

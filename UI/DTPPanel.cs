@@ -42,7 +42,7 @@ namespace Klyte.DynamicTextProps.UI
             KlyteMonoUtils.CreateUIElement(out UITabContainer tabContainer, m_mainPanel.transform, "DTPTabContainer", new Vector4(0, 80, m_mainPanel.width, m_mainPanel.height - 80));
             m_stripMain.tabPages = tabContainer;
 
-            CreateTab<DTPPropPlacingTab>("InfoIconEscapeRoutes", "K45_DTP_HIGHWAY_SIGN_CONFIG_TAB", "DTPHighwaySign");
+            CreateTab<DTPPropPlacingTab2>("InfoIconEscapeRoutes", "K45_DTP_HIGHWAY_SIGN_CONFIG_TAB", "DTPHighwaySign");
             CreateTab<DTPStreetSignTab>("InfoIconTrafficRoutes", "K45_DTP_STREET_SIGN_CONFIG_TAB", "DTPStreetSign");
             CreateTab<DTPMileageMarkerTab>("LocationMarkerNormal", "K45_DTP_MILEAGE_MARKERS_CONFIG_TAB", "DTPMileageMarkerTab");
             CreateTab<DTPBuildingEditorTab2>("IconAssetBuilding", "K45_DTP_BUILDING_CONFIG_TAB", "DTPBuildingEditorTab");

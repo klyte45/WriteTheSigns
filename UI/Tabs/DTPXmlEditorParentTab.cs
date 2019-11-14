@@ -370,10 +370,11 @@ namespace Klyte.DynamicTextProps.UI
             if (isTextEditionAvailable() && CurrentTabText >= 0 && m_clipboardText != null)
             {
                 CurrentSelectedDescriptorArray[CurrentTabText] = XmlUtils.DefaultXmlDeserialize<BTD>(m_clipboardText);
-
+                OnPasteText();
                 ReloadTabInfoText();
             }
         }
+        protected virtual void OnPasteText() { }
 
         protected void DoDeleteText()
         {
@@ -506,8 +507,10 @@ namespace Klyte.DynamicTextProps.UI
         }
         protected abstract void AfterLoadingTabTextInfo(BTD descriptor);
 
-        protected void SetTextOwnNameContent(int idx) => SafeActionInTextBoard(descriptor => descriptor.m_textType = BoardGeneratorBuildings.AVAILABLE_TEXT_TYPES[idx]);
+        protected abstract void SetTextOwnNameContent(int idx);
         protected void SetTextCustom(string txt) => SafeActionInTextBoard(descriptor => descriptor.m_fixedText = txt?.Replace("\\n", "\n"));
+
+      
 
     }
 }

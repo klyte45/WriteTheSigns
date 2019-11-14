@@ -18,13 +18,19 @@ namespace Klyte.DynamicTextProps.Overrides
 
         public Dictionary<string, UIFont> m_fontCache = new Dictionary<string, UIFont>();
         public BasicRenderInformation[] m_cachedExitTitles;
-        //public BasicRenderInformation[] m_cachedDistanceMeshes;
+        private readonly Dictionary<string, BasicRenderInformation> m_textCache = new Dictionary<string, BasicRenderInformation>();
         public List<ushort> m_destroyQueue = new List<ushort>();
         public List<string> LoadedProps { get; private set; }
 
         private UIDynamicFont m_font;
 
 
+        public static readonly TextType[] AVAILABLE_TEXT_TYPES = new TextType[]
+        {
+            TextType.OwnName,
+            TextType.Fixed,
+            TextType.BuildingNumber
+        };
 
 
         public override int ObjArraySize => NetManager.MAX_SEGMENT_COUNT;
@@ -65,6 +71,7 @@ namespace Klyte.DynamicTextProps.Overrides
         protected override void ResetImpl()
         {
             m_fontCache = new Dictionary<string, UIFont>();
+            m_textCache.Clear();
         }
 
         private void OnSegmentReleased(ushort segmentId) => m_boardsContainers[segmentId] = null;
@@ -220,79 +227,19 @@ namespace Klyte.DynamicTextProps.Overrides
 
 
         #region Upadate Data
-        protected override BasicRenderInformation GetOwnNameMesh(ushort buildingID, int boardIdx, int secIdx,  ref BoardDescriptorHigwaySignXml descriptor)
+
+        private BasicRenderInformation m_fixedOwnname = null;
+
+        protected override BasicRenderInformation GetOwnNameMesh(ushort buildingID, int boardIdx, int secIdx, ref BoardDescriptorHigwaySignXml descriptor)
         {
-            if (m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].GeneratedFixedTextRenderInfo == null
-                || m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].m_cachedTextContent != m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].m_ownTextContent)
+            if (m_fixedOwnname == null)
             {
-                BasicRenderInformation result = m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].GeneratedFixedTextRenderInfo;
-                string resultText = "X";
-                switch (m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].m_ownTextContent)
-                {
-                    case OwnNameContent.None:
-                        resultText = "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW";
-                        break;
-                    case OwnNameContent.Custom:
-                        resultText = m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].m_fixedText ?? "-- NULL --";
-                        break;
-                        //case OwnNameContent.NextExitNumber:
-                        //    break;
-                        //case OwnNameContent.NextExitDistanceMeters:
-                        //    break;
-                        //case OwnNameContent.NextExitDistanceKilometers:
-                        //    break;
-                        //case OwnNameContent.NextExitImmediateRoad:
-                        //    break;
-                        //case OwnNameContent.NextExitNearestAvenue1:
-                        //    break;
-                        //case OwnNameContent.NextExitNearestAvenue2:
-                        //    break;
-                        //case OwnNameContent.NextExitNearestAvenue3:
-                        //    break;
-                        //case OwnNameContent.NextExitCurrentDistrict:
-                        //    break;
-                        //case OwnNameContent.NextExitDistrictDestination1A:
-                        //    break;
-                        //case OwnNameContent.NextExitDistrictDestination1B:
-                        //    break;
-                        //case OwnNameContent.NextExitDistrictDestination2A:
-                        //    break;
-                        //case OwnNameContent.NextExitDistrictDestination2B:
-                        //    break;
-                        //case OwnNameContent.NextExitDistrictDestination3A:
-                        //    break;
-                        //case OwnNameContent.NextExitDistrictDestination3B:
-                        //    break;
-                }
-                //if (m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].m_allCaps)
-                //{
-                //    resultText = resultText.ToUpper();
-                //}
-                UIFont overrideFont = null;
-                if (!m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].m_overrideFont.IsNullOrWhiteSpace())
-                {
-                    if (!m_fontCache.ContainsKey(m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].m_overrideFont))
-                    {
-                        BuildSurfaceFont(out UIDynamicFont surfaceFont, m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].m_overrideFont);
-                        if (surfaceFont.baseFont == null)
-                        {
-                            m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].m_overrideFont = null;
-                        }
-                        else
-                        {
-                            m_fontCache[m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].m_overrideFont] =  surfaceFont;
-                        }
-                    }
-                    overrideFont = m_fontCache[m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].m_overrideFont];
-                }
-                RefreshTextData(ref result, resultText, overrideFont);
-                m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].GeneratedFixedTextRenderInfo = result;
-                m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].m_cachedTextContent = m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].m_ownTextContent;
+                RefreshTextData(ref m_fixedOwnname, "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", null);
             }
-            return m_boardsContainers[buildingID].m_boardsData[boardIdx].descriptor.m_textDescriptors[secIdx].GeneratedFixedTextRenderInfo;
+            return m_fixedOwnname;
         }
 
-        protected override BasicRenderInformation GetMeshCurrentNumber(ushort id, int boardIdx, int kilometers,  ref BoardDescriptorHigwaySignXml descriptor)
+        protected override BasicRenderInformation GetMeshCurrentNumber(ushort id, int boardIdx, int kilometers, ref BoardDescriptorHigwaySignXml descriptor)
         {
             if (m_cachedExitTitles.Length <= kilometers + 1)
             {
@@ -306,6 +253,18 @@ namespace Klyte.DynamicTextProps.Overrides
             return m_cachedExitTitles[kilometers];
 
         }
+
+        protected override BasicRenderInformation GetFixedTextMesh(ref BoardTextDescriptorHighwaySignsXml textDescriptor, ushort refID, int boardIdx, int secIdx, ref BoardDescriptorHigwaySignXml descriptor)
+        {
+            string txt = (textDescriptor.m_isFixedTextLocalized ? Locale.Get(textDescriptor.m_fixedText, textDescriptor.m_fixedTextLocaleKey) : textDescriptor.m_fixedText) ?? "";
+            if (descriptor.m_textDescriptors[secIdx].m_cachedType != TextType.Fixed)
+            {
+                descriptor.m_textDescriptors[secIdx].GeneratedFixedTextRenderInfo = null;
+                descriptor.m_textDescriptors[secIdx].m_cachedType = TextType.Fixed;
+            }
+            return GetTextRendered(secIdx, descriptor, txt);
+        }
+
         #endregion
 
         public override Color? GetColor(ushort segmentId, int idx, int secIdx, BoardDescriptorHigwaySignXml descriptor) => m_boardsContainers[segmentId].m_boardsData[idx].descriptor.m_color;
@@ -318,6 +277,49 @@ namespace Klyte.DynamicTextProps.Overrides
         }
 
         public override Color GetContrastColor(ushort refID, int boardIdx, int secIdx, BoardDescriptorHigwaySignXml descriptor) => Color.black;
+
+
+        private BasicRenderInformation GetTextRendered(int secIdx, BoardDescriptorHigwaySignXml descriptor, string txt)
+        {
+            if (!descriptor.m_textDescriptors[secIdx].m_overrideFont.IsNullOrWhiteSpace())
+            {
+
+                if (!m_fontCache.ContainsKey(descriptor.m_textDescriptors[secIdx].m_overrideFont))
+                {
+                    BuildSurfaceFont(out UIDynamicFont surfaceFont, descriptor.m_textDescriptors[secIdx].m_overrideFont);
+                    if (surfaceFont.baseFont == null)
+                    {
+                        descriptor.m_textDescriptors[secIdx].m_overrideFont = null;
+
+                        return GetCachedText(txt);
+                    }
+                    else
+                    {
+                        m_fontCache[descriptor.m_textDescriptors[secIdx].m_overrideFont] = surfaceFont;
+                    }
+                }
+
+                if (descriptor.m_textDescriptors[secIdx].GeneratedFixedTextRenderInfo == null)
+                {
+                    descriptor.m_textDescriptors[secIdx].GeneratedFixedTextRenderInfo = RefreshTextData(txt, m_fontCache[descriptor.m_textDescriptors[secIdx].m_overrideFont]);
+                }
+                return descriptor.m_textDescriptors[secIdx].GeneratedFixedTextRenderInfo;
+            }
+            else
+            {
+
+                return GetCachedText(txt);
+            }
+        }
+
+        private BasicRenderInformation GetCachedText(string txt)
+        {
+            if (!m_textCache.ContainsKey(txt))
+            {
+                m_textCache[txt] = RefreshTextData(txt);
+            }
+            return m_textCache[txt];
+        }
 
     }
 }

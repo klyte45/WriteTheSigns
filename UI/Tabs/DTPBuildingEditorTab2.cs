@@ -553,6 +553,8 @@ namespace Klyte.DynamicTextProps.UI
             }
         }
 
+        protected override void SetTextOwnNameContent(int idx) => SafeActionInTextBoard(descriptor => descriptor.m_textType = BoardGeneratorBuildings.AVAILABLE_TEXT_TYPES[idx]);
+
         #endregion
 
         private class PlatformItem : ICheckable

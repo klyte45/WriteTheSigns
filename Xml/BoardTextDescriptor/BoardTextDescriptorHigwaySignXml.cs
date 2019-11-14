@@ -9,15 +9,13 @@ namespace Klyte.DynamicTextProps.Overrides
     {
         public class BoardTextDescriptorHighwaySignsXml : BoardTextDescriptorParentXml<BoardTextDescriptorHighwaySignsXml>, ILibable
         {
-            [XmlAttribute("nameContent")]
-            public OwnNameContent m_ownTextContent;
-            [XmlIgnore]
-            public OwnNameContent m_cachedTextContent;
             [XmlAttribute("overrideFont")]
             public string m_overrideFont;
 
             [XmlAttribute("saveName")]
             public string SaveName { get; set; }
+            [XmlIgnore]
+            public TextType? m_cachedType;
         }
 
     }

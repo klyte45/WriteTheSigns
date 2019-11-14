@@ -23,7 +23,7 @@ namespace Klyte.DynamicTextProps.Overrides
     public partial class BoardGeneratorBuildings : BoardGeneratorParent<BoardGeneratorBuildings, BoardBunchContainerBuilding, CacheControl, BasicRenderInformation, BoardDescriptorBuildingXml, BoardTextDescriptorBuildingsXml>
     {
 
-        public Dictionary<string, Tuple<UIFont, uint>> m_fontCache = new Dictionary<string, Tuple<UIFont, uint>>();
+        public Dictionary<string, UIFont> m_fontCache = new Dictionary<string, UIFont>();
         private static Dictionary<string, BuildingGroupDescriptorXml> m_loadedDescriptors;
         internal static Dictionary<string, BuildingGroupDescriptorXml> LoadedDescriptors
         {
@@ -409,14 +409,12 @@ namespace Klyte.DynamicTextProps.Overrides
                     }
                     else
                     {
-                        m_fontCache[descriptor.m_textDescriptors[secIdx].m_overrideFont] = Tuple.New((UIFont) surfaceFont, 0u);
+                        m_fontCache[descriptor.m_textDescriptors[secIdx].m_overrideFont] = surfaceFont;
                     }
                 }
-                Tuple<UIFont, uint> overrideFont = m_fontCache[descriptor.m_textDescriptors[secIdx].m_overrideFont];
-
-                if (descriptor.m_textDescriptors[secIdx].GeneratedFixedTextRenderInfo == null || descriptor.m_textDescriptors[secIdx].GeneratedFixedTextRenderInfoTick < overrideFont.Second)
+                if (descriptor.m_textDescriptors[secIdx].GeneratedFixedTextRenderInfo == null)
                 {
-                    descriptor.m_textDescriptors[secIdx].GeneratedFixedTextRenderInfo = RefreshTextData(txt, overrideFont.First);
+                    descriptor.m_textDescriptors[secIdx].GeneratedFixedTextRenderInfo = RefreshTextData(txt, m_fontCache[descriptor.m_textDescriptors[secIdx].m_overrideFont]);
                 }
                 return descriptor.m_textDescriptors[secIdx].GeneratedFixedTextRenderInfo;
             }
