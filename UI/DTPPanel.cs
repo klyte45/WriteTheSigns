@@ -1,7 +1,8 @@
 ﻿using ColossalFramework.Globalization;
 using ColossalFramework.UI;
 using Klyte.Commons.Utils;
-using Klyte.DynamicTextProps.TextureAtlas;
+using Klyte.DynamicTextProps.UI.Images;
+using Klyte.DynamicTextProps.Utils;
 using UnityEngine;
 
 namespace Klyte.DynamicTextProps.UI
@@ -61,8 +62,7 @@ namespace Klyte.DynamicTextProps.UI
             closeButton.eventClick += (x, y) => DynamicTextPropsMod.Instance.ClosePanel();
 
             KlyteMonoUtils.CreateUIElement(out UISprite logo, m_mainPanel.transform, "DTPLogo", new Vector4(22, 5f, 32, 32));
-            logo.atlas = DTPCommonTextureAtlas.instance.Atlas;
-            logo.spriteName = "ServiceVehiclesManagerIcon";
+            logo.spriteName = DTPResourceLoader.instance.GetDefaultSpriteNameFor(CommonSpriteNames.KDTPIcon);
             //KlyteMonoUtils.CreateDragHandle(logo, KlyteModsPanel.instance.mainPanel);
         }
 

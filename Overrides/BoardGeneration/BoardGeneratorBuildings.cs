@@ -100,7 +100,7 @@ namespace Klyte.DynamicTextProps.Overrides
         private static string DefaultFilename { get; } = $"{DynamicTextPropsMod.m_defaultFileNameXml}.xml";
         public void LoadAllBuildingConfigurations()
         {
-            FileUtils.ScanPrefabsFolders(DefaultFilename, LoadDescriptorsFromXml);
+            FileUtils.ScanPrefabsFolders<BuildingInfo>(DefaultFilename, LoadDescriptorsFromXml);
             var errorList = new List<string>();
             foreach (string filename in Directory.GetFiles(DynamicTextPropsMod.DefaultBuildingsConfigurationFolder, "*.xml"))
             {

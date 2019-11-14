@@ -7,7 +7,7 @@ using Klyte.Commons.Interfaces;
 using Klyte.Commons.Utils;
 using Klyte.DynamicTextProps.Libraries;
 using Klyte.DynamicTextProps.Overrides;
-using Klyte.DynamicTextProps.TextureAtlas;
+using Klyte.DynamicTextProps.UI.Images;
 using Klyte.DynamicTextProps.Utils;
 using System;
 using System.Collections.Generic;
@@ -114,7 +114,7 @@ namespace Klyte.DynamicTextProps.UI
             m_fontSelect.width -= 40;
             UIPanel parent = m_fontSelect.GetComponentInParent<UIPanel>();
             UIButton actionButton = ConfigureActionButton(parent);
-            SetIcon(actionButton, "Reload", Color.white);
+            SetIcon(actionButton, CommonSpriteNames.Reload, Color.white);
             actionButton.eventClick += (x, t) => DTPUtils.ReloadFontsOf<BoardGeneratorBuildings>(m_fontSelect);
             DTPUtils.ReloadFontsOf<BoardGeneratorBuildings>(m_fontSelect);
 
@@ -345,9 +345,9 @@ namespace Klyte.DynamicTextProps.UI
             deleteButton = ConfigureActionButton(subPanelActionsBar.Self);
             deleteButton.eventClick += (x, y) => actionDelete();
 
-            SetIcon(copyButton, "Copy", Color.white);
-            SetIcon(pasteButton, "Paste", Color.white);
-            SetIcon(deleteButton, "RemoveIcon", Color.white);
+            SetIcon(copyButton, CommonSpriteNames.Copy, Color.white);
+            SetIcon(pasteButton, CommonSpriteNames.Paste, Color.white);
+            SetIcon(deleteButton, CommonSpriteNames.RemoveIcon, Color.white);
 
             deleteButton.color = Color.red;
 
@@ -358,7 +358,7 @@ namespace Klyte.DynamicTextProps.UI
             loadDD.width -= 80;
             UIPanel parent = loadDD.GetComponentInParent<UIPanel>();
             UIButton actionButton = ConfigureActionButton(parent);
-            SetIcon(actionButton, "Load", Color.white);
+            SetIcon(actionButton, CommonSpriteNames.Load, Color.white);
             actionButton.eventClick += (x, t) =>
             {
                 if (m_currentBuildingName != null)
@@ -373,7 +373,7 @@ namespace Klyte.DynamicTextProps.UI
             KlyteMonoUtils.CreateUIElement(out actionButton, parent.transform, "DelBtn");
             actionButton = ConfigureActionButton(parent);
             actionButton.color = Color.red;
-            SetIcon(actionButton, "RemoveIcon", Color.white);
+            SetIcon(actionButton, CommonSpriteNames.RemoveIcon, Color.white);
             actionButton.eventClick += (x, t) =>
             {
                 if (m_currentBuildingName != null)
@@ -391,7 +391,7 @@ namespace Klyte.DynamicTextProps.UI
             saveTxt.width -= 40;
             parent = saveTxt.GetComponentInParent<UIPanel>();
             actionButton = ConfigureActionButton(parent);
-            SetIcon(actionButton, "Save", Color.white);
+            SetIcon(actionButton, CommonSpriteNames.Save, Color.white);
             actionButton.eventClick += (x, t) =>
             {
                 if (m_currentBuildingName != null && !saveTxt.text.IsNullOrWhiteSpace())
@@ -405,14 +405,13 @@ namespace Klyte.DynamicTextProps.UI
             return loadDD;
         }
 
-        private static void SetIcon(UIButton copyButton, string spriteName, Color color)
+        private static void SetIcon(UIButton copyButton, CommonSpriteNames spriteName, Color color)
         {
             UISprite icon = copyButton.AddUIComponent<UISprite>();
             icon.relativePosition = new Vector3(2, 2);
-            icon.atlas = DTPCommonTextureAtlas.instance.Atlas;
             icon.width = 36;
             icon.height = 36;
-            icon.spriteName = spriteName;
+            icon.spriteName = DTPResourceLoader.instance.GetDefaultSpriteNameFor(spriteName);
             icon.color = color;
         }
 

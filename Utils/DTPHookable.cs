@@ -1,12 +1,10 @@
 using ColossalFramework;
 using ColossalFramework.Math;
-using ColossalFramework.UI;
 using Klyte.Commons.Utils;
-using Klyte.DynamicTextProps.TextureAtlas;
+using Klyte.DynamicTextProps.UI.Images;
 using System;
 using UnityEngine;
 using static ItemClass;
-using static Klyte.DynamicTextProps.TextureAtlas.LineIconsTextureAtlas;
 
 namespace Klyte.DynamicTextProps.Utils
 {
@@ -59,62 +57,62 @@ namespace Klyte.DynamicTextProps.Utils
         };
 
 
-        public static Func<ushort, Tuple<UITextureAtlas, string, Color, string>> GetLineLogoParameters = (ushort lineID) =>
+        public static Func<ushort, Tuple<string, Color, string>> GetLineLogoParameters = (ushort lineID) =>
          {
              Color lineColor = TransportManager.instance.GetLineColor(lineID);
-             LineIconsTextureAtlas.LineIcon lineIcon;
+             LineIconSpriteNames lineIcon;
              switch (TransportManager.instance.m_lines.m_buffer[lineID].Info.m_transportType)
              {
                  case TransportInfo.TransportType.Bus:
-                     lineIcon = LineIcon.OvalIcon;
+                     lineIcon = LineIconSpriteNames.OvalIcon;
                      break;
                  case TransportInfo.TransportType.Metro:
-                     lineIcon = LineIcon.SquareIcon;
+                     lineIcon = LineIconSpriteNames.SquareIcon;
                      break;
                  case TransportInfo.TransportType.Train:
-                     lineIcon = LineIcon.CircleIcon;
+                     lineIcon = LineIconSpriteNames.CircleIcon;
                      break;
                  case TransportInfo.TransportType.Ship:
                      if (TransportManager.instance.m_lines.m_buffer[lineID].Info.m_vehicleType == VehicleInfo.VehicleType.Ferry)
                      {
-                         lineIcon = LineIcon.S08StarIcon;
+                         lineIcon = LineIconSpriteNames.S08StarIcon;
                      }
                      else
                      {
-                         lineIcon = LineIcon.DiamondIcon;
+                         lineIcon = LineIconSpriteNames.DiamondIcon;
                      }
                      break;
                  case TransportInfo.TransportType.Airplane:
                      if (TransportManager.instance.m_lines.m_buffer[lineID].Info.m_vehicleType == VehicleInfo.VehicleType.Blimp)
                      {
-                         lineIcon = LineIcon.ParachuteIcon;
+                         lineIcon = LineIconSpriteNames.ParachuteIcon;
                      }
                      else
                      {
-                         lineIcon = LineIcon.PentagonIcon;
+                         lineIcon = LineIconSpriteNames.PentagonIcon;
                      }
                      break;
                  case TransportInfo.TransportType.Tram:
-                     lineIcon = LineIcon.TrapezeIcon;
+                     lineIcon = LineIconSpriteNames.TrapezeIcon;
                      break;
                  case TransportInfo.TransportType.EvacuationBus:
-                     lineIcon = LineIcon.CrossIcon;
+                     lineIcon = LineIconSpriteNames.CrossIcon;
                      break;
                  case TransportInfo.TransportType.Monorail:
-                     lineIcon = LineIcon.RoundedSquareIcon;
+                     lineIcon = LineIconSpriteNames.RoundedSquareIcon;
                      break;
                  case TransportInfo.TransportType.Pedestrian:
-                     lineIcon = LineIcon.MountainIcon;
+                     lineIcon = LineIconSpriteNames.MountainIcon;
                      break;
                  case TransportInfo.TransportType.TouristBus:
-                     lineIcon = LineIcon.CameraIcon;
+                     lineIcon = LineIconSpriteNames.CameraIcon;
                      break;
                  default:
-                     lineIcon = LineIcon.S05StarIcon;
+                     lineIcon = LineIconSpriteNames.S05StarIcon;
                      break;
              }
 
-             return Tuple.New(LineIconsTextureAtlas.instance.Atlas, lineIcon.ToString(), lineColor, lineID.ToString());
+             return Tuple.New(DTPResourceLoader.instance.GetDefaultSpriteNameFor(lineIcon), lineColor, lineID.ToString());
          };
 
         public static Func<ushort, ushort, string> GetStopName = (ushort stopId, ushort lineId) =>

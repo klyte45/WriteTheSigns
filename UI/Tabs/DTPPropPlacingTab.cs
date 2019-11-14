@@ -3,17 +3,16 @@ using ColossalFramework.Globalization;
 using ColossalFramework.UI;
 using ICities;
 using Klyte.Commons.Extensors;
-using Klyte.Commons.Utils;
 using Klyte.Commons.Interfaces;
+using Klyte.Commons.Utils;
+using Klyte.DynamicTextProps.Libraries;
 using Klyte.DynamicTextProps.Overrides;
-using Klyte.DynamicTextProps.TextureAtlas;
+using Klyte.DynamicTextProps.UI.Images;
 using Klyte.DynamicTextProps.Utils;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using static Klyte.DynamicTextProps.Overrides.BoardGeneratorHighwaySigns;
-using Klyte.DynamicTextProps.Libraries;
 
 namespace Klyte.DynamicTextProps.UI
 {
@@ -105,7 +104,7 @@ namespace Klyte.DynamicTextProps.UI
             m_fontSelect.width -= 40;
             UIPanel parent = m_fontSelect.GetComponentInParent<UIPanel>();
             UIButton actionButton = ConfigureActionButton(parent);
-            SetIcon(actionButton, "Reload", Color.white);
+            SetIcon(actionButton, CommonSpriteNames.Reload, Color.white);
             actionButton.eventClick += (x, t) => DTPUtils.ReloadFontsOf<BoardGeneratorHighwaySigns>(m_fontSelect);
             DTPUtils.ReloadFontsOf<BoardGeneratorHighwaySigns>(m_fontSelect);
 
@@ -306,9 +305,9 @@ namespace Klyte.DynamicTextProps.UI
             deleteButton = ConfigureActionButton(subPanelActionsBar.Self);
             deleteButton.eventClick += (x, y) => actionDelete();
 
-            SetIcon(copyButton, "Copy", Color.white);
-            SetIcon(pasteButton, "Paste", Color.white);
-            SetIcon(deleteButton, "RemoveIcon", Color.white);
+            SetIcon(copyButton, CommonSpriteNames.Copy, Color.white);
+            SetIcon(pasteButton, CommonSpriteNames.Paste, Color.white);
+            SetIcon(deleteButton, CommonSpriteNames.RemoveIcon, Color.white);
 
             deleteButton.color = Color.red;
 
@@ -319,7 +318,7 @@ namespace Klyte.DynamicTextProps.UI
             loadDD.width -= 80;
             UIPanel parent = loadDD.GetComponentInParent<UIPanel>();
             UIButton actionButton = ConfigureActionButton(parent);
-            SetIcon(actionButton, "Load", Color.white);
+            SetIcon(actionButton, CommonSpriteNames.Load, Color.white);
             actionButton.eventClick += (x, t) =>
             {
                 if (m_currentSelectedSegment > 0)
@@ -334,7 +333,7 @@ namespace Klyte.DynamicTextProps.UI
             KlyteMonoUtils.CreateUIElement(out actionButton, parent.transform, "DelBtn");
             actionButton = ConfigureActionButton(parent);
             actionButton.color = Color.red;
-            SetIcon(actionButton, "RemoveIcon", Color.white);
+            SetIcon(actionButton, CommonSpriteNames.RemoveIcon, Color.white);
             actionButton.eventClick += (x, t) =>
             {
                 if (m_currentSelectedSegment > 0)
@@ -352,7 +351,7 @@ namespace Klyte.DynamicTextProps.UI
             saveTxt.width -= 40;
             parent = saveTxt.GetComponentInParent<UIPanel>();
             actionButton = ConfigureActionButton(parent);
-            SetIcon(actionButton, "Save", Color.white);
+            SetIcon(actionButton, CommonSpriteNames.Save, Color.white);
             actionButton.eventClick += (x, t) =>
             {
                 if (m_currentSelectedSegment > 0 && !saveTxt.text.IsNullOrWhiteSpace())
@@ -366,14 +365,13 @@ namespace Klyte.DynamicTextProps.UI
             return loadDD;
         }
 
-        private static void SetIcon(UIButton copyButton, string spriteName, Color color)
+        private static void SetIcon(UIButton copyButton, CommonSpriteNames spriteName, Color color)
         {
             UISprite icon = copyButton.AddUIComponent<UISprite>();
             icon.relativePosition = new Vector3(2, 2);
-            icon.atlas = DTPCommonTextureAtlas.instance.Atlas;
             icon.width = 36;
             icon.height = 36;
-            icon.spriteName = spriteName;
+            icon.spriteName = DTPResourceLoader.instance.GetDefaultSpriteNameFor(spriteName);
             icon.color = color;
         }
 
@@ -472,7 +470,7 @@ namespace Klyte.DynamicTextProps.UI
             if (m_currentSelectedSegment > 0 && CurrentTab >= 0)
             {
                 LogUtils.DoLog($"  BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData.length = {  BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData.Length }");
-                List<CacheControlHighwaySign> tempList = BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData.ToList();
+                var tempList = BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData.ToList();
                 tempList.RemoveAt(CurrentTab);
                 BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData = tempList.ToArray();
                 LogUtils.DoLog($"  BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData.length pos = {  BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData.Length }");
@@ -530,7 +528,7 @@ namespace Klyte.DynamicTextProps.UI
         {
             if (m_currentSelectedSegment > 0 && CurrentTab >= 0 && CurrentTabText >= 0)
             {
-                List<BoardTextDescriptorHighwaySignsXml> tempList = BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[CurrentTab].descriptor.m_textDescriptors.ToList();
+                var tempList = BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[CurrentTab].descriptor.m_textDescriptors.ToList();
                 tempList.RemoveAt(CurrentTabText);
                 BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[CurrentTab].descriptor.m_textDescriptors = tempList.ToArray();
                 ReloadTabInfo();
@@ -889,7 +887,7 @@ namespace Klyte.DynamicTextProps.UI
 
         private void ReloadFontsOverride(UIDropDown target, string currentVal)
         {
-            List<string> items = Font.GetOSInstalledFontNames().ToList();
+            var items = Font.GetOSInstalledFontNames().ToList();
             items.Insert(0, Locale.Get("K45_DTP_USE_DEFAULT_FONT_HS"));
             target.items = items.ToArray();
             if (items.Contains(currentVal))

@@ -3,25 +3,31 @@ using ColossalFramework.UI;
 using Klyte.Commons.Extensors;
 using Klyte.Commons.Interfaces;
 using Klyte.Commons.Utils;
-using Klyte.DynamicTextProps.TextureAtlas;
 using Klyte.DynamicTextProps.UI;
+using Klyte.DynamicTextProps.UI.Images;
 using Klyte.DynamicTextProps.Utils;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using UnityEngine;
-using static Klyte.DynamicTextProps.TextureAtlas.DTPCommonTextureAtlas;
 
 [assembly: AssemblyVersion("1.99.999.*")]
 namespace Klyte.DynamicTextProps
 {
-    public class DynamicTextPropsMod : BasicIUserMod<DynamicTextPropsMod, DTPResourceLoader, DTPController, DTPCommonTextureAtlas, DTPPanel, SpriteNames>
+    public class DynamicTextPropsMod : BasicIUserMod<DynamicTextPropsMod, DTPResourceLoader, DTPController, DTPPanel, CommonSpriteNames>
     {
         public DynamicTextPropsMod() => Construct();
 
         public override string SimpleName => "Klyte's Dynamic Text Props";
 
         public override string Description => "This mod allows creating dynamic text props in the city";
+
+        public override List<Tuple<string, Type, int, int>> SpriteSheets { get; } = new List<Tuple<string, Type, int, int>>()
+        {
+            Tuple.New( "UI.Images.sprites.png",typeof(CommonSpriteNames),64,64),
+            Tuple.New( "UI.Images.lineFormats.png",typeof(LineIconSpriteNames),64,64),
+        };
 
         public override void DoErrorLog(string fmt, params object[] args) => LogUtils.DoErrorLog(fmt, args);
 
@@ -35,6 +41,7 @@ namespace Klyte.DynamicTextProps
 
         public override void TopSettingsUI(UIHelperExtension helper)
         {
+
             UIHelperExtension group8 = helper.AddGroupExtended(Locale.Get("K45_DTP_GENERAL_INFO"));
             AddFolderButton(DefaultBuildingsConfigurationFolder, group8, "K45_DTP_DEFAULT_BUILDINGS_CONFIG_PATH_TITLE");
             group8.AddLabel(Locale.Get("K45_DTP_GET_FILES_GITHUB"));

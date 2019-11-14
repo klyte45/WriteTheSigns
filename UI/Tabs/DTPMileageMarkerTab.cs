@@ -3,16 +3,16 @@ using ColossalFramework.Globalization;
 using ColossalFramework.UI;
 using ICities;
 using Klyte.Commons.Extensors;
-using Klyte.Commons.Utils;
 using Klyte.Commons.Interfaces;
+using Klyte.Commons.Utils;
+using Klyte.DynamicTextProps.Libraries;
 using Klyte.DynamicTextProps.Overrides;
-using Klyte.DynamicTextProps.TextureAtlas;
+using Klyte.DynamicTextProps.UI.Images;
 using Klyte.DynamicTextProps.Utils;
 using System;
 using System.Linq;
 using UnityEngine;
 using static Klyte.DynamicTextProps.Overrides.BoardGeneratorHighwayMileage;
-using Klyte.DynamicTextProps.Libraries;
 
 namespace Klyte.DynamicTextProps.UI
 {
@@ -73,7 +73,7 @@ namespace Klyte.DynamicTextProps.UI
             m_fontSelect.width -= 40;
             UIPanel parent = m_fontSelect.GetComponentInParent<UIPanel>();
             UIButton actionButton = ConfigureActionButton(parent);
-            SetIcon(actionButton, "Reload", Color.white);
+            SetIcon(actionButton, CommonSpriteNames.Reload, Color.white);
             actionButton.eventClick += (x, t) => DTPUtils.ReloadFontsOf<BoardGeneratorHighwayMileage>(m_fontSelect);
             DTPUtils.ReloadFontsOf<BoardGeneratorHighwayMileage>(m_fontSelect);
             BoardGeneratorHighwayMileage.GenerateDefaultSignModelAtLibrary();
@@ -201,7 +201,7 @@ namespace Klyte.DynamicTextProps.UI
             {
                 copyButton = ConfigureActionButton(subPanelActionsBar.Self);
                 copyButton.eventClick += (x, y) => actionCopy();
-                SetIcon(copyButton, "Copy", Color.white);
+                SetIcon(copyButton, CommonSpriteNames.Copy, Color.white);
             }
             else
             {
@@ -211,7 +211,7 @@ namespace Klyte.DynamicTextProps.UI
             {
                 pasteButton = ConfigureActionButton(subPanelActionsBar.Self);
                 pasteButton.eventClick += (x, y) => actionPaste();
-                SetIcon(pasteButton, "Paste", Color.white);
+                SetIcon(pasteButton, CommonSpriteNames.Paste, Color.white);
                 pasteButton.isVisible = false;
             }
             else
@@ -222,7 +222,7 @@ namespace Klyte.DynamicTextProps.UI
             {
                 deleteButton = ConfigureActionButton(subPanelActionsBar.Self);
                 deleteButton.eventClick += (x, y) => actionDelete();
-                SetIcon(deleteButton, "RemoveIcon", Color.white);
+                SetIcon(deleteButton, CommonSpriteNames.RemoveIcon, Color.white);
                 deleteButton.color = Color.red;
             }
             else
@@ -234,7 +234,7 @@ namespace Klyte.DynamicTextProps.UI
             loadDD.width -= 80;
             UIPanel parent = loadDD.GetComponentInParent<UIPanel>();
             UIButton actionButton = ConfigureActionButton(parent);
-            SetIcon(actionButton, "Load", Color.white);
+            SetIcon(actionButton, CommonSpriteNames.Load, Color.white);
             actionButton.eventClick += (x, t) =>
             {
                 DESC groupInfo = BasicLib<LIB, DESC>.Instance.Get(loadDD.selectedValue);
@@ -246,7 +246,7 @@ namespace Klyte.DynamicTextProps.UI
             KlyteMonoUtils.CreateUIElement(out actionButton, parent.transform, "DelBtn");
             actionButton = ConfigureActionButton(parent);
             actionButton.color = Color.red;
-            SetIcon(actionButton, "RemoveIcon", Color.white);
+            SetIcon(actionButton, CommonSpriteNames.RemoveIcon, Color.white);
             actionButton.eventClick += (x, t) =>
             {
                 DESC groupInfo = BasicLib<LIB, DESC>.Instance.Get(loadDD.selectedValue);
@@ -261,7 +261,7 @@ namespace Klyte.DynamicTextProps.UI
             saveTxt.width -= 40;
             parent = saveTxt.GetComponentInParent<UIPanel>();
             actionButton = ConfigureActionButton(parent);
-            SetIcon(actionButton, "Save", Color.white);
+            SetIcon(actionButton, CommonSpriteNames.Save, Color.white);
             actionButton.eventClick += (x, t) =>
             {
                 if (!saveTxt.text.IsNullOrWhiteSpace())
@@ -281,14 +281,13 @@ namespace Klyte.DynamicTextProps.UI
         private static void ReloadLib<LIB, DESC>(UIDropDown loadDD)
             where LIB : BasicLib<LIB, DESC>, new()
             where DESC : ILibable => loadDD.items = BasicLib<LIB, DESC>.Instance.List().ToArray();
-        private static void SetIcon(UIButton copyButton, string spriteName, Color color)
+        private static void SetIcon(UIButton copyButton, CommonSpriteNames spriteName, Color color)
         {
             UISprite icon = copyButton.AddUIComponent<UISprite>();
             icon.relativePosition = new Vector3(2, 2);
-            icon.atlas = DTPCommonTextureAtlas.instance.Atlas;
             icon.width = 36;
             icon.height = 36;
-            icon.spriteName = spriteName;
+            icon.spriteName = DTPResourceLoader.instance.GetDefaultSpriteNameFor(spriteName);
             icon.color = color;
         }
 
@@ -479,8 +478,8 @@ namespace Klyte.DynamicTextProps.UI
         }
         private void EnsureTabQuantityTexts(int size)
         {
-            var targetCount = Mathf.Max(m_pseudoTabstripTexts.tabCount, size + 1);
-            for (var i = 0; i < targetCount; i++)
+            int targetCount = Mathf.Max(m_pseudoTabstripTexts.tabCount, size + 1);
+            for (int i = 0; i < targetCount; i++)
             {
                 if (i >= m_pseudoTabstripTexts.tabCount)
                 {
@@ -504,7 +503,7 @@ namespace Klyte.DynamicTextProps.UI
         private void ConfigureTabsShownText(int quantity)
         {
 
-            for (var i = 0; i < m_pseudoTabstripTexts.tabCount; i++)
+            for (int i = 0; i < m_pseudoTabstripTexts.tabCount; i++)
             {
                 m_pseudoTabstripTexts.tabs[i].isVisible = i < quantity || i == m_pseudoTabstripTexts.tabCount - 1;
             }

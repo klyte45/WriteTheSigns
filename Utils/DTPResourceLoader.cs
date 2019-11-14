@@ -9,6 +9,7 @@ namespace Klyte.DynamicTextProps.Utils
     {
         public override string Prefix { get; } = "Klyte.DynamicTextProps.";
 
+        public override string PrefixAtlasImage => "K45_DTP";
 
         public Dictionary<string, Shader> LoadAllShaders(string assetBundleName)
         {
