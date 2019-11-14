@@ -32,37 +32,34 @@ namespace Klyte.DynamicTextProps.Overrides
                 m_cooldown = 2;
             }
         }
-        public static void AfterRemoveStop(ref TransportLine __instance, bool __result, int index)
+        public static void BeforeRemoveStop(ref TransportLine __instance, int index)
         {
-            if (__result)
+            ushort num = 0;
+            if (index == -1)
             {
-                ushort num = 0;
-                if (index == -1)
+                if ((__instance.m_flags & TransportLine.Flags.Complete) == TransportLine.Flags.None)
                 {
-                    if ((__instance.m_flags & TransportLine.Flags.Complete) == TransportLine.Flags.None)
-                    {
-                        num = __instance.GetLastStop();
-                    }
-                    else
-                    {
-                        return;
-                    }
+                    num = __instance.GetLastStop();
                 }
                 else
                 {
-                    num = __instance.m_stops;
-                    for (int i = 0; i < index; i++)
+                    return;
+                }
+            }
+            else
+            {
+                num = __instance.m_stops;
+                for (int i = 0; i < index; i++)
+                {
+                    num = TransportLine.GetNextStop(num);
+                    if (num == __instance.m_stops)
                     {
-                        num = TransportLine.GetNextStop(num);
-                        if (num == __instance.m_stops)
-                        {
-                            break;
-                        }
+                        break;
                     }
                 }
-
-                DTPLineUtils.PurgeStopCache(num);
             }
+
+            DTPLineUtils.PurgeStopCache(num);
         }
         public static void AfterRemoveLine(ushort lineID) => DTPLineUtils.PurgeLineCache(lineID);
 
@@ -114,12 +111,12 @@ namespace Klyte.DynamicTextProps.Overrides
             #region Release Line Hooks
             MethodInfo posUpdate = typeof(TransportManagerOverrides).GetMethod("PushIntoStackLine", RedirectorUtils.allFlags);
             MethodInfo posAddStop = typeof(TransportManagerOverrides).GetMethod("PushIntoStackBuilding", RedirectorUtils.allFlags);
-            MethodInfo posRemoveStop = typeof(TransportManagerOverrides).GetMethod("AfterRemoveStop", RedirectorUtils.allFlags);
+            MethodInfo preRemoveStop = typeof(TransportManagerOverrides).GetMethod("BeforeRemoveStop", RedirectorUtils.allFlags);
             MethodInfo posRemoveLine = typeof(TransportManagerOverrides).GetMethod("AfterRemoveLine", RedirectorUtils.allFlags);
 
             RedirectorInstance.AddRedirect(typeof(TransportManager).GetMethod("UpdateLine", RedirectorUtils.allFlags), null, posUpdate);
             RedirectorInstance.AddRedirect(typeof(TransportLine).GetMethod("AddStop", RedirectorUtils.allFlags), null, posAddStop);
-            RedirectorInstance.AddRedirect(typeof(TransportLine).GetMethod("RemoveStop", RedirectorUtils.allFlags, null, new Type[] { typeof(ushort), typeof(int), typeof(Vector3).MakeByRefType() }, null), null, posRemoveStop);
+            RedirectorInstance.AddRedirect(typeof(TransportLine).GetMethod("RemoveStop", RedirectorUtils.allFlags, null, new Type[] { typeof(ushort), typeof(int), typeof(Vector3).MakeByRefType() }, null), preRemoveStop);
             RedirectorInstance.AddRedirect(typeof(TransportManager).GetMethod("ReleaseLine", RedirectorUtils.allFlags), null, posRemoveLine);
             #endregion
 
