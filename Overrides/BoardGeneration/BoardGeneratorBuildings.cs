@@ -37,7 +37,7 @@ namespace Klyte.DynamicTextProps.Overrides
             }
         }
 
-        private DTPBuildingEditorTab EditorInstance => DTPBuildingEditorTab.Instance;
+        private DTPBuildingEditorTab2 EditorInstance => DTPBuildingEditorTab2.Instance as DTPBuildingEditorTab2;
 
         private LineDescriptor[] m_linesDescriptors;
         private ulong[] m_lineLastUpdate;

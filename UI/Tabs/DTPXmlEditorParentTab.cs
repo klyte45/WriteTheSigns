@@ -25,6 +25,7 @@ namespace Klyte.DynamicTextProps.UI
         where BRI : BasicRenderInformation, new()
         where LIBTXT : BasicLib<LIBTXT, BTD>, new()
     {
+        public static DTPXmlEditorParentTab<BG, BBC, CC, BRI, BD, BTD, LIBTXT> Instance { get; private set; }
         public UIScrollablePanel MainContainer { get; protected set; }
 
         protected UIHelperExtension m_uiHelperHS;
@@ -42,7 +43,6 @@ namespace Klyte.DynamicTextProps.UI
         protected UITextField[] m_posVectorEditorText;
         protected UITextField[] m_rotVectorEditorText;
         protected UIColorField m_colorEditorText;
-        protected UICheckBox m_useContrastColorTextCheckbox;
         protected UIDropDown m_dropdownTextAlignHorizontal;
         protected UIDropDown m_dropdownTextAlignVertical;
         protected UITextField m_maxWidthText;
@@ -56,7 +56,7 @@ namespace Klyte.DynamicTextProps.UI
         protected UIDropDown m_loadPropGroup;
         protected UIDropDown m_loadTextDD;
 
-        protected string m_clipboardText;
+        private string m_clipboardText;
 
         protected int CurrentTabText
         {
@@ -66,15 +66,28 @@ namespace Klyte.DynamicTextProps.UI
 
         protected bool m_isLoading = false;
 
-        protected abstract void GetParamsForcreatingTextTabstrip(out UIScrollablePanel scrollTabs, out int width, out UIHelperExtension referenceHelper);
-        internal abstract void OnTextTabStripChanged();
-        internal abstract string[] GetTextContentTypesAvailable();
+        protected abstract string GetFontLabelString();
+        protected abstract void OnTextTabStripChanged();
+        protected abstract string[] GetTextContentTypesAvailable();
+        protected abstract void AwakePropEditor(out UIScrollablePanel scrollTabs, out UIHelperExtension referenceHelperTabs);
+        protected abstract void OnDropdownTextTypeSelectionChanged(int idx);
+        protected abstract void OnLoadTextLibItem();
+        protected virtual void DoInTextCommonTabGroupUI(UIHelperExtension groupTexts) { }
+        protected virtual void DoInTextSizeTabGroupUI(UIHelperExtension groupTexts) { }
+        protected virtual void DoInTextAlignmentTabGroupUI(UIHelperExtension groupTexts) { }
+        protected virtual void DoInTextEffectsTabGroupUI(UIHelperExtension groupTexts) { }
+        protected abstract void PostAwake();
+        
 
         public void Awake()
         {
+            Instance = this;
+
             MainContainer = GetComponent<UIScrollablePanel>();
 
             m_uiHelperHS = new UIHelperExtension(MainContainer);
+
+            AddDropdown(GetFontLabelString(), out m_fontSelect, m_uiHelperHS, new string[0], OnSetFont);
 
             m_fontSelect.width -= 40;
             UIPanel parent = m_fontSelect.GetComponentInParent<UIPanel>();
@@ -83,8 +96,9 @@ namespace Klyte.DynamicTextProps.UI
             actionButton.eventClick += (x, t) => DTPUtils.ReloadFontsOf<BG>(m_fontSelect);
             DTPUtils.ReloadFontsOf<BG>(m_fontSelect);
 
-            GetParamsForcreatingTextTabstrip(out UIScrollablePanel scrollTabs, out int targetWidth, out UIHelperExtension referenceHelper);
-            KlyteMonoUtils.CreateUIElement(out m_pseudoTabstripTexts, scrollTabs.transform, "DTPTabstrip", new Vector4(5, 40, targetWidth - 10, 40));
+
+            AwakePropEditor(out UIScrollablePanel scrollTabs, out UIHelperExtension referenceHelper);
+            KlyteMonoUtils.CreateUIElement(out m_pseudoTabstripTexts, scrollTabs.transform, "DTPTabstrip", new Vector4(5, 40, referenceHelper.Self.width - 10, 40));
             m_pseudoTabstripTexts.startSelectedIndex = -1;
             m_pseudoTabstripTexts.selectedIndex = -1;
             m_pseudoTabstripTexts.closeOnReclick = true;
@@ -123,6 +137,7 @@ namespace Klyte.DynamicTextProps.UI
                                       }
 
                                       CurrentSelectedDescriptorArray[CurrentTabText] = XmlUtils.DefaultXmlDeserialize<BTD>(XmlUtils.DefaultXmlSerialize(x));
+                                      OnLoadTextLibItem();
                                   },
                           () => CurrentSelectedDescriptorArray?.ElementAtOrDefault(CurrentTabText));
 
@@ -138,7 +153,9 @@ namespace Klyte.DynamicTextProps.UI
             m_dropdownTextContent.eventSelectedIndexChanged += (e, idx) =>
             {
                 m_customText.GetComponentInParent<UIPanel>().isVisible = BoardGeneratorBuildings.AVAILABLE_TEXT_TYPES[idx] == TextType.Fixed;
+                OnDropdownTextTypeSelectionChanged(idx);
             };
+            DoInTextCommonTabGroupUI(groupTexts);
 
             groupTexts = m_pseudoTabTextsContainer.AddTogglableGroup(Locale.Get("K45_DTP_TEXTS_SIZE_POSITION"));
             AddVector3Field(Locale.Get("K45_DTP_RELATIVE_POS"), out m_posVectorEditorText, groupTexts, SetTextRelPosition);
@@ -146,15 +163,19 @@ namespace Klyte.DynamicTextProps.UI
             AddFloatField(Locale.Get("K45_DTP_TEXT_SCALE"), out m_scaleText, groupTexts, SetTextScale, false);
             AddFloatField(Locale.Get("K45_DTP_MAX_WIDTH_METERS"), out m_maxWidthText, groupTexts, SetTextMaxWidth, false);
             m_textResizeYOnOverflow = (UICheckBox) groupTexts.AddCheckbox(Locale.Get("K45_DTP_RESIZE_Y_TEXT_OVERFLOW"), false, SetTextResizeYOnOverflow);
+            DoInTextSizeTabGroupUI(groupTexts);
 
             groupTexts = m_pseudoTabTextsContainer.AddTogglableGroup(Locale.Get("K45_DTP_TEXTS_2D_ALIGNMENT"));
             AddDropdown(Locale.Get("K45_DTP_TEXT_ALIGN_HOR"), out m_dropdownTextAlignHorizontal, groupTexts, Enum.GetNames(typeof(UIHorizontalAlignment)).Select(x => Locale.Get("K45_ALIGNMENT", x)).ToArray(), SetTextAlignmentHorizontal);
             AddDropdown(Locale.Get("K45_DTP_TEXT_ALIGN_VER"), out m_dropdownTextAlignVertical, groupTexts, Enum.GetNames(typeof(UIVerticalAlignment)).Select(x => Locale.Get("K45_VERT_ALIGNMENT", x)).ToArray(), SetTextAlignmentVertical);
+            DoInTextAlignmentTabGroupUI(groupTexts);
 
             groupTexts = m_pseudoTabTextsContainer.AddTogglableGroup(Locale.Get("K45_DTP_TEXT_EFFECTS"));
             AddSlider(Locale.Get("K45_DTP_LUMINOSITY_DAY"), out m_textLuminosityDay, groupTexts, SetTextLumDay, 0, 10f, 0.25f);
             AddSlider(Locale.Get("K45_DTP_LUMINOSITY_NIGHT"), out m_textLuminosityNight, groupTexts, SetTextLumNight, 0, 10f, 0.25f);
+            DoInTextEffectsTabGroupUI(groupTexts);
 
+            PostAwake();
         }
 
 
@@ -371,9 +392,8 @@ namespace Klyte.DynamicTextProps.UI
         public void Start() => m_propsDropdown.items = new string[] { Locale.Get("K45_DTP_NONE_PROP_ITEM") }.Concat(BoardGeneratorHighwaySigns.Instance.LoadedProps.Select(x => x.EndsWith("_Data") ? Locale.Get("PROPS_TITLE", x) : x)).ToArray();
 
 
-        protected abstract BD CurrentSelectedBG { get; }
         protected abstract void SetPropModel(int idx);
-        internal abstract void ReloadTabInfo();
+        protected abstract void ReloadTabInfo();
         protected void SetTextItemName(string txt)
         {
             SafeActionInTextBoard(descriptor =>
@@ -473,9 +493,18 @@ namespace Klyte.DynamicTextProps.UI
             m_textResizeYOnOverflow.isChecked = (descriptor?.m_applyOverflowResizingOnY ?? false);
             m_textLuminosityDay.value = (descriptor?.m_dayEmissiveMultiplier ?? 0);
             m_textLuminosityNight.value = (descriptor?.m_nightEmissiveMultiplier ?? 0);
-            m_useContrastColorTextCheckbox.isChecked = descriptor?.m_useContrastColor ?? false;
-            m_colorEditorText.parent.isVisible = !m_useContrastColorTextCheckbox.isChecked;
+            AfterLoadingTabTextInfo(descriptor);
         }
+        protected void ConfigureTabsShownText(int quantity)
+        {
+
+            for (int i = 0; i < m_pseudoTabstripTexts.tabCount; i++)
+            {
+                m_pseudoTabstripTexts.tabs[i].isVisible = i < quantity || i == m_pseudoTabstripTexts.tabCount - 1;
+            }
+
+        }
+        protected abstract void AfterLoadingTabTextInfo(BTD descriptor);
 
         protected void SetTextOwnNameContent(int idx) => SafeActionInTextBoard(descriptor => descriptor.m_textType = BoardGeneratorBuildings.AVAILABLE_TEXT_TYPES[idx]);
         protected void SetTextCustom(string txt) => SafeActionInTextBoard(descriptor => descriptor.m_fixedText = txt?.Replace("\\n", "\n"));
