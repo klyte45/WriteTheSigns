@@ -52,7 +52,7 @@ namespace Klyte.DynamicTextProps.Overrides
         }
         protected virtual void OnChangeFont(string fontName) { }
 
-        protected void Reset()
+        public void Reset()
         {
             lastFontUpdateFrame = SimulationManager.instance.m_currentTickIndex;
 

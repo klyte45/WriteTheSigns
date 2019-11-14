@@ -72,7 +72,7 @@ namespace Klyte.DynamicTextProps.UI
 
         private UIDropDown m_loadPropGroup;
         private UIDropDown m_loadPropItem;
-        private UIDropDown m_loadText;
+        private UIDropDown m_loadTextDD;
 
 
         public ushort m_currentSelectedSegment;
@@ -236,7 +236,7 @@ namespace Klyte.DynamicTextProps.UI
             m_pseudoTabTextsContainer.Self.isVisible = false;
             m_pseudoTabTextsContainer.Self.width = MainContainer.width - 50;
 
-            m_loadText = AddLibBox<DTPLibTextMeshHighwaySigns, BoardTextDescriptorHighwaySignsXml>(Locale.Get("K45_DTP_PROP_TEXT_LIB_TITLE"), m_pseudoTabTextsContainer,
+            m_loadTextDD = AddLibBox<DTPLibTextMeshHighwaySigns, BoardTextDescriptorHighwaySignsXml>(Locale.Get("K45_DTP_PROP_TEXT_LIB_TITLE"), m_pseudoTabTextsContainer,
                                     out UIButton m_copyButtonText, DoCopyText,
                                     out m_pasteButtonText, DoPasteText,
                                     out UIButton m_deleteButtonText, DoDeleteText,
@@ -859,7 +859,7 @@ namespace Klyte.DynamicTextProps.UI
 
             m_isLoading = true;
             LoadTabTextInfo(BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment]?.m_boardsData[CurrentTab]?.descriptor.m_textDescriptors[CurrentTabText]);
-            m_loadText.items = DTPLibTextMeshHighwaySigns.Instance.List().ToArray();
+            m_loadTextDD.items = DTPLibTextMeshHighwaySigns.Instance.List().ToArray();
             m_isLoading = false;
         }
 

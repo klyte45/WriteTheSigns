@@ -81,7 +81,7 @@ namespace Klyte.DynamicTextProps.UI
 
         private UIDropDown m_loadPropGroup;
         private UIDropDown m_loadPropItem;
-        private UIDropDown m_loadText;
+        private UIDropDown m_loadTextDD;
 
 
         public string m_currentBuildingName;
@@ -267,7 +267,7 @@ namespace Klyte.DynamicTextProps.UI
             m_pseudoTabTextsContainer.Self.isVisible = false;
             m_pseudoTabTextsContainer.Self.width = MainContainer.width - 50;
 
-            m_loadText = AddLibBox<DTPLibTextMeshBuildingSigns, BoardTextDescriptorBuildingsXml>(Locale.Get("K45_DTP_PROP_TEXT_LIB_TITLE"), m_pseudoTabTextsContainer,
+            m_loadTextDD = AddLibBox<DTPLibTextMeshBuildingSigns, BoardTextDescriptorBuildingsXml>(Locale.Get("K45_DTP_PROP_TEXT_LIB_TITLE"), m_pseudoTabTextsContainer,
                                     out UIButton m_copyButtonText, DoCopyText,
                                     out m_pasteButtonText, DoPasteText,
                                     out UIButton m_deleteButtonText, DoDeleteText,
@@ -923,7 +923,7 @@ namespace Klyte.DynamicTextProps.UI
 
             m_isLoading = true;
             LoadTabTextInfo(BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName]?.BoardDescriptors[CurrentTab]?.m_textDescriptors[CurrentTabText]);
-            m_loadText.items = DTPLibTextMeshBuildingSigns.Instance.List().ToArray();
+            m_loadTextDD.items = DTPLibTextMeshBuildingSigns.Instance.List().ToArray();
             m_isLoading = false;
         }
 
