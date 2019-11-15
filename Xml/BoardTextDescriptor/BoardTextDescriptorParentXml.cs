@@ -15,7 +15,7 @@ namespace Klyte.DynamicTextProps.Overrides
         [XmlIgnore]
         public Vector3 m_textRelativePosition;
         [XmlIgnore]
-        public Vector3 m_textRelativeRotation;
+        public Vector3 m_textRelativeRotation = new Vector3(0, 180, 0);
         [XmlAttribute("textScale")]
         public float m_textScale = 1f;
         [XmlAttribute("maxWidth")]
