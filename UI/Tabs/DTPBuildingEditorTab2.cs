@@ -66,7 +66,7 @@ namespace Klyte.DynamicTextProps.UI
         private string m_clipboardGroup;
 
         protected override string GetFontLabelString() => Locale.Get("K45_DTP_FONT_STATIONS");
-        protected override bool isTextEditionAvailable() => m_currentBuildingName != null && CurrentTab >= 0;
+        protected override bool IsTextEditionAvailable() => m_currentBuildingName != null && CurrentTab >= 0;
         protected override void SetPropModel(int idx)
         {
             if (idx > 0)
@@ -107,7 +107,9 @@ namespace Klyte.DynamicTextProps.UI
                     }
 
                     BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName] = XmlUtils.DefaultXmlDeserialize<BuildingGroupDescriptorXml>(XmlUtils.DefaultXmlSerialize(x));
+                    BoardGeneratorBuildings.Instance.OnDescriptorChanged();
                     ReloadBuilding();
+                    OnChangeTab(-1);
                 },
                 () => BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName],
                 (helper) =>
@@ -162,7 +164,8 @@ namespace Klyte.DynamicTextProps.UI
                                         }
 
                                         BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName].BoardDescriptors[CurrentTab] = XmlUtils.DefaultXmlDeserialize<BoardDescriptorBuildingXml>(XmlUtils.DefaultXmlSerialize(x));
-                                        ReloadBuilding();
+                                        BoardGeneratorBuildings.Instance.OnDescriptorChanged();
+                                        ReloadTabInfo();
                                     },
                             () => BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName].BoardDescriptors?.ElementAtOrDefault(CurrentTab));
 
@@ -216,11 +219,7 @@ namespace Klyte.DynamicTextProps.UI
             m_useContrastColorTextCheckbox = groupTexts.AddCheckboxLocale("K45_DTP_USE_CONTRAST_COLOR", false, SetUseContrastColor);
             AddDropdown(Locale.Get("K45_DTP_OVERRIDE_FONT"), out m_overrideFontText, groupTexts, new string[0], SetOverrideFont);
         }
-        protected override void PostAwake()
-        {
-            m_pseudoTabTextsContainer.Self.isVisible = false;
-            OnBuildingSet(null);
-        }
+        protected override void PostAwake() => OnBuildingSet(null);
         #endregion
 
         #region Lib Actions

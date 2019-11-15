@@ -140,11 +140,11 @@ namespace Klyte.DynamicTextProps.UI
         }
 
         protected override void AfterLoadingTabTextInfo(BoardTextDescriptorSteetSignXml descriptor) => m_useContrastColorTextCheckbox.isChecked = descriptor?.m_useContrastColor ?? false;
-        protected override void OnDropdownTextTypeSelectionChanged(int idx) => m_customText.parent.isVisible = BoardGeneratorBuildings.AVAILABLE_TEXT_TYPES[idx] == TextType.Fixed;
+        protected override void OnDropdownTextTypeSelectionChanged(int idx) { }
         protected override void OnLoadTextLibItem() => ReloadTabInfoText();
         protected override void PostAwake() { }
         protected override string GetLocaleNameForContentTypes() => "K45_DTP_OWN_NAME_CONTENT";
-        protected override bool isTextEditionAvailable() => true;
+        protected override bool IsTextEditionAvailable() => true;
         protected override void ReloadTabInfo() { }
         protected override TextType[] GetAvailableTextTypes() => AVAILABLE_TEXT_TYPES;
 

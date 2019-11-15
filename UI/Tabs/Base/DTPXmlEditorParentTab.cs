@@ -66,18 +66,24 @@ namespace Klyte.DynamicTextProps.UI
 
         protected bool m_isLoading = false;
 
+        protected abstract BTD[] CurrentSelectedDescriptorArray { get; set; }
         protected abstract string GetFontLabelString();
         protected abstract void OnTextTabStripChanged();
         protected abstract void AwakePropEditor(out UIScrollablePanel scrollTabs, out UIHelperExtension referenceHelperTabs);
         protected abstract void OnDropdownTextTypeSelectionChanged(int idx);
         protected abstract void OnLoadTextLibItem();
+        protected abstract void PostAwake();
+        protected abstract void AfterLoadingTabTextInfo(BTD descriptor);
+        protected abstract TextType[] GetAvailableTextTypes();
+        protected abstract void ReloadTabInfoText();
+        protected abstract string GetLocaleNameForContentTypes();
+        protected abstract bool IsTextEditionAvailable();
+        protected virtual void OnChangeCustomText(BTD descriptor) { }
         protected virtual void DoInTextCommonTabGroupUI(UIHelperExtension groupTexts) { }
         protected virtual void DoInTextSizeTabGroupUI(UIHelperExtension groupTexts) { }
         protected virtual void DoInTextAlignmentTabGroupUI(UIHelperExtension groupTexts) { }
         protected virtual void DoInTextEffectsTabGroupUI(UIHelperExtension groupTexts) { }
-        protected abstract void PostAwake();
-
-        protected abstract string GetLocaleNameForContentTypes();
+        protected virtual void OnPasteText() { }
 
         protected string[] GetTextTypeOptions() => GetAvailableTextTypes().Select(x => Locale.Get(GetLocaleNameForContentTypes(), x.ToString())).ToArray();
 
@@ -133,7 +139,7 @@ namespace Klyte.DynamicTextProps.UI
                                   out UIButton m_deleteButtonText, DoDeleteText,
                                   (x) =>
                                   {
-                                      if (!isTextEditionAvailable() || CurrentTabText < 0)
+                                      if (!IsTextEditionAvailable() || CurrentTabText < 0)
                                       {
                                           return;
                                       }
@@ -153,7 +159,7 @@ namespace Klyte.DynamicTextProps.UI
 
             m_dropdownTextContent.eventSelectedIndexChanged += (e, idx) =>
             {
-                m_customText.GetComponentInParent<UIPanel>().isVisible = BoardGeneratorBuildings.AVAILABLE_TEXT_TYPES[idx] == TextType.Fixed;
+                m_customText.GetComponentInParent<UIPanel>().isVisible = GetAvailableTextTypes()[idx] == TextType.Fixed;
                 OnDropdownTextTypeSelectionChanged(idx);
             };
             DoInTextCommonTabGroupUI(groupTexts);
@@ -237,14 +243,12 @@ namespace Klyte.DynamicTextProps.UI
             SetIcon(actionButton, CommonSpriteNames.Load, Color.white);
             actionButton.eventClick += (x, t) =>
             {
-                if (isTextEditionAvailable())
+                DESC groupInfo = BasicLib<LIB, DESC>.Instance.Get(loadDD.selectedValue);
+                if (groupInfo != null)
                 {
-                    DESC groupInfo = BasicLib<LIB, DESC>.Instance.Get(loadDD.selectedValue);
-                    if (groupInfo != null)
-                    {
-                        onLoad(groupInfo);
-                    }
+                    onLoad(groupInfo);
                 }
+
             };
             KlyteMonoUtils.CreateUIElement(out actionButton, parent.transform, "DelBtn");
             actionButton = ConfigureActionButton(parent);
@@ -252,15 +256,13 @@ namespace Klyte.DynamicTextProps.UI
             SetIcon(actionButton, CommonSpriteNames.RemoveIcon, Color.white);
             actionButton.eventClick += (x, t) =>
             {
-                if (isTextEditionAvailable())
+                DESC groupInfo = BasicLib<LIB, DESC>.Instance.Get(loadDD.selectedValue);
+                if (groupInfo != null)
                 {
-                    DESC groupInfo = BasicLib<LIB, DESC>.Instance.Get(loadDD.selectedValue);
-                    if (groupInfo != null)
-                    {
-                        BasicLib<LIB, DESC>.Instance.Remove(loadDD.selectedValue);
-                        loadDD.items = BasicLib<LIB, DESC>.Instance.List().ToArray();
-                    }
+                    BasicLib<LIB, DESC>.Instance.Remove(loadDD.selectedValue);
+                    loadDD.items = BasicLib<LIB, DESC>.Instance.List().ToArray();
                 }
+
             };
 
             AddTextField(Locale.Get("K45_DTP_SAVE_TO_LIB"), out UITextField saveTxt, groupLibPropGroup, (x) => { });
@@ -270,7 +272,7 @@ namespace Klyte.DynamicTextProps.UI
             SetIcon(actionButton, CommonSpriteNames.Save, Color.white);
             actionButton.eventClick += (x, t) =>
             {
-                if (isTextEditionAvailable() && !saveTxt.text.IsNullOrWhiteSpace())
+                if (!saveTxt.text.IsNullOrWhiteSpace())
                 {
                     BasicLib<LIB, DESC>.Instance.Add(saveTxt.text, getContentToSave());
                     loadDD.items = BasicLib<LIB, DESC>.Instance.List().ToArray();
@@ -371,13 +373,10 @@ namespace Klyte.DynamicTextProps.UI
         #endregion
         #region Text clipboard actions 
 
-        protected abstract bool isTextEditionAvailable();
-
-        protected abstract BTD[] CurrentSelectedDescriptorArray { get; set; }
 
         protected void DoCopyText()
         {
-            if (isTextEditionAvailable() && CurrentTabText >= 0)
+            if (IsTextEditionAvailable() && CurrentTabText >= 0)
             {
                 m_clipboardText = XmlUtils.DefaultXmlSerialize(CurrentSelectedDescriptorArray[CurrentTabText]);
                 m_pasteButtonText.isVisible = true;
@@ -386,18 +385,17 @@ namespace Klyte.DynamicTextProps.UI
 
         protected void DoPasteText()
         {
-            if (isTextEditionAvailable() && CurrentTabText >= 0 && m_clipboardText != null)
+            if (IsTextEditionAvailable() && CurrentTabText >= 0 && m_clipboardText != null)
             {
                 CurrentSelectedDescriptorArray[CurrentTabText] = XmlUtils.DefaultXmlDeserialize<BTD>(m_clipboardText);
                 OnPasteText();
                 ReloadTabInfoText();
             }
         }
-        protected virtual void OnPasteText() { }
 
         protected void DoDeleteText()
         {
-            if (isTextEditionAvailable() && CurrentTabText >= 0)
+            if (IsTextEditionAvailable() && CurrentTabText >= 0)
             {
                 var tempList = CurrentSelectedDescriptorArray.ToList();
                 tempList.RemoveAt(CurrentTabText);
@@ -457,7 +455,7 @@ namespace Klyte.DynamicTextProps.UI
 
         protected void SafeActionInTextBoard(Action<BTD> toDo)
         {
-            if (isTextEditionAvailable() && !m_isLoading)
+            if (IsTextEditionAvailable() && !m_isLoading)
             {
                 EnsureTabQuantityTexts(CurrentTabText);
                 BTD descriptor = CurrentSelectedDescriptorArray[CurrentTabText];
@@ -478,7 +476,7 @@ namespace Klyte.DynamicTextProps.UI
                 {
                     ((UIButton) m_pseudoTabstripTexts.tabs[i]).text = "+";
                 }
-                else if (isTextEditionAvailable() && i < (CurrentSelectedDescriptorArray?.Length ?? 0))
+                else if (IsTextEditionAvailable() && i < (CurrentSelectedDescriptorArray?.Length ?? 0))
                 {
                     ((UIButton) m_pseudoTabstripTexts.tabs[i]).text = (CurrentSelectedDescriptorArray?.ElementAtOrDefault(i)?.SaveName).IsNullOrWhiteSpace() ? $"T{i + 1}" : (CurrentSelectedDescriptorArray[i]?.SaveName);
                 }
@@ -495,8 +493,6 @@ namespace Klyte.DynamicTextProps.UI
             ReloadTabInfoText();
 
         }
-
-        protected abstract void ReloadTabInfoText();
 
         protected void LoadTabTextInfo(BTD descriptor)
         {
@@ -529,7 +525,6 @@ namespace Klyte.DynamicTextProps.UI
             }
 
         }
-        protected abstract void AfterLoadingTabTextInfo(BTD descriptor);
 
         protected void SetTextOwnNameContent(int idx) => SafeActionInTextBoard(descriptor => descriptor.m_textType = GetAvailableTextTypes()[idx]);
         protected void SetTextCustom(string txt) => SafeActionInTextBoard(descriptor =>
@@ -537,8 +532,6 @@ namespace Klyte.DynamicTextProps.UI
             descriptor.m_fixedText = txt?.Replace("\\n", "\n");
             OnChangeCustomText(descriptor);
         });
-        protected virtual void OnChangeCustomText(BTD descriptor) { }
-        protected abstract TextType[] GetAvailableTextTypes();
 
     }
 }

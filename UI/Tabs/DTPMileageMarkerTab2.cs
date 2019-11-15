@@ -128,17 +128,13 @@ namespace Klyte.DynamicTextProps.UI
             ReloadGroupLib();
         }
 
-        protected override void AfterLoadingTabTextInfo(BoardTextDescriptorMileageMarkerXml descriptor)
-        {
-
-            m_useContrastColorTextCheckbox.isChecked = descriptor.m_useContrastColor;
-        }
+        protected override void AfterLoadingTabTextInfo(BoardTextDescriptorMileageMarkerXml descriptor) => m_useContrastColorTextCheckbox.isChecked = descriptor?.m_useContrastColor ?? false;
 
         protected override void OnTextTabStripChanged() => OnChangeTabTexts(BoardGeneratorHighwayMileage.LoadedMileageMarkerConfig.m_textDescriptors?.Length ?? 0);
         protected override string GetLocaleNameForContentTypes() => "K45_DTP_OWN_NAME_CONTENT_MM";
-        protected override void OnDropdownTextTypeSelectionChanged(int idx) => m_customText.parent.isVisible = AVAILABLE_TEXT_TYPES[idx] == TextType.Fixed;
+        protected override void OnDropdownTextTypeSelectionChanged(int idx) { }
         protected override void OnLoadTextLibItem() => ReloadTabInfoText();
-        protected override bool isTextEditionAvailable() => true;
+        protected override bool IsTextEditionAvailable() => true;
         protected override void ReloadTabInfo() { }
 
         protected override void OnChangeCustomText(BoardTextDescriptorMileageMarkerXml descriptor) => descriptor.GeneratedFixedTextRenderInfo = null;

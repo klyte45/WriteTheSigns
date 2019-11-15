@@ -8,7 +8,7 @@ using static Klyte.DynamicTextProps.Overrides.BoardGeneratorRoadNodes;
 namespace Klyte.DynamicTextProps.Overrides
 {
     [XmlRoot("streetSignDescriptor")]
-    public class BoardDescriptorStreetSignXml : BoardDescriptorParentXml<BoardDescriptorStreetSignXml, BoardTextDescriptorSteetSignXml>, ILibable
+    public class BoardDescriptorStreetSignXml : BoardDescriptorParentXml<BoardDescriptorStreetSignXml, BoardTextDescriptorSteetSignXml>, ILibable, IFontConfigContainer, IPropParamsContainer
     {
         [XmlAttribute("fontName")]
         public string FontName { get; set; }
@@ -27,6 +27,8 @@ namespace Klyte.DynamicTextProps.Overrides
 
         [XmlAttribute("color")]
         public string PropColorStr { get => m_cachedColor == default ? null : ColorExtensions.ToRGB(PropColor); set => m_cachedColor = value.IsNullOrWhiteSpace() ? default : (Color) ColorExtensions.FromRGB(value); }
+        [XmlIgnore]
+        public string PropName { get => m_propName; set => m_propName = value; }
     }
 
 

@@ -56,7 +56,7 @@ namespace Klyte.DynamicTextProps.UI
         private string m_clipboard;
         private string m_clipboardGroup;
 
-        protected override bool isTextEditionAvailable() => m_currentSelectedSegment > 0 && CurrentTab >= 0;
+        protected override bool IsTextEditionAvailable() => m_currentSelectedSegment > 0 && CurrentTab >= 0;
         #region Awake
         protected override string GetFontLabelString() => Locale.Get("K45_DTP_FONT_PLACED_PROPS");
 
@@ -86,6 +86,7 @@ namespace Klyte.DynamicTextProps.UI
 
                     BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment] = XmlUtils.DefaultXmlDeserialize<BoardBunchContainerHighwaySignXml>(XmlUtils.DefaultXmlSerialize(x));
                     ReloadSegment();
+                    OnChangeTab(-1);
                 },
                 () => BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment]);
 
@@ -137,7 +138,8 @@ namespace Klyte.DynamicTextProps.UI
                                         }
 
                                         BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[CurrentTab].descriptor = XmlUtils.DefaultXmlDeserialize<BoardDescriptorHigwaySignXml>(XmlUtils.DefaultXmlSerialize(x));
-                                        ReloadSegment();
+                                        BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].cached = false;
+                                        ReloadTabInfo();
                                     },
                             () => BoardGeneratorHighwaySigns.m_boardsContainers?.ElementAtOrDefault(m_currentSelectedSegment)?.m_boardsData?.ElementAtOrDefault(CurrentTab)?.descriptor);
 
