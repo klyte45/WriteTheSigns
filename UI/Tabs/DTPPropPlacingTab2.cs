@@ -242,9 +242,9 @@ namespace Klyte.DynamicTextProps.UI
         #endregion
         protected override void SetPropModel(int idx)
         {
-            if (idx > 0)
+            if (idx >= 0)
             {
-                SafeActionInBoard(descriptor => descriptor.m_propName = BoardGeneratorHighwaySigns.Instance.LoadedProps[idx - 1]);
+                SafeActionInBoard(descriptor => descriptor.m_propName = idx > 0 ? BoardGeneratorHighwaySigns.Instance.LoadedProps[idx - 1] : null);
             }
         }
 
@@ -445,7 +445,7 @@ namespace Klyte.DynamicTextProps.UI
         }
         private void LoadTabInfo(BoardDescriptorHigwaySignXml descriptor)
         {
-            m_propsDropdown.selectedIndex = BoardGeneratorHighwaySigns.Instance.LoadedProps.IndexOf(descriptor?.m_propName);
+            m_propsDropdown.selectedIndex = BoardGeneratorHighwaySigns.Instance.LoadedProps.IndexOf(descriptor?.m_propName)+1;
             m_segmentPosition.value = descriptor?.m_segmentPosition ?? 0.5f;
             m_propItemName.text = descriptor?.SaveName ?? "";
             m_invertOrientation.isChecked = descriptor?.m_invertSign ?? false;
@@ -478,7 +478,7 @@ namespace Klyte.DynamicTextProps.UI
             }
         }
 
-        protected override string[] GetTextContentTypesAvailable() => BoardGeneratorHighwaySigns.AVAILABLE_TEXT_TYPES.Select(x => Locale.Get("K45_DTP_OWN_NAME_CONTENT_HS", x.ToString())).ToArray();
+        protected override string GetLocaleNameForContentTypes() => "K45_DTP_OWN_NAME_CONTENT_HS";
         protected override void OnDropdownTextTypeSelectionChanged(int idx) => m_overrideFontText.parent.isVisible = BoardGeneratorBuildings.AVAILABLE_TEXT_TYPES[idx] == TextType.Fixed;
         protected override void OnLoadTextLibItem() => ReloadSegment();
         protected override void ReloadTabInfoText()
@@ -495,7 +495,7 @@ namespace Klyte.DynamicTextProps.UI
             m_isLoading = false;
         }
 
-        protected override void SetTextOwnNameContent(int idx) => SafeActionInTextBoard(descriptor => descriptor.m_textType = BoardGeneratorHighwaySigns.AVAILABLE_TEXT_TYPES[idx]);
+        protected override TextType[] GetAvailableTextTypes() => AVAILABLE_TEXT_TYPES;
     }
 
 

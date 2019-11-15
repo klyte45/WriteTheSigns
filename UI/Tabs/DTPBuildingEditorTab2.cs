@@ -207,7 +207,7 @@ namespace Klyte.DynamicTextProps.UI
             ReloadTabInfo();
             OnChangeTabTexts(BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName].BoardDescriptors.ElementAtOrDefault(CurrentTab).m_textDescriptors.Length - 1);
         }
-        protected override string[] GetTextContentTypesAvailable() => BoardGeneratorBuildings.AVAILABLE_TEXT_TYPES.Select(x => Locale.Get("K45_DTP_OWN_NAME_CONTENT_BUILDING", x.ToString())).ToArray();
+        protected override string GetLocaleNameForContentTypes() => "K45_DTP_OWN_NAME_CONTENT_BUILDING";
         protected override void OnDropdownTextTypeSelectionChanged(int idx) => m_overrideFontText.parent.isVisible = BoardGeneratorBuildings.AVAILABLE_TEXT_TYPES[idx] == TextType.OwnName || BoardGeneratorBuildings.AVAILABLE_TEXT_TYPES[idx] == TextType.Fixed;
         protected override void OnLoadTextLibItem() => ReloadBuilding();
         protected override void DoInTextCommonTabGroupUI(UIHelperExtension groupTexts)
@@ -553,7 +553,7 @@ namespace Klyte.DynamicTextProps.UI
             }
         }
 
-        protected override void SetTextOwnNameContent(int idx) => SafeActionInTextBoard(descriptor => descriptor.m_textType = BoardGeneratorBuildings.AVAILABLE_TEXT_TYPES[idx]);
+        protected override TextType[] GetAvailableTextTypes() => AVAILABLE_TEXT_TYPES;
 
         #endregion
 

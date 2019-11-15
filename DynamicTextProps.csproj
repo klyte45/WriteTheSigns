@@ -135,6 +135,7 @@
     <Compile Include="UI\Images\CommonSpriteNames.cs" />
     <Compile Include="UI\Images\LineIconSpriteNames.cs" />
     <Compile Include="UI\Tabs\DTPBuildingEditorTab2.cs" />
+    <Compile Include="UI\Tabs\DTPMileageMarkerTab2.cs" />
     <Compile Include="UI\Tabs\DTPPropPlacingTab2.cs" />
     <Compile Include="UI\Tabs\DTPXmlEditorParentTab.cs" />
     <Compile Include="Utils\DTPLineUtils.cs" />
@@ -145,7 +146,6 @@
     <Compile Include="Xml\Containers\BoardBunchContainerBuilding.cs" />
     <Compile Include="Overrides\BoardGeneration\PathCrawler\MileagePlateDescriptor.cs" />
     <Compile Include="Overrides\BoardGeneration\PathCrawler\RoadIdentifier.cs" />
-    <Compile Include="UI\Tabs\DTPMileageMarkerTab.cs" />
     <Compile Include="Xml\BoardDescriptor\BoardDescriptorMileageMarkerXml.cs" />
     <Compile Include="Xml\BoardTextDescriptor\BoardTextDescriptorMileageMarkerXml.cs" />
     <Compile Include="Xml\BoardTextDescriptor\BoardTextDescriptorSteetSignXml.cs" />

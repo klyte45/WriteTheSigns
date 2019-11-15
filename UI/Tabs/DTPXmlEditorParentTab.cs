@@ -56,7 +56,7 @@ namespace Klyte.DynamicTextProps.UI
         protected UIDropDown m_loadPropGroup;
         protected UIDropDown m_loadTextDD;
 
-        private string m_clipboardText;
+        protected string m_clipboardText;
 
         protected int CurrentTabText
         {
@@ -68,7 +68,6 @@ namespace Klyte.DynamicTextProps.UI
 
         protected abstract string GetFontLabelString();
         protected abstract void OnTextTabStripChanged();
-        protected abstract string[] GetTextContentTypesAvailable();
         protected abstract void AwakePropEditor(out UIScrollablePanel scrollTabs, out UIHelperExtension referenceHelperTabs);
         protected abstract void OnDropdownTextTypeSelectionChanged(int idx);
         protected abstract void OnLoadTextLibItem();
@@ -77,7 +76,10 @@ namespace Klyte.DynamicTextProps.UI
         protected virtual void DoInTextAlignmentTabGroupUI(UIHelperExtension groupTexts) { }
         protected virtual void DoInTextEffectsTabGroupUI(UIHelperExtension groupTexts) { }
         protected abstract void PostAwake();
-        
+
+        protected abstract string GetLocaleNameForContentTypes();
+
+        protected string[] GetTextTypeOptions() => GetAvailableTextTypes().Select(x => Locale.Get(GetLocaleNameForContentTypes(), x.ToString())).ToArray();
 
         public void Awake()
         {
@@ -146,10 +148,9 @@ namespace Klyte.DynamicTextProps.UI
             AddTextField(Locale.Get("K45_DTP_TEXT_TAB_TITLE"), out m_textItemName, groupTexts, SetTextItemName);
             m_colorEditorText = groupTexts.AddColorPicker(Locale.Get("K45_DTP_TEXT_COLOR"), Color.white, SetTextColor);
             KlyteMonoUtils.LimitWidth(m_colorEditorText.parent.GetComponentInChildren<UILabel>(), groupTexts.Self.width / 2, true);
-            AddDropdown(Locale.Get("K45_DTP_TEXT_CONTENT"), out m_dropdownTextContent, groupTexts, GetTextContentTypesAvailable(), SetTextOwnNameContent);
+            AddDropdown(Locale.Get("K45_DTP_TEXT_CONTENT"), out m_dropdownTextContent, groupTexts, GetTextTypeOptions(), SetTextOwnNameContent);
             AddTextField(Locale.Get("K45_DTP_CUSTOM_TEXT"), out m_customText, groupTexts, SetTextCustom);
 
-            m_dropdownTextContent.selectedIndex = -1;
             m_dropdownTextContent.eventSelectedIndexChanged += (e, idx) =>
             {
                 m_customText.GetComponentInParent<UIPanel>().isVisible = BoardGeneratorBuildings.AVAILABLE_TEXT_TYPES[idx] == TextType.Fixed;
@@ -195,20 +196,38 @@ namespace Klyte.DynamicTextProps.UI
             ((UIPanel) subPanelActionsBar.Self).autoFitChildrenHorizontally = true;
             ((UIPanel) subPanelActionsBar.Self).autoFitChildrenVertically = true;
 
-            copyButton = ConfigureActionButton(subPanelActionsBar.Self);
-            copyButton.eventClick += (x, y) => actionCopy();
-            pasteButton = ConfigureActionButton(subPanelActionsBar.Self);
-            pasteButton.eventClick += (x, y) => actionPaste();
-            deleteButton = ConfigureActionButton(subPanelActionsBar.Self);
-            deleteButton.eventClick += (x, y) => actionDelete();
-
-            SetIcon(copyButton, CommonSpriteNames.Copy, Color.white);
-            SetIcon(pasteButton, CommonSpriteNames.Paste, Color.white);
-            SetIcon(deleteButton, CommonSpriteNames.RemoveIcon, Color.white);
-
-            deleteButton.color = Color.red;
-
-            pasteButton.isVisible = false;
+            if (actionCopy != null)
+            {
+                copyButton = ConfigureActionButton(subPanelActionsBar.Self);
+                copyButton.eventClick += (x, y) => actionCopy();
+                SetIcon(copyButton, CommonSpriteNames.Copy, Color.white);
+            }
+            else
+            {
+                copyButton = null;
+            }
+            if (actionPaste != null)
+            {
+                pasteButton = ConfigureActionButton(subPanelActionsBar.Self);
+                pasteButton.eventClick += (x, y) => actionPaste();
+                SetIcon(pasteButton, CommonSpriteNames.Paste, Color.white);
+                pasteButton.isVisible = false;
+            }
+            else
+            {
+                pasteButton = null;
+            }
+            if (actionDelete != null)
+            {
+                deleteButton = ConfigureActionButton(subPanelActionsBar.Self);
+                deleteButton.eventClick += (x, y) => actionDelete();
+                SetIcon(deleteButton, CommonSpriteNames.RemoveIcon, Color.white);
+                deleteButton.color = Color.red;
+            }
+            else
+            {
+                deleteButton = null;
+            }
 
 
             AddDropdown(Locale.Get("K45_DTP_LOAD_FROM_LIB"), out UIDropDown loadDD, groupLibPropGroup, BasicLib<LIB, DESC>.Instance.List().ToArray(), (x) => { });
@@ -390,8 +409,13 @@ namespace Klyte.DynamicTextProps.UI
 
 
         #endregion
-        public void Start() => m_propsDropdown.items = new string[] { Locale.Get("K45_DTP_NONE_PROP_ITEM") }.Concat(BoardGeneratorHighwaySigns.Instance.LoadedProps.Select(x => x.EndsWith("_Data") ? Locale.Get("PROPS_TITLE", x) : x)).ToArray();
+        public void Start()
+        {
+            m_propsDropdown.items = new string[] { Locale.Get("K45_DTP_NONE_PROP_ITEM") }.Concat(BoardGeneratorHighwaySigns.Instance.LoadedProps.Select(x => x.EndsWith("_Data") ? Locale.Get("PROPS_TITLE", x) : x)).ToArray();
+            OnStart();
+        }
 
+        protected virtual void OnStart() { }
 
         protected abstract void SetPropModel(int idx);
         protected abstract void ReloadTabInfo();
@@ -478,7 +502,7 @@ namespace Klyte.DynamicTextProps.UI
         {
             m_textItemName.text = descriptor?.SaveName ?? "";
             TextType textType = descriptor?.m_textType ?? TextType.OwnName;
-            m_dropdownTextContent.selectedIndex = Array.IndexOf(BoardGeneratorBuildings.AVAILABLE_TEXT_TYPES, textType);
+            m_dropdownTextContent.selectedIndex = Array.IndexOf(GetAvailableTextTypes(), textType);
             m_customText.text = (descriptor?.m_fixedText?.Replace("\n", "\\n") ?? "");
             m_posVectorEditorText[0].text = (descriptor?.m_textRelativePosition.x ?? 0).ToString();
             m_posVectorEditorText[1].text = (descriptor?.m_textRelativePosition.y ?? 0).ToString();
@@ -507,10 +531,14 @@ namespace Klyte.DynamicTextProps.UI
         }
         protected abstract void AfterLoadingTabTextInfo(BTD descriptor);
 
-        protected abstract void SetTextOwnNameContent(int idx);
-        protected void SetTextCustom(string txt) => SafeActionInTextBoard(descriptor => descriptor.m_fixedText = txt?.Replace("\\n", "\n"));
-
-      
+        protected void SetTextOwnNameContent(int idx) => SafeActionInTextBoard(descriptor => descriptor.m_textType = GetAvailableTextTypes()[idx]);
+        protected void SetTextCustom(string txt) => SafeActionInTextBoard(descriptor =>
+        {
+            descriptor.m_fixedText = txt?.Replace("\\n", "\n");
+            OnChangeCustomText(descriptor);
+        });
+        protected virtual void OnChangeCustomText(BTD descriptor) { }
+        protected abstract TextType[] GetAvailableTextTypes();
 
     }
 }
