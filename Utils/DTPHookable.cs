@@ -1,7 +1,7 @@
 using ColossalFramework;
 using ColossalFramework.Math;
+using Klyte.Commons.UI.Sprites;
 using Klyte.Commons.Utils;
-using Klyte.DynamicTextProps.UI.Images;
 using System;
 using UnityEngine;
 using static ItemClass;
@@ -64,55 +64,55 @@ namespace Klyte.DynamicTextProps.Utils
              switch (TransportManager.instance.m_lines.m_buffer[lineID].Info.m_transportType)
              {
                  case TransportInfo.TransportType.Bus:
-                     lineIcon = LineIconSpriteNames.OvalIcon;
+                     lineIcon = LineIconSpriteNames.K45_OvalIcon;
                      break;
                  case TransportInfo.TransportType.Metro:
-                     lineIcon = LineIconSpriteNames.SquareIcon;
+                     lineIcon = LineIconSpriteNames.K45_SquareIcon;
                      break;
                  case TransportInfo.TransportType.Train:
-                     lineIcon = LineIconSpriteNames.CircleIcon;
+                     lineIcon = LineIconSpriteNames.K45_CircleIcon;
                      break;
                  case TransportInfo.TransportType.Ship:
                      if (TransportManager.instance.m_lines.m_buffer[lineID].Info.m_vehicleType == VehicleInfo.VehicleType.Ferry)
                      {
-                         lineIcon = LineIconSpriteNames.S08StarIcon;
+                         lineIcon = LineIconSpriteNames.K45_S08StarIcon;
                      }
                      else
                      {
-                         lineIcon = LineIconSpriteNames.DiamondIcon;
+                         lineIcon = LineIconSpriteNames.K45_DiamondIcon;
                      }
                      break;
                  case TransportInfo.TransportType.Airplane:
                      if (TransportManager.instance.m_lines.m_buffer[lineID].Info.m_vehicleType == VehicleInfo.VehicleType.Blimp)
                      {
-                         lineIcon = LineIconSpriteNames.ParachuteIcon;
+                         lineIcon = LineIconSpriteNames.K45_ParachuteIcon;
                      }
                      else
                      {
-                         lineIcon = LineIconSpriteNames.PentagonIcon;
+                         lineIcon = LineIconSpriteNames.K45_PentagonIcon;
                      }
                      break;
                  case TransportInfo.TransportType.Tram:
-                     lineIcon = LineIconSpriteNames.TrapezeIcon;
+                     lineIcon = LineIconSpriteNames.K45_TrapezeIcon;
                      break;
                  case TransportInfo.TransportType.EvacuationBus:
-                     lineIcon = LineIconSpriteNames.CrossIcon;
+                     lineIcon = LineIconSpriteNames.K45_CrossIcon;
                      break;
                  case TransportInfo.TransportType.Monorail:
-                     lineIcon = LineIconSpriteNames.RoundedSquareIcon;
+                     lineIcon = LineIconSpriteNames.K45_RoundedSquareIcon;
                      break;
                  case TransportInfo.TransportType.Pedestrian:
-                     lineIcon = LineIconSpriteNames.MountainIcon;
+                     lineIcon = LineIconSpriteNames.K45_MountainIcon;
                      break;
                  case TransportInfo.TransportType.TouristBus:
-                     lineIcon = LineIconSpriteNames.CameraIcon;
+                     lineIcon = LineIconSpriteNames.K45_CameraIcon;
                      break;
                  default:
-                     lineIcon = LineIconSpriteNames.S05StarIcon;
+                     lineIcon = LineIconSpriteNames.K45_S05StarIcon;
                      break;
              }
 
-             return Tuple.New(DTPResourceLoader.instance.GetDefaultSpriteNameFor(lineIcon), lineColor, lineID.ToString());
+             return Tuple.New(KlyteResourceLoader.GetDefaultSpriteNameFor(lineIcon), lineColor, lineID.ToString());
          };
 
         public static Func<ushort, ushort, string> GetStopName = (ushort stopId, ushort lineId) =>

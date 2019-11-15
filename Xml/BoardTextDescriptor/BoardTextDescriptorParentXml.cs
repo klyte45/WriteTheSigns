@@ -1,7 +1,6 @@
 ﻿using ColossalFramework;
 using ColossalFramework.UI;
 using Klyte.Commons.Utils;
-using Klyte.DynamicTextProps.Utils;
 using System;
 using System.IO;
 using System.Xml;
@@ -64,22 +63,7 @@ namespace Klyte.DynamicTextProps.Overrides
         [XmlAttribute("color")]
         public string ForceColor { get => m_defaultColor == Color.clear ? null : ColorExtensions.ToRGB(m_defaultColor); set => m_defaultColor = value.IsNullOrWhiteSpace() ? Color.clear : (Color) ColorExtensions.FromRGB(value); }
 
-        [XmlIgnore]
-        public Shader ShaderOverride
-        {
-            get {
-                if (m_shader == null)
-                {
-                    return null;
-                }
 
-                if (m_shaderOverride == null)
-                {
-                    m_shaderOverride = Shader.Find(m_shader) ?? DTPResourceLoader.instance.GetLoadedShader(m_shader);
-                }
-                return m_shaderOverride;
-            }
-        }
         [XmlIgnore]
         private Shader m_shaderOverride;
         [XmlIgnore]
@@ -98,11 +82,11 @@ namespace Klyte.DynamicTextProps.Overrides
 
         public string Serialize()
         {
-            XmlSerializer xmlser = new XmlSerializer(typeof(T));
-            XmlWriterSettings settings = new XmlWriterSettings { Indent = false };
-            using StringWriter textWriter = new StringWriter();
-            using XmlWriter xw = XmlWriter.Create(textWriter, settings);
-            XmlSerializerNamespaces ns = new XmlSerializerNamespaces();
+            var xmlser = new XmlSerializer(typeof(T));
+            var settings = new XmlWriterSettings { Indent = false };
+            using var textWriter = new StringWriter();
+            using var xw = XmlWriter.Create(textWriter, settings);
+            var ns = new XmlSerializerNamespaces();
             ns.Add("", "");
             xmlser.Serialize(xw, this, ns);
             return textWriter.ToString();
@@ -110,11 +94,11 @@ namespace Klyte.DynamicTextProps.Overrides
 
         public static T Deserialize(string s)
         {
-            XmlSerializer xmlser = new XmlSerializer(typeof(T));
+            var xmlser = new XmlSerializer(typeof(T));
             try
             {
                 using TextReader tr = new StringReader(s);
-                using XmlReader reader = XmlReader.Create(tr);
+                using var reader = XmlReader.Create(tr);
                 if (xmlser.CanDeserialize(reader))
                 {
                     return (T) xmlser.Deserialize(reader);

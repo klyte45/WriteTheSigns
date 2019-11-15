@@ -4,10 +4,10 @@ using ColossalFramework.UI;
 using ICities;
 using Klyte.Commons.Extensors;
 using Klyte.Commons.Interfaces;
+using Klyte.Commons.UI.SpriteNames;
 using Klyte.Commons.Utils;
 using Klyte.DynamicTextProps.Libraries;
 using Klyte.DynamicTextProps.Overrides;
-using Klyte.DynamicTextProps.UI.Images;
 using Klyte.DynamicTextProps.Utils;
 using System;
 using System.Linq;
@@ -100,7 +100,7 @@ namespace Klyte.DynamicTextProps.UI
             m_fontSelect.width -= 40;
             UIPanel parent = m_fontSelect.GetComponentInParent<UIPanel>();
             UIButton actionButton = ConfigureActionButton(parent);
-            SetIcon(actionButton, CommonSpriteNames.Reload, Color.white);
+            SetIcon(actionButton, CommonsSpriteNames.K45_Reload, Color.white);
             actionButton.eventClick += (x, t) => DTPUtils.ReloadFontsOf<BG>(m_fontSelect);
             DTPUtils.ReloadFontsOf<BG>(m_fontSelect);
 
@@ -206,7 +206,7 @@ namespace Klyte.DynamicTextProps.UI
             {
                 copyButton = ConfigureActionButton(subPanelActionsBar.Self);
                 copyButton.eventClick += (x, y) => actionCopy();
-                SetIcon(copyButton, CommonSpriteNames.Copy, Color.white);
+                SetIcon(copyButton, CommonsSpriteNames.K45_Copy, Color.white);
             }
             else
             {
@@ -216,7 +216,7 @@ namespace Klyte.DynamicTextProps.UI
             {
                 pasteButton = ConfigureActionButton(subPanelActionsBar.Self);
                 pasteButton.eventClick += (x, y) => actionPaste();
-                SetIcon(pasteButton, CommonSpriteNames.Paste, Color.white);
+                SetIcon(pasteButton, CommonsSpriteNames.K45_Paste, Color.white);
                 pasteButton.isVisible = false;
             }
             else
@@ -227,7 +227,7 @@ namespace Klyte.DynamicTextProps.UI
             {
                 deleteButton = ConfigureActionButton(subPanelActionsBar.Self);
                 deleteButton.eventClick += (x, y) => actionDelete();
-                SetIcon(deleteButton, CommonSpriteNames.RemoveIcon, Color.white);
+                SetIcon(deleteButton, CommonsSpriteNames.K45_RemoveIcon, Color.white);
                 deleteButton.color = Color.red;
             }
             else
@@ -240,7 +240,7 @@ namespace Klyte.DynamicTextProps.UI
             loadDD.width -= 80;
             UIPanel parent = loadDD.GetComponentInParent<UIPanel>();
             UIButton actionButton = ConfigureActionButton(parent);
-            SetIcon(actionButton, CommonSpriteNames.Load, Color.white);
+            SetIcon(actionButton, CommonsSpriteNames.K45_Load, Color.white);
             actionButton.eventClick += (x, t) =>
             {
                 DESC groupInfo = BasicLib<LIB, DESC>.Instance.Get(loadDD.selectedValue);
@@ -253,7 +253,7 @@ namespace Klyte.DynamicTextProps.UI
             KlyteMonoUtils.CreateUIElement(out actionButton, parent.transform, "DelBtn");
             actionButton = ConfigureActionButton(parent);
             actionButton.color = Color.red;
-            SetIcon(actionButton, CommonSpriteNames.RemoveIcon, Color.white);
+            SetIcon(actionButton, CommonsSpriteNames.K45_RemoveIcon, Color.white);
             actionButton.eventClick += (x, t) =>
             {
                 DESC groupInfo = BasicLib<LIB, DESC>.Instance.Get(loadDD.selectedValue);
@@ -269,7 +269,7 @@ namespace Klyte.DynamicTextProps.UI
             saveTxt.width -= 40;
             parent = saveTxt.GetComponentInParent<UIPanel>();
             actionButton = ConfigureActionButton(parent);
-            SetIcon(actionButton, CommonSpriteNames.Save, Color.white);
+            SetIcon(actionButton, CommonsSpriteNames.K45_Save, Color.white);
             actionButton.eventClick += (x, t) =>
             {
                 if (!saveTxt.text.IsNullOrWhiteSpace())
@@ -285,13 +285,13 @@ namespace Klyte.DynamicTextProps.UI
 
 
         #region UI Utils
-        protected static void SetIcon(UIButton copyButton, CommonSpriteNames spriteName, Color color)
+        protected static void SetIcon(UIButton copyButton, CommonsSpriteNames spriteName, Color color)
         {
             UISprite icon = copyButton.AddUIComponent<UISprite>();
             icon.relativePosition = new Vector3(2, 2);
             icon.width = 36;
             icon.height = 36;
-            icon.spriteName = DTPResourceLoader.instance.GetDefaultSpriteNameFor(spriteName);
+            icon.spriteName = KlyteResourceLoader.GetDefaultSpriteNameFor(spriteName);
             icon.color = color;
         }
 

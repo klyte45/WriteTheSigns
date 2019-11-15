@@ -303,7 +303,7 @@ namespace Klyte.DynamicTextProps.Overrides
 
             Matrix4x4 matrix = propMatrix * Matrix4x4.TRS(
                 targetRelativePosition,
-                Quaternion.AngleAxis(textDescriptor.m_textRelativeRotation.x, Vector3.left) * Quaternion.AngleAxis(textDescriptor.m_textRelativeRotation.y , Vector3.down) * Quaternion.AngleAxis(textDescriptor.m_textRelativeRotation.z, Vector3.back),
+                Quaternion.AngleAxis(textDescriptor.m_textRelativeRotation.x, Vector3.left) * Quaternion.AngleAxis(textDescriptor.m_textRelativeRotation.y, Vector3.down) * Quaternion.AngleAxis(textDescriptor.m_textRelativeRotation.z, Vector3.back),
                 new Vector3(defaultMultiplierX * overflowScaleX / descriptor.ScaleX, defaultMultiplierY * overflowScaleY / descriptor.PropScale.y, 1));
 
             Color colorToSet = Color.white;
@@ -324,7 +324,7 @@ namespace Klyte.DynamicTextProps.Overrides
 
 
             materialPropertyBlock.SetColor(m_shaderPropEmissive, Color.white * (SimulationManager.instance.m_isNightTime ? textDescriptor.m_nightEmissiveMultiplier : textDescriptor.m_dayEmissiveMultiplier));
-            renderInfo.m_generatedMaterial.shader = textDescriptor.ShaderOverride ?? TextShader;
+            renderInfo.m_generatedMaterial.shader = TextShader;
             Graphics.DrawMesh(renderInfo.m_mesh, matrix, renderInfo.m_generatedMaterial, A_layer, cameraInfo.m_camera, 0, materialPropertyBlock, A_castShadows, A_receiveShadows, A_useLightProbes);
 
         }
@@ -376,7 +376,7 @@ namespace Klyte.DynamicTextProps.Overrides
                 PoolList<Vector2> uvs = uirenderData.uvs;
                 PoolList<int> triangles = uirenderData.triangles;
 
-                Texture2D tex = TextureRenderUtils.RenderTextToTexture((UIDynamicFont) (overrideFont ?? DrawFont), text.IsNullOrWhiteSpace() ? " " : text, Color.white, out Vector2 realSize);
+                Texture2D tex = TextureRenderUtils.RenderTokenizedText((UIDynamicFont) (overrideFont ?? DrawFont), 2, text.IsNullOrWhiteSpace() ? " " : text, Color.white, out Vector2 realSize);
 
                 var options = new RenderOptions
                 {
@@ -415,16 +415,17 @@ namespace Klyte.DynamicTextProps.Overrides
                 {
                     result.m_generatedMaterial = new Material(Shader.Find("Custom/Buildings/Building/NoBase"))
                     {
-                        mainTexture = mainTex
+                        mainTexture = tex
                     };
                 }
                 else
                 {
-                    result.m_generatedMaterial.mainTexture = mainTex;
+                    result.m_generatedMaterial.mainTexture = tex;
                 }
                 //LogUtils.DoErrorLog($"TEX SIZE= {tex.width},{tex.height} text = {text}");
+                result.m_generatedMaterial.SetTexture("_MainTex", tex);
                 var aciTex = new Texture2D(tex.width, tex.height);
-                aciTex.SetPixels(tex.GetPixels().Select(x => new Color(1 - x.r, 0, 0, 1)).ToArray());
+                aciTex.SetPixels(tex.GetPixels().Select(x => new Color(1 - x.a, 0, 0, 1)).ToArray());
                 aciTex.Apply();
                 result.m_generatedMaterial.SetTexture("_ACIMap", aciTex);
                 var xysTex = new Texture2D(tex.width, tex.height);

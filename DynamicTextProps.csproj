@@ -7,7 +7,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{BE788EF8-D9ED-4409-826B-8C859CC18C88}</ProjectGuid>
     <OutputType>Library</OutputType>
-    <RootNamespace>Klyte.DynamicTextProps</RootNamespace>
+    <RootNamespace>Klyte</RootNamespace>
     <AssemblyName>KlyteDynamicTextProps</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <TargetFrameworkProfile />
@@ -84,7 +84,7 @@
     <Compile Include="commons\Interfaces\IPropColorContainer.cs" />
     <Compile Include="commons\Interfaces\ITimeable.cs" />
     <Compile Include="commons\Redirectors\UIDynamicFontRendererRedirector.cs" />
-    <Compile Include="commons\UI\Images\SpritesNames.cs" />
+    <Compile Include="commons\UI\SpriteNames\CommonsSpriteNames.cs" />
     <Compile Include="commons\Utils\TextureAtlasUtils.cs" />
     <Compile Include="commons\Tools\BasicBuildingTool.cs" />
     <Compile Include="commons\Tools\BasicNetTool.cs" />
@@ -94,20 +94,19 @@
     <Compile Include="commons\UI\TLMWorkersChartPanel.cs" />
     <Compile Include="commons\UI\UIRadialChartExtended.cs" />
     <Compile Include="commons\Utils\BuildingUtils.cs" />
-    <Compile Include="commons\Utils\CommonResourceLoader.cs" />
     <Compile Include="commons\Utils\DistrictUtils.cs" />
     <Compile Include="commons\Utils\FileUtils.cs" />
     <Compile Include="commons\Utils\GeneralUtils.cs" />
     <Compile Include="commons\Utils\KlyteMathUtils.cs" />
     <Compile Include="commons\Utils\KlyteMonoUtils.cs" />
-    <Compile Include="commons\Utils\RenderUtils.cs" />
+    <Compile Include="commons\Utils\TextureRenderUtils.cs" />
     <Compile Include="commons\Utils\LogUtils.cs" />
     <Compile Include="commons\Utils\MapUtils.cs" />
     <Compile Include="commons\Utils\NumberingUtils.cs" />
     <Compile Include="commons\Utils\PastelConfig.cs" />
     <Compile Include="commons\Utils\RandomPastelColorGenerator.cs" />
     <Compile Include="commons\Utils\ReflectionUtils.cs" />
-    <Compile Include="commons\Utils\ResourceLoader.cs" />
+    <Compile Include="commons\Utils\KlyteResourceLoader.cs" />
     <Compile Include="commons\Utils\RoadSearchUtils.cs" />
     <Compile Include="commons\Utils\SegmentUtils.cs" />
     <Compile Include="commons\Utils\SerializationUtils.cs" />
@@ -134,8 +133,7 @@
     <Compile Include="Overrides\BoardGeneration\BasicRenderInformation.cs" />
     <Compile Include="Overrides\BuildingManagerOverrides.cs" />
     <Compile Include="Tools\BuildingTool.cs" />
-    <Compile Include="UI\Images\CommonSpriteNames.cs" />
-    <Compile Include="UI\Images\LineIconSpriteNames.cs" />
+    <Compile Include="commons\UI\SpriteNames\LineIconSpriteNames.cs" />
     <Compile Include="UI\Tabs\DTPBuildingEditorTab2.cs" />
     <Compile Include="UI\Tabs\DTPMileageMarkerTab3.cs" />
     <Compile Include="UI\Tabs\DTPPropPlacingTab2.cs" />
@@ -179,7 +177,6 @@
     <Compile Include="Xml\Enums\TextType.cs" />
     <Compile Include="Tools\RoadSegmentTool.cs" />
     <Compile Include="UI\DTPPanel.cs" />
-    <Compile Include="Utils\DTPResourceLoader.cs" />
     <Compile Include="Utils\DTPHookable.cs" />
     <Compile Include="Utils\DTPUtils.cs" />
   </ItemGroup>
@@ -279,15 +276,56 @@
     <EmbeddedResource Include="UI\i18n\en.properties" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="UI\Images\sprites.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="UI\Images\lineFormats.png" />
-    <EmbeddedResource Include="commons\UI\Images\sprites.png" />
+    <EmbeddedResource Include="UI\Images\%25K45_KDTPIcon.png" />
+    <EmbeddedResource Include="commons\UI\Images\%25K45_24hLineIcon.png" />
+    <EmbeddedResource Include="commons\UI\Images\%25K45_AutoColorIcon.png" />
+    <EmbeddedResource Include="commons\UI\Images\%25K45_AutoNameIcon.png" />
+    <EmbeddedResource Include="commons\UI\Images\%25K45_Copy.png" />
+    <EmbeddedResource Include="commons\UI\Images\%25K45_FontIcon.png" />
+    <EmbeddedResource Include="commons\UI\Images\%25K45_K45Button.png" />
+    <EmbeddedResource Include="commons\UI\Images\%25K45_K45ButtonDisabled.png" />
+    <EmbeddedResource Include="commons\UI\Images\%25K45_K45ButtonFocused.png" />
+    <EmbeddedResource Include="commons\UI\Images\%25K45_K45ButtonHovered.png" />
+    <EmbeddedResource Include="commons\UI\Images\%25K45_Load.png" />
+    <EmbeddedResource Include="commons\UI\Images\%25K45_Paste.png" />
+    <EmbeddedResource Include="commons\UI\Images\%25K45_PerHourIcon.png" />
+    <EmbeddedResource Include="commons\UI\Images\%25K45_Reload.png" />
+    <EmbeddedResource Include="commons\UI\Images\%25K45_RemoveIcon.png" />
+    <EmbeddedResource Include="commons\UI\Images\%25K45_Save.png" />
+    <EmbeddedResource Include="commons\UI\Images\%25K45_CameraIcon.png" />
+    <EmbeddedResource Include="commons\UI\Images\%25K45_CircleIcon.png" />
+    <EmbeddedResource Include="commons\UI\Images\%25K45_ConeIcon.png" />
+    <EmbeddedResource Include="commons\UI\Images\%25K45_CrossIcon.png" />
+    <EmbeddedResource Include="commons\UI\Images\%25K45_DepotIcon.png" />
+    <EmbeddedResource Include="commons\UI\Images\%25K45_DiamondIcon.png" />
+    <EmbeddedResource Include="commons\UI\Images\%25K45_HeptagonIcon.png" />
+    <EmbeddedResource Include="commons\UI\Images\%25K45_HexagonIcon.png" />
+    <EmbeddedResource Include="commons\UI\Images\%25K45_MapIcon.png" />
+    <EmbeddedResource Include="commons\UI\Images\%25K45_MountainIcon.png" />
+    <EmbeddedResource Include="commons\UI\Images\%25K45_OctagonIcon.png" />
+    <EmbeddedResource Include="commons\UI\Images\%25K45_OvalIcon.png" />
+    <EmbeddedResource Include="commons\UI\Images\%25K45_ParachuteIcon.png" />
+    <EmbeddedResource Include="commons\UI\Images\%25K45_PentagonIcon.png" />
+    <EmbeddedResource Include="commons\UI\Images\%25K45_RoundedHexagonIcon.png" />
+    <EmbeddedResource Include="commons\UI\Images\%25K45_RoundedPentagonIcon.png" />
+    <EmbeddedResource Include="commons\UI\Images\%25K45_RoundedSquareIcon.png" />
+    <EmbeddedResource Include="commons\UI\Images\%25K45_RoundedTriangleIcon.png" />
+    <EmbeddedResource Include="commons\UI\Images\%25K45_S03StarIcon.png" />
+    <EmbeddedResource Include="commons\UI\Images\%25K45_S04StarIcon.png" />
+    <EmbeddedResource Include="commons\UI\Images\%25K45_S05StarIcon.png" />
+    <EmbeddedResource Include="commons\UI\Images\%25K45_S06StarIcon.png" />
+    <EmbeddedResource Include="commons\UI\Images\%25K45_S07StarIcon.png" />
+    <EmbeddedResource Include="commons\UI\Images\%25K45_S08StarIcon.png" />
+    <EmbeddedResource Include="commons\UI\Images\%25K45_S09StarIcon.png" />
+    <EmbeddedResource Include="commons\UI\Images\%25K45_S10StarIcon.png" />
+    <EmbeddedResource Include="commons\UI\Images\%25K45_SquareIcon.png" />
+    <EmbeddedResource Include="commons\UI\Images\%25K45_TrapezeIcon.png" />
+    <EmbeddedResource Include="commons\UI\Images\%25K45_TriangleIcon.png" />
+    <EmbeddedResource Include="commons\UI\Images\bordersDescriptor.txt" />
     <Content Include="commons\UI\Images\sprites.psd" />
     <Content Include="commons\UI\VersionNotes.txt" />
     <None Include="README.md" />
-    <None Include="UI\Images\lineFormats.psd" />
+    <None Include="commons\UI\Images\lineFormats.psd" />
     <None Include="UI\Images\sprites.psd" />
     <EmbeddedResource Include="UI\VersionNotes.txt" />
   </ItemGroup>

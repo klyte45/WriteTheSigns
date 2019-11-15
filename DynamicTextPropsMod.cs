@@ -4,9 +4,6 @@ using Klyte.Commons.Extensors;
 using Klyte.Commons.Interfaces;
 using Klyte.Commons.Utils;
 using Klyte.DynamicTextProps.UI;
-using Klyte.DynamicTextProps.UI.Images;
-using Klyte.DynamicTextProps.Utils;
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
@@ -15,19 +12,14 @@ using UnityEngine;
 [assembly: AssemblyVersion("1.99.999.*")]
 namespace Klyte.DynamicTextProps
 {
-    public class DynamicTextPropsMod : BasicIUserMod<DynamicTextPropsMod, DTPResourceLoader, DTPController, DTPPanel, CommonSpriteNames>
+    public class DynamicTextPropsMod : BasicIUserMod<DynamicTextPropsMod, DTPController, DTPPanel>
     {
         public DynamicTextPropsMod() => Construct();
 
         public override string SimpleName => "Klyte's Dynamic Text Props";
 
         public override string Description => "This mod allows creating dynamic text props in the city";
-
-        public override List<Tuple<string, Type, int, int>> SpriteSheets { get; } = new List<Tuple<string, Type, int, int>>()
-        {
-            Tuple.New( "UI.Images.sprites.png",typeof(CommonSpriteNames),64,64),
-            Tuple.New( "UI.Images.lineFormats.png",typeof(LineIconSpriteNames),64,64),
-        };
+        public override string IconName => "K45_DTPIcon";
 
         public override void DoErrorLog(string fmt, params object[] args) => LogUtils.DoErrorLog(fmt, args);
 
