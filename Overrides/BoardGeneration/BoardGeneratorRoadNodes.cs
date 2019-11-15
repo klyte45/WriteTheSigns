@@ -35,7 +35,6 @@ namespace Klyte.DynamicTextProps.Overrides
         {
             TextType.OwnName,
             TextType.Fixed,
-            TextType.StreetPrefix,
             TextType.StreetSuffix,
             TextType.StreetNameComplete,
             TextType.Custom1,
@@ -482,7 +481,7 @@ namespace Klyte.DynamicTextProps.Overrides
                         SaveName = "[A] Street Name Complete"
                     },
                     new BoardTextDescriptorSteetSignXml{
-                        m_textRelativePosition =new Vector3(0.47f,2.05f,-0.001f) ,
+                        m_textRelativePosition =new Vector3(0.47f,2.06f,-0.001f) ,
                         m_textRelativeRotation = Vector3.zero,
                         m_maxWidthMeters = 0.8f,
                         m_textScale = .2f,
@@ -527,7 +526,7 @@ namespace Klyte.DynamicTextProps.Overrides
                         SaveName = "[B] Street Name Complete"
                     },
                     new BoardTextDescriptorSteetSignXml{
-                        m_textRelativePosition =new Vector3(0.47f,2.05f,0.001f) ,
+                        m_textRelativePosition =new Vector3(0.47f,2.06f,0.001f) ,
                         m_textRelativeRotation = new Vector3(0,180,0),
                         m_maxWidthMeters = 0.8f,
                         m_textScale = .2f,

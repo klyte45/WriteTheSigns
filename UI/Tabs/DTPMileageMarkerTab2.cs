@@ -86,7 +86,7 @@ namespace Klyte.DynamicTextProps.UI
 
         protected override void OnStart()
         {
-            m_propsDropdown.selectedIndex = BoardGeneratorHighwaySigns.Instance.LoadedProps.IndexOf(BoardGeneratorHighwayMileage.LoadedMileageMarkerConfig.m_propName) + 1;
+            m_propsDropdown.selectedIndex = BoardGeneratorHighwaySigns.Instance.LoadedProps.IndexOf(BoardGeneratorHighwayMileage.LoadedMileageMarkerConfig.m_propName ?? "") + 1;
             BoardGeneratorHighwayMileage.Instance.ChangeFont(BoardGeneratorHighwayMileage.LoadedMileageMarkerConfig.FontName);
             DTPUtils.ReloadFontsOf<BoardGeneratorHighwayMileage>(m_fontSelect);
             OnChangePropColor(BoardGeneratorHighwayMileage.LoadedMileageMarkerConfig.PropColor);
@@ -136,7 +136,7 @@ namespace Klyte.DynamicTextProps.UI
 
         protected override void OnTextTabStripChanged() => OnChangeTabTexts(BoardGeneratorHighwayMileage.LoadedMileageMarkerConfig.m_textDescriptors?.Length ?? 0);
         protected override string GetLocaleNameForContentTypes() => "K45_DTP_OWN_NAME_CONTENT_MM";
-        protected override void OnDropdownTextTypeSelectionChanged(int idx) => m_customText.parent.isVisible = BoardGeneratorBuildings.AVAILABLE_TEXT_TYPES[idx] == TextType.Fixed;
+        protected override void OnDropdownTextTypeSelectionChanged(int idx) => m_customText.parent.isVisible = AVAILABLE_TEXT_TYPES[idx] == TextType.Fixed;
         protected override void OnLoadTextLibItem() => ReloadTabInfoText();
         protected override bool isTextEditionAvailable() => true;
         protected override void ReloadTabInfo() { }
