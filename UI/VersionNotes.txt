@@ -5,3 +5,5 @@
 	- Fixed stop names for use in stations
 	- Fixed next/prev station name show
 	- Fixed stop points mapping
+	- Added full street name option for props placed in segments
+	- Removed light shine effects at day period (may get back in the future)

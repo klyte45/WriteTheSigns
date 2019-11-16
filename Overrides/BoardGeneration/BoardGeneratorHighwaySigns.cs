@@ -29,7 +29,7 @@ namespace Klyte.DynamicTextProps.Overrides
         {
             TextType.OwnName,
             TextType.Fixed,
-            TextType.BuildingNumber
+            TextType.StreetNameComplete
         };
 
 
@@ -229,7 +229,7 @@ namespace Klyte.DynamicTextProps.Overrides
         #region Upadate Data
 
         private BasicRenderInformation m_fixedOwnname = null;
-
+        protected override BasicRenderInformation GetMeshFullStreetName(ushort idx, int boardIdx, int secIdx, ref BoardDescriptorHigwaySignXml descriptor) => GetFromCacheArray(idx, CacheArrayTypes.FullStreetName);
         protected override BasicRenderInformation GetOwnNameMesh(ushort buildingID, int boardIdx, int secIdx, ref BoardDescriptorHigwaySignXml descriptor)
         {
             if (m_fixedOwnname == null)
@@ -281,6 +281,10 @@ namespace Klyte.DynamicTextProps.Overrides
 
         private BasicRenderInformation GetTextRendered(int secIdx, BoardDescriptorHigwaySignXml descriptor, string txt)
         {
+            if (txt.IsNullOrWhiteSpace())
+            {
+                return null;
+            }
             if (!descriptor.m_textDescriptors[secIdx].m_overrideFont.IsNullOrWhiteSpace())
             {
 

@@ -48,8 +48,8 @@ namespace Klyte.DynamicTextProps.UI
         protected UITextField m_maxWidthText;
         protected UITextField m_scaleText;
         protected UICheckBox m_textResizeYOnOverflow;
-        protected UISlider m_textLuminosityDay;
-        protected UISlider m_textLuminosityNight;
+        //protected UISlider m_textLuminosityDay;
+        //protected UISlider m_textLuminosityNight;
 
         protected UIButton m_pasteButtonText;
 
@@ -159,8 +159,11 @@ namespace Klyte.DynamicTextProps.UI
 
             m_dropdownTextContent.eventSelectedIndexChanged += (e, idx) =>
             {
-                m_customText.GetComponentInParent<UIPanel>().isVisible = GetAvailableTextTypes()[idx] == TextType.Fixed;
-                OnDropdownTextTypeSelectionChanged(idx);
+                if (idx >= 0 && idx < GetAvailableTextTypes().Length)
+                {
+                    m_customText.GetComponentInParent<UIPanel>().isVisible = GetAvailableTextTypes()[idx] == TextType.Fixed;
+                    OnDropdownTextTypeSelectionChanged(idx);
+                }
             };
             DoInTextCommonTabGroupUI(groupTexts);
 
@@ -177,10 +180,10 @@ namespace Klyte.DynamicTextProps.UI
             AddDropdown(Locale.Get("K45_DTP_TEXT_ALIGN_VER"), out m_dropdownTextAlignVertical, groupTexts, Enum.GetNames(typeof(UIVerticalAlignment)).Select(x => Locale.Get("K45_VERT_ALIGNMENT", x)).ToArray(), SetTextAlignmentVertical);
             DoInTextAlignmentTabGroupUI(groupTexts);
 
-            groupTexts = m_pseudoTabTextsContainer.AddTogglableGroup(Locale.Get("K45_DTP_TEXT_EFFECTS"));
-            AddSlider(Locale.Get("K45_DTP_LUMINOSITY_DAY"), out m_textLuminosityDay, groupTexts, SetTextLumDay, 0, 10f, 0.25f);
-            AddSlider(Locale.Get("K45_DTP_LUMINOSITY_NIGHT"), out m_textLuminosityNight, groupTexts, SetTextLumNight, 0, 10f, 0.25f);
-            DoInTextEffectsTabGroupUI(groupTexts);
+            //groupTexts = m_pseudoTabTextsContainer.AddTogglableGroup(Locale.Get("K45_DTP_TEXT_EFFECTS"));
+            //AddSlider(Locale.Get("K45_DTP_LUMINOSITY_DAY"), out m_textLuminosityDay, groupTexts, SetTextLumDay, 0, 10f, 0.25f);
+            //AddSlider(Locale.Get("K45_DTP_LUMINOSITY_NIGHT"), out m_textLuminosityNight, groupTexts, SetTextLumNight, 0, 10f, 0.25f);
+            //DoInTextEffectsTabGroupUI(groupTexts);
 
             PostAwake();
         }
@@ -512,8 +515,8 @@ namespace Klyte.DynamicTextProps.UI
             m_maxWidthText.text = (descriptor?.m_maxWidthMeters ?? 0).ToString();
             m_scaleText.text = (descriptor?.m_textScale ?? 0).ToString();
             m_textResizeYOnOverflow.isChecked = (descriptor?.m_applyOverflowResizingOnY ?? false);
-            m_textLuminosityDay.value = (descriptor?.m_dayEmissiveMultiplier ?? 0);
-            m_textLuminosityNight.value = (descriptor?.m_nightEmissiveMultiplier ?? 0);
+            //m_textLuminosityDay.value = (descriptor?.m_dayEmissiveMultiplier ?? 0);
+            //m_textLuminosityNight.value = (descriptor?.m_nightEmissiveMultiplier ?? 0);
             AfterLoadingTabTextInfo(descriptor);
         }
         protected void ConfigureTabsShownText(int quantity)
@@ -526,7 +529,7 @@ namespace Klyte.DynamicTextProps.UI
 
         }
 
-        protected void SetTextOwnNameContent(int idx) => SafeActionInTextBoard(descriptor => descriptor.m_textType = GetAvailableTextTypes()[idx]);
+        protected void SetTextOwnNameContent(int idx) => SafeActionInTextBoard(descriptor => { if (idx >= 0 && idx < GetAvailableTextTypes().Length) { descriptor.m_textType = GetAvailableTextTypes()[idx]; } });
         protected void SetTextCustom(string txt) => SafeActionInTextBoard(descriptor =>
         {
             descriptor.m_fixedText = txt?.Replace("\\n", "\n");

@@ -35,7 +35,7 @@ namespace Klyte.DynamicTextProps.UI
 
         private UIButton m_pasteButton;
 
-        private UIDropDown m_overrideFontText;
+        //private UIDropDown m_overrideFontText;
 
         private UIDropDown m_loadPropItem;
 
@@ -172,11 +172,7 @@ namespace Klyte.DynamicTextProps.UI
             ReloadTabInfoText();
         }
 
-        protected override void DoInTextCommonTabGroupUI(UIHelperExtension groupTexts)
-        {
-            base.DoInTextCommonTabGroupUI(groupTexts);
-            AddDropdown(Locale.Get("K45_DTP_OVERRIDE_FONT"), out m_overrideFontText, groupTexts, new string[0], SetOverrideFont);
-        }
+        protected override void DoInTextCommonTabGroupUI(UIHelperExtension groupTexts) => base.DoInTextCommonTabGroupUI(groupTexts);//    AddDropdown(Locale.Get("K45_DTP_OVERRIDE_FONT"), out m_overrideFontText, groupTexts, new string[0], SetOverrideFont);
         protected override void PostAwake() => OnSegmentSet(0);
         #endregion
 
@@ -279,7 +275,7 @@ namespace Klyte.DynamicTextProps.UI
         {
             SafeActionInTextBoard(descriptor =>
             {
-                descriptor.m_overrideFont = idx > 0 ? m_overrideFontText.selectedValue : null;
+                //    descriptor.m_overrideFont = idx > 0 ? m_overrideFontText.selectedValue : null;
                 descriptor.GeneratedFixedTextRenderInfo.m_frameDrawTime = 0;
             });
         }
@@ -447,7 +443,7 @@ namespace Klyte.DynamicTextProps.UI
         }
         private void LoadTabInfo(BoardDescriptorHigwaySignXml descriptor)
         {
-            m_propsDropdown.selectedIndex = BoardGeneratorHighwaySigns.Instance.LoadedProps.IndexOf(descriptor?.m_propName)+1;
+            m_propsDropdown.selectedIndex = BoardGeneratorHighwaySigns.Instance.LoadedProps.IndexOf(descriptor?.m_propName) + 1;
             m_segmentPosition.value = descriptor?.m_segmentPosition ?? 0.5f;
             m_propItemName.text = descriptor?.SaveName ?? "";
             m_invertOrientation.isChecked = descriptor?.m_invertSign ?? false;
@@ -463,7 +459,7 @@ namespace Klyte.DynamicTextProps.UI
             m_colorEditor.selectedColor = descriptor?.m_color ?? Color.white;
         }
 
-        protected override void AfterLoadingTabTextInfo(BoardTextDescriptorHighwaySignsXml descriptor) => ReloadFontsOverride(m_overrideFontText, descriptor?.m_overrideFont);
+        protected override void AfterLoadingTabTextInfo(BoardTextDescriptorHighwaySignsXml descriptor) { }// => ReloadFontsOverride(m_overrideFontText, descriptor?.m_overrideFont);
 
         private void ReloadFontsOverride(UIDropDown target, string currentVal)
         {
@@ -481,7 +477,7 @@ namespace Klyte.DynamicTextProps.UI
         }
 
         protected override string GetLocaleNameForContentTypes() => "K45_DTP_OWN_NAME_CONTENT_HS";
-        protected override void OnDropdownTextTypeSelectionChanged(int idx) => m_overrideFontText.parent.isVisible = BoardGeneratorBuildings.AVAILABLE_TEXT_TYPES[idx] == TextType.Fixed;
+        protected override void OnDropdownTextTypeSelectionChanged(int idx) { }// => m_overrideFontText.parent.isVisible = BoardGeneratorBuildings.AVAILABLE_TEXT_TYPES[idx] == TextType.Fixed;
         protected override void OnLoadTextLibItem() => ReloadSegment();
         protected override void ReloadTabInfoText()
         {

@@ -20,7 +20,6 @@ namespace Klyte.DynamicTextProps.Overrides
         public bool[] m_updatedStreetPositions;
         public uint[] m_lastFrameUpdate;
 
-        public BasicRenderInformation[] m_cachedDistrictsNames;
         public BasicRenderInformation[] m_cachedNumber;
 
 
@@ -37,7 +36,7 @@ namespace Klyte.DynamicTextProps.Overrides
             TextType.Fixed,
             TextType.StreetSuffix,
             TextType.StreetNameComplete,
-            TextType.Custom1,
+            TextType.District,
             TextType.Custom2
         };
 
@@ -46,7 +45,6 @@ namespace Klyte.DynamicTextProps.Overrides
         {
             m_lastFrameUpdate = new uint[NetManager.MAX_NODE_COUNT];
             m_updatedStreetPositions = new bool[ObjArraySize];
-            m_cachedDistrictsNames = new BasicRenderInformation[DistrictManager.MAX_DISTRICT_COUNT];
             m_cachedNumber = new BasicRenderInformation[10];
 
             BuildSurfaceFont(out m_font, LoadedStreetSignDescriptor.FontName);
@@ -61,7 +59,7 @@ namespace Klyte.DynamicTextProps.Overrides
                 static void RegisterEvent(string eventName, Type adrEventsType, Action action) => adrEventsType.GetEvent(eventName)?.AddEventHandler(null, action);
                 RegisterEvent("EventZeroMarkerBuildingChange", adrEventsType, new Action(OnZeroMarkChanged));
                 RegisterEvent("EventRoadNamingChange", adrEventsType, new Action(OnZeroMarkChanged));
-                RegisterEvent("EventDistrictColorChanged", adrEventsType, new Action(OnZeroMarkChanged));
+                RegisterEvent("EventDistrictColorChanged", adrEventsType, new Action(OnDistrictChanged));
                 RegisterEvent("EventBuildingNameStrategyChanged", adrEventsType, new Action(OnZeroMarkChanged));
             }
 
@@ -85,9 +83,6 @@ namespace Klyte.DynamicTextProps.Overrides
             m_testTextInfo = null;
             m_cachedNumber = new BasicRenderInformation[10];
             m_updatedStreetPositions = new bool[ObjArraySize];
-            m_cachedDistrictsNames = new BasicRenderInformation[DistrictManager.MAX_DISTRICT_COUNT];
-            m_cachedStreetNameInformation_Full = new BasicRenderInformation[NetManager.MAX_SEGMENT_COUNT];
-            m_cachedStreetNameInformation_End = new BasicRenderInformation[NetManager.MAX_SEGMENT_COUNT];
         }
 
 
@@ -101,14 +96,11 @@ namespace Klyte.DynamicTextProps.Overrides
             LogUtils.DoLog("onNameSeedChanged");
             m_updatedStreetPositions[NetManager.instance.m_segments.m_buffer[segmentId].m_endNode] = false;
             m_updatedStreetPositions[NetManager.instance.m_segments.m_buffer[segmentId].m_startNode] = false;
-            m_cachedStreetNameInformation_Full[segmentId] = null;
-            m_cachedStreetNameInformation_End[segmentId] = null;
         }
 
         private void OnDistrictChanged()
         {
             LogUtils.DoLog("onDistrictChanged");
-            m_cachedDistrictsNames = new BasicRenderInformation[DistrictManager.MAX_DISTRICT_COUNT];
             m_updatedStreetPositions = new bool[NetManager.MAX_NODE_COUNT];
         }
         private void OnZeroMarkChanged()
@@ -125,7 +117,6 @@ namespace Klyte.DynamicTextProps.Overrides
         }
 
         private uint m_lastTickUpdate = 0;
-        private uint m_lastTickTextureGen = 0;
 
         public void AfterRenderInstanceImpl(RenderManager.CameraInfo cameraInfo, ushort nodeID, ref NetNode data)
         {
@@ -296,62 +287,14 @@ namespace Klyte.DynamicTextProps.Overrides
 
         }
 
-        private BasicRenderInformation[] m_cachedStreetNameInformation_Full = new BasicRenderInformation[NetManager.MAX_SEGMENT_COUNT];
-        private BasicRenderInformation[] m_cachedStreetNameInformation_End = new BasicRenderInformation[NetManager.MAX_SEGMENT_COUNT];
-
         #region Upadate Data
 
-        private BasicRenderInformation GetFromCacheArray(ushort segmentId, ref BasicRenderInformation[] cacheArray, int type)
-        {
-            if (m_lastTickTextureGen < SimulationManager.instance.m_currentTickIndex && (cacheArray[segmentId] == null || lastFontUpdateFrame > cacheArray[segmentId].m_frameDrawTime))
-            {
-                LogUtils.DoLog($"!nameUpdated segmentId {segmentId}");
-                switch (type)
-                {
-                    case 1:
-                        UpdateMeshStreetSuffix(segmentId, ref cacheArray[segmentId]);
-                        break;
-                    case 2:
-                        UpdateMeshFullNameStreet(segmentId, ref cacheArray[segmentId]);
-                        break;
-                }
-                m_lastTickTextureGen = SimulationManager.instance.m_currentTickIndex;
-            }
-            return cacheArray[segmentId];
 
-        }
 
-        protected override BasicRenderInformation GetMeshStreetSuffix(ushort idx, int boardIdx, int secIdx, ref BoardDescriptorStreetSignXml descriptor) => GetFromCacheArray((secIdx == 0 ? m_boardsContainers[idx].m_boardsData[boardIdx].m_segmentId1 : m_boardsContainers[idx].m_boardsData[boardIdx].m_segmentId2), ref m_cachedStreetNameInformation_End, 1);
-        protected override BasicRenderInformation GetMeshFullStreetName(ushort idx, int boardIdx, int secIdx, ref BoardDescriptorStreetSignXml descriptor) => GetFromCacheArray((secIdx == 0 ? m_boardsContainers[idx].m_boardsData[boardIdx].m_segmentId1 : m_boardsContainers[idx].m_boardsData[boardIdx].m_segmentId2), ref m_cachedStreetNameInformation_Full, 2);
+        protected override BasicRenderInformation GetMeshStreetSuffix(ushort idx, int boardIdx, int secIdx, ref BoardDescriptorStreetSignXml descriptor) => GetFromCacheArray((secIdx == 0 ? m_boardsContainers[idx].m_boardsData[boardIdx].m_segmentId1 : m_boardsContainers[idx].m_boardsData[boardIdx].m_segmentId2), CacheArrayTypes.SuffixStreetName);
+        protected override BasicRenderInformation GetMeshFullStreetName(ushort idx, int boardIdx, int secIdx, ref BoardDescriptorStreetSignXml descriptor) => GetFromCacheArray((secIdx == 0 ? m_boardsContainers[idx].m_boardsData[boardIdx].m_segmentId1 : m_boardsContainers[idx].m_boardsData[boardIdx].m_segmentId2), CacheArrayTypes.FullStreetName);
 
-        protected override BasicRenderInformation GetMeshCustom1(ushort idx, int boardIdx, int secIdx, ref BoardDescriptorStreetSignXml descriptor)
-        {
-            byte districtId;
-            if (secIdx == 0)
-            {
-                districtId = m_boardsContainers[idx].m_boardsData[boardIdx].m_districtId1;
-            }
-            else
-            {
-                districtId = m_boardsContainers[idx].m_boardsData[boardIdx].m_districtId2;
-            }
-            if (m_cachedDistrictsNames[districtId] == null)
-            {
-                LogUtils.DoLog($"!districtName {districtId}");
-                string name;
-                if (districtId == 0)
-                {
-                    name = SimulationManager.instance.m_metaData.m_CityName;
-                }
-                else
-                {
-                    name = DistrictManager.instance.GetDistrictName(districtId);
-                }
-                RefreshTextData(ref m_cachedDistrictsNames[districtId], name);
-            }
-            return m_cachedDistrictsNames[districtId];
-
-        }
+        protected override BasicRenderInformation GetMeshDistrict(ushort idx, int boardIdx, int secIdx, ref BoardDescriptorStreetSignXml descriptor) => GetFromCacheArray((secIdx == 0 ? m_boardsContainers[idx].m_boardsData[boardIdx].m_districtId1 : m_boardsContainers[idx].m_boardsData[boardIdx].m_districtId2), CacheArrayTypes.District);
         protected override BasicRenderInformation GetMeshCustom2(ushort idx, int boardIdx, int secIdx, ref BoardDescriptorStreetSignXml descriptor)
         {
             int distanceRef = (int) Mathf.Floor(m_boardsContainers[idx].m_boardsData[boardIdx].m_distanceRef / 1000);
@@ -486,7 +429,7 @@ namespace Klyte.DynamicTextProps.Overrides
                         m_maxWidthMeters = 0.8f,
                         m_textScale = .2f,
                         m_useContrastColor = true,
-                        m_textType = TextType.Custom1,// District
+                        m_textType = TextType.District,// District
                         m_verticalAlign =  UIVerticalAlignment.Middle,
                         SaveName = "[A] District"
                     },
@@ -531,7 +474,7 @@ namespace Klyte.DynamicTextProps.Overrides
                         m_maxWidthMeters = 0.8f,
                         m_textScale = .2f,
                         m_useContrastColor = true,
-                        m_textType = TextType.Custom1,// District
+                        m_textType = TextType.District,// District
                         m_verticalAlign =  UIVerticalAlignment.Middle,
                         SaveName = "[B] District"
                     },

@@ -63,9 +63,6 @@ namespace Klyte.DynamicTextProps.Overrides
         [XmlAttribute("color")]
         public string ForceColor { get => m_defaultColor == Color.clear ? null : ColorExtensions.ToRGB(m_defaultColor); set => m_defaultColor = value.IsNullOrWhiteSpace() ? Color.clear : (Color) ColorExtensions.FromRGB(value); }
 
-
-        [XmlIgnore]
-        private Shader m_shaderOverride;
         [XmlIgnore]
         private BasicRenderInformation m_generatedFixedTextRenderInfo;
         [XmlIgnore]

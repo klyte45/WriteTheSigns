@@ -7,6 +7,7 @@ using Klyte.Commons.Extensors;
 using Klyte.Commons.Redirectors;
 using Klyte.Commons.Utils;
 using Klyte.DynamicTextProps.Utils;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -52,7 +53,7 @@ namespace Klyte.DynamicTextProps.Overrides
         }
         protected virtual void OnChangeFont(string fontName) { }
 
-        public void Reset()
+        public virtual void Reset()
         {
             lastFontUpdateFrame = SimulationManager.instance.m_currentTickIndex;
 
@@ -77,7 +78,13 @@ namespace Klyte.DynamicTextProps.Overrides
     {
         public abstract int ObjArraySize { get; }
 
-
+        public sealed override void Reset()
+        {
+            base.Reset();
+            m_cachedStreetNameInformation_Full = new BRI[NetManager.MAX_SEGMENT_COUNT];
+            m_cachedStreetNameInformation_End = new BRI[NetManager.MAX_SEGMENT_COUNT];
+            m_cachedDistrictsNames = new BRI[DistrictManager.MAX_DISTRICT_COUNT];
+        }
 
 
         public static readonly int m_shaderPropColor = Shader.PropertyToID("_Color");
@@ -101,13 +108,42 @@ namespace Klyte.DynamicTextProps.Overrides
         {
             base.Awake();
             Initialize();
+
+            NetManagerOverrides.EventSegmentNameChanged += OnNameSeedChanged;
+            DistrictManagerOverrides.EventOnDistrictChanged += OnDistrictChanged;
+
+            var adrEventsType = Type.GetType("Klyte.Addresses.ModShared.AdrEvents, KlyteAddresses");
+            if (adrEventsType != null)
+            {
+                static void RegisterEvent(string eventName, Type adrEventsType, Action action) => adrEventsType.GetEvent(eventName)?.AddEventHandler(null, action);
+                RegisterEvent("EventRoadNamingChange", adrEventsType, new Action(OnNameSeedChanged));
+                RegisterEvent("EventDistrictColorChanged", adrEventsType, new Action(OnDistrictChanged));
+            }
+
             m_boardsContainers = new BBC[ObjArraySize];
 
             LogUtils.DoLog($"Loading Boards Generator {typeof(BG)}");
 
 
         }
+        private void OnNameSeedChanged()
+        {
+            m_cachedStreetNameInformation_Full = new BRI[NetManager.MAX_SEGMENT_COUNT];
+            m_cachedStreetNameInformation_End = new BRI[NetManager.MAX_SEGMENT_COUNT];
+        }
 
+        #region events
+        private void OnNameSeedChanged(ushort segmentId)
+        {
+            m_cachedStreetNameInformation_Full[segmentId] = null;
+            m_cachedStreetNameInformation_End[segmentId] = null;
+        }
+        private void OnDistrictChanged()
+        {
+            LogUtils.DoLog("onDistrictChanged");
+            m_cachedDistrictsNames = new BRI[DistrictManager.MAX_DISTRICT_COUNT];
+        }
+        #endregion
 
         protected Quad2 GetBounds(ref Building data)
         {
@@ -250,6 +286,9 @@ namespace Klyte.DynamicTextProps.Overrides
                 case TextType.BuildingNumber:
                     renderInfo = GetMeshCurrentNumber(refID, boardIdx, secIdx, ref descriptor);
                     break;
+                case TextType.District:
+                    renderInfo = GetMeshDistrict(refID, boardIdx, secIdx, ref descriptor);
+                    break;
                 case TextType.Custom1:
                     renderInfo = GetMeshCustom1(refID, boardIdx, secIdx, ref descriptor);
                     break;
@@ -260,7 +299,7 @@ namespace Klyte.DynamicTextProps.Overrides
                     renderInfo = GetMeshCustom3(refID, boardIdx, secIdx, ref descriptor);
                     break;
             }
-            if (renderInfo == null)
+            if (renderInfo?.m_mesh == null || renderInfo?.m_generatedMaterial == null)
             {
                 return;
             }
@@ -341,13 +380,73 @@ namespace Klyte.DynamicTextProps.Overrides
             result = DTPHookable.GetStreetSuffix(idx);
             RefreshTextData(ref bri, result);
         }
+        private BRI[] m_cachedStreetNameInformation_Full = new BRI[NetManager.MAX_SEGMENT_COUNT];
+        private BRI[] m_cachedStreetNameInformation_End = new BRI[NetManager.MAX_SEGMENT_COUNT];
+        private BRI[] m_cachedDistrictsNames = new BRI[DistrictManager.MAX_DISTRICT_COUNT];
+        private uint m_lastTickTextureGen = 0;
 
+        protected enum CacheArrayTypes
+        {
+            FullStreetName,
+            SuffixStreetName,
+            District
+        }
+
+
+        protected BRI GetFromCacheArray(ushort refId, CacheArrayTypes type)
+        {
+            switch (type)
+            {
+                case CacheArrayTypes.SuffixStreetName:
+                    return GetFromCacheArray(refId, type, ref m_cachedStreetNameInformation_End);
+                case CacheArrayTypes.FullStreetName:
+                    return GetFromCacheArray(refId, type, ref m_cachedStreetNameInformation_Full);
+                case CacheArrayTypes.District:
+                    return GetFromCacheArray(refId, type, ref m_cachedDistrictsNames);
+
+            }
+            return null;
+        }
+
+        private BRI GetFromCacheArray(ushort refId, CacheArrayTypes type, ref BRI[] cacheArray)
+        {
+            if (m_lastTickTextureGen < SimulationManager.instance.m_currentTickIndex && (cacheArray[refId] == null || lastFontUpdateFrame > cacheArray[refId].m_frameDrawTime))
+            {
+                LogUtils.DoLog($"!nameUpdated segmentId {refId}");
+                switch (type)
+                {
+                    case CacheArrayTypes.SuffixStreetName:
+                        UpdateMeshStreetSuffix(refId, ref cacheArray[refId]);
+                        break;
+                    case CacheArrayTypes.FullStreetName:
+                        UpdateMeshFullNameStreet(refId, ref cacheArray[refId]);
+                        break;
+                    case CacheArrayTypes.District:
+                        UpdateMeshDistrict(refId, ref cacheArray[refId]);
+                        break;
+                }
+                m_lastTickTextureGen = SimulationManager.instance.m_currentTickIndex;
+            }
+            return cacheArray[refId];
+        }
 
         protected void UpdateMeshFullNameStreet(ushort idx, ref BRI bri)
         {
-            //(ushort segmentID, ref string __result, ref List<ushort> usedQueue, bool defaultPrefix, bool removePrefix = false)
             string name = DTPHookable.GetStreetFullName(idx);
             LogUtils.DoLog($"!GenName {name} for {idx}");
+            RefreshTextData(ref bri, name);
+        }
+        protected void UpdateMeshDistrict(ushort districtId, ref BRI bri)
+        {
+            string name;
+            if (districtId == 0)
+            {
+                name = SimulationManager.instance.m_metaData.m_CityName;
+            }
+            else
+            {
+                name = DistrictManager.instance.GetDistrictName(districtId);
+            }
             RefreshTextData(ref bri, name);
         }
 
@@ -365,8 +464,12 @@ namespace Klyte.DynamicTextProps.Overrides
             {
                 result = new BRI();
             }
-
+            if (text.IsNullOrWhiteSpace())
+            {
+                return;
+            }
             UIFontManager.Invalidate(overrideFont ?? DrawFont);
+
             var uirenderData = UIRenderData.Obtain();
             try
             {
@@ -464,6 +567,7 @@ namespace Klyte.DynamicTextProps.Overrides
         protected virtual BRI GetMeshFullStreetName(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;
         protected virtual BRI GetMeshStreetSuffix(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;
         protected virtual BRI GetMeshStreetPrefix(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;
+        protected virtual BRI GetMeshDistrict(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;
         protected virtual BRI GetMeshCustom1(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;
         protected virtual BRI GetMeshCustom2(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;
         protected virtual BRI GetMeshCustom3(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;

@@ -8,6 +8,7 @@
         StreetSuffix,
         StreetNameComplete,
         BuildingNumber,
+        District,
         Custom1,
         Custom2,
         Custom3,

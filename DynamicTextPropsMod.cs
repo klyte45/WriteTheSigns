@@ -9,7 +9,7 @@ using System.IO;
 using System.Reflection;
 using UnityEngine;
 
-[assembly: AssemblyVersion("1.99.999.*")]
+[assembly: AssemblyVersion("2.0.0.0")]
 namespace Klyte.DynamicTextProps
 {
     public class DynamicTextPropsMod : BasicIUserMod<DynamicTextPropsMod, DTPController, DTPPanel>
@@ -19,7 +19,7 @@ namespace Klyte.DynamicTextProps
         public override string SimpleName => "Klyte's Dynamic Text Props";
 
         public override string Description => "This mod allows creating dynamic text props in the city";
-        public override string IconName => "K45_DTPIcon";
+        public override string IconName => "K45_KDTPIcon";
 
         public override void DoErrorLog(string fmt, params object[] args) => LogUtils.DoErrorLog(fmt, args);
 
@@ -63,7 +63,6 @@ namespace Klyte.DynamicTextProps
 
         public static readonly string FOLDER_NAME = FileUtils.BASE_FOLDER_PATH + "DynamicTextProps";
         internal static readonly string m_defaultFileNameXml = "DefaultBuildingsConfig";
-        private UILabel refBut;
         public const string DEFAULT_GAME_BUILDINGS_CONFIG_FOLDER = "BuildingsDefaultPlacing";
         public const string DEFAULT_GAME_VEHICLES_CONFIG_FOLDER = "VehiclesDefaultPlacing";
 
