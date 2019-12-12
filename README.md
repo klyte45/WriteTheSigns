@@ -1,4 +1,4 @@
-# Dynamic Text Props mod by Klyte45
+# Dynamic Text Props mod by Klyte45 (updated up to v2)
 
 This mod allows to create:
 
@@ -40,7 +40,7 @@ There's 3 configuration levels when creating layout:
 * The prop bunch, which contains a group of prop items and all their contents. (only for segment and buildings)
 
 ***WARNING***: Because of each type of layout have their own configuration, a text or prop item (or bunch) 
-are not compatible with the other types of layoyts!
+are not compatible with the other types of layouts!
 
 ### Configuration Saving
 
@@ -232,11 +232,51 @@ The reference in this case is the **Center of the segment that the kilometer/mil
 | useContrastColor												  |  `true` or `false`               | If `true`, use the contrast color (black or white) based on prop color. |
 | textType                                                        | \<depends on type\>               | Indicate the source of the text. See below for each type |
 | fixedText                                                       | string                            | The fixed text for use when `textType="Fixed"` | 
-| nightEmissiveMultiplier                                         | float                             | The text emission at night, simulating light effect. Defaults 0. |
-| dayEmissiveMultiplier                                           | float                             | The text emission at day, simulating light effect. Defaults 0. |
 | textAlign                                                       | `Left` or `Center` or `Right`   | The text horizontal alignment |
 | verticalAlign                                                   | `Top` or `Middle` or `Bottom`   | The text vertical alignment, based on generated mesh (no baseline) |
-| shader                                                          | string                            | A replace shader to be used in this text. Any loaded shader is valid, but not all will work with texts |
+    
+##### Text tags
+
+Use this tags to have special features enabled: 
+
+| **Tag**                          | **Value**                               |  **Example**                       | **Description** |
+|:--------------------------------:|:---------------------------------------:|:----------------------------------:|-----------------|
+| color                            | <color {color`RRGGBB`}>{content}</color>|`<color FFFF00>text in yellow</color>`| Changes the text color for that content|
+| sprite                           | <sprite {spriteName}>                   |`<sprite ChirperHovered>`             | Display a sprite in the ingame sprite atlas. Text color used as tint. <br> You can add new content using Klyte's Framework. |
+| k45symbol                        | <k45Symbol {spriteName},{spriteColor},{textToWrite>| `<k45Symbol K45_PentagonIcon,FFFFFF,270>`| Displays a sprite with a text inside.<BR>The text position is defined by the borders of the sprite, described in its info. <br> Any sprite in ingame texture atlas can be used. You can add content using Klyte's Framework. |
+
+Some sprites are added by default in the ingame atlas, and can be used for writing text inside. The name of them are:
+* K45_MapIcon
+* K45_OvalIcon
+* K45_RoundedHexagonIcon
+* K45_RoundedPentagonIcon
+* K45_RoundedTriangleIcon
+* K45_RoundedSquareIcon
+* K45_OctagonIcon
+* K45_HeptagonIcon
+* K45_S10StarIcon
+* K45_S09StarIcon
+* K45_S07StarIcon
+* K45_S06StarIcon
+* K45_S05StarIcon
+* K45_S04StarIcon
+* K45_S03StarIcon
+* K45_CameraIcon
+* K45_MountainIcon
+* K45_ConeIcon
+* K45_TriangleIcon
+* K45_CrossIcon
+* K45_DepotIcon
+* K45_ParachuteIcon
+* K45_HexagonIcon
+* K45_SquareIcon
+* K45_PentagonIcon
+* K45_TrapezeIcon
+* K45_DiamondIcon
+* K45_S08StarIcon
+* K45_CircleIcon
+
+
 
 #### Buildings
 
@@ -254,9 +294,7 @@ The reference in this case is the **Center of the segment that the kilometer/mil
 
 ##### Extra fields
 
-| **Field**     |  **Values**    | **Description** |
-|:-------------:|:--------------:|-----------------|
-|overrideFont   | string         | The font that will be used for rendering the text. Only works when `textType="OwnName"` or `textType="Fixed"`|
+There's no extra fields (anymore).
 
 #### Segments
 
@@ -264,22 +302,13 @@ The reference in this case is the **Center of the segment that the kilometer/mil
 
 | `textType` value | Description |
 |:-----------------:|--------------|
-| OwnName | Uses the own content field. See below |
+| OwnName | Test text |
+| Fixed | A fixed text (set at `fixedText` field) |
+| StreetNameComplete | Current segment full name, with qualifier (if available) |
 
 ##### Extra fields
 
-| **Field**     |  **Values**    | **Description** |
-|:-------------:|:--------------:|-----------------|
-|overrideFont   | string         | The font that will be used for rendering the text.|
-|nameContent    | *see below*    | The `OwnName`configuration. Only used when `textType="OwnName"`|
-
-##### `nameContent` values table
-
-
-| `nameContent` value | Description |
-|:-----------------:|--------------|
-| None | Creates a test text. Useful to limit the width when creating signs inside the game |
-| Custom | A fixed text (set at `fixedText` field) |
+There's no extra fields (anymore).
 
 *Other contents will be added in the future*
 
@@ -294,7 +323,7 @@ The reference in this case is the **Center of the segment that the kilometer/mil
 | StreetPrefix | The street qualifier. Available if the street wasn't renamed manually. (Ex: Street, Avenue) |
 | StreetSuffix | The street own name, without qualifier. Full street name if renamed manually.  |
 | StreetNameComplete | The full street name, with qualifier |
-| Custom1 | The district name  |
+| District | The district name  |
 | Custom2 | The distance from the zero marker (in kilometers) |
 
 ##### Extra fields
