@@ -10,6 +10,9 @@ namespace Klyte.DynamicTextProps.Overrides
         [XmlAttribute("overrideFont")]
         public string m_overrideFont;
 
+        [XmlAttribute("allCaps")]
+        public bool m_allCaps = false;
+
         [XmlAttribute("saveName")]
         public string SaveName { get; set; }
 

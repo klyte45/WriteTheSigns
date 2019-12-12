@@ -40,6 +40,7 @@ namespace Klyte.DynamicTextProps.UI
         private UIDropDown m_colorModeDropdown;
         private UIColorField m_colorEditor;
         private UICheckBox m_useContrastColorTextCheckbox;
+        private UICheckBox m_allCapsCheckbox;
         private CheckboxOrdernatedListPlatformItem m_checkboxOrdernatedListPlatform;
 
         private UIDropDown m_overrideFontText;
@@ -217,6 +218,7 @@ namespace Klyte.DynamicTextProps.UI
         {
             base.DoInTextCommonTabGroupUI(groupTexts);
             m_useContrastColorTextCheckbox = groupTexts.AddCheckboxLocale("K45_DTP_USE_CONTRAST_COLOR", false, SetUseContrastColor);
+            m_allCapsCheckbox = groupTexts.AddCheckboxLocale("K45_DTP_TEXT_ALL_CAPS", false, SetAllCaps);
             AddDropdown(Locale.Get("K45_DTP_OVERRIDE_FONT"), out m_overrideFontText, groupTexts, new string[0], SetOverrideFont);
         }
         protected override void PostAwake() => OnBuildingSet(null);
@@ -316,6 +318,10 @@ namespace Klyte.DynamicTextProps.UI
             }
         }
 
+        protected void SetAllCaps(bool val) => SafeActionInTextBoard(descriptor =>
+        {
+            descriptor.m_allCaps = val;
+        });
 
         private void SetOverrideFont(int idx)
         {
@@ -533,6 +539,7 @@ namespace Klyte.DynamicTextProps.UI
             TextType textType = descriptor?.m_textType ?? TextType.OwnName;
 
             m_useContrastColorTextCheckbox.isChecked = descriptor?.m_useContrastColor ?? false;
+            m_allCapsCheckbox.isChecked = descriptor?.m_allCaps ?? false;
             m_colorEditorText.parent.isVisible = !m_useContrastColorTextCheckbox.isChecked;
             ReloadFontsOverride(m_overrideFontText, descriptor?.m_overrideFont);
             m_overrideFontText.parent.isVisible = textType == TextType.OwnName || textType == TextType.Fixed;

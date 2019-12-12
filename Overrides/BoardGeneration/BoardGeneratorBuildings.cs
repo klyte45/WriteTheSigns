@@ -41,6 +41,7 @@ namespace Klyte.DynamicTextProps.Overrides
 
         private LineDescriptor[] m_linesDescriptors;
         private ulong[] m_lineLastUpdate;
+        private ulong[] m_lastDrawBuilding;
         private DistrictDescriptor[] m_districtDescriptors;
         private readonly Dictionary<string, StopPointDescriptorLanes[]> m_buildingStopsDescriptor = new Dictionary<string, StopPointDescriptorLanes[]>();
         private readonly Dictionary<string, BasicRenderInformation> m_textCache = new Dictionary<string, BasicRenderInformation>();
@@ -119,6 +120,7 @@ namespace Klyte.DynamicTextProps.Overrides
             m_lineLastUpdate = new ulong[TransportManager.MAX_LINE_COUNT];
             m_districtDescriptors = new DistrictDescriptor[DistrictManager.MAX_DISTRICT_COUNT];
             m_boardsContainers = new BoardBunchContainerBuilding[BuildingManager.MAX_BUILDING_COUNT];
+            m_lastDrawBuilding = new ulong[BuildingManager.MAX_BUILDING_COUNT];
             if (errorList.Count > 0)
             {
                 UIComponent uIComponent = UIView.library.ShowModal("ExceptionPanel");
@@ -204,9 +206,21 @@ namespace Klyte.DynamicTextProps.Overrides
 
         private void OnBuildingLineChanged(ushort id)
         {
-            if (m_boardsContainers[id] != null)
+            ushort parentId = id;
+            int count = 10;
+            while (parentId > 0 && count > 0)
             {
-                m_boardsContainers[id].m_platformToLine = null;
+                if (m_boardsContainers[parentId] != null)
+                {
+                    m_boardsContainers[parentId].m_platformToLine = null;
+                }
+
+                parentId = BuildingManager.instance.m_buildings.m_buffer[parentId].m_parentBuilding;
+                count--;
+            }
+            if (count == 0)
+            {
+                LogUtils.DoErrorLog($"INFINITELOOP! {id} {parentId} ");
             }
         }
 
@@ -244,6 +258,21 @@ namespace Klyte.DynamicTextProps.Overrides
 
         public void AfterRenderMeshesImpl(RenderManager.CameraInfo cameraInfo, ushort buildingID, ref Building data, int layerMask, ref RenderManager.Instance renderInstance)
         {
+            if (data.m_parentBuilding != 0)
+            {
+                RenderManager instance = Singleton<RenderManager>.instance;
+                if (instance.RequireInstance(data.m_parentBuilding, 1u, out uint num))
+                {
+                    AfterRenderMeshesImpl(cameraInfo, data.m_parentBuilding, ref BuildingManager.instance.m_buildings.m_buffer[data.m_parentBuilding], layerMask, ref instance.m_instances[num]);
+                }
+                return;
+            }
+            if (m_lastDrawBuilding[buildingID] >= SimulationManager.instance.m_currentTickIndex)
+            {
+                return;
+            }
+            m_lastDrawBuilding[buildingID] = SimulationManager.instance.m_currentTickIndex;
+
             string refName = GetReferenceModelName(ref data);
             if (EditorInstance.component.isVisible && EditorInstance.m_currentBuildingName == refName)
             {
@@ -331,14 +360,24 @@ namespace Klyte.DynamicTextProps.Overrides
         {
             if (getFromGlobalCache)
             {
-                return GetCachedText(BuildingManager.instance.GetBuildingName(buildingID, new InstanceID()) ?? "DUMMY!!!!!");
+                string cacheKey = BuildingManager.instance.GetBuildingName(buildingID, new InstanceID()) ?? "DUMMY!!!!!";
+                if (descriptor.m_textDescriptors[secIdx].m_allCaps)
+                {
+                    cacheKey = cacheKey.ToUpper();
+                }
+                return GetCachedText(cacheKey);
             }
             if (descriptor.m_textDescriptors[secIdx].m_cachedType != TextType.OwnName)
             {
                 descriptor.m_textDescriptors[secIdx].GeneratedFixedTextRenderInfo = null;
                 descriptor.m_textDescriptors[secIdx].m_cachedType = TextType.OwnName;
             }
-            m_boardsContainers[buildingID].m_nameSubInfo = GetTextRendered(secIdx, descriptor, BuildingManager.instance.GetBuildingName(buildingID, new InstanceID()) ?? "DUMMY!!!!!");
+            string resultText = BuildingManager.instance.GetBuildingName(buildingID, new InstanceID()) ?? "DUMMY!!!!!";
+            if (descriptor.m_textDescriptors[secIdx].m_allCaps)
+            {
+                resultText = resultText.ToUpper();
+            }
+            m_boardsContainers[buildingID].m_nameSubInfo = GetTextRendered(secIdx, descriptor, resultText);
 
             return m_boardsContainers[buildingID].m_nameSubInfo;
 
@@ -504,6 +543,12 @@ namespace Klyte.DynamicTextProps.Overrides
                         for (int i = 0; i < m_buildingStopsDescriptor[buildingName].Length; i++)
                         {
                             Matrix4x4 inverseMatrix = refMatrix.inverse;
+                            if (inverseMatrix == default)
+                            {
+                                bbcb.m_platformToLine = null;
+                                LogUtils.DoLog("--------------- end UpdateLinesBuilding - inverseMatrix is zero");
+                                return;
+                            }
                             float maxDist = m_buildingStopsDescriptor[buildingName][i].width;
                             float maxHeightDiff = m_buildingStopsDescriptor[buildingName][i].width;
                             if (DynamicTextPropsMod.DebugMode)
@@ -511,6 +556,8 @@ namespace Klyte.DynamicTextProps.Overrides
                                 LogUtils.DoLog($"platLine ({i}) = {m_buildingStopsDescriptor[buildingName][i].platformLine.a} {m_buildingStopsDescriptor[buildingName][i].platformLine.b} {m_buildingStopsDescriptor[buildingName][i].platformLine.c} {m_buildingStopsDescriptor[buildingName][i].platformLine.d}");
                                 LogUtils.DoLog($"maxDist ({i}) = {maxDist}");
                                 LogUtils.DoLog($"maxHeightDiff ({i}) = {maxHeightDiff}");
+                                LogUtils.DoLog($"refMatrix ({i}) = {refMatrix}");
+                                LogUtils.DoLog($"inverseMatrix ({i}) = {inverseMatrix}");
                             }
                             bbcb.m_platformToLine[i] = nearStops
                                 .Where(x =>

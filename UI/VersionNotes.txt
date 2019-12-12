@@ -1,9 +1,6 @@
-﻿v2
-	- NEW RENDERING SYSTEM: Now interacts with game lights
-	- Support to dynamic train/metro MOM stations
-	- Repeat prop feature in buildings: useful for same-config group replication
-	- Fixed stop names for use in stations
-	- Fixed next/prev station name show
-	- Fixed stop points mapping
-	- Added full street name option for props placed in segments
-	- Removed light shine effects at day period (may get back in the future)
+﻿v2.1
+	- New "All Caps" modifier for building texts
+	- Temporary fix for stack overflow reports at game logs (caused by DistrictManager rendering flow - may be fixed in base game)
+	- Fixed: Rotation is ignored when using subbuildings
+	- Fixed: Sub buildings not show props if parent building is not rendered
+	- Fixed: Lines in sub buildings aren't forcing the boards of the building to be updated
