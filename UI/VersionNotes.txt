@@ -1,4 +1,8 @@
-﻿v2.1
+﻿V2.1r1
+	- Definitive fix for stack overflow 
+	- Fixed: Null & White Space strings are always processed
+
+v2.1
 	- New "All Caps" modifier for building texts
 	- Temporary fix for stack overflow reports at game logs (caused by DistrictManager rendering flow - may be fixed in base game)
 	- Fixed: Rotation is ignored when using subbuildings

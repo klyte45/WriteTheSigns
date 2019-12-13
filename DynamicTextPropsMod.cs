@@ -9,7 +9,7 @@ using System.IO;
 using System.Reflection;
 using UnityEngine;
 
-[assembly: AssemblyVersion("2.1.0.0")]
+[assembly: AssemblyVersion("2.1.0.1")]
 namespace Klyte.DynamicTextProps
 {
     public class DynamicTextPropsMod : BasicIUserMod<DynamicTextPropsMod, DTPController, DTPPanel>
@@ -59,7 +59,6 @@ namespace Klyte.DynamicTextProps
             KlyteMonoUtils.LimitWidth(namesFilesButton, 710);
             namesFilesButton.text = fileInfo.FullName + Path.DirectorySeparatorChar;
         }
-
 
         public static readonly string FOLDER_NAME = FileUtils.BASE_FOLDER_PATH + "DynamicTextProps";
         internal static readonly string m_defaultFileNameXml = "DefaultBuildingsConfig";

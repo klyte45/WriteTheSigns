@@ -458,6 +458,7 @@ namespace Klyte.DynamicTextProps.Overrides
             return result;
         }
 
+
         protected void RefreshTextData(ref BRI result, string text, UIFont overrideFont = null)
         {
             if (result == null)
@@ -466,8 +467,10 @@ namespace Klyte.DynamicTextProps.Overrides
             }
             if (text.IsNullOrWhiteSpace())
             {
+                result.m_frameDrawTime = uint.MaxValue;
                 return;
             }
+
             UIFontManager.Invalidate(overrideFont ?? DrawFont);
 
             var uirenderData = UIRenderData.Obtain();
@@ -480,6 +483,7 @@ namespace Klyte.DynamicTextProps.Overrides
                 PoolList<int> triangles = uirenderData.triangles;
 
                 Texture2D tex = TextureRenderUtils.RenderTokenizedText((UIDynamicFont) (overrideFont ?? DrawFont), 2, text.IsNullOrWhiteSpace() ? " " : text, Color.white, out Vector2 realSize);
+
 
                 var options = new RenderOptions
                 {
@@ -535,6 +539,9 @@ namespace Klyte.DynamicTextProps.Overrides
                 xysTex.SetPixels(tex.GetPixels().Select(x => new Color(0.732F, 0.732F, 1, 1)).ToArray());
                 xysTex.Apply();
                 result.m_generatedMaterial.SetTexture("_XYSMap", xysTex);
+            }
+            catch (Exception e){
+                LogUtils.DoErrorLog($"!!!! {e}");
             }
             finally
             {

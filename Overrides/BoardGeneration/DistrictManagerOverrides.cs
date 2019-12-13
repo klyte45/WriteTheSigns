@@ -49,13 +49,13 @@ namespace Klyte.DynamicTextProps.Overrides
             return false;
         }
 
-        private static readonly FieldInfo m_namesModifiedField =typeof(DistrictManager).GetField("m_namesModified", RedirectorUtils.allFlags);
+        private static readonly FieldInfo m_namesModifiedField = typeof(DistrictManager).GetField("m_namesModified", RedirectorUtils.allFlags);
 
         #endregion
 
 
 
-        #region Hooking
+        #region Hooking 
 
         public void Awake()
         {
@@ -68,12 +68,29 @@ namespace Klyte.DynamicTextProps.Overrides
 
             RedirectorInstance.AddRedirect(typeof(DistrictManager).GetMethod("SetDistrictName", RedirectorUtils.allFlags), null, posChange);
             RedirectorInstance.AddRedirect(typeof(DistrictManager).GetMethod("AreaModified", RedirectorUtils.allFlags), null, posChange);
-            RedirectorInstance.AddRedirect(typeof(DistrictManager).GetMethod("UpdateNames", RedirectorUtils.allFlags), avoidRedrawingStackOverflowOnFontChange);
-            RedirectorInstance.AddRedirect(typeof(DistrictManager).GetMethod("OnLocaleChanged", RedirectorUtils.allFlags), avoidRedrawingStackOverflowOnLocaleChange);
             #endregion
+        }
+        public void Start()
+        {
+
+            FieldInfo eventField = ReflectionUtils.GetEventField(typeof(Font), "textureRebuilt");
+            var value = (Action<Font>) eventField.GetValue(null);
+            eventField.SetValue(null, (Action<Font>) ((Font f) =>
+            {
+                if (m_isRunningActionCallback)
+                {
+                    return;
+                }
+
+                m_isRunningActionCallback = true;
+                value(f);
+                m_isRunningActionCallback = false;
+            }));
 
 
         }
+
+        private static bool m_isRunningActionCallback = false;
         #endregion
 
 
