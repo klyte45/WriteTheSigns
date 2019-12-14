@@ -302,6 +302,15 @@ namespace Klyte.DynamicTextProps.Overrides
                 case TextType.Custom3:
                     renderInfo = GetMeshCustom3(refID, boardIdx, secIdx, ref descriptor);
                     break;
+                case TextType.LinesSymbols:
+                    renderInfo = GetMeshLinesSymbols(refID, boardIdx, secIdx, ref descriptor);
+                    break;
+                case TextType.Custom4:
+                    renderInfo = GetMeshCustom4(refID, boardIdx, secIdx, ref descriptor);
+                    break;
+                case TextType.Custom5:
+                    renderInfo = GetMeshCustom5(refID, boardIdx, secIdx, ref descriptor);
+                    break;
             }
             if (renderInfo?.m_mesh == null || renderInfo?.m_generatedMaterial == null)
             {
@@ -758,6 +767,9 @@ namespace Klyte.DynamicTextProps.Overrides
         protected virtual BRI GetMeshCustom1(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;
         protected virtual BRI GetMeshCustom2(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;
         protected virtual BRI GetMeshCustom3(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;
+        protected virtual BRI GetMeshCustom4(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;
+        protected virtual BRI GetMeshCustom5(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;
+        protected virtual BRI GetMeshLinesSymbols(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;
         protected virtual BRI GetFixedTextMesh(ref BTD textDescriptor, ushort refID, int boardIdx, int secIdx, ref BD descriptor)
         {
 

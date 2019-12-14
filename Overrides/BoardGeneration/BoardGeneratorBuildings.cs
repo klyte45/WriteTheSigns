@@ -59,6 +59,7 @@ namespace Klyte.DynamicTextProps.Overrides
             //TextType.StreetPrefix,
             //TextType.StreetSuffix,
             //TextType.StreetNameComplete,
+            //TextType.LinesSymbols,
             TextType.Custom1, // Next Station Line
             TextType.Custom2, // Previous Station Line
             TextType.Custom3  // Line Destination (Last stop before get back)
@@ -355,33 +356,15 @@ namespace Klyte.DynamicTextProps.Overrides
 
 
         #region Upadate Data
-        protected override BasicRenderInformation GetOwnNameMesh(ushort buildingID, int boardIdx, int secIdx, ref BoardDescriptorBuildingXml descriptor) => GetOwnNameMesh(buildingID, secIdx, ref descriptor, false);
-        private BasicRenderInformation GetOwnNameMesh(ushort buildingID, int secIdx, ref BoardDescriptorBuildingXml descriptor, bool getFromGlobalCache)
+        protected override BasicRenderInformation GetOwnNameMesh(ushort buildingID, int boardIdx, int secIdx, ref BoardDescriptorBuildingXml descriptor) => GetOwnNameMesh(buildingID, secIdx, ref descriptor);
+        private BasicRenderInformation GetOwnNameMesh(ushort buildingID, int secIdx, ref BoardDescriptorBuildingXml descriptor)
         {
-            if (getFromGlobalCache)
-            {
-                string cacheKey = BuildingManager.instance.GetBuildingName(buildingID, new InstanceID()) ?? "DUMMY!!!!!";
-                if (descriptor.m_textDescriptors[secIdx].m_allCaps)
-                {
-                    cacheKey = cacheKey.ToUpper();
-                }
-                return GetCachedText(cacheKey);
-            }
-            if (descriptor.m_textDescriptors[secIdx].m_cachedType != TextType.OwnName)
-            {
-                descriptor.m_textDescriptors[secIdx].GeneratedFixedTextRenderInfo = null;
-                descriptor.m_textDescriptors[secIdx].m_cachedType = TextType.OwnName;
-            }
-            string resultText = BuildingManager.instance.GetBuildingName(buildingID, new InstanceID()) ?? "DUMMY!!!!!";
+            string cacheKey = BuildingManager.instance.GetBuildingName(buildingID, new InstanceID()) ?? "DUMMY!!!!!";
             if (descriptor.m_textDescriptors[secIdx].m_allCaps)
             {
-                resultText = resultText.ToUpper();
+                cacheKey = cacheKey.ToUpper();
             }
-            m_boardsContainers[buildingID].m_nameSubInfo = GetTextRendered(secIdx, descriptor, resultText);
-
-            return m_boardsContainers[buildingID].m_nameSubInfo;
-
-        }
+            return GetCachedText($"{descriptor.m_textDescriptors[secIdx].m_prefix}{cacheKey}{descriptor.m_textDescriptors[secIdx].m_suffix}");        }
         protected override BasicRenderInformation GetMeshCustom1(ushort buildingID, int boardIdx, int secIdx, ref BoardDescriptorBuildingXml descriptor)
         {
             if (descriptor.m_platforms.Length > 0)
@@ -389,7 +372,7 @@ namespace Klyte.DynamicTextProps.Overrides
                 StopInformation stop = GetTargetStopInfo(buildingID, descriptor);
                 if (stop.m_nextStopId > 0 && !stop.m_isEndOfLine)
                 {
-                    return GetOwnNameMesh(DTPLineUtils.GetStopBuilding(stop.m_nextStopId, stop.m_lineId), secIdx, ref descriptor, true);
+                    return GetOwnNameMesh(DTPLineUtils.GetStopBuilding(stop.m_nextStopId, stop.m_lineId), secIdx, ref descriptor);
                 }
             }
 
@@ -402,7 +385,7 @@ namespace Klyte.DynamicTextProps.Overrides
                 StopInformation stop = GetTargetStopInfo(buildingID, descriptor);
                 if (stop.m_previousStopId > 0)
                 {
-                    return GetOwnNameMesh(DTPLineUtils.GetStopBuilding(stop.m_previousStopId, stop.m_lineId), secIdx, ref descriptor, true);
+                    return GetOwnNameMesh(DTPLineUtils.GetStopBuilding(stop.m_previousStopId, stop.m_lineId), secIdx, ref descriptor);
                 }
             }
 
@@ -415,7 +398,7 @@ namespace Klyte.DynamicTextProps.Overrides
                 StopInformation stop = GetTargetStopInfo(buildingID, descriptor);
                 if (stop.m_destinationId > 0)
                 {
-                    return GetOwnNameMesh(DTPLineUtils.GetStopBuilding(stop.m_destinationId, stop.m_lineId), secIdx, ref descriptor, true);
+                    return GetOwnNameMesh(DTPLineUtils.GetStopBuilding(stop.m_destinationId, stop.m_lineId), secIdx, ref descriptor);
                 }
             }
 

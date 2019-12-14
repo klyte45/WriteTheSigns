@@ -9,6 +9,7 @@
         StreetNameComplete,
         BuildingNumber,
         District,
+        LinesSymbols,
         Custom1,
         Custom2,
         Custom3,

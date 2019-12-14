@@ -12,6 +12,10 @@ namespace Klyte.DynamicTextProps.Overrides
 
         [XmlAttribute("allCaps")]
         public bool m_allCaps = false;
+        [XmlAttribute("prefix")]
+        public string m_prefix = "";
+        [XmlAttribute("suffix")]
+        public string m_suffix = "";
 
         [XmlAttribute("saveName")]
         public string SaveName { get; set; }

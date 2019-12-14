@@ -41,6 +41,8 @@ namespace Klyte.DynamicTextProps.UI
         private UIColorField m_colorEditor;
         private UICheckBox m_useContrastColorTextCheckbox;
         private UICheckBox m_allCapsCheckbox;
+        private UITextField m_textPrefix;
+        private UITextField m_textSuffix;
         private CheckboxOrdernatedListPlatformItem m_checkboxOrdernatedListPlatform;
 
         private UIDropDown m_overrideFontText;
@@ -212,13 +214,23 @@ namespace Klyte.DynamicTextProps.UI
             OnChangeTabTexts(BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName].BoardDescriptors.ElementAtOrDefault(CurrentTab).m_textDescriptors.Length - 1);
         }
         protected override string GetLocaleNameForContentTypes() => "K45_DTP_OWN_NAME_CONTENT_BUILDING";
-        protected override void OnDropdownTextTypeSelectionChanged(int idx) => m_overrideFontText.parent.isVisible = BoardGeneratorBuildings.AVAILABLE_TEXT_TYPES[idx] == TextType.OwnName || BoardGeneratorBuildings.AVAILABLE_TEXT_TYPES[idx] == TextType.Fixed;
+        protected override void OnDropdownTextTypeSelectionChanged(int idx)
+        {
+            bool isFixedMode = BoardGeneratorBuildings.AVAILABLE_TEXT_TYPES[idx] == TextType.Fixed;
+            m_overrideFontText.parent.isVisible = isFixedMode;
+            m_allCapsCheckbox.isVisible = !isFixedMode;
+            m_textPrefix.GetComponentInParent<UIPanel>().isVisible = !isFixedMode;
+            m_textSuffix.GetComponentInParent<UIPanel>().isVisible = !isFixedMode;
+        }
+
         protected override void OnLoadTextLibItem() => ReloadBuilding();
         protected override void DoInTextCommonTabGroupUI(UIHelperExtension groupTexts)
         {
             base.DoInTextCommonTabGroupUI(groupTexts);
             m_useContrastColorTextCheckbox = groupTexts.AddCheckboxLocale("K45_DTP_USE_CONTRAST_COLOR", false, SetUseContrastColor);
             m_allCapsCheckbox = groupTexts.AddCheckboxLocale("K45_DTP_TEXT_ALL_CAPS", false, SetAllCaps);
+            AddTextField(Locale.Get("K45_DTP_PREFIX"), out m_textPrefix, groupTexts, SetPrefix);
+            AddTextField(Locale.Get("K45_DTP_SUFFIX"), out m_textSuffix, groupTexts, SetSuffix);
             AddDropdown(Locale.Get("K45_DTP_OVERRIDE_FONT"), out m_overrideFontText, groupTexts, new string[0], SetOverrideFont);
         }
         protected override void PostAwake() => OnBuildingSet(null);
@@ -318,10 +330,9 @@ namespace Klyte.DynamicTextProps.UI
             }
         }
 
-        protected void SetAllCaps(bool val) => SafeActionInTextBoard(descriptor =>
-        {
-            descriptor.m_allCaps = val;
-        });
+        protected void SetAllCaps(bool val) => SafeActionInTextBoard(descriptor => descriptor.m_allCaps = val);
+        protected void SetPrefix(string prefix) => SafeActionInTextBoard(descriptor => descriptor.m_prefix = prefix);
+        protected void SetSuffix(string suffix) => SafeActionInTextBoard(descriptor => descriptor.m_suffix = suffix);
 
         private void SetOverrideFont(int idx)
         {
@@ -540,9 +551,17 @@ namespace Klyte.DynamicTextProps.UI
 
             m_useContrastColorTextCheckbox.isChecked = descriptor?.m_useContrastColor ?? false;
             m_allCapsCheckbox.isChecked = descriptor?.m_allCaps ?? false;
+            m_textPrefix.text = descriptor?.m_prefix ?? "";
+            m_textSuffix.text = descriptor?.m_suffix ?? "";
             m_colorEditorText.parent.isVisible = !m_useContrastColorTextCheckbox.isChecked;
             ReloadFontsOverride(m_overrideFontText, descriptor?.m_overrideFont);
-            m_overrideFontText.parent.isVisible = textType == TextType.OwnName || textType == TextType.Fixed;
+
+
+            bool isFixedMode = textType == TextType.Fixed;
+            m_overrideFontText.parent.isVisible = isFixedMode;
+            m_allCapsCheckbox.isVisible = !isFixedMode;
+            m_textPrefix.GetComponentInParent<UIPanel>().isVisible = !isFixedMode;
+            m_textSuffix.GetComponentInParent<UIPanel>().isVisible = !isFixedMode;
         }
         private void ReloadFontsOverride(UIDropDown target, string currentVal)
         {
