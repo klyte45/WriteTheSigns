@@ -81,9 +81,11 @@ namespace Klyte.DynamicTextProps.Overrides
         public sealed override void Reset()
         {
             base.Reset();
-            m_cachedStreetNameInformation_Full = new BRI[NetManager.MAX_SEGMENT_COUNT];
-            m_cachedStreetNameInformation_End = new BRI[NetManager.MAX_SEGMENT_COUNT];
-            m_cachedDistrictsNames = new BRI[DistrictManager.MAX_DISTRICT_COUNT];
+            m_cachedStreetNameInformation_Full = new string[NetManager.MAX_SEGMENT_COUNT];
+            m_cachedStreetNameInformation_End = new string[NetManager.MAX_SEGMENT_COUNT];
+            m_cachedDistrictsNames = new string[DistrictManager.MAX_DISTRICT_COUNT];
+            m_cachedStreetNameInformation_Start = new string[DistrictManager.MAX_DISTRICT_COUNT];
+            m_defaultCacheForStrings = new Dictionary<string, BRI>();
         }
 
 
@@ -128,8 +130,8 @@ namespace Klyte.DynamicTextProps.Overrides
         }
         private void OnNameSeedChanged()
         {
-            m_cachedStreetNameInformation_Full = new BRI[NetManager.MAX_SEGMENT_COUNT];
-            m_cachedStreetNameInformation_End = new BRI[NetManager.MAX_SEGMENT_COUNT];
+            m_cachedStreetNameInformation_Full = new string[NetManager.MAX_SEGMENT_COUNT];
+            m_cachedStreetNameInformation_End = new string[NetManager.MAX_SEGMENT_COUNT];
         }
 
         #region events
@@ -141,7 +143,7 @@ namespace Klyte.DynamicTextProps.Overrides
         private void OnDistrictChanged()
         {
             LogUtils.DoLog("onDistrictChanged");
-            m_cachedDistrictsNames = new BRI[DistrictManager.MAX_DISTRICT_COUNT];
+            m_cachedDistrictsNames = new string[DistrictManager.MAX_DISTRICT_COUNT];
         }
         #endregion
 
@@ -364,31 +366,26 @@ namespace Klyte.DynamicTextProps.Overrides
 
             materialPropertyBlock.SetColor(m_shaderPropEmissive, Color.white * (SimulationManager.instance.m_isNightTime ? textDescriptor.m_nightEmissiveMultiplier : textDescriptor.m_dayEmissiveMultiplier));
             renderInfo.m_generatedMaterial.shader = TextShader;
-            Graphics.DrawMesh(renderInfo.m_mesh, matrix, renderInfo.m_generatedMaterial, A_layer, cameraInfo.m_camera, 0, materialPropertyBlock, A_castShadows, A_receiveShadows, A_useLightProbes);
+            Graphics.DrawMesh(renderInfo.m_mesh, matrix, renderInfo.m_generatedMaterial, 10, cameraInfo.m_camera, 0, materialPropertyBlock, false, true, true);
 
         }
 
-        private static int A_layer = 10;
-        private static bool A_castShadows = false;
-        private static bool A_receiveShadows = true;
-        private static bool A_useLightProbes = true;
-
-        protected void UpdateMeshStreetSuffix(ushort idx, ref BRI bri)
-        {
-            LogUtils.DoLog($"!UpdateMeshStreetSuffix {idx}");
-            string result = "";
-            result = DTPHookable.GetStreetSuffix(idx);
-            RefreshTextData(ref bri, result);
-        }
-        private BRI[] m_cachedStreetNameInformation_Full = new BRI[NetManager.MAX_SEGMENT_COUNT];
-        private BRI[] m_cachedStreetNameInformation_End = new BRI[NetManager.MAX_SEGMENT_COUNT];
-        private BRI[] m_cachedDistrictsNames = new BRI[DistrictManager.MAX_DISTRICT_COUNT];
+        private string[] m_cachedStreetNameInformation_Full = new string[NetManager.MAX_SEGMENT_COUNT];
+        private string[] m_cachedStreetNameInformation_End = new string[NetManager.MAX_SEGMENT_COUNT];
+        private string[] m_cachedStreetNameInformation_Start = new string[NetManager.MAX_SEGMENT_COUNT];
+        private string[] m_cachedDistrictsNames = new string[DistrictManager.MAX_DISTRICT_COUNT];
+        private Dictionary<string, BRI> m_defaultCacheForStrings = new Dictionary<string, BRI>();
         private uint m_lastTickTextureGen = 0;
+
+        public void ClearCacheStreetName() => m_cachedStreetNameInformation_End = new string[NetManager.MAX_SEGMENT_COUNT];
+        public void ClearCacheStreetQualifier() => m_cachedStreetNameInformation_Start = new string[NetManager.MAX_SEGMENT_COUNT];
+        public void ClearCacheFullStreetName() => m_cachedStreetNameInformation_Full = new string[NetManager.MAX_SEGMENT_COUNT];
 
         protected enum CacheArrayTypes
         {
             FullStreetName,
             SuffixStreetName,
+            StreetQualifier,
             District
         }
 
@@ -399,6 +396,8 @@ namespace Klyte.DynamicTextProps.Overrides
             {
                 case CacheArrayTypes.SuffixStreetName:
                     return GetFromCacheArray(refId, type, ref m_cachedStreetNameInformation_End);
+                case CacheArrayTypes.StreetQualifier:
+                    return GetFromCacheArray(refId, type, ref m_cachedStreetNameInformation_Start);
                 case CacheArrayTypes.FullStreetName:
                     return GetFromCacheArray(refId, type, ref m_cachedStreetNameInformation_Full);
                 case CacheArrayTypes.District:
@@ -408,37 +407,56 @@ namespace Klyte.DynamicTextProps.Overrides
             return null;
         }
 
-        private BRI GetFromCacheArray(ushort refId, CacheArrayTypes type, ref BRI[] cacheArray)
+        private BRI GetFromCacheArray(ushort refId, CacheArrayTypes type, ref string[] cacheArray)
         {
-            if (m_lastTickTextureGen < SimulationManager.instance.m_currentTickIndex && (cacheArray[refId] == null || lastFontUpdateFrame > cacheArray[refId].m_frameDrawTime))
+            if (m_lastTickTextureGen < SimulationManager.instance.m_currentTickIndex && (cacheArray[refId] == null))
             {
                 LogUtils.DoLog($"!nameUpdated segmentId {refId}");
                 switch (type)
                 {
                     case CacheArrayTypes.SuffixStreetName:
-                        UpdateMeshStreetSuffix(refId, ref cacheArray[refId]);
+                        UpdateMeshStreetSuffix(refId, ref cacheArray[refId], m_defaultCacheForStrings);
                         break;
                     case CacheArrayTypes.FullStreetName:
-                        UpdateMeshFullNameStreet(refId, ref cacheArray[refId]);
+                        UpdateMeshFullNameStreet(refId, ref cacheArray[refId], m_defaultCacheForStrings);
+                        break;
+                    case CacheArrayTypes.StreetQualifier:
+                        UpdateMeshStreetQualifier(refId, ref cacheArray[refId], m_defaultCacheForStrings);
                         break;
                     case CacheArrayTypes.District:
-                        UpdateMeshDistrict(refId, ref cacheArray[refId]);
+                        UpdateMeshDistrict(refId, ref cacheArray[refId], m_defaultCacheForStrings);
                         break;
                 }
                 m_lastTickTextureGen = SimulationManager.instance.m_currentTickIndex;
             }
-            return cacheArray[refId];
+            m_defaultCacheForStrings.TryGetValue(cacheArray[refId] ?? "", out BRI result);
+            return result;
+
+
         }
 
-        protected void UpdateMeshFullNameStreet(ushort idx, ref BRI bri)
+        protected void UpdateMeshFullNameStreet(ushort idx, ref string name, Dictionary<string, BRI> bris)
         {
-            string name = DTPHookable.GetStreetFullName(idx);
+            name = DTPHookable.GetStreetFullName(idx);
             LogUtils.DoLog($"!GenName {name} for {idx}");
-            RefreshTextData(ref bri, name);
+            UpdateTextIfNecessary(name, bris);
         }
-        protected void UpdateMeshDistrict(ushort districtId, ref BRI bri)
+        protected void UpdateMeshStreetQualifier(ushort idx, ref string name, Dictionary<string, BRI> bris)
         {
-            string name;
+            name = DTPHookable.GetStreetFullName(idx);
+            if ((NetManager.instance.m_segments.m_buffer[idx].m_flags & NetSegment.Flags.CustomName) == 0)
+            {
+                name = name.Replace(DTPHookable.GetStreetSuffix(idx), "").Trim();
+            }
+            else
+            {
+                name = name.Replace(DTPHookable.GetStreetSuffixCustom(idx), "").Trim();
+            }
+            LogUtils.DoLog($"!GenName {name} for {idx}");
+            UpdateTextIfNecessary(name, bris);
+        }
+        protected void UpdateMeshDistrict(ushort districtId, ref string name, Dictionary<string, BRI> bris)
+        {
             if (districtId == 0)
             {
                 name = SimulationManager.instance.m_metaData.m_CityName;
@@ -447,9 +465,31 @@ namespace Klyte.DynamicTextProps.Overrides
             {
                 name = DistrictManager.instance.GetDistrictName(districtId);
             }
-            RefreshTextData(ref bri, name);
+            UpdateTextIfNecessary(name, bris);
+        }
+        protected void UpdateMeshStreetSuffix(ushort idx, ref string name, Dictionary<string, BRI> bris)
+        {
+            LogUtils.DoLog($"!UpdateMeshStreetSuffix {idx}");
+            if ((NetManager.instance.m_segments.m_buffer[idx].m_flags & NetSegment.Flags.CustomName) == 0)
+            {
+                name = DTPHookable.GetStreetSuffix(idx);
+            }
+            else
+            {
+                name = DTPHookable.GetStreetSuffixCustom(idx);
+            }
+            UpdateTextIfNecessary(name, bris);
         }
 
+        private void UpdateTextIfNecessary(string name, Dictionary<string, BRI> bris)
+        {
+            if (name != null && (!bris.ContainsKey(name) || lastFontUpdateFrame > bris[name].m_frameDrawTime))
+            {
+                BRI bri = bris.ContainsKey(name) ? bris[name] : default;
+                RefreshTextData(ref bri, name);
+                bris[name] = bri;
+            }
+        }
 
         protected BRI RefreshTextData(string text, UIFont overrideFont = null)
         {
@@ -540,7 +580,8 @@ namespace Klyte.DynamicTextProps.Overrides
                 xysTex.Apply();
                 result.m_generatedMaterial.SetTexture("_XYSMap", xysTex);
             }
-            catch (Exception e){
+            catch (Exception e)
+            {
                 LogUtils.DoErrorLog($"!!!! {e}");
             }
             finally

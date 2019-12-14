@@ -2,6 +2,7 @@ using ColossalFramework;
 using ColossalFramework.Math;
 using Klyte.Commons.UI.Sprites;
 using Klyte.Commons.Utils;
+using Klyte.DynamicTextProps.Overrides;
 using System;
 using UnityEngine;
 using static ItemClass;
@@ -12,30 +13,37 @@ namespace Klyte.DynamicTextProps.Utils
     {
         public static Func<ushort, string> GetStreetFullName = (ushort idx) => NetManager.instance.GetSegmentName(idx);
 
+        public static Func<ushort, string> GetStreetSuffixCustom = (ushort idx) =>
+        {
+            string result = GetStreetFullName(idx);
+            if (result.Contains(" "))
+            {
+                switch (BoardGeneratorRoadNodes.Instance.LoadedStreetSignDescriptor.RoadQualifierExtraction)
+                {
+                    case BoardDescriptorStreetSignXml.RoadQualifierExtractionMode.START:
+                        result = result.Substring(result.IndexOf(' ') + 1);
+                        break;
+                    case BoardDescriptorStreetSignXml.RoadQualifierExtractionMode.END:
+                        result = result.Substring(0, result.LastIndexOf(' '));
+                        break;
+                }
+            }
+            return result;
+        };
         public static Func<ushort, string> GetStreetSuffix = (ushort idx) =>
         {
             string result;
-            if ((NetManager.instance.m_segments.m_buffer[idx].m_flags & NetSegment.Flags.CustomName) != 0)
+            LogUtils.DoLog($"!UpdateMeshStreetSuffix NonCustom {NetManager.instance.m_segments.m_buffer[idx].m_nameSeed}");
+            if (NetManager.instance.m_segments.m_buffer[idx].Info.m_netAI is RoadBaseAI ai)
             {
-                LogUtils.DoLog($"!UpdateMeshStreetSuffix Custom");
-                InstanceID id = default;
-                id.NetSegment = idx;
-                result = Singleton<InstanceManager>.instance.GetName(id);
+                var randomizer = new Randomizer(NetManager.instance.m_segments.m_buffer[idx].m_nameSeed);
+                randomizer.Int32(12);
+                result = ReflectionUtils.RunPrivateMethod<string>(ai, "GenerateStreetName", randomizer);
+                //}
             }
             else
             {
-                LogUtils.DoLog($"!UpdateMeshStreetSuffix NonCustom {NetManager.instance.m_segments.m_buffer[idx].m_nameSeed}");
-                if (NetManager.instance.m_segments.m_buffer[idx].Info.m_netAI is RoadBaseAI ai)
-                {
-                    var randomizer = new Randomizer(NetManager.instance.m_segments.m_buffer[idx].m_nameSeed);
-                    randomizer.Int32(12);
-                    result = ReflectionUtils.RunPrivateMethod<string>(ai, "GenerateStreetName", randomizer);
-                    //}
-                }
-                else
-                {
-                    result = "???";
-                }
+                result = "???";
             }
 
             return result;

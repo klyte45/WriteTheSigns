@@ -34,6 +34,7 @@ namespace Klyte.DynamicTextProps.Overrides
         {
             TextType.OwnName,
             TextType.Fixed,
+            TextType.StreetPrefix,
             TextType.StreetSuffix,
             TextType.StreetNameComplete,
             TextType.District,
@@ -292,6 +293,7 @@ namespace Klyte.DynamicTextProps.Overrides
 
 
         protected override BasicRenderInformation GetMeshStreetSuffix(ushort idx, int boardIdx, int secIdx, ref BoardDescriptorStreetSignXml descriptor) => GetFromCacheArray((secIdx == 0 ? m_boardsContainers[idx].m_boardsData[boardIdx].m_segmentId1 : m_boardsContainers[idx].m_boardsData[boardIdx].m_segmentId2), CacheArrayTypes.SuffixStreetName);
+        protected override BasicRenderInformation GetMeshStreetPrefix(ushort idx, int boardIdx, int secIdx, ref BoardDescriptorStreetSignXml descriptor) => GetFromCacheArray((secIdx == 0 ? m_boardsContainers[idx].m_boardsData[boardIdx].m_segmentId1 : m_boardsContainers[idx].m_boardsData[boardIdx].m_segmentId2), CacheArrayTypes.StreetQualifier);
         protected override BasicRenderInformation GetMeshFullStreetName(ushort idx, int boardIdx, int secIdx, ref BoardDescriptorStreetSignXml descriptor) => GetFromCacheArray((secIdx == 0 ? m_boardsContainers[idx].m_boardsData[boardIdx].m_segmentId1 : m_boardsContainers[idx].m_boardsData[boardIdx].m_segmentId2), CacheArrayTypes.FullStreetName);
 
         protected override BasicRenderInformation GetMeshDistrict(ushort idx, int boardIdx, int secIdx, ref BoardDescriptorStreetSignXml descriptor) => GetFromCacheArray((secIdx == 0 ? m_boardsContainers[idx].m_boardsData[boardIdx].m_districtId1 : m_boardsContainers[idx].m_boardsData[boardIdx].m_districtId2), CacheArrayTypes.District);
@@ -348,12 +350,6 @@ namespace Klyte.DynamicTextProps.Overrides
             InstanceID result = default;
             result.NetNode = nodeId;
             return result;
-        }
-
-        private struct UpdateFlagsSegments
-        {
-            public bool m_nameMesh;
-            public bool m_streetSuffixMesh;
         }
 
         private BasicRenderInformation m_testTextInfo = null;

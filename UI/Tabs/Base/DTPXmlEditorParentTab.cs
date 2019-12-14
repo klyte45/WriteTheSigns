@@ -342,7 +342,13 @@ namespace Klyte.DynamicTextProps.UI
             dropdown.GetComponentInParent<UIPanel>().autoLayoutDirection = LayoutDirection.Horizontal;
             dropdown.GetComponentInParent<UIPanel>().autoFitChildrenVertically = true;
             label = dropdown.parent.GetComponentInChildren<UILabel>();
+            KlyteMonoUtils.CreateUIElement(out UIPanel labelContainer, dropdown.parent.transform, "LabelContainer", new Vector4(0, 0, (parentHelper.Self.width / 2) - 10, label.height));
+            labelContainer.autoLayout = true;
+            labelContainer.autoSize = false;
+            labelContainer.zOrder = 0;
+            label.transform.SetParent(labelContainer.transform);
             KlyteMonoUtils.LimitWidth(label, (parentHelper.Self.width / 2) - 10, true);
+            label.padding.top = 10;
         }
 
         protected void AddTextField(string title, out UITextField textField, UIHelperExtension parentHelper, OnTextSubmitted onChange) => AddTextField(title, out textField, out UILabel label, parentHelper, onChange);

@@ -1,10 +1,5 @@
-﻿V2.1r1
+﻿V2.2
+	- Added: Street name qualifier option for street plates
+	- Added: Support to automatic extraction of street name qualifier from customized names (using first or last word)
 	- Definitive fix for stack overflow 
 	- Fixed: Null & White Space strings are always processed
-
-v2.1
-	- New "All Caps" modifier for building texts
-	- Temporary fix for stack overflow reports at game logs (caused by DistrictManager rendering flow - may be fixed in base game)
-	- Fixed: Rotation is ignored when using subbuildings
-	- Fixed: Sub buildings not show props if parent building is not rendered
-	- Fixed: Lines in sub buildings aren't forcing the boards of the building to be updated
