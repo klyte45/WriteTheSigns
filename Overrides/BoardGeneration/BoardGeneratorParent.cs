@@ -9,8 +9,10 @@ using Klyte.Commons.Utils;
 using Klyte.DynamicTextProps.Utils;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text;
 using UnityEngine;
 using static Klyte.Commons.Redirectors.UIDynamicFontRendererRedirector;
 
@@ -83,8 +85,8 @@ namespace Klyte.DynamicTextProps.Overrides
             base.Reset();
             m_cachedStreetNameInformation_Full = new string[NetManager.MAX_SEGMENT_COUNT];
             m_cachedStreetNameInformation_End = new string[NetManager.MAX_SEGMENT_COUNT];
-            m_cachedDistrictsNames = new string[DistrictManager.MAX_DISTRICT_COUNT];
             m_cachedStreetNameInformation_Start = new string[DistrictManager.MAX_DISTRICT_COUNT];
+            m_cachedDistrictsNames = new string[DistrictManager.MAX_DISTRICT_COUNT];
             m_defaultCacheForStrings = new Dictionary<string, BRI>();
         }
 
@@ -380,6 +382,7 @@ namespace Klyte.DynamicTextProps.Overrides
         public void ClearCacheStreetName() => m_cachedStreetNameInformation_End = new string[NetManager.MAX_SEGMENT_COUNT];
         public void ClearCacheStreetQualifier() => m_cachedStreetNameInformation_Start = new string[NetManager.MAX_SEGMENT_COUNT];
         public void ClearCacheFullStreetName() => m_cachedStreetNameInformation_Full = new string[NetManager.MAX_SEGMENT_COUNT];
+        public void ClearCacheDefault() => m_defaultCacheForStrings = new Dictionary<string, BRI>();
 
         protected enum CacheArrayTypes
         {
@@ -446,11 +449,11 @@ namespace Klyte.DynamicTextProps.Overrides
             name = DTPHookable.GetStreetFullName(idx);
             if ((NetManager.instance.m_segments.m_buffer[idx].m_flags & NetSegment.Flags.CustomName) == 0)
             {
-                name = name.Replace(DTPHookable.GetStreetSuffix(idx), "").Trim();
+                name = ApplyAbbreviations(name.Replace(DTPHookable.GetStreetSuffix(idx), ""));
             }
             else
             {
-                name = name.Replace(DTPHookable.GetStreetSuffixCustom(idx), "").Trim();
+                name = ApplyAbbreviations(name.Replace(DTPHookable.GetStreetSuffixCustom(idx), ""));
             }
             LogUtils.DoLog($"!GenName {name} for {idx}");
             UpdateTextIfNecessary(name, bris);
@@ -472,15 +475,151 @@ namespace Klyte.DynamicTextProps.Overrides
             LogUtils.DoLog($"!UpdateMeshStreetSuffix {idx}");
             if ((NetManager.instance.m_segments.m_buffer[idx].m_flags & NetSegment.Flags.CustomName) == 0)
             {
-                name = DTPHookable.GetStreetSuffix(idx);
+                name = ApplyAbbreviations(DTPHookable.GetStreetSuffix(idx));
             }
             else
             {
-                name = DTPHookable.GetStreetSuffixCustom(idx);
+                name = ApplyAbbreviations(DTPHookable.GetStreetSuffixCustom(idx));
             }
             UpdateTextIfNecessary(name, bris);
         }
 
+        protected string ApplyAbbreviations(string name)
+        {
+            if (DynamicTextPropsMod.Instance.Controller.AbbreviationFiles.TryGetValue(BoardGeneratorRoadNodes.Instance.LoadedStreetSignDescriptor.AbbreviationFile ?? "", out Dictionary<string, string> translations))
+            {
+                foreach (string key in translations.Keys.Where(x => x.Contains(" ")))
+                {
+                    name = ReplaceCaseInsensitive(name, key, translations[key], StringComparison.OrdinalIgnoreCase);
+
+                }
+                string[] parts = name.Split(' ');
+                for (int i = 0; i < parts.Length; i++)
+                {
+                    if ((i == 0 && translations.TryGetValue($"^{parts[i]}", out string replacement))
+                        || (i == parts.Length - 1 && translations.TryGetValue($"{parts[i]}$", out replacement))
+                        || (i > 0 && i < parts.Length - 1 && translations.TryGetValue($"={parts[i]}=", out replacement))
+                        || translations.TryGetValue(parts[i], out replacement))
+                    {
+                        parts[i] = replacement;
+                    }
+                }
+                return string.Join(" ", parts.Where(x => !x.IsNullOrWhiteSpace()).ToArray());
+
+            }
+            else
+            {
+                return name;
+            }
+        }
+        /// <summary>
+        /// Returns a new string in which all occurrences of a specified string in the current instance are replaced with another 
+        /// specified string according the type of search to use for the specified string.
+        /// </summary>
+        /// <param name="str">The string performing the replace method.</param>
+        /// <param name="oldValue">The string to be replaced.</param>
+        /// <param name="newValue">The string replace all occurrences of <paramref name="oldValue"/>. 
+        /// If value is equal to <c>null</c>, than all occurrences of <paramref name="oldValue"/> will be removed from the <paramref name="str"/>.</param>
+        /// <param name="comparisonType">One of the enumeration values that specifies the rules for the search.</param>
+        /// <returns>A string that is equivalent to the current string except that all instances of <paramref name="oldValue"/> are replaced with <paramref name="newValue"/>. 
+        /// If <paramref name="oldValue"/> is not found in the current instance, the method returns the current instance unchanged.</returns>
+        [DebuggerStepThrough]
+        public static string ReplaceCaseInsensitive(string str,
+            string oldValue, string @newValue,
+            StringComparison comparisonType)
+        {
+
+            // Check inputs.
+            if (str == null)
+            {
+                // Same as original .NET C# string.Replace behavior.
+                throw new ArgumentNullException(nameof(str));
+            }
+            if (str.Length == 0)
+            {
+                // Same as original .NET C# string.Replace behavior.
+                return str;
+            }
+            if (oldValue == null)
+            {
+                // Same as original .NET C# string.Replace behavior.
+                throw new ArgumentNullException(nameof(oldValue));
+            }
+            if (oldValue.Length == 0)
+            {
+                // Same as original .NET C# string.Replace behavior.
+                throw new ArgumentException("String cannot be of zero length.");
+            }
+
+
+            //if (oldValue.Equals(newValue, comparisonType))
+            //{
+            //This condition has no sense
+            //It will prevent method from replacesing: "Example", "ExAmPlE", "EXAMPLE" to "example"
+            //return str;
+            //}
+
+
+
+            // Prepare string builder for storing the processed string.
+            // Note: StringBuilder has a better performance than String by 30-40%.
+            var resultStringBuilder = new StringBuilder(str.Length);
+
+
+
+            // Analyze the replacement: replace or remove.
+            bool isReplacementNullOrEmpty = string.IsNullOrEmpty(@newValue);
+
+
+
+            // Replace all values.
+            const int valueNotFound = -1;
+            int foundAt;
+            int startSearchFromIndex = 0;
+            while ((foundAt = str.IndexOf(oldValue, startSearchFromIndex, comparisonType)) != valueNotFound)
+            {
+
+                // Append all characters until the found replacement.
+                int @charsUntilReplacment = foundAt - startSearchFromIndex;
+                bool isNothingToAppend = @charsUntilReplacment == 0;
+                if (!isNothingToAppend)
+                {
+                    resultStringBuilder.Append(str, startSearchFromIndex, @charsUntilReplacment);
+                }
+
+
+
+                // Process the replacement.
+                if (!isReplacementNullOrEmpty)
+                {
+                    resultStringBuilder.Append(@newValue);
+                }
+
+
+                // Prepare start index for the next search.
+                // This needed to prevent infinite loop, otherwise method always start search 
+                // from the start of the string. For example: if an oldValue == "EXAMPLE", newValue == "example"
+                // and comparisonType == "any ignore case" will conquer to replacing:
+                // "EXAMPLE" to "example" to "example" to "example" … infinite loop.
+                startSearchFromIndex = foundAt + oldValue.Length;
+                if (startSearchFromIndex == str.Length)
+                {
+                    // It is end of the input string: no more space for the next search.
+                    // The input string ends with a value that has already been replaced. 
+                    // Therefore, the string builder with the result is complete and no further action is required.
+                    return resultStringBuilder.ToString();
+                }
+            }
+
+
+            // Append the last part to the result.
+            int @charsUntilStringEnd = str.Length - startSearchFromIndex;
+            resultStringBuilder.Append(str, startSearchFromIndex, @charsUntilStringEnd);
+
+
+            return resultStringBuilder.ToString();
+
+        }
         private void UpdateTextIfNecessary(string name, Dictionary<string, BRI> bris)
         {
             if (name != null && (!bris.ContainsKey(name) || lastFontUpdateFrame > bris[name].m_frameDrawTime))

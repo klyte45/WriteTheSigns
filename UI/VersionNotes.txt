@@ -1,5 +1,7 @@
 ﻿V2.2
 	- Added: Street name qualifier option for street plates
 	- Added: Support to automatic extraction of street name qualifier from customized names (using first or last word)
+	- Added: Support to abbreviations files to use in qualifier and Name of streets (not applied when together - full name)
+	- Street signs generation optimized (less usage of RAM and smarter caching of textures)
 	- Definitive fix for stack overflow 
 	- Fixed: Null & White Space strings are always processed

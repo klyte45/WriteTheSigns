@@ -36,6 +36,7 @@ namespace Klyte.DynamicTextProps
 
             UIHelperExtension group8 = helper.AddGroupExtended(Locale.Get("K45_DTP_GENERAL_INFO"));
             AddFolderButton(DefaultBuildingsConfigurationFolder, group8, "K45_DTP_DEFAULT_BUILDINGS_CONFIG_PATH_TITLE");
+            AddFolderButton(AbbreviationFilesPath, group8, "K45_DTP_ABBREVIATION_FILES_PATH_TITLE");
             group8.AddLabel(Locale.Get("K45_DTP_GET_FILES_GITHUB"));
             group8.AddButton(Locale.Get("K45_DTP_GO_TO_GITHUB"), () => Application.OpenURL("https://github.com/klyte45/DynamicTextPropsFiles"));
         }
@@ -62,11 +63,14 @@ namespace Klyte.DynamicTextProps
 
         public static readonly string FOLDER_NAME = FileUtils.BASE_FOLDER_PATH + "DynamicTextProps";
         internal static readonly string m_defaultFileNameXml = "DefaultBuildingsConfig";
-        public const string DEFAULT_GAME_BUILDINGS_CONFIG_FOLDER = "BuildingsDefaultPlacing";
-        public const string DEFAULT_GAME_VEHICLES_CONFIG_FOLDER = "VehiclesDefaultPlacing";
+        private const string DEFAULT_GAME_BUILDINGS_CONFIG_FOLDER = "BuildingsDefaultPlacing";
+        private const string DEFAULT_GAME_VEHICLES_CONFIG_FOLDER = "VehiclesDefaultPlacing";
+        private const string ABBREVIATION_FILES_FOLDER = "AbbreviationFiles";
 
         public static string DefaultBuildingsConfigurationFolder { get; } = FOLDER_NAME + Path.DirectorySeparatorChar + DEFAULT_GAME_BUILDINGS_CONFIG_FOLDER;
         public static string DefaultVehiclesConfigurationFolder { get; } = FOLDER_NAME + Path.DirectorySeparatorChar + DEFAULT_GAME_VEHICLES_CONFIG_FOLDER;
+
+        public static string AbbreviationFilesPath { get; } = FOLDER_NAME + Path.DirectorySeparatorChar + ABBREVIATION_FILES_FOLDER;
 
     }
 }

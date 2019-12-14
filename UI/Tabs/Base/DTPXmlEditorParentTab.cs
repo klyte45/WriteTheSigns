@@ -97,13 +97,7 @@ namespace Klyte.DynamicTextProps.UI
 
             AddDropdown(GetFontLabelString(), out m_fontSelect, m_uiHelperHS, new string[0], OnSetFont);
 
-            m_fontSelect.width -= 40;
-            UIPanel parent = m_fontSelect.GetComponentInParent<UIPanel>();
-            UIButton actionButton = ConfigureActionButton(parent);
-            SetIcon(actionButton, CommonsSpriteNames.K45_Reload, Color.white);
-            actionButton.eventClick += (x, t) => DTPUtils.ReloadFontsOf<BG>(m_fontSelect);
-            DTPUtils.ReloadFontsOf<BG>(m_fontSelect);
-
+            AddRefreshButtonForDropdown(m_fontSelect, () => DTPUtils.ReloadFontsOf<BG>(m_fontSelect));
 
             AwakePropEditor(out UIScrollablePanel scrollTabs, out UIHelperExtension referenceHelper);
             KlyteMonoUtils.CreateUIElement(out m_pseudoTabstripTexts, scrollTabs.transform, "DTPTabstrip", new Vector4(5, 40, referenceHelper.Self.width - 10, 40));
@@ -188,6 +182,15 @@ namespace Klyte.DynamicTextProps.UI
             PostAwake();
         }
 
+        protected void AddRefreshButtonForDropdown(UIDropDown m_fontSelect, Action onClick)
+        {
+            m_fontSelect.width -= 40;
+            UIPanel parent = m_fontSelect.GetComponentInParent<UIPanel>();
+            UIButton actionButton = ConfigureActionButton(parent);
+            SetIcon(actionButton, CommonsSpriteNames.K45_Reload, Color.white);
+            actionButton.eventClick += (x, t) => onClick();
+            onClick();
+        }
 
         protected UIDropDown AddLibBox<LIB, DESC>(string groupTitle, UIHelperExtension parentHelper,
     out UIButton copyButton, Action actionCopy,

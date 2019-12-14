@@ -83,7 +83,7 @@ namespace Klyte.DynamicTextProps.Overrides
         {
             m_testTextInfo = null;
             m_cachedNumber = new BasicRenderInformation[10];
-            m_updatedStreetPositions = new bool[ObjArraySize];
+            ClearCacheDefault();
         }
 
 

@@ -21,6 +21,9 @@ namespace Klyte.DynamicTextProps.Overrides
         [XmlAttribute("roadQualifierExtraction")]
         public RoadQualifierExtractionMode RoadQualifierExtraction { get; set; } = RoadQualifierExtractionMode.NONE;
 
+        [XmlAttribute("abbreviationFile")]
+        public string AbbreviationFile { get; set; } = "";
+
         [XmlAttribute("useDistrictColor")]
         public bool UseDistrictColor = false;
         [XmlIgnore]
