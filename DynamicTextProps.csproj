@@ -85,6 +85,7 @@
     <Compile Include="commons\Interfaces\ITimeable.cs" />
     <Compile Include="commons\Redirectors\UIDynamicFontRendererRedirector.cs" />
     <Compile Include="commons\UI\SpriteNames\CommonsSpriteNames.cs" />
+    <Compile Include="commons\Utils\StructExtensions\PathUnitExtensions.cs" />
     <Compile Include="commons\Utils\TextureAtlasUtils.cs" />
     <Compile Include="commons\Tools\BasicBuildingTool.cs" />
     <Compile Include="commons\Tools\BasicNetTool.cs" />

@@ -23,6 +23,7 @@ namespace Klyte.DynamicTextProps.UI
 
 
         private UIHelperExtension m_contentContainer;
+        private UITextField m_mappingThresold;
         private UITabstripAutoResize m_pseudoTabstripProps;
 
         private UIHelperExtension m_pseudoTabPropsHelper;
@@ -121,6 +122,8 @@ namespace Klyte.DynamicTextProps.UI
                     m_saveOnAssetFolderButton = (UIButton) helper.AddButton(Locale.Get("K45_DTP_SAVE_ASSET_FOLDER"), () => BoardGeneratorBuildings.SaveInAssetFolder(m_currentBuildingName));
                     helper.AddButton(Locale.Get("K45_DTP_RELOAD_CONFIGS"), LoadAllBuildingConfigurations);
                 });
+            AddFloatField(Locale.Get("K45_DTP_PLATFORM_MAPPING_DISTANCE_THRESOLD"), out m_mappingThresold, m_contentContainer, SetMappingThresold, false);
+
             KlyteMonoUtils.CreateHorizontalScrollPanel(m_contentContainer.Self, out scrollTabs, out UIScrollbar bar, m_contentContainer.Self.width - 20, 40, Vector3.zero);
             KlyteMonoUtils.CreateUIElement(out m_pseudoTabstripProps, scrollTabs.transform, "DTPTabstrip", new Vector4(5, 40, scrollTabs.width - 10, 40));
             m_pseudoTabstripProps.startSelectedIndex = -1;
@@ -303,6 +306,19 @@ namespace Klyte.DynamicTextProps.UI
         #region UI Actions
 
         private void LoadAllBuildingConfigurations() => BoardGeneratorBuildings.Instance.LoadAllBuildingConfigurations();
+
+        private void SetMappingThresold(float f)
+        {
+            if (m_currentBuildingName != null && !m_isLoading)
+            {
+                if (!LoadedDescriptors.ContainsKey(m_currentBuildingName))
+                {
+                    LoadedDescriptors[m_currentBuildingName] = new BuildingGroupDescriptorXml();
+                }
+                LoadedDescriptors[m_currentBuildingName].StopMappingThresold = f;
+                BoardGeneratorBuildings.ClearStopMapping(m_currentBuildingName);
+            }
+        }
         private void SetShowIfNoLine(bool val) => SafeActionInBoard(descriptor => descriptor.m_showIfNoLine = val);
         private void SetPlatformOrder(List<PlatformItem> val) => SafeActionInBoard(descriptor => descriptor.m_platforms = val.Select(x => x.index).ToArray());
         private void SetPropItemName(string txt)
@@ -478,6 +494,7 @@ namespace Klyte.DynamicTextProps.UI
                 }
                 EnsureTabQuantity(BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName]?.BoardDescriptors?.Length ?? -1);
                 ConfigureTabsShown(BoardGeneratorBuildings.LoadedDescriptors[m_currentBuildingName]?.BoardDescriptors?.Length ?? -1);
+                m_mappingThresold.text = LoadedDescriptors[m_currentBuildingName].StopMappingThresold.ToString();
                 m_isLoading = false;
             }
             m_pseudoTabPropsHelper.Self.isVisible = m_currentBuildingName != null && CurrentTab >= 0;

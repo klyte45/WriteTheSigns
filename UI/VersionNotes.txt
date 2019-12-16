@@ -1,9 +1,6 @@
-﻿V2.2
-	- Added: Support to prefix/suffix in smart text for buildings
-	- REMOVED: Support to custom font for building names
-	- Added: Street name qualifier option for street plates
-	- Added: Support to automatic extraction of street name qualifier from customized names (using first or last word)
-	- Added: Support to abbreviations files to use in qualifier and Name of streets (not applied when together - full name)
-	- Street signs generation optimized (less usage of RAM and smarter caching of textures)
-	- Definitive fix for stack overflow 
-	- Fixed: Null & White Space strings are always processed
+﻿V2.3
+	- Added field in building descriptor to set the thresold distance to consider two platforms in same line (in platform mapping)
+	- Fixed: All caps not applied for prefix/suffix
+	- Fixed: Next and prev stops aren't being well setted in the last station of a non-circular line
+	- Fixed some glitches with labels when they are too large (being resized but still ocupping all space as normal size)
+	- Fixed: Stops at a sub building aren't being right mapped to the main building (and refers to "DUMMY!!!!")

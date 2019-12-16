@@ -252,10 +252,12 @@ namespace Klyte.DynamicTextProps.Overrides
         {
             if (!Instance.m_buildingStopsDescriptor.ContainsKey(building))
             {
-                Instance.m_buildingStopsDescriptor[building] = MapStopPoints(PrefabCollection<BuildingInfo>.FindLoaded(building));
+                Instance.m_buildingStopsDescriptor[building] = MapStopPoints(PrefabCollection<BuildingInfo>.FindLoaded(building), LoadedDescriptors.ContainsKey(building) ? LoadedDescriptors[building].StopMappingThresold : 1f);
             }
             return Instance.m_buildingStopsDescriptor[building];
         }
+
+        public static void ClearStopMapping(string building) => Instance.m_buildingStopsDescriptor.Remove(building);
 
         public void AfterRenderMeshesImpl(RenderManager.CameraInfo cameraInfo, ushort buildingID, ref Building data, int layerMask, ref RenderManager.Instance renderInstance)
         {
@@ -279,7 +281,7 @@ namespace Klyte.DynamicTextProps.Overrides
             {
                 if (!m_buildingStopsDescriptor.ContainsKey(refName))
                 {
-                    m_buildingStopsDescriptor[refName] = MapStopPoints(data.Info);
+                    m_buildingStopsDescriptor[refName] = MapStopPoints(data.Info, LoadedDescriptors.ContainsKey(refName) ? LoadedDescriptors[refName].StopMappingThresold : 1f);
                 }
                 for (int i = 0; i < m_buildingStopsDescriptor[refName].Length; i++)
                 {
@@ -359,18 +361,19 @@ namespace Klyte.DynamicTextProps.Overrides
         protected override BasicRenderInformation GetOwnNameMesh(ushort buildingID, int boardIdx, int secIdx, ref BoardDescriptorBuildingXml descriptor) => GetOwnNameMesh(buildingID, secIdx, ref descriptor);
         private BasicRenderInformation GetOwnNameMesh(ushort buildingID, int secIdx, ref BoardDescriptorBuildingXml descriptor)
         {
-            string cacheKey = BuildingManager.instance.GetBuildingName(buildingID, new InstanceID()) ?? "DUMMY!!!!!";
+            string cacheKey = $"{descriptor.m_textDescriptors[secIdx].m_prefix}{BuildingManager.instance.GetBuildingName(buildingID, new InstanceID()) ?? "DUMMY!!!!!"}{descriptor.m_textDescriptors[secIdx].m_suffix}";
             if (descriptor.m_textDescriptors[secIdx].m_allCaps)
             {
                 cacheKey = cacheKey.ToUpper();
             }
-            return GetCachedText($"{descriptor.m_textDescriptors[secIdx].m_prefix}{cacheKey}{descriptor.m_textDescriptors[secIdx].m_suffix}");        }
+            return GetCachedText(cacheKey);
+        }
         protected override BasicRenderInformation GetMeshCustom1(ushort buildingID, int boardIdx, int secIdx, ref BoardDescriptorBuildingXml descriptor)
         {
             if (descriptor.m_platforms.Length > 0)
             {
                 StopInformation stop = GetTargetStopInfo(buildingID, descriptor);
-                if (stop.m_nextStopId > 0 && !stop.m_isEndOfLine)
+                if (stop.m_nextStopId > 0)
                 {
                     return GetOwnNameMesh(DTPLineUtils.GetStopBuilding(stop.m_nextStopId, stop.m_lineId), secIdx, ref descriptor);
                 }
@@ -458,6 +461,7 @@ namespace Klyte.DynamicTextProps.Overrides
 
         protected void UpdateLinesBuilding(ushort buildingID, ref Building data, BoardBunchContainerBuilding bbcb, ref Matrix4x4 refMatrix)
         {
+            NetManager nmInstance = NetManager.instance;
             string refName = GetReferenceModelName(ref data);
             if (bbcb.m_platformToLine == null || (bbcb.m_platformToLine?.Length > 0 && bbcb.m_platformToLine.SelectMany((x) => x?.Select(y => bbcb.m_linesUpdateFrame < m_lineLastUpdate[y.m_lineId])).Any(x => x)))
             {
@@ -465,7 +469,7 @@ namespace Klyte.DynamicTextProps.Overrides
                 bbcb.m_platformToLine = null;
                 if (!m_buildingStopsDescriptor.ContainsKey(refName))
                 {
-                    m_buildingStopsDescriptor[refName] = MapStopPoints(data.Info);
+                    m_buildingStopsDescriptor[refName] = MapStopPoints(data.Info, LoadedDescriptors.ContainsKey(refName) ? LoadedDescriptors[refName].StopMappingThresold : 1f);
 
                 }
 
@@ -488,25 +492,25 @@ namespace Klyte.DynamicTextProps.Overrides
                         while (node > 0)
                         {
                             allnodes.Add(node);
-                            node = NetManager.instance.m_nodes.m_buffer[node].m_nextBuildingNode;
+                            node = nmInstance.m_nodes.m_buffer[node].m_nextBuildingNode;
                         }
                         subBuilding = BuildingManager.instance.m_buildings.m_buffer[subBuilding].m_subBuilding;
                     }
                     foreach (ushort node in allnodes)
                     {
-                        if (!boundaries.Any(x => x.Intersect(NetManager.instance.m_nodes.m_buffer[node].m_position)))
+                        if (!boundaries.Any(x => x.Intersect(nmInstance.m_nodes.m_buffer[node].m_position)))
                         {
                             for (int segIdx = 0; segIdx < 8; segIdx++)
                             {
-                                ushort segmentId = NetManager.instance.m_nodes.m_buffer[node].GetSegment(segIdx);
-                                if (segmentId != 0 && allnodes.Contains(NetManager.instance.m_segments.m_buffer[segmentId].GetOtherNode(node)))
+                                ushort segmentId = nmInstance.m_nodes.m_buffer[node].GetSegment(segIdx);
+                                if (segmentId != 0 && allnodes.Contains(nmInstance.m_segments.m_buffer[segmentId].GetOtherNode(node)))
                                 {
 
 
                                     boundaries.Add(GetBounds(
-                                        NetManager.instance.m_nodes.m_buffer[NetManager.instance.m_segments.m_buffer[segmentId].m_startNode].m_position,
-                                        NetManager.instance.m_nodes.m_buffer[NetManager.instance.m_segments.m_buffer[segmentId].m_endNode].m_position,
-                                        NetManager.instance.m_segments.m_buffer[segmentId].Info.m_halfWidth)
+                                        nmInstance.m_nodes.m_buffer[nmInstance.m_segments.m_buffer[segmentId].m_startNode].m_position,
+                                        nmInstance.m_nodes.m_buffer[nmInstance.m_segments.m_buffer[segmentId].m_endNode].m_position,
+                                        nmInstance.m_segments.m_buffer[segmentId].Info.m_halfWidth)
                                         );
                                 }
                             }
@@ -520,7 +524,7 @@ namespace Klyte.DynamicTextProps.Overrides
 
                         if (DynamicTextPropsMod.DebugMode)
                         {
-                            LogUtils.DoLog($"[{InstanceManager.instance.GetName(new InstanceID { Building = buildingID })}] nearStops = [\n\t\t{string.Join(",\n\t\t", nearStops.Select(x => $"[{x} => {NetManager.instance.m_nodes.m_buffer[x].m_position} (TL { NetManager.instance.m_nodes.m_buffer[x].m_transportLine} => [{TransportManager.instance.m_lines.m_buffer[NetManager.instance.m_nodes.m_buffer[x].m_transportLine].Info.m_transportType}-{TransportManager.instance.m_lines.m_buffer[NetManager.instance.m_nodes.m_buffer[x].m_transportLine].m_lineNumber}] {InstanceManager.instance.GetName(new InstanceID { TransportLine = NetManager.instance.m_nodes.m_buffer[x].m_transportLine })} )]").ToArray())}\n\t] ");
+                            LogUtils.DoLog($"[{InstanceManager.instance.GetName(new InstanceID { Building = buildingID })}] nearStops = [\n\t\t{string.Join(",\n\t\t", nearStops.Select(x => $"[{x} => {nmInstance.m_nodes.m_buffer[x].m_position} (TL { nmInstance.m_nodes.m_buffer[x].m_transportLine} => [{TransportManager.instance.m_lines.m_buffer[nmInstance.m_nodes.m_buffer[x].m_transportLine].Info.m_transportType}-{TransportManager.instance.m_lines.m_buffer[nmInstance.m_nodes.m_buffer[x].m_transportLine].m_lineNumber}] {InstanceManager.instance.GetName(new InstanceID { TransportLine = nmInstance.m_nodes.m_buffer[x].m_transportLine })} )]").ToArray())}\n\t] ");
                         }
                         string buildingName = refName;
                         for (int i = 0; i < m_buildingStopsDescriptor[buildingName].Length; i++)
@@ -542,10 +546,11 @@ namespace Klyte.DynamicTextProps.Overrides
                                 LogUtils.DoLog($"refMatrix ({i}) = {refMatrix}");
                                 LogUtils.DoLog($"inverseMatrix ({i}) = {inverseMatrix}");
                             }
+                            float angleBuilding = data.m_angle * Mathf.Rad2Deg;
                             bbcb.m_platformToLine[i] = nearStops
                                 .Where(x =>
                                 {
-                                    Vector3 relPos = inverseMatrix.MultiplyPoint(NetManager.instance.m_nodes.m_buffer[x].m_position);
+                                    Vector3 relPos = inverseMatrix.MultiplyPoint(nmInstance.m_nodes.m_buffer[x].m_position);
                                     float dist = m_buildingStopsDescriptor[buildingName][i].platformLine.DistanceSqr(relPos, out _);
                                     float diffY = Mathf.Abs(relPos.y - m_buildingStopsDescriptor[buildingName][i].platformLine.Position(0.5f).y);
                                     if (DynamicTextPropsMod.DebugMode)
@@ -559,18 +564,50 @@ namespace Klyte.DynamicTextProps.Overrides
                                 {
                                     var result = new StopInformation
                                     {
-                                        m_lineId = NetManager.instance.m_nodes.m_buffer[x].m_transportLine,
+                                        m_lineId = nmInstance.m_nodes.m_buffer[x].m_transportLine,
                                         m_stopId = x
                                     };
-                                    result.m_previousStopId = TransportLine.GetPrevStop(x);
-                                    result.m_nextStopId = TransportLine.GetNextStop(x);
-                                    result.m_isEndOfLine = DTPHookable.GetStopName(result.m_previousStopId, result.m_lineId) == DTPHookable.GetStopName(result.m_nextStopId, result.m_lineId);
                                     result.m_destinationId = FindDestinationStop(x, result.m_lineId);
+                                    float anglePlat = (m_buildingStopsDescriptor[buildingName][i].directionPath.GetAngleXZ() + 360 + angleBuilding) % 360;
+
+                                    ref NetSegment[] segBuffer = ref nmInstance.m_segments.m_buffer;
+                                    for (int j = 0; j < 8; j++)
+                                    {
+                                        ushort segment = nmInstance.m_nodes.m_buffer[x].GetSegment(j);
+                                        if (segment == 0)
+                                        {
+                                            continue;
+                                        }
+                                        float angleDir;
+                                        PathUnit.Position path1;
+                                        PathUnit.Position path2;
+                                        if (segBuffer[segment].m_startNode == x)
+                                        {
+                                            path1 = PathManager.instance.m_pathUnits.m_buffer[nmInstance.m_segments.m_buffer[segment].m_path].m_position00;
+                                            path2 = PathManager.instance.m_pathUnits.m_buffer[nmInstance.m_segments.m_buffer[segment].m_path].m_position01;
+                                        }
+                                        else
+                                        {
+                                            PathManager.instance.m_pathUnits.m_buffer[nmInstance.m_segments.m_buffer[segment].m_path].GetLast2Positions(out path2, out path1);
+
+                                        }
+                                        angleDir = ((segBuffer[path2.m_segment].GetBezier().Position(path2.m_offset / 255f) - segBuffer[path1.m_segment].GetBezier().Position(path1.m_offset / 255f)).GetAngleXZ() + 360) % 360;
+                                        float diff = Mathf.Abs(angleDir - anglePlat);
+                                        LogUtils.DoErrorLog($"ANGLE COMPARISON: diff = {diff} | PLAT = {anglePlat} | SEG = {nmInstance.m_segments.m_buffer[segment].m_startDirection} ({angleDir}) ({buildingName}=>  P[{i}] | L = {nmInstance.m_nodes.m_buffer[x].m_transportLine} )");
+                                        if (diff > 90 && diff < 270)
+                                        {
+                                            result.m_previousStopId = segBuffer[segment].GetOtherNode(x);
+                                        }
+                                        else
+                                        {
+                                            result.m_nextStopId = segBuffer[segment].GetOtherNode(x);
+                                        }
+                                    }
+
                                     if (result.m_destinationId == 0)
                                     {
                                         result.m_destinationId = result.m_nextStopId;
                                     }
-
                                     return result;
                                 }).ToArray();
                             if (DynamicTextPropsMod.DebugMode)

@@ -147,7 +147,7 @@ namespace Klyte.DynamicTextProps.UI
 
             AddTextField(Locale.Get("K45_DTP_TEXT_TAB_TITLE"), out m_textItemName, groupTexts, SetTextItemName);
             m_colorEditorText = groupTexts.AddColorPicker(Locale.Get("K45_DTP_TEXT_COLOR"), Color.white, SetTextColor);
-            KlyteMonoUtils.LimitWidth(m_colorEditorText.parent.GetComponentInChildren<UILabel>(), groupTexts.Self.width / 2, true);
+            KlyteMonoUtils.LimitWidthAndBox(m_colorEditorText.parent.GetComponentInChildren<UILabel>(), groupTexts.Self.width / 2, true);
             AddDropdown(Locale.Get("K45_DTP_TEXT_CONTENT"), out m_dropdownTextContent, groupTexts, GetTextTypeOptions(), SetTextOwnNameContent);
             AddTextField(Locale.Get("K45_DTP_CUSTOM_TEXT"), out m_customText, groupTexts, SetTextCustom);
 
@@ -318,24 +318,24 @@ namespace Klyte.DynamicTextProps.UI
             slider = (UISlider) parentHelper.AddSlider(label, min, max, step, min, onChange);
             slider.GetComponentInParent<UIPanel>().autoLayoutDirection = LayoutDirection.Horizontal;
             slider.GetComponentInParent<UIPanel>().autoFitChildrenVertically = true;
-            KlyteMonoUtils.LimitWidth(slider.parent.GetComponentInChildren<UILabel>(), (parentHelper.Self.width / 2) - 10, true);
+            KlyteMonoUtils.LimitWidthAndBox(slider.parent.GetComponentInChildren<UILabel>(), (parentHelper.Self.width / 2) - 10, true);
         }
 
         protected void AddVector3Field(string label, out UITextField[] fieldArray, UIHelperExtension parentHelper, Action<Vector3> onChange)
         {
             fieldArray = parentHelper.AddVector3Field(label, Vector3.zero, onChange);
-            KlyteMonoUtils.LimitWidth(fieldArray[0].parent.GetComponentInChildren<UILabel>(), (parentHelper.Self.width / 2) - 10, true);
+            KlyteMonoUtils.LimitWidthAndBox(fieldArray[0].parent.GetComponentInChildren<UILabel>(), (parentHelper.Self.width / 2) - 10, true);
         }
 
         protected void AddFloatField(string label, out UITextField field, UIHelperExtension parentHelper, Action<float> onChange, bool acceptNegative)
         {
             field = parentHelper.AddFloatField(label, 0, onChange, acceptNegative);
-            KlyteMonoUtils.LimitWidth(field.parent.GetComponentInChildren<UILabel>(), (parentHelper.Self.width / 2) - 10, true);
+            KlyteMonoUtils.LimitWidthAndBox(field.parent.GetComponentInChildren<UILabel>(), (parentHelper.Self.width / 2) - 10, true);
         }
         protected void AddIntField(string label, out UITextField field, UIHelperExtension parentHelper, Action<int> onChange, bool acceptNegative)
         {
             field = parentHelper.AddIntField(label, 0, onChange, acceptNegative);
-            KlyteMonoUtils.LimitWidth(field.parent.GetComponentInChildren<UILabel>(), (parentHelper.Self.width / 2) - 10, true);
+            KlyteMonoUtils.LimitWidthAndBox(field.parent.GetComponentInChildren<UILabel>(), (parentHelper.Self.width / 2) - 10, true);
         }
         protected void AddDropdown(string title, out UIDropDown dropdown, UIHelperExtension parentHelper, string[] options, OnDropdownSelectionChanged onChange) => AddDropdown(title, out dropdown, out UILabel label, parentHelper, options, onChange);
         protected void AddDropdown(string title, out UIDropDown dropdown, out UILabel label, UIHelperExtension parentHelper, string[] options, OnDropdownSelectionChanged onChange)
@@ -345,14 +345,10 @@ namespace Klyte.DynamicTextProps.UI
             dropdown.GetComponentInParent<UIPanel>().autoLayoutDirection = LayoutDirection.Horizontal;
             dropdown.GetComponentInParent<UIPanel>().autoFitChildrenVertically = true;
             label = dropdown.parent.GetComponentInChildren<UILabel>();
-            KlyteMonoUtils.CreateUIElement(out UIPanel labelContainer, dropdown.parent.transform, "LabelContainer", new Vector4(0, 0, (parentHelper.Self.width / 2) - 10, label.height));
-            labelContainer.autoLayout = true;
-            labelContainer.autoSize = false;
-            labelContainer.zOrder = 0;
-            label.transform.SetParent(labelContainer.transform);
-            KlyteMonoUtils.LimitWidth(label, (parentHelper.Self.width / 2) - 10, true);
+            KlyteMonoUtils.LimitWidthAndBox(label, (parentHelper.Self.width / 2) - 10);
             label.padding.top = 10;
         }
+
 
         protected void AddTextField(string title, out UITextField textField, UIHelperExtension parentHelper, OnTextSubmitted onChange) => AddTextField(title, out textField, out UILabel label, parentHelper, onChange);
 
@@ -363,7 +359,7 @@ namespace Klyte.DynamicTextProps.UI
             textField.GetComponentInParent<UIPanel>().autoLayoutDirection = LayoutDirection.Horizontal;
             textField.GetComponentInParent<UIPanel>().autoFitChildrenVertically = true;
             label = textField.parent.GetComponentInChildren<UILabel>();
-            KlyteMonoUtils.LimitWidth(label, (parentHelper.Self.width / 2) - 10, true);
+            KlyteMonoUtils.LimitWidthAndBox(label, (parentHelper.Self.width / 2) - 10, true);
         }
 
         protected UIButton m_tabModel;

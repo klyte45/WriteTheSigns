@@ -162,14 +162,23 @@ namespace Klyte.DynamicTextProps.Utils
 
              if (ss != ItemClass.SubService.None)
              {
-                 tempBuildingId = BuildingUtils.FindBuilding(position, 100f, ItemClass.Service.PublicTransport, ss, m_defaultAllowedVehicleTypes, Building.Flags.None, Building.Flags.Untouchable);
+                 tempBuildingId = BuildingUtils.FindBuilding(position, 100f, ItemClass.Service.PublicTransport, ss, m_defaultAllowedVehicleTypes, Building.Flags.None, Building.Flags.None);
+
+                 while (BuildingManager.instance.m_buildings.m_buffer[tempBuildingId].m_parentBuilding != 0)
+                 {
+                     tempBuildingId = BuildingManager.instance.m_buildings.m_buffer[tempBuildingId].m_parentBuilding;
+                 }
                  if (BuildingUtils.IsBuildingValidForStation(true, bm, tempBuildingId))
                  {
                      return tempBuildingId;
                  }
              }
 
-             tempBuildingId = BuildingUtils.FindBuilding(position, 100f, ItemClass.Service.PublicTransport, ItemClass.SubService.None, m_defaultAllowedVehicleTypes, Building.Flags.None, Building.Flags.Untouchable);
+             tempBuildingId = BuildingUtils.FindBuilding(position, 100f, ItemClass.Service.PublicTransport, ItemClass.SubService.None, m_defaultAllowedVehicleTypes, Building.Flags.None, Building.Flags.None);
+             while (BuildingManager.instance.m_buildings.m_buffer[tempBuildingId].m_parentBuilding != 0)
+             {
+                 tempBuildingId = BuildingManager.instance.m_buildings.m_buffer[tempBuildingId].m_parentBuilding;
+             }
              if (BuildingUtils.IsBuildingValidForStation(true, bm, tempBuildingId))
              {
                  return tempBuildingId;

@@ -16,7 +16,6 @@
             public ushort m_nextStopId;
             public ushort m_previousStopId;
             public ushort m_destinationId;
-            public bool m_isEndOfLine;
         }
     }
 }
