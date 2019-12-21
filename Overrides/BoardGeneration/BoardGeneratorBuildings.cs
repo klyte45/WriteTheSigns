@@ -593,7 +593,7 @@ namespace Klyte.DynamicTextProps.Overrides
                                         }
                                         angleDir = ((segBuffer[path2.m_segment].GetBezier().Position(path2.m_offset / 255f) - segBuffer[path1.m_segment].GetBezier().Position(path1.m_offset / 255f)).GetAngleXZ() + 360) % 360;
                                         float diff = Mathf.Abs(angleDir - anglePlat);
-                                        LogUtils.DoErrorLog($"ANGLE COMPARISON: diff = {diff} | PLAT = {anglePlat} | SEG = {nmInstance.m_segments.m_buffer[segment].m_startDirection} ({angleDir}) ({buildingName}=>  P[{i}] | L = {nmInstance.m_nodes.m_buffer[x].m_transportLine} )");
+                                        LogUtils.DoLog($"ANGLE COMPARISON: diff = {diff} | PLAT = {anglePlat} | SEG = {nmInstance.m_segments.m_buffer[segment].m_startDirection} ({angleDir}) ({buildingName}=>  P[{i}] | L = {nmInstance.m_nodes.m_buffer[x].m_transportLine} )");
                                         if (diff > 90 && diff < 270)
                                         {
                                             result.m_previousStopId = segBuffer[segment].GetOtherNode(x);
