@@ -9,7 +9,7 @@ using System.IO;
 using System.Reflection;
 using UnityEngine;
 
-[assembly: AssemblyVersion("2.3.0.2")]
+[assembly: AssemblyVersion("2.3.1.0")]
 namespace Klyte.DynamicTextProps
 {
     public class DynamicTextPropsMod : BasicIUserMod<DynamicTextPropsMod, DTPController, DTPPanel>

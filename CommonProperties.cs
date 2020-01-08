@@ -1,5 +1,4 @@
 using Klyte.DynamicTextProps;
-using Klyte.DynamicTextProps.Utils;
 
 namespace Klyte.Commons
 {
@@ -8,6 +7,7 @@ namespace Klyte.Commons
         public static bool DebugMode => DynamicTextPropsMod.DebugMode;
         public static string Version => DynamicTextPropsMod.Version;
         public static string ModName => DynamicTextPropsMod.Instance.SimpleName;
-        public static string Acronym => "DTP";
+        public static string Acronym { get; } = "DTP";
+        public static string ModRootFolder { get; } = DynamicTextPropsMod.FOLDER_NAME;
     }
 }
