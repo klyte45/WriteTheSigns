@@ -14,7 +14,7 @@ using static Klyte.DynamicTextProps.Overrides.BoardGeneratorRoadNodes;
 namespace Klyte.DynamicTextProps.Overrides
 {
 
-    public partial class BoardGeneratorRoadNodes : BoardGeneratorParent<BoardGeneratorRoadNodes, BoardBunchContainerStreetPlateXml, CacheControlStreetPlate, BasicRenderInformation, BoardDescriptorStreetSignXml, BoardTextDescriptorSteetSignXml>, ISerializableDataExtension
+    public partial class BoardGeneratorRoadNodes : BoardGeneratorParent<BoardGeneratorRoadNodes, BoardBunchContainerStreetPlateXml, CacheControlStreetPlate, BasicRenderInformation, BoardDescriptorStreetSignXml, BoardTextDescriptorSteetSignXml>
     {
 
         public bool[] m_updatedStreetPositions;

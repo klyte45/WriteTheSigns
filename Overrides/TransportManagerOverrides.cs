@@ -32,33 +32,26 @@ namespace Klyte.DynamicTextProps.Overrides
                 m_cooldown = 2;
             }
         }
-        public static void BeforeRemoveStop(ref TransportLine __instance, int index)
+        public static void BeforeRemoveStop(ref TransportLine __instance, int index, ushort lineID)
         {
-            ushort num = 0;
+            if ((__instance.m_flags & TransportLine.Flags.Temporary) != TransportLine.Flags.None || __instance.m_stops > NetManager.MAX_NODE_COUNT)
+            {
+                return;
+            }
+            ushort num;
             if (index == -1)
             {
-                if ((__instance.m_flags & TransportLine.Flags.Complete) == TransportLine.Flags.None)
-                {
-                    num = __instance.GetLastStop();
-                }
-                else
-                {
-                    return;
-                }
+                index += __instance.CountStops(lineID);
             }
-            else
+            num = __instance.m_stops;
+            for (int i = 0; i < index && num <= NetManager.MAX_NODE_COUNT; i++)
             {
-                num = __instance.m_stops;
-                for (int i = 0; i < index; i++)
+                num = TransportLine.GetNextStop(num);
+                if (num == __instance.m_stops)
                 {
-                    num = TransportLine.GetNextStop(num);
-                    if (num == __instance.m_stops)
-                    {
-                        break;
-                    }
+                    break;
                 }
             }
-
             DTPLineUtils.PurgeStopCache(num);
         }
         public static void AfterRemoveLine(ushort lineID) => DTPLineUtils.PurgeLineCache(lineID);

@@ -19,7 +19,7 @@ namespace Klyte.DynamicTextProps.Overrides
         {
             RedirectorInstance = KlyteMonoUtils.CreateElement<Redirector>(transform);
             LogUtils.DoLog("Loading Building Manager Overrides");
-            MethodInfo posRename = typeof(BuildingManagerOverrides).GetMethod("OnInstanceRenamed", RedirectorUtils.allFlags);
+            MethodInfo posRename = typeof(BuildingManagerOverrides).GetMethod("OnBuildingRemoved", RedirectorUtils.allFlags);
 
             RedirectorInstance.AddRedirect(typeof(BuildingManager).GetMethod("ReleaseBuilding", RedirectorUtils.allFlags), null, posRename);
 

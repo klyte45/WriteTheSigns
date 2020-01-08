@@ -133,6 +133,7 @@
     <Compile Include="commons\Interfaces\ILibable.cs" />
     <Compile Include="Overrides\BoardGeneration\BasicRenderInformation.cs" />
     <Compile Include="Overrides\BuildingManagerOverrides.cs" />
+    <Compile Include="Overrides\DistrictManagerOverrides.cs" />
     <Compile Include="Tools\BuildingTool.cs" />
     <Compile Include="commons\UI\SpriteNames\LineIconSpriteNames.cs" />
     <Compile Include="UI\Tabs\DTPBuildingEditorTab2.cs" />
@@ -171,7 +172,6 @@
     <Compile Include="Xml\Cache\CacheControl.cs" />
     <Compile Include="Xml\Cache\CacheControlHighwaySign.cs" />
     <Compile Include="Xml\Cache\CacheControlSerializer.cs" />
-    <Compile Include="Overrides\BoardGeneration\DistrictManagerOverrides.cs" />
     <Compile Include="Xml\Containers\IBoardBunchContainer.cs" />
     <Compile Include="Overrides\InstanceManagerOverrides.cs" />
     <Compile Include="Overrides\NetManagerOverrides.cs" />
