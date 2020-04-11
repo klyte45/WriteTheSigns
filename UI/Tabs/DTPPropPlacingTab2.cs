@@ -387,8 +387,8 @@ namespace Klyte.DynamicTextProps.UI
         private void EnablePickTool()
         {
             OnSegmentSet(0);
-            DynamicTextPropsMod.Instance.Controller.RoadSegmentToolInstance.OnSelectSegment += OnSegmentSet;
-            DynamicTextPropsMod.Instance.Controller.RoadSegmentToolInstance.enabled = true;
+            DynamicTextPropsMod.Controller.RoadSegmentToolInstance.OnSelectSegment += OnSegmentSet;
+            DynamicTextPropsMod.Controller.RoadSegmentToolInstance.enabled = true;
         }
 
         private void OnSegmentSet(ushort segmentId)

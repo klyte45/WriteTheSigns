@@ -368,7 +368,7 @@ namespace Klyte.DynamicTextProps.UI
         {
             if (m_tabModel == null)
             {
-                KlyteMonoUtils.CreateUIElement(out UIButton tabTemplate, DynamicTextPropsMod.Instance.Controller.gameObject.transform, "DTPTabTemplate");
+                KlyteMonoUtils.CreateUIElement(out UIButton tabTemplate, DynamicTextPropsMod.Controller.gameObject.transform, "DTPTabTemplate");
                 KlyteMonoUtils.InitButton(tabTemplate, false, "GenericTab");
                 tabTemplate.autoSize = true;
                 tabTemplate.textPadding = new RectOffset(10, 10, 10, 7);

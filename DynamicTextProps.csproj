@@ -79,25 +79,32 @@
     <Compile Include="commons\Extensors\UI\UITabstripAutoResize.cs" />
     <Compile Include="commons\Interfaces\BasicIUserMod.cs" />
     <Compile Include="commons\Interfaces\BasicIUserModSimplified.cs" />
+    <Compile Include="commons\Interfaces\BasicKPanel.cs" />
+    <Compile Include="commons\Interfaces\IController.cs" />
     <Compile Include="commons\Interfaces\IEnumerableIndex.cs" />
     <Compile Include="commons\Interfaces\IFontConfigContainer.cs" />
     <Compile Include="commons\Interfaces\IIdentifiable.cs" />
     <Compile Include="commons\Interfaces\ILibable.cs" />
     <Compile Include="commons\Interfaces\IPropColorContainer.cs" />
     <Compile Include="commons\Interfaces\ITimeable.cs" />
+    <Compile Include="commons\Interfaces\IViewStartActions.cs" />
     <Compile Include="commons\Interfaces\Warehouse\BasicSingletonSerializableDataExtension.cs" />
     <Compile Include="commons\Interfaces\Warehouse\ConfigWarehouseBase.cs" />
     <Compile Include="commons\Interfaces\Warehouse\ExtensionInterface2LevelIntImpl.cs" />
     <Compile Include="commons\Interfaces\Warehouse\ExtensionInterfaceDictionaryByEnumImpl.cs" />
     <Compile Include="commons\Interfaces\Warehouse\ExtensionInterfaceDictionaryByUintImpl.cs" />
+    <Compile Include="commons\Interfaces\Warehouse\ExtensionInterfaceDictionaryStructValSimplImpl.cs" />
     <Compile Include="commons\Interfaces\Warehouse\ExtensionInterfaceListImpl .cs" />
     <Compile Include="commons\Interfaces\Warehouse\ExtensionInterfaceSingleImpl.cs" />
     <Compile Include="commons\Interfaces\Warehouse\ExtensorContainer.cs" />
     <Compile Include="commons\Redirectors\UIDynamicFontRendererRedirector.cs" />
+    <Compile Include="commons\Redirectors\UIDynamicPanelsRedirector.cs" />
+    <Compile Include="commons\Redirectors\UIViewRedirector.cs" />
     <Compile Include="commons\Tools\BasicBuildingTool.cs" />
     <Compile Include="commons\Tools\BasicNetTool.cs" />
     <Compile Include="commons\UI\AVOPreviewRenderer.cs" />
     <Compile Include="commons\UI\i18n\KlyteLocaleManager.cs" />
+    <Compile Include="commons\UI\K45DialogControl.cs" />
     <Compile Include="commons\UI\SpriteNames\CommonsSpriteNames.cs" />
     <Compile Include="commons\UI\SpriteNames\LineIconSpriteNames.cs" />
     <Compile Include="commons\UI\TLMAgesChartPanel.cs" />
@@ -133,6 +140,7 @@
     <Compile Include="commons\Utils\TextureScaler.cs" />
     <Compile Include="commons\Utils\UtilitiesClasses\CardinalPoint .cs" />
     <Compile Include="commons\Utils\UtilitiesClasses\ColorList.cs" />
+    <Compile Include="commons\Utils\UtilitiesClasses\EntryStructValueContainerStructVal.cs" />
     <Compile Include="commons\Utils\UtilitiesClasses\LibableList.cs" />
     <Compile Include="commons\Utils\UtilitiesClasses\MutableTuple.cs" />
     <Compile Include="commons\Utils\UtilitiesClasses\NonSequentialList.cs" />
@@ -141,6 +149,7 @@
     <Compile Include="commons\Utils\UtilitiesClasses\SimpleEnumerableList.cs" />
     <Compile Include="commons\Utils\UtilitiesClasses\SimpleNonSequentialList.cs" />
     <Compile Include="commons\Utils\UtilitiesClasses\SimpleXmlDictionary.cs" />
+    <Compile Include="commons\Utils\UtilitiesClasses\SimpleXmlDictionaryStructVal.cs" />
     <Compile Include="commons\Utils\UtilitiesClasses\SimpleXmlHashSet.cs" />
     <Compile Include="commons\Utils\UtilitiesClasses\SimpleXmlList.cs" />
     <Compile Include="commons\Utils\UtilitiesClasses\TimeableList.cs" />
@@ -357,7 +366,6 @@
     <Content Include="commons\UI\Images\lineFormat.png" />
     <Content Include="commons\UI\Images\lineFormat.psd" />
     <Content Include="commons\UI\Images\sprites.psd" />
-    <Content Include="commons\UI\VersionNotes.txt" />
   </ItemGroup>
   <PropertyGroup>
     <PostBuildEvent>xcopy /Y "$(TargetDir)0Harmony.dll" "$(ProjectDir)\_requiredDLLs\"

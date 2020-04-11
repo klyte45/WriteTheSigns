@@ -1,4 +1,5 @@
-﻿using Klyte.Commons.Utils;
+﻿using Klyte.Commons.Interfaces;
+using Klyte.Commons.Utils;
 using Klyte.DynamicTextProps.Libraries;
 using Klyte.DynamicTextProps.Overrides;
 using Klyte.DynamicTextProps.Tools;
@@ -12,7 +13,7 @@ using UnityEngine;
 namespace Klyte.DynamicTextProps
 {
 
-    public class DTPController : MonoBehaviour
+    public class DTPController : BaseController<DynamicTextPropsMod, DTPController>
     {
         public RoadSegmentTool RoadSegmentToolInstance => FindObjectOfType<RoadSegmentTool>();
         public BuildingEditorTool BuildingEditorToolInstance => FindObjectOfType<BuildingEditorTool>();

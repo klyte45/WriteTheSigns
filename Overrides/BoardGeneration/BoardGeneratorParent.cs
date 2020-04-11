@@ -495,7 +495,7 @@ namespace Klyte.DynamicTextProps.Overrides
 
         protected string ApplyAbbreviations(string name)
         {
-            if (DynamicTextPropsMod.Instance.Controller.AbbreviationFiles.TryGetValue(BoardGeneratorRoadNodes.Instance.LoadedStreetSignDescriptor.AbbreviationFile ?? "", out Dictionary<string, string> translations))
+            if (DynamicTextPropsMod.Controller.AbbreviationFiles.TryGetValue(BoardGeneratorRoadNodes.Instance.LoadedStreetSignDescriptor.AbbreviationFile ?? "", out Dictionary<string, string> translations))
             {
                 foreach (string key in translations.Keys.Where(x => x.Contains(" ")))
                 {

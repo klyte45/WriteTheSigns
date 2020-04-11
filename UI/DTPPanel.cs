@@ -1,43 +1,28 @@
 ﻿using ColossalFramework.Globalization;
 using ColossalFramework.UI;
+using Klyte.Commons.Interfaces;
 using Klyte.Commons.Utils;
 using UnityEngine;
 
 namespace Klyte.DynamicTextProps.UI
 {
 
-    public class DTPPanel : UICustomControl
+    public class DTPPanel : BasicKPanel<DynamicTextPropsMod, DTPController, DTPPanel>
     {
-        private UIPanel m_controlContainer;
-
-        public static DTPPanel Instance { get; private set; }
-        public UIPanel MainPanel { get; private set; }
-
-        private UIPanel m_mainPanel;
 
         private UITabstrip m_stripMain;
+        public override float PanelWidth => 875;
+
+        public override float PanelHeight => 850;
 
         #region Awake
-        public void Awake()
+        protected override void AwakeActions()
         {
-            Instance = this;
-
-            m_controlContainer = GetComponent<UIPanel>();
-            m_controlContainer.area = new Vector4(0, 0, 0, 0);
-            m_controlContainer.isVisible = false;
-            m_controlContainer.name = "DTPPanel";
-
-            KlyteMonoUtils.CreateUIElement(out m_mainPanel, m_controlContainer.transform, "DTPListPanel", new Vector4(0, 0, 875, 850));
-            m_mainPanel.backgroundSprite = "MenuPanel2";
-
-            CreateTitleBar();
-
-
-            KlyteMonoUtils.CreateUIElement(out m_stripMain, m_mainPanel.transform, "DTPTabstrip", new Vector4(5, 40, m_mainPanel.width - 10, 40));
+            KlyteMonoUtils.CreateUIElement(out m_stripMain, MainPanel.transform, "DTPTabstrip", new Vector4(5, 40, MainPanel.width - 10, 40));
             m_stripMain.startSelectedIndex = -1;
             m_stripMain.selectedIndex = -1;
 
-            KlyteMonoUtils.CreateUIElement(out UITabContainer tabContainer, m_mainPanel.transform, "DTPTabContainer", new Vector4(0, 80, m_mainPanel.width, m_mainPanel.height - 80));
+            KlyteMonoUtils.CreateUIElement(out UITabContainer tabContainer, MainPanel.transform, "DTPTabContainer", new Vector4(0, 80, MainPanel.width, MainPanel.height - 80));
             m_stripMain.tabPages = tabContainer;
 
             CreateTab<DTPPropPlacingTab2>("InfoIconEscapeRoutes", "K45_DTP_HIGHWAY_SIGN_CONFIG_TAB", "DTPHighwaySign");
@@ -45,24 +30,7 @@ namespace Klyte.DynamicTextProps.UI
             CreateTab<DTPMileageMarkerTab3>("LocationMarkerNormal", "K45_DTP_MILEAGE_MARKERS_CONFIG_TAB", "DTPMileageMarkerTab");
             CreateTab<DTPBuildingEditorTab2>("IconAssetBuilding", "K45_DTP_BUILDING_CONFIG_TAB", "DTPBuildingEditorTab");
         }
-
-        private void CreateTitleBar()
-        {
-            KlyteMonoUtils.CreateUIElement(out UILabel titlebar, m_mainPanel.transform, "DTPListPanel", new Vector4(75, 10, m_mainPanel.width - 150, 20));
-            titlebar.autoSize = false;
-            titlebar.text = DynamicTextPropsMod.Instance.GeneralName;
-            titlebar.textAlignment = UIHorizontalAlignment.Center;
-            //KlyteMonoUtils.CreateDragHandle(titlebar, KlyteModsPanel.instance.mainPanel);
-
-            KlyteMonoUtils.CreateUIElement(out UIButton closeButton, m_mainPanel.transform, "CloseButton", new Vector4(m_mainPanel.width - 37, 5, 32, 32));
-            KlyteMonoUtils.InitButton(closeButton, false, "buttonclose", true);
-            closeButton.hoveredBgSprite = "buttonclosehover";
-            closeButton.eventClick += (x, y) => DynamicTextPropsMod.Instance.ClosePanel();
-
-            KlyteMonoUtils.CreateUIElement(out UISprite logo, m_mainPanel.transform, "DTPLogo", new Vector4(22, 5f, 32, 32));
-            logo.spriteName = DynamicTextPropsMod.Instance.IconName;
-            //KlyteMonoUtils.CreateDragHandle(logo, KlyteModsPanel.instance.mainPanel);
-        }
+      
 
         private static UIButton CreateTabTemplate()
         {
@@ -83,7 +51,7 @@ namespace Klyte.DynamicTextProps.UI
 
             KlyteMonoUtils.CreateUIElement(out UIPanel contentContainer, null);
             contentContainer.name = "Container";
-            contentContainer.area = new Vector4(15, 0, m_mainPanel.width - 30, m_mainPanel.height - 70);
+            contentContainer.area = new Vector4(15, 0, MainPanel.width - 30, MainPanel.height - 70);
             m_stripMain.AddTab(objectName, tab.gameObject, contentContainer.gameObject);
 
 

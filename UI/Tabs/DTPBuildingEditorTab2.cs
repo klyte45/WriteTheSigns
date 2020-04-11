@@ -467,8 +467,8 @@ namespace Klyte.DynamicTextProps.UI
         private void EnablePickTool()
         {
             OnBuildingSet(null);
-            DynamicTextPropsMod.Instance.Controller.BuildingEditorToolInstance.OnBuildingSelect += OnBuildingSet;
-            DynamicTextPropsMod.Instance.Controller.BuildingEditorToolInstance.enabled = true;
+            DynamicTextPropsMod.Controller.BuildingEditorToolInstance.OnBuildingSelect += OnBuildingSet;
+            DynamicTextPropsMod.Controller.BuildingEditorToolInstance.enabled = true;
         }
 
         private void OnBuildingSet(ushort id) => OnBuildingSet(BoardGeneratorBuildings.GetReferenceModelName(ref BuildingManager.instance.m_buildings.m_buffer[id]));

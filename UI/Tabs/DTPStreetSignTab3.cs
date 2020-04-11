@@ -40,12 +40,12 @@ namespace Klyte.DynamicTextProps.UI
             AddRefreshButtonForDropdown(m_abbreviationDropdown, () =>
             {
                 m_loadingAbbreviations = true;
-                DynamicTextPropsMod.Instance.Controller.ReloadAbbreviationFiles();
+                DynamicTextPropsMod.Controller.ReloadAbbreviationFiles();
                 var abbreviationOptions = new List<string>()
                     {
                         Locale.Get("K45_DTP_NO_ABBREVIATION_FILE_OPTION")
                     };
-                abbreviationOptions.AddRange(DynamicTextPropsMod.Instance.Controller.AbbreviationFiles.Keys.OrderBy(x => x));
+                abbreviationOptions.AddRange(DynamicTextPropsMod.Controller.AbbreviationFiles.Keys.OrderBy(x => x));
                 m_abbreviationDropdown.items = abbreviationOptions.ToArray();
                 m_abbreviationDropdown.selectedIndex = abbreviationOptions.IndexOf(BoardGeneratorRoadNodes.Instance.LoadedStreetSignDescriptor.AbbreviationFile);
                 if (m_abbreviationDropdown.selectedIndex == -1)
