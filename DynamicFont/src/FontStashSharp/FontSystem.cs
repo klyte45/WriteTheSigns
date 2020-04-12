@@ -64,7 +64,7 @@ namespace FontStashSharp
 
         public List<FontAtlas> Atlases { get; } = new List<FontAtlas>();
 
-        public event EventHandler CurrentAtlasFull;
+        public event Action CurrentAtlasFull;
 
         public FontSystem(int width, int height, int blur = 0)
         {
@@ -695,24 +695,26 @@ namespace FontStashSharp
             int gh = Mathf.RoundToInt(glyph.Bounds.height);
             if (!currentAtlas.AddRect(gw, gh, ref gx, ref gy))
             {
-                CurrentAtlasFull?.Invoke(this, EventArgs.Empty);
-
-                // This code will force creation of new atlas with 4x size
-                _currentAtlas = null;
-                if (_size.x * _size.y < 8192 * 8192)
+                CurrentAtlasFull?.Invoke();
+                do
                 {
-                    _size *= 2;
-                }
-                glyphs.Clear();
-                glyphs[codepoint] = glyph;
+                    // This code will force creation of new atlas with 4x size
+                    _currentAtlas = null;
+                    if (_size.x * _size.y < 8192 * 8192)
+                    {
+                        _size *= 2;
+                    }
+                    else
+                    {
+                        throw new Exception(string.Format("Could not add rect to the newly created atlas. gw={0}, gh={1} - MAP REACHED 8K * 8K LIMIT!", gw, gh));
+                    }
+                    glyphs.Clear();
+                    glyphs[codepoint] = glyph;
 
-                currentAtlas = CurrentAtlas;
+                    currentAtlas = CurrentAtlas;
 
-                // Try to add again
-                if (!currentAtlas.AddRect(gw, gh, ref gx, ref gy))
-                {
-                    throw new Exception(string.Format("Could not add rect to the newly created atlas. gw={0}, gh={1}", gw, gh));
-                }
+                    // Try to add again
+                } while (!currentAtlas.AddRect(gw, gh, ref gx, ref gy));
             }
 
             glyph.Bounds.x = gx;

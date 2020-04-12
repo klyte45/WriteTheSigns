@@ -21,7 +21,7 @@ using static Klyte.DynamicTextProps.Overrides.BoardGeneratorBuildings;
 namespace Klyte.DynamicTextProps.Overrides
 {
 
-    public partial class BoardGeneratorBuildings : BoardGeneratorParent<BoardGeneratorBuildings, BoardBunchContainerBuilding, DTPBuildingsData,  BoardDescriptorBuildingXml, BoardTextDescriptorBuildingsXml>
+    public partial class BoardGeneratorBuildings : BoardGeneratorParent<BoardGeneratorBuildings, BoardBunchContainerBuilding, DTPBuildingsData, BoardDescriptorBuildingXml, BoardTextDescriptorBuildingsXml>
     {
 
         public Dictionary<string, UIFont> m_fontCache = new Dictionary<string, UIFont>();
@@ -67,6 +67,7 @@ namespace Klyte.DynamicTextProps.Overrides
         #region Initialize
         public override void Initialize()
         {
+            return;
             BuildSurfaceFont(out m_font, Data.GlobalConfiguration.DefaultFont);
             LoadAllBuildingConfigurations();
 
@@ -98,12 +99,12 @@ namespace Klyte.DynamicTextProps.Overrides
 
         protected override void OnChangeFont(string fontName) => Data.GlobalConfiguration.DefaultFont = fontName;
 
-        private static string DefaultFilename { get; } = $"{DynamicTextPropsMod.m_defaultFileNameXml}.xml";
+        private static string DefaultFilename { get; } = $"{DTPController.m_defaultFileNameXml}.xml";
         public void LoadAllBuildingConfigurations()
         {
             FileUtils.ScanPrefabsFolders<BuildingInfo>(DefaultFilename, LoadDescriptorsFromXml);
             var errorList = new List<string>();
-            foreach (string filename in Directory.GetFiles(DynamicTextPropsMod.DefaultBuildingsConfigurationFolder, "*.xml"))
+            foreach (string filename in Directory.GetFiles(DTPController.DefaultBuildingsConfigurationFolder, "*.xml"))
             {
                 try
                 {
@@ -836,7 +837,7 @@ namespace Klyte.DynamicTextProps.Overrides
 
         private static void SaveInCommonFolder(XmlSerializer serializer, BuildingGroupDescriptorXml item, bool force = false)
         {
-            string filePath = DynamicTextPropsMod.DefaultBuildingsConfigurationFolder + Path.DirectorySeparatorChar + $"{DynamicTextPropsMod.m_defaultFileNameXml}_{item.BuildingName}.xml";
+            string filePath = DTPController.DefaultBuildingsConfigurationFolder + Path.DirectorySeparatorChar + $"{DTPController.m_defaultFileNameXml}_{item.BuildingName}.xml";
             SaveInPath(serializer, item, force, filePath);
         }
         public static bool SaveInAssetFolder(string buildingName)

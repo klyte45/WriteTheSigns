@@ -51,7 +51,6 @@ namespace FontStashSharp
             Width = w;
             Height = h;
             Nodes = new FontAtlasNode[count];
-            count = 0;
             Nodes[0].X = 0;
             Nodes[0].Y = 0;
             Nodes[0].Width = w;

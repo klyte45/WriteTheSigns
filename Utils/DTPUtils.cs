@@ -17,16 +17,16 @@ namespace Klyte.DynamicTextProps.Utils
             List<string> items = Font.GetOSInstalledFontNames().ToList();
             items.Insert(0, Locale.Get("K45_DTP_DEFAULT_FONT_LABEL"));
             target.items = items.ToArray();
-            string filename = BoardGeneratorParent<BG>.Instance.DrawFont.baseFont.fontNames[0];
-            if (items.Contains(filename))
-            {
-                target.selectedIndex = items.IndexOf(filename);
-            }
-            else
-            {
+            //string filename = BoardGeneratorParent<BG>.Instance.DrawFont.baseFont.fontNames[0];
+            //if (items.Contains(filename))
+            //{
+            //    target.selectedIndex = items.IndexOf(filename);
+            //}
+            //else
+            //{
                 target.selectedIndex = 0;
                 BoardGeneratorParent<BG>.Instance.ChangeFont(null);
-            }
+            //}
         }
     }
 }

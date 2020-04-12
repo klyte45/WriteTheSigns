@@ -382,6 +382,7 @@
     <None Include="commons\README.md" />
     <None Include="commons\UI\Images\lineFormats.psd" />
     <None Include="README.md" />
+    <EmbeddedResource Include="UI\DefaultFont\SourceSansPro-Regular.ttf" />
     <None Include="UI\Images\sprites.psd" />
     <EmbeddedResource Include="UI\VersionNotes.txt" />
   </ItemGroup>

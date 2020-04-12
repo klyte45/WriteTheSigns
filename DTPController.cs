@@ -38,7 +38,7 @@ namespace Klyte.DynamicTextProps
 
         public void ReloadAbbreviationFiles()
         {
-            AbbreviationFiles = LoadAbbreviationFiles(DynamicTextPropsMod.AbbreviationFilesPath);
+            AbbreviationFiles = LoadAbbreviationFiles(AbbreviationFilesPath);
             BoardGeneratorRoadNodes.Instance.ClearCacheStreetName();
             BoardGeneratorRoadNodes.Instance.ClearCacheStreetQualifier();
         }
@@ -60,6 +60,17 @@ namespace Klyte.DynamicTextProps
         }
 
 
+        public static readonly string FOLDER_NAME = FileUtils.BASE_FOLDER_PATH + "DynamicTextProps";
+        public const string m_defaultFileNameXml = "DefaultBuildingsConfig";
+        public const string DEFAULT_GAME_BUILDINGS_CONFIG_FOLDER = "BuildingsDefaultPlacing";
+        public const string DEFAULT_GAME_VEHICLES_CONFIG_FOLDER = "VehiclesDefaultPlacing";
+        public const string ABBREVIATION_FILES_FOLDER = "AbbreviationFiles";
+        public const string FONTS_FILES_FOLDER = "Fonts";
+
+        public static string DefaultBuildingsConfigurationFolder { get; } = FOLDER_NAME + Path.DirectorySeparatorChar + DEFAULT_GAME_BUILDINGS_CONFIG_FOLDER;
+        public static string DefaultVehiclesConfigurationFolder { get; } = FOLDER_NAME + Path.DirectorySeparatorChar + DEFAULT_GAME_VEHICLES_CONFIG_FOLDER;
+        public static string AbbreviationFilesPath { get; } = FOLDER_NAME + Path.DirectorySeparatorChar + ABBREVIATION_FILES_FOLDER;
+        public static string FontFilesPath { get; } = FOLDER_NAME + Path.DirectorySeparatorChar + FONTS_FILES_FOLDER;
     }
 
 }

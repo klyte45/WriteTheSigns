@@ -15,7 +15,7 @@ namespace Klyte.DynamicTextProps.Libraries
         where DESC : ILibable
     {
         protected abstract string XmlName { get; }
-        private static string DefaultXmlFileBasePath => DynamicTextPropsMod.FOLDER_NAME + Path.DirectorySeparatorChar;
+        private static string DefaultXmlFileBasePath => DTPController.FOLDER_NAME + Path.DirectorySeparatorChar;
         private string DefaultXmlFileBaseFullPath => $"{DefaultXmlFileBasePath}{XmlName}.xml";
 
         private static LIB m_instance;

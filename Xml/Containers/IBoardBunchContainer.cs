@@ -16,6 +16,7 @@ namespace Klyte.DynamicTextProps.Overrides
         [XmlIgnore]
         internal CC[] m_boardsData;
 
+        [XmlIgnore]
         public BasicRenderInformation NameSubInfo { get; set; }
 
         public bool HasAnyBoard() => (m_boardsData?.Where(y => y != null)?.Count() ?? 0) > 0;

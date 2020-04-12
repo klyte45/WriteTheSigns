@@ -58,7 +58,7 @@ namespace SpriteFontPlus
             set => _fontSystem.DefaultCharacter = value;
         }
 
-        public event EventHandler CurrentAtlasFull
+        public event Action CurrentAtlasFull
         {
             add {
                 _fontSystem.CurrentAtlasFull += value;
@@ -117,8 +117,8 @@ namespace SpriteFontPlus
 
         public void Reset() => _fontSystem.Reset();
 
-        public static DynamicSpriteFont FromTtf(byte[] ttf, int defaultSize, int textureWidth = 1024, int textureHeight = 1024, int blur = 0) => new DynamicSpriteFont(ttf, defaultSize, textureWidth, textureHeight, blur);
+        public static DynamicSpriteFont FromTtf(byte[] ttf, int defaultSize, int textureWidth = 4, int textureHeight = 4, int blur = 0) => new DynamicSpriteFont(ttf, defaultSize, textureWidth, textureHeight, blur);
 
-        public static DynamicSpriteFont FromTtf(Stream ttfStream, int defaultSize, int textureWidth = 1024, int textureHeight = 1024, int blur = 0) => FromTtf(ttfStream.ToByteArray(), defaultSize, textureWidth, textureHeight, blur);
+        public static DynamicSpriteFont FromTtf(Stream ttfStream, int defaultSize, int textureWidth = 4, int textureHeight = 4, int blur = 0) => FromTtf(ttfStream.ToByteArray(), defaultSize, textureWidth, textureHeight, blur);
     }
 }

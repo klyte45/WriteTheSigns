@@ -10,7 +10,6 @@ using SpriteFontPlus;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Text;
 using UnityEngine;
@@ -20,36 +19,28 @@ namespace Klyte.DynamicTextProps.Overrides
 
     public abstract class BoardGeneratorParent<BG> : Redirector, IRedirectable where BG : BoardGeneratorParent<BG>
     {
+
         public abstract UIDynamicFont DrawFont { get; }
         protected uint lastFontUpdateFrame = SimulationManager.instance.m_currentTickIndex;
         protected static Shader TextShader = Shader.Find("Custom/Props/Prop/Default") ?? DistrictManager.instance.m_properties.m_areaNameShader;
 
         public static BG Instance { get; protected set; }
 
-        protected void BuildSurfaceFont(out UIDynamicFont font, string fontName)
-        {
-            font = ScriptableObject.CreateInstance<UIDynamicFont>();
-
-            var fontList = new List<string> { fontName };
-            fontList.AddRange(DistrictManager.instance.m_properties?.m_areaNameFont?.baseFont?.fontNames?.ToList() ?? new List<string>());
-            font.baseFont = Font.CreateDynamicFontFromOSFont(fontList.ToArray(), 64);
-            font.lineHeight = 70;
-            font.baseline = 66;
-            font.size = 64;
-        }
+        protected void BuildSurfaceFont(out UIDynamicFont font, string fontName) => font = null;//font = ScriptableObject.CreateInstance<UIDynamicFont>();//var fontList = new List<string> { fontName };//fontList.AddRange(DistrictManager.instance.m_properties?.m_areaNameFont?.baseFont?.fontNames?.ToList() ?? new List<string>());//font.baseFont = Font.CreateDynamicFontFromOSFont(fontList.ToArray(), 64);//font.lineHeight = 70;//font.baseline = 66;//font.size = 64;
 
         public void ChangeFont(string newFont)
         {
-            var fontList = new List<string>();
-            if (newFont != null)
-            {
-                fontList.Add(newFont);
-            }
-            fontList.AddRange(DistrictManager.instance.m_properties.m_areaNameFont.baseFont.fontNames.ToList());
-            DrawFont.baseFont = Font.CreateDynamicFontFromOSFont(fontList.ToArray(), 64);
-            lastFontUpdateFrame = SimulationManager.instance.m_currentTickIndex;
-            OnChangeFont(DrawFont.baseFont.name != newFont ? null : newFont);
-            Reset();
+
+            //var fontList = new List<string>();
+            //if (newFont != null)
+            //{
+            //    fontList.Add(newFont);
+            //}
+            //fontList.AddRange(DistrictManager.instance.m_properties.m_areaNameFont.baseFont.fontNames.ToList());
+            //DrawFont.baseFont = Font.CreateDynamicFontFromOSFont(fontList.ToArray(), 64);
+            //lastFontUpdateFrame = SimulationManager.instance.m_currentTickIndex;
+            //OnChangeFont(DrawFont.baseFont.name != newFont ? null : newFont);
+            //Reset();
         }
         protected virtual void OnChangeFont(string fontName) { }
 
@@ -64,8 +55,8 @@ namespace Klyte.DynamicTextProps.Overrides
         public virtual void Awake() => Instance = this as BG;
     }
 
-    public abstract class BoardGeneratorParent<BG, BBC, D,  BD, BTD> : BoardGeneratorParent<BG>
-        where BG : BoardGeneratorParent<BG, BBC, D,  BD, BTD>
+    public abstract class BoardGeneratorParent<BG, BBC, D, BD, BTD> : BoardGeneratorParent<BG>
+        where BG : BoardGeneratorParent<BG, BBC, D, BD, BTD>
         where BBC : IBoardBunchContainer
         where D : DTPBaseData<D, BBC>, new()
         where BD : BoardDescriptorParentXml<BD, BTD>
@@ -101,6 +92,8 @@ namespace Klyte.DynamicTextProps.Overrides
         {
             base.Awake();
             Initialize();
+
+            _font.CurrentAtlasFull += Reset;
 
             NetManagerOverrides.EventSegmentNameChanged += OnNameSeedChanged;
             DistrictManagerOverrides.EventOnDistrictChanged += OnDistrictChanged;
@@ -633,7 +626,7 @@ namespace Klyte.DynamicTextProps.Overrides
             return result;
         }
 
-        private static DynamicSpriteFont _font = DynamicSpriteFont.FromTtf(File.ReadAllBytes(@"C:\WINDOWS\Fonts\HelveticaWorld-Regular.ttf"), 120);
+        private static DynamicSpriteFont _font = DynamicSpriteFont.FromTtf(KlyteResourceLoader.LoadResourceData("UI.DefaultFont.SourceSansPro-Regular.ttf"), 160);
         protected void RefreshTextData(ref BasicRenderInformation result, string text, UIFont overrideFont = null)
         {
             if (result == null)
@@ -645,7 +638,7 @@ namespace Klyte.DynamicTextProps.Overrides
                 result.m_frameDrawTime = uint.MaxValue;
                 return;
             }
-            _font.DrawString(result, text, default, Color.white);
+            _font.DrawString(result, text, default, Color.white, Vector2.one * .75F);
         }
 
         private Vector3[] CenterVertices(PoolList<Vector3> points)

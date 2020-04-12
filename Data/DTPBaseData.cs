@@ -20,8 +20,7 @@ namespace Klyte.DynamicTextProps.Data
         }
         public void ResetBoards() => BoardSerialData = null;
 
-        [XmlArray("BoardsContainer")]
-        [XmlArrayItem("Board")]
+        [XmlElement("BoardsContainer")]
         public SimpleNonSequentialList<BBC> BoardSerialData
         {
             get {
