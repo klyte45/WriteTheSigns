@@ -1,5 +1,6 @@
 ﻿using ColossalFramework.Globalization;
 using Klyte.Commons.Utils;
+using Klyte.DynamicTextProps.Data;
 using Klyte.DynamicTextProps.Libraries;
 using Klyte.DynamicTextProps.Overrides;
 using static Klyte.DynamicTextProps.Overrides.BoardGeneratorHighwayMileage;
@@ -7,7 +8,7 @@ using static Klyte.DynamicTextProps.Overrides.BoardGeneratorHighwayMileage;
 namespace Klyte.DynamicTextProps.UI
 {
 
-    internal class DTPMileageMarkerTab3 : DTPNoPropEditorTemplateTab<BoardGeneratorHighwayMileage, IBoardBunchContainer<CacheControl, BasicRenderInformation>, CacheControl, BasicRenderInformation, BoardDescriptorMileageMarkerXml, BoardTextDescriptorMileageMarkerXml, DTPLibTextMeshMileageMarker, DTPLibMileageMarkerGroup>
+    internal class DTPMileageMarkerTab3 : DTPNoPropEditorTemplateTab<BoardGeneratorHighwayMileage, IBoardBunchContainer<CacheControl>, DTPHighwayMileageData, BoardDescriptorMileageMarkerXml, BoardTextDescriptorMileageMarkerXml, DTPLibTextMeshMileageMarker, DTPLibMileageMarkerGroup>
     {
         protected override BoardDescriptorMileageMarkerXml CurrentConfig
         {

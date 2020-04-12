@@ -1,6 +1,7 @@
 ﻿using ColossalFramework.Globalization;
 using ColossalFramework.UI;
 using Klyte.Commons.Utils;
+using Klyte.DynamicTextProps.Data;
 using Klyte.DynamicTextProps.Libraries;
 using Klyte.DynamicTextProps.Overrides;
 using System;
@@ -12,7 +13,7 @@ using static Klyte.DynamicTextProps.Overrides.BoardGeneratorRoadNodes;
 namespace Klyte.DynamicTextProps.UI
 {
 
-    internal class DTPStreetSignTab3 : DTPNoPropEditorTemplateTab<BoardGeneratorRoadNodes, BoardBunchContainerStreetPlateXml, CacheControlStreetPlate, BasicRenderInformation, BoardDescriptorStreetSignXml, BoardTextDescriptorSteetSignXml, DTPLibTextMeshStreetPlate, DTPLibStreetPropGroup>
+    internal class DTPStreetSignTab3 : DTPNoPropEditorTemplateTab<BoardGeneratorRoadNodes, IBoardBunchContainer<CacheControlStreetPlate>, DTPRoadNodesData, BoardDescriptorStreetSignXml, BoardTextDescriptorSteetSignXml, DTPLibTextMeshStreetPlate, DTPLibStreetPropGroup>
     {
         private UICheckBox m_useDistrictColorCheck;
         private UIColorField m_propColorPicker;
@@ -65,7 +66,7 @@ namespace Klyte.DynamicTextProps.UI
 
         protected void SetRoadQualifierExtractionMode(int idx)
         {
-            BoardGeneratorRoadNodes.Instance.LoadedStreetSignDescriptor.RoadQualifierExtraction = (RoadQualifierExtractionMode) idx;
+            BoardGeneratorRoadNodes.Instance.LoadedStreetSignDescriptor.RoadQualifierExtraction = (RoadQualifierExtractionMode)idx;
             BoardGeneratorRoadNodes.Instance.ClearCacheStreetName();
             BoardGeneratorRoadNodes.Instance.ClearCacheStreetQualifier();
         }

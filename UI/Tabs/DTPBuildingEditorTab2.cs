@@ -3,6 +3,7 @@ using ColossalFramework.Globalization;
 using ColossalFramework.UI;
 using Klyte.Commons.Extensors;
 using Klyte.Commons.Utils;
+using Klyte.DynamicTextProps.Data;
 using Klyte.DynamicTextProps.Libraries;
 using Klyte.DynamicTextProps.Overrides;
 using System;
@@ -14,7 +15,7 @@ using static Klyte.DynamicTextProps.Overrides.BoardGeneratorBuildings;
 namespace Klyte.DynamicTextProps.UI
 {
 
-    internal class DTPBuildingEditorTab2 : DTPXmlEditorParentTab<BoardGeneratorBuildings, BoardBunchContainerBuilding, CacheControl, BasicRenderInformation, BoardDescriptorBuildingXml, BoardTextDescriptorBuildingsXml, DTPLibTextMeshBuildingSigns>
+    internal class DTPBuildingEditorTab2 : DTPXmlEditorParentTab<BoardGeneratorBuildings, BoardBunchContainerBuilding, DTPBuildingsData, BoardDescriptorBuildingXml, BoardTextDescriptorBuildingsXml, DTPLibTextMeshBuildingSigns>
     {
 
         private UIButton m_buttonTool;

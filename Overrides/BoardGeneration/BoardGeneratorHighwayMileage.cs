@@ -350,7 +350,11 @@ namespace Klyte.DynamicTextProps.Overrides
         }
 
         public override Color GetContrastColor(ushort refID, int boardIdx, int secIdx, BoardDescriptorMileageMarkerXml descriptor) => KlyteMonoUtils.ContrastColor(descriptor.PropColor);
-
+        internal void CleanDescriptor()
+        {
+            LoadedMileageMarkerConfig = new BoardDescriptorMileageMarkerXml();
+            SoftReset();
+        }
 
     }
 }

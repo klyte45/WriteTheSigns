@@ -24,7 +24,7 @@ namespace Klyte.DynamicTextProps.Data
             var result = new DTPHighwaySignsData();
 
             IEnumerable<IGrouping<ushort, Tuple<ushort, string>>> parsedData = ParseSerialization(data.Split(SERIALIZATION_ITM_SEPARATOR.ToCharArray()));
-            result.BoardsContainers = new BoardBunchContainerHighwaySignXml[NetManager.MAX_SEGMENT_COUNT];
+            result.ResetBoards();
             foreach (IGrouping<ushort, Tuple<ushort, string>> item in parsedData)
             {
                 LogUtils.DoLog($"item: {item}");
@@ -65,6 +65,9 @@ namespace Klyte.DynamicTextProps.Data
                 i++;
             });
         }
+
+        public const string SERIALIZATION_IDX_SEPARATOR = "∂";
+        public const string SERIALIZATION_ITM_SEPARATOR = "∫";
     }
 
 }

@@ -3,6 +3,7 @@ using ColossalFramework.Globalization;
 using ColossalFramework.UI;
 using Klyte.Commons.Extensors;
 using Klyte.Commons.Utils;
+using Klyte.DynamicTextProps.Data;
 using Klyte.DynamicTextProps.Libraries;
 using Klyte.DynamicTextProps.Overrides;
 using System;
@@ -13,7 +14,7 @@ using static Klyte.DynamicTextProps.Overrides.BoardGeneratorHighwaySigns;
 namespace Klyte.DynamicTextProps.UI
 {
 
-    internal class DTPPropPlacingTab2 : DTPXmlEditorParentTab<BoardGeneratorHighwaySigns, BoardBunchContainerHighwaySignXml, CacheControlHighwaySign, BasicRenderInformation, BoardDescriptorHigwaySignXml, BoardTextDescriptorHighwaySignsXml, DTPLibTextMeshHighwaySigns>
+    internal class DTPPropPlacingTab2 : DTPXmlEditorParentTab<BoardGeneratorHighwaySigns, BoardBunchContainerHighwaySignXml, DTPHighwaySignsData, BoardDescriptorHigwaySignXml, BoardTextDescriptorHighwaySignsXml, DTPLibTextMeshHighwaySigns>
     {
         private UIButton m_buttonTool;
 
@@ -49,8 +50,8 @@ namespace Klyte.DynamicTextProps.UI
         }
         protected override BoardTextDescriptorHighwaySignsXml[] CurrentSelectedDescriptorArray
         {
-            get => BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[CurrentTab].descriptor.m_textDescriptors;
-            set => BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[CurrentTab].descriptor.m_textDescriptors = value;
+            get => BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment].m_boardsData[CurrentTab].descriptor.m_textDescriptors;
+            set => BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment].m_boardsData[CurrentTab].descriptor.m_textDescriptors = value;
         }
 
         private string m_clipboard;
@@ -62,11 +63,11 @@ namespace Klyte.DynamicTextProps.UI
 
         protected override void AwakePropEditor(out UIScrollablePanel scrollTabs, out UIHelperExtension referenceHelperTabs)
         {
-            m_buttonTool = (UIButton) m_uiHelperHS.AddButton(Locale.Get("K45_DTP_PICK_A_SEGMENT"), EnablePickTool);
+            m_buttonTool = (UIButton)m_uiHelperHS.AddButton(Locale.Get("K45_DTP_PICK_A_SEGMENT"), EnablePickTool);
             KlyteMonoUtils.LimitWidth(m_buttonTool, m_uiHelperHS.Self.width - 20, true);
 
             m_contentContainer = m_uiHelperHS.AddGroupExtended(Locale.Get("K45_DTP_PICKED_SEGMENT_DATA"));
-            ((UIPanel) m_contentContainer.Self).backgroundSprite = "";
+            ((UIPanel)m_contentContainer.Self).backgroundSprite = "";
             m_contentContainer.Self.width = MainContainer.width - 30;
 
             m_selectionAddress = m_contentContainer.Self.parent.GetComponentInChildren<UILabel>();
@@ -84,11 +85,11 @@ namespace Klyte.DynamicTextProps.UI
                         return;
                     }
 
-                    BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment] = XmlUtils.DefaultXmlDeserialize<BoardBunchContainerHighwaySignXml>(XmlUtils.DefaultXmlSerialize(x));
+                    BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment] = XmlUtils.DefaultXmlDeserialize<BoardBunchContainerHighwaySignXml>(XmlUtils.DefaultXmlSerialize(x));
                     ReloadSegment();
                     OnChangeTab(-1);
                 },
-                () => BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment]);
+                () => BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment]);
 
             KlyteMonoUtils.CreateHorizontalScrollPanel(m_contentContainer.Self, out scrollTabs, out UIScrollbar bar, m_contentContainer.Self.width - 20, 40, Vector3.zero);
 
@@ -105,7 +106,7 @@ namespace Klyte.DynamicTextProps.UI
             {
                 if (idx == m_pseudoTabstripProps.tabCount - 1)
                 {
-                    int nextIdx = BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment]?.m_boardsData?.Length ?? 0;
+                    int nextIdx = BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment]?.m_boardsData?.Length ?? 0;
                     LogUtils.DoLog($"nextIdx = {nextIdx}");
                     EnsureBoardsArrayIdx(nextIdx);
                     ReloadSegment();
@@ -120,7 +121,7 @@ namespace Klyte.DynamicTextProps.UI
 
             m_pseudoTabPropsHelper = m_uiHelperHS.AddGroupExtended(Locale.Get("K45_DTP_PROP_CONFIGURATION"), out UILabel lbl, out UIPanel voide3);
             Destroy(lbl);
-            ((UIPanel) m_pseudoTabPropsHelper.Self).backgroundSprite = "";
+            ((UIPanel)m_pseudoTabPropsHelper.Self).backgroundSprite = "";
 
             m_pseudoTabPropsHelper.Self.eventVisibilityChanged += (x, y) => { if (y) { ReloadTabInfo(); } };
             m_pseudoTabPropsHelper.Self.width = MainContainer.width - 30;
@@ -137,11 +138,11 @@ namespace Klyte.DynamicTextProps.UI
                                             return;
                                         }
 
-                                        BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[CurrentTab].descriptor = XmlUtils.DefaultXmlDeserialize<BoardDescriptorHigwaySignXml>(XmlUtils.DefaultXmlSerialize(x));
-                                        BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].cached = false;
+                                        BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment].m_boardsData[CurrentTab].descriptor = XmlUtils.DefaultXmlDeserialize<BoardDescriptorHigwaySignXml>(XmlUtils.DefaultXmlSerialize(x));
+                                        BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment].cached = false;
                                         ReloadTabInfo();
                                     },
-                            () => BoardGeneratorHighwaySigns.m_boardsContainers?.ElementAtOrDefault(m_currentSelectedSegment)?.m_boardsData?.ElementAtOrDefault(CurrentTab)?.descriptor);
+                            () => BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers?.ElementAtOrDefault(m_currentSelectedSegment)?.m_boardsData?.ElementAtOrDefault(CurrentTab)?.descriptor);
 
 
             UIHelperExtension groupProp = m_pseudoTabPropsHelper.AddTogglableGroup(Locale.Get("K45_DTP_PROP_CONFIGURATION"));
@@ -149,7 +150,7 @@ namespace Klyte.DynamicTextProps.UI
 
             AddDropdown(Locale.Get("K45_DTP_PROP_MODEL_SELECT"), out m_propsDropdown, groupProp, new string[0], SetPropModel);
             AddSlider(Locale.Get("K45_DTP_SEGMENT_RELATIVE_POS"), out m_segmentPosition, groupProp, SetPropSegPosition, 0, 1, 0.01f);
-            m_invertOrientation = (UICheckBox) groupProp.AddCheckbox(Locale.Get("K45_DTP_INVERT_SIGN_SIDE"), false, SetInvertSignSide);
+            m_invertOrientation = (UICheckBox)groupProp.AddCheckbox(Locale.Get("K45_DTP_INVERT_SIGN_SIDE"), false, SetInvertSignSide);
 
             AddVector3Field(Locale.Get("K45_DTP_RELATIVE_POS"), out m_posVectorEditor, groupProp, SetPropRelPosition);
             AddVector3Field(Locale.Get("K45_DTP_RELATIVE_ROT"), out m_rotVectorEditor, groupProp, SetPropRelRotation);
@@ -166,9 +167,9 @@ namespace Klyte.DynamicTextProps.UI
 
         protected override void OnTextTabStripChanged()
         {
-            EnsureBoardsArrayIdx(-1, BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment]?.m_boardsData[CurrentTab]?.descriptor?.m_textDescriptors?.Length ?? 0);
+            EnsureBoardsArrayIdx(-1, BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment]?.m_boardsData[CurrentTab]?.descriptor?.m_textDescriptors?.Length ?? 0);
             ReloadTabInfo();
-            OnChangeTabTexts(BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[CurrentTab].descriptor.m_textDescriptors.Length - 1);
+            OnChangeTabTexts(BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment].m_boardsData[CurrentTab].descriptor.m_textDescriptors.Length - 1);
             ReloadTabInfoText();
         }
 
@@ -181,7 +182,7 @@ namespace Klyte.DynamicTextProps.UI
         {
             if (m_currentSelectedSegment > 0 && CurrentTab >= 0)
             {
-                m_clipboard = (BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[CurrentTab].Serialize());
+                m_clipboard = (BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment].m_boardsData[CurrentTab].Serialize());
                 m_pasteButton.isVisible = true;
             }
         }
@@ -190,8 +191,8 @@ namespace Klyte.DynamicTextProps.UI
         {
             if (m_currentSelectedSegment > 0 && CurrentTab >= 0 && m_clipboard != null)
             {
-                BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].cached = false;
-                BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[CurrentTab].Deserialize(m_clipboard);
+                BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment].cached = false;
+                BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment].m_boardsData[CurrentTab].Deserialize(m_clipboard);
                 ReloadTabInfo();
             }
         }
@@ -200,11 +201,11 @@ namespace Klyte.DynamicTextProps.UI
         {
             if (m_currentSelectedSegment > 0 && CurrentTab >= 0)
             {
-                LogUtils.DoLog($"  BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData.length = {  BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData.Length }");
-                var tempList = BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData.ToList();
+                LogUtils.DoLog($"  BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment].m_boardsData.length = {  BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment].m_boardsData.Length }");
+                var tempList = BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment].m_boardsData.ToList();
                 tempList.RemoveAt(CurrentTab);
-                BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData = tempList.ToArray();
-                LogUtils.DoLog($"  BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData.length pos = {  BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData.Length }");
+                BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment].m_boardsData = tempList.ToArray();
+                LogUtils.DoLog($"  BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment].m_boardsData.length pos = {  BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment].m_boardsData.Length }");
                 OnSegmentSet(m_currentSelectedSegment);
             }
         }
@@ -213,7 +214,7 @@ namespace Klyte.DynamicTextProps.UI
         {
             if (m_currentSelectedSegment > 0)
             {
-                m_clipboardGroup = XmlUtils.DefaultXmlSerialize(BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment]);
+                m_clipboardGroup = XmlUtils.DefaultXmlSerialize(BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment]);
                 m_pasteGroupButton.isVisible = true;
             }
         }
@@ -222,7 +223,7 @@ namespace Klyte.DynamicTextProps.UI
         {
             if (m_currentSelectedSegment > 0 && m_clipboardGroup != null)
             {
-                BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment] = XmlUtils.DefaultXmlDeserialize<BoardBunchContainerHighwaySignXml>(m_clipboardGroup);
+                BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment] = XmlUtils.DefaultXmlDeserialize<BoardBunchContainerHighwaySignXml>(m_clipboardGroup);
                 ReloadSegment();
             }
         }
@@ -231,12 +232,12 @@ namespace Klyte.DynamicTextProps.UI
         {
             if (m_currentSelectedSegment > 0)
             {
-                BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment] = new BoardBunchContainerHighwaySignXml();
+                BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment] = new BoardBunchContainerHighwaySignXml();
                 OnSegmentSet(m_currentSelectedSegment);
             }
         }
 
-        protected override void OnPasteText() => BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].cached = false;
+        protected override void OnPasteText() => BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment].cached = false;
         #endregion
         protected override void SetPropModel(int idx)
         {
@@ -251,7 +252,7 @@ namespace Klyte.DynamicTextProps.UI
             SafeActionInBoard(descriptor =>
             {
                 descriptor.SaveName = txt;
-                EnsureTabQuantity(BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment]?.m_boardsData?.Length ?? -1);
+                EnsureTabQuantity(BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment]?.m_boardsData?.Length ?? -1);
             });
         }
         private void SetPropColor(Color color) => SafeActionInBoard(descriptor => descriptor.m_color = color);
@@ -265,8 +266,8 @@ namespace Klyte.DynamicTextProps.UI
             if (m_currentSelectedSegment != 0 && !m_isLoading)
             {
                 EnsureBoardsArrayIdx(CurrentTab);
-                BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].cached = false;
-                BoardDescriptorHigwaySignXml descriptor = BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[CurrentTab].descriptor;
+                BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment].cached = false;
+                BoardDescriptorHigwaySignXml descriptor = BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment].m_boardsData[CurrentTab].descriptor;
                 toDo(descriptor);
             }
         }
@@ -284,29 +285,29 @@ namespace Klyte.DynamicTextProps.UI
         {
             if (idx >= 0)
             {
-                if (BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment] == null)
+                if (BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment] == null)
                 {
-                    BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment] = new BoardGeneratorHighwaySigns.BoardBunchContainerHighwaySignXml();
+                    BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment] = new BoardGeneratorHighwaySigns.BoardBunchContainerHighwaySignXml();
                 }
-                if (BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData == null || BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData.Length <= idx)
+                if (BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment].m_boardsData == null || BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment].m_boardsData.Length <= idx)
                 {
-                    CacheControlHighwaySign[] oldArr = BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData;
-                    BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData = new BoardGeneratorHighwaySigns.CacheControlHighwaySign[idx + 1];
+                    CacheControlHighwaySign[] oldArr = BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment].m_boardsData;
+                    BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment].m_boardsData = new BoardGeneratorHighwaySigns.CacheControlHighwaySign[idx + 1];
                     if (oldArr != null && oldArr.Length > 0)
                     {
                         for (int i = 0; i < oldArr.Length && i <= idx; i++)
                         {
-                            BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[i] = oldArr[i];
+                            BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment].m_boardsData[i] = oldArr[i];
                         }
                     }
                 }
-                if (BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[idx] == null)
+                if (BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment].m_boardsData[idx] == null)
                 {
-                    BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[idx] = new BoardGeneratorHighwaySigns.CacheControlHighwaySign();
+                    BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment].m_boardsData[idx] = new BoardGeneratorHighwaySigns.CacheControlHighwaySign();
                 }
-                if (BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[idx].descriptor == null)
+                if (BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment].m_boardsData[idx].descriptor == null)
                 {
-                    BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[idx].descriptor = new BoardGeneratorHighwaySigns.BoardDescriptorHigwaySignXml();
+                    BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment].m_boardsData[idx].descriptor = new BoardGeneratorHighwaySigns.BoardDescriptorHigwaySignXml();
                 }
 
                 EnsureTabQuantity(idx + 1);
@@ -326,21 +327,21 @@ namespace Klyte.DynamicTextProps.UI
                 return;
             }
 
-            if (BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[idx].descriptor.m_textDescriptors == null || BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[idx].descriptor.m_textDescriptors.Length <= textIdx)
+            if (BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment].m_boardsData[idx].descriptor.m_textDescriptors == null || BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment].m_boardsData[idx].descriptor.m_textDescriptors.Length <= textIdx)
             {
-                BoardTextDescriptorHighwaySignsXml[] oldArr = BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[idx].descriptor.m_textDescriptors;
-                BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[idx].descriptor.m_textDescriptors = new BoardTextDescriptorHighwaySignsXml[textIdx + 1];
+                BoardTextDescriptorHighwaySignsXml[] oldArr = BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment].m_boardsData[idx].descriptor.m_textDescriptors;
+                BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment].m_boardsData[idx].descriptor.m_textDescriptors = new BoardTextDescriptorHighwaySignsXml[textIdx + 1];
                 if (oldArr != null && oldArr.Length > 0)
                 {
                     for (int i = 0; i < oldArr.Length && i <= textIdx; i++)
                     {
-                        BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[idx].descriptor.m_textDescriptors[i] = oldArr[i];
+                        BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment].m_boardsData[idx].descriptor.m_textDescriptors[i] = oldArr[i];
                     }
                 }
             }
-            if (BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[idx].descriptor.m_textDescriptors[textIdx] == null)
+            if (BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment].m_boardsData[idx].descriptor.m_textDescriptors[textIdx] == null)
             {
-                BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment].m_boardsData[idx].descriptor.m_textDescriptors[textIdx] = new BoardTextDescriptorHighwaySignsXml
+                BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment].m_boardsData[idx].descriptor.m_textDescriptors[textIdx] = new BoardTextDescriptorHighwaySignsXml
                 {
                     m_defaultColor = Color.white,
                     m_useContrastColor = false
@@ -360,15 +361,15 @@ namespace Klyte.DynamicTextProps.UI
                 }
                 if (i == targetCount - 1)
                 {
-                    ((UIButton) m_pseudoTabstripProps.tabs[i]).text = "+";
+                    ((UIButton)m_pseudoTabstripProps.tabs[i]).text = "+";
                 }
-                else if (m_currentSelectedSegment > 0 && i < (BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment]?.m_boardsData?.Length ?? 0))
+                else if (m_currentSelectedSegment > 0 && i < (BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment]?.m_boardsData?.Length ?? 0))
                 {
-                    ((UIButton) m_pseudoTabstripProps.tabs[i]).text = (BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment]?.m_boardsData[i]?.descriptor?.SaveName).IsNullOrWhiteSpace() ? $"P{i + 1}" : BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment]?.m_boardsData[i]?.descriptor?.SaveName;
+                    ((UIButton)m_pseudoTabstripProps.tabs[i]).text = (BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment]?.m_boardsData[i]?.descriptor?.SaveName).IsNullOrWhiteSpace() ? $"P{i + 1}" : BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment]?.m_boardsData[i]?.descriptor?.SaveName;
                 }
                 else
                 {
-                    ((UIButton) m_pseudoTabstripProps.tabs[i]).text = $"P{i + 1}";
+                    ((UIButton)m_pseudoTabstripProps.tabs[i]).text = $"P{i + 1}";
                 }
 
             }
@@ -409,8 +410,8 @@ namespace Klyte.DynamicTextProps.UI
                 int startNodeNum = SegmentUtils.GetNumberAt(m_currentSelectedSegment, true);
                 m_selectionAddress.text = $"{NetManager.instance.GetSegmentName(m_currentSelectedSegment)}, {Mathf.Min(startNodeNum, endNodeNum)} - {Mathf.Max(startNodeNum, endNodeNum)}";
 
-                EnsureTabQuantity(BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment]?.m_boardsData?.Length ?? -1);
-                ConfigureTabsShown(BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment]?.m_boardsData?.Length ?? -1);
+                EnsureTabQuantity(BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment]?.m_boardsData?.Length ?? -1);
+                ConfigureTabsShown(BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment]?.m_boardsData?.Length ?? -1);
                 m_isLoading = false;
             }
             m_pseudoTabPropsHelper.Self.isVisible = m_currentSelectedSegment > 0 && CurrentTab >= 0;
@@ -428,15 +429,15 @@ namespace Klyte.DynamicTextProps.UI
         protected override void ReloadTabInfo()
         {
             m_pseudoTabPropsHelper.Self.isVisible = m_currentSelectedSegment > 0 && CurrentTab >= 0;
-            if (m_currentSelectedSegment <= 0 || CurrentTab < 0 || CurrentTab >= (BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment]?.m_boardsData?.Length ?? 0))
+            if (m_currentSelectedSegment <= 0 || CurrentTab < 0 || CurrentTab >= (BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment]?.m_boardsData?.Length ?? 0))
             {
                 return;
             }
 
             m_isLoading = true;
-            LoadTabInfo(BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment]?.m_boardsData[CurrentTab]?.descriptor);
-            EnsureTabQuantityTexts(BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment]?.m_boardsData[CurrentTab]?.descriptor?.m_textDescriptors?.Length ?? 0);
-            ConfigureTabsShownText(BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment]?.m_boardsData[CurrentTab]?.descriptor?.m_textDescriptors?.Length ?? 0);
+            LoadTabInfo(BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment]?.m_boardsData[CurrentTab]?.descriptor);
+            EnsureTabQuantityTexts(BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment]?.m_boardsData[CurrentTab]?.descriptor?.m_textDescriptors?.Length ?? 0);
+            ConfigureTabsShownText(BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment]?.m_boardsData[CurrentTab]?.descriptor?.m_textDescriptors?.Length ?? 0);
             m_isLoading = false;
             m_loadPropItem.items = DTPLibPropSingleHighwaySigns.Instance.List().ToArray();
             OnChangeTabTexts(-1);
@@ -488,7 +489,7 @@ namespace Klyte.DynamicTextProps.UI
             }
 
             m_isLoading = true;
-            LoadTabTextInfo(BoardGeneratorHighwaySigns.m_boardsContainers[m_currentSelectedSegment]?.m_boardsData[CurrentTab]?.descriptor.m_textDescriptors[CurrentTabText]);
+            LoadTabTextInfo(BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment]?.m_boardsData[CurrentTab]?.descriptor.m_textDescriptors[CurrentTabText]);
             m_loadTextDD.items = DTPLibTextMeshHighwaySigns.Instance.List().ToArray();
             m_isLoading = false;
         }

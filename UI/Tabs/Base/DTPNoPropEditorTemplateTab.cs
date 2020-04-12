@@ -3,6 +3,7 @@ using ColossalFramework.UI;
 using Klyte.Commons.Extensors;
 using Klyte.Commons.Interfaces;
 using Klyte.Commons.Utils;
+using Klyte.DynamicTextProps.Data;
 using Klyte.DynamicTextProps.Libraries;
 using Klyte.DynamicTextProps.Overrides;
 using Klyte.DynamicTextProps.Utils;
@@ -12,13 +13,12 @@ using UnityEngine;
 namespace Klyte.DynamicTextProps.UI
 {
 
-    internal abstract class DTPNoPropEditorTemplateTab<BG, BBC, CC, BRI, BD, BTD, LIBTXT, LIBPROP> : DTPXmlEditorParentTab<BG, BBC, CC, BRI, BD, BTD, LIBTXT>
-        where BG : BoardGeneratorParent<BG, BBC, CC, BRI, BD, BTD>
-        where BBC : IBoardBunchContainer<CC, BRI>
+    internal abstract class DTPNoPropEditorTemplateTab<BG, BBC, D, BD, BTD, LIBTXT, LIBPROP> : DTPXmlEditorParentTab<BG, BBC, D, BD, BTD, LIBTXT>
+        where BG : BoardGeneratorParent<BG, BBC, D, BD, BTD>
+        where BBC : IBoardBunchContainer
         where BD : BoardDescriptorParentXml<BD, BTD>, ILibable, IFontConfigContainer, IPropParamsContainer
         where BTD : BoardTextDescriptorParentXml<BTD>, ILibable
-        where CC : CacheControl
-        where BRI : BasicRenderInformation, new()
+        where D : DTPBaseData<D, BBC>, new()
         where LIBTXT : BasicLib<LIBTXT, BTD>, new()
         where LIBPROP : BasicLib<LIBPROP, BD>, new()
     {
@@ -57,7 +57,7 @@ namespace Klyte.DynamicTextProps.UI
                         },
                 () => CurrentConfig);
 
-            var buttonErase = (UIButton) m_uiHelperHS.AddButton(Locale.Get("K45_DTP_ERASE_CURRENT_CONFIG"), DoDeleteGroup);
+            var buttonErase = (UIButton)m_uiHelperHS.AddButton(Locale.Get("K45_DTP_ERASE_CURRENT_CONFIG"), DoDeleteGroup);
             KlyteMonoUtils.LimitWidth(buttonErase, m_uiHelperHS.Self.width - 20, true);
             buttonErase.color = Color.red;
 
@@ -96,7 +96,7 @@ namespace Klyte.DynamicTextProps.UI
         protected override void OnStart()
         {
             m_propsDropdown.selectedIndex = BoardGeneratorHighwaySigns.Instance.LoadedProps.IndexOf(CurrentConfig.PropName ?? "") + 1;
-            BoardGeneratorParent<BG, BBC, CC, BRI, BD, BTD>.Instance.ChangeFont(CurrentConfig.FontName);
+            BoardGeneratorParent<BG, BBC, D, BD, BTD>.Instance.ChangeFont(CurrentConfig.FontName);
             DTPUtils.ReloadFontsOf<BG>(m_fontSelect);
             OnChangePropColor(CurrentConfig.PropColor);
             OnChangeTabTexts(-1);

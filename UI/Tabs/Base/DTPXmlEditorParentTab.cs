@@ -6,6 +6,7 @@ using Klyte.Commons.Extensors;
 using Klyte.Commons.Interfaces;
 using Klyte.Commons.UI.SpriteNames;
 using Klyte.Commons.Utils;
+using Klyte.DynamicTextProps.Data;
 using Klyte.DynamicTextProps.Libraries;
 using Klyte.DynamicTextProps.Overrides;
 using Klyte.DynamicTextProps.Utils;
@@ -16,16 +17,15 @@ using UnityEngine;
 namespace Klyte.DynamicTextProps.UI
 {
 
-    internal abstract class DTPXmlEditorParentTab<BG, BBC, CC, BRI, BD, BTD, LIBTXT> : UICustomControl
-        where BG : BoardGeneratorParent<BG, BBC, CC, BRI, BD, BTD>
-        where BBC : IBoardBunchContainer<CC, BRI>
+    internal abstract class DTPXmlEditorParentTab<BG, BBC, D, BD, BTD, LIBTXT> : UICustomControl
+        where BG : BoardGeneratorParent<BG, BBC, D,   BD, BTD>
+        where BBC : IBoardBunchContainer
         where BD : BoardDescriptorParentXml<BD, BTD>
         where BTD : BoardTextDescriptorParentXml<BTD>, ILibable
-        where CC : CacheControl
-        where BRI : BasicRenderInformation, new()
+        where D : DTPBaseData<D, BBC>, new()
         where LIBTXT : BasicLib<LIBTXT, BTD>, new()
     {
-        public static DTPXmlEditorParentTab<BG, BBC, CC, BRI, BD, BTD, LIBTXT> Instance { get; private set; }
+        public static DTPXmlEditorParentTab<BG, BBC, D, BD, BTD, LIBTXT> Instance { get; private set; }
         public UIScrollablePanel MainContainer { get; protected set; }
 
         protected UIHelperExtension m_uiHelperHS;
