@@ -10,16 +10,15 @@ namespace Klyte.DynamicTextProps.Data
 {
     public abstract class DTPBaseData<D, BBC, CC> : DataExtensorBase<D> where D : DTPBaseData<D, BBC, CC>, new() where BBC : IBoardBunchContainer<CC> where CC : CacheControl
     {
-        [XmlIgnore]
-        public BBC[] m_boardsContainers;
-
+        public BBC[] BoardsContainers { get; private set; }
         public abstract int ObjArraySize { get; }
 
         public override void LoadDefaults()
         {
             base.LoadDefaults();
-            m_boardsContainers = new BBC[ObjArraySize];
+            BoardsContainers = new BBC[ObjArraySize];
         }
+        public void ResetBoards() => BoardSerialData = null;
 
         [XmlArray("BoardsContainer")]
         [XmlArrayItem("Board")]
@@ -27,11 +26,11 @@ namespace Klyte.DynamicTextProps.Data
         {
             get {
                 var temp = new SimpleNonSequentialList<BBC>();
-                m_boardsContainers.Select((x, i) => Tuple.New(i, x)).Where((x) => x?.Second?.m_boardsData?.Where(y => y != null).Count() > 0).ForEach(x => temp[x.First] = x.Second);
+                BoardsContainers.Select((x, i) => Tuple.New(i, x)).Where((x) => x?.Second?.m_boardsData?.Where(y => y != null).Count() > 0).ForEach(x => temp[x.First] = x.Second);
                 return temp;
             }
             set {
-                m_boardsContainers = new BBC[ObjArraySize];
+                BoardsContainers = new BBC[ObjArraySize];
                 if (value != null)
                 {
                     foreach (KeyValuePair<long, BBC> item in value)
@@ -41,7 +40,7 @@ namespace Klyte.DynamicTextProps.Data
                         {
                             continue;
                         }
-                        m_boardsContainers[item.Key] = item.Value;
+                        BoardsContainers[item.Key] = item.Value;
                     }
                 }
             }

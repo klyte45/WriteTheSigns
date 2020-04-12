@@ -4,16 +4,16 @@ using ColossalFramework.Math;
 using ColossalFramework.UI;
 using Klyte.Commons.Extensors;
 using Klyte.Commons.Utils;
+using Klyte.DynamicTextProps.Data;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using static Klyte.DynamicTextProps.Overrides.BoardGeneratorHighwaySigns;
 
 namespace Klyte.DynamicTextProps.Overrides
 {
 
-    public partial class BoardGeneratorHighwaySigns : BoardGeneratorParent<BoardGeneratorHighwaySigns, BoardBunchContainerHighwaySignXml, CacheControlHighwaySign, BasicRenderInformation, BoardDescriptorHigwaySignXml, BoardTextDescriptorHighwaySignsXml>
+    public partial class BoardGeneratorHighwaySigns : BoardGeneratorParent<BoardGeneratorHighwaySigns, BoardBunchContainerHighwaySignXml, DTPHighwaySignsData, CacheControlHighwaySign, BoardDescriptorHigwaySignXml, BoardTextDescriptorHighwaySignsXml>
     {
 
         public Dictionary<string, UIFont> m_fontCache = new Dictionary<string, UIFont>();
@@ -33,7 +33,6 @@ namespace Klyte.DynamicTextProps.Overrides
         };
 
 
-        public override int ObjArraySize => NetManager.MAX_SEGMENT_COUNT;
         public override UIDynamicFont DrawFont => m_font;
 
         #region Initialize
@@ -59,11 +58,6 @@ namespace Klyte.DynamicTextProps.Overrides
 
         public void Start()
         {
-            if (m_loadedBoards != null)
-            {
-                m_boardsContainers = m_loadedBoards;
-                m_loadedBoards = null;
-            }
         }
 
 
@@ -73,7 +67,7 @@ namespace Klyte.DynamicTextProps.Overrides
             m_textCache.Clear();
         }
 
-        private void OnSegmentReleased(ushort segmentId) => m_boardsContainers[segmentId] = null;
+        private void OnSegmentReleased(ushort segmentId) => Data.BoardsContainers[segmentId] = null;
         #endregion
 
         public static void AfterRenderSegment(RenderManager.CameraInfo cameraInfo, ushort segmentID, int layerMask)
@@ -85,15 +79,15 @@ namespace Klyte.DynamicTextProps.Overrides
 
         public void AfterRenderSegmentImpl(RenderManager.CameraInfo cameraInfo, ushort segmentID, int layerMask)
         {
-            if (m_boardsContainers[segmentID] == null)
+            if (Data.BoardsContainers[segmentID] == null)
             {
                 return;
             }
 
-            if (!m_boardsContainers[segmentID].cached)
+            if (!Data.BoardsContainers[segmentID].cached)
             {
                 UpdateCache(segmentID);
-                m_boardsContainers[segmentID].cached = true;
+                Data.BoardsContainers[segmentID].cached = true;
             }
 
             RenderSign(cameraInfo, segmentID, layerMask);
@@ -102,9 +96,9 @@ namespace Klyte.DynamicTextProps.Overrides
 
         private void RenderSign(RenderManager.CameraInfo cameraInfo, ushort segmentID, int layerMask)
         {
-            for (int i = 0; i < m_boardsContainers[segmentID]?.m_boardsData?.Length; i++)
+            for (int i = 0; i < Data.BoardsContainers[segmentID]?.m_boardsData?.Length; i++)
             {
-                CacheControlHighwaySign sign = m_boardsContainers[segmentID]?.m_boardsData[i];
+                CacheControlHighwaySign sign = Data.BoardsContainers[segmentID]?.m_boardsData[i];
                 if (sign?.descriptor == null)
                 {
                     continue;
@@ -127,9 +121,9 @@ namespace Klyte.DynamicTextProps.Overrides
         private void UpdateCache(ushort segmentID)
         {
 
-            for (int i = 0; i < m_boardsContainers[segmentID]?.m_boardsData?.Length; i++)
+            for (int i = 0; i < Data.BoardsContainers[segmentID]?.m_boardsData?.Length; i++)
             {
-                CacheControlHighwaySign sign = m_boardsContainers[segmentID]?.m_boardsData[i];
+                CacheControlHighwaySign sign = Data.BoardsContainers[segmentID]?.m_boardsData[i];
                 if (sign?.descriptor == null)
                 {
                     continue;
@@ -153,76 +147,6 @@ namespace Klyte.DynamicTextProps.Overrides
                 sign.cachedRotation = sign.descriptor.m_propRotation + new Vector3(0, rotation + 90);
             }
         }
-
-
-        #region Serialize
-
-        // Token: 0x04000019 RID: 25
-        protected override string ID { get; } = "K45_DTP_HS";
-        private static BoardBunchContainerHighwaySignXml[] m_loadedBoards;
-
-        public override void Deserialize(string data)
-        {
-            LogUtils.DoLog($"STR: \"{data}\"");
-            if (data.IsNullOrWhiteSpace())
-            {
-                return;
-            }
-
-            IEnumerable<IGrouping<ushort, Tuple<ushort, string>>> parsedData = ParseSerialization(data.Split(SERIALIZATION_ITM_SEPARATOR.ToCharArray()));
-            m_loadedBoards = new BoardBunchContainerHighwaySignXml[NetManager.MAX_SEGMENT_COUNT];
-            foreach (IGrouping<ushort, Tuple<ushort, string>> item in parsedData)
-            {
-                LogUtils.DoLog($"item: {item}");
-                FillItem(item);
-            }
-        }
-
-        private static void FillItem(IGrouping<ushort, Tuple<ushort, string>> item)
-        {
-            if (item.Key == 0)
-            {
-                return;
-            }
-
-            int count = item.Count();
-            LogUtils.DoLog($"COUNT: {count}");
-            m_loadedBoards[item.Key] = new BoardBunchContainerHighwaySignXml
-            {
-                m_boardsData = new CacheControlHighwaySign[count]
-            };
-            int i = 0;
-            item.ForEach((x) =>
-            {
-                m_loadedBoards[item.Key].m_boardsData[i] = new CacheControlHighwaySign();
-                m_loadedBoards[item.Key].m_boardsData[i].Deserialize(x.Second);
-                i++;
-            });
-        }
-
-        private static IEnumerable<IGrouping<ushort, Tuple<ushort, string>>> ParseSerialization(string[] data)
-        {
-            return data.Select(x =>
-            {
-                string[] dataArray = x.Split(SERIALIZATION_IDX_SEPARATOR.ToCharArray());
-                return Tuple.New(ushort.Parse(dataArray[0]), dataArray[1]);
-
-            }).GroupBy(x => x.First);
-        }
-
-        public override string Serialize()
-        {
-            LogUtils.DoLog($"m_boardsContainers: \"{ m_boardsContainers}\"");
-            IEnumerable<string> list = m_boardsContainers.SelectMany(SerializeSelectMany) ?? new List<string>();
-            LogUtils.DoLog($"list: \"{list?.Count()}\"");
-            return string.Join(SERIALIZATION_ITM_SEPARATOR, list?.ToArray());
-        }
-        private static IEnumerable<string> SerializeSelectMany(BoardBunchContainerHighwaySignXml x, int i) => x?.m_boardsData?.Select(y => y == null ? null : $"{i}{SERIALIZATION_IDX_SEPARATOR}{ y.Serialize()}").Where(y => y != null) ?? new string[0];
-
-
-        public const string SERIALIZATION_IDX_SEPARATOR = "∂";
-        public const string SERIALIZATION_ITM_SEPARATOR = "∫";
-        #endregion
 
 
         #region Upadate Data
@@ -266,7 +190,7 @@ namespace Klyte.DynamicTextProps.Overrides
 
         #endregion
 
-        public override Color? GetColor(ushort segmentId, int idx, int secIdx, BoardDescriptorHigwaySignXml descriptor) => m_boardsContainers[segmentId].m_boardsData[idx].descriptor.m_color;
+        public override Color? GetColor(ushort segmentId, int idx, int secIdx, BoardDescriptorHigwaySignXml descriptor) => Data.BoardsContainers[segmentId].m_boardsData[idx].descriptor.m_color;
 
         protected override InstanceID GetPropRenderID(ushort nodeId)
         {

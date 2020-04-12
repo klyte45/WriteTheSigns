@@ -24,7 +24,7 @@ namespace Klyte.DynamicTextProps.Data
             var result = new DTPHighwaySignsData();
 
             IEnumerable<IGrouping<ushort, Tuple<ushort, string>>> parsedData = ParseSerialization(data.Split(SERIALIZATION_ITM_SEPARATOR.ToCharArray()));
-            result.m_boardsContainers = new BoardBunchContainerHighwaySignXml[NetManager.MAX_SEGMENT_COUNT];
+            result.BoardsContainers = new BoardBunchContainerHighwaySignXml[NetManager.MAX_SEGMENT_COUNT];
             foreach (IGrouping<ushort, Tuple<ushort, string>> item in parsedData)
             {
                 LogUtils.DoLog($"item: {item}");
@@ -53,15 +53,15 @@ namespace Klyte.DynamicTextProps.Data
 
             int count = item.Count();
             LogUtils.DoLog($"COUNT: {count}");
-            result.m_boardsContainers[item.Key] = new BoardBunchContainerHighwaySignXml
+            result.BoardsContainers[item.Key] = new BoardBunchContainerHighwaySignXml
             {
                 m_boardsData = new CacheControlHighwaySign[count]
             };
             int i = 0;
             item.ForEach((x) =>
             {
-                result.m_boardsContainers[item.Key].m_boardsData[i] = new CacheControlHighwaySign();
-                result.m_boardsContainers[item.Key].m_boardsData[i].Deserialize(x.Second);
+                result.BoardsContainers[item.Key].m_boardsData[i] = new CacheControlHighwaySign();
+                result.BoardsContainers[item.Key].m_boardsData[i].Deserialize(x.Second);
                 i++;
             });
         }

@@ -3,7 +3,7 @@
 
     public partial class BoardGeneratorBuildings
     {
-        public class BoardBunchContainerBuilding : IBoardBunchContainer<CacheControl, BasicRenderInformation>
+        public class BoardBunchContainerBuilding : IBoardBunchContainer<CacheControl>
         {
             public StopInformation[][] m_platformToLine;
             public uint m_linesUpdateFrame;

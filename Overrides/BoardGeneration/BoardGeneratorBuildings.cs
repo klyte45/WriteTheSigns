@@ -6,6 +6,7 @@ using ColossalFramework.Packaging;
 using ColossalFramework.UI;
 using Klyte.Commons.Extensors;
 using Klyte.Commons.Utils;
+using Klyte.DynamicTextProps.Data;
 using Klyte.DynamicTextProps.UI;
 using Klyte.DynamicTextProps.Utils;
 using System;
@@ -20,7 +21,7 @@ using static Klyte.DynamicTextProps.Overrides.BoardGeneratorBuildings;
 namespace Klyte.DynamicTextProps.Overrides
 {
 
-    public partial class BoardGeneratorBuildings : BoardGeneratorParent<BoardGeneratorBuildings, BoardBunchContainerBuilding, CacheControl, BasicRenderInformation, BoardDescriptorBuildingXml, BoardTextDescriptorBuildingsXml>
+    public partial class BoardGeneratorBuildings : BoardGeneratorParent<BoardGeneratorBuildings, BoardBunchContainerBuilding, DTPBuildingsData, CacheControl, BoardDescriptorBuildingXml, BoardTextDescriptorBuildingsXml>
     {
 
         public Dictionary<string, UIFont> m_fontCache = new Dictionary<string, UIFont>();
@@ -46,8 +47,6 @@ namespace Klyte.DynamicTextProps.Overrides
         private readonly Dictionary<string, StopPointDescriptorLanes[]> m_buildingStopsDescriptor = new Dictionary<string, StopPointDescriptorLanes[]>();
         private readonly Dictionary<string, BasicRenderInformation> m_textCache = new Dictionary<string, BasicRenderInformation>();
 
-        public override int ObjArraySize => BuildingManager.MAX_BUILDING_COUNT;
-
         private UIDynamicFont m_font;
 
         public override UIDynamicFont DrawFont => m_font;
@@ -68,7 +67,7 @@ namespace Klyte.DynamicTextProps.Overrides
         #region Initialize
         public override void Initialize()
         {
-            BuildSurfaceFont(out m_font, LoadedConfig.DefaultFont);
+            BuildSurfaceFont(out m_font, Data.GlobalConfiguration.DefaultFont);
             LoadAllBuildingConfigurations();
 
 
@@ -97,7 +96,7 @@ namespace Klyte.DynamicTextProps.Overrides
             #endregion
         }
 
-        protected override void OnChangeFont(string fontName) => LoadedConfig.DefaultFont = fontName;
+        protected override void OnChangeFont(string fontName) => Data.GlobalConfiguration.DefaultFont = fontName;
 
         private static string DefaultFilename { get; } = $"{DynamicTextPropsMod.m_defaultFileNameXml}.xml";
         public void LoadAllBuildingConfigurations()
@@ -120,7 +119,7 @@ namespace Klyte.DynamicTextProps.Overrides
             m_linesDescriptors = new LineDescriptor[TransportManager.MAX_LINE_COUNT];
             m_lineLastUpdate = new ulong[TransportManager.MAX_LINE_COUNT];
             m_districtDescriptors = new DistrictDescriptor[DistrictManager.MAX_DISTRICT_COUNT];
-            m_boardsContainers = new BoardBunchContainerBuilding[BuildingManager.MAX_BUILDING_COUNT];
+            Data.ResetBoards();
             m_lastDrawBuilding = new ulong[BuildingManager.MAX_BUILDING_COUNT];
             if (errorList.Count > 0)
             {
@@ -176,15 +175,15 @@ namespace Klyte.DynamicTextProps.Overrides
         private void OnNodeChanged(ushort id)
         {
             ushort buildingId = NetNode.FindOwnerBuilding(id, 56f);
-            if (buildingId > 0 && m_boardsContainers[buildingId] != null)
+            if (buildingId > 0 && Data.BoardsContainers[buildingId] != null)
             {
-                m_boardsContainers[buildingId].m_linesUpdateFrame = 0;
+                Data.BoardsContainers[buildingId].m_linesUpdateFrame = 0;
             }
         }
 
         protected override void ResetImpl()
         {
-            m_boardsContainers.ForEach(x =>
+            Data.BoardsContainers.ForEach(x =>
             {
                 if (x != null)
                 {
@@ -199,9 +198,9 @@ namespace Klyte.DynamicTextProps.Overrides
         private void OnLineUpdated(ushort lineId) => m_linesDescriptors[lineId] = default;
         private void OnBuildingNameChanged(ushort id)
         {
-            if (m_boardsContainers[id] != null)
+            if (Data.BoardsContainers[id] != null)
             {
-                m_boardsContainers[id].m_nameSubInfo = null;
+                Data.BoardsContainers[id].m_nameSubInfo = null;
             }
         }
 
@@ -211,9 +210,9 @@ namespace Klyte.DynamicTextProps.Overrides
             int count = 10;
             while (parentId > 0 && count > 0)
             {
-                if (m_boardsContainers[parentId] != null)
+                if (Data.BoardsContainers[parentId] != null)
                 {
-                    m_boardsContainers[parentId].m_platformToLine = null;
+                    Data.BoardsContainers[parentId].m_platformToLine = null;
                 }
 
                 parentId = BuildingManager.instance.m_buildings.m_buffer[parentId].m_parentBuilding;
@@ -225,7 +224,7 @@ namespace Klyte.DynamicTextProps.Overrides
             }
         }
 
-        public void OnDescriptorChanged() => m_boardsContainers = new BoardBunchContainerBuilding[BuildingManager.MAX_BUILDING_COUNT];
+        public void OnDescriptorChanged() => Data.ResetBoards();
         #endregion
 
         public static void AfterEndOverlayImpl(RenderManager.CameraInfo cameraInfo)
@@ -293,17 +292,17 @@ namespace Klyte.DynamicTextProps.Overrides
             {
                 return;
             }
-            if (m_boardsContainers[buildingID] == null)
+            if (Data.BoardsContainers[buildingID] == null)
             {
-                m_boardsContainers[buildingID] = new BoardBunchContainerBuilding();
+                Data.BoardsContainers[buildingID] = new BoardBunchContainerBuilding();
             }
-            if (m_boardsContainers[buildingID]?.m_boardsData?.Count() != LoadedDescriptors[refName].BoardDescriptors.Length)
+            if (Data.BoardsContainers[buildingID]?.m_boardsData?.Count() != LoadedDescriptors[refName].BoardDescriptors.Length)
             {
-                m_boardsContainers[buildingID].m_boardsData = new CacheControl[LoadedDescriptors[refName].BoardDescriptors.Length];
-                m_boardsContainers[buildingID].m_nameSubInfo = null;
+                Data.BoardsContainers[buildingID].m_boardsData = new CacheControl[LoadedDescriptors[refName].BoardDescriptors.Length];
+                Data.BoardsContainers[buildingID].m_nameSubInfo = null;
             }
 
-            UpdateLinesBuilding(buildingID, ref data, m_boardsContainers[buildingID], ref renderInstance.m_dataMatrix1);
+            UpdateLinesBuilding(buildingID, ref data, Data.BoardsContainers[buildingID], ref renderInstance.m_dataMatrix1);
             for (int i = 0; i < LoadedDescriptors[refName].BoardDescriptors.Length; i++)
             {
                 renderInstance = RenderDescriptor(cameraInfo, buildingID, data, layerMask, renderInstance, refName, i);
@@ -313,9 +312,9 @@ namespace Klyte.DynamicTextProps.Overrides
         private RenderManager.Instance RenderDescriptor(RenderManager.CameraInfo cameraInfo, ushort buildingID, Building data, int layerMask, RenderManager.Instance renderInstance, string refName, int i)
         {
             BoardDescriptorBuildingXml descriptor = LoadedDescriptors[refName].BoardDescriptors[i];
-            if (m_boardsContainers[buildingID].m_boardsData[i] == null)
+            if (Data.BoardsContainers[buildingID].m_boardsData[i] == null)
             {
-                m_boardsContainers[buildingID].m_boardsData[i] = new CacheControl();
+                Data.BoardsContainers[buildingID].m_boardsData[i] = new CacheControl();
             }
             for (int k = 0; k <= descriptor.m_arrayRepeatTimes; k++)
             {
@@ -331,7 +330,7 @@ namespace Klyte.DynamicTextProps.Overrides
 
         private void RenderPropConfig(RenderManager.CameraInfo cameraInfo, ushort buildingID, Building data, int layerMask, ref RenderManager.Instance renderInstance, int i, ref BoardDescriptorBuildingXml descriptor, int k)
         {
-            RenderPropMesh(ref m_boardsContainers[buildingID].m_boardsData[i].m_cachedProp, cameraInfo, buildingID, i, 0, layerMask, data.m_angle, renderInstance.m_dataMatrix1.MultiplyPoint(descriptor.m_propPosition + (descriptor.ArrayRepeat * k)), renderInstance.m_dataVector3, ref descriptor.m_propName, descriptor.m_propRotation, descriptor.PropScale, ref descriptor, out Matrix4x4 propMatrix, out bool rendered);
+            RenderPropMesh(ref Data.BoardsContainers[buildingID].m_boardsData[i].m_cachedProp, cameraInfo, buildingID, i, 0, layerMask, data.m_angle, renderInstance.m_dataMatrix1.MultiplyPoint(descriptor.m_propPosition + (descriptor.ArrayRepeat * k)), renderInstance.m_dataVector3, ref descriptor.m_propName, descriptor.m_propRotation, descriptor.PropScale, ref descriptor, out Matrix4x4 propMatrix, out bool rendered);
             if (rendered && descriptor.m_textDescriptors != null)
             {
                 for (int j = 0; j < descriptor.m_textDescriptors?.Length; j++)
@@ -339,7 +338,7 @@ namespace Klyte.DynamicTextProps.Overrides
                     MaterialPropertyBlock materialBlock = Singleton<PropManager>.instance.m_materialBlock;
                     materialBlock.Clear();
 
-                    RenderTextMesh(cameraInfo, buildingID, i, j, ref descriptor, propMatrix, ref descriptor.m_textDescriptors[j], ref m_boardsContainers[buildingID].m_boardsData[i], materialBlock);
+                    RenderTextMesh(cameraInfo, buildingID, i, j, ref descriptor, propMatrix, ref descriptor.m_textDescriptors[j], ref Data.BoardsContainers[buildingID].m_boardsData[i], materialBlock);
                 }
             }
         }
@@ -707,9 +706,9 @@ namespace Klyte.DynamicTextProps.Overrides
         {
             foreach (int platform in descriptor.m_platforms)
             {
-                if (m_boardsContainers[buildingID].m_platformToLine != null && m_boardsContainers[buildingID].m_platformToLine.ElementAtOrDefault(platform) != null)
+                if (Data.BoardsContainers[buildingID].m_platformToLine != null && Data.BoardsContainers[buildingID].m_platformToLine.ElementAtOrDefault(platform) != null)
                 {
-                    StopInformation line = m_boardsContainers[buildingID].m_platformToLine[platform].ElementAtOrDefault(0);
+                    StopInformation line = Data.BoardsContainers[buildingID].m_platformToLine[platform].ElementAtOrDefault(0);
                     if (line.m_lineId != 0)
                     {
                         return line;
@@ -729,9 +728,9 @@ namespace Klyte.DynamicTextProps.Overrides
                     int[] targetPlatforms = descriptor.m_platforms;
                     foreach (int platform in targetPlatforms)
                     {
-                        if (m_boardsContainers[buildingID].m_platformToLine != null && m_boardsContainers[buildingID].m_platformToLine.ElementAtOrDefault(platform) != null && m_boardsContainers[buildingID].m_platformToLine[platform].Length > 0)
+                        if (Data.BoardsContainers[buildingID].m_platformToLine != null && Data.BoardsContainers[buildingID].m_platformToLine.ElementAtOrDefault(platform) != null && Data.BoardsContainers[buildingID].m_platformToLine[platform].Length > 0)
                         {
-                            StopInformation line = m_boardsContainers[buildingID].m_platformToLine[platform].ElementAtOrDefault(0);
+                            StopInformation line = Data.BoardsContainers[buildingID].m_platformToLine[platform].ElementAtOrDefault(0);
                             if (line.m_lineId != 0)
                             {
                                 if (m_linesDescriptors[line.m_lineId].m_lineColor == default)
@@ -880,32 +879,6 @@ namespace Klyte.DynamicTextProps.Overrides
                 }
             }
         }
-
-        #region Serialization
-        protected override string ID => "K45_DTP_BGB";
-
-
-        public override void Deserialize(string data)
-        {
-            LogUtils.DoLog($"{GetType()} STR: \"{data}\"");
-            if (data.IsNullOrWhiteSpace())
-            {
-                return;
-            }
-            try
-            {
-                LoadedConfig = XmlUtils.DefaultXmlDeserialize<BoardGeneratorBuildingConfigXml>(data);
-            }
-            catch (Exception e)
-            {
-                LogUtils.DoErrorLog($"Error deserializing: {e.Message}\n{e.StackTrace}");
-            }
-        }
-
-        public override string Serialize() => XmlUtils.DefaultXmlSerialize(LoadedConfig, false);
-
-        public static BoardGeneratorBuildingConfigXml LoadedConfig = new BoardGeneratorBuildingConfigXml();
-        #endregion
 
     }
 }

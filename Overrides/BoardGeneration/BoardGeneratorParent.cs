@@ -83,6 +83,7 @@ namespace Klyte.DynamicTextProps.Overrides
             m_defaultCacheForStrings = new Dictionary<string, BasicRenderInformation>();
         }
 
+        public D Data => DTPBaseData<D, BBC, CC>.Instance;
 
         public static readonly int m_shaderPropColor = Shader.PropertyToID("_Color");
         public static readonly int m_shaderPropColor0 = Shader.PropertyToID("_ColorV0");
@@ -256,7 +257,7 @@ namespace Klyte.DynamicTextProps.Overrides
 
         protected void RenderTextMesh(RenderManager.CameraInfo cameraInfo, ushort refID, int boardIdx, int secIdx, ref BD descriptor, Matrix4x4 propMatrix, ref BTD textDescriptor, ref CC ctrl, MaterialPropertyBlock materialPropertyBlock)
         {
-            BRI renderInfo = null;
+            BasicRenderInformation renderInfo = null;
             switch (textDescriptor.m_textType)
             {
                 case TextType.OwnName:
@@ -378,7 +379,7 @@ namespace Klyte.DynamicTextProps.Overrides
         public void ClearCacheStreetName() => m_cachedStreetNameInformation_End = new string[NetManager.MAX_SEGMENT_COUNT];
         public void ClearCacheStreetQualifier() => m_cachedStreetNameInformation_Start = new string[NetManager.MAX_SEGMENT_COUNT];
         public void ClearCacheFullStreetName() => m_cachedStreetNameInformation_Full = new string[NetManager.MAX_SEGMENT_COUNT];
-        public void ClearCacheDefault() => m_defaultCacheForStrings = new Dictionary<string, BRI>();
+        public void ClearCacheDefault() => m_defaultCacheForStrings = new Dictionary<string, BasicRenderInformation>();
 
         protected enum CacheArrayTypes
         {
@@ -389,7 +390,7 @@ namespace Klyte.DynamicTextProps.Overrides
         }
 
 
-        protected BRI GetFromCacheArray(ushort refId, CacheArrayTypes type)
+        protected BasicRenderInformation GetFromCacheArray(ushort refId, CacheArrayTypes type)
         {
             switch (type)
             {
@@ -406,7 +407,7 @@ namespace Klyte.DynamicTextProps.Overrides
             return null;
         }
 
-        private BRI GetFromCacheArray(ushort refId, CacheArrayTypes type, ref string[] cacheArray)
+        private BasicRenderInformation GetFromCacheArray(ushort refId, CacheArrayTypes type, ref string[] cacheArray)
         {
             if (m_lastTickTextureGen < SimulationManager.instance.m_currentTickIndex && (cacheArray[refId] == null))
             {
@@ -428,19 +429,19 @@ namespace Klyte.DynamicTextProps.Overrides
                 }
                 m_lastTickTextureGen = SimulationManager.instance.m_currentTickIndex;
             }
-            m_defaultCacheForStrings.TryGetValue(cacheArray[refId] ?? "", out BRI result);
+            m_defaultCacheForStrings.TryGetValue(cacheArray[refId] ?? "", out BasicRenderInformation result);
             return result;
 
 
         }
 
-        protected void UpdateMeshFullNameStreet(ushort idx, ref string name, Dictionary<string, BRI> bris)
+        protected void UpdateMeshFullNameStreet(ushort idx, ref string name, Dictionary<string, BasicRenderInformation> bris)
         {
             name = DTPHookable.GetStreetFullName(idx);
             LogUtils.DoLog($"!GenName {name} for {idx}");
             UpdateTextIfNecessary(name, bris);
         }
-        protected void UpdateMeshStreetQualifier(ushort idx, ref string name, Dictionary<string, BRI> bris)
+        protected void UpdateMeshStreetQualifier(ushort idx, ref string name, Dictionary<string, BasicRenderInformation> bris)
         {
             name = DTPHookable.GetStreetFullName(idx);
             if ((NetManager.instance.m_segments.m_buffer[idx].m_flags & NetSegment.Flags.CustomName) == 0)
@@ -454,7 +455,7 @@ namespace Klyte.DynamicTextProps.Overrides
             LogUtils.DoLog($"!GenName {name} for {idx}");
             UpdateTextIfNecessary(name, bris);
         }
-        protected void UpdateMeshDistrict(ushort districtId, ref string name, Dictionary<string, BRI> bris)
+        protected void UpdateMeshDistrict(ushort districtId, ref string name, Dictionary<string, BasicRenderInformation> bris)
         {
             if (districtId == 0)
             {
@@ -466,7 +467,7 @@ namespace Klyte.DynamicTextProps.Overrides
             }
             UpdateTextIfNecessary(name, bris);
         }
-        protected void UpdateMeshStreetSuffix(ushort idx, ref string name, Dictionary<string, BRI> bris)
+        protected void UpdateMeshStreetSuffix(ushort idx, ref string name, Dictionary<string, BasicRenderInformation> bris)
         {
             LogUtils.DoLog($"!UpdateMeshStreetSuffix {idx}");
             if ((NetManager.instance.m_segments.m_buffer[idx].m_flags & NetSegment.Flags.CustomName) == 0)
@@ -616,29 +617,29 @@ namespace Klyte.DynamicTextProps.Overrides
             return resultStringBuilder.ToString();
 
         }
-        private void UpdateTextIfNecessary(string name, Dictionary<string, BRI> bris)
+        private void UpdateTextIfNecessary(string name, Dictionary<string, BasicRenderInformation> bris)
         {
             if (name != null && (!bris.ContainsKey(name) || lastFontUpdateFrame > bris[name].m_frameDrawTime))
             {
-                BRI bri = bris.ContainsKey(name) ? bris[name] : default;
+                BasicRenderInformation bri = bris.ContainsKey(name) ? bris[name] : default;
                 RefreshTextData(ref bri, name);
                 bris[name] = bri;
             }
         }
 
-        protected BRI RefreshTextData(string text, UIFont overrideFont = null)
+        protected BasicRenderInformation RefreshTextData(string text, UIFont overrideFont = null)
         {
-            var result = new BRI();
+            var result = new BasicRenderInformation();
             RefreshTextData(ref result, text, overrideFont);
             return result;
         }
 
         private static DynamicSpriteFont _font = DynamicSpriteFont.FromTtf(File.ReadAllBytes(@"C:\WINDOWS\Fonts\HelveticaWorld-Regular.ttf"), 120);
-        protected void RefreshTextData(ref BRI result, string text, UIFont overrideFont = null)
+        protected void RefreshTextData(ref BasicRenderInformation result, string text, UIFont overrideFont = null)
         {
             if (result == null)
             {
-                result = new BRI();
+                result = new BasicRenderInformation();
             }
             if (text.IsNullOrWhiteSpace())
             {
@@ -667,76 +668,32 @@ namespace Klyte.DynamicTextProps.Overrides
         public abstract Color GetContrastColor(ushort refID, int boardIdx, int secIdx, BD descriptor);
 
         #region UpdateData
-        protected virtual BRI GetOwnNameMesh(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;
-        protected virtual BRI GetMeshCurrentNumber(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;
-        protected virtual BRI GetMeshFullStreetName(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;
-        protected virtual BRI GetMeshStreetSuffix(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;
-        protected virtual BRI GetMeshStreetPrefix(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;
-        protected virtual BRI GetMeshDistrict(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;
-        protected virtual BRI GetMeshCustom1(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;
-        protected virtual BRI GetMeshCustom2(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;
-        protected virtual BRI GetMeshCustom3(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;
-        protected virtual BRI GetMeshCustom4(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;
-        protected virtual BRI GetMeshCustom5(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;
-        protected virtual BRI GetMeshLinesSymbols(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;
-        protected virtual BRI GetFixedTextMesh(ref BTD textDescriptor, ushort refID, int boardIdx, int secIdx, ref BD descriptor)
+        protected virtual BasicRenderInformation GetOwnNameMesh(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;
+        protected virtual BasicRenderInformation GetMeshCurrentNumber(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;
+        protected virtual BasicRenderInformation GetMeshFullStreetName(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;
+        protected virtual BasicRenderInformation GetMeshStreetSuffix(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;
+        protected virtual BasicRenderInformation GetMeshStreetPrefix(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;
+        protected virtual BasicRenderInformation GetMeshDistrict(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;
+        protected virtual BasicRenderInformation GetMeshCustom1(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;
+        protected virtual BasicRenderInformation GetMeshCustom2(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;
+        protected virtual BasicRenderInformation GetMeshCustom3(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;
+        protected virtual BasicRenderInformation GetMeshCustom4(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;
+        protected virtual BasicRenderInformation GetMeshCustom5(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;
+        protected virtual BasicRenderInformation GetMeshLinesSymbols(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;
+        protected virtual BasicRenderInformation GetFixedTextMesh(ref BTD textDescriptor, ushort refID, int boardIdx, int secIdx, ref BD descriptor)
         {
 
             if (textDescriptor.GeneratedFixedTextRenderInfo == null || textDescriptor.GeneratedFixedTextRenderInfoTick < lastFontUpdateFrame)
             {
-                var result = textDescriptor.GeneratedFixedTextRenderInfo as BRI;
+                var result = textDescriptor.GeneratedFixedTextRenderInfo as BasicRenderInformation;
                 RefreshTextData(ref result, (textDescriptor.m_isFixedTextLocalized ? Locale.Get(textDescriptor.m_fixedText, textDescriptor.m_fixedTextLocaleKey) : textDescriptor.m_fixedText) ?? "");
                 textDescriptor.GeneratedFixedTextRenderInfo = result;
             }
-            return textDescriptor.GeneratedFixedTextRenderInfo as BRI;
+            return textDescriptor.GeneratedFixedTextRenderInfo as BasicRenderInformation;
         }
         #endregion
 
-        //#region Serialization
-        //protected abstract string ID { get; }
-        //public IManagers Managers => SerializableDataManager?.managers;
 
-        //public ISerializableData SerializableDataManager { get; private set; }
-
-        //public void OnCreated(ISerializableData serializableData) => SerializableDataManager = serializableData;
-        //public void OnLoadData()
-        //{
-        //    if (ID == null || Singleton<ToolManager>.instance.m_properties.m_mode != ItemClass.Availability.Game)
-        //    {
-        //        return;
-        //    }
-        //    if (!SerializableDataManager.EnumerateData().Contains(ID))
-        //    {
-        //        return;
-        //    }
-        //    using var memoryStream = new MemoryStream(SerializableDataManager.LoadData(ID));
-        //    byte[] storage = memoryStream.ToArray();
-        //    Deserialize(System.Text.Encoding.UTF8.GetString(storage));
-        //}
-
-        //// Token: 0x0600003B RID: 59 RVA: 0x00004020 File Offset: 0x00002220
-        //public void OnSaveData()
-        //{
-        //    if (ID == null || Singleton<ToolManager>.instance.m_properties.m_mode != ItemClass.Availability.Game)
-        //    {
-        //        return;
-        //    }
-
-        //    string serialData = Serialize();
-        //    LogUtils.DoLog($"serialData: {serialData ?? "<NULL>"}");
-        //    if (serialData == null)
-        //    {
-        //        return;
-        //    }
-
-        //    byte[] data = System.Text.Encoding.UTF8.GetBytes(serialData);
-        //    SerializableDataManager.SaveData(ID, data);
-        //}
-
-        //public abstract void Deserialize(string data);
-        //public abstract string Serialize();
-        //public void OnReleased() { }
-        //#endregion
 
     }
 
