@@ -13,7 +13,7 @@ using static Klyte.DynamicTextProps.Overrides.BoardGeneratorHighwaySigns;
 namespace Klyte.DynamicTextProps.Overrides
 {
 
-    public partial class BoardGeneratorHighwaySigns : BoardGeneratorParent<BoardGeneratorHighwaySigns, BoardBunchContainerHighwaySignXml, DTPHighwaySignsData, CacheControlHighwaySign, BoardDescriptorHigwaySignXml, BoardTextDescriptorHighwaySignsXml>
+    public partial class BoardGeneratorHighwaySigns : BoardGeneratorParent<BoardGeneratorHighwaySigns, BoardBunchContainerHighwaySignXml, DTPHighwaySignsData, BoardDescriptorHigwaySignXml, BoardTextDescriptorHighwaySignsXml>
     {
 
         public Dictionary<string, UIFont> m_fontCache = new Dictionary<string, UIFont>();
@@ -111,7 +111,7 @@ namespace Klyte.DynamicTextProps.Overrides
                     {
                         MaterialPropertyBlock block = NetManager.instance.m_materialBlock;
                         block.Clear();
-                        RenderTextMesh(cameraInfo, segmentID, i, j, ref sign.descriptor, propMatrix, ref sign.descriptor.m_textDescriptors[j], ref sign, block);
+                        RenderTextMesh(cameraInfo, segmentID, i, j, ref sign.descriptor, propMatrix, ref sign.descriptor.m_textDescriptors[j], block);
                     }
                 }
 

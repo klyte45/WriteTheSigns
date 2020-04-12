@@ -1,9 +1,9 @@
-﻿using ColossalFramework;
-using ColossalFramework.Globalization;
+﻿using ColossalFramework.Globalization;
 using ColossalFramework.Math;
 using ColossalFramework.UI;
 using Klyte.Commons.Extensors;
 using Klyte.Commons.Utils;
+using Klyte.DynamicTextProps.Data;
 using Klyte.DynamicTextProps.Libraries;
 using System;
 using System.Collections.Generic;
@@ -14,7 +14,7 @@ using static Klyte.Commons.Utils.SegmentUtils;
 namespace Klyte.DynamicTextProps.Overrides
 {
 
-    public partial class BoardGeneratorHighwayMileage : BoardGeneratorParent<BoardGeneratorHighwayMileage, IBoardBunchContainer<CacheControl, BasicRenderInformation>, CacheControl, BasicRenderInformation, BoardDescriptorMileageMarkerXml, BoardTextDescriptorMileageMarkerXml>
+    public partial class BoardGeneratorHighwayMileage : BoardGeneratorParent<BoardGeneratorHighwayMileage, IBoardBunchContainer<CacheControl>, DTPHighwayMileageData, BoardDescriptorMileageMarkerXml, BoardTextDescriptorMileageMarkerXml>
     {
 
         public BasicRenderInformation[] m_cachedKilometerMeshes;
@@ -30,7 +30,7 @@ namespace Klyte.DynamicTextProps.Overrides
                     TextType.Custom1,
                     TextType.BuildingNumber
           };
-        public override int ObjArraySize => 0;
+
         public override UIDynamicFont DrawFont => m_font;
 
 
@@ -198,9 +198,9 @@ namespace Klyte.DynamicTextProps.Overrides
                         float meterCount = 0f;
                         foreach (Tuple<ushort, float> segmentRef in segments)
                         {
-                            int oldMeterKm = (int) meterCount / divisor;
+                            int oldMeterKm = (int)meterCount / divisor;
                             meterCount += segmentRef.Second;
-                            if (oldMeterKm != (int) meterCount / divisor)
+                            if (oldMeterKm != (int)meterCount / divisor)
                             {
                                 NetSegment segmentObj = NetManager.instance.m_segments.m_buffer[segmentRef.First];
                                 bool invert = (NetManager.instance.m_segments.m_buffer[segmentRef.First].m_flags & NetSegment.Flags.Invert) > 0;
@@ -214,7 +214,7 @@ namespace Klyte.DynamicTextProps.Overrides
                                 byte cardinalDirection = SegmentUtils.GetCardinalDirection(start, end);
                                 if (roadInverted)
                                 {
-                                    cardinalDirection = (byte) ((cardinalDirection + 4) % 8);
+                                    cardinalDirection = (byte)((cardinalDirection + 4) % 8);
                                 }
                                 var marker1 = new MileageMarkerDescriptor
                                 {
@@ -232,7 +232,7 @@ namespace Klyte.DynamicTextProps.Overrides
                                         segmentId = segmentRef.First,
                                         kilometer = oldMeterKm + 1,
                                         position = segmentObj.m_middlePosition + (VectorUtils.X_Y(KlyteMathUtils.DegreeToVector2(rotation + 90)) * (segmentObj.Info.m_halfWidth - 1)),
-                                        cardinalDirection8 = (byte) ((cardinalDirection + (segmentObj.Info.m_hasBackwardVehicleLanes && segmentObj.Info.m_hasForwardVehicleLanes ? 4 : 0)) % 8),
+                                        cardinalDirection8 = (byte)((cardinalDirection + (segmentObj.Info.m_hasBackwardVehicleLanes && segmentObj.Info.m_hasForwardVehicleLanes ? 4 : 0)) % 8),
                                         rotation = segmentObj.Info.m_hasBackwardVehicleLanes && segmentObj.Info.m_hasForwardVehicleLanes ? rotation - 90 : rotation + 90
                                     };
 
@@ -286,7 +286,7 @@ namespace Klyte.DynamicTextProps.Overrides
                         CacheControl c = null;
                         MaterialPropertyBlock block = NetManager.instance.m_materialBlock;
                         block.Clear();
-                        RenderTextMesh(cameraInfo, segmentID, i, marker.kilometer, ref m_loadedDescriptor, propMatrix, ref LoadedMileageMarkerConfig.m_textDescriptors[j], ref c, block);
+                        RenderTextMesh(cameraInfo, segmentID, i, marker.kilometer, ref m_loadedDescriptor, propMatrix, ref LoadedMileageMarkerConfig.m_textDescriptors[j], block);
                     }
                 }
             }
@@ -296,7 +296,7 @@ namespace Klyte.DynamicTextProps.Overrides
 
 
         #region Upadate Data
-        protected override BasicRenderInformation GetMeshCustom1(ushort id, int boardIdx, int kilometers,  ref BoardDescriptorMileageMarkerXml descriptor)
+        protected override BasicRenderInformation GetMeshCustom1(ushort id, int boardIdx, int kilometers, ref BoardDescriptorMileageMarkerXml descriptor)
         {
             byte direction = (boardIdx == 1 ? m_segmentCachedInfo[id].Third : m_segmentCachedInfo[id].Second).cardinalDirection8;
             if (m_cachedDirectionMeshes[direction] == null || lastFontUpdateFrame > m_cachedDirectionMeshes[direction].m_frameDrawTime)
@@ -308,7 +308,7 @@ namespace Klyte.DynamicTextProps.Overrides
             return m_cachedDirectionMeshes[direction];
 
         }
-        protected override BasicRenderInformation GetMeshCurrentNumber(ushort id, int boardIdx, int kilometers,  ref BoardDescriptorMileageMarkerXml descriptor)
+        protected override BasicRenderInformation GetMeshCurrentNumber(ushort id, int boardIdx, int kilometers, ref BoardDescriptorMileageMarkerXml descriptor)
         {
             if (m_cachedKilometerMeshes.Length <= kilometers + 1)
             {
@@ -327,7 +327,7 @@ namespace Klyte.DynamicTextProps.Overrides
         private long m_testTextInfoTime = 0;
         private PropInfo m_cachedPropInfo;
 
-        protected override BasicRenderInformation GetOwnNameMesh(ushort id, int boardIdx, int secIdx,  ref BoardDescriptorMileageMarkerXml descriptor)
+        protected override BasicRenderInformation GetOwnNameMesh(ushort id, int boardIdx, int secIdx, ref BoardDescriptorMileageMarkerXml descriptor)
         {
             if (m_testTextInfo == null || m_testTextInfoTime < lastFontUpdateFrame)
             {
@@ -351,33 +351,6 @@ namespace Klyte.DynamicTextProps.Overrides
 
         public override Color GetContrastColor(ushort refID, int boardIdx, int secIdx, BoardDescriptorMileageMarkerXml descriptor) => KlyteMonoUtils.ContrastColor(descriptor.PropColor);
 
-        #region Serialize
-        public override void Deserialize(string data)
-        {
-            LogUtils.DoLog($"{GetType()} STR: \"{data}\"");
-            if (data.IsNullOrWhiteSpace())
-            {
-                return;
-            }
-            try
-            {
-                LoadedMileageMarkerConfig = XmlUtils.DefaultXmlDeserialize<BoardDescriptorMileageMarkerXml>(data);
-            }
-            catch (Exception e)
-            {
-                LogUtils.DoErrorLog($"Error deserializing: {e.Message}\n{e.StackTrace}");
-            }
-        }
-        public override string Serialize() => XmlUtils.DefaultXmlSerialize(LoadedMileageMarkerConfig, false);
-        protected override string ID { get; } = "K45_DTP_MM";
-
-        internal void CleanDescriptor()
-        {
-            LoadedMileageMarkerConfig = new BoardDescriptorMileageMarkerXml();
-            SoftReset();
-        }
-
-        #endregion
 
     }
 }

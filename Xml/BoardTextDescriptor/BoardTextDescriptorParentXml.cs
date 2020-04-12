@@ -9,6 +9,7 @@ using UnityEngine;
 
 namespace Klyte.DynamicTextProps.Overrides
 {
+
     public abstract class BoardTextDescriptorParentXml<T> where T : BoardTextDescriptorParentXml<T>
     {
         [XmlIgnore]

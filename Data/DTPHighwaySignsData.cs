@@ -9,7 +9,7 @@ namespace Klyte.DynamicTextProps.Data
 {
 
     [XmlRoot("DTPHighwaySignsData")]
-    public class DTPHighwaySignsData : DTPBaseData<DTPHighwaySignsData, BoardBunchContainerHighwaySignXml, CacheControlHighwaySign>
+    public class DTPHighwaySignsData : DTPBaseData<DTPHighwaySignsData, BoardBunchContainerHighwaySignXml>
     {
         public override int ObjArraySize => NetManager.MAX_SEGMENT_COUNT;
 

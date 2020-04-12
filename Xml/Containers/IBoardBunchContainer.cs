@@ -1,13 +1,24 @@
-﻿using System.Xml.Serialization;
+﻿using System.Linq;
+using System.Xml.Serialization;
 
 namespace Klyte.DynamicTextProps.Overrides
 {
-    public class IBoardBunchContainer<CC> where CC : CacheControl
+    public interface IBoardBunchContainer
     {
         [XmlIgnore]
-        internal BasicRenderInformation m_nameSubInfo;
+        BasicRenderInformation NameSubInfo { get; set; }
+
+        public bool HasAnyBoard();
+    }
+
+    public class IBoardBunchContainer<CC> : IBoardBunchContainer where CC : CacheControl
+    {
         [XmlIgnore]
         internal CC[] m_boardsData;
+
+        public BasicRenderInformation NameSubInfo { get; set; }
+
+        public bool HasAnyBoard() => (m_boardsData?.Where(y => y != null)?.Count() ?? 0) > 0;
     }
 
 

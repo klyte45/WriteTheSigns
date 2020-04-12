@@ -21,7 +21,7 @@ using static Klyte.DynamicTextProps.Overrides.BoardGeneratorBuildings;
 namespace Klyte.DynamicTextProps.Overrides
 {
 
-    public partial class BoardGeneratorBuildings : BoardGeneratorParent<BoardGeneratorBuildings, BoardBunchContainerBuilding, DTPBuildingsData, CacheControl, BoardDescriptorBuildingXml, BoardTextDescriptorBuildingsXml>
+    public partial class BoardGeneratorBuildings : BoardGeneratorParent<BoardGeneratorBuildings, BoardBunchContainerBuilding, DTPBuildingsData,  BoardDescriptorBuildingXml, BoardTextDescriptorBuildingsXml>
     {
 
         public Dictionary<string, UIFont> m_fontCache = new Dictionary<string, UIFont>();
@@ -187,7 +187,7 @@ namespace Klyte.DynamicTextProps.Overrides
             {
                 if (x != null)
                 {
-                    x.m_nameSubInfo = null;
+                    x.NameSubInfo = null;
                 }
             });
             m_textCache.Clear();
@@ -200,7 +200,7 @@ namespace Klyte.DynamicTextProps.Overrides
         {
             if (Data.BoardsContainers[id] != null)
             {
-                Data.BoardsContainers[id].m_nameSubInfo = null;
+                Data.BoardsContainers[id].NameSubInfo = null;
             }
         }
 
@@ -299,7 +299,7 @@ namespace Klyte.DynamicTextProps.Overrides
             if (Data.BoardsContainers[buildingID]?.m_boardsData?.Count() != LoadedDescriptors[refName].BoardDescriptors.Length)
             {
                 Data.BoardsContainers[buildingID].m_boardsData = new CacheControl[LoadedDescriptors[refName].BoardDescriptors.Length];
-                Data.BoardsContainers[buildingID].m_nameSubInfo = null;
+                Data.BoardsContainers[buildingID].NameSubInfo = null;
             }
 
             UpdateLinesBuilding(buildingID, ref data, Data.BoardsContainers[buildingID], ref renderInstance.m_dataMatrix1);
@@ -338,7 +338,7 @@ namespace Klyte.DynamicTextProps.Overrides
                     MaterialPropertyBlock materialBlock = Singleton<PropManager>.instance.m_materialBlock;
                     materialBlock.Clear();
 
-                    RenderTextMesh(cameraInfo, buildingID, i, j, ref descriptor, propMatrix, ref descriptor.m_textDescriptors[j], ref Data.BoardsContainers[buildingID].m_boardsData[i], materialBlock);
+                    RenderTextMesh(cameraInfo, buildingID, i, j, ref descriptor, propMatrix, ref descriptor.m_textDescriptors[j], materialBlock);
                 }
             }
         }

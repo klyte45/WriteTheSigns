@@ -8,7 +8,7 @@ using System.Xml.Serialization;
 
 namespace Klyte.DynamicTextProps.Data
 {
-    public abstract class DTPBaseData<D, BBC, CC> : DataExtensorBase<D> where D : DTPBaseData<D, BBC, CC>, new() where BBC : IBoardBunchContainer<CC> where CC : CacheControl
+    public abstract class DTPBaseData<D, BBC> : DataExtensorBase<D> where D : DTPBaseData<D, BBC>, new() where BBC : IBoardBunchContainer
     {
         public BBC[] BoardsContainers { get; private set; }
         public abstract int ObjArraySize { get; }
@@ -26,7 +26,7 @@ namespace Klyte.DynamicTextProps.Data
         {
             get {
                 var temp = new SimpleNonSequentialList<BBC>();
-                BoardsContainers.Select((x, i) => Tuple.New(i, x)).Where((x) => x?.Second?.m_boardsData?.Where(y => y != null).Count() > 0).ForEach(x => temp[x.First] = x.Second);
+                BoardsContainers.Select((x, i) => Tuple.New(i, x)).Where((x) => x?.Second?.HasAnyBoard() ?? false).ForEach(x => temp[x.First] = x.Second);
                 return temp;
             }
             set {
