@@ -4,14 +4,12 @@ using System.Xml.Serialization;
 
 namespace Klyte.DynamicTextProps.Overrides
 {
-    public partial class BoardGeneratorRoadNodes
+    public class BoardTextDescriptorSteetSignXml : BoardTextDescriptorParentXml<BoardTextDescriptorSteetSignXml>, ILibable
     {
-        public class BoardTextDescriptorSteetSignXml : BoardTextDescriptorParentXml<BoardTextDescriptorSteetSignXml>, ILibable
-        {
-            [XmlAttribute("saveName")]
-            public string SaveName { get; set; }
-        }
-
+        [XmlAttribute("saveName")]
+        public string SaveName { get; set; }
     }
+
+
 
 }

@@ -64,13 +64,12 @@ namespace Klyte.DynamicTextProps.Overrides
         public virtual void Awake() => Instance = this as BG;
     }
 
-    public abstract class BoardGeneratorParent<BG, BBC, D, CC, BD, BTD> : BoardGeneratorParent<BG>
-        where BG : BoardGeneratorParent<BG, BBC, D, CC, BD, BTD>
-        where BBC : IBoardBunchContainer<CC>
-        where D : DTPBaseData<D, BBC, CC>, new()
+    public abstract class BoardGeneratorParent<BG, BBC, D,  BD, BTD> : BoardGeneratorParent<BG>
+        where BG : BoardGeneratorParent<BG, BBC, D,  BD, BTD>
+        where BBC : IBoardBunchContainer
+        where D : DTPBaseData<D, BBC>, new()
         where BD : BoardDescriptorParentXml<BD, BTD>
         where BTD : BoardTextDescriptorParentXml<BTD>
-        where CC : CacheControl
     {
 
         public sealed override void Reset()
@@ -83,7 +82,7 @@ namespace Klyte.DynamicTextProps.Overrides
             m_defaultCacheForStrings = new Dictionary<string, BasicRenderInformation>();
         }
 
-        public D Data => DTPBaseData<D, BBC, CC>.Instance;
+        public D Data => DTPBaseData<D, BBC>.Instance;
 
         public static readonly int m_shaderPropColor = Shader.PropertyToID("_Color");
         public static readonly int m_shaderPropColor0 = Shader.PropertyToID("_ColorV0");
@@ -255,7 +254,7 @@ namespace Klyte.DynamicTextProps.Overrides
 
         protected abstract InstanceID GetPropRenderID(ushort refID);
 
-        protected void RenderTextMesh(RenderManager.CameraInfo cameraInfo, ushort refID, int boardIdx, int secIdx, ref BD descriptor, Matrix4x4 propMatrix, ref BTD textDescriptor, ref CC ctrl, MaterialPropertyBlock materialPropertyBlock)
+        protected void RenderTextMesh(RenderManager.CameraInfo cameraInfo, ushort refID, int boardIdx, int secIdx, ref BD descriptor, Matrix4x4 propMatrix, ref BTD textDescriptor, MaterialPropertyBlock materialPropertyBlock)
         {
             BasicRenderInformation renderInfo = null;
             switch (textDescriptor.m_textType)

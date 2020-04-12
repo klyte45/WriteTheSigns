@@ -88,7 +88,7 @@
     <Compile Include="commons\Interfaces\IPropColorContainer.cs" />
     <Compile Include="commons\Interfaces\ITimeable.cs" />
     <Compile Include="commons\Interfaces\IViewStartActions.cs" />
-    <Compile Include="commons\Interfaces\Warehouse\BasicSingletonSerializableDataExtension.cs" />
+    <Compile Include="commons\Interfaces\Warehouse\DataExtensorBase.cs" />
     <Compile Include="commons\Interfaces\Warehouse\ConfigWarehouseBase.cs" />
     <Compile Include="commons\Interfaces\Warehouse\ExtensionInterface2LevelIntImpl.cs" />
     <Compile Include="commons\Interfaces\Warehouse\ExtensionInterfaceDictionaryByEnumImpl.cs" />
@@ -97,6 +97,8 @@
     <Compile Include="commons\Interfaces\Warehouse\ExtensionInterfaceListImpl .cs" />
     <Compile Include="commons\Interfaces\Warehouse\ExtensionInterfaceSingleImpl.cs" />
     <Compile Include="commons\Interfaces\Warehouse\ExtensorContainer.cs" />
+    <Compile Include="commons\Interfaces\Warehouse\IDataExtensorLegacy.cs" />
+    <Compile Include="commons\Interfaces\Warehouse\IDataExtensor.cs" />
     <Compile Include="commons\Redirectors\UIDynamicFontRendererRedirector.cs" />
     <Compile Include="commons\Redirectors\UIDynamicPanelsRedirector.cs" />
     <Compile Include="commons\Redirectors\UIViewRedirector.cs" />
@@ -110,6 +112,7 @@
     <Compile Include="commons\UI\TLMAgesChartPanel.cs" />
     <Compile Include="commons\UI\TLMWorkersChartPanel.cs" />
     <Compile Include="commons\UI\UIRadialChartExtended.cs" />
+    <Compile Include="commons\Utils\ZipUtils.cs" />
     <Compile Include="commons\Utils\BuildingUtils.cs" />
     <Compile Include="commons\Utils\DistrictUtils.cs" />
     <Compile Include="commons\Utils\FileUtils.cs" />
@@ -156,6 +159,15 @@
     <Compile Include="commons\Utils\UtilitiesClasses\Tuple.cs" />
     <Compile Include="commons\Utils\VehicleUtils.cs" />
     <Compile Include="commons\Utils\XmlUtils.cs" />
+    <Compile Include="Data\DTPBuildingsDataLegacy.cs" />
+    <Compile Include="Data\DTPHighwayMileageDataLegacy.cs" />
+    <Compile Include="Data\DTPBaseData.cs" />
+    <Compile Include="Data\DTPBuildingsData.cs" />
+    <Compile Include="Data\DTPHighwayMileageData.cs" />
+    <Compile Include="Data\DTPRoadNodesData.cs" />
+    <Compile Include="Data\DTPHighwaySignsData.cs" />
+    <Compile Include="Data\DTPRoadNodesDataLegacy.cs" />
+    <Compile Include="Data\DTPHighwaySignsDataLegacy.cs" />
     <Compile Include="DynamicFont\src\CharacterRange.cs" />
     <Compile Include="DynamicFont\src\DynamicSpriteFont.cs" />
     <Compile Include="DynamicFont\src\FontStashSharp\Bounds.cs" />
@@ -191,7 +203,6 @@
     <Compile Include="Xml\BoardDescriptor\BoardDescriptorMileageMarkerXml.cs" />
     <Compile Include="Xml\BoardTextDescriptor\BoardTextDescriptorMileageMarkerXml.cs" />
     <Compile Include="Xml\BoardTextDescriptor\BoardTextDescriptorSteetSignXml.cs" />
-    <Compile Include="Xml\Containers\BoardBunchContainerStreetPlateXml.cs" />
     <Compile Include="Xml\Cache\CacheControlStreetPlate.cs" />
     <Compile Include="Xml\Containers\BoardBunchContainerHighwaySignXml.cs" />
     <Compile Include="Xml\BoardDescriptor\BoardDescriptorHigwaySignXml.cs" />

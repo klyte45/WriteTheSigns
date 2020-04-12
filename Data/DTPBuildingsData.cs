@@ -6,7 +6,7 @@ namespace Klyte.DynamicTextProps.Data
 {
 
     [XmlRoot("DTPBuildingsData")]
-    public class DTPBuildingsData : DTPBaseData<DTPBuildingsData, BoardBunchContainerBuilding, CacheControl>
+    public class DTPBuildingsData : DTPBaseData<DTPBuildingsData, BoardBunchContainerBuilding>
     {
         public override int ObjArraySize => BuildingManager.MAX_BUILDING_COUNT;
 

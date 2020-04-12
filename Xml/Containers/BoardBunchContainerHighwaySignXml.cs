@@ -11,7 +11,7 @@ namespace Klyte.DynamicTextProps.Overrides
     public partial class BoardGeneratorHighwaySigns
     {
 
-        public class BoardBunchContainerHighwaySignXml : IBoardBunchContainer<CacheControlHighwaySign, BasicRenderInformation>, ILibable
+        public class BoardBunchContainerHighwaySignXml : IBoardBunchContainer<CacheControlHighwaySign>, ILibable
         {
             [XmlIgnore]
             public bool cached = false;
