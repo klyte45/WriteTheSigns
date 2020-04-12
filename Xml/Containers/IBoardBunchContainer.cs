@@ -2,10 +2,10 @@
 
 namespace Klyte.DynamicTextProps.Overrides
 {
-    public class IBoardBunchContainer<CC, BRI> where CC : CacheControl where BRI : BasicRenderInformation
+    public class IBoardBunchContainer<CC> where CC : CacheControl
     {
         [XmlIgnore]
-        internal BRI m_nameSubInfo;
+        internal BasicRenderInformation m_nameSubInfo;
         [XmlIgnore]
         internal CC[] m_boardsData;
     }

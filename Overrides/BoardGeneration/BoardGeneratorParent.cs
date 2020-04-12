@@ -2,9 +2,9 @@
 using ColossalFramework.Globalization;
 using ColossalFramework.Math;
 using ColossalFramework.UI;
-using ICities;
 using Klyte.Commons.Extensors;
 using Klyte.Commons.Utils;
+using Klyte.DynamicTextProps.Data;
 using Klyte.DynamicTextProps.Utils;
 using SpriteFontPlus;
 using System;
@@ -64,15 +64,14 @@ namespace Klyte.DynamicTextProps.Overrides
         public virtual void Awake() => Instance = this as BG;
     }
 
-    public abstract class BoardGeneratorParent<BG, BBC, CC, BRI, BD, BTD> : BoardGeneratorParent<BG>, ISerializableDataExtension
-        where BG : BoardGeneratorParent<BG, BBC, CC, BRI, BD, BTD>
-        where BBC : IBoardBunchContainer<CC, BRI>
+    public abstract class BoardGeneratorParent<BG, BBC, D, CC, BD, BTD> : BoardGeneratorParent<BG>
+        where BG : BoardGeneratorParent<BG, BBC, D, CC, BD, BTD>
+        where BBC : IBoardBunchContainer<CC>
+        where D : DTPBaseData<D, BBC, CC>, new()
         where BD : BoardDescriptorParentXml<BD, BTD>
         where BTD : BoardTextDescriptorParentXml<BTD>
         where CC : CacheControl
-        where BRI : BasicRenderInformation, new()
     {
-        public abstract int ObjArraySize { get; }
 
         public sealed override void Reset()
         {
@@ -81,7 +80,7 @@ namespace Klyte.DynamicTextProps.Overrides
             m_cachedStreetNameInformation_End = new string[NetManager.MAX_SEGMENT_COUNT];
             m_cachedStreetNameInformation_Start = new string[DistrictManager.MAX_DISTRICT_COUNT];
             m_cachedDistrictsNames = new string[DistrictManager.MAX_DISTRICT_COUNT];
-            m_defaultCacheForStrings = new Dictionary<string, BRI>();
+            m_defaultCacheForStrings = new Dictionary<string, BasicRenderInformation>();
         }
 
 
@@ -92,10 +91,6 @@ namespace Klyte.DynamicTextProps.Overrides
         public static readonly int m_shaderPropColor3 = Shader.PropertyToID("_ColorV3");
         public static readonly int m_shaderPropEmissive = Shader.PropertyToID("_SpecColor");
         public abstract void Initialize();
-
-
-        public static BBC[] m_boardsContainers;
-
 
         private const float m_pixelRatio = 2;
         //private const float m_scaleY = 1.2f;
@@ -117,8 +112,6 @@ namespace Klyte.DynamicTextProps.Overrides
                 RegisterEvent("EventRoadNamingChange", adrEventsType, new Action(OnNameSeedChanged));
                 RegisterEvent("EventDistrictColorChanged", adrEventsType, new Action(OnDistrictChanged));
             }
-
-            m_boardsContainers = new BBC[ObjArraySize];
 
             LogUtils.DoLog($"Loading Boards Generator {typeof(BG)}");
 
@@ -379,7 +372,7 @@ namespace Klyte.DynamicTextProps.Overrides
         private string[] m_cachedStreetNameInformation_End = new string[NetManager.MAX_SEGMENT_COUNT];
         private string[] m_cachedStreetNameInformation_Start = new string[NetManager.MAX_SEGMENT_COUNT];
         private string[] m_cachedDistrictsNames = new string[DistrictManager.MAX_DISTRICT_COUNT];
-        private Dictionary<string, BRI> m_defaultCacheForStrings = new Dictionary<string, BRI>();
+        private Dictionary<string, BasicRenderInformation> m_defaultCacheForStrings = new Dictionary<string, BasicRenderInformation>();
         private uint m_lastTickTextureGen = 0;
 
         public void ClearCacheStreetName() => m_cachedStreetNameInformation_End = new string[NetManager.MAX_SEGMENT_COUNT];
@@ -699,51 +692,51 @@ namespace Klyte.DynamicTextProps.Overrides
         }
         #endregion
 
-        #region Serialization
-        protected abstract string ID { get; }
-        public IManagers Managers => SerializableDataManager?.managers;
+        //#region Serialization
+        //protected abstract string ID { get; }
+        //public IManagers Managers => SerializableDataManager?.managers;
 
-        public ISerializableData SerializableDataManager { get; private set; }
+        //public ISerializableData SerializableDataManager { get; private set; }
 
-        public void OnCreated(ISerializableData serializableData) => SerializableDataManager = serializableData;
-        public void OnLoadData()
-        {
-            if (ID == null || Singleton<ToolManager>.instance.m_properties.m_mode != ItemClass.Availability.Game)
-            {
-                return;
-            }
-            if (!SerializableDataManager.EnumerateData().Contains(ID))
-            {
-                return;
-            }
-            using var memoryStream = new MemoryStream(SerializableDataManager.LoadData(ID));
-            byte[] storage = memoryStream.ToArray();
-            Deserialize(System.Text.Encoding.UTF8.GetString(storage));
-        }
+        //public void OnCreated(ISerializableData serializableData) => SerializableDataManager = serializableData;
+        //public void OnLoadData()
+        //{
+        //    if (ID == null || Singleton<ToolManager>.instance.m_properties.m_mode != ItemClass.Availability.Game)
+        //    {
+        //        return;
+        //    }
+        //    if (!SerializableDataManager.EnumerateData().Contains(ID))
+        //    {
+        //        return;
+        //    }
+        //    using var memoryStream = new MemoryStream(SerializableDataManager.LoadData(ID));
+        //    byte[] storage = memoryStream.ToArray();
+        //    Deserialize(System.Text.Encoding.UTF8.GetString(storage));
+        //}
 
-        // Token: 0x0600003B RID: 59 RVA: 0x00004020 File Offset: 0x00002220
-        public void OnSaveData()
-        {
-            if (ID == null || Singleton<ToolManager>.instance.m_properties.m_mode != ItemClass.Availability.Game)
-            {
-                return;
-            }
+        //// Token: 0x0600003B RID: 59 RVA: 0x00004020 File Offset: 0x00002220
+        //public void OnSaveData()
+        //{
+        //    if (ID == null || Singleton<ToolManager>.instance.m_properties.m_mode != ItemClass.Availability.Game)
+        //    {
+        //        return;
+        //    }
 
-            string serialData = Serialize();
-            LogUtils.DoLog($"serialData: {serialData ?? "<NULL>"}");
-            if (serialData == null)
-            {
-                return;
-            }
+        //    string serialData = Serialize();
+        //    LogUtils.DoLog($"serialData: {serialData ?? "<NULL>"}");
+        //    if (serialData == null)
+        //    {
+        //        return;
+        //    }
 
-            byte[] data = System.Text.Encoding.UTF8.GetBytes(serialData);
-            SerializableDataManager.SaveData(ID, data);
-        }
+        //    byte[] data = System.Text.Encoding.UTF8.GetBytes(serialData);
+        //    SerializableDataManager.SaveData(ID, data);
+        //}
 
-        public abstract void Deserialize(string data);
-        public abstract string Serialize();
-        public void OnReleased() { }
-        #endregion
+        //public abstract void Deserialize(string data);
+        //public abstract string Serialize();
+        //public void OnReleased() { }
+        //#endregion
 
     }
 
