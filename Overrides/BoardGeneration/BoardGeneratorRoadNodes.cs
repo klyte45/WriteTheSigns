@@ -70,7 +70,7 @@ namespace Klyte.DynamicTextProps.Overrides
             System.Reflection.MethodInfo postRenderMeshs = GetType().GetMethod("AfterRenderSegment", RedirectorUtils.allFlags);
             System.Reflection.MethodInfo orig = typeof(NetSegment).GetMethod("RenderInstance", new Type[] { typeof(RenderManager.CameraInfo), typeof(ushort), typeof(int) });
             LogUtils.DoLog($"Patching: {orig} => {postRenderMeshs} {postRenderMeshs.IsStatic}");
-            RedirectorInstance.AddRedirect(orig, null, postRenderMeshs);
+            AddRedirect(orig, null, postRenderMeshs);
             #endregion
         }
 

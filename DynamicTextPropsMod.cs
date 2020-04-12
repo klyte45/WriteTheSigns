@@ -14,7 +14,7 @@ namespace Klyte.DynamicTextProps
 {
     public class DynamicTextPropsMod : BasicIUserMod<DynamicTextPropsMod, DTPController, DTPPanel>
     {
-        public override string SimpleName => "Klyte's Dynamic Text Props";
+        public override string SimpleName => "Dynamic Text Props";
 
         public override string Description => "This mod allows creating dynamic text props in the city";
         public override string IconName => "K45_KDTPIcon";

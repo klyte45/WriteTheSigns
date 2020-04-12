@@ -7,6 +7,6 @@ namespace Klyte.DynamicTextProps.Overrides
     public class BoardGeneratorBuildingConfigXml
     {
         [XmlAttribute("defaultFont")]
-        public string DefaultFont { get; set; }
+        public string DefaultFont { get; set; } = "";
     }
 }

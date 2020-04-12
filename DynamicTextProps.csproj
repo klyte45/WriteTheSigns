@@ -156,6 +156,19 @@
     <Compile Include="commons\Utils\UtilitiesClasses\Tuple.cs" />
     <Compile Include="commons\Utils\VehicleUtils.cs" />
     <Compile Include="commons\Utils\XmlUtils.cs" />
+    <Compile Include="DynamicFont\src\CharacterRange.cs" />
+    <Compile Include="DynamicFont\src\DynamicSpriteFont.cs" />
+    <Compile Include="DynamicFont\src\FontStashSharp\Bounds.cs" />
+    <Compile Include="DynamicFont\src\FontStashSharp\Font.cs" />
+    <Compile Include="DynamicFont\src\FontStashSharp\FontAtlas.cs" />
+    <Compile Include="DynamicFont\src\FontStashSharp\FontAtlasNode.cs" />
+    <Compile Include="DynamicFont\src\FontStashSharp\FontGlyph.cs" />
+    <Compile Include="DynamicFont\src\FontStashSharp\FontGlyphSquad.cs" />
+    <Compile Include="DynamicFont\src\FontStashSharp\FontSystem.cs" />
+    <Compile Include="DynamicFont\src\GlyphInfo.cs" />
+    <Compile Include="DynamicFont\src\TtfFontBaker.cs" />
+    <Compile Include="DynamicFont\src\TtfFontBakerResult.cs" />
+    <Compile Include="DynamicFont\src\Utility\IOUtils.cs" />
     <Compile Include="Libraries\BasicLib.cs" />
     <Compile Include="Overrides\BoardGeneration\BasicRenderInformation.cs" />
     <Compile Include="Overrides\BuildingManagerOverrides.cs" />
@@ -205,6 +218,13 @@
     <Compile Include="UI\DTPPanel.cs" />
     <Compile Include="Utils\DTPHookable.cs" />
     <Compile Include="Utils\DTPUtils.cs" />
+    <Compile Include="_StbTrueTypeSharp\src\Bmp.cs" />
+    <Compile Include="_StbTrueTypeSharp\src\Buf.cs" />
+    <Compile Include="_StbTrueTypeSharp\src\CharStringContext.cs" />
+    <Compile Include="_StbTrueTypeSharp\src\Common.cs" />
+    <Compile Include="_StbTrueTypeSharp\src\FakePtr.cs" />
+    <Compile Include="_StbTrueTypeSharp\src\FontInfo.cs" />
+    <Compile Include="_StbTrueTypeSharp\src\RectPackContext.cs" />
   </ItemGroup>
   <ProjectExtensions>
     <MonoDevelop>

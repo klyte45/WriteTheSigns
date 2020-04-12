@@ -105,9 +105,9 @@ namespace Klyte.DynamicTextProps.Overrides
             System.Reflection.MethodInfo afterRenderSegment = GetType().GetMethod("AfterRenderSegment", RedirectorUtils.allFlags);
             System.Reflection.MethodInfo onApplyModificationTool = GetType().GetMethod("OnApplyModificationTool", RedirectorUtils.allFlags);
             LogUtils.DoLog($"Patching=> {postRenderMeshs} {postRenderMeshs.IsStatic}");
-            RedirectorInstance.AddRedirect(typeof(RoadBaseAI).GetMethod("RenderNode", RedirectorUtils.allFlags), null, postRenderMeshs);
-            RedirectorInstance.AddRedirect(typeof(NetSegment).GetMethod("RenderInstance", new Type[] { typeof(RenderManager.CameraInfo), typeof(ushort), typeof(int) }), null, afterRenderSegment);
-            RedirectorInstance.AddRedirect(typeof(NetAdjust).GetMethod("ApplyModification", new Type[] { typeof(int) }), null, onApplyModificationTool);
+            AddRedirect(typeof(RoadBaseAI).GetMethod("RenderNode", RedirectorUtils.allFlags), null, postRenderMeshs);
+            AddRedirect(typeof(NetSegment).GetMethod("RenderInstance", new Type[] { typeof(RenderManager.CameraInfo), typeof(ushort), typeof(int) }), null, afterRenderSegment);
+            AddRedirect(typeof(NetAdjust).GetMethod("ApplyModification", new Type[] { typeof(int) }), null, onApplyModificationTool);
             #endregion
         }
 

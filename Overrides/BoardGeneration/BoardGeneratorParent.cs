@@ -4,9 +4,9 @@ using ColossalFramework.Math;
 using ColossalFramework.UI;
 using ICities;
 using Klyte.Commons.Extensors;
-using Klyte.Commons.Redirectors;
 using Klyte.Commons.Utils;
 using Klyte.DynamicTextProps.Utils;
+using SpriteFontPlus;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -14,26 +14,24 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using UnityEngine;
-using static Klyte.Commons.Redirectors.UIDynamicFontRendererRedirector;
 
 namespace Klyte.DynamicTextProps.Overrides
 {
 
-    public abstract class BoardGeneratorParent<BG> : MonoBehaviour, IRedirectable where BG : BoardGeneratorParent<BG>
+    public abstract class BoardGeneratorParent<BG> : Redirector, IRedirectable where BG : BoardGeneratorParent<BG>
     {
         public abstract UIDynamicFont DrawFont { get; }
         protected uint lastFontUpdateFrame = SimulationManager.instance.m_currentTickIndex;
         protected static Shader TextShader = Shader.Find("Custom/Props/Prop/Default") ?? DistrictManager.instance.m_properties.m_areaNameShader;
 
         public static BG Instance { get; protected set; }
-        public Redirector RedirectorInstance { get; set; }
 
         protected void BuildSurfaceFont(out UIDynamicFont font, string fontName)
         {
             font = ScriptableObject.CreateInstance<UIDynamicFont>();
 
             var fontList = new List<string> { fontName };
-            fontList.AddRange(DistrictManager.instance.m_properties?.m_areaNameFont?.baseFont?.fontNames?.ToList());
+            fontList.AddRange(DistrictManager.instance.m_properties?.m_areaNameFont?.baseFont?.fontNames?.ToList() ?? new List<string>());
             font.baseFont = Font.CreateDynamicFontFromOSFont(fontList.ToArray(), 64);
             font.lineHeight = 70;
             font.baseline = 66;
@@ -63,11 +61,7 @@ namespace Klyte.DynamicTextProps.Overrides
         }
         protected abstract void ResetImpl();
 
-        public virtual void Awake()
-        {
-            Instance = this as BG;
-            RedirectorInstance = KlyteMonoUtils.CreateElement<Redirector>(transform);
-        }
+        public virtual void Awake() => Instance = this as BG;
     }
 
     public abstract class BoardGeneratorParent<BG, BBC, CC, BRI, BD, BTD> : BoardGeneratorParent<BG>, ISerializableDataExtension
@@ -324,7 +318,7 @@ namespace Klyte.DynamicTextProps.Overrides
             float realWidth = defaultMultiplierX * renderInfo.m_sizeMetersUnscaled.x;
             float realHeight = defaultMultiplierY * renderInfo.m_sizeMetersUnscaled.y;
             Vector3 targetRelativePosition = textDescriptor.m_textRelativePosition;
-            //    LogUtils.DoLog($"[{GetType().Name},{refID},{boardIdx},{secIdx}] realWidth = {realWidth}; realHeight = {realHeight}; renderInfo.m_mesh.bounds = {renderInfo.m_mesh.bounds};");
+            //LogUtils.DoLog($"[{GetType().Name},{refID},{boardIdx},{secIdx}] realWidth = {realWidth}; realHeight = {realHeight}; renderInfo.m_mesh.bounds = {renderInfo.m_mesh.bounds};");
             if (textDescriptor.m_maxWidthMeters > 0 && textDescriptor.m_maxWidthMeters < realWidth)
             {
                 overflowScaleX = textDescriptor.m_maxWidthMeters / realWidth;
@@ -646,7 +640,7 @@ namespace Klyte.DynamicTextProps.Overrides
             return result;
         }
 
-
+        private static DynamicSpriteFont _font = DynamicSpriteFont.FromTtf(File.ReadAllBytes(@"C:\WINDOWS\Fonts\HelveticaWorld-Regular.ttf"), 120);
         protected void RefreshTextData(ref BRI result, string text, UIFont overrideFont = null)
         {
             if (result == null)
@@ -658,85 +652,7 @@ namespace Klyte.DynamicTextProps.Overrides
                 result.m_frameDrawTime = uint.MaxValue;
                 return;
             }
-
-            UIFontManager.Invalidate(overrideFont ?? DrawFont);
-
-            var uirenderData = UIRenderData.Obtain();
-            try
-            {
-                uirenderData.Clear();
-                PoolList<Vector3> vertices = uirenderData.vertices;
-                PoolList<Color32> colors = uirenderData.colors;
-                PoolList<Vector2> uvs = uirenderData.uvs;
-                PoolList<int> triangles = uirenderData.triangles;
-
-                Texture2D tex = TextureRenderUtils.RenderTokenizedText((UIDynamicFont) (overrideFont ?? DrawFont), 2, text.IsNullOrWhiteSpace() ? " " : text, Color.white, out Vector2 realSize);
-
-
-                var options = new RenderOptions
-                {
-                    color = Color.white,
-                    fillAmount = 1f,
-                    flip = UISpriteFlip.None,
-                    offset = Vector3.zero,
-                    pixelsToUnits = 1,
-                    size = realSize,
-                    spriteInfo = new UITextureAtlas.SpriteInfo()
-                    {
-                        region = new Rect(0, 0, 1, 1)
-                    }
-                };
-                UIDynamicFontRendererRedirector.RenderSprite(uirenderData, options);
-
-
-                if (result.m_mesh == null)
-                {
-                    result.m_mesh = new Mesh();
-                }
-                result.m_mesh.Clear();
-                result.m_mesh.vertices = CenterVertices(vertices).ToArray();
-                result.m_mesh.colors32 = colors.ToArray();
-                result.m_mesh.uv = uvs.ToArray();
-                result.m_mesh.triangles = triangles.ToArray();
-                result.m_mesh.RecalculateBounds();
-                result.m_mesh.RecalculateNormals();
-                result.m_mesh.RecalculateTangents();
-                result.m_frameDrawTime = lastFontUpdateFrame;
-                result.m_sizeMetersUnscaled = new Vector2(realSize.x, result.m_mesh.bounds.extents.y);
-                var mainTex = new Texture2D(tex.width, tex.height);
-                mainTex.SetPixels(new Color[tex.width * tex.height].Select(x => Color.white).ToArray());
-                mainTex.Apply();
-                if (result.m_generatedMaterial == null)
-                {
-                    result.m_generatedMaterial = new Material(Shader.Find("Custom/Buildings/Building/NoBase"))
-                    {
-                        mainTexture = tex
-                    };
-                }
-                else
-                {
-                    result.m_generatedMaterial.mainTexture = tex;
-                }
-                //LogUtils.DoErrorLog($"TEX SIZE= {tex.width},{tex.height} text = {text}");
-                result.m_generatedMaterial.SetTexture("_MainTex", tex);
-                var aciTex = new Texture2D(tex.width, tex.height);
-                aciTex.SetPixels(tex.GetPixels().Select(x => new Color(1 - x.a, 0, 0, 1)).ToArray());
-                aciTex.Apply();
-                result.m_generatedMaterial.SetTexture("_ACIMap", aciTex);
-                var xysTex = new Texture2D(tex.width, tex.height);
-                xysTex.SetPixels(tex.GetPixels().Select(x => new Color(0.732F, 0.732F, 1, 1)).ToArray());
-                xysTex.Apply();
-                result.m_generatedMaterial.SetTexture("_XYSMap", xysTex);
-            }
-            catch (Exception e)
-            {
-                LogUtils.DoErrorLog($"!!!! {e}");
-            }
-            finally
-            {
-                uirenderData.Release();
-            }
-
+            _font.DrawString(result, text, default, Color.white);
         }
 
         private Vector3[] CenterVertices(PoolList<Vector3> points)

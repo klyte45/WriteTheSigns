@@ -8,17 +8,19 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using UnityEngine;
 
 namespace Klyte.DynamicTextProps
 {
 
     public class DTPController : BaseController<DynamicTextPropsMod, DTPController>
     {
+
         public RoadSegmentTool RoadSegmentToolInstance => FindObjectOfType<RoadSegmentTool>();
         public BuildingEditorTool BuildingEditorToolInstance => FindObjectOfType<BuildingEditorTool>();
         public DTPLibPropGroupHigwaySigns GroupInstance => DTPLibPropGroupHigwaySigns.Instance;
         public Dictionary<string, Dictionary<string, string>> AbbreviationFiles { get; private set; }
+
+        public BoardGeneratorRoadNodes BoardGeneratorRoadNodesInstance => BoardGeneratorRoadNodes.Instance;
 
         public void Awake()
         {

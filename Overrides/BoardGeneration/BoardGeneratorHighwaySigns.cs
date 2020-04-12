@@ -39,7 +39,6 @@ namespace Klyte.DynamicTextProps.Overrides
         #region Initialize
         public override void Initialize()
         {
-            RedirectorInstance = KlyteMonoUtils.CreateElement<Redirector>(transform);
             m_cachedExitTitles = new BasicRenderInformation[50];
             //m_cachedDistanceMeshes = new BasicRenderInformation[100];
             LoadedProps = new List<string>();
@@ -52,7 +51,7 @@ namespace Klyte.DynamicTextProps.Overrides
 
             #region Hooks
             System.Reflection.MethodInfo afterRenderSegment = GetType().GetMethod("AfterRenderSegment", RedirectorUtils.allFlags);
-            RedirectorInstance.AddRedirect(typeof(NetSegment).GetMethod("RenderInstance", new Type[] { typeof(RenderManager.CameraInfo), typeof(ushort), typeof(int) }), null, afterRenderSegment);
+            AddRedirect(typeof(NetSegment).GetMethod("RenderInstance", new Type[] { typeof(RenderManager.CameraInfo), typeof(ushort), typeof(int) }), null, afterRenderSegment);
             #endregion
         }
 

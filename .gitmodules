@@ -1,3 +1,6 @@
 [submodule "commons"]
 	path = commons
 	url = https://github.com/klyte45/KlyteCommonsIncludable.git
+[submodule "_StbTrueTypeSharp"]
+	path = _StbTrueTypeSharp
+	url = https://github.com/StbSharp/SafeStbTrueTypeSharp.git
