@@ -2,6 +2,7 @@ using ColossalFramework;
 using ColossalFramework.Math;
 using Klyte.Commons.UI.Sprites;
 using Klyte.Commons.Utils;
+using Klyte.DynamicTextProps.Data;
 using Klyte.DynamicTextProps.Overrides;
 using System;
 using UnityEngine;
@@ -18,7 +19,7 @@ namespace Klyte.DynamicTextProps.Utils
             string result = GetStreetFullName(idx);
             if (result.Contains(" "))
             {
-                switch (BoardGeneratorRoadNodes.Instance.LoadedStreetSignDescriptor.RoadQualifierExtraction)
+                switch (DTPRoadNodesData.Instance.CurrentDescriptor.RoadQualifierExtraction)
                 {
                     case BoardDescriptorStreetSignXml.RoadQualifierExtractionMode.START:
                         result = result.Substring(result.IndexOf(' ') + 1);

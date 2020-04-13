@@ -9,5 +9,6 @@ namespace Klyte.Commons
         public static string ModName => DynamicTextPropsMod.Instance.SimpleName;
         public static string Acronym { get; } = "DTP";
         public static string ModRootFolder { get; } = DTPController.FOLDER_NAME;
+        public static string ModIcon => DynamicTextPropsMod.Instance.IconName;
     }
 }

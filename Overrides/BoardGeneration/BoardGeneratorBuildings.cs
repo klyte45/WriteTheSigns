@@ -75,7 +75,7 @@ namespace Klyte.DynamicTextProps.Overrides
             #region Hooks
             System.Reflection.MethodInfo postRenderMeshs = GetType().GetMethod("AfterRenderMeshes", RedirectorUtils.allFlags);
             LogUtils.DoLog($"Patching=> {postRenderMeshs}");
-            AddRedirect(typeof(BuildingAI).GetMethod("RenderMeshes", RedirectorUtils.allFlags), null, postRenderMeshs);
+            AddRedirect(typeof(BuildingAI).GetMethod("RenderInstance", RedirectorUtils.allFlags), null, postRenderMeshs);
             System.Reflection.MethodInfo afterEndOverlayImpl = GetType().GetMethod("AfterEndOverlayImpl", RedirectorUtils.allFlags);
             AddRedirect(typeof(ToolManager).GetMethod("EndOverlayImpl", RedirectorUtils.allFlags), null, afterEndOverlayImpl);
 
@@ -115,6 +115,17 @@ namespace Klyte.DynamicTextProps.Overrides
             m_lastDrawBuilding = new ulong[BuildingManager.MAX_BUILDING_COUNT];
             if (errorList.Count > 0)
             {
+                K45DialogControl.ShowModal(new K45DialogControl.BindProperties
+                {
+                    title = "Errors loading Files",
+                    message = string.Join("\r\n", errorList.ToArray()),
+                    showButton1 = true,
+                    textButton1 = "Okay...",
+                    showClose = true
+
+                }, (x) => true);
+
+
                 UIComponent uIComponent = UIView.library.ShowModal("ExceptionPanel");
                 if (uIComponent != null)
                 {
@@ -182,6 +193,7 @@ namespace Klyte.DynamicTextProps.Overrides
                     x.NameSubInfo = null;
                 }
             });
+            m_cachedBuildingName = new string[BuildingManager.MAX_BUILDING_COUNT];
         }
 
 
@@ -192,6 +204,8 @@ namespace Klyte.DynamicTextProps.Overrides
             {
                 Data.BoardsContainers[id].NameSubInfo = null;
             }
+
+            m_cachedBuildingName[id] = null;
         }
 
         private void OnBuildingLineChanged(ushort id)
@@ -320,7 +334,7 @@ namespace Klyte.DynamicTextProps.Overrides
 
         private void RenderPropConfig(RenderManager.CameraInfo cameraInfo, ushort buildingID, Building data, int layerMask, ref RenderManager.Instance renderInstance, int i, ref BoardDescriptorBuildingXml descriptor, int k)
         {
-            RenderPropMesh(ref Data.BoardsContainers[buildingID].m_boardsData[i].m_cachedProp, cameraInfo, buildingID, i, 0, layerMask, data.m_angle, renderInstance.m_dataMatrix1.MultiplyPoint(descriptor.m_propPosition + (descriptor.ArrayRepeat * k)), renderInstance.m_dataVector3, ref descriptor.m_propName, descriptor.m_propRotation, descriptor.PropScale, ref descriptor, out Matrix4x4 propMatrix, out bool rendered);
+            RenderPropMesh(ref Data.BoardsContainers[buildingID].m_boardsData[i].m_cachedProp, cameraInfo, buildingID, i, 0, layerMask, data.m_angle, renderInstance.m_dataMatrix1.MultiplyPoint(descriptor.m_propPosition + (descriptor.ArrayRepeat * k)), renderInstance.m_dataVector3, ref descriptor.m_propName, descriptor.m_propRotation, descriptor.PropScale, descriptor, out Matrix4x4 propMatrix, out bool rendered);
             if (rendered && descriptor.m_textDescriptors != null)
             {
                 for (int j = 0; j < descriptor.m_textDescriptors?.Length; j++)
@@ -328,7 +342,7 @@ namespace Klyte.DynamicTextProps.Overrides
                     MaterialPropertyBlock materialBlock = Singleton<PropManager>.instance.m_materialBlock;
                     materialBlock.Clear();
 
-                    RenderTextMesh(cameraInfo, buildingID, i, j, ref descriptor, propMatrix, ref descriptor.m_textDescriptors[j], materialBlock);
+                    RenderTextMesh(cameraInfo, buildingID, i, j, descriptor, propMatrix, descriptor.m_textDescriptors[j], materialBlock);
                 }
             }
         }
@@ -344,66 +358,70 @@ namespace Klyte.DynamicTextProps.Overrides
             return refName;
         }
 
-
+        private string[] m_cachedBuildingName = new string[BuildingManager.MAX_BUILDING_COUNT];
 
         #region Upadate Data
-        protected override BasicRenderInformation GetOwnNameMesh(ushort buildingID, int boardIdx, int secIdx, ref BoardDescriptorBuildingXml descriptor) => GetOwnNameMesh(buildingID, secIdx, ref descriptor);
-        private BasicRenderInformation GetOwnNameMesh(ushort buildingID, int secIdx, ref BoardDescriptorBuildingXml descriptor)
+        protected override BasicRenderInformation GetOwnNameMesh(ushort buildingID, int boardIdx, int secIdx, BoardDescriptorBuildingXml descriptor) => GetOwnNameMesh(buildingID, secIdx, descriptor);
+        private BasicRenderInformation GetOwnNameMesh(ushort buildingID, int secIdx, BoardDescriptorBuildingXml descriptor)
         {
-            string cacheKey = $"{descriptor.m_textDescriptors[secIdx].m_prefix}{BuildingManager.instance.GetBuildingName(buildingID, new InstanceID()) ?? "DUMMY!!!!!"}{descriptor.m_textDescriptors[secIdx].m_suffix}";
+            if (m_cachedBuildingName[buildingID] == null)
+            {
+                m_cachedBuildingName[buildingID] = BuildingManager.instance.GetBuildingName(buildingID, new InstanceID()) ?? "DUMMY!!!!!";
+            }
+            string cacheKey = $"{descriptor.m_textDescriptors[secIdx].m_prefix}{m_cachedBuildingName[buildingID]}{descriptor.m_textDescriptors[secIdx].m_suffix}";
             if (descriptor.m_textDescriptors[secIdx].m_allCaps)
             {
                 cacheKey = cacheKey.ToUpper();
             }
-            return GetTextData(cacheKey);
+            return RenderUtils.GetTextData(cacheKey, DrawFont);
         }
-        protected override BasicRenderInformation GetMeshCustom1(ushort buildingID, int boardIdx, int secIdx, ref BoardDescriptorBuildingXml descriptor)
+        protected override BasicRenderInformation GetMeshCustom1(ushort buildingID, int boardIdx, int secIdx, BoardDescriptorBuildingXml descriptor)
         {
             if (descriptor.m_platforms.Length > 0)
             {
                 StopInformation stop = GetTargetStopInfo(buildingID, descriptor);
                 if (stop.m_nextStopId > 0)
                 {
-                    return GetOwnNameMesh(DTPLineUtils.GetStopBuilding(stop.m_nextStopId, stop.m_lineId), secIdx, ref descriptor);
+                    return GetOwnNameMesh(DTPLineUtils.GetStopBuilding(stop.m_nextStopId, stop.m_lineId), secIdx, descriptor);
                 }
             }
 
             return null;
         }
-        protected override BasicRenderInformation GetMeshCustom2(ushort buildingID, int boardIdx, int secIdx, ref BoardDescriptorBuildingXml descriptor)
+        protected override BasicRenderInformation GetMeshCustom2(ushort buildingID, int boardIdx, int secIdx, BoardDescriptorBuildingXml descriptor)
         {
             if (descriptor.m_platforms.Length > 0)
             {
                 StopInformation stop = GetTargetStopInfo(buildingID, descriptor);
                 if (stop.m_previousStopId > 0)
                 {
-                    return GetOwnNameMesh(DTPLineUtils.GetStopBuilding(stop.m_previousStopId, stop.m_lineId), secIdx, ref descriptor);
+                    return GetOwnNameMesh(DTPLineUtils.GetStopBuilding(stop.m_previousStopId, stop.m_lineId), secIdx, descriptor);
                 }
             }
 
             return null;
         }
-        protected override BasicRenderInformation GetMeshCustom3(ushort buildingID, int boardIdx, int secIdx, ref BoardDescriptorBuildingXml descriptor)
+        protected override BasicRenderInformation GetMeshCustom3(ushort buildingID, int boardIdx, int secIdx, BoardDescriptorBuildingXml descriptor)
         {
             if (descriptor.m_platforms.Length > 0)
             {
                 StopInformation stop = GetTargetStopInfo(buildingID, descriptor);
                 if (stop.m_destinationId > 0)
                 {
-                    return GetOwnNameMesh(DTPLineUtils.GetStopBuilding(stop.m_destinationId, stop.m_lineId), secIdx, ref descriptor);
+                    return GetOwnNameMesh(DTPLineUtils.GetStopBuilding(stop.m_destinationId, stop.m_lineId), secIdx, descriptor);
                 }
             }
 
             return null;
         }
-        protected override BasicRenderInformation GetFixedTextMesh(ref BoardTextDescriptorBuildingsXml textDescriptor, ushort refID, int boardIdx, int secIdx, ref BoardDescriptorBuildingXml descriptor)
+        protected override BasicRenderInformation GetFixedTextMesh(BoardTextDescriptorBuildingsXml textDescriptor, ushort refID, int boardIdx, int secIdx, BoardDescriptorBuildingXml descriptor)
         {
             string txt = (textDescriptor.m_isFixedTextLocalized ? Locale.Get(textDescriptor.m_fixedText, textDescriptor.m_fixedTextLocaleKey) : textDescriptor.m_fixedText) ?? "";
 
             return GetTextRendered(secIdx, descriptor, txt);
         }
 
-        private BasicRenderInformation GetTextRendered(int secIdx, BoardDescriptorBuildingXml descriptor, string txt) => GetTextData(txt, descriptor.m_textDescriptors[secIdx].m_overrideFont);
+        private BasicRenderInformation GetTextRendered(int secIdx, BoardDescriptorBuildingXml descriptor, string txt) => RenderUtils.GetTextData(txt, DrawFont, descriptor.m_textDescriptors[secIdx].m_overrideFont);
 
 
 
@@ -411,7 +429,7 @@ namespace Klyte.DynamicTextProps.Overrides
         {
             NetManager nmInstance = NetManager.instance;
             string refName = GetReferenceModelName(ref data);
-            if (bbcb.m_platformToLine == null || (bbcb.m_platformToLine?.Length > 0 && bbcb.m_platformToLine.SelectMany((x) => x?.Select(y => bbcb.m_linesUpdateFrame < m_lineLastUpdate[y.m_lineId])).Any(x => x)))
+            if ((bbcb.m_platformToLine?.Length > 0 && bbcb.m_platformToLine.SelectMany((x) => x?.Select(y => bbcb.m_linesUpdateFrame < m_lineLastUpdate[y.m_lineId])).Any(x => x)))
             {
                 LogUtils.DoLog("--------------- UpdateLinesBuilding");
                 bbcb.m_platformToLine = null;

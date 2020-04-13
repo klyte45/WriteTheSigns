@@ -196,6 +196,7 @@
     <Compile Include="UI\Tabs\Base\DTPXmlEditorParentTab.cs" />
     <Compile Include="UI\Tabs\DTPStreetSignTab3.cs" />
     <Compile Include="Utils\DTPLineUtils.cs" />
+    <Compile Include="Utils\RenderUtils.cs" />
     <Compile Include="Xml\BoardDescriptor\BoardDescriptorBuildingXml.cs" />
     <Compile Include="Xml\BoardGeneratorBuildingConfigXml.cs" />
     <Compile Include="Xml\BoardTextDescriptor\BoardTextDescriptorBuildingsXml.cs" />
@@ -290,6 +291,7 @@
   </ProjectExtensions>
   <ItemGroup>
     <Folder Include="Properties\" />
+    <Folder Include="Rendering\" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="0Harmony, Version=1.2.0.1, Culture=neutral, processorArchitecture=MSIL">

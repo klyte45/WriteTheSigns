@@ -11,7 +11,7 @@ namespace FontStashSharp
         public FontAtlas Atlas;
         public int Codepoint;
         public int Index;
-        public int Size;
+        public int Height;
         public int Blur;
         public Rect Bounds;
         public int XAdvance;

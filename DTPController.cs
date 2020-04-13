@@ -3,6 +3,7 @@ using Klyte.Commons.Utils;
 using Klyte.DynamicTextProps.Libraries;
 using Klyte.DynamicTextProps.Overrides;
 using Klyte.DynamicTextProps.Tools;
+using Klyte.DynamicTextProps.Utils;
 using SpriteFontPlus;
 using System;
 using System.Collections.Generic;
@@ -20,8 +21,7 @@ namespace Klyte.DynamicTextProps
         public BuildingEditorTool BuildingEditorToolInstance => FindObjectOfType<BuildingEditorTool>();
         public DTPLibPropGroupHigwaySigns GroupInstance => DTPLibPropGroupHigwaySigns.Instance;
         public Dictionary<string, Dictionary<string, string>> AbbreviationFiles { get; private set; }
-
-        public BoardGeneratorRoadNodes BoardGeneratorRoadNodesInstance => BoardGeneratorRoadNodes.Instance;
+        public FontServer FontServer => FontServer.instance;
 
         public void Awake()
         {
@@ -54,8 +54,8 @@ namespace Klyte.DynamicTextProps
         public void ReloadAbbreviationFiles()
         {
             AbbreviationFiles = LoadAbbreviationFiles(AbbreviationFilesPath);
-            BoardGeneratorRoadNodes.Instance.ClearCacheStreetName();
-            BoardGeneratorRoadNodes.Instance.ClearCacheStreetQualifier();
+            RenderUtils.ClearCacheStreetName();
+            RenderUtils.ClearCacheStreetQualifier();
         }
 
         private static Dictionary<string, Dictionary<string, string>> LoadAbbreviationFiles(string path)

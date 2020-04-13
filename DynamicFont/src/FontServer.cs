@@ -11,23 +11,23 @@ namespace SpriteFontPlus
     {
         private Dictionary<string, DynamicSpriteFont> m_fontRegistered = new Dictionary<string, DynamicSpriteFont>();
 
-        private float m_overallSize = 120;
+        private float m_targetHeight = 100;
 
-        private float m_qualityMultiplier = 1;
+        private float m_qualityMultiplier = 1f;
 
 
         public event Action<string> EventTextureReloaded;
 
         private bool m_currentlyReloadingAll = false;
 
-        private int FontSizeEffective => Mathf.RoundToInt(m_overallSize * m_qualityMultiplier);
-        public Vector2 ScaleEffective => Vector2.one * m_overallSize / FontSizeEffective;
+        private int FontSizeEffective => Mathf.RoundToInt(m_targetHeight * m_qualityMultiplier);
+        public Vector2 ScaleEffective => Vector2.one * m_targetHeight / FontSizeEffective;
 
 
         public void ResetCollection() => m_fontRegistered = new Dictionary<string, DynamicSpriteFont>();
         public void SetOverallSize(float f)
         {
-            m_overallSize = f;
+            m_targetHeight = f;
             OnChangeSizeParam();
         }
 
@@ -45,7 +45,7 @@ namespace SpriteFontPlus
         {
             foreach (DynamicSpriteFont font in m_fontRegistered.Values)
             {
-                font.Size = FontSizeEffective;
+                font.Height = FontSizeEffective;
                 font.Reset(4, 4);
             }
         }

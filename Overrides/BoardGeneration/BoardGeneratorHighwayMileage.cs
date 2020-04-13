@@ -4,6 +4,7 @@ using Klyte.Commons.Extensors;
 using Klyte.Commons.Utils;
 using Klyte.DynamicTextProps.Data;
 using Klyte.DynamicTextProps.Libraries;
+using Klyte.DynamicTextProps.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -30,19 +31,6 @@ namespace Klyte.DynamicTextProps.Overrides
 
 
 
-        private static BoardDescriptorMileageMarkerXml m_loadedDescriptor = new BoardDescriptorMileageMarkerXml();
-
-        public static BoardDescriptorMileageMarkerXml LoadedMileageMarkerConfig
-        {
-            get {
-                if (m_loadedDescriptor == null)
-                {
-                    m_loadedDescriptor = new BoardDescriptorMileageMarkerXml();
-                }
-                return m_loadedDescriptor;
-            }
-            set => m_loadedDescriptor = value;
-        }
 
         internal static void GenerateDefaultSignModelAtLibrary()
         {
@@ -93,6 +81,8 @@ namespace Klyte.DynamicTextProps.Overrides
 
             NetManagerOverrides.EventNodeChanged += OnNodeChanged;
             NetManagerOverrides.EventSegmentChanged += OnSegmentChanged;
+
+            LocaleManager.eventLocaleChanged += () => m_cachedCardinalName = new string[10];
 
             #region Hooks
             System.Reflection.MethodInfo postRenderMeshs = GetType().GetMethod("AfterRenderNode", RedirectorUtils.allFlags);
@@ -174,7 +164,7 @@ namespace Klyte.DynamicTextProps.Overrides
                 }
                 if (m_segmentCachedInfo[segmentId] == null)
                 {
-                    int divisor = LoadedMileageMarkerConfig.UseMiles ? 1609 : 1000;
+                    int divisor = Data.CurrentDescriptor.UseMiles ? 1609 : 1000;
                     IEnumerable<Tuple<ushort, float>> segments = SegmentUtils.GetSegmentRoadEdges(segmentId, false, false, false, out ComparableRoad start, out ComparableRoad end);
                     if (segments == null)
                     {
@@ -270,35 +260,39 @@ namespace Klyte.DynamicTextProps.Overrides
                     continue;
                 }
 
-                RenderPropMesh(ref m_cachedPropInfo, cameraInfo, segmentID, i, marker.kilometer, layerMask, 0, marker.position, Vector4.zero, ref LoadedMileageMarkerConfig.m_propName, new Vector3(0, marker.rotation) + LoadedMileageMarkerConfig.m_propRotation, LoadedMileageMarkerConfig.PropScale, ref m_loadedDescriptor, out Matrix4x4 propMatrix, out bool rendered);
+                RenderPropMesh(ref m_cachedPropInfo, cameraInfo, segmentID, i, marker.kilometer, layerMask, 0, marker.position, Vector4.zero, ref Data.CurrentDescriptor.m_propName, new Vector3(0, marker.rotation) + Data.CurrentDescriptor.m_propRotation, Data.CurrentDescriptor.PropScale, Data.CurrentDescriptor, out Matrix4x4 propMatrix, out bool rendered);
                 if (rendered)
                 {
-                    for (int j = 0; j < LoadedMileageMarkerConfig.m_textDescriptors.Length; j++)
+                    for (int j = 0; j < Data.CurrentDescriptor.m_textDescriptors.Length; j++)
                     {
                         CacheControl c = null;
                         MaterialPropertyBlock block = NetManager.instance.m_materialBlock;
                         block.Clear();
-                        RenderTextMesh(cameraInfo, segmentID, i, marker.kilometer, ref m_loadedDescriptor, propMatrix, ref LoadedMileageMarkerConfig.m_textDescriptors[j], block);
+                        RenderTextMesh(cameraInfo, segmentID, i, marker.kilometer, Data.CurrentDescriptor, propMatrix, Data.CurrentDescriptor.m_textDescriptors[j], block);
                     }
                 }
             }
 
         }
 
-
+        private string[] m_cachedCardinalName = new string[10];
 
         #region Upadate Data
-        protected override BasicRenderInformation GetMeshCustom1(ushort id, int boardIdx, int kilometers, ref BoardDescriptorMileageMarkerXml descriptor)
+        protected override BasicRenderInformation GetMeshCustom1(ushort id, int boardIdx, int kilometers, BoardDescriptorMileageMarkerXml descriptor)
         {
             byte direction = (boardIdx == 1 ? m_segmentCachedInfo[id].Third : m_segmentCachedInfo[id].Second).cardinalDirection8;
-            return GetTextData(Locale.Get("K45_CARDINAL_POINT_LONG", direction.ToString()).ToUpper());
+            if (m_cachedCardinalName[direction] == null)
+            {
+                m_cachedCardinalName[direction] = Locale.Get("K45_CARDINAL_POINT_LONG", direction.ToString()).ToUpper();
+            }
+            return RenderUtils.GetTextData(m_cachedCardinalName[direction], DrawFont);
 
         }
-        protected override BasicRenderInformation GetMeshCurrentNumber(ushort id, int boardIdx, int kilometers, ref BoardDescriptorMileageMarkerXml descriptor) => GetTextData(kilometers.ToString());
+        protected override BasicRenderInformation GetMeshCurrentNumber(ushort id, int boardIdx, int kilometers, BoardDescriptorMileageMarkerXml descriptor) => RenderUtils.GetTextData(kilometers.ToString(), DrawFont);
 
         private PropInfo m_cachedPropInfo;
 
-        protected override BasicRenderInformation GetOwnNameMesh(ushort id, int boardIdx, int secIdx, ref BoardDescriptorMileageMarkerXml descriptor) => GetTextData("WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW");
+        protected override BasicRenderInformation GetOwnNameMesh(ushort id, int boardIdx, int secIdx, BoardDescriptorMileageMarkerXml descriptor) => RenderUtils.GetTextData("WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", DrawFont);
         #endregion
 
         public override Color? GetColor(ushort buildingID, int idx, int secIdx, BoardDescriptorMileageMarkerXml descriptor) => descriptor.PropColor;
@@ -313,7 +307,7 @@ namespace Klyte.DynamicTextProps.Overrides
         public override Color GetContrastColor(ushort refID, int boardIdx, int secIdx, BoardDescriptorMileageMarkerXml descriptor) => KlyteMonoUtils.ContrastColor(descriptor.PropColor);
         internal void CleanDescriptor()
         {
-            LoadedMileageMarkerConfig = new BoardDescriptorMileageMarkerXml();
+            Data.CurrentDescriptor = new BoardDescriptorMileageMarkerXml();
             SoftReset();
         }
 

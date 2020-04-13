@@ -1,8 +1,12 @@
+using ColossalFramework;
 using ColossalFramework.Globalization;
 using ColossalFramework.UI;
 using Klyte.Commons.Utils;
+using Klyte.DynamicTextProps.Data;
 using Klyte.DynamicTextProps.Overrides;
 using SpriteFontPlus;
+using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Klyte.DynamicTextProps.Utils
@@ -28,6 +32,35 @@ namespace Klyte.DynamicTextProps.Utils
             {
                 target.selectedIndex = 0;
                 BoardGeneratorParent<BG>.Instance.ChangeFont(null);
+            }
+        }
+
+        public static string ApplyAbbreviations(string name)
+        {
+            if (DynamicTextPropsMod.Controller.AbbreviationFiles.TryGetValue(DTPRoadNodesData.Instance.CurrentDescriptor.AbbreviationFile ?? "", out Dictionary<string, string> translations))
+            {
+                foreach (string key in translations.Keys.Where(x => x.Contains(" ")))
+                {
+                    name = TextUtils.ReplaceCaseInsensitive(name, key, translations[key], StringComparison.OrdinalIgnoreCase);
+
+                }
+                string[] parts = name.Split(' ');
+                for (int i = 0; i < parts.Length; i++)
+                {
+                    if ((i == 0 && translations.TryGetValue($"^{parts[i]}", out string replacement))
+                        || (i == parts.Length - 1 && translations.TryGetValue($"{parts[i]}$", out replacement))
+                        || (i > 0 && i < parts.Length - 1 && translations.TryGetValue($"={parts[i]}=", out replacement))
+                        || translations.TryGetValue(parts[i], out replacement))
+                    {
+                        parts[i] = replacement;
+                    }
+                }
+                return string.Join(" ", parts.Where(x => !x.IsNullOrWhiteSpace()).ToArray());
+
+            }
+            else
+            {
+                return name;
             }
         }
     }

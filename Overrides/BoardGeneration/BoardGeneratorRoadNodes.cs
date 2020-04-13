@@ -101,11 +101,11 @@ namespace Klyte.DynamicTextProps.Overrides
 
         public void AfterRenderInstanceImpl(RenderManager.CameraInfo cameraInfo, ushort nodeID, ref NetNode data)
         {
-            if (LoadedStreetSignDescriptor == null)
+            if (Data.CurrentDescriptor == null)
             {
-                LoadedStreetSignDescriptor = new BoardDescriptorStreetSignXml();
+                Data.CurrentDescriptor = new BoardDescriptorStreetSignXml();
             }
-            if (LoadedStreetSignDescriptor?.m_propName == null || m_lastFrameUpdate[nodeID] >= m_getCurrentFrame(RenderManager.instance))
+            if (Data.CurrentDescriptor?.m_propName == null || m_lastFrameUpdate[nodeID] >= m_getCurrentFrame(RenderManager.instance))
             {
                 return;
             }
@@ -182,7 +182,7 @@ namespace Klyte.DynamicTextProps.Overrides
                             }
                             if (resultOtherSegment == 0
                                 || !(Singleton<NetManager>.instance.m_segments.m_buffer[resultOtherSegment].Info.m_netAI is RoadBaseAI roadAiJ)
-                                || SegmentUtils.IsSameName(resultOtherSegment, segmentIid, false, false, true, LoadedStreetSignDescriptor.PlaceOnDistrictBorder, true)
+                                || SegmentUtils.IsSameName(resultOtherSegment, segmentIid, false, false, true, Data.CurrentDescriptor.PlaceOnDistrictBorder, true)
                                 || (roadAiJ.m_highwayRules && roadAiI.m_highwayRules)
                                 || roadAiI.GenerateName(segmentIid, ref Singleton<NetManager>.instance.m_segments.m_buffer[segmentIid]).IsNullOrWhiteSpace()
                                 || roadAiJ.GenerateName(resultOtherSegment, ref Singleton<NetManager>.instance.m_segments.m_buffer[resultOtherSegment]).IsNullOrWhiteSpace())
@@ -218,8 +218,8 @@ namespace Klyte.DynamicTextProps.Overrides
 
                             Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_platePosition = platePos;
                             Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_renderPlate = true;
-                            Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_cachedColor = LoadedStreetSignDescriptor.UseDistrictColor ? DTPHookable.GetDistrictColor(Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_districtId1) : LoadedStreetSignDescriptor.PropColor;
-                            Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_cachedColor2 = LoadedStreetSignDescriptor.UseDistrictColor ? DTPHookable.GetDistrictColor(Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_districtId2) : LoadedStreetSignDescriptor.PropColor;
+                            Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_cachedColor = Data.CurrentDescriptor.UseDistrictColor ? DTPHookable.GetDistrictColor(Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_districtId1) : Data.CurrentDescriptor.PropColor;
+                            Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_cachedColor2 = Data.CurrentDescriptor.UseDistrictColor ? DTPHookable.GetDistrictColor(Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_districtId2) : Data.CurrentDescriptor.PropColor;
                             Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_cachedContrastColor = KlyteMonoUtils.ContrastColor(Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_cachedColor);
                             Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_cachedContrastColor2 = KlyteMonoUtils.ContrastColor(Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_cachedColor2);
                             Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_distanceRef = Vector2.Distance(VectorUtils.XZ(Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_platePosition), DTPHookable.GetStartPoint());
@@ -236,30 +236,30 @@ namespace Klyte.DynamicTextProps.Overrides
             {
                 if (Data.BoardsContainers[nodeID].m_boardsData[boardIdx]?.m_renderPlate ?? false)
                 {
-                    if (Data.BoardsContainers[nodeID].m_boardsData[boardIdx]?.m_cachedProp?.name != LoadedStreetSignDescriptor?.m_propName)
+                    if (Data.BoardsContainers[nodeID].m_boardsData[boardIdx]?.m_cachedProp?.name != Data.CurrentDescriptor?.m_propName)
                     {
                         Data.BoardsContainers[nodeID].m_boardsData[boardIdx].m_cachedProp = null;
                     }
 
-                    RenderPropMesh(ref Data.BoardsContainers[nodeID].m_boardsData[boardIdx].m_cachedProp, cameraInfo, nodeID, boardIdx, 0, 0xFFFFFFF, 0, Data.BoardsContainers[nodeID].m_boardsData[boardIdx].m_platePosition, Vector4.zero, ref LoadedStreetSignDescriptor.m_propName, new Vector3(0, Data.BoardsContainers[nodeID].m_boardsData[boardIdx].m_streetDirection1) + LoadedStreetSignDescriptor.m_propRotation, LoadedStreetSignDescriptor.PropScale, ref m_loadedStreetSignDescriptor, out Matrix4x4 propMatrix, out bool rendered);
+                    RenderPropMesh(ref Data.BoardsContainers[nodeID].m_boardsData[boardIdx].m_cachedProp, cameraInfo, nodeID, boardIdx, 0, 0xFFFFFFF, 0, Data.BoardsContainers[nodeID].m_boardsData[boardIdx].m_platePosition, Vector4.zero, ref Data.CurrentDescriptor.m_propName, new Vector3(0, Data.BoardsContainers[nodeID].m_boardsData[boardIdx].m_streetDirection1) + Data.CurrentDescriptor.m_propRotation, Data.CurrentDescriptor.PropScale, Data.CurrentDescriptor, out Matrix4x4 propMatrix, out bool rendered);
                     if (rendered)
                     {
-                        for (int j = 0; j < LoadedStreetSignDescriptor.m_textDescriptors.Length; j++)
+                        for (int j = 0; j < Data.CurrentDescriptor.m_textDescriptors.Length; j++)
                         {
                             MaterialPropertyBlock properties = PropManager.instance.m_materialBlock;
                             properties.Clear();
-                            RenderTextMesh(cameraInfo, nodeID, boardIdx, 0, ref m_loadedStreetSignDescriptor, propMatrix, ref LoadedStreetSignDescriptor.m_textDescriptors[j], properties);
+                            RenderTextMesh(cameraInfo, nodeID, boardIdx, 0, Data.CurrentDescriptor, propMatrix, Data.CurrentDescriptor.m_textDescriptors[j], properties);
                         }
                     }
-                    RenderPropMesh(ref Data.BoardsContainers[nodeID].m_boardsData[boardIdx].m_cachedProp, cameraInfo, nodeID, boardIdx, 1, 0xFFFFFFF, 0, Data.BoardsContainers[nodeID].m_boardsData[boardIdx].m_platePosition, Vector4.zero, ref LoadedStreetSignDescriptor.m_propName, new Vector3(0, Data.BoardsContainers[nodeID].m_boardsData[boardIdx].m_streetDirection2) + LoadedStreetSignDescriptor.m_propRotation, LoadedStreetSignDescriptor.PropScale, ref m_loadedStreetSignDescriptor, out propMatrix, out rendered);
+                    RenderPropMesh(ref Data.BoardsContainers[nodeID].m_boardsData[boardIdx].m_cachedProp, cameraInfo, nodeID, boardIdx, 1, 0xFFFFFFF, 0, Data.BoardsContainers[nodeID].m_boardsData[boardIdx].m_platePosition, Vector4.zero, ref Data.CurrentDescriptor.m_propName, new Vector3(0, Data.BoardsContainers[nodeID].m_boardsData[boardIdx].m_streetDirection2) + Data.CurrentDescriptor.m_propRotation, Data.CurrentDescriptor.PropScale, Data.CurrentDescriptor, out propMatrix, out rendered);
                     if (rendered)
                     {
 
-                        for (int j = 0; j < LoadedStreetSignDescriptor.m_textDescriptors.Length; j++)
+                        for (int j = 0; j < Data.CurrentDescriptor.m_textDescriptors.Length; j++)
                         {
                             MaterialPropertyBlock properties = PropManager.instance.m_materialBlock;
                             properties.Clear();
-                            RenderTextMesh(cameraInfo, nodeID, boardIdx, 1, ref m_loadedStreetSignDescriptor, propMatrix, ref LoadedStreetSignDescriptor.m_textDescriptors[j], properties);
+                            RenderTextMesh(cameraInfo, nodeID, boardIdx, 1, Data.CurrentDescriptor, propMatrix, Data.CurrentDescriptor.m_textDescriptors[j], properties);
                         }
                     }
 
@@ -272,18 +272,15 @@ namespace Klyte.DynamicTextProps.Overrides
 
 
 
-        protected override BasicRenderInformation GetMeshStreetSuffix(ushort idx, int boardIdx, int secIdx, ref BoardDescriptorStreetSignXml descriptor) => GetFromCacheArray((secIdx == 0 ? Data.BoardsContainers[idx].m_boardsData[boardIdx].m_segmentId1 : Data.BoardsContainers[idx].m_boardsData[boardIdx].m_segmentId2), CacheArrayTypes.SuffixStreetName);
-        protected override BasicRenderInformation GetMeshStreetPrefix(ushort idx, int boardIdx, int secIdx, ref BoardDescriptorStreetSignXml descriptor) => GetFromCacheArray((secIdx == 0 ? Data.BoardsContainers[idx].m_boardsData[boardIdx].m_segmentId1 : Data.BoardsContainers[idx].m_boardsData[boardIdx].m_segmentId2), CacheArrayTypes.StreetQualifier);
-        protected override BasicRenderInformation GetMeshFullStreetName(ushort idx, int boardIdx, int secIdx, ref BoardDescriptorStreetSignXml descriptor) => GetFromCacheArray((secIdx == 0 ? Data.BoardsContainers[idx].m_boardsData[boardIdx].m_segmentId1 : Data.BoardsContainers[idx].m_boardsData[boardIdx].m_segmentId2), CacheArrayTypes.FullStreetName);
-
-        protected override BasicRenderInformation GetMeshDistrict(ushort idx, int boardIdx, int secIdx, ref BoardDescriptorStreetSignXml descriptor) => GetFromCacheArray((secIdx == 0 ? Data.BoardsContainers[idx].m_boardsData[boardIdx].m_districtId1 : Data.BoardsContainers[idx].m_boardsData[boardIdx].m_districtId2), CacheArrayTypes.District);
-        protected override BasicRenderInformation GetMeshCustom2(ushort idx, int boardIdx, int secIdx, ref BoardDescriptorStreetSignXml descriptor)
+        protected override BasicRenderInformation GetMeshStreetSuffix(ushort idx, int boardIdx, int secIdx, BoardDescriptorStreetSignXml descriptor) => RenderUtils.GetFromCacheArray((secIdx == 0 ? Data.BoardsContainers[idx].m_boardsData[boardIdx].m_segmentId1 : Data.BoardsContainers[idx].m_boardsData[boardIdx].m_segmentId2), RenderUtils.CacheArrayTypes.SuffixStreetName, DrawFont);
+        protected override BasicRenderInformation GetMeshStreetPrefix(ushort idx, int boardIdx, int secIdx, BoardDescriptorStreetSignXml descriptor) => RenderUtils.GetFromCacheArray((secIdx == 0 ? Data.BoardsContainers[idx].m_boardsData[boardIdx].m_segmentId1 : Data.BoardsContainers[idx].m_boardsData[boardIdx].m_segmentId2), RenderUtils.CacheArrayTypes.StreetQualifier, DrawFont);
+        protected override BasicRenderInformation GetMeshFullStreetName(ushort idx, int boardIdx, int secIdx, BoardDescriptorStreetSignXml descriptor) => RenderUtils.GetFromCacheArray((secIdx == 0 ? Data.BoardsContainers[idx].m_boardsData[boardIdx].m_segmentId1 : Data.BoardsContainers[idx].m_boardsData[boardIdx].m_segmentId2), RenderUtils.CacheArrayTypes.FullStreetName, DrawFont);
+        protected override BasicRenderInformation GetMeshDistrict(ushort idx, int boardIdx, int secIdx, BoardDescriptorStreetSignXml descriptor) => RenderUtils.GetFromCacheArray((secIdx == 0 ? Data.BoardsContainers[idx].m_boardsData[boardIdx].m_districtId1 : Data.BoardsContainers[idx].m_boardsData[boardIdx].m_districtId2), RenderUtils.CacheArrayTypes.District, DrawFont);
+        protected override BasicRenderInformation GetMeshCustom2(ushort idx, int boardIdx, int secIdx, BoardDescriptorStreetSignXml descriptor)
         {
             int distanceRef = (int)Mathf.Floor(Data.BoardsContainers[idx].m_boardsData[boardIdx].m_distanceRef / 1000);
-            return GetTextData(distanceRef.ToString());
+            return RenderUtils.GetTextData(distanceRef.ToString(), DrawFont);
         }
-
-
 
         #endregion
 
@@ -310,8 +307,6 @@ namespace Klyte.DynamicTextProps.Overrides
             }
         }
 
-
-
         protected override InstanceID GetPropRenderID(ushort nodeId)
         {
             InstanceID result = default;
@@ -321,37 +316,20 @@ namespace Klyte.DynamicTextProps.Overrides
 
         private BasicRenderInformation m_testTextInfo = null;
         private long m_testTextInfoTime = 0;
-        protected override BasicRenderInformation GetOwnNameMesh(ushort buildingID, int boardIdx, int secIdx, ref BoardDescriptorStreetSignXml descriptor)
+        protected override BasicRenderInformation GetOwnNameMesh(ushort buildingID, int boardIdx, int secIdx, BoardDescriptorStreetSignXml descriptor)
         {
             if (m_testTextInfo == null || m_testTextInfoTime < LastFontUpdateFrame)
             {
                 string resultText = "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW";
-                m_testTextInfo = GetTextData(resultText);
+                m_testTextInfo = RenderUtils.GetTextData(resultText, DrawFont);
                 m_testTextInfoTime = LastFontUpdateFrame;
             }
             return m_testTextInfo;
         }
 
-        public BoardDescriptorStreetSignXml LoadedStreetSignDescriptor
-        {
-            get {
-                if (m_loadedStreetSignDescriptor == null)
-                {
-                    m_loadedStreetSignDescriptor = m_loadedXml ?? new BoardDescriptorStreetSignXml();
-                    m_loadedXml = null;
-                }
-                return m_loadedStreetSignDescriptor;
-            }
 
-            set => m_loadedStreetSignDescriptor = value;
-        }
+        public void CleanDescriptor() => Data.CurrentDescriptor = new BoardDescriptorStreetSignXml();
 
-        private static BoardDescriptorStreetSignXml m_loadedXml = null;
-
-        public void CleanDescriptor() => m_loadedStreetSignDescriptor = new BoardDescriptorStreetSignXml();
-
-
-        private BoardDescriptorStreetSignXml m_loadedStreetSignDescriptor = null;
         public static void GenerateDefaultSignModelAtLibrary()
         {
             var defaultModel = new BoardDescriptorStreetSignXml

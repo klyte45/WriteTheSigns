@@ -69,12 +69,12 @@ namespace Klyte.DynamicTextProps.UI
 
         }
 
-        protected override void OnTextTabStripChanged() => OnChangeTabTexts(BoardGeneratorRoadNodes.Instance.LoadedStreetSignDescriptor.m_textDescriptors?.Length ?? 0);
+        protected override void OnTextTabStripChanged() => OnChangeTabTexts(DTPRoadNodesData.Instance.CurrentDescriptor.m_textDescriptors?.Length ?? 0);
         protected override void DoInTextCommonTabGroupUI(UIHelperExtension groupTexts) => m_useContrastColorTextCheckbox = groupTexts.AddCheckboxLocale("K45_DTP_USE_CONTRAST_COLOR", false, SetUseContrastColor);
 
         protected void OnChangePropColor(Color c)
         {
-            BoardGeneratorRoadNodes.Instance.LoadedStreetSignDescriptor.PropColor = c;
+            DTPRoadNodesData.Instance.CurrentDescriptor.PropColor = c;
             BoardGeneratorRoadNodes.Instance.SoftReset();
         }
 

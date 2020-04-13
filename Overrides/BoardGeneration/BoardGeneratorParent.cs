@@ -1,5 +1,4 @@
-﻿using ColossalFramework;
-using ColossalFramework.Globalization;
+﻿using ColossalFramework.Globalization;
 using ColossalFramework.Math;
 using ColossalFramework.UI;
 using Klyte.Commons.Extensors;
@@ -8,8 +7,6 @@ using Klyte.DynamicTextProps.Data;
 using Klyte.DynamicTextProps.Utils;
 using SpriteFontPlus;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 namespace Klyte.DynamicTextProps.Overrides
@@ -26,7 +23,7 @@ namespace Klyte.DynamicTextProps.Overrides
 
         public void ChangeFont(string newFont) => FontName = newFont ?? DTPController.DEFAULT_FONT_KEY;
 
-        public virtual void Reset() => ResetImpl();
+        public void Reset() => ResetImpl();
         protected abstract void ResetImpl();
 
         public virtual void Awake() => Instance = this as BG;
@@ -43,14 +40,6 @@ namespace Klyte.DynamicTextProps.Overrides
 
         public sealed override string FontName { get => DTPBaseData<D, BBC>.Instance.DefaultFont; set => DTPBaseData<D, BBC>.Instance.DefaultFont = value; }
 
-        public sealed override void Reset()
-        {
-            base.Reset();
-            m_cachedStreetNameInformation_Full = new string[NetManager.MAX_SEGMENT_COUNT];
-            m_cachedStreetNameInformation_End = new string[NetManager.MAX_SEGMENT_COUNT];
-            m_cachedStreetNameInformation_Start = new string[NetManager.MAX_SEGMENT_COUNT];
-            m_cachedDistrictsNames = new string[DistrictManager.MAX_DISTRICT_COUNT];
-        }
 
         public D Data => DTPBaseData<D, BBC>.Instance;
 
@@ -86,22 +75,22 @@ namespace Klyte.DynamicTextProps.Overrides
         }
         private void OnNameSeedChanged()
         {
-            m_cachedStreetNameInformation_Full = new string[NetManager.MAX_SEGMENT_COUNT];
-            m_cachedStreetNameInformation_End = new string[NetManager.MAX_SEGMENT_COUNT];
-            m_cachedStreetNameInformation_Start = new string[NetManager.MAX_SEGMENT_COUNT];
+            RenderUtils.ClearCacheFullStreetName();
+            RenderUtils.ClearCacheStreetName();
+            RenderUtils.ClearCacheStreetQualifier();
         }
 
         #region events
         private void OnNameSeedChanged(ushort segmentId)
         {
-            m_cachedStreetNameInformation_Full[segmentId] = null;
-            m_cachedStreetNameInformation_End[segmentId] = null;
-            m_cachedStreetNameInformation_Start[segmentId] = null;
+            RenderUtils.ClearCacheFullStreetName();
+            RenderUtils.ClearCacheStreetName();
+            RenderUtils.ClearCacheStreetQualifier();
         }
         private void OnDistrictChanged()
         {
             LogUtils.DoLog("onDistrictChanged");
-            m_cachedDistrictsNames = new string[DistrictManager.MAX_DISTRICT_COUNT];
+            RenderUtils.ClearCacheDistrictName();
         }
         #endregion
 
@@ -144,7 +133,7 @@ namespace Klyte.DynamicTextProps.Overrides
 
 
 
-        protected void RenderPropMesh(ref PropInfo propInfo, RenderManager.CameraInfo cameraInfo, ushort refId, int boardIdx, int secIdx, int layerMask, float refAngleRad, Vector3 position, Vector4 dataVector, ref string propName, Vector3 propAngle, Vector3 propScale, ref BD descriptor, out Matrix4x4 propMatrix, out bool rendered)
+        protected void RenderPropMesh(ref PropInfo propInfo, RenderManager.CameraInfo cameraInfo, ushort refId, int boardIdx, int secIdx, int layerMask, float refAngleRad, Vector3 position, Vector4 dataVector, ref string propName, Vector3 propAngle, Vector3 propScale, BD descriptor, out Matrix4x4 propMatrix, out bool rendered)
         {
             Color? propColor = GetColor(refId, boardIdx, secIdx, descriptor);
             if (propColor == null)
@@ -182,20 +171,13 @@ namespace Klyte.DynamicTextProps.Overrides
                                      Vector3 rotation, Vector3 scale, out bool rendered)
         {
             rendered = false;
-            //     DistrictManager instance2 = Singleton<DistrictManager>.instance;
             var randomizer = new Randomizer((refId << 6) | (idx + 32));
             Matrix4x4 matrix = default;
             matrix.SetTRS(position, Quaternion.AngleAxis(rotation.y + (refAngleRad * Mathf.Rad2Deg), Vector3.down) * Quaternion.AngleAxis(rotation.x, Vector3.left) * Quaternion.AngleAxis(rotation.z, Vector3.back), scale);
             if (propInfo != null)
             {
-                //scale = propInfo.m_minScale + (float)randomizer.Int32(10000u) * (propInfo.m_maxScale - propInfo.m_minScale) * 0.0001f;
-                // byte district = instance2.GetDistrict(position);
-                //   byte park = instance2.GetPark(position);
-                propInfo = propInfo.GetVariation(ref randomizer);//, park, ref instance2.m_districts.m_buffer[(int)district]);
+                propInfo = propInfo.GetVariation(ref randomizer);
                 Color color = propInfo.m_color0;
-                //      float magn = scale.magnitude;
-                //if ((layerMask & 1 << propInfo.m_prefabDataLayer) != 0 || propInfo.m_hasEffects)
-                //{
                 if (cameraInfo.CheckRenderDistance(position, propInfo.m_maxRenderDistance * scale.sqrMagnitude))
                 {
                     InstanceID propRenderID2 = GetPropRenderID(refId);
@@ -214,56 +196,55 @@ namespace Klyte.DynamicTextProps.Overrides
                     }
                     rendered = true;
                 }
-                //}
             }
             return matrix;
         }
 
         protected abstract InstanceID GetPropRenderID(ushort refID);
 
-        protected void RenderTextMesh(RenderManager.CameraInfo cameraInfo, ushort refID, int boardIdx, int secIdx, ref BD descriptor, Matrix4x4 propMatrix, ref BTD textDescriptor, MaterialPropertyBlock materialPropertyBlock)
+        protected void RenderTextMesh(RenderManager.CameraInfo cameraInfo, ushort refID, int boardIdx, int secIdx, BD descriptor, Matrix4x4 propMatrix, BTD textDescriptor, MaterialPropertyBlock materialPropertyBlock)
         {
             BasicRenderInformation renderInfo = null;
             switch (textDescriptor.m_textType)
             {
                 case TextType.OwnName:
-                    renderInfo = GetOwnNameMesh(refID, boardIdx, secIdx, ref descriptor);
+                    renderInfo = GetOwnNameMesh(refID, boardIdx, secIdx, descriptor);
                     break;
                 case TextType.Fixed:
-                    renderInfo = GetFixedTextMesh(ref textDescriptor, refID, boardIdx, secIdx, ref descriptor);
+                    renderInfo = GetFixedTextMesh(textDescriptor, refID, boardIdx, secIdx, descriptor);
                     break;
                 case TextType.StreetPrefix:
-                    renderInfo = GetMeshStreetPrefix(refID, boardIdx, secIdx, ref descriptor);
+                    renderInfo = GetMeshStreetPrefix(refID, boardIdx, secIdx, descriptor);
                     break;
                 case TextType.StreetSuffix:
-                    renderInfo = GetMeshStreetSuffix(refID, boardIdx, secIdx, ref descriptor);
+                    renderInfo = GetMeshStreetSuffix(refID, boardIdx, secIdx, descriptor);
                     break;
                 case TextType.StreetNameComplete:
-                    renderInfo = GetMeshFullStreetName(refID, boardIdx, secIdx, ref descriptor);
+                    renderInfo = GetMeshFullStreetName(refID, boardIdx, secIdx, descriptor);
                     break;
                 case TextType.BuildingNumber:
-                    renderInfo = GetMeshCurrentNumber(refID, boardIdx, secIdx, ref descriptor);
+                    renderInfo = GetMeshCurrentNumber(refID, boardIdx, secIdx, descriptor);
                     break;
                 case TextType.District:
-                    renderInfo = GetMeshDistrict(refID, boardIdx, secIdx, ref descriptor);
+                    renderInfo = GetMeshDistrict(refID, boardIdx, secIdx, descriptor);
                     break;
                 case TextType.Custom1:
-                    renderInfo = GetMeshCustom1(refID, boardIdx, secIdx, ref descriptor);
+                    renderInfo = GetMeshCustom1(refID, boardIdx, secIdx, descriptor);
                     break;
                 case TextType.Custom2:
-                    renderInfo = GetMeshCustom2(refID, boardIdx, secIdx, ref descriptor);
+                    renderInfo = GetMeshCustom2(refID, boardIdx, secIdx, descriptor);
                     break;
                 case TextType.Custom3:
-                    renderInfo = GetMeshCustom3(refID, boardIdx, secIdx, ref descriptor);
+                    renderInfo = GetMeshCustom3(refID, boardIdx, secIdx, descriptor);
                     break;
                 case TextType.LinesSymbols:
-                    renderInfo = GetMeshLinesSymbols(refID, boardIdx, secIdx, ref descriptor);
+                    renderInfo = GetMeshLinesSymbols(refID, boardIdx, secIdx, descriptor);
                     break;
                 case TextType.Custom4:
-                    renderInfo = GetMeshCustom4(refID, boardIdx, secIdx, ref descriptor);
+                    renderInfo = GetMeshCustom4(refID, boardIdx, secIdx, descriptor);
                     break;
                 case TextType.Custom5:
-                    renderInfo = GetMeshCustom5(refID, boardIdx, secIdx, ref descriptor);
+                    renderInfo = GetMeshCustom5(refID, boardIdx, secIdx, descriptor);
                     break;
             }
             if (renderInfo?.m_mesh == null || renderInfo?.m_generatedMaterial == null)
@@ -331,148 +312,27 @@ namespace Klyte.DynamicTextProps.Overrides
 
             materialPropertyBlock.SetColor(m_shaderPropEmissive, Color.white * (SimulationManager.instance.m_isNightTime ? textDescriptor.m_nightEmissiveMultiplier : textDescriptor.m_dayEmissiveMultiplier));
             renderInfo.m_generatedMaterial.shader = TextShader;
-            Graphics.DrawMesh(renderInfo.m_mesh, matrix, renderInfo.m_generatedMaterial, 10, cameraInfo.m_camera, 0, materialPropertyBlock, false, true, true);
+            Graphics.DrawMesh(renderInfo.m_mesh, matrix, renderInfo.m_generatedMaterial, 10, null, 0, materialPropertyBlock, false);
 
         }
-
-        private string[] m_cachedStreetNameInformation_Full = new string[NetManager.MAX_SEGMENT_COUNT];
-        private string[] m_cachedStreetNameInformation_End = new string[NetManager.MAX_SEGMENT_COUNT];
-        private string[] m_cachedStreetNameInformation_Start = new string[NetManager.MAX_SEGMENT_COUNT];
-        private string[] m_cachedDistrictsNames = new string[DistrictManager.MAX_DISTRICT_COUNT];
-
-        public void ClearCacheStreetName() => m_cachedStreetNameInformation_End = new string[NetManager.MAX_SEGMENT_COUNT];
-        public void ClearCacheStreetQualifier() => m_cachedStreetNameInformation_Start = new string[NetManager.MAX_SEGMENT_COUNT];
-        public void ClearCacheFullStreetName() => m_cachedStreetNameInformation_Full = new string[NetManager.MAX_SEGMENT_COUNT];
-
-        protected enum CacheArrayTypes
-        {
-            FullStreetName,
-            SuffixStreetName,
-            StreetQualifier,
-            District
-        }
-
-
-        protected BasicRenderInformation GetFromCacheArray(ushort refId, CacheArrayTypes type, string overrideFont = null)
-        {
-            return type switch
-            {
-                CacheArrayTypes.SuffixStreetName => UpdateMeshStreetSuffix(refId, ref m_cachedStreetNameInformation_End[refId], overrideFont),
-                CacheArrayTypes.FullStreetName => UpdateMeshFullNameStreet(refId, ref m_cachedStreetNameInformation_Full[refId], overrideFont),
-                CacheArrayTypes.StreetQualifier => UpdateMeshStreetQualifier(refId, ref m_cachedStreetNameInformation_Start[refId], overrideFont),
-                CacheArrayTypes.District => UpdateMeshDistrict(refId, ref m_cachedDistrictsNames[refId], overrideFont),
-                _ => null,
-            };
-        }
-
-        protected BasicRenderInformation UpdateMeshFullNameStreet(ushort idx, ref string name, string overrideFont)
-        {
-            if (name == null)
-            {
-                name = DTPHookable.GetStreetFullName(idx);
-                LogUtils.DoLog($"!GenName {name} for {idx}");
-            }
-            return GetTextData(name, overrideFont);
-        }
-        protected BasicRenderInformation UpdateMeshStreetQualifier(ushort idx, ref string name, string overrideFont)
-        {
-            if (name == null)
-            {
-                name = DTPHookable.GetStreetFullName(idx);
-                if ((NetManager.instance.m_segments.m_buffer[idx].m_flags & NetSegment.Flags.CustomName) == 0)
-                {
-                    name = ApplyAbbreviations(name.Replace(DTPHookable.GetStreetSuffix(idx), ""));
-                }
-                else
-                {
-                    name = ApplyAbbreviations(name.Replace(DTPHookable.GetStreetSuffixCustom(idx), ""));
-                }
-                LogUtils.DoLog($"!GenName {name} for {idx}");
-            }
-            return GetTextData(name, overrideFont);
-        }
-        protected BasicRenderInformation UpdateMeshDistrict(ushort districtId, ref string name, string overrideFont)
-        {
-            if (name == null)
-            {
-                if (districtId == 0)
-                {
-                    name = SimulationManager.instance.m_metaData.m_CityName;
-                }
-                else
-                {
-                    name = DistrictManager.instance.GetDistrictName(districtId);
-                }
-            }
-            return GetTextData(name, overrideFont);
-        }
-        protected BasicRenderInformation UpdateMeshStreetSuffix(ushort idx, ref string name, string overrideFont)
-        {
-            if (name == null)
-            {
-                LogUtils.DoLog($"!UpdateMeshStreetSuffix {idx}");
-                if ((NetManager.instance.m_segments.m_buffer[idx].m_flags & NetSegment.Flags.CustomName) == 0)
-                {
-                    name = ApplyAbbreviations(DTPHookable.GetStreetSuffix(idx));
-                }
-                else
-                {
-                    name = ApplyAbbreviations(DTPHookable.GetStreetSuffixCustom(idx));
-                }
-            }
-            return GetTextData(name, overrideFont);
-        }
-
-        protected string ApplyAbbreviations(string name)
-        {
-            if (DynamicTextPropsMod.Controller.AbbreviationFiles.TryGetValue(BoardGeneratorRoadNodes.Instance.LoadedStreetSignDescriptor.AbbreviationFile ?? "", out Dictionary<string, string> translations))
-            {
-                foreach (string key in translations.Keys.Where(x => x.Contains(" ")))
-                {
-                    name = TextUtils.ReplaceCaseInsensitive(name, key, translations[key], StringComparison.OrdinalIgnoreCase);
-
-                }
-                string[] parts = name.Split(' ');
-                for (int i = 0; i < parts.Length; i++)
-                {
-                    if ((i == 0 && translations.TryGetValue($"^{parts[i]}", out string replacement))
-                        || (i == parts.Length - 1 && translations.TryGetValue($"{parts[i]}$", out replacement))
-                        || (i > 0 && i < parts.Length - 1 && translations.TryGetValue($"={parts[i]}=", out replacement))
-                        || translations.TryGetValue(parts[i], out replacement))
-                    {
-                        parts[i] = replacement;
-                    }
-                }
-                return string.Join(" ", parts.Where(x => !x.IsNullOrWhiteSpace()).ToArray());
-
-            }
-            else
-            {
-                return name;
-            }
-        }
-
-        protected BasicRenderInformation GetTextData(string text, string overrideFont = null) => (FontServer.instance[overrideFont] ?? DrawFont).DrawString(text, default, Color.white, FontServer.instance.ScaleEffective);
-
-
         #endregion
         public abstract Color? GetColor(ushort buildingID, int idx, int secIdx, BD descriptor);
         public abstract Color GetContrastColor(ushort refID, int boardIdx, int secIdx, BD descriptor);
 
         #region UpdateData
-        protected virtual BasicRenderInformation GetOwnNameMesh(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;
-        protected virtual BasicRenderInformation GetMeshCurrentNumber(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;
-        protected virtual BasicRenderInformation GetMeshFullStreetName(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;
-        protected virtual BasicRenderInformation GetMeshStreetSuffix(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;
-        protected virtual BasicRenderInformation GetMeshStreetPrefix(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;
-        protected virtual BasicRenderInformation GetMeshDistrict(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;
-        protected virtual BasicRenderInformation GetMeshCustom1(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;
-        protected virtual BasicRenderInformation GetMeshCustom2(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;
-        protected virtual BasicRenderInformation GetMeshCustom3(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;
-        protected virtual BasicRenderInformation GetMeshCustom4(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;
-        protected virtual BasicRenderInformation GetMeshCustom5(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;
-        protected virtual BasicRenderInformation GetMeshLinesSymbols(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;
-        protected virtual BasicRenderInformation GetFixedTextMesh(ref BTD textDescriptor, ushort refID, int boardIdx, int secIdx, ref BD descriptor) => GetTextData((textDescriptor.m_isFixedTextLocalized ? Locale.Get(textDescriptor.m_fixedText, textDescriptor.m_fixedTextLocaleKey) : textDescriptor.m_fixedText) ?? "");
+        protected virtual BasicRenderInformation GetOwnNameMesh(ushort refID, int boardIdx, int secIdx, BD descriptor) => null;
+        protected virtual BasicRenderInformation GetMeshCurrentNumber(ushort refID, int boardIdx, int secIdx, BD descriptor) => null;
+        protected virtual BasicRenderInformation GetMeshFullStreetName(ushort refID, int boardIdx, int secIdx, BD descriptor) => null;
+        protected virtual BasicRenderInformation GetMeshStreetSuffix(ushort refID, int boardIdx, int secIdx, BD descriptor) => null;
+        protected virtual BasicRenderInformation GetMeshStreetPrefix(ushort refID, int boardIdx, int secIdx, BD descriptor) => null;
+        protected virtual BasicRenderInformation GetMeshDistrict(ushort refID, int boardIdx, int secIdx, BD descriptor) => null;
+        protected virtual BasicRenderInformation GetMeshCustom1(ushort refID, int boardIdx, int secIdx, BD descriptor) => null;
+        protected virtual BasicRenderInformation GetMeshCustom2(ushort refID, int boardIdx, int secIdx, BD descriptor) => null;
+        protected virtual BasicRenderInformation GetMeshCustom3(ushort refID, int boardIdx, int secIdx, BD descriptor) => null;
+        protected virtual BasicRenderInformation GetMeshCustom4(ushort refID, int boardIdx, int secIdx, BD descriptor) => null;
+        protected virtual BasicRenderInformation GetMeshCustom5(ushort refID, int boardIdx, int secIdx, BD descriptor) => null;
+        protected virtual BasicRenderInformation GetMeshLinesSymbols(ushort refID, int boardIdx, int secIdx, BD descriptor) => null;
+        protected virtual BasicRenderInformation GetFixedTextMesh(BTD textDescriptor, ushort refID, int boardIdx, int secIdx, BD descriptor) => RenderUtils.GetTextData((textDescriptor.m_isFixedTextLocalized ? Locale.Get(textDescriptor.m_fixedText, textDescriptor.m_fixedTextLocaleKey) : textDescriptor.m_fixedText) ?? "", DrawFont);
         #endregion
 
 

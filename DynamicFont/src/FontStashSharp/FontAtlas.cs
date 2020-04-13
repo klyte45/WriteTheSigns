@@ -274,7 +274,7 @@ namespace FontStashSharp
                 Material.mainTexture = Texture;
                 Material.SetTexture("_MainTex", Texture);
                 Texture2D aciTex = Material.GetTexture("_ACIMap") as Texture2D ?? new Texture2D(Texture.width, Texture.height);
-                aciTex.SetPixels(Texture.GetPixels().Select(x => new Color(1 - x.a, 0, 0, 1)).ToArray());
+                aciTex.SetPixels(Texture.GetPixels().Select(x => new Color(1 - x.a, 0, 1 - x.a / 2, 1)).ToArray());
                 aciTex.Apply();
                 Material.SetTexture("_ACIMap", aciTex);
 

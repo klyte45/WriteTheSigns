@@ -1,5 +1,4 @@
 ﻿using StbTrueTypeSharp;
-using System;
 
 namespace FontStashSharp
 {
@@ -21,10 +20,18 @@ namespace FontStashSharp
             LineHeight = LineHeightBase * size;
             Scale = _font.stbtt_ScaleForPixelHeight(size);
         }
+        public void RecalculateBasedOnHeight(float height)
+        {
+            float size = height / (AscentBase - DescentBase);
+            Ascent = AscentBase * size;
+            Descent = DescentBase * size;
+            LineHeight = LineHeightBase * size;
+            Scale = _font.stbtt_ScaleForPixelHeight(size);
+        }
 
         public int GetGlyphIndex(int codepoint) => _font.stbtt_FindGlyphIndex(codepoint);
 
-        public void BuildGlyphBitmap(int glyph, float size, float scale, ref int advance, ref int lsb, ref int x0, ref int y0, ref int x1, ref int y1)
+        public void BuildGlyphBitmap(int glyph, float scale, ref int advance, ref int lsb, ref int x0, ref int y0, ref int x1, ref int y1)
         {
             _font.stbtt_GetGlyphHMetrics(glyph, ref advance, ref lsb);
             _font.stbtt_GetGlyphBitmapBox(glyph, scale, scale, ref x0, ref y0, ref x1, ref y1);

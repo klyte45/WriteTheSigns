@@ -4,6 +4,7 @@ using Klyte.Commons.Utils;
 using Klyte.DynamicTextProps.Data;
 using Klyte.DynamicTextProps.Libraries;
 using Klyte.DynamicTextProps.Overrides;
+using Klyte.DynamicTextProps.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,17 +24,17 @@ namespace Klyte.DynamicTextProps.UI
 
         protected override BoardDescriptorStreetSignXml CurrentConfig
         {
-            get => BoardGeneratorRoadNodes.Instance.LoadedStreetSignDescriptor;
-            set => BoardGeneratorRoadNodes.Instance.LoadedStreetSignDescriptor = value;
+            get => DTPRoadNodesData.Instance.CurrentDescriptor;
+            set => DTPRoadNodesData.Instance.CurrentDescriptor = value;
         }
 
         protected override void BeforeCreatingTextScrollPanel()
         {
-            m_useDistrictColorCheck = m_uiHelperHS.AddCheckboxLocale("K45_DTP_USE_DISTRICT_COLOR", BoardGeneratorRoadNodes.Instance.LoadedStreetSignDescriptor.UseDistrictColor, OnChangeUseDistrictColor);
+            m_useDistrictColorCheck = m_uiHelperHS.AddCheckboxLocale("K45_DTP_USE_DISTRICT_COLOR", DTPRoadNodesData.Instance.CurrentDescriptor.UseDistrictColor, OnChangeUseDistrictColor);
             KlyteMonoUtils.LimitWidth(m_useDistrictColorCheck.label, m_uiHelperHS.Self.width - 50);
-            KlyteMonoUtils.LimitWidth(m_uiHelperHS.AddCheckboxLocale("K45_DTP_PLACE_ON_DISTRICT_BORDER", BoardGeneratorRoadNodes.Instance.LoadedStreetSignDescriptor.PlaceOnDistrictBorder, SetPlaceOnDistrictBorder).label, m_uiHelperHS.Self.width - 50);
-            m_propColorPicker = m_uiHelperHS.AddColorPicker(Locale.Get("K45_DTP_PROP_COLOR"), BoardGeneratorRoadNodes.Instance.LoadedStreetSignDescriptor.PropColor, OnChangePropColor);
-            m_propColorPicker.parent.isVisible = !BoardGeneratorRoadNodes.Instance.LoadedStreetSignDescriptor.UseDistrictColor;
+            KlyteMonoUtils.LimitWidth(m_uiHelperHS.AddCheckboxLocale("K45_DTP_PLACE_ON_DISTRICT_BORDER", DTPRoadNodesData.Instance.CurrentDescriptor.PlaceOnDistrictBorder, SetPlaceOnDistrictBorder).label, m_uiHelperHS.Self.width - 50);
+            m_propColorPicker = m_uiHelperHS.AddColorPicker(Locale.Get("K45_DTP_PROP_COLOR"), DTPRoadNodesData.Instance.CurrentDescriptor.PropColor, OnChangePropColor);
+            m_propColorPicker.parent.isVisible = !DTPRoadNodesData.Instance.CurrentDescriptor.UseDistrictColor;
             AddDropdown(Locale.Get("K45_DTP_CUSTOM_NAME_EXTRACTION_QUALIFIER"), out m_qualifierExtractionDropdown, m_uiHelperHS, Enum.GetNames(typeof(RoadQualifierExtractionMode)).Select(x => Locale.Get($"K45_DTP_RoadQualifierExtractionMode", x)).ToArray(), SetRoadQualifierExtractionMode);
 
 
@@ -48,7 +49,7 @@ namespace Klyte.DynamicTextProps.UI
                     };
                 abbreviationOptions.AddRange(DynamicTextPropsMod.Controller.AbbreviationFiles.Keys.OrderBy(x => x));
                 m_abbreviationDropdown.items = abbreviationOptions.ToArray();
-                m_abbreviationDropdown.selectedIndex = abbreviationOptions.IndexOf(BoardGeneratorRoadNodes.Instance.LoadedStreetSignDescriptor.AbbreviationFile);
+                m_abbreviationDropdown.selectedIndex = abbreviationOptions.IndexOf(DTPRoadNodesData.Instance.CurrentDescriptor.AbbreviationFile);
                 if (m_abbreviationDropdown.selectedIndex == -1)
                 {
                     m_abbreviationDropdown.selectedIndex = 0;
@@ -66,30 +67,30 @@ namespace Klyte.DynamicTextProps.UI
 
         protected void SetRoadQualifierExtractionMode(int idx)
         {
-            BoardGeneratorRoadNodes.Instance.LoadedStreetSignDescriptor.RoadQualifierExtraction = (RoadQualifierExtractionMode)idx;
-            BoardGeneratorRoadNodes.Instance.ClearCacheStreetName();
-            BoardGeneratorRoadNodes.Instance.ClearCacheStreetQualifier();
+            DTPRoadNodesData.Instance.CurrentDescriptor.RoadQualifierExtraction = (RoadQualifierExtractionMode)idx;
+            RenderUtils.ClearCacheStreetName();
+            RenderUtils.ClearCacheStreetQualifier();
         }
 
         protected void SetAbbreviationFile(int idx)
         {
             if (!m_loadingAbbreviations)
             {
-                BoardGeneratorRoadNodes.Instance.LoadedStreetSignDescriptor.AbbreviationFile = idx <= 0 ? null : m_abbreviationDropdown.items[idx];
-                BoardGeneratorRoadNodes.Instance.ClearCacheStreetName();
-                BoardGeneratorRoadNodes.Instance.ClearCacheStreetQualifier();
+                DTPRoadNodesData.Instance.CurrentDescriptor.AbbreviationFile = idx <= 0 ? null : m_abbreviationDropdown.items[idx];
+                RenderUtils.ClearCacheStreetName();
+                RenderUtils.ClearCacheStreetQualifier();
             }
         }
 
         private void OnChangeUseDistrictColor(bool isChecked)
         {
-            BoardGeneratorRoadNodes.Instance.LoadedStreetSignDescriptor.UseDistrictColor = isChecked;
+            DTPRoadNodesData.Instance.CurrentDescriptor.UseDistrictColor = isChecked;
             m_propColorPicker.parent.isVisible = !isChecked;
             BoardGeneratorRoadNodes.Instance.SoftReset();
         }
         private void SetPlaceOnDistrictBorder(bool isChecked)
         {
-            BoardGeneratorRoadNodes.Instance.LoadedStreetSignDescriptor.PlaceOnDistrictBorder = isChecked;
+            DTPRoadNodesData.Instance.CurrentDescriptor.PlaceOnDistrictBorder = isChecked;
             BoardGeneratorRoadNodes.Instance.SoftReset();
         }
     }

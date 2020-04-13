@@ -18,24 +18,18 @@ namespace FontStashSharp
         private float _itw;
         private FontAtlas _currentAtlas;
         private Vector2 _size;
-        private int _fontSize;
+        private int _fontHeight;
 
         private Dictionary<string, BasicRenderInformation> m_textCache = new Dictionary<string, BasicRenderInformation>();
 
-        public int FontSize
+        public int FontHeight
         {
-            get => _fontSize;
-
+            get => _fontHeight;
             set {
-                if (value == _fontSize)
-                {
-                    return;
-                }
-
-                _fontSize = value;
+                _fontHeight = value;
                 foreach (Font f in _fonts)
                 {
-                    f.Recalculate(_fontSize);
+                    f.RecalculateBasedOnHeight(_fontHeight);
                 }
             }
         }
@@ -96,7 +90,7 @@ namespace FontStashSharp
 
         public void ClearState()
         {
-            FontSize = 12;
+            FontHeight = 100;
             Color = Color.white;
             Spacing = 0;
         }
@@ -104,8 +98,7 @@ namespace FontStashSharp
         public void AddFontMem(byte[] data)
         {
             var font = Font.FromMemory(data);
-
-            font.Recalculate(FontSize);
+            font.RecalculateBasedOnHeight(FontHeight);
             _fonts.Add(font);
         }
 
@@ -144,7 +137,7 @@ namespace FontStashSharp
 
             bri = new BasicRenderInformation();
 
-            Dictionary<int, FontGlyph> glyphs = GetGlyphsCollection(FontSize);
+            Dictionary<int, FontGlyph> glyphs = GetGlyphsCollection(FontHeight);
 
             // Determine ascent and lineHeight from first character
             float ascent = 0, lineHeight = 0;
@@ -152,7 +145,7 @@ namespace FontStashSharp
             {
                 int codepoint = char.ConvertToUtf32(str, i);
 
-                FontGlyph glyph = GetGlyph(glyphs, codepoint);
+                FontGlyph glyph = GetGlyph(glyphs, codepoint, out _);
                 if (glyph == null)
                 {
                     continue;
@@ -195,8 +188,8 @@ namespace FontStashSharp
                         continue;
                     }
 
-                    FontGlyph glyph = GetGlyph(glyphs, codepoint);
-                    if (lastUpdateAtlasAtStart != LastUpdateAtlas)
+                    FontGlyph glyph = GetGlyph(glyphs, codepoint, out bool hasResetted);
+                    if (hasResetted)
                     {
                         goto loop_retry;
                     }
@@ -225,7 +218,6 @@ namespace FontStashSharp
                 {
                     bri.m_mesh = new Mesh();
                 }
-                LogUtils.DoLog(uirenderData.ToString());
                 bri.m_mesh.Clear();
                 bri.m_mesh.vertices = AlignVertices(vertices, alignment);
                 bri.m_mesh.normals = normals.ToArray();
@@ -529,15 +521,14 @@ namespace FontStashSharp
                 return 0.0f;
             }
 
-            Dictionary<int, FontGlyph> glyphs = GetGlyphsCollection(FontSize);
+            Dictionary<int, FontGlyph> glyphs = GetGlyphsCollection(FontHeight);
 
             // Determine ascent and lineHeight from first character
             float ascent = 0, lineHeight = 0;
             for (int i = 0; i < str.Length; i += char.IsSurrogatePair(str, i) ? 2 : 1)
             {
                 int codepoint = char.ConvertToUtf32(str, i);
-
-                FontGlyph glyph = GetGlyph(glyphs, codepoint);
+                FontGlyph glyph = GetGlyph(glyphs, codepoint, out _);
                 if (glyph == null)
                 {
                     continue;
@@ -574,7 +565,8 @@ namespace FontStashSharp
                     continue;
                 }
 
-                FontGlyph glyph = GetGlyph(glyphs, codepoint);
+                FontGlyph glyph = GetGlyph(glyphs, codepoint, out _);
+
                 if (glyph == null)
                 {
                     continue;
@@ -666,7 +658,7 @@ namespace FontStashSharp
             }
 
             int advance = 0, lsb = 0, x0 = 0, y0 = 0, x1 = 0, y1 = 0;
-            font.BuildGlyphBitmap(g, FontSize, font.Scale, ref advance, ref lsb, ref x0, ref y0, ref x1, ref y1);
+            font.BuildGlyphBitmap(g, font.Scale, ref advance, ref lsb, ref x0, ref y0, ref x1, ref y1);
 
             int pad = FontGlyph.PadFromBlur(Blur);
             int gw = x1 - x0 + pad * 2;
@@ -676,7 +668,7 @@ namespace FontStashSharp
             {
                 Font = font,
                 Codepoint = codepoint,
-                Size = FontSize,
+                Height = FontHeight,
                 Blur = Blur,
                 Index = g,
                 Bounds = new Rect(0, 0, gw, gh),
@@ -690,8 +682,9 @@ namespace FontStashSharp
             return glyph;
         }
 
-        private FontGlyph GetGlyphInternal(Dictionary<int, FontGlyph> glyphs, int codepoint)
+        private FontGlyph GetGlyphInternal(Dictionary<int, FontGlyph> glyphs, int codepoint, out bool hasResetted)
         {
+            hasResetted = false;
             FontGlyph glyph = GetGlyphWithoutBitmap(glyphs, codepoint);
             if (glyph == null)
             {
@@ -728,6 +721,7 @@ namespace FontStashSharp
                     currentAtlas = CurrentAtlas;
                     m_textCache.Clear();
 
+                    hasResetted = true;
                     // Try to add again
                 } while (!currentAtlas.AddRect(gw, gh, ref gx, ref gy));
             }
@@ -742,12 +736,12 @@ namespace FontStashSharp
             return glyph;
         }
 
-        private FontGlyph GetGlyph(Dictionary<int, FontGlyph> glyphs, int codepoint)
+        private FontGlyph GetGlyph(Dictionary<int, FontGlyph> glyphs, int codepoint, out bool hasResetted)
         {
-            FontGlyph result = GetGlyphInternal(glyphs, codepoint);
+            FontGlyph result = GetGlyphInternal(glyphs, codepoint, out hasResetted);
             if (result == null && DefaultCharacter != null)
             {
-                result = GetGlyphInternal(glyphs, DefaultCharacter.Value);
+                result = GetGlyphInternal(glyphs, DefaultCharacter.Value, out hasResetted);
             }
 
             return result;
@@ -782,5 +776,7 @@ namespace FontStashSharp
 
             x += (int)(glyph.XAdvance / 10.0f + 0.5f);
         }
+
+
     }
 }

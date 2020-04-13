@@ -3,6 +3,7 @@ using ColossalFramework.Math;
 using Klyte.Commons.Extensors;
 using Klyte.Commons.Utils;
 using Klyte.DynamicTextProps.Data;
+using Klyte.DynamicTextProps.Utils;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -86,14 +87,14 @@ namespace Klyte.DynamicTextProps.Overrides
                     continue;
                 }
 
-                RenderPropMesh(ref sign.m_cachedProp, cameraInfo, segmentID, i, 0, layerMask, 0, sign.cachedPosition, Vector4.zero, ref sign.descriptor.m_propName, sign.cachedRotation, sign.descriptor.PropScale, ref sign.descriptor, out Matrix4x4 propMatrix, out bool rendered);
+                RenderPropMesh(ref sign.m_cachedProp, cameraInfo, segmentID, i, 0, layerMask, 0, sign.cachedPosition, Vector4.zero, ref sign.descriptor.m_propName, sign.cachedRotation, sign.descriptor.PropScale, sign.descriptor, out Matrix4x4 propMatrix, out bool rendered);
                 if (rendered)
                 {
                     for (int j = 0; j < sign.descriptor.m_textDescriptors?.Length; j++)
                     {
                         MaterialPropertyBlock block = NetManager.instance.m_materialBlock;
                         block.Clear();
-                        RenderTextMesh(cameraInfo, segmentID, i, j, ref sign.descriptor, propMatrix, ref sign.descriptor.m_textDescriptors[j], block);
+                        RenderTextMesh(cameraInfo, segmentID, i, j, sign.descriptor, propMatrix, sign.descriptor.m_textDescriptors[j], block);
                     }
                 }
 
@@ -133,16 +134,15 @@ namespace Klyte.DynamicTextProps.Overrides
 
         #region Upadate Data
 
-        protected override BasicRenderInformation GetMeshFullStreetName(ushort idx, int boardIdx, int secIdx, ref BoardDescriptorHigwaySignXml descriptor) => GetFromCacheArray(idx, CacheArrayTypes.FullStreetName);
-        protected override BasicRenderInformation GetOwnNameMesh(ushort buildingID, int boardIdx, int secIdx, ref BoardDescriptorHigwaySignXml descriptor) => GetTextData("WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", null);
+        protected override BasicRenderInformation GetMeshFullStreetName(ushort idx, int boardIdx, int secIdx, BoardDescriptorHigwaySignXml descriptor) => RenderUtils.GetFromCacheArray(idx, RenderUtils.CacheArrayTypes.FullStreetName, DrawFont);
+        protected override BasicRenderInformation GetOwnNameMesh(ushort buildingID, int boardIdx, int secIdx, BoardDescriptorHigwaySignXml descriptor) => RenderUtils.GetTextData("WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", DrawFont);
+        protected override BasicRenderInformation GetMeshCurrentNumber(ushort id, int boardIdx, int kilometers, BoardDescriptorHigwaySignXml descriptor) => RenderUtils.GetTextData($"Saída {kilometers}", DrawFont);
 
-        protected override BasicRenderInformation GetMeshCurrentNumber(ushort id, int boardIdx, int kilometers, ref BoardDescriptorHigwaySignXml descriptor) => GetTextData($"Saída {kilometers}");
-
-        protected override BasicRenderInformation GetFixedTextMesh(ref BoardTextDescriptorHighwaySignsXml textDescriptor, ushort refID, int boardIdx, int secIdx, ref BoardDescriptorHigwaySignXml descriptor)
+        protected override BasicRenderInformation GetFixedTextMesh(BoardTextDescriptorHighwaySignsXml textDescriptor, ushort refID, int boardIdx, int secIdx, BoardDescriptorHigwaySignXml descriptor)
         {
             string txt = (textDescriptor.m_isFixedTextLocalized ? Locale.Get(textDescriptor.m_fixedText, textDescriptor.m_fixedTextLocaleKey) : textDescriptor.m_fixedText) ?? "";
 
-            return GetTextRendered(secIdx, descriptor, txt);
+            return RenderUtils.GetTextData(txt, DrawFont, descriptor.m_textDescriptors[secIdx].m_overrideFont);
         }
 
         #endregion
@@ -157,7 +157,6 @@ namespace Klyte.DynamicTextProps.Overrides
         }
 
         public override Color GetContrastColor(ushort refID, int boardIdx, int secIdx, BoardDescriptorHigwaySignXml descriptor) => Color.black;
-        private BasicRenderInformation GetTextRendered(int secIdx, BoardDescriptorHigwaySignXml descriptor, string txt) => GetTextData(txt, descriptor.m_textDescriptors[secIdx].m_overrideFont);
         protected override void ResetImpl() { }
     }
 }

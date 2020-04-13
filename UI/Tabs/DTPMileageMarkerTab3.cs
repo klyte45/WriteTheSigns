@@ -12,11 +12,11 @@ namespace Klyte.DynamicTextProps.UI
     {
         protected override BoardDescriptorMileageMarkerXml CurrentConfig
         {
-            get => LoadedMileageMarkerConfig;
-            set => LoadedMileageMarkerConfig = value;
+            get => DTPHighwayMileageData.Instance.CurrentDescriptor;
+            set => DTPHighwayMileageData.Instance.CurrentDescriptor = value;
         }
 
-        protected override void BeforeCreatingTextScrollPanel() => KlyteMonoUtils.LimitWidth(m_uiHelperHS.AddCheckboxLocale("K45_DTP_USE_MILES", LoadedMileageMarkerConfig.UseMiles, OnSetUseMiles).label, m_uiHelperHS.Self.width - 50);
+        protected override void BeforeCreatingTextScrollPanel() => KlyteMonoUtils.LimitWidth(m_uiHelperHS.AddCheckboxLocale("K45_DTP_USE_MILES", DTPHighwayMileageData.Instance.CurrentDescriptor.UseMiles, OnSetUseMiles).label, m_uiHelperHS.Self.width - 50);
         protected override void CleanDescriptor() => BoardGeneratorHighwayMileage.Instance.CleanDescriptor();
         protected override void GenerateDefaultModels() => GenerateDefaultSignModelAtLibrary();
         protected override TextType[] GetAvailableTextTypes() => AVAILABLE_TEXT_TYPES;
@@ -26,7 +26,7 @@ namespace Klyte.DynamicTextProps.UI
 
         private void OnSetUseMiles(bool value)
         {
-            LoadedMileageMarkerConfig.UseMiles = value;
+            DTPHighwayMileageData.Instance.CurrentDescriptor.UseMiles = value;
             BoardGeneratorHighwayMileage.Instance.SoftReset();
         }
 
