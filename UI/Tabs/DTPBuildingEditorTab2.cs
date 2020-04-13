@@ -356,7 +356,6 @@ namespace Klyte.DynamicTextProps.UI
             SafeActionInTextBoard(descriptor =>
             {
                 descriptor.m_overrideFont = idx > 0 ? m_overrideFontText.selectedValue : null;
-                descriptor.GeneratedFixedTextRenderInfo = null;
             });
         }
 

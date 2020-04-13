@@ -20,6 +20,9 @@ namespace Klyte.DynamicTextProps.Data
         }
         public void ResetBoards() => BoardSerialData = null;
 
+        [XmlAttribute("defaultFont")]
+        public virtual string DefaultFont { get; set; }
+
         [XmlElement("BoardsContainer")]
         public SimpleNonSequentialList<BBC> BoardSerialData
         {

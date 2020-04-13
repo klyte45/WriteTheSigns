@@ -1,7 +1,7 @@
 ﻿using ColossalFramework;
 using Klyte.Commons.Interfaces;
 using Klyte.Commons.Utils;
-using Klyte.DynamicTextProps.Overrides;
+using Klyte.DynamicTextProps.Legacy;
 using System;
 
 namespace Klyte.DynamicTextProps.Data
@@ -22,7 +22,7 @@ namespace Klyte.DynamicTextProps.Data
             }
             try
             {
-                result.GlobalConfiguration = XmlUtils.DefaultXmlDeserialize<BoardGeneratorBuildingConfigXml>(data);
+                result.DefaultFont = XmlUtils.DefaultXmlDeserialize<BoardGeneratorBuildingConfigXmlLegacy>(data).DefaultFont;
             }
             catch (Exception e)
             {

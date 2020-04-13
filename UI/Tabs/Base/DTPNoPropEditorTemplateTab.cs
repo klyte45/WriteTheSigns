@@ -112,7 +112,6 @@ namespace Klyte.DynamicTextProps.UI
             }
         }
 
-        protected override void OnChangeCustomText(BTD descriptor) => descriptor.GeneratedFixedTextRenderInfo = null;
 
         protected override void ReloadTabInfoText()
         {

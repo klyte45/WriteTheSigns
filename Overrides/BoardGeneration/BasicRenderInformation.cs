@@ -6,7 +6,7 @@ namespace Klyte.DynamicTextProps.Overrides
     {
         public Mesh m_mesh;
         public Vector2 m_sizeMetersUnscaled;
-        public uint m_frameDrawTime;
+        public long m_materialGeneratedTick;
         public Material m_generatedMaterial;
     }
 

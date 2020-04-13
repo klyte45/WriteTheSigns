@@ -1,9 +1,6 @@
 using ColossalFramework;
-using ColossalFramework.Math;
 using ColossalFramework.UI;
-using Klyte.Commons;
 using Klyte.Commons.Utils;
-using Klyte.DynamicTextProps;
 using Klyte.DynamicTextProps.Overrides;
 using System;
 using System.Collections.Generic;
@@ -22,6 +19,8 @@ namespace FontStashSharp
         private FontAtlas _currentAtlas;
         private Vector2 _size;
         private int _fontSize;
+
+        private Dictionary<string, BasicRenderInformation> m_textCache = new Dictionary<string, BasicRenderInformation>();
 
         public int FontSize
         {
@@ -47,6 +46,8 @@ namespace FontStashSharp
         public Vector2 Scale;
         public bool UseKernings = true;
 
+        public long LastUpdateAtlas { get; private set; }
+
         public int? DefaultCharacter = ' ';
 
         public FontAtlas CurrentAtlas
@@ -56,6 +57,7 @@ namespace FontStashSharp
                 {
                     _currentAtlas = new FontAtlas(Mathf.RoundToInt(_size.x), Mathf.RoundToInt(_size.y), 256);
                     Atlases.Add(_currentAtlas);
+                    LastUpdateAtlas = DateTime.Now.Ticks;
                 }
 
                 return _currentAtlas;
@@ -119,12 +121,28 @@ namespace FontStashSharp
             return result;
         }
 
-        public float DrawText(BasicRenderInformation bri, float x, float y, string str, UIHorizontalAlignment alignment = UIHorizontalAlignment.Center)
+        public BasicRenderInformation DrawText(float x, float y, string str, UIHorizontalAlignment alignment = UIHorizontalAlignment.Center)
         {
+            BasicRenderInformation bri;
             if (string.IsNullOrEmpty(str))
             {
-                return 0.0f;
+                if (!m_textCache.TryGetValue("", out bri))
+                {
+                    bri = new BasicRenderInformation
+                    {
+                        m_mesh = new Mesh(),
+                        m_generatedMaterial = CurrentAtlas.Material
+                    };
+                    m_textCache[""] = bri;
+                }
+                return bri;
             }
+            if (m_textCache.TryGetValue(str, out bri))
+            {
+                return bri;
+            }
+
+            bri = new BasicRenderInformation();
 
             Dictionary<int, FontGlyph> glyphs = GetGlyphsCollection(FontSize);
 
@@ -155,6 +173,8 @@ namespace FontStashSharp
             var uirenderData = UIRenderData.Obtain();
             try
             {
+            loop_retry:
+                long lastUpdateAtlasAtStart = LastUpdateAtlas;
                 uirenderData.Clear();
                 PoolList<Vector3> vertices = uirenderData.vertices;
                 PoolList<Vector3> normals = uirenderData.normals;
@@ -176,6 +196,10 @@ namespace FontStashSharp
                     }
 
                     FontGlyph glyph = GetGlyph(glyphs, codepoint);
+                    if (lastUpdateAtlasAtStart != LastUpdateAtlas)
+                    {
+                        goto loop_retry;
+                    }
                     if (glyph == null)
                     {
                         continue;
@@ -193,11 +217,6 @@ namespace FontStashSharp
                                                 (int)(q.X1 - q.X0),
                                                 (int)(q.Y1 - q.Y0));
 
-                    //var sourceRect = new Rect((int)(q.S0 * _size.x),
-                    //                            (int)(q.T0 * _size.y),
-                    //                            (int)((q.S1 - q.S0) * _size.x),
-                    //                            (int)((q.T1 - q.T0) * _size.y));
-
                     DrawChar(glyph, vertices, normals, triangles, uvs, colors, Color.white, Color.white, destRect);
 
                     prevGlyph = glyph;
@@ -213,6 +232,7 @@ namespace FontStashSharp
                 bri.m_mesh.colors32 = colors.Select(x => new Color32(x.a, x.a, x.a, x.a)).ToArray();
                 bri.m_mesh.uv = uvs.ToArray();
                 bri.m_mesh.triangles = triangles.ToArray();
+                bri.m_materialGeneratedTick = LastUpdateAtlas;
             }
             finally
             {
@@ -223,7 +243,8 @@ namespace FontStashSharp
             _currentAtlas.UpdateMaterial();
             bri.m_generatedMaterial = _currentAtlas.Material;
             bri.m_sizeMetersUnscaled = bri.m_mesh.bounds.size;
-            return x;
+            m_textCache[str] = bri;
+            return bri;
         }
 
         private Vector3[] AlignVertices(PoolList<Vector3> points, UIHorizontalAlignment alignment)
@@ -341,15 +362,6 @@ namespace FontStashSharp
         };
         private void AddUVCoords(PoolList<Vector2> uvs, FontGlyph glyph)
         {
-
-            if (CommonProperties.DebugMode)
-            {
-                LogUtils.DoLog($"UV = [" +
-                    $"{new Vector2(glyph.Bounds.left / _currentAtlas.Width, glyph.Bounds.bottom / _currentAtlas.Height)}," +
-                    $"{new Vector2(glyph.Bounds.right / _currentAtlas.Width, glyph.Bounds.bottom / _currentAtlas.Height)}," +
-                    $"{new Vector2(glyph.Bounds.right / _currentAtlas.Width, glyph.Bounds.top / _currentAtlas.Height)   }," +
-                    $"{new Vector2(glyph.Bounds.left / _currentAtlas.Width, glyph.Bounds.top / _currentAtlas.Height)    }])");
-            }
             uvs.Add(new Vector2(glyph.Bounds.right / _currentAtlas.Width, glyph.Bounds.bottom / _currentAtlas.Height));
             uvs.Add(new Vector2(glyph.Bounds.left / _currentAtlas.Width, glyph.Bounds.bottom / _currentAtlas.Height));
             uvs.Add(new Vector2(glyph.Bounds.left / _currentAtlas.Width, glyph.Bounds.top / _currentAtlas.Height));
@@ -608,6 +620,8 @@ namespace FontStashSharp
 
             _glyphs.Clear();
 
+            m_textCache.Clear();
+
             if (width == _size.x && height == _size.y)
             {
                 return;
@@ -712,6 +726,7 @@ namespace FontStashSharp
                     glyphs[codepoint] = glyph;
 
                     currentAtlas = CurrentAtlas;
+                    m_textCache.Clear();
 
                     // Try to add again
                 } while (!currentAtlas.AddRect(gw, gh, ref gx, ref gy));

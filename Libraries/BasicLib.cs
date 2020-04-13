@@ -6,7 +6,6 @@ using System.IO;
 using System.Linq;
 using System.Xml.Serialization;
 using static Klyte.Commons.Utils.XmlUtils;
-using static Klyte.DynamicTextProps.Overrides.BoardGeneratorRoadNodes;
 
 namespace Klyte.DynamicTextProps.Libraries
 {
@@ -67,14 +66,14 @@ namespace Klyte.DynamicTextProps.Libraries
 
         public void Remove(string indexName)
         {
-            var removed = m_savedDescriptors.Remove(indexName);
+            bool removed = m_savedDescriptors.Remove(indexName);
             if (removed)
             {
                 Save();
             }
         }
 
-        private void Save() => File.WriteAllText(DefaultXmlFileBaseFullPath, XmlUtils.DefaultXmlSerialize<LIB>((LIB) this));
+        private void Save() => File.WriteAllText(DefaultXmlFileBaseFullPath, XmlUtils.DefaultXmlSerialize<LIB>((LIB)this));
 
     }
 
@@ -89,9 +88,9 @@ namespace Klyte.DynamicTextProps.Libraries
     #endregion
 
     #region In Segment props
-    [XmlRoot("LibSegmentPropGroup")] public class DTPLibPropGroupHigwaySigns : BasicLib<DTPLibPropGroupHigwaySigns, BoardGeneratorHighwaySigns.BoardBunchContainerHighwaySignXml> { protected override string XmlName => "LibSegmentPropGroup"; }
-    [XmlRoot("LibSegmentProp")] public class DTPLibPropSingleHighwaySigns : BasicLib<DTPLibPropSingleHighwaySigns, BoardGeneratorHighwaySigns.BoardDescriptorHigwaySignXml> { protected override string XmlName => "LibSegmentProp"; }
-    [XmlRoot("LibSegmentText")] public class DTPLibTextMeshHighwaySigns : BasicLib<DTPLibTextMeshHighwaySigns, BoardGeneratorHighwaySigns.BoardTextDescriptorHighwaySignsXml> { protected override string XmlName => "LibSegmentText"; }
+    [XmlRoot("LibSegmentPropGroup")] public class DTPLibPropGroupHigwaySigns : BasicLib<DTPLibPropGroupHigwaySigns, BoardBunchContainerHighwaySignXml> { protected override string XmlName => "LibSegmentPropGroup"; }
+    [XmlRoot("LibSegmentProp")] public class DTPLibPropSingleHighwaySigns : BasicLib<DTPLibPropSingleHighwaySigns, BoardDescriptorHigwaySignXml> { protected override string XmlName => "LibSegmentProp"; }
+    [XmlRoot("LibSegmentText")] public class DTPLibTextMeshHighwaySigns : BasicLib<DTPLibTextMeshHighwaySigns, BoardTextDescriptorHighwaySignsXml> { protected override string XmlName => "LibSegmentText"; }
     #endregion
 
     #region Building extra props

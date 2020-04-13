@@ -19,11 +19,6 @@ namespace Klyte.DynamicTextProps.Overrides
         public bool[] m_updatedStreetPositions;
         public uint[] m_lastFrameUpdate;
 
-        public BasicRenderInformation[] m_cachedNumber;
-
-        public override UIDynamicFont DrawFont => m_font;
-        private UIDynamicFont m_font;
-
         private readonly Func<RenderManager, uint> m_getCurrentFrame = ReflectionUtils.GetGetFieldDelegate<RenderManager, uint>("m_currentFrame", typeof(RenderManager));
 
         public static readonly TextType[] AVAILABLE_TEXT_TYPES = new TextType[]
@@ -42,9 +37,6 @@ namespace Klyte.DynamicTextProps.Overrides
         {
             m_lastFrameUpdate = new uint[NetManager.MAX_NODE_COUNT];
             m_updatedStreetPositions = new bool[Data.ObjArraySize];
-            m_cachedNumber = new BasicRenderInformation[10];
-
-            BuildSurfaceFont(out m_font, LoadedStreetSignDescriptor.FontName);
 
             NetManagerOverrides.EventNodeChanged += OnNodeChanged;
             DistrictManagerOverrides.EventOnDistrictChanged += OnDistrictChanged;
@@ -72,15 +64,7 @@ namespace Klyte.DynamicTextProps.Overrides
 
         protected override void ResetImpl() => SoftReset();
 
-        protected override void OnChangeFont(string fontName) => LoadedStreetSignDescriptor.FontName = fontName;
-
-
-        public void SoftReset()
-        {
-            m_testTextInfo = null;
-            m_cachedNumber = new BasicRenderInformation[10];
-            ClearCacheDefault();
-        }
+        public void SoftReset() => m_testTextInfo = null;
 
 
         private void OnNodeChanged(ushort nodeId)
@@ -296,20 +280,7 @@ namespace Klyte.DynamicTextProps.Overrides
         protected override BasicRenderInformation GetMeshCustom2(ushort idx, int boardIdx, int secIdx, ref BoardDescriptorStreetSignXml descriptor)
         {
             int distanceRef = (int)Mathf.Floor(Data.BoardsContainers[idx].m_boardsData[boardIdx].m_distanceRef / 1000);
-            while (m_cachedNumber.Length <= distanceRef + 1)
-            {
-                LogUtils.DoLog($"!Length {m_cachedNumber.Length }/{distanceRef}");
-                var newArray = m_cachedNumber.ToList();
-                newArray.Add(null);
-                m_cachedNumber = newArray.ToArray();
-            }
-            if (m_cachedNumber[distanceRef] == null)
-            {
-                LogUtils.DoLog($"!m_cachedNumber {distanceRef}");
-                RefreshTextData(ref m_cachedNumber[distanceRef], distanceRef.ToString());
-            }
-            return m_cachedNumber[distanceRef];
-
+            return GetTextData(distanceRef.ToString());
         }
 
 
@@ -352,12 +323,11 @@ namespace Klyte.DynamicTextProps.Overrides
         private long m_testTextInfoTime = 0;
         protected override BasicRenderInformation GetOwnNameMesh(ushort buildingID, int boardIdx, int secIdx, ref BoardDescriptorStreetSignXml descriptor)
         {
-            if (m_testTextInfo == null || m_testTextInfoTime < lastFontUpdateFrame)
+            if (m_testTextInfo == null || m_testTextInfoTime < LastFontUpdateFrame)
             {
                 string resultText = "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW";
-                UIFont overrideFont = null;
-                RefreshTextData(ref m_testTextInfo, resultText, overrideFont);
-                m_testTextInfoTime = lastFontUpdateFrame;
+                m_testTextInfo = GetTextData(resultText);
+                m_testTextInfoTime = LastFontUpdateFrame;
             }
             return m_testTextInfo;
         }

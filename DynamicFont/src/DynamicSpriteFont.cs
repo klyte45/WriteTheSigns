@@ -30,6 +30,10 @@ namespace SpriteFontPlus
 
         private readonly FontSystem _fontSystem;
 
+        public long LastUpdate => _fontSystem.LastUpdateAtlas;
+
+        public readonly string m_fontName;
+
         public IEnumerable<Texture2D> Textures => new TextureEnumerator(_fontSystem);
 
         public int Size
@@ -69,8 +73,9 @@ namespace SpriteFontPlus
             }
         }
 
-        private DynamicSpriteFont(byte[] ttf, int defaultSize, int textureWidth, int textureHeight, int blur)
+        private DynamicSpriteFont(byte[] ttf, string name, int defaultSize, int textureWidth, int textureHeight, int blur)
         {
+            m_fontName = name;
             _fontSystem = new FontSystem(textureWidth, textureHeight, blur)
             {
                 FontSize = defaultSize
@@ -79,14 +84,14 @@ namespace SpriteFontPlus
             _fontSystem.AddFontMem(ttf);
         }
 
-        public float DrawString(BasicRenderInformation batch, string text, Vector2 pos, Color color) => DrawString(batch, text, pos, color, Vector2.one);
+        public BasicRenderInformation DrawString(string text, Vector2 pos, Color color) => DrawString(text, pos, color, Vector2.one);
 
-        public float DrawString(BasicRenderInformation bri, string text, Vector2 pos, Color color, Vector2 scale)
+        public BasicRenderInformation DrawString(string text, Vector2 pos, Color color, Vector2 scale)
         {
             _fontSystem.Color = color;
             _fontSystem.Scale = scale;
 
-            float result = _fontSystem.DrawText(bri, pos.x, pos.y, text);
+            BasicRenderInformation result = _fontSystem.DrawText(pos.x, pos.y, text);
 
             _fontSystem.Scale = Vector2.one;
 
@@ -117,8 +122,8 @@ namespace SpriteFontPlus
 
         public void Reset() => _fontSystem.Reset();
 
-        public static DynamicSpriteFont FromTtf(byte[] ttf, int defaultSize, int textureWidth = 4, int textureHeight = 4, int blur = 0) => new DynamicSpriteFont(ttf, defaultSize, textureWidth, textureHeight, blur);
+        public static DynamicSpriteFont FromTtf(byte[] ttf, string name, int defaultSize, int textureWidth = 4, int textureHeight = 4, int blur = 0) => new DynamicSpriteFont(ttf, name, defaultSize, textureWidth, textureHeight, blur);
 
-        public static DynamicSpriteFont FromTtf(Stream ttfStream, int defaultSize, int textureWidth = 4, int textureHeight = 4, int blur = 0) => FromTtf(ttfStream.ToByteArray(), defaultSize, textureWidth, textureHeight, blur);
+        public static DynamicSpriteFont FromTtf(Stream ttfStream, string name, int defaultSize, int textureWidth = 4, int textureHeight = 4, int blur = 0) => FromTtf(ttfStream.ToByteArray(), name, defaultSize, textureWidth, textureHeight, blur);
     }
 }

@@ -1,6 +1,5 @@
 ﻿using ColossalFramework.Globalization;
 using ColossalFramework.Math;
-using ColossalFramework.UI;
 using Klyte.Commons.Extensors;
 using Klyte.Commons.Utils;
 using Klyte.DynamicTextProps.Data;
@@ -21,8 +20,6 @@ namespace Klyte.DynamicTextProps.Overrides
         public BasicRenderInformation[] m_cachedDirectionMeshes;
         public Tuple<RoadIdentifier, MileageMarkerDescriptor, MileageMarkerDescriptor>[] m_segmentCachedInfo;
 
-        private UIDynamicFont m_font;
-
         public static readonly TextType[] AVAILABLE_TEXT_TYPES = new TextType[]
           {
                     TextType.OwnName,
@@ -31,7 +28,6 @@ namespace Klyte.DynamicTextProps.Overrides
                     TextType.BuildingNumber
           };
 
-        public override UIDynamicFont DrawFont => m_font;
 
 
         private static BoardDescriptorMileageMarkerXml m_loadedDescriptor = new BoardDescriptorMileageMarkerXml();
@@ -98,8 +94,6 @@ namespace Klyte.DynamicTextProps.Overrides
             NetManagerOverrides.EventNodeChanged += OnNodeChanged;
             NetManagerOverrides.EventSegmentChanged += OnSegmentChanged;
 
-            BuildSurfaceFont(out m_font, LoadedMileageMarkerConfig.FontName);
-
             #region Hooks
             System.Reflection.MethodInfo postRenderMeshs = GetType().GetMethod("AfterRenderNode", RedirectorUtils.allFlags);
             System.Reflection.MethodInfo afterRenderSegment = GetType().GetMethod("AfterRenderSegment", RedirectorUtils.allFlags);
@@ -117,7 +111,6 @@ namespace Klyte.DynamicTextProps.Overrides
 
         public void SoftReset()
         {
-            m_testTextInfo = null;
             m_cachedDirectionMeshes = new BasicRenderInformation[9];
             m_cachedKilometerMeshes = new BasicRenderInformation[100];
             m_segmentCachedInfo = new Tuple<RoadIdentifier, MileageMarkerDescriptor, MileageMarkerDescriptor>[NetManager.MAX_SEGMENT_COUNT];
@@ -150,7 +143,6 @@ namespace Klyte.DynamicTextProps.Overrides
 
         private void OnSegmentChanged(ushort segmentId) => m_segmentCachedInfo = new Tuple<RoadIdentifier, MileageMarkerDescriptor, MileageMarkerDescriptor>[NetManager.MAX_SEGMENT_COUNT];
         #endregion
-        protected override void OnChangeFont(string fontName) => LoadedMileageMarkerConfig.FontName = fontName;
 
         public static void AfterRenderNode(ushort nodeID)
         {
@@ -299,45 +291,14 @@ namespace Klyte.DynamicTextProps.Overrides
         protected override BasicRenderInformation GetMeshCustom1(ushort id, int boardIdx, int kilometers, ref BoardDescriptorMileageMarkerXml descriptor)
         {
             byte direction = (boardIdx == 1 ? m_segmentCachedInfo[id].Third : m_segmentCachedInfo[id].Second).cardinalDirection8;
-            if (m_cachedDirectionMeshes[direction] == null || lastFontUpdateFrame > m_cachedDirectionMeshes[direction].m_frameDrawTime)
-            {
-                LogUtils.DoLog($"!nameUpdated Node1 {kilometers} ({direction})");
-                RefreshTextData(ref m_cachedDirectionMeshes[direction], Locale.Get("K45_CARDINAL_POINT_LONG", direction.ToString()).ToUpper());
-
-            }
-            return m_cachedDirectionMeshes[direction];
+            return GetTextData(Locale.Get("K45_CARDINAL_POINT_LONG", direction.ToString()).ToUpper());
 
         }
-        protected override BasicRenderInformation GetMeshCurrentNumber(ushort id, int boardIdx, int kilometers, ref BoardDescriptorMileageMarkerXml descriptor)
-        {
-            if (m_cachedKilometerMeshes.Length <= kilometers + 1)
-            {
-                m_cachedKilometerMeshes = new BasicRenderInformation[kilometers + 1];
-            }
-            if (m_cachedKilometerMeshes[kilometers] == null || lastFontUpdateFrame > m_cachedKilometerMeshes[kilometers].m_frameDrawTime)
-            {
-                LogUtils.DoLog($"!nameUpdated Node1 {kilometers}");
-                RefreshTextData(ref m_cachedKilometerMeshes[kilometers], $"{kilometers}");
-            }
-            return m_cachedKilometerMeshes[kilometers];
+        protected override BasicRenderInformation GetMeshCurrentNumber(ushort id, int boardIdx, int kilometers, ref BoardDescriptorMileageMarkerXml descriptor) => GetTextData(kilometers.ToString());
 
-        }
-
-        private BasicRenderInformation m_testTextInfo = null;
-        private long m_testTextInfoTime = 0;
         private PropInfo m_cachedPropInfo;
 
-        protected override BasicRenderInformation GetOwnNameMesh(ushort id, int boardIdx, int secIdx, ref BoardDescriptorMileageMarkerXml descriptor)
-        {
-            if (m_testTextInfo == null || m_testTextInfoTime < lastFontUpdateFrame)
-            {
-                string resultText = "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW";
-                UIFont overrideFont = null;
-                RefreshTextData(ref m_testTextInfo, resultText, overrideFont);
-                m_testTextInfoTime = lastFontUpdateFrame;
-            }
-            return m_testTextInfo;
-        }
+        protected override BasicRenderInformation GetOwnNameMesh(ushort id, int boardIdx, int secIdx, ref BoardDescriptorMileageMarkerXml descriptor) => GetTextData("WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW");
         #endregion
 
         public override Color? GetColor(ushort buildingID, int idx, int secIdx, BoardDescriptorMileageMarkerXml descriptor) => descriptor.PropColor;

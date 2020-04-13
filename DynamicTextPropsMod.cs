@@ -35,17 +35,7 @@ namespace Klyte.DynamicTextProps
             group8.AddLabel(Locale.Get("K45_DTP_GET_FILES_GITHUB"));
             group8.AddButton(Locale.Get("K45_DTP_GO_TO_GITHUB"), () => Application.OpenURL("https://github.com/klyte45/DynamicTextPropsFiles"));
         }
-        protected void BuildSurfaceFont(out UIDynamicFont font, string fontName)
-        {
-            font = ScriptableObject.CreateInstance<UIDynamicFont>();
-
-            var fontList = new List<string> { fontName };
-            font.baseFont = Font.CreateDynamicFontFromOSFont(fontList.ToArray(), 64);
-            font.lineHeight = 70;
-            font.baseline = 66;
-            font.size = 64;
-        }
-
+  
         private static void AddFolderButton(string filePath, UIHelperExtension helper, string localeId)
         {
             FileInfo fileInfo = FileUtils.EnsureFolderCreation(filePath);

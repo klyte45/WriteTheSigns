@@ -24,7 +24,6 @@ namespace Klyte.DynamicTextProps.Overrides
     public partial class BoardGeneratorBuildings : BoardGeneratorParent<BoardGeneratorBuildings, BoardBunchContainerBuilding, DTPBuildingsData, BoardDescriptorBuildingXml, BoardTextDescriptorBuildingsXml>
     {
 
-        public Dictionary<string, UIFont> m_fontCache = new Dictionary<string, UIFont>();
         private static Dictionary<string, BuildingGroupDescriptorXml> m_loadedDescriptors;
         internal static Dictionary<string, BuildingGroupDescriptorXml> LoadedDescriptors
         {
@@ -45,11 +44,7 @@ namespace Klyte.DynamicTextProps.Overrides
         private ulong[] m_lastDrawBuilding;
         private DistrictDescriptor[] m_districtDescriptors;
         private readonly Dictionary<string, StopPointDescriptorLanes[]> m_buildingStopsDescriptor = new Dictionary<string, StopPointDescriptorLanes[]>();
-        private readonly Dictionary<string, BasicRenderInformation> m_textCache = new Dictionary<string, BasicRenderInformation>();
 
-        private UIDynamicFont m_font;
-
-        public override UIDynamicFont DrawFont => m_font;
 
         public static readonly TextType[] AVAILABLE_TEXT_TYPES = new TextType[]
         {
@@ -67,8 +62,6 @@ namespace Klyte.DynamicTextProps.Overrides
         #region Initialize
         public override void Initialize()
         {
-            return;
-            BuildSurfaceFont(out m_font, Data.GlobalConfiguration.DefaultFont);
             LoadAllBuildingConfigurations();
 
 
@@ -96,8 +89,6 @@ namespace Klyte.DynamicTextProps.Overrides
 
             #endregion
         }
-
-        protected override void OnChangeFont(string fontName) => Data.GlobalConfiguration.DefaultFont = fontName;
 
         private static string DefaultFilename { get; } = $"{DTPController.m_defaultFileNameXml}.xml";
         public void LoadAllBuildingConfigurations()
@@ -191,8 +182,6 @@ namespace Klyte.DynamicTextProps.Overrides
                     x.NameSubInfo = null;
                 }
             });
-            m_textCache.Clear();
-
         }
 
 
@@ -366,7 +355,7 @@ namespace Klyte.DynamicTextProps.Overrides
             {
                 cacheKey = cacheKey.ToUpper();
             }
-            return GetCachedText(cacheKey);
+            return GetTextData(cacheKey);
         }
         protected override BasicRenderInformation GetMeshCustom1(ushort buildingID, int boardIdx, int secIdx, ref BoardDescriptorBuildingXml descriptor)
         {
@@ -410,54 +399,13 @@ namespace Klyte.DynamicTextProps.Overrides
         protected override BasicRenderInformation GetFixedTextMesh(ref BoardTextDescriptorBuildingsXml textDescriptor, ushort refID, int boardIdx, int secIdx, ref BoardDescriptorBuildingXml descriptor)
         {
             string txt = (textDescriptor.m_isFixedTextLocalized ? Locale.Get(textDescriptor.m_fixedText, textDescriptor.m_fixedTextLocaleKey) : textDescriptor.m_fixedText) ?? "";
-            if (descriptor.m_textDescriptors[secIdx].m_cachedType != TextType.Fixed)
-            {
-                descriptor.m_textDescriptors[secIdx].GeneratedFixedTextRenderInfo = null;
-                descriptor.m_textDescriptors[secIdx].m_cachedType = TextType.Fixed;
-            }
+
             return GetTextRendered(secIdx, descriptor, txt);
         }
 
-        private BasicRenderInformation GetTextRendered(int secIdx, BoardDescriptorBuildingXml descriptor, string txt)
-        {
-            if (!descriptor.m_textDescriptors[secIdx].m_overrideFont.IsNullOrWhiteSpace())
-            {
+        private BasicRenderInformation GetTextRendered(int secIdx, BoardDescriptorBuildingXml descriptor, string txt) => GetTextData(txt, descriptor.m_textDescriptors[secIdx].m_overrideFont);
 
-                if (!m_fontCache.ContainsKey(descriptor.m_textDescriptors[secIdx].m_overrideFont))
-                {
-                    BuildSurfaceFont(out UIDynamicFont surfaceFont, descriptor.m_textDescriptors[secIdx].m_overrideFont);
-                    if (surfaceFont.baseFont == null)
-                    {
-                        descriptor.m_textDescriptors[secIdx].m_overrideFont = null;
 
-                        return GetCachedText(txt);
-                    }
-                    else
-                    {
-                        m_fontCache[descriptor.m_textDescriptors[secIdx].m_overrideFont] = surfaceFont;
-                    }
-                }
-                if (descriptor.m_textDescriptors[secIdx].GeneratedFixedTextRenderInfo == null)
-                {
-                    descriptor.m_textDescriptors[secIdx].GeneratedFixedTextRenderInfo = RefreshTextData(txt, m_fontCache[descriptor.m_textDescriptors[secIdx].m_overrideFont]);
-                }
-                return descriptor.m_textDescriptors[secIdx].GeneratedFixedTextRenderInfo;
-            }
-            else
-            {
-
-                return GetCachedText(txt);
-            }
-        }
-
-        private BasicRenderInformation GetCachedText(string txt)
-        {
-            if (!m_textCache.ContainsKey(txt))
-            {
-                m_textCache[txt] = RefreshTextData(txt);
-            }
-            return m_textCache[txt];
-        }
 
         protected void UpdateLinesBuilding(ushort buildingID, ref Building data, BoardBunchContainerBuilding bbcb, ref Matrix4x4 refMatrix)
         {

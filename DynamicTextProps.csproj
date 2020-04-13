@@ -112,6 +112,7 @@
     <Compile Include="commons\UI\TLMAgesChartPanel.cs" />
     <Compile Include="commons\UI\TLMWorkersChartPanel.cs" />
     <Compile Include="commons\UI\UIRadialChartExtended.cs" />
+    <Compile Include="commons\Utils\TextUtils.cs" />
     <Compile Include="commons\Utils\ZipUtils.cs" />
     <Compile Include="commons\Utils\BuildingUtils.cs" />
     <Compile Include="commons\Utils\DistrictUtils.cs" />
@@ -174,9 +175,11 @@
     <Compile Include="DynamicFont\src\FontStashSharp\Font.cs" />
     <Compile Include="DynamicFont\src\FontStashSharp\FontAtlas.cs" />
     <Compile Include="DynamicFont\src\FontStashSharp\FontAtlasNode.cs" />
+    <Compile Include="DynamicFont\src\FontStashSharp\FontCreationException.cs" />
     <Compile Include="DynamicFont\src\FontStashSharp\FontGlyph.cs" />
     <Compile Include="DynamicFont\src\FontStashSharp\FontGlyphSquad.cs" />
     <Compile Include="DynamicFont\src\FontStashSharp\FontSystem.cs" />
+    <Compile Include="DynamicFont\src\FontServer.cs" />
     <Compile Include="DynamicFont\src\GlyphInfo.cs" />
     <Compile Include="DynamicFont\src\TtfFontBaker.cs" />
     <Compile Include="DynamicFont\src\TtfFontBakerResult.cs" />

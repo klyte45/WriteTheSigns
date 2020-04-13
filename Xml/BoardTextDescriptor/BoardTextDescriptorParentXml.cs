@@ -64,20 +64,6 @@ namespace Klyte.DynamicTextProps.Overrides
         [XmlAttribute("color")]
         public string ForceColor { get => m_defaultColor == Color.clear ? null : ColorExtensions.ToRGB(m_defaultColor); set => m_defaultColor = value.IsNullOrWhiteSpace() ? Color.clear : (Color) ColorExtensions.FromRGB(value); }
 
-        [XmlIgnore]
-        private BasicRenderInformation m_generatedFixedTextRenderInfo;
-        [XmlIgnore]
-        public BasicRenderInformation GeneratedFixedTextRenderInfo
-        {
-            get => m_generatedFixedTextRenderInfo;
-            set {
-                m_generatedFixedTextRenderInfo = value;
-                GeneratedFixedTextRenderInfoTick = SimulationManager.instance.m_currentTickIndex;
-            }
-        }
-        [XmlIgnore]
-        public uint GeneratedFixedTextRenderInfoTick { get; private set; }
-
         public string Serialize()
         {
             var xmlser = new XmlSerializer(typeof(T));

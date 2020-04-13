@@ -1,9 +1,5 @@
-﻿using ColossalFramework.UI;
-using Klyte.Commons.Utils;
-using System.Collections.Generic;
-using System.Linq;
+﻿using Klyte.DynamicTextProps.Overrides;
 using System.Xml.Serialization;
-using static Klyte.DynamicTextProps.Overrides.BoardGeneratorHighwaySigns;
 
 namespace Klyte.DynamicTextProps.Data
 {
@@ -13,7 +9,7 @@ namespace Klyte.DynamicTextProps.Data
     {
         public override int ObjArraySize => NetManager.MAX_SEGMENT_COUNT;
 
-        
+
         public override string SaveId => "K45_DTP3_DTPHighwaySignsData";
     }
 

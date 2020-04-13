@@ -9,10 +9,7 @@ namespace Klyte.DynamicTextProps.Data
     public class DTPBuildingsData : DTPBaseData<DTPBuildingsData, BoardBunchContainerBuilding>
     {
         public override int ObjArraySize => BuildingManager.MAX_BUILDING_COUNT;
-
-        [XmlElement("GlobalConfiguration")]
-        public BoardGeneratorBuildingConfigXml GlobalConfiguration { get; set; }
-
+        
         public override string SaveId => "K45_DTP3_DTPBuildingsData";
     }
 

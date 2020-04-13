@@ -1,0 +1,82 @@
+using ColossalFramework;
+using FontStashSharp;
+using Klyte.Commons.Utils;
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+
+namespace SpriteFontPlus
+{
+    public class FontServer : SingletonLite<FontServer>
+    {
+        private Dictionary<string, DynamicSpriteFont> m_fontRegistered = new Dictionary<string, DynamicSpriteFont>();
+
+        private float m_overallSize = 120;
+
+        private float m_qualityMultiplier = 1;
+
+
+        public event Action<string> EventTextureReloaded;
+
+        private bool m_currentlyReloadingAll = false;
+
+        private int FontSizeEffective => Mathf.RoundToInt(m_overallSize * m_qualityMultiplier);
+        public Vector2 ScaleEffective => Vector2.one * m_overallSize / FontSizeEffective;
+
+
+        public void ResetCollection() => m_fontRegistered = new Dictionary<string, DynamicSpriteFont>();
+        public void SetOverallSize(float f)
+        {
+            m_overallSize = f;
+            OnChangeSizeParam();
+        }
+
+        public void ResetOverallSize() => SetOverallSize(120);
+
+        public void SetQualityMultiplier(float f)
+        {
+            m_qualityMultiplier = f;
+            OnChangeSizeParam();
+        }
+
+        public void ResetQualityMultiplier() => SetQualityMultiplier(1);
+
+        private void OnChangeSizeParam()
+        {
+            foreach (DynamicSpriteFont font in m_fontRegistered.Values)
+            {
+                font.Size = FontSizeEffective;
+                font.Reset(4, 4);
+            }
+        }
+
+        public bool RegisterFont(string name, byte[] fontData)
+        {
+            try
+            {
+                if (name == null)
+                {
+                    LogUtils.DoErrorLog($"RegisterFont: FONT NAME CANNOT BE NULL!!");
+                    return false;
+                }
+
+                if (m_fontRegistered.ContainsKey(name))
+                {
+                    m_fontRegistered[name].Reset(1, 1);
+                }
+                m_fontRegistered[name] = DynamicSpriteFont.FromTtf(fontData, name, FontSizeEffective);
+            }
+            catch (FontCreationException)
+            {
+                LogUtils.DoErrorLog($"RegisterFont: Error creating the font \"{name}\"... Invalid data!");
+                return false;
+            }
+            return true;
+        }
+        public void ClearFonts() => m_fontRegistered.Clear();
+
+        public DynamicSpriteFont this[string idx] => idx != null && m_fontRegistered.TryGetValue(idx, out DynamicSpriteFont value) ? value : null;
+
+        public IEnumerable<string> GetAllFonts() => m_fontRegistered.Keys;
+    }
+}

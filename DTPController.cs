@@ -3,6 +3,7 @@ using Klyte.Commons.Utils;
 using Klyte.DynamicTextProps.Libraries;
 using Klyte.DynamicTextProps.Overrides;
 using Klyte.DynamicTextProps.Tools;
+using SpriteFontPlus;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -34,6 +35,20 @@ namespace Klyte.DynamicTextProps
                 FindObjectOfType<ToolController>().gameObject.AddComponent<BuildingEditorTool>();
             }
             ReloadAbbreviationFiles();
+
+            FontServer.Ensure();
+            ReloadFontsFromPath();
+        }
+
+        public static void ReloadFontsFromPath()
+        {
+            FontServer.instance.ResetCollection();
+            FontServer.instance.RegisterFont(DEFAULT_FONT_KEY, KlyteResourceLoader.LoadResourceData("UI.DefaultFont.SourceSansPro-Regular.ttf"));
+
+            foreach (string fontFile in Directory.GetFiles(FontFilesPath, "*.ttf"))
+            {
+                FontServer.instance.RegisterFont(Path.GetFileNameWithoutExtension(fontFile), File.ReadAllBytes(fontFile));
+            }
         }
 
         public void ReloadAbbreviationFiles()
@@ -66,6 +81,8 @@ namespace Klyte.DynamicTextProps
         public const string DEFAULT_GAME_VEHICLES_CONFIG_FOLDER = "VehiclesDefaultPlacing";
         public const string ABBREVIATION_FILES_FOLDER = "AbbreviationFiles";
         public const string FONTS_FILES_FOLDER = "Fonts";
+
+        public const string DEFAULT_FONT_KEY = "/DEFAULT/";
 
         public static string DefaultBuildingsConfigurationFolder { get; } = FOLDER_NAME + Path.DirectorySeparatorChar + DEFAULT_GAME_BUILDINGS_CONFIG_FOLDER;
         public static string DefaultVehiclesConfigurationFolder { get; } = FOLDER_NAME + Path.DirectorySeparatorChar + DEFAULT_GAME_VEHICLES_CONFIG_FOLDER;

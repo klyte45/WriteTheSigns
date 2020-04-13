@@ -272,27 +272,18 @@ namespace Klyte.DynamicTextProps.UI
             }
         }
 
-        private void SetOverrideFont(int idx)
-        {
-            SafeActionInTextBoard(descriptor =>
-            {
-                //    descriptor.m_overrideFont = idx > 0 ? m_overrideFontText.selectedValue : null;
-                descriptor.GeneratedFixedTextRenderInfo.m_frameDrawTime = 0;
-            });
-        }
-
         private void EnsureBoardsArrayIdx(int idx, int textIdx = -1)
         {
             if (idx >= 0)
             {
                 if (BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment] == null)
                 {
-                    BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment] = new BoardGeneratorHighwaySigns.BoardBunchContainerHighwaySignXml();
+                    BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment] = new BoardBunchContainerHighwaySignXml();
                 }
                 if (BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment].m_boardsData == null || BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment].m_boardsData.Length <= idx)
                 {
                     CacheControlHighwaySign[] oldArr = BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment].m_boardsData;
-                    BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment].m_boardsData = new BoardGeneratorHighwaySigns.CacheControlHighwaySign[idx + 1];
+                    BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment].m_boardsData = new CacheControlHighwaySign[idx + 1];
                     if (oldArr != null && oldArr.Length > 0)
                     {
                         for (int i = 0; i < oldArr.Length && i <= idx; i++)
@@ -303,11 +294,11 @@ namespace Klyte.DynamicTextProps.UI
                 }
                 if (BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment].m_boardsData[idx] == null)
                 {
-                    BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment].m_boardsData[idx] = new BoardGeneratorHighwaySigns.CacheControlHighwaySign();
+                    BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment].m_boardsData[idx] = new CacheControlHighwaySign();
                 }
                 if (BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment].m_boardsData[idx].descriptor == null)
                 {
-                    BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment].m_boardsData[idx].descriptor = new BoardGeneratorHighwaySigns.BoardDescriptorHigwaySignXml();
+                    BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment].m_boardsData[idx].descriptor = new BoardDescriptorHigwaySignXml();
                 }
 
                 EnsureTabQuantity(idx + 1);

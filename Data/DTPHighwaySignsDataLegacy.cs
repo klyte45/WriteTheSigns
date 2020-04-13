@@ -2,9 +2,9 @@
 using ColossalFramework.UI;
 using Klyte.Commons.Interfaces;
 using Klyte.Commons.Utils;
+using Klyte.DynamicTextProps.Overrides;
 using System.Collections.Generic;
 using System.Linq;
-using static Klyte.DynamicTextProps.Overrides.BoardGeneratorHighwaySigns;
 
 namespace Klyte.DynamicTextProps.Data
 {

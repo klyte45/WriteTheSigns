@@ -38,7 +38,7 @@ namespace FontStashSharp
 
             if (font._font.stbtt_InitFont(data, 0) == 0)
             {
-                throw new Exception("stbtt_InitFont failed");
+                throw new FontCreationException("stbtt_InitFont failed");
             }
 
             font._font.stbtt_GetFontVMetrics(out int ascent, out int descent, out int lineGap);

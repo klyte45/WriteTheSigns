@@ -7,8 +7,6 @@ using UnityEngine;
 namespace Klyte.DynamicTextProps.Overrides
 {
 
-    public partial class BoardGeneratorHighwaySigns
-    {
         [XmlRoot("highwaySignDescriptor")]
         public class BoardDescriptorHigwaySignXml : BoardDescriptorParentXml<BoardDescriptorHigwaySignXml, BoardTextDescriptorHighwaySignsXml>, ILibable
         {
@@ -28,5 +26,5 @@ namespace Klyte.DynamicTextProps.Overrides
             public string SaveName { get; set; }
         }
 
-    }
+    
 }

@@ -9,9 +9,7 @@ using Klyte.DynamicTextProps.Utils;
 using SpriteFontPlus;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Text;
 using UnityEngine;
 
 namespace Klyte.DynamicTextProps.Overrides
@@ -19,40 +17,20 @@ namespace Klyte.DynamicTextProps.Overrides
 
     public abstract class BoardGeneratorParent<BG> : Redirector, IRedirectable where BG : BoardGeneratorParent<BG>
     {
-
-        public abstract UIDynamicFont DrawFont { get; }
-        protected uint lastFontUpdateFrame = SimulationManager.instance.m_currentTickIndex;
+        public virtual string FontName { get; set; }
+        public DynamicSpriteFont DrawFont => FontServer.instance[FontName] ?? FontServer.instance[DTPController.DEFAULT_FONT_KEY];
+        protected long LastFontUpdateFrame => DrawFont.LastUpdate;
         protected static Shader TextShader = Shader.Find("Custom/Props/Prop/Default") ?? DistrictManager.instance.m_properties.m_areaNameShader;
 
         public static BG Instance { get; protected set; }
 
-        protected void BuildSurfaceFont(out UIDynamicFont font, string fontName) => font = null;//font = ScriptableObject.CreateInstance<UIDynamicFont>();//var fontList = new List<string> { fontName };//fontList.AddRange(DistrictManager.instance.m_properties?.m_areaNameFont?.baseFont?.fontNames?.ToList() ?? new List<string>());//font.baseFont = Font.CreateDynamicFontFromOSFont(fontList.ToArray(), 64);//font.lineHeight = 70;//font.baseline = 66;//font.size = 64;
+        public void ChangeFont(string newFont) => FontName = newFont ?? DTPController.DEFAULT_FONT_KEY;
 
-        public void ChangeFont(string newFont)
-        {
-
-            //var fontList = new List<string>();
-            //if (newFont != null)
-            //{
-            //    fontList.Add(newFont);
-            //}
-            //fontList.AddRange(DistrictManager.instance.m_properties.m_areaNameFont.baseFont.fontNames.ToList());
-            //DrawFont.baseFont = Font.CreateDynamicFontFromOSFont(fontList.ToArray(), 64);
-            //lastFontUpdateFrame = SimulationManager.instance.m_currentTickIndex;
-            //OnChangeFont(DrawFont.baseFont.name != newFont ? null : newFont);
-            //Reset();
-        }
-        protected virtual void OnChangeFont(string fontName) { }
-
-        public virtual void Reset()
-        {
-            lastFontUpdateFrame = SimulationManager.instance.m_currentTickIndex;
-
-            ResetImpl();
-        }
+        public virtual void Reset() => ResetImpl();
         protected abstract void ResetImpl();
 
         public virtual void Awake() => Instance = this as BG;
+
     }
 
     public abstract class BoardGeneratorParent<BG, BBC, D, BD, BTD> : BoardGeneratorParent<BG>
@@ -63,14 +41,15 @@ namespace Klyte.DynamicTextProps.Overrides
         where BTD : BoardTextDescriptorParentXml<BTD>
     {
 
+        public sealed override string FontName { get => DTPBaseData<D, BBC>.Instance.DefaultFont; set => DTPBaseData<D, BBC>.Instance.DefaultFont = value; }
+
         public sealed override void Reset()
         {
             base.Reset();
             m_cachedStreetNameInformation_Full = new string[NetManager.MAX_SEGMENT_COUNT];
             m_cachedStreetNameInformation_End = new string[NetManager.MAX_SEGMENT_COUNT];
-            m_cachedStreetNameInformation_Start = new string[DistrictManager.MAX_DISTRICT_COUNT];
+            m_cachedStreetNameInformation_Start = new string[NetManager.MAX_SEGMENT_COUNT];
             m_cachedDistrictsNames = new string[DistrictManager.MAX_DISTRICT_COUNT];
-            m_defaultCacheForStrings = new Dictionary<string, BasicRenderInformation>();
         }
 
         public D Data => DTPBaseData<D, BBC>.Instance;
@@ -83,17 +62,12 @@ namespace Klyte.DynamicTextProps.Overrides
         public static readonly int m_shaderPropEmissive = Shader.PropertyToID("_SpecColor");
         public abstract void Initialize();
 
-        private const float m_pixelRatio = 2;
-        //private const float m_scaleY = 1.2f;
-        private const float m_textScale = 0.75f;
         private readonly Vector2 m_scalingMatrix = new Vector2(0.005f, 0.005f);
 
         public override void Awake()
         {
             base.Awake();
             Initialize();
-
-            _font.CurrentAtlasFull += Reset;
 
             NetManagerOverrides.EventSegmentNameChanged += OnNameSeedChanged;
             DistrictManagerOverrides.EventOnDistrictChanged += OnDistrictChanged;
@@ -114,6 +88,7 @@ namespace Klyte.DynamicTextProps.Overrides
         {
             m_cachedStreetNameInformation_Full = new string[NetManager.MAX_SEGMENT_COUNT];
             m_cachedStreetNameInformation_End = new string[NetManager.MAX_SEGMENT_COUNT];
+            m_cachedStreetNameInformation_Start = new string[NetManager.MAX_SEGMENT_COUNT];
         }
 
         #region events
@@ -121,6 +96,7 @@ namespace Klyte.DynamicTextProps.Overrides
         {
             m_cachedStreetNameInformation_Full[segmentId] = null;
             m_cachedStreetNameInformation_End[segmentId] = null;
+            m_cachedStreetNameInformation_Start[segmentId] = null;
         }
         private void OnDistrictChanged()
         {
@@ -195,16 +171,14 @@ namespace Klyte.DynamicTextProps.Overrides
             {
                 propInfo = null;
             }
-            propMatrix = RenderProp(refId, refAngleRad, cameraInfo, propInfo, position, dataVector, boardIdx, layerMask, propAngle, propScale, out rendered);
+            propMatrix = RenderProp(refId, refAngleRad, cameraInfo, propInfo, position, dataVector, boardIdx, propAngle, propScale, out rendered);
         }
 
 
 
         #region Rendering
         private Matrix4x4 RenderProp(ushort refId, float refAngleRad, RenderManager.CameraInfo cameraInfo,
-#pragma warning disable IDE0060 // Remover o parâmetro não utilizado
-                                     PropInfo propInfo, Vector3 position, Vector4 dataVector, int idx, int layerMask,
-#pragma warning restore IDE0060 // Remover o parâmetro não utilizado
+                                     PropInfo propInfo, Vector3 position, Vector4 dataVector, int idx,
                                      Vector3 rotation, Vector3 scale, out bool rendered)
         {
             rendered = false;
@@ -365,13 +339,10 @@ namespace Klyte.DynamicTextProps.Overrides
         private string[] m_cachedStreetNameInformation_End = new string[NetManager.MAX_SEGMENT_COUNT];
         private string[] m_cachedStreetNameInformation_Start = new string[NetManager.MAX_SEGMENT_COUNT];
         private string[] m_cachedDistrictsNames = new string[DistrictManager.MAX_DISTRICT_COUNT];
-        private Dictionary<string, BasicRenderInformation> m_defaultCacheForStrings = new Dictionary<string, BasicRenderInformation>();
-        private uint m_lastTickTextureGen = 0;
 
         public void ClearCacheStreetName() => m_cachedStreetNameInformation_End = new string[NetManager.MAX_SEGMENT_COUNT];
         public void ClearCacheStreetQualifier() => m_cachedStreetNameInformation_Start = new string[NetManager.MAX_SEGMENT_COUNT];
         public void ClearCacheFullStreetName() => m_cachedStreetNameInformation_Full = new string[NetManager.MAX_SEGMENT_COUNT];
-        public void ClearCacheDefault() => m_defaultCacheForStrings = new Dictionary<string, BasicRenderInformation>();
 
         protected enum CacheArrayTypes
         {
@@ -382,95 +353,74 @@ namespace Klyte.DynamicTextProps.Overrides
         }
 
 
-        protected BasicRenderInformation GetFromCacheArray(ushort refId, CacheArrayTypes type)
+        protected BasicRenderInformation GetFromCacheArray(ushort refId, CacheArrayTypes type, string overrideFont = null)
         {
-            switch (type)
+            return type switch
             {
-                case CacheArrayTypes.SuffixStreetName:
-                    return GetFromCacheArray(refId, type, ref m_cachedStreetNameInformation_End);
-                case CacheArrayTypes.StreetQualifier:
-                    return GetFromCacheArray(refId, type, ref m_cachedStreetNameInformation_Start);
-                case CacheArrayTypes.FullStreetName:
-                    return GetFromCacheArray(refId, type, ref m_cachedStreetNameInformation_Full);
-                case CacheArrayTypes.District:
-                    return GetFromCacheArray(refId, type, ref m_cachedDistrictsNames);
-
-            }
-            return null;
+                CacheArrayTypes.SuffixStreetName => UpdateMeshStreetSuffix(refId, ref m_cachedStreetNameInformation_End[refId], overrideFont),
+                CacheArrayTypes.FullStreetName => UpdateMeshFullNameStreet(refId, ref m_cachedStreetNameInformation_Full[refId], overrideFont),
+                CacheArrayTypes.StreetQualifier => UpdateMeshStreetQualifier(refId, ref m_cachedStreetNameInformation_Start[refId], overrideFont),
+                CacheArrayTypes.District => UpdateMeshDistrict(refId, ref m_cachedDistrictsNames[refId], overrideFont),
+                _ => null,
+            };
         }
 
-        private BasicRenderInformation GetFromCacheArray(ushort refId, CacheArrayTypes type, ref string[] cacheArray)
+        protected BasicRenderInformation UpdateMeshFullNameStreet(ushort idx, ref string name, string overrideFont)
         {
-            if (m_lastTickTextureGen < SimulationManager.instance.m_currentTickIndex && (cacheArray[refId] == null))
+            if (name == null)
             {
-                LogUtils.DoLog($"!nameUpdated segmentId {refId}");
-                switch (type)
+                name = DTPHookable.GetStreetFullName(idx);
+                LogUtils.DoLog($"!GenName {name} for {idx}");
+            }
+            return GetTextData(name, overrideFont);
+        }
+        protected BasicRenderInformation UpdateMeshStreetQualifier(ushort idx, ref string name, string overrideFont)
+        {
+            if (name == null)
+            {
+                name = DTPHookable.GetStreetFullName(idx);
+                if ((NetManager.instance.m_segments.m_buffer[idx].m_flags & NetSegment.Flags.CustomName) == 0)
                 {
-                    case CacheArrayTypes.SuffixStreetName:
-                        UpdateMeshStreetSuffix(refId, ref cacheArray[refId], m_defaultCacheForStrings);
-                        break;
-                    case CacheArrayTypes.FullStreetName:
-                        UpdateMeshFullNameStreet(refId, ref cacheArray[refId], m_defaultCacheForStrings);
-                        break;
-                    case CacheArrayTypes.StreetQualifier:
-                        UpdateMeshStreetQualifier(refId, ref cacheArray[refId], m_defaultCacheForStrings);
-                        break;
-                    case CacheArrayTypes.District:
-                        UpdateMeshDistrict(refId, ref cacheArray[refId], m_defaultCacheForStrings);
-                        break;
+                    name = ApplyAbbreviations(name.Replace(DTPHookable.GetStreetSuffix(idx), ""));
                 }
-                m_lastTickTextureGen = SimulationManager.instance.m_currentTickIndex;
+                else
+                {
+                    name = ApplyAbbreviations(name.Replace(DTPHookable.GetStreetSuffixCustom(idx), ""));
+                }
+                LogUtils.DoLog($"!GenName {name} for {idx}");
             }
-            m_defaultCacheForStrings.TryGetValue(cacheArray[refId] ?? "", out BasicRenderInformation result);
-            return result;
-
-
+            return GetTextData(name, overrideFont);
         }
-
-        protected void UpdateMeshFullNameStreet(ushort idx, ref string name, Dictionary<string, BasicRenderInformation> bris)
+        protected BasicRenderInformation UpdateMeshDistrict(ushort districtId, ref string name, string overrideFont)
         {
-            name = DTPHookable.GetStreetFullName(idx);
-            LogUtils.DoLog($"!GenName {name} for {idx}");
-            UpdateTextIfNecessary(name, bris);
+            if (name == null)
+            {
+                if (districtId == 0)
+                {
+                    name = SimulationManager.instance.m_metaData.m_CityName;
+                }
+                else
+                {
+                    name = DistrictManager.instance.GetDistrictName(districtId);
+                }
+            }
+            return GetTextData(name, overrideFont);
         }
-        protected void UpdateMeshStreetQualifier(ushort idx, ref string name, Dictionary<string, BasicRenderInformation> bris)
+        protected BasicRenderInformation UpdateMeshStreetSuffix(ushort idx, ref string name, string overrideFont)
         {
-            name = DTPHookable.GetStreetFullName(idx);
-            if ((NetManager.instance.m_segments.m_buffer[idx].m_flags & NetSegment.Flags.CustomName) == 0)
+            if (name == null)
             {
-                name = ApplyAbbreviations(name.Replace(DTPHookable.GetStreetSuffix(idx), ""));
+                LogUtils.DoLog($"!UpdateMeshStreetSuffix {idx}");
+                if ((NetManager.instance.m_segments.m_buffer[idx].m_flags & NetSegment.Flags.CustomName) == 0)
+                {
+                    name = ApplyAbbreviations(DTPHookable.GetStreetSuffix(idx));
+                }
+                else
+                {
+                    name = ApplyAbbreviations(DTPHookable.GetStreetSuffixCustom(idx));
+                }
             }
-            else
-            {
-                name = ApplyAbbreviations(name.Replace(DTPHookable.GetStreetSuffixCustom(idx), ""));
-            }
-            LogUtils.DoLog($"!GenName {name} for {idx}");
-            UpdateTextIfNecessary(name, bris);
-        }
-        protected void UpdateMeshDistrict(ushort districtId, ref string name, Dictionary<string, BasicRenderInformation> bris)
-        {
-            if (districtId == 0)
-            {
-                name = SimulationManager.instance.m_metaData.m_CityName;
-            }
-            else
-            {
-                name = DistrictManager.instance.GetDistrictName(districtId);
-            }
-            UpdateTextIfNecessary(name, bris);
-        }
-        protected void UpdateMeshStreetSuffix(ushort idx, ref string name, Dictionary<string, BasicRenderInformation> bris)
-        {
-            LogUtils.DoLog($"!UpdateMeshStreetSuffix {idx}");
-            if ((NetManager.instance.m_segments.m_buffer[idx].m_flags & NetSegment.Flags.CustomName) == 0)
-            {
-                name = ApplyAbbreviations(DTPHookable.GetStreetSuffix(idx));
-            }
-            else
-            {
-                name = ApplyAbbreviations(DTPHookable.GetStreetSuffixCustom(idx));
-            }
-            UpdateTextIfNecessary(name, bris);
+            return GetTextData(name, overrideFont);
         }
 
         protected string ApplyAbbreviations(string name)
@@ -479,7 +429,7 @@ namespace Klyte.DynamicTextProps.Overrides
             {
                 foreach (string key in translations.Keys.Where(x => x.Contains(" ")))
                 {
-                    name = ReplaceCaseInsensitive(name, key, translations[key], StringComparison.OrdinalIgnoreCase);
+                    name = TextUtils.ReplaceCaseInsensitive(name, key, translations[key], StringComparison.OrdinalIgnoreCase);
 
                 }
                 string[] parts = name.Split(' ');
@@ -501,159 +451,9 @@ namespace Klyte.DynamicTextProps.Overrides
                 return name;
             }
         }
-        /// <summary>
-        /// Returns a new string in which all occurrences of a specified string in the current instance are replaced with another 
-        /// specified string according the type of search to use for the specified string.
-        /// </summary>
-        /// <param name="str">The string performing the replace method.</param>
-        /// <param name="oldValue">The string to be replaced.</param>
-        /// <param name="newValue">The string replace all occurrences of <paramref name="oldValue"/>. 
-        /// If value is equal to <c>null</c>, than all occurrences of <paramref name="oldValue"/> will be removed from the <paramref name="str"/>.</param>
-        /// <param name="comparisonType">One of the enumeration values that specifies the rules for the search.</param>
-        /// <returns>A string that is equivalent to the current string except that all instances of <paramref name="oldValue"/> are replaced with <paramref name="newValue"/>. 
-        /// If <paramref name="oldValue"/> is not found in the current instance, the method returns the current instance unchanged.</returns>
-        [DebuggerStepThrough]
-        public static string ReplaceCaseInsensitive(string str,
-            string oldValue, string @newValue,
-            StringComparison comparisonType)
-        {
 
-            // Check inputs.
-            if (str == null)
-            {
-                // Same as original .NET C# string.Replace behavior.
-                throw new ArgumentNullException(nameof(str));
-            }
-            if (str.Length == 0)
-            {
-                // Same as original .NET C# string.Replace behavior.
-                return str;
-            }
-            if (oldValue == null)
-            {
-                // Same as original .NET C# string.Replace behavior.
-                throw new ArgumentNullException(nameof(oldValue));
-            }
-            if (oldValue.Length == 0)
-            {
-                // Same as original .NET C# string.Replace behavior.
-                throw new ArgumentException("String cannot be of zero length.");
-            }
+        protected BasicRenderInformation GetTextData(string text, string overrideFont = null) => (FontServer.instance[overrideFont] ?? DrawFont).DrawString(text, default, Color.white, FontServer.instance.ScaleEffective);
 
-
-            //if (oldValue.Equals(newValue, comparisonType))
-            //{
-            //This condition has no sense
-            //It will prevent method from replacesing: "Example", "ExAmPlE", "EXAMPLE" to "example"
-            //return str;
-            //}
-
-
-
-            // Prepare string builder for storing the processed string.
-            // Note: StringBuilder has a better performance than String by 30-40%.
-            var resultStringBuilder = new StringBuilder(str.Length);
-
-
-
-            // Analyze the replacement: replace or remove.
-            bool isReplacementNullOrEmpty = string.IsNullOrEmpty(@newValue);
-
-
-
-            // Replace all values.
-            const int valueNotFound = -1;
-            int foundAt;
-            int startSearchFromIndex = 0;
-            while ((foundAt = str.IndexOf(oldValue, startSearchFromIndex, comparisonType)) != valueNotFound)
-            {
-
-                // Append all characters until the found replacement.
-                int @charsUntilReplacment = foundAt - startSearchFromIndex;
-                bool isNothingToAppend = @charsUntilReplacment == 0;
-                if (!isNothingToAppend)
-                {
-                    resultStringBuilder.Append(str, startSearchFromIndex, @charsUntilReplacment);
-                }
-
-
-
-                // Process the replacement.
-                if (!isReplacementNullOrEmpty)
-                {
-                    resultStringBuilder.Append(@newValue);
-                }
-
-
-                // Prepare start index for the next search.
-                // This needed to prevent infinite loop, otherwise method always start search 
-                // from the start of the string. For example: if an oldValue == "EXAMPLE", newValue == "example"
-                // and comparisonType == "any ignore case" will conquer to replacing:
-                // "EXAMPLE" to "example" to "example" to "example" … infinite loop.
-                startSearchFromIndex = foundAt + oldValue.Length;
-                if (startSearchFromIndex == str.Length)
-                {
-                    // It is end of the input string: no more space for the next search.
-                    // The input string ends with a value that has already been replaced. 
-                    // Therefore, the string builder with the result is complete and no further action is required.
-                    return resultStringBuilder.ToString();
-                }
-            }
-
-
-            // Append the last part to the result.
-            int @charsUntilStringEnd = str.Length - startSearchFromIndex;
-            resultStringBuilder.Append(str, startSearchFromIndex, @charsUntilStringEnd);
-
-
-            return resultStringBuilder.ToString();
-
-        }
-        private void UpdateTextIfNecessary(string name, Dictionary<string, BasicRenderInformation> bris)
-        {
-            if (name != null && (!bris.ContainsKey(name) || lastFontUpdateFrame > bris[name].m_frameDrawTime))
-            {
-                BasicRenderInformation bri = bris.ContainsKey(name) ? bris[name] : default;
-                RefreshTextData(ref bri, name);
-                bris[name] = bri;
-            }
-        }
-
-        protected BasicRenderInformation RefreshTextData(string text, UIFont overrideFont = null)
-        {
-            var result = new BasicRenderInformation();
-            RefreshTextData(ref result, text, overrideFont);
-            return result;
-        }
-
-        private static DynamicSpriteFont _font = DynamicSpriteFont.FromTtf(KlyteResourceLoader.LoadResourceData("UI.DefaultFont.SourceSansPro-Regular.ttf"), 160);
-        protected void RefreshTextData(ref BasicRenderInformation result, string text, UIFont overrideFont = null)
-        {
-            if (result == null)
-            {
-                result = new BasicRenderInformation();
-            }
-            if (text.IsNullOrWhiteSpace())
-            {
-                result.m_frameDrawTime = uint.MaxValue;
-                return;
-            }
-            _font.DrawString(result, text, default, Color.white, Vector2.one * .75F);
-        }
-
-        private Vector3[] CenterVertices(PoolList<Vector3> points)
-        {
-            if (points.Count == 0)
-            {
-                return points.ToArray();
-            }
-
-            var max = new Vector3(points.Select(x => x.x).Max(), points.Select(x => x.y).Max(), points.Select(x => x.z).Max());
-            var min = new Vector3(points.Select(x => x.x).Min(), points.Select(x => x.y).Min(), points.Select(x => x.z).Min());
-            Vector3 center = (max + min) / 2;
-
-            return points.Select(x => x - center).ToArray();
-        }
 
         #endregion
         public abstract Color? GetColor(ushort buildingID, int idx, int secIdx, BD descriptor);
@@ -672,17 +472,7 @@ namespace Klyte.DynamicTextProps.Overrides
         protected virtual BasicRenderInformation GetMeshCustom4(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;
         protected virtual BasicRenderInformation GetMeshCustom5(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;
         protected virtual BasicRenderInformation GetMeshLinesSymbols(ushort refID, int boardIdx, int secIdx, ref BD descriptor) => null;
-        protected virtual BasicRenderInformation GetFixedTextMesh(ref BTD textDescriptor, ushort refID, int boardIdx, int secIdx, ref BD descriptor)
-        {
-
-            if (textDescriptor.GeneratedFixedTextRenderInfo == null || textDescriptor.GeneratedFixedTextRenderInfoTick < lastFontUpdateFrame)
-            {
-                var result = textDescriptor.GeneratedFixedTextRenderInfo as BasicRenderInformation;
-                RefreshTextData(ref result, (textDescriptor.m_isFixedTextLocalized ? Locale.Get(textDescriptor.m_fixedText, textDescriptor.m_fixedTextLocaleKey) : textDescriptor.m_fixedText) ?? "");
-                textDescriptor.GeneratedFixedTextRenderInfo = result;
-            }
-            return textDescriptor.GeneratedFixedTextRenderInfo as BasicRenderInformation;
-        }
+        protected virtual BasicRenderInformation GetFixedTextMesh(ref BTD textDescriptor, ushort refID, int boardIdx, int secIdx, ref BD descriptor) => GetTextData((textDescriptor.m_isFixedTextLocalized ? Locale.Get(textDescriptor.m_fixedText, textDescriptor.m_fixedTextLocaleKey) : textDescriptor.m_fixedText) ?? "");
         #endregion
 
 
