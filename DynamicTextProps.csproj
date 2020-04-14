@@ -189,11 +189,13 @@
     <Compile Include="Overrides\BuildingManagerOverrides.cs" />
     <Compile Include="Overrides\DistrictManagerOverrides.cs" />
     <Compile Include="Tools\BuildingTool.cs" />
+    <Compile Include="UI\DTPPropPreviewRenderer.cs" />
     <Compile Include="UI\Tabs\DTPBuildingEditorTab2.cs" />
     <Compile Include="UI\Tabs\DTPMileageMarkerTab3.cs" />
     <Compile Include="UI\Tabs\DTPPropPlacingTab2.cs" />
     <Compile Include="UI\Tabs\Base\DTPNoPropEditorTemplateTab.cs" />
     <Compile Include="UI\Tabs\Base\DTPXmlEditorParentTab.cs" />
+    <Compile Include="UI\Tabs\DTPPropTextLayoutEditor.cs" />
     <Compile Include="UI\Tabs\DTPStreetSignTab3.cs" />
     <Compile Include="Utils\DTPLineUtils.cs" />
     <Compile Include="Utils\RenderUtils.cs" />

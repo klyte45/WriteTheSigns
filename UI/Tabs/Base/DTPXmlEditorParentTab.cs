@@ -325,6 +325,9 @@ namespace Klyte.DynamicTextProps.UI
         {
             fieldArray = parentHelper.AddVector3Field(label, Vector3.zero, onChange);
             KlyteMonoUtils.LimitWidthAndBox(fieldArray[0].parent.GetComponentInChildren<UILabel>(), (parentHelper.Self.width / 2) - 10, true);
+            fieldArray[0].zOrder = 1;
+            fieldArray[1].zOrder = 2;
+            fieldArray[2].zOrder = 3;
         }
 
         protected void AddFloatField(string label, out UITextField field, UIHelperExtension parentHelper, Action<float> onChange, bool acceptNegative)

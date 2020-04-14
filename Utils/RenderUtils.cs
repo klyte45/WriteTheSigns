@@ -1,3 +1,4 @@
+using ColossalFramework.Math;
 using Klyte.Commons.Utils;
 using Klyte.DynamicTextProps.Overrides;
 using SpriteFontPlus;
@@ -100,7 +101,38 @@ namespace Klyte.DynamicTextProps.Utils
 
         public static BasicRenderInformation GetTextData(string text, DynamicSpriteFont primaryFont, string overrideFont = null) => (FontServer.instance[overrideFont] ?? primaryFont).DrawString(text, default, Color.white, FontServer.instance.ScaleEffective);
 
-
+        public static Matrix4x4 RenderProp(ushort refId, float refAngleRad, RenderManager.CameraInfo cameraInfo,
+                                    PropInfo propInfo, Vector3 position, Vector4 dataVector, int idx,
+                                    Vector3 rotation, Vector3 scale, out bool rendered, InstanceID propRenderID2)
+        {
+            rendered = false;
+            var randomizer = new Randomizer((refId << 6) | (idx + 32));
+            Matrix4x4 matrix = default;
+            matrix.SetTRS(position, Quaternion.AngleAxis(rotation.y + (refAngleRad * Mathf.Rad2Deg), Vector3.down) * Quaternion.AngleAxis(rotation.x, Vector3.left) * Quaternion.AngleAxis(rotation.z, Vector3.back), scale);
+            if (propInfo != null)
+            {
+                propInfo = propInfo.GetVariation(ref randomizer);
+                Color color = propInfo.m_color0;
+                if (cameraInfo.CheckRenderDistance(position, propInfo.m_maxRenderDistance * scale.sqrMagnitude))
+                {
+                    int oldLayerMask = cameraInfo.m_layerMask;
+                    float oldRenderDist = propInfo.m_lodRenderDistance;
+                    propInfo.m_lodRenderDistance *= scale.sqrMagnitude;
+                    cameraInfo.m_layerMask = 0x7FFFFFFF;
+                    try
+                    {
+                        PropInstance.RenderInstance(cameraInfo, propInfo, propRenderID2, matrix, position, scale.y, refAngleRad + (rotation.y * Mathf.Deg2Rad), color, dataVector, true);
+                    }
+                    finally
+                    {
+                        propInfo.m_lodRenderDistance = oldRenderDist;
+                        cameraInfo.m_layerMask = oldLayerMask;
+                    }
+                    rendered = true;
+                }
+            }
+            return matrix;
+        }
     }
 }
 

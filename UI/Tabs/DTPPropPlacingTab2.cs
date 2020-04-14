@@ -137,7 +137,6 @@ namespace Klyte.DynamicTextProps.UI
                                         {
                                             return;
                                         }
-
                                         BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment].m_boardsData[CurrentTab].descriptor = XmlUtils.DefaultXmlDeserialize<BoardDescriptorHigwaySignXml>(XmlUtils.DefaultXmlSerialize(x));
                                         BoardGeneratorHighwaySigns.Instance.Data.BoardsContainers[m_currentSelectedSegment].cached = false;
                                         ReloadTabInfo();
