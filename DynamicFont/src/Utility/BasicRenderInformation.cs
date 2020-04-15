@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Klyte.DynamicTextProps.Overrides
+namespace SpriteFontPlus.Utility
 {
     public class BasicRenderInformation
     {

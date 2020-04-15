@@ -1,5 +1,4 @@
 using FontStashSharp;
-using Klyte.DynamicTextProps.Overrides;
 using SpriteFontPlus.Utility;
 using System;
 using System.Collections;

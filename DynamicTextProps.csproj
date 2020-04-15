@@ -160,15 +160,11 @@
     <Compile Include="commons\Utils\UtilitiesClasses\Tuple.cs" />
     <Compile Include="commons\Utils\VehicleUtils.cs" />
     <Compile Include="commons\Utils\XmlUtils.cs" />
-    <Compile Include="Data\DTPBuildingsDataLegacy.cs" />
-    <Compile Include="Data\DTPHighwayMileageDataLegacy.cs" />
     <Compile Include="Data\DTPBaseData.cs" />
     <Compile Include="Data\DTPBuildingsData.cs" />
     <Compile Include="Data\DTPHighwayMileageData.cs" />
     <Compile Include="Data\DTPRoadNodesData.cs" />
     <Compile Include="Data\DTPHighwaySignsData.cs" />
-    <Compile Include="Data\DTPRoadNodesDataLegacy.cs" />
-    <Compile Include="Data\DTPHighwaySignsDataLegacy.cs" />
     <Compile Include="DynamicFont\src\CharacterRange.cs" />
     <Compile Include="DynamicFont\src\DynamicSpriteFont.cs" />
     <Compile Include="DynamicFont\src\FontStashSharp\Bounds.cs" />
@@ -185,48 +181,33 @@
     <Compile Include="DynamicFont\src\TtfFontBakerResult.cs" />
     <Compile Include="DynamicFont\src\Utility\IOUtils.cs" />
     <Compile Include="Libraries\BasicLib.cs" />
-    <Compile Include="Overrides\BoardGeneration\BasicRenderInformation.cs" />
+    <Compile Include="DynamicFont\src\Utility\BasicRenderInformation.cs" />
     <Compile Include="Overrides\BuildingManagerOverrides.cs" />
     <Compile Include="Overrides\DistrictManagerOverrides.cs" />
     <Compile Include="Tools\BuildingTool.cs" />
     <Compile Include="UI\DTPPropPreviewRenderer.cs" />
-    <Compile Include="UI\Tabs\DTPBuildingEditorTab2.cs" />
-    <Compile Include="UI\Tabs\DTPMileageMarkerTab3.cs" />
-    <Compile Include="UI\Tabs\DTPPropPlacingTab2.cs" />
-    <Compile Include="UI\Tabs\Base\DTPNoPropEditorTemplateTab.cs" />
-    <Compile Include="UI\Tabs\Base\DTPXmlEditorParentTab.cs" />
     <Compile Include="UI\Tabs\DTPPropTextLayoutEditor.cs" />
-    <Compile Include="UI\Tabs\DTPStreetSignTab3.cs" />
     <Compile Include="Utils\DTPLineUtils.cs" />
     <Compile Include="Utils\RenderUtils.cs" />
     <Compile Include="Xml\BoardDescriptor\BoardDescriptorBuildingXml.cs" />
+    <Compile Include="Xml\BoardDescriptor\BoardDescriptorGeneralXml.cs" />
     <Compile Include="Xml\BoardGeneratorBuildingConfigXml.cs" />
-    <Compile Include="Xml\BoardTextDescriptor\BoardTextDescriptorBuildingsXml.cs" />
+    <Compile Include="Xml\BoardTextDescriptor\BoardTextDescriptorGeneralXml.cs" />
     <Compile Include="Xml\Containers\BuildingGroupDescriptorXml.cs" />
     <Compile Include="Xml\Containers\BoardBunchContainerBuilding.cs" />
     <Compile Include="Overrides\BoardGeneration\PathCrawler\MileagePlateDescriptor.cs" />
     <Compile Include="Overrides\BoardGeneration\PathCrawler\RoadIdentifier.cs" />
     <Compile Include="Xml\BoardDescriptor\BoardDescriptorMileageMarkerXml.cs" />
-    <Compile Include="Xml\BoardTextDescriptor\BoardTextDescriptorMileageMarkerXml.cs" />
-    <Compile Include="Xml\BoardTextDescriptor\BoardTextDescriptorSteetSignXml.cs" />
     <Compile Include="Xml\Cache\CacheControlStreetPlate.cs" />
     <Compile Include="Xml\Containers\BoardBunchContainerHighwaySignXml.cs" />
-    <Compile Include="Xml\BoardDescriptor\BoardDescriptorHigwaySignXml.cs" />
+    <Compile Include="Xml\BoardDescriptor\BoardDescriptorOnNetXml.cs" />
     <Compile Include="Overrides\TransportManagerOverrides.cs" />
     <Compile Include="Xml\BoardDescriptor\BoardDescriptorStreetSignXml.cs" />
-    <Compile Include="Xml\BoardTextDescriptor\BoardTextDescriptorHigwaySignXml.cs" />
-    <Compile Include="Xml\BoardDescriptor\BoardDescriptorParentXml.cs" />
-    <Compile Include="Overrides\BoardGeneration\BoardGeneratorHighwaySigns.cs" />
-    <Compile Include="Overrides\BoardGeneration\BoardGeneratorHighwayMileage.cs" />
-    <Compile Include="Overrides\BoardGeneration\BoardGeneratorRoadNodes.cs" />
     <Compile Include="Overrides\BoardGeneration\BoardGeneratorParent.cs" />
-    <Compile Include="Overrides\BoardGeneration\BoardGeneratorBuildings.cs" />
     <Compile Include="DynamicTextPropsMod.cs" />
     <Compile Include="DTPController.cs" />
-    <Compile Include="Xml\BoardTextDescriptor\BoardTextDescriptorParentXml.cs" />
     <Compile Include="Xml\Cache\CacheControl.cs" />
     <Compile Include="Xml\Cache\CacheControlHighwaySign.cs" />
-    <Compile Include="Xml\Cache\CacheControlSerializer.cs" />
     <Compile Include="Xml\Containers\IBoardBunchContainer.cs" />
     <Compile Include="Overrides\InstanceManagerOverrides.cs" />
     <Compile Include="Overrides\NetManagerOverrides.cs" />
@@ -294,6 +275,7 @@
   <ItemGroup>
     <Folder Include="Properties\" />
     <Folder Include="Rendering\" />
+    <Folder Include="UI\Tabs\Base\" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="0Harmony, Version=1.2.0.1, Culture=neutral, processorArchitecture=MSIL">

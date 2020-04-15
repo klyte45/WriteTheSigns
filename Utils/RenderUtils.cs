@@ -1,7 +1,7 @@
 using ColossalFramework.Math;
 using Klyte.Commons.Utils;
-using Klyte.DynamicTextProps.Overrides;
 using SpriteFontPlus;
+using SpriteFontPlus.Utility;
 using UnityEngine;
 
 namespace Klyte.DynamicTextProps.Utils

@@ -16,10 +16,6 @@ namespace Klyte.DynamicTextProps.Overrides
         public Color m_cachedColor = Color.white;
         public Color m_cachedColor2 = Color.white;
         internal Color m_propColor = Color.white;
-        internal uint m_fullNameSubInfoDrawTime2;
-        internal uint m_fullNameSubInfoDrawTime;
-        internal uint m_nameSubInfoDrawTime2;
-        internal uint m_nameSubInfoDrawTime;
         internal Color m_cachedContrastColor;
         internal Color m_cachedContrastColor2;
     }

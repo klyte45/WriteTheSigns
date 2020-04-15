@@ -12,9 +12,9 @@ namespace Klyte.DynamicTextProps.Overrides
         [XmlIgnore]
         public bool cached = false;
         [XmlElement("descriptors")]
-        public ListWrapper<BoardDescriptorHigwaySignXml> Descriptors
+        public ListWrapper<BoardDescriptorOnNetXml> Descriptors
         {
-            get => new ListWrapper<BoardDescriptorHigwaySignXml> { listVal = m_boardsData.Select(x => x.descriptor).ToList() };
+            get => new ListWrapper<BoardDescriptorOnNetXml> { listVal = m_boardsData.Select(x => x.descriptor).ToList() };
             set => m_boardsData = value.listVal.Select(x => new CacheControlHighwaySign { descriptor = x }).ToArray();
         }
 

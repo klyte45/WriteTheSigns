@@ -1,13 +1,13 @@
-﻿using System.Xml;
+﻿using ColossalFramework;
+using Klyte.Commons.Utils;
+using System.Xml;
 using System.Xml.Serialization;
 using UnityEngine;
 
 namespace Klyte.DynamicTextProps.Overrides
 {
 
-    public abstract class BoardDescriptorParentXml<BD, BTD>
-        where BD : BoardDescriptorParentXml<BD, BTD>
-        where BTD : BoardTextDescriptorParentXml<BTD>
+    public class BoardDescriptorGeneralXml
     {
         [XmlAttribute("propName")]
         public string m_propName;
@@ -26,7 +26,7 @@ namespace Klyte.DynamicTextProps.Overrides
         [XmlIgnore]
         public Vector3 m_propRotation;
         [XmlElement("textDescriptor")]
-        public BTD[] m_textDescriptors = new BTD[0];
+        public BoardTextDescriptorGeneralXml[] m_textDescriptors = new BoardTextDescriptorGeneralXml[0];
 
 
         [XmlAttribute("positionX")]
@@ -50,6 +50,18 @@ namespace Klyte.DynamicTextProps.Overrides
         public float? ScaleY;
         [XmlAttribute("scaleZ")]
         public float? ScaleZ;
+
+
+        [XmlIgnore]
+        public Color FixedColor { get => m_cachedColor; set => m_cachedColor = value; }
+        [XmlIgnore]
+        private Color m_cachedColor;
+        [XmlAttribute("fixedColor")]
+        public string FixedColorStr { get => m_cachedColor == default ? null : ColorExtensions.ToRGB(FixedColor); set => FixedColor = value.IsNullOrWhiteSpace() ? default : (Color)ColorExtensions.FromRGB(value); }
+
+
+        [XmlAttribute("fontName")]
+        public string FontName { get; set; }
 
 
         public Matrix4x4 TextMatrixTranslation(int idx) => Matrix4x4.Translate(m_textDescriptors[idx].m_textRelativePosition);

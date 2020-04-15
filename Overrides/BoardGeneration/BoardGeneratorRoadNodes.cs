@@ -13,7 +13,7 @@ using UnityEngine;
 namespace Klyte.DynamicTextProps.Overrides
 {
 
-    public partial class BoardGeneratorRoadNodes : BoardGeneratorParent<BoardGeneratorRoadNodes, IBoardBunchContainer<CacheControlStreetPlate>, DTPRoadNodesData, BoardDescriptorStreetSignXml, BoardTextDescriptorSteetSignXml>
+    public partial class BoardGeneratorRoadNodes : BoardGeneratorParent<BoardGeneratorRoadNodes, IBoardBunchContainer<CacheControlStreetPlate>, DTPRoadNodesData>
     {
 
         public bool[] m_updatedStreetPositions;

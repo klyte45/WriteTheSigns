@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using SpriteFontPlus.Utility;
+using System.Linq;
 using System.Xml.Serialization;
 
 namespace Klyte.DynamicTextProps.Overrides

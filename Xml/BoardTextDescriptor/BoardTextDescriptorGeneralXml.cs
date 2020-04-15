@@ -1,16 +1,14 @@
 ﻿using ColossalFramework;
 using ColossalFramework.UI;
 using Klyte.Commons.Utils;
-using System;
-using System.IO;
 using System.Xml;
 using System.Xml.Serialization;
 using UnityEngine;
 
 namespace Klyte.DynamicTextProps.Overrides
 {
-
-    public abstract class BoardTextDescriptorParentXml<T> where T : BoardTextDescriptorParentXml<T>
+    [XmlRoot("textDescriptor")]
+    public class BoardTextDescriptorGeneralXml
     {
         [XmlIgnore]
         public Vector3 m_textRelativePosition;
@@ -62,42 +60,17 @@ namespace Klyte.DynamicTextProps.Overrides
         public float RotationZ { get => m_textRelativeRotation.z; set => m_textRelativeRotation.z = value; }
 
         [XmlAttribute("color")]
-        public string ForceColor { get => m_defaultColor == Color.clear ? null : ColorExtensions.ToRGB(m_defaultColor); set => m_defaultColor = value.IsNullOrWhiteSpace() ? Color.clear : (Color) ColorExtensions.FromRGB(value); }
+        public string ForceColor { get => m_defaultColor == Color.clear ? null : ColorExtensions.ToRGB(m_defaultColor); set => m_defaultColor = value.IsNullOrWhiteSpace() ? Color.clear : (Color)ColorExtensions.FromRGB(value); }
 
-        public string Serialize()
-        {
-            var xmlser = new XmlSerializer(typeof(T));
-            var settings = new XmlWriterSettings { Indent = false };
-            using var textWriter = new StringWriter();
-            using var xw = XmlWriter.Create(textWriter, settings);
-            var ns = new XmlSerializerNamespaces();
-            ns.Add("", "");
-            xmlser.Serialize(xw, this, ns);
-            return textWriter.ToString();
-        }
+        [XmlAttribute("overrideFont")]
+        public string m_overrideFont;
 
-        public static T Deserialize(string s)
-        {
-            var xmlser = new XmlSerializer(typeof(T));
-            try
-            {
-                using TextReader tr = new StringReader(s);
-                using var reader = XmlReader.Create(tr);
-                if (xmlser.CanDeserialize(reader))
-                {
-                    return (T) xmlser.Deserialize(reader);
-                }
-                else
-                {
-                    LogUtils.DoErrorLog($"CAN'T DESERIALIZE BOARD DESCRIPTOR!\nText : {s}");
-                }
-            }
-            catch (Exception e)
-            {
-                LogUtils.DoErrorLog($"CAN'T DESERIALIZE BOARD DESCRIPTOR!\nText : {s}\n{e.Message}\n{e.StackTrace}");
-            }
-            return null;
-        }
+        [XmlAttribute("allCaps")]
+        public bool m_allCaps = false;
+        [XmlAttribute("prefix")]
+        public string m_prefix = "";
+        [XmlAttribute("suffix")]
+        public string m_suffix = "";
     }
 
 
