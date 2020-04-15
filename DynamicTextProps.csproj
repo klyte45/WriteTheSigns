@@ -399,9 +399,13 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="commons\UI\Images\%25K45_AbsoluteMode.png" />
+    <EmbeddedResource Include="commons\UI\Images\%25K45_Delete.png" />
+    <EmbeddedResource Include="commons\UI\Images\%25K45_Lock.png" />
     <Content Include="commons\UI\Images\%25K45_MenuPanel_color.png" />
+    <EmbeddedResource Include="commons\UI\Images\%25K45_New.png" />
     <Content Include="commons\UI\Images\%25K45_RelativeMode.png" />
     <Content Include="commons\UI\Images\%25K45_RemoveUnwantedIcon.png" />
+    <EmbeddedResource Include="commons\UI\Images\%25K45_Unlock.png" />
     <Content Include="commons\UI\Images\lineFormat.png" />
     <Content Include="commons\UI\Images\lineFormat.psd" />
     <Content Include="commons\UI\Images\sprites.psd" />

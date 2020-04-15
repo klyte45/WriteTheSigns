@@ -9,20 +9,16 @@ using System.IO;
 using System.Reflection;
 using UnityEngine;
 
-[assembly: AssemblyVersion("3.0.0.*")]
+[assembly: AssemblyVersion("1.0.0.*")]
 namespace Klyte.DynamicTextProps
 {
     public class DynamicTextPropsMod : BasicIUserMod<DynamicTextPropsMod, DTPController, DTPPanel>
     {
-        public override string SimpleName => "Dynamic Text Props";
+        public override string SimpleName => "??????";
 
         public override string Description => "This mod allows creating dynamic text props in the city";
         public override string IconName => "K45_KDTPIcon";
-
-        public override void DoErrorLog(string fmt, params object[] args) => LogUtils.DoErrorLog(fmt, args);
-
-        public override void DoLog(string fmt, params object[] args) => LogUtils.DoLog(fmt, args);
-
+        
         public override void OnReleased() => base.OnReleased();
 
         public override void TopSettingsUI(UIHelperExtension helper)
