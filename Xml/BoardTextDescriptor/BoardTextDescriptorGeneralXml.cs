@@ -14,28 +14,29 @@ namespace Klyte.DynamicTextProps.Overrides
         public Vector3 m_textRelativePosition;
         [XmlIgnore]
         public Vector3 m_textRelativeRotation = new Vector3(0, 180, 0);
+
         [XmlAttribute("textScale")]
         public float m_textScale = 1f;
         [XmlAttribute("maxWidth")]
         public float m_maxWidthMeters = 0;
         [XmlAttribute("applyOverflowResizingOnY")]
         public bool m_applyOverflowResizingOnY = false;
+
         [XmlAttribute("useContrastColor")]
         public bool m_useContrastColor = true;
         [XmlIgnore]
         public Color m_defaultColor = Color.clear;
+
         [XmlAttribute("textType")]
         public TextType m_textType = TextType.OwnName;
+
         [XmlAttribute("fixedText")]
         public string m_fixedText = null;
         [XmlAttribute("fixedTextLocaleCategory")]
         public string m_fixedTextLocaleKey = null;
         [XmlAttribute("fixedTextLocalized")]
         public bool m_isFixedTextLocalized = false;
-        [XmlAttribute("nightEmissiveMultiplier")]
-        public float m_nightEmissiveMultiplier = 0f;
-        [XmlAttribute("dayEmissiveMultiplier")]
-        public float m_dayEmissiveMultiplier = 0f;
+
         [XmlAttribute("textAlign")]
         public UIHorizontalAlignment m_textAlign = UIHorizontalAlignment.Center;
         [XmlAttribute("verticalAlign")]

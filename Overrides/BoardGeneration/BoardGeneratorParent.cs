@@ -132,7 +132,7 @@ namespace Klyte.DynamicTextProps.Overrides
 
 
 
-        protected void RenderPropMesh(ref PropInfo propInfo, RenderManager.CameraInfo cameraInfo, ushort refId, int boardIdx, int secIdx, int layerMask, float refAngleRad, Vector3 position, Vector4 dataVector, ref string propName, Vector3 propAngle, Vector3 propScale, BoardDescriptorGeneralXml descriptor, out Matrix4x4 propMatrix, out bool rendered)
+        protected void RenderPropMesh<B>(ref PropInfo propInfo, RenderManager.CameraInfo cameraInfo, ushort refId, int boardIdx, int secIdx, int layerMask, float refAngleRad, Vector3 position, Vector4 dataVector, ref string propName, Vector3 propAngle, Vector3 propScale, BoardInstanceXml<B> descriptor, out Matrix4x4 propMatrix, out bool rendered) where B:IBoardDescriptor,new()
         {
             Color? propColor = GetColor(refId, boardIdx, secIdx, descriptor);
             if (propColor == null)
@@ -168,7 +168,7 @@ namespace Klyte.DynamicTextProps.Overrides
 
         protected abstract InstanceID GetPropRenderID(ushort refID);
 
-        protected void RenderTextMesh(RenderManager.CameraInfo cameraInfo, ushort refID, int boardIdx, int secIdx, BoardDescriptorGeneralXml descriptor, Matrix4x4 propMatrix, BoardTextDescriptorGeneralXml textDescriptor, MaterialPropertyBlock materialPropertyBlock)
+        protected void RenderTextMesh<B>(RenderManager.CameraInfo cameraInfo, ushort refID, int boardIdx, int secIdx, BoardInstanceXml<B> descriptor, Matrix4x4 propMatrix, BoardTextDescriptorGeneralXml textDescriptor, MaterialPropertyBlock materialPropertyBlock) where B : IBoardDescriptor,new()
         {
             BasicRenderInformation renderInfo = null;
             switch (textDescriptor.m_textType)
@@ -276,29 +276,29 @@ namespace Klyte.DynamicTextProps.Overrides
             materialPropertyBlock.SetColor(m_shaderPropColor3, colorToSet);
 
 
-            materialPropertyBlock.SetColor(m_shaderPropEmissive, Color.white * (SimulationManager.instance.m_isNightTime ? textDescriptor.m_nightEmissiveMultiplier : textDescriptor.m_dayEmissiveMultiplier));
+            //materialPropertyBlock.SetColor(m_shaderPropEmissive, Color.white * (SimulationManager.instance.m_isNightTime ? textDescriptor.m_nightEmissiveMultiplier : textDescriptor.m_dayEmissiveMultiplier));
             renderInfo.m_generatedMaterial.shader = TextShader;
             Graphics.DrawMesh(renderInfo.m_mesh, matrix, renderInfo.m_generatedMaterial, 10, null, 0, materialPropertyBlock, false);
 
         }
         #endregion
-        public abstract Color? GetColor(ushort buildingID, int idx, int secIdx, BoardDescriptorGeneralXml descriptor);
-        public abstract Color GetContrastColor(ushort refID, int boardIdx, int secIdx, BoardDescriptorGeneralXml descriptor);
+        public abstract Color? GetColor<B>(ushort buildingID, int idx, int secIdx, BoardInstanceXml<B> descriptor) where B : IBoardDescriptor, new();
+        public abstract Color GetContrastColor<B>(ushort refID, int boardIdx, int secIdx, BoardInstanceXml<B> descriptor) where B : IBoardDescriptor, new();
 
         #region UpdateData
-        protected virtual BasicRenderInformation GetOwnNameMesh(ushort refID, int boardIdx, int secIdx, BoardDescriptorGeneralXml descriptor) => null;
-        protected virtual BasicRenderInformation GetMeshCurrentNumber(ushort refID, int boardIdx, int secIdx, BoardDescriptorGeneralXml descriptor) => null;
-        protected virtual BasicRenderInformation GetMeshFullStreetName(ushort refID, int boardIdx, int secIdx, BoardDescriptorGeneralXml descriptor) => null;
-        protected virtual BasicRenderInformation GetMeshStreetSuffix(ushort refID, int boardIdx, int secIdx, BoardDescriptorGeneralXml descriptor) => null;
-        protected virtual BasicRenderInformation GetMeshStreetPrefix(ushort refID, int boardIdx, int secIdx, BoardDescriptorGeneralXml descriptor) => null;
-        protected virtual BasicRenderInformation GetMeshDistrict(ushort refID, int boardIdx, int secIdx, BoardDescriptorGeneralXml descriptor) => null;
-        protected virtual BasicRenderInformation GetMeshCustom1(ushort refID, int boardIdx, int secIdx, BoardDescriptorGeneralXml descriptor) => null;
-        protected virtual BasicRenderInformation GetMeshCustom2(ushort refID, int boardIdx, int secIdx, BoardDescriptorGeneralXml descriptor) => null;
-        protected virtual BasicRenderInformation GetMeshCustom3(ushort refID, int boardIdx, int secIdx, BoardDescriptorGeneralXml descriptor) => null;
-        protected virtual BasicRenderInformation GetMeshCustom4(ushort refID, int boardIdx, int secIdx, BoardDescriptorGeneralXml descriptor) => null;
-        protected virtual BasicRenderInformation GetMeshCustom5(ushort refID, int boardIdx, int secIdx, BoardDescriptorGeneralXml descriptor) => null;
-        protected virtual BasicRenderInformation GetMeshLinesSymbols(ushort refID, int boardIdx, int secIdx, BoardDescriptorGeneralXml descriptor) => null;
-        protected virtual BasicRenderInformation GetFixedTextMesh(BoardTextDescriptorGeneralXml textDescriptor, ushort refID, int boardIdx, int secIdx, BoardDescriptorGeneralXml descriptor) => RenderUtils.GetTextData((textDescriptor.m_isFixedTextLocalized ? Locale.Get(textDescriptor.m_fixedText, textDescriptor.m_fixedTextLocaleKey) : textDescriptor.m_fixedText) ?? "", DrawFont);
+        protected virtual BasicRenderInformation GetOwnNameMesh<B>(ushort refID, int boardIdx, int secIdx, BoardInstanceXml<B> descriptor) where B : IBoardDescriptor, new() => null;
+        protected virtual BasicRenderInformation GetMeshCurrentNumber<B>(ushort refID, int boardIdx, int secIdx, BoardInstanceXml<B> descriptor) where B : IBoardDescriptor, new() => null;
+        protected virtual BasicRenderInformation GetMeshFullStreetName<B>(ushort refID, int boardIdx, int secIdx, BoardInstanceXml<B> descriptor) where B : IBoardDescriptor, new() => null;
+        protected virtual BasicRenderInformation GetMeshStreetSuffix<B>(ushort refID, int boardIdx, int secIdx, BoardInstanceXml<B> descriptor) where B : IBoardDescriptor, new() => null;
+        protected virtual BasicRenderInformation GetMeshStreetPrefix<B>(ushort refID, int boardIdx, int secIdx, BoardInstanceXml<B> descriptor) where B : IBoardDescriptor, new() => null;
+        protected virtual BasicRenderInformation GetMeshDistrict<B>(ushort refID, int boardIdx, int secIdx, BoardInstanceXml<B> descriptor) where B : IBoardDescriptor, new() => null;
+        protected virtual BasicRenderInformation GetMeshCustom1<B>(ushort refID, int boardIdx, int secIdx, BoardInstanceXml<B> descriptor) where B : IBoardDescriptor, new() => null;
+        protected virtual BasicRenderInformation GetMeshCustom2<B>(ushort refID, int boardIdx, int secIdx, BoardInstanceXml<B> descriptor) where B : IBoardDescriptor, new() => null;
+        protected virtual BasicRenderInformation GetMeshCustom3<B>(ushort refID, int boardIdx, int secIdx, BoardInstanceXml<B> descriptor) where B : IBoardDescriptor, new() => null;
+        protected virtual BasicRenderInformation GetMeshCustom4<B>(ushort refID, int boardIdx, int secIdx, BoardInstanceXml<B> descriptor) where B : IBoardDescriptor, new() => null;
+        protected virtual BasicRenderInformation GetMeshCustom5<B>(ushort refID, int boardIdx, int secIdx, BoardInstanceXml<B> descriptor) where B : IBoardDescriptor, new() => null;
+        protected virtual BasicRenderInformation GetMeshLinesSymbols<B>(ushort refID, int boardIdx, int secIdx, BoardInstanceXml<B> descriptor) where B : IBoardDescriptor, new() => null;
+        protected virtual BasicRenderInformation GetFixedTextMesh<B>(BoardTextDescriptorGeneralXml textDescriptor, ushort refID, int boardIdx, int secIdx, BoardInstanceXml<B> descriptor) where B : IBoardDescriptor, new() => RenderUtils.GetTextData((textDescriptor.m_isFixedTextLocalized ? Locale.Get(textDescriptor.m_fixedText, textDescriptor.m_fixedTextLocaleKey) : textDescriptor.m_fixedText) ?? "", DrawFont);
         #endregion
 
 

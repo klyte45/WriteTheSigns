@@ -6,9 +6,6 @@ namespace Klyte.DynamicTextProps.UI
     public class DTPPropPreviewRenderer : MonoBehaviour
     {
         private readonly Camera m_camera;
-
-        private float m_rotation = 120f;
-
         private float m_zoom = 3f;
 
 
@@ -26,16 +23,12 @@ namespace Klyte.DynamicTextProps.UI
 
         public RenderTexture Texture => m_camera.targetTexture;
 
-        public float CameraRotation
-        {
-            get => m_rotation;
-            set => m_rotation = value;
-        }
+        public float CameraRotation { get; set; } = 120f;
 
         public float Zoom
         {
             get => m_zoom;
-            set => m_zoom = Mathf.Clamp(value, 0.5f, 5f);
+            set => m_zoom = value;
         }
 
         public DTPPropPreviewRenderer()
@@ -44,7 +37,7 @@ namespace Klyte.DynamicTextProps.UI
             m_camera.transform.SetParent(base.transform);
             m_camera.backgroundColor = new Color(0f, 0f, 0f, 0f);
             m_camera.fieldOfView = 30f;
-            m_camera.nearClipPlane = 1f;
+            m_camera.nearClipPlane = 0.0001f;
             m_camera.farClipPlane = 1000f;
             m_camera.allowHDR = true;
             m_camera.enabled = false;
@@ -85,9 +78,9 @@ namespace Klyte.DynamicTextProps.UI
             m_camera.nearClipPlane = Mathf.Max(num2 - num * 1.5f, 0.01f);
             m_camera.farClipPlane = num2 + num * 1.5f;
 
-            Quaternion quaternion = Quaternion.Euler(0f, 0f, 0f) * Quaternion.Euler(0f, m_rotation, 0f);
-            Vector3 pos = quaternion * -new Vector3(info.m_mesh.bounds.center.x, 0, info.m_mesh.bounds.center.z);
-            Matrix4x4 matrix = Matrix4x4.TRS(offset, Quaternion.identity, Vector3.one) * Matrix4x4.TRS(pos, quaternion, Vector3.one);
+            Quaternion quaternion = Quaternion.Euler(0f, 0f, 0f) * Quaternion.Euler(0f, CameraRotation, 0f);
+            Vector3 pos = quaternion * -new Vector3(info.m_mesh.bounds.center.x, 0, info.m_mesh.bounds.max.z);
+            Matrix4x4 matrix = Matrix4x4.TRS(offset, Quaternion.identity, Vector3.one) * Matrix4x4.TRS(Vector3.zero, quaternion, Vector3.one);
 
 
             PropManager instance = Singleton<PropManager>.instance;

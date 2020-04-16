@@ -24,10 +24,12 @@ namespace Klyte.DynamicTextProps.UI
         private UIPanel m_previewPanel;
         private UITextureSprite m_preview;
         private UIPanel m_previewControls;
+        private UIButton m_lockToSelection;
 
         private PropInfo m_currentInfo;
 
         private float m_targetZoom = 3;
+        private float m_targetZoomSqrt = 9;
         private float m_targetRotation = 0;
         private Vector2 m_targetCameraPosition = default;
         private Vector2 m_cameraPosition = default;
@@ -35,10 +37,28 @@ namespace Klyte.DynamicTextProps.UI
         private UIPanel m_topBar;
         private UIPanel m_previewBar;
         private UIScrollablePanel m_editTabstrip;
-        private UIScrollablePanel m_editArea;
+        private UIPanel m_editArea;
+        private DTPBasicPropInfoEditor m_propInfoEditor;
 
-        private UITabContainer m_tabPagesContainer;
         private UIButton m_plusButton;
+
+        private bool m_viewLocked;
+        private int m_currentTab;
+
+        private UIPanel m_basicInfoEditor;
+        private UIPanel m_textInfoEditor;
+        private Color32 CurrentSelectedColor { get; set; }
+        public float TargetZoom
+        {
+            get => m_targetZoom;
+            set {
+                m_targetZoom = value;
+                m_targetZoomSqrt = Mathf.Sqrt(value);
+            }
+        }
+
+        private float m_maxZoom = 2f;
+        //private float m_minZoom = -10f;
 
         public void Awake()
         {
@@ -78,7 +98,7 @@ namespace Klyte.DynamicTextProps.UI
             m_preview.texture = m_previewRenderer.Texture;
             m_preview.eventMouseWheel += ChangeViewZoom;
             m_preview.eventMouseMove += OnMouseMove;
-            m_previewRenderer.Zoom = m_targetZoom;
+            m_previewRenderer.Zoom = TargetZoom;
 
             KlyteMonoUtils.CreateUIElement(out m_previewControls, m_previewBar.transform, "previewPanel", new UnityEngine.Vector4(0, 0, 50, 300));
             m_previewControls.padding = new RectOffset(5, 5, 5, 5);
@@ -86,28 +106,65 @@ namespace Klyte.DynamicTextProps.UI
             m_previewControls.autoLayoutDirection = LayoutDirection.Vertical;
 
 
-            InitCircledButton(m_previewControls, out UIButton lockToSelection, CommonsSpriteNames.K45_Unlock, (x, y) => { }, "K45_DTP_LOCK_UNLOCK_TO_CURRENT_ITEM");
-            InitCircledButton(m_previewControls, out UIButton resetView, CommonsSpriteNames.K45_Reload, (x, y) => { }, "K45_DTP_RESET_VIEW");
+            InitCircledButton(m_previewControls, out m_lockToSelection, CommonsSpriteNames.K45_Unlock, (x, y) => ToggleLock(), "K45_DTP_LOCK_UNLOCK_TO_CURRENT_ITEM");
+            m_lockToSelection.focusedBgSprite = null;
+            m_viewLocked = true;
+            ToggleLock();
+
+            InitCircledButton(m_previewControls, out UIButton resetView, CommonsSpriteNames.K45_Reload, (x, y) => ResetCamera(), "K45_DTP_RESET_VIEW");
 
             KlyteMonoUtils.CreateScrollPanel(m_previewBar, out m_editTabstrip, out _, m_previewBar.width - m_previewPanel.width - m_previewControls.width - m_previewBar.padding.horizontal - (m_previewBar.autoLayoutPadding.horizontal * 2) - 20, 300);
-            KlyteMonoUtils.CreateUIElement(out UIPanel areaContainer, MainContainer.transform, "previewBar", new UnityEngine.Vector4(0, 0, MainContainer.width - MainContainer.padding.horizontal, MainContainer.height - m_previewBar.height - m_topBar.height - MainContainer.padding.vertical - (MainContainer.autoLayoutPadding.vertical * 2) - 5));
-            KlyteMonoUtils.CreateScrollPanel(areaContainer, out m_editArea, out _, areaContainer.width - 20, areaContainer.height);
-
             m_editTabstrip.autoLayout = true;
             m_editTabstrip.autoLayoutDirection = LayoutDirection.Vertical;
 
-
-            KlyteMonoUtils.CreateUIElement(out m_tabPagesContainer, m_editArea.transform, $"EditProp_TabContainer", m_editArea.area);
-
-
-
             InitTabButton(m_editTabstrip, out _, Locale.Get("K45_DTP_BASIC_INFO_TAB_TITLE"), new Vector2(m_editTabstrip.size.x, 30));
-            m_tabPagesContainer.AddTabPage();
-            InitTabButton(m_editTabstrip, out m_plusButton, Locale.Get("K45_DTP_ADD_NEW_TEXT_ENTRY"), new Vector2(m_editTabstrip.size.x, 30));
-            m_plusButton.eventClicked -= OnTabChange;
+            InitTabButton(m_editTabstrip, out m_plusButton, Locale.Get("K45_DTP_ADD_NEW_TEXT_ENTRY"), new Vector2(m_editTabstrip.size.x, 30), false);
             m_plusButton.eventClicked += AddTabToItem;
 
-            m_currentInfo = PrefabCollection<PropInfo>.FindLoaded("1679673551.Street Plate_Data");
+            KlyteMonoUtils.CreateUIElement(out m_editArea, MainContainer.transform, "editArea", new UnityEngine.Vector4(0, 0, MainContainer.width - MainContainer.padding.horizontal, MainContainer.height - m_previewBar.height - m_topBar.height - MainContainer.padding.vertical - (MainContainer.autoLayoutPadding.vertical * 2) - 5));
+            m_editArea.padding = new RectOffset(5, 5, 5, 5);
+
+
+            KlyteMonoUtils.CreateUIElement(out m_basicInfoEditor, m_editArea.transform, "basicTab", new UnityEngine.Vector4(0, 0, m_editArea.width - m_editArea.padding.horizontal, m_editArea.height - m_editArea.padding.vertical));
+            m_propInfoEditor = m_basicInfoEditor.gameObject.AddComponent<DTPBasicPropInfoEditor>();
+            KlyteMonoUtils.CreateUIElement(out m_textInfoEditor, m_editArea.transform, "textTab", new UnityEngine.Vector4(0, 0, m_editArea.width - m_editArea.padding.horizontal, m_editArea.height - m_editArea.padding.vertical));
+
+            OnTabChange(0);
+
+            m_propInfoEditor.EventPropChanged += (x) =>
+            {
+                if (x != null)
+                {
+                    m_currentInfo = x;
+                    ResetCamera();
+                }
+            };
+
+            m_propInfoEditor.EventPropColorChanged += (x) => CurrentSelectedColor = x;
+        }
+
+        private void ToggleLock()
+        {
+            m_viewLocked = !m_viewLocked;
+            if (m_viewLocked)
+            {
+                m_lockToSelection.normalFgSprite = KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_Lock);
+                m_lockToSelection.hoveredFgSprite = KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_Unlock);
+                m_lockToSelection.color = Color.red;
+                m_lockToSelection.focusedColor = Color.red;
+                m_lockToSelection.textColor = Color.yellow;
+                m_lockToSelection.hoveredColor = Color.green;
+                ResetCamera();
+            }
+            else
+            {
+                m_lockToSelection.normalFgSprite = KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_Unlock);
+                m_lockToSelection.hoveredFgSprite = KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_Lock);
+                m_lockToSelection.color = Color.white;
+                m_lockToSelection.focusedColor = Color.white;
+                m_lockToSelection.textColor = Color.white;
+                m_lockToSelection.hoveredColor = Color.red;
+            }
         }
 
         private void InitCircledButton(UIComponent parent, out UIButton m_newButton, CommonsSpriteNames sprite, MouseEventHandler onClicked, string tooltipLocale)
@@ -121,19 +178,35 @@ namespace Klyte.DynamicTextProps.UI
             m_newButton.eventClicked += onClicked;
             m_newButton.tooltip = name;
         }
-        private void InitTabButton(UIComponent parent, out UIButton tabTemplate, string text, Vector2 size)
+        private void InitTabButton(UIComponent parent, out UIButton tabTemplate, string text, Vector2 size, bool useDefaultAction = true)
         {
             KlyteMonoUtils.CreateUIElement(out tabTemplate, parent.transform, name, new UnityEngine.Vector4(0, 0, 40, 40));
             KlyteMonoUtils.InitButton(tabTemplate, false, "GenericTab");
             tabTemplate.autoSize = false;
             tabTemplate.size = size;
             tabTemplate.text = text;
-            tabTemplate.eventClicked += OnTabChange;
+            tabTemplate.group = parent;
+            if (useDefaultAction)
+            {
+                tabTemplate.eventClicked += (x, y) => OnTabChange(x.zOrder);
+            }
         }
-        private void OnTabChange(UIComponent x, UIMouseEventParameter y)
+
+        private void ResetCamera()
         {
-            m_tabPagesContainer.tabIndex = x.zOrder;
-            m_tabPagesContainer.selectedIndex = 1;
+            m_maxZoom = Mathf.Max(Mathf.Pow(m_currentInfo.m_mesh.bounds.extents.y / m_currentInfo.m_mesh.bounds.extents.x, 1 / 3f) * 3f, 3f);
+            TargetZoom = m_maxZoom;
+            m_targetRotation = 0;
+            Vector3 target = m_currentInfo.m_mesh.bounds.center;
+            target.y *= -1;
+            m_targetCameraPosition = target;
+        }
+
+        private void OnTabChange(int idx)
+        {
+            m_currentTab = idx;
+            m_basicInfoEditor.isVisible = m_currentTab == 0;
+            m_textInfoEditor.isVisible = m_currentTab != 0;
         }
 
         private void AddTabToItem(UIComponent x, UIMouseEventParameter y)
@@ -211,24 +284,37 @@ namespace Klyte.DynamicTextProps.UI
 
         private void OnMouseMove(UIComponent component, UIMouseEventParameter eventParam)
         {
-            if ((eventParam.buttons & UIMouseButton.Left) != 0)
+            if (m_currentInfo != default && !m_viewLocked)
             {
-                m_targetCameraPosition = Vector2.Max(new Vector2(-3, -3), Vector2.Min(new Vector2(3, 0), (new Vector2(eventParam.moveDelta.x / -component.height, eventParam.moveDelta.y / component.height) * m_targetZoom) + m_targetCameraPosition));
-            }
-            else if ((eventParam.buttons & UIMouseButton.Right) != 0)
-            {
-                m_targetRotation += eventParam.moveDelta.x;
+                if ((eventParam.buttons & UIMouseButton.Left) != 0)
+                {
+                    Vector3 min = m_currentInfo.m_mesh.bounds.min;
+                    Vector3 max = m_currentInfo.m_mesh.bounds.max;
+                    min.y = -max.y;
+                    max.y = -m_currentInfo.m_mesh.bounds.min.y;
+                    m_targetCameraPosition = Vector2.Max(min, Vector2.Min(max, new Vector2(-eventParam.moveDelta.x / component.width, eventParam.moveDelta.y / component.height) + m_targetCameraPosition));
+                }
+                else if ((eventParam.buttons & UIMouseButton.Right) != 0)
+                {
+                    m_targetRotation += eventParam.moveDelta.x;
+                }
             }
         }
-        private void ChangeViewZoom(UIComponent component, UIMouseEventParameter eventParam) => m_targetZoom = Mathf.Max(Mathf.Min(m_targetZoom + eventParam.wheelDelta, 6), 0.5f);
+        private void ChangeViewZoom(UIComponent component, UIMouseEventParameter eventParam)
+        {
+            if (!m_viewLocked)
+            {
+                TargetZoom = Mathf.Max(Mathf.Min(TargetZoom + eventParam.wheelDelta * 0.125f, m_maxZoom), 1f / m_currentInfo.m_mesh.bounds.extents.magnitude / m_currentInfo.m_mesh.bounds.extents.magnitude);
+            }
+        }
 
         public void Update()
         {
             if (m_currentInfo != default && MainContainer.isVisible)
             {
-                if (Mathf.Abs(m_previewRenderer.Zoom - m_targetZoom) > 0.01f)
+                if (Mathf.Abs(m_previewRenderer.Zoom - TargetZoom) > 0.01f)
                 {
-                    m_previewRenderer.Zoom = Mathf.Lerp(m_previewRenderer.Zoom, m_targetZoom, 0.25f);
+                    m_previewRenderer.Zoom = Mathf.Lerp(m_previewRenderer.Zoom, TargetZoom, 0.25f);
                 }
                 if (Mathf.Abs(m_previewRenderer.CameraRotation - m_targetRotation) > 0.01f)
                 {
@@ -247,14 +333,13 @@ namespace Klyte.DynamicTextProps.UI
             {
                 if (btn != m_plusButton)
                 {
-                    if (btn.zOrder == m_tabPagesContainer.tabIndex)
+                    if (btn.zOrder == m_currentTab)
                     {
-                        btn.Focus();
+                        btn.state |= UIButton.ButtonState.Focused;
                     }
                     else
                     {
-                        btn.group = btn.parent;
-                        btn.Unfocus();
+                        btn.state &= ~UIButton.ButtonState.Focused;
                     }
                 }
             }
@@ -267,8 +352,10 @@ namespace Klyte.DynamicTextProps.UI
                 return;
             }
             m_preview.isVisible = true;
-            m_previewRenderer.RenderProp(m_currentInfo, m_cameraPosition, Color.white);
+            m_previewRenderer.RenderProp(m_currentInfo, m_cameraPosition, CurrentSelectedColor);
         }
+
+
     }
 
 }

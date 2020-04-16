@@ -186,12 +186,15 @@
     <Compile Include="Overrides\DistrictManagerOverrides.cs" />
     <Compile Include="Tools\BuildingTool.cs" />
     <Compile Include="UI\DTPPropPreviewRenderer.cs" />
+    <Compile Include="UI\Tabs\DTPBasicPropInfoEditor.cs" />
     <Compile Include="UI\Tabs\DTPPropTextLayoutEditor.cs" />
     <Compile Include="Utils\DTPLineUtils.cs" />
+    <Compile Include="Utils\PrefabUtils.cs" />
     <Compile Include="Utils\RenderUtils.cs" />
     <Compile Include="Xml\BoardDescriptor\BoardDescriptorBuildingXml.cs" />
     <Compile Include="Xml\BoardDescriptor\BoardDescriptorGeneralXml.cs" />
-    <Compile Include="Xml\BoardGeneratorBuildingConfigXml.cs" />
+    <Compile Include="Xml\BoardDescriptor\BoardInstanceXml.cs" />
+    <Compile Include="Xml\BoardDescriptor\IBoardDescriptor.cs" />
     <Compile Include="Xml\BoardTextDescriptor\BoardTextDescriptorGeneralXml.cs" />
     <Compile Include="Xml\Containers\BuildingGroupDescriptorXml.cs" />
     <Compile Include="Xml\Containers\BoardBunchContainerBuilding.cs" />

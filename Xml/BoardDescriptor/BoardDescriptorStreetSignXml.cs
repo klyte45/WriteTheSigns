@@ -3,7 +3,7 @@
 namespace Klyte.DynamicTextProps.Overrides
 {
     [XmlRoot("roadCornerDescriptor")]
-    public class BoardDescriptorNetNodesXml
+    public class BoardDescriptorNetNodesXml: IBoardDescriptor
     {
         [XmlAttribute("placeOnDistrictBorder")]
         public bool PlaceOnDistrictBorder { get; set; } = true;

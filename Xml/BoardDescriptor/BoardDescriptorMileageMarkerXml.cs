@@ -3,7 +3,7 @@
 namespace Klyte.DynamicTextProps.Overrides
 {
     [XmlRoot("mileageMarkerDescriptor")]
-    public class BoardDescriptorMileageMarkerXml
+    public class BoardDescriptorMileageMarkerXml : IBoardDescriptor
     {
 
         [XmlAttribute("useMiles")]
