@@ -1,5 +1,4 @@
-﻿using ColossalFramework.Globalization;
-using ColossalFramework.Math;
+﻿using ColossalFramework.Math;
 using ColossalFramework.UI;
 using Klyte.Commons.Extensors;
 using Klyte.Commons.Utils;
@@ -132,7 +131,7 @@ namespace Klyte.DynamicTextProps.Overrides
 
 
 
-        protected void RenderPropMesh<B>(ref PropInfo propInfo, RenderManager.CameraInfo cameraInfo, ushort refId, int boardIdx, int secIdx, int layerMask, float refAngleRad, Vector3 position, Vector4 dataVector, ref string propName, Vector3 propAngle, Vector3 propScale, BoardInstanceXml<B> descriptor, out Matrix4x4 propMatrix, out bool rendered) where B:IBoardDescriptor,new()
+        protected void RenderPropMesh<B>(ref PropInfo propInfo, RenderManager.CameraInfo cameraInfo, ushort refId, int boardIdx, int secIdx, int layerMask, float refAngleRad, Vector3 position, Vector4 dataVector, ref string propName, Vector3 propAngle, Vector3 propScale, BoardInstanceXml<B> descriptor, out Matrix4x4 propMatrix, out bool rendered) where B : IBoardDescriptor, new()
         {
             Color? propColor = GetColor(refId, boardIdx, secIdx, descriptor);
             if (propColor == null)
@@ -168,7 +167,7 @@ namespace Klyte.DynamicTextProps.Overrides
 
         protected abstract InstanceID GetPropRenderID(ushort refID);
 
-        protected void RenderTextMesh<B>(RenderManager.CameraInfo cameraInfo, ushort refID, int boardIdx, int secIdx, BoardInstanceXml<B> descriptor, Matrix4x4 propMatrix, BoardTextDescriptorGeneralXml textDescriptor, MaterialPropertyBlock materialPropertyBlock) where B : IBoardDescriptor,new()
+        protected void RenderTextMesh<B>(RenderManager.CameraInfo cameraInfo, ushort refID, int boardIdx, int secIdx, BoardInstanceXml<B> descriptor, Matrix4x4 propMatrix, BoardTextDescriptorGeneralXml textDescriptor, MaterialPropertyBlock materialPropertyBlock) where B : IBoardDescriptor, new()
         {
             BasicRenderInformation renderInfo = null;
             switch (textDescriptor.m_textType)
@@ -298,7 +297,7 @@ namespace Klyte.DynamicTextProps.Overrides
         protected virtual BasicRenderInformation GetMeshCustom4<B>(ushort refID, int boardIdx, int secIdx, BoardInstanceXml<B> descriptor) where B : IBoardDescriptor, new() => null;
         protected virtual BasicRenderInformation GetMeshCustom5<B>(ushort refID, int boardIdx, int secIdx, BoardInstanceXml<B> descriptor) where B : IBoardDescriptor, new() => null;
         protected virtual BasicRenderInformation GetMeshLinesSymbols<B>(ushort refID, int boardIdx, int secIdx, BoardInstanceXml<B> descriptor) where B : IBoardDescriptor, new() => null;
-        protected virtual BasicRenderInformation GetFixedTextMesh<B>(BoardTextDescriptorGeneralXml textDescriptor, ushort refID, int boardIdx, int secIdx, BoardInstanceXml<B> descriptor) where B : IBoardDescriptor, new() => RenderUtils.GetTextData((textDescriptor.m_isFixedTextLocalized ? Locale.Get(textDescriptor.m_fixedText, textDescriptor.m_fixedTextLocaleKey) : textDescriptor.m_fixedText) ?? "", DrawFont);
+        protected virtual BasicRenderInformation GetFixedTextMesh<B>(BoardTextDescriptorGeneralXml textDescriptor, ushort refID, int boardIdx, int secIdx, BoardInstanceXml<B> descriptor) where B : IBoardDescriptor, new() => RenderUtils.GetTextData(textDescriptor.m_fixedText ?? "", DrawFont);
         #endregion
 
 

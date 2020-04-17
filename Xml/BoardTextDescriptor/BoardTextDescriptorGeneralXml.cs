@@ -22,27 +22,35 @@ namespace Klyte.DynamicTextProps.Overrides
         [XmlAttribute("applyOverflowResizingOnY")]
         public bool m_applyOverflowResizingOnY = false;
 
+
         [XmlAttribute("useContrastColor")]
         public bool m_useContrastColor = true;
         [XmlIgnore]
         public Color m_defaultColor = Color.clear;
-
-        [XmlAttribute("textType")]
-        public TextType m_textType = TextType.OwnName;
-
-        [XmlAttribute("fixedText")]
-        public string m_fixedText = null;
-        [XmlAttribute("fixedTextLocaleCategory")]
-        public string m_fixedTextLocaleKey = null;
-        [XmlAttribute("fixedTextLocalized")]
-        public bool m_isFixedTextLocalized = false;
-
         [XmlAttribute("textAlign")]
         public UIHorizontalAlignment m_textAlign = UIHorizontalAlignment.Center;
         [XmlAttribute("verticalAlign")]
         public UIVerticalAlignment m_verticalAlign = UIVerticalAlignment.Middle;
         [XmlAttribute("shader")]
         public string m_shader = null;
+
+
+        [XmlAttribute("textType")]
+        public TextType m_textType = TextType.OwnName;
+
+        [XmlAttribute("fixedText")]
+        public string m_fixedText = null;
+
+
+        [XmlAttribute("overrideFont")]
+        public string m_overrideFont;
+
+        [XmlAttribute("allCaps")]
+        public bool m_allCaps = false;
+        [XmlAttribute("prefix")]
+        public string m_prefix = "";
+        [XmlAttribute("suffix")]
+        public string m_suffix = "";
 
 
 
@@ -62,16 +70,6 @@ namespace Klyte.DynamicTextProps.Overrides
 
         [XmlAttribute("color")]
         public string ForceColor { get => m_defaultColor == Color.clear ? null : ColorExtensions.ToRGB(m_defaultColor); set => m_defaultColor = value.IsNullOrWhiteSpace() ? Color.clear : (Color)ColorExtensions.FromRGB(value); }
-
-        [XmlAttribute("overrideFont")]
-        public string m_overrideFont;
-
-        [XmlAttribute("allCaps")]
-        public bool m_allCaps = false;
-        [XmlAttribute("prefix")]
-        public string m_prefix = "";
-        [XmlAttribute("suffix")]
-        public string m_suffix = "";
     }
 
 

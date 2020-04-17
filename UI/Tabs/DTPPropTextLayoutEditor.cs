@@ -58,7 +58,6 @@ namespace Klyte.DynamicTextProps.UI
         }
 
         private float m_maxZoom = 2f;
-        //private float m_minZoom = -10f;
 
         public void Awake()
         {
@@ -74,13 +73,13 @@ namespace Klyte.DynamicTextProps.UI
             m_topBar.autoLayoutDirection = LayoutDirection.Horizontal;
             m_topBar.padding = new RectOffset(5, 5, 5, 5);
 
-            InitCircledButton(m_topBar, out m_refreshListButton, CommonsSpriteNames.K45_Reload, RefreshConfigList, "K45_DTP_REFRESH_CONFIG_LIST");
+            KlyteMonoUtils.InitCircledButton(m_topBar, out m_refreshListButton, CommonsSpriteNames.K45_Reload, RefreshConfigList, "K45_DTP_REFRESH_CONFIG_LIST");
 
             m_configList = UIHelperExtension.CloneBasicDropDownNoLabel(new string[0], OnConfigSelectionChange, m_topBar);
             m_configList.width = 745;
 
-            InitCircledButton(m_topBar, out m_newButton, CommonsSpriteNames.K45_New, OnNewConfig, "K45_DTP_CREATE_NEW_CONFIG");
-            InitCircledButton(m_topBar, out m_deleteButton, CommonsSpriteNames.K45_Delete, OnDeleteConfig, "K45_DTP_DELETE_SELECTED_CONFIG");
+            KlyteMonoUtils.InitCircledButton(m_topBar, out m_newButton, CommonsSpriteNames.K45_New, OnNewConfig, "K45_DTP_CREATE_NEW_CONFIG");
+            KlyteMonoUtils.InitCircledButton(m_topBar, out m_deleteButton, CommonsSpriteNames.K45_Delete, OnDeleteConfig, "K45_DTP_DELETE_SELECTED_CONFIG");
 
             KlyteMonoUtils.CreateUIElement(out m_previewBar, MainContainer.transform, "previewBar", new UnityEngine.Vector4(0, 0, MainContainer.width, 300));
             m_previewBar.autoLayout = true;
@@ -106,12 +105,12 @@ namespace Klyte.DynamicTextProps.UI
             m_previewControls.autoLayoutDirection = LayoutDirection.Vertical;
 
 
-            InitCircledButton(m_previewControls, out m_lockToSelection, CommonsSpriteNames.K45_Unlock, (x, y) => ToggleLock(), "K45_DTP_LOCK_UNLOCK_TO_CURRENT_ITEM");
+            KlyteMonoUtils.InitCircledButton(m_previewControls, out m_lockToSelection, CommonsSpriteNames.K45_Unlock, (x, y) => ToggleLock(), "K45_DTP_LOCK_UNLOCK_TO_CURRENT_ITEM");
             m_lockToSelection.focusedBgSprite = null;
             m_viewLocked = true;
             ToggleLock();
 
-            InitCircledButton(m_previewControls, out UIButton resetView, CommonsSpriteNames.K45_Reload, (x, y) => ResetCamera(), "K45_DTP_RESET_VIEW");
+            KlyteMonoUtils.InitCircledButton(m_previewControls, out UIButton resetView, CommonsSpriteNames.K45_Reload, (x, y) => ResetCamera(), "K45_DTP_RESET_VIEW");
 
             KlyteMonoUtils.CreateScrollPanel(m_previewBar, out m_editTabstrip, out _, m_previewBar.width - m_previewPanel.width - m_previewControls.width - m_previewBar.padding.horizontal - (m_previewBar.autoLayoutPadding.horizontal * 2) - 20, 300);
             m_editTabstrip.autoLayout = true;
@@ -128,6 +127,7 @@ namespace Klyte.DynamicTextProps.UI
             KlyteMonoUtils.CreateUIElement(out m_basicInfoEditor, m_editArea.transform, "basicTab", new UnityEngine.Vector4(0, 0, m_editArea.width - m_editArea.padding.horizontal, m_editArea.height - m_editArea.padding.vertical));
             m_propInfoEditor = m_basicInfoEditor.gameObject.AddComponent<DTPBasicPropInfoEditor>();
             KlyteMonoUtils.CreateUIElement(out m_textInfoEditor, m_editArea.transform, "textTab", new UnityEngine.Vector4(0, 0, m_editArea.width - m_editArea.padding.horizontal, m_editArea.height - m_editArea.padding.vertical));
+            m_textInfoEditor.gameObject.AddComponent<DTPTextEditor>();
 
             OnTabChange(0);
 
@@ -167,17 +167,7 @@ namespace Klyte.DynamicTextProps.UI
             }
         }
 
-        private void InitCircledButton(UIComponent parent, out UIButton m_newButton, CommonsSpriteNames sprite, MouseEventHandler onClicked, string tooltipLocale)
-        {
-            string name = Locale.Get(tooltipLocale);
-            KlyteMonoUtils.CreateUIElement(out m_newButton, parent.transform, name, new UnityEngine.Vector4(0, 0, 40, 40));
-            KlyteMonoUtils.InitButtonFull(m_newButton, false, "OptionBase");
-            m_newButton.focusedBgSprite = "";
-            m_newButton.normalFgSprite = KlyteResourceLoader.GetDefaultSpriteNameFor(sprite);
-            m_newButton.scaleFactor = 0.6f;
-            m_newButton.eventClicked += onClicked;
-            m_newButton.tooltip = name;
-        }
+
         private void InitTabButton(UIComponent parent, out UIButton tabTemplate, string text, Vector2 size, bool useDefaultAction = true)
         {
             KlyteMonoUtils.CreateUIElement(out tabTemplate, parent.transform, name, new UnityEngine.Vector4(0, 0, 40, 40));

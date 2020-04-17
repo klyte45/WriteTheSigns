@@ -186,6 +186,8 @@
     <Compile Include="Overrides\DistrictManagerOverrides.cs" />
     <Compile Include="Tools\BuildingTool.cs" />
     <Compile Include="UI\DTPPropPreviewRenderer.cs" />
+    <Compile Include="UI\Tabs\DTPEditorLib.cs" />
+    <Compile Include="UI\Tabs\DTPTextEditor.cs" />
     <Compile Include="UI\Tabs\DTPBasicPropInfoEditor.cs" />
     <Compile Include="UI\Tabs\DTPPropTextLayoutEditor.cs" />
     <Compile Include="Utils\DTPLineUtils.cs" />
@@ -388,6 +390,8 @@
     <EmbeddedResource Include="commons\UI\Images\%25K45_Lock.png" />
     <Content Include="commons\UI\Images\%25K45_MenuPanel_color.png" />
     <EmbeddedResource Include="commons\UI\Images\%25K45_New.png" />
+    <EmbeddedResource Include="commons\UI\Images\%25K45_QuestionMark.png" />
+    <EmbeddedResource Include="commons\UI\Images\%25K45_MoveCross.png" />
     <Content Include="commons\UI\Images\%25K45_RelativeMode.png" />
     <Content Include="commons\UI\Images\%25K45_RemoveUnwantedIcon.png" />
     <EmbeddedResource Include="commons\UI\Images\%25K45_Unlock.png" />
@@ -398,12 +402,12 @@
   <PropertyGroup>
     <PostBuildEvent>xcopy /Y "$(TargetDir)0Harmony.dll" "$(ProjectDir)\_requiredDLLs\"
 xcopy /Y "$(TargetPath)" "$(ProjectDir)\_requiredDLLs\"
-xcopy /Y "$(ProjectDir)\_requiredDLLs\*" "C:\Users\Leandro\AppData\Local\Colossal Order\Cities_Skylines\Addons\Mods\DTB\"
-xcopy /Y "$(ProjectDir)\_requiredDLLs\*"  "S:\Steam\steamapps\workshop\content\255710\1831805509\"</PostBuildEvent>
+xcopy /Y /e "$(ProjectDir)\_requiredDLLs\*" "C:\Users\Leandro\AppData\Local\Colossal Order\Cities_Skylines\Addons\Mods\DTB\"
+rem xcopy /Y /e "$(ProjectDir)\_requiredDLLs\*"  "S:\Steam\steamapps\workshop\content\255710\???\"</PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <PreBuildEvent>del /Q "S:\Steam\steamapps\workshop\content\255710\1831805509\*"
-del /Q "C:\Users\Leandro\AppData\Local\Colossal Order\Cities_Skylines\Addons\Mods\DTB\*"
-del /Q "$(ProjectDir)\_requiredDLLs"</PreBuildEvent>
+    <PreBuildEvent>rem del /S /Q "S:\Steam\steamapps\workshop\content\255710\???\*"
+del /S /Q "C:\Users\Leandro\AppData\Local\Colossal Order\Cities_Skylines\Addons\Mods\DTB\*"
+del /Q "$(ProjectDir)\_requiredDLLs\*.dll"</PreBuildEvent>
   </PropertyGroup>
 </Project>
