@@ -44,7 +44,7 @@ namespace Klyte.DynamicTextProps.Xml
         [XmlAttribute("scaleZ")]
         public float? ScaleZ;
 
-        public BoardDescriptorGeneralXml Descriptor { get; private set; } = new BoardDescriptorGeneralXml();
+        public BoardDescriptorGeneralXml Descriptor { get; internal set; } = new BoardDescriptorGeneralXml();
     }
 
 

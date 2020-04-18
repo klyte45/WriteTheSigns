@@ -1,6 +1,5 @@
 using ColossalFramework;
 using ColossalFramework.UI;
-using Klyte.Commons.Utils;
 using SpriteFontPlus.Utility;
 using System;
 using System.Collections.Generic;
@@ -200,8 +199,8 @@ namespace FontStashSharp
 
                     GetQuad(glyph, prevGlyph, Spacing, ref originX, ref originY, ref q);
 
-                    q.X0 = (int)(q.X0 * Scale.x);
-                    q.X1 = (int)(q.X1 * Scale.x);
+                    q.X0 = (int)(q.X0 * -Scale.x);
+                    q.X1 = (int)(q.X1 * -Scale.x);
                     q.Y0 = (int)(q.Y0 * Scale.y);
                     q.Y1 = (int)(q.Y1 * Scale.y);
 

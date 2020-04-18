@@ -1,7 +1,5 @@
 ﻿using Klyte.Commons.Interfaces;
 using Klyte.Commons.Utils;
-using Klyte.DynamicTextProps.Libraries;
-using Klyte.DynamicTextProps.Overrides;
 using Klyte.DynamicTextProps.Tools;
 using Klyte.DynamicTextProps.Utils;
 using SpriteFontPlus;
@@ -10,6 +8,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using UnityEngine;
 
 namespace Klyte.DynamicTextProps
 {
@@ -87,6 +86,7 @@ namespace Klyte.DynamicTextProps
         public static string DefaultVehiclesConfigurationFolder { get; } = FOLDER_NAME + Path.DirectorySeparatorChar + DEFAULT_GAME_VEHICLES_CONFIG_FOLDER;
         public static string AbbreviationFilesPath { get; } = FOLDER_NAME + Path.DirectorySeparatorChar + ABBREVIATION_FILES_FOLDER;
         public static string FontFilesPath { get; } = FOLDER_NAME + Path.DirectorySeparatorChar + FONTS_FILES_FOLDER;
+        public static Shader DEFAULT_SHADER_TEXT = Shader.Find("Custom/Buildings/Building/NoBase") ?? DistrictManager.instance.m_properties.m_areaNameShader;
     }
 
 }

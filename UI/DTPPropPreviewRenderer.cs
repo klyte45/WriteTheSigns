@@ -1,4 +1,7 @@
 ﻿using ColossalFramework;
+using Klyte.DynamicTextProps.Rendering;
+using Klyte.DynamicTextProps.Xml;
+using SpriteFontPlus;
 using UnityEngine;
 
 namespace Klyte.DynamicTextProps.UI
@@ -6,6 +9,9 @@ namespace Klyte.DynamicTextProps.UI
     public class DTPPropPreviewRenderer : MonoBehaviour
     {
         private readonly Camera m_camera;
+        private readonly MaterialPropertyBlock m_block = new MaterialPropertyBlock();
+        private readonly BoardInstanceXml m_defaultInstance = new BoardInstanceXml();
+
 
         public Vector2 Size
         {
@@ -41,9 +47,9 @@ namespace Klyte.DynamicTextProps.UI
             m_camera.name = "DTPCamera";
         }
 
-        public Matrix4x4 RenderProp(PropInfo info) => RenderProp(info, default, info.m_color0);
+        public Matrix4x4 RenderProp(PropInfo info, BoardDescriptorGeneralXml descriptor) => RenderProp(info, default, info.m_color0, descriptor);
 
-        public Matrix4x4 RenderProp(PropInfo info, Vector3 offset, Color color)
+        public Matrix4x4 RenderProp(PropInfo info, Vector3 offset, Color color, BoardDescriptorGeneralXml descriptor)
         {
             InfoManager instanceInfo = Singleton<InfoManager>.instance;
             InfoManager.InfoMode currentMode = instanceInfo.CurrentMode;
@@ -90,8 +96,11 @@ namespace Klyte.DynamicTextProps.UI
             propManager.m_drawCallData.m_defaultCalls += 1;
             Graphics.DrawMesh(info.m_mesh, matrix, info.m_material, info.m_prefabDataLayer, m_camera, 0, materialBlock, false, false, false);
 
-
-
+            m_defaultInstance.Descriptor = descriptor;
+            for (ushort i = 0; i < descriptor.m_textDescriptors.Length; i++)
+            {
+                DTPPropRenderingRules.RenderTextMesh(0, 0, i, m_defaultInstance, matrix, descriptor.m_textDescriptors[i], m_block, FontServer.instance[DTPController.DEFAULT_FONT_KEY], m_camera);
+            }
 
 
 

@@ -28,28 +28,28 @@ namespace Klyte.DynamicTextProps.Utils
         }
 
 
-        public static BasicRenderInformation GetFromCacheArray(ushort refId, CacheArrayTypes type, DynamicSpriteFont primaryFont, string overrideFont = null)
+        public static BasicRenderInformation GetFromCacheArray(ushort refId, string prefix, string suffix, bool allCaps, CacheArrayTypes type, DynamicSpriteFont primaryFont, string overrideFont = null)
         {
             return type switch
             {
-                CacheArrayTypes.SuffixStreetName => UpdateMeshStreetSuffix(refId, ref m_cachedStreetNameInformation_End[refId], primaryFont, overrideFont),
-                CacheArrayTypes.FullStreetName => UpdateMeshFullNameStreet(refId, ref m_cachedStreetNameInformation_Full[refId], primaryFont, overrideFont),
-                CacheArrayTypes.StreetQualifier => UpdateMeshStreetQualifier(refId, ref m_cachedStreetNameInformation_Start[refId], primaryFont, overrideFont),
-                CacheArrayTypes.District => UpdateMeshDistrict(refId, ref m_cachedDistrictsNames[refId], primaryFont, overrideFont),
+                CacheArrayTypes.SuffixStreetName => UpdateMeshStreetSuffix(refId, ref m_cachedStreetNameInformation_End[refId], prefix, suffix, allCaps, primaryFont, overrideFont),
+                CacheArrayTypes.FullStreetName => UpdateMeshFullNameStreet(refId, ref m_cachedStreetNameInformation_Full[refId], prefix, suffix, allCaps, primaryFont, overrideFont),
+                CacheArrayTypes.StreetQualifier => UpdateMeshStreetQualifier(refId, ref m_cachedStreetNameInformation_Start[refId], prefix, suffix, allCaps, primaryFont, overrideFont),
+                CacheArrayTypes.District => UpdateMeshDistrict(refId, ref m_cachedDistrictsNames[refId], prefix, suffix, allCaps, primaryFont, overrideFont),
                 _ => null,
             };
         }
 
-        public static BasicRenderInformation UpdateMeshFullNameStreet(ushort idx, ref string name, DynamicSpriteFont primaryFont, string overrideFont)
+        public static BasicRenderInformation UpdateMeshFullNameStreet(ushort idx, ref string name, string prefix, string suffix, bool allCaps, DynamicSpriteFont primaryFont, string overrideFont)
         {
             if (name == null)
             {
                 name = DTPHookable.GetStreetFullName(idx);
                 LogUtils.DoLog($"!GenName {name} for {idx}");
             }
-            return GetTextData(name, primaryFont, overrideFont);
+            return GetTextData(name, prefix, suffix, allCaps, primaryFont, overrideFont);
         }
-        public static BasicRenderInformation UpdateMeshStreetQualifier(ushort idx, ref string name, DynamicSpriteFont primaryFont, string overrideFont)
+        public static BasicRenderInformation UpdateMeshStreetQualifier(ushort idx, ref string name, string prefix, string suffix, bool allCaps, DynamicSpriteFont primaryFont, string overrideFont)
         {
             if (name == null)
             {
@@ -64,9 +64,9 @@ namespace Klyte.DynamicTextProps.Utils
                 }
                 LogUtils.DoLog($"!GenName {name} for {idx}");
             }
-            return GetTextData(name, primaryFont, overrideFont);
+            return GetTextData(name, prefix, suffix, allCaps, primaryFont, overrideFont);
         }
-        public static BasicRenderInformation UpdateMeshDistrict(ushort districtId, ref string name, DynamicSpriteFont primaryFont, string overrideFont)
+        public static BasicRenderInformation UpdateMeshDistrict(ushort districtId, ref string name, string prefix, string suffix, bool allCaps, DynamicSpriteFont primaryFont, string overrideFont)
         {
             if (name == null)
             {
@@ -79,9 +79,9 @@ namespace Klyte.DynamicTextProps.Utils
                     name = DistrictManager.instance.GetDistrictName(districtId);
                 }
             }
-            return GetTextData(name, primaryFont, overrideFont);
+            return GetTextData(name, prefix, suffix, allCaps, primaryFont, overrideFont);
         }
-        public static BasicRenderInformation UpdateMeshStreetSuffix(ushort idx, ref string name, DynamicSpriteFont primaryFont, string overrideFont)
+        public static BasicRenderInformation UpdateMeshStreetSuffix(ushort idx, ref string name, string prefix, string suffix, bool allCaps, DynamicSpriteFont primaryFont, string overrideFont)
         {
             if (name == null)
             {
@@ -95,11 +95,19 @@ namespace Klyte.DynamicTextProps.Utils
                     name = DTPUtils.ApplyAbbreviations(DTPHookable.GetStreetSuffixCustom(idx));
                 }
             }
-            return GetTextData(name, primaryFont,overrideFont);
+            return GetTextData(name, prefix, suffix, allCaps, primaryFont, overrideFont);
         }
 
 
-        public static BasicRenderInformation GetTextData(string text, DynamicSpriteFont primaryFont, string overrideFont = null) => (FontServer.instance[overrideFont] ?? primaryFont).DrawString(text, default, Color.white, FontServer.instance.ScaleEffective);
+        public static BasicRenderInformation GetTextData(string text, string prefix, string suffix, bool allCaps, DynamicSpriteFont primaryFont, string overrideFont = null)
+        {
+            string str = $"{prefix}{text}{suffix}";
+            if (allCaps)
+            {
+                str = str.ToUpper();
+            }
+            return (FontServer.instance[overrideFont] ?? primaryFont).DrawString(str, default, Color.white, FontServer.instance.ScaleEffective);
+        }
 
         public static Matrix4x4 RenderProp(ushort refId, float refAngleRad, RenderManager.CameraInfo cameraInfo,
                                     PropInfo propInfo, Vector3 position, Vector4 dataVector, int idx,

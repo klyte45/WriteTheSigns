@@ -48,7 +48,7 @@ namespace Klyte.DynamicTextProps.UI
         private UIPanel m_textInfoEditor;
         private PropInfo m_currentInfo;
 
-        internal Color32 CurrentSelectedColor => EditingInstance.FixedColor;
+        internal Color? CurrentSelectedColor => EditingInstance.FixedColor;
 
         internal event Action<int> CurrentTabChanged;
 

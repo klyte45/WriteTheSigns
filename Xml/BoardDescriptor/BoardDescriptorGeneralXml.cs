@@ -14,11 +14,11 @@ namespace Klyte.DynamicTextProps.Xml
         public string m_propName;
 
         [XmlIgnore]
-        public Color FixedColor { get => m_cachedColor; set => m_cachedColor = value; }
+        public Color? FixedColor { get => m_cachedColor; set => m_cachedColor = value; }
         [XmlIgnore]
-        private Color m_cachedColor;
+        private Color? m_cachedColor;
         [XmlAttribute("fixedColor")]
-        public string FixedColorStr { get => m_cachedColor == default ? null : ColorExtensions.ToRGB(FixedColor); set => FixedColor = value.IsNullOrWhiteSpace() ? default : (Color)ColorExtensions.FromRGB(value); }
+        public string FixedColorStr { get => m_cachedColor == null ? null : ColorExtensions.ToRGB(FixedColor ?? Color.clear); set => FixedColor = value.IsNullOrWhiteSpace() ? null : (Color?)ColorExtensions.FromRGB(value); }
 
         [XmlAttribute("fontName")]
         public string FontName { get; set; }

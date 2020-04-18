@@ -22,7 +22,6 @@ namespace Klyte.DynamicTextProps.Rendering
         public static readonly int SHADER_PROP_SPECULAR = Shader.PropertyToID("_SpecColor");
 
 
-        private static readonly Shader m_textShader = Shader.Find("Custom/Props/Prop/Default") ?? DistrictManager.instance.m_properties.m_areaNameShader;
 
 
         public static void RenderPropMesh(ref PropInfo propInfo, RenderManager.CameraInfo cameraInfo, ushort refId, int boardIdx, int secIdx, int layerMask, float refAngleRad, Vector3 position, Vector4 dataVector, ref string propName, Vector3 propAngle, Vector3 propScale, BoardInstanceXml descriptor, out Matrix4x4 propMatrix, out bool rendered, InstanceID propRenderID)
@@ -71,7 +70,7 @@ namespace Klyte.DynamicTextProps.Rendering
             float realWidth = defaultMultiplierX * renderInfo.m_sizeMetersUnscaled.x;
             float realHeight = defaultMultiplierY * renderInfo.m_sizeMetersUnscaled.y;
             Vector3 targetRelativePosition = textDescriptor.m_textRelativePosition;
-            //LogUtils.DoLog($"[{GetType().Name},{refID},{boardIdx},{secIdx}] realWidth = {realWidth}; realHeight = {realHeight}; renderInfo.m_mesh.bounds = {renderInfo.m_mesh.bounds};");
+            //LogUtils.DoWarnLog($"[{renderInfo},{refID},{boardIdx},{secIdx}] realWidth = {realWidth}; realHeight = {realHeight};");
             if (textDescriptor.m_maxWidthMeters > 0 && textDescriptor.m_maxWidthMeters < realWidth)
             {
                 overflowScaleX = textDescriptor.m_maxWidthMeters / realWidth;
@@ -92,7 +91,7 @@ namespace Klyte.DynamicTextProps.Rendering
 
             if (textDescriptor.m_verticalAlign != UIVerticalAlignment.Middle)
             {
-                float factor = textDescriptor.m_verticalAlign == UIVerticalAlignment.Bottom == (((textDescriptor.m_textRelativeRotation.x % 360) + 810) % 360 > 180) ? -1f : 1f;
+                float factor = textDescriptor.m_verticalAlign == UIVerticalAlignment.Bottom == (((textDescriptor.m_textRelativeRotation.x % 360) + 810) % 360 > 180) ? -.5f : .5f;
                 targetRelativePosition += new Vector3(0, realHeight * factor, 0);
             }
 
@@ -106,7 +105,7 @@ namespace Klyte.DynamicTextProps.Rendering
             {
                 colorToSet = GetContrastColor(refID, boardIdx, secIdx, descriptor);
             }
-            else if (textDescriptor.m_defaultColor != Color.clear)
+            else if (textDescriptor.m_defaultColor != null)
             {
                 colorToSet = textDescriptor.m_defaultColor;
             }
@@ -119,32 +118,32 @@ namespace Klyte.DynamicTextProps.Rendering
 
 
             //materialPropertyBlock.SetColor(m_shaderPropEmissive, Color.white * (SimulationManager.instance.m_isNightTime ? textDescriptor.m_nightEmissiveMultiplier : textDescriptor.m_dayEmissiveMultiplier));
-            renderInfo.m_generatedMaterial.shader = m_textShader;
+            renderInfo.m_generatedMaterial.shader = DTPController.DEFAULT_SHADER_TEXT;
             Graphics.DrawMesh(renderInfo.m_mesh, matrix, renderInfo.m_generatedMaterial, 10, targetCamera, 0, materialPropertyBlock, false);
 
         }
-        public static Color? GetColor(ushort refId, int boardIdx, int secIdx, BoardInstanceXml descriptor)
+        public static Color? GetColor(ushort refId, int boardIdx, int textIdx, BoardInstanceXml descriptor)
         {
 
             if (descriptor is BoardDescriptorRoadNodeXml)
             {
-                if (secIdx == 0)
+                if (textIdx == 0)
                 {
-                    return DTPRoadNodesData.Instance.BoardsContainers[refId].m_boardsData[boardIdx]?.m_cachedColor ?? Color.white;
+                    return DTPRoadNodesData.Instance.BoardsContainers[refId].m_boardsData[boardIdx]?.m_cachedColor;
                 }
                 else
                 {
-                    return DTPRoadNodesData.Instance.BoardsContainers[refId].m_boardsData[boardIdx]?.m_cachedColor2 ?? Color.white;
+                    return DTPRoadNodesData.Instance.BoardsContainers[refId].m_boardsData[boardIdx]?.m_cachedColor2;
                 }
             }
-            return null;
+            return descriptor.Descriptor.FixedColor;
         }
 
-        public static Color GetContrastColor(ushort refID, int boardIdx, int secIdx, BoardInstanceXml descriptor)
+        public static Color GetContrastColor(ushort refID, int boardIdx, int textIdx, BoardInstanceXml descriptor)
         {
             if (descriptor is BoardDescriptorRoadNodeXml)
             {
-                if (secIdx == 0)
+                if (textIdx == 0)
                 {
                     return DTPRoadNodesData.Instance.BoardsContainers[refID].m_boardsData[boardIdx]?.m_cachedContrastColor ?? Color.black;
                 }
@@ -153,7 +152,7 @@ namespace Klyte.DynamicTextProps.Rendering
                     return DTPRoadNodesData.Instance.BoardsContainers[refID].m_boardsData[boardIdx]?.m_cachedContrastColor2 ?? Color.black;
                 }
             }
-            return Color.clear;
+            return KlyteMonoUtils.ContrastColor(descriptor.Descriptor.FixedColor ?? Color.white);
         }
 
         private static BasicRenderInformation GetTextMesh(DynamicSpriteFont baseFont, BoardTextDescriptorGeneralXml textDescriptor, ushort refID, int boardIdx, int secIdx, BoardInstanceXml descriptor)
@@ -163,22 +162,22 @@ namespace Klyte.DynamicTextProps.Rendering
                 switch (textDescriptor.m_textType)
                 {
                     case TextType.StreetSuffix:
-                        return RenderUtils.GetFromCacheArray((secIdx == 0 ? DTPRoadNodesData.Instance.BoardsContainers[refID].m_boardsData[boardIdx].m_segmentId1 : DTPRoadNodesData.Instance.BoardsContainers[refID].m_boardsData[boardIdx].m_segmentId2), RenderUtils.CacheArrayTypes.SuffixStreetName, baseFont);
+                        return RenderUtils.GetFromCacheArray((secIdx == 0 ? DTPRoadNodesData.Instance.BoardsContainers[refID].m_boardsData[boardIdx].m_segmentId1 : DTPRoadNodesData.Instance.BoardsContainers[refID].m_boardsData[boardIdx].m_segmentId2), textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, RenderUtils.CacheArrayTypes.SuffixStreetName, baseFont);
                     case TextType.StreetPrefix:
-                        return RenderUtils.GetFromCacheArray((secIdx == 0 ? DTPRoadNodesData.Instance.BoardsContainers[refID].m_boardsData[boardIdx].m_segmentId1 : DTPRoadNodesData.Instance.BoardsContainers[refID].m_boardsData[boardIdx].m_segmentId2), RenderUtils.CacheArrayTypes.StreetQualifier, baseFont);
+                        return RenderUtils.GetFromCacheArray((secIdx == 0 ? DTPRoadNodesData.Instance.BoardsContainers[refID].m_boardsData[boardIdx].m_segmentId1 : DTPRoadNodesData.Instance.BoardsContainers[refID].m_boardsData[boardIdx].m_segmentId2), textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, RenderUtils.CacheArrayTypes.StreetQualifier, baseFont);
                     case TextType.StreetNameComplete:
-                        return RenderUtils.GetFromCacheArray((secIdx == 0 ? DTPRoadNodesData.Instance.BoardsContainers[refID].m_boardsData[boardIdx].m_segmentId1 : DTPRoadNodesData.Instance.BoardsContainers[refID].m_boardsData[boardIdx].m_segmentId2), RenderUtils.CacheArrayTypes.FullStreetName, baseFont);
+                        return RenderUtils.GetFromCacheArray((secIdx == 0 ? DTPRoadNodesData.Instance.BoardsContainers[refID].m_boardsData[boardIdx].m_segmentId1 : DTPRoadNodesData.Instance.BoardsContainers[refID].m_boardsData[boardIdx].m_segmentId2), textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, RenderUtils.CacheArrayTypes.FullStreetName, baseFont);
                     case TextType.District:
-                        return RenderUtils.GetFromCacheArray((secIdx == 0 ? DTPRoadNodesData.Instance.BoardsContainers[refID].m_boardsData[boardIdx].m_districtId1 : DTPRoadNodesData.Instance.BoardsContainers[refID].m_boardsData[boardIdx].m_districtId2), RenderUtils.CacheArrayTypes.District, baseFont);
+                        return RenderUtils.GetFromCacheArray((secIdx == 0 ? DTPRoadNodesData.Instance.BoardsContainers[refID].m_boardsData[boardIdx].m_districtId1 : DTPRoadNodesData.Instance.BoardsContainers[refID].m_boardsData[boardIdx].m_districtId2), textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, RenderUtils.CacheArrayTypes.District, baseFont);
                     case TextType.DistanceFromCenter:
                         int distanceRef = (int)Mathf.Floor(DTPRoadNodesData.Instance.BoardsContainers[refID].m_boardsData[boardIdx].m_distanceRef / 1000);
-                        return RenderUtils.GetTextData(distanceRef.ToString(), baseFont);
+                        return RenderUtils.GetTextData(distanceRef.ToString(), textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, baseFont);
                     case TextType.Fixed:
-                        return RenderUtils.GetTextData(textDescriptor.m_fixedText ?? "", baseFont, textDescriptor.m_overrideFont);
+                        return RenderUtils.GetTextData(textDescriptor.m_fixedText ?? "", textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, baseFont, textDescriptor.m_overrideFont);
                     default: return null;
                 }
             }
-            return RenderUtils.GetTextData(textDescriptor.m_fixedText ?? "", baseFont, textDescriptor.m_overrideFont);
+            return RenderUtils.GetTextData(textDescriptor.m_fixedText ?? "", textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, baseFont, textDescriptor.m_overrideFont);
         }
     }
 

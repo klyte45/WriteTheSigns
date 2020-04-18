@@ -24,7 +24,7 @@ namespace Klyte.DynamicTextProps.UI
 
 
         private PropInfo CurrentInfo => DTPPropTextLayoutEditor.Instance.CurrentInfo;
-        private Color32 CurrentSelectedColor => DTPPropTextLayoutEditor.Instance.CurrentSelectedColor;
+        private Color32? CurrentSelectedColor => DTPPropTextLayoutEditor.Instance.CurrentSelectedColor;
         private int TabToPreview => DTPPropTextLayoutEditor.Instance.CurrentTab;
         private BoardDescriptorGeneralXml EditingInstance => DTPPropTextLayoutEditor.Instance.EditingInstance;
 
@@ -133,7 +133,7 @@ namespace Klyte.DynamicTextProps.UI
                 return;
             }
             m_preview.isVisible = true;
-            m_previewRenderer.RenderProp(CurrentInfo, m_cameraPosition, CurrentSelectedColor);
+            m_previewRenderer.RenderProp(CurrentInfo, m_cameraPosition, CurrentSelectedColor ?? Color.white, EditingInstance);
         }
 
         public void Update()

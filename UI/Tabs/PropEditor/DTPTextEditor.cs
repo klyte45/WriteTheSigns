@@ -46,6 +46,7 @@ namespace Klyte.DynamicTextProps.UI
 
         private int TabToEdit => DTPPropTextLayoutEditor.Instance.CurrentTab - 1;
         private bool m_isEditing = true;
+        private UICheckBox m_allCaps;
 
         public void Awake()
         {
@@ -86,6 +87,7 @@ namespace Klyte.DynamicTextProps.UI
             AddDropdown(Locale.Get("K45_DTP_OVERRIDE_FONT"), out m_overrideFontSelect, helperConfig, new string[0], OnSetOverrideFont);
             AddTextField(Locale.Get("K45_DTP_PREFIX"), out m_textPrefix, helperConfig, OnSetPrefix);
             AddTextField(Locale.Get("K45_DTP_SUFFIX"), out m_textSuffix, helperConfig, OnSetSuffix);
+            m_allCaps = helperConfig.AddCheckboxLocale("K45_DTP_TEXT_ALL_CAPS", false, OnSetAllCaps); ;
 
             DTPUtils.ReloadFontsOf(m_overrideFontSelect, true);
 
@@ -114,6 +116,7 @@ namespace Klyte.DynamicTextProps.UI
                     m_overrideFontSelect.selectedIndex = x.m_overrideFont == null ? 0 : Array.IndexOf(m_overrideFontSelect.items, x.m_overrideFont);
                     m_textPrefix.text = x.m_prefix ?? "";
                     m_textSuffix.text = x.m_suffix ?? "";
+                    m_allCaps.isChecked = x.m_allCaps;
 
 
                     m_customText.parent.isVisible = x.m_textType == TextType.Fixed;
@@ -122,6 +125,7 @@ namespace Klyte.DynamicTextProps.UI
             };
             m_isEditing = false;
         }
+
 
         private delegate void SafeObtainMethod(ref BoardTextDescriptorGeneralXml x);
 
@@ -184,6 +188,7 @@ namespace Klyte.DynamicTextProps.UI
 
         private void OnRotationChange(Vector3 obj) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_textRelativeRotation = obj);
         private void OnPositionChange(Vector3 obj) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_textRelativePosition = obj);
+        private void OnSetAllCaps(bool isChecked) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_allCaps = isChecked);
     }
 
 }
