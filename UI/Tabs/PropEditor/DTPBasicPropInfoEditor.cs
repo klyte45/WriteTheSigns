@@ -33,7 +33,6 @@ namespace Klyte.DynamicTextProps.UI
 
         private PropInfo m_lastSelection;
 
-        private int TabToPreview => DTPPropTextLayoutEditor.Instance.CurrentTab;
         private BoardDescriptorGeneralXml EditingInstance => DTPPropTextLayoutEditor.Instance.EditingInstance;
 
         public void Awake()

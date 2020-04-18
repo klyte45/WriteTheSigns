@@ -91,12 +91,15 @@ namespace Klyte.DynamicTextProps.UI
 
         internal void ResetCamera()
         {
-            m_maxZoom = Mathf.Max(Mathf.Pow(CurrentInfo.m_mesh.bounds.extents.y / CurrentInfo.m_mesh.bounds.extents.x, 1 / 3f) * 3f, 3f);
-            TargetZoom = m_maxZoom;
-            m_targetRotation = 0;
-            Vector3 target = CurrentInfo.m_mesh.bounds.center;
-            target.y *= -1;
-            m_targetCameraPosition = target;
+            if (CurrentInfo != null)
+            {
+                m_maxZoom = Mathf.Max(Mathf.Pow(CurrentInfo.m_mesh.bounds.extents.y / CurrentInfo.m_mesh.bounds.extents.x, 1 / 3f) * 3f, 3f);
+                TargetZoom = m_maxZoom;
+                m_targetRotation = 0;
+                Vector3 target = CurrentInfo.m_mesh.bounds.center;
+                target.y *= -1;
+                m_targetCameraPosition = target;
+            }
         }
         private void OnMouseMove(UIComponent component, UIMouseEventParameter eventParam)
         {

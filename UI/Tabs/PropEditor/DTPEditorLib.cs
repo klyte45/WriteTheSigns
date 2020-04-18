@@ -1,8 +1,10 @@
-﻿using ColossalFramework.UI;
+﻿using ColossalFramework.Globalization;
+using ColossalFramework.UI;
 using ICities;
 using Klyte.Commons.Extensors;
 using Klyte.Commons.Utils;
 using System;
+using System.Reflection;
 using UnityEngine;
 
 
@@ -47,12 +49,17 @@ namespace Klyte.DynamicTextProps.UI
         {
             fieldArray = parentHelper.AddVector3Field(label, Vector3.zero, onChange);
             KlyteMonoUtils.LimitWidthAndBox(fieldArray[0].parent.GetComponentInChildren<UILabel>(), (parentHelper.Self.width / 2) - 10, true);
-            fieldArray.ForEach(x => x.eventMouseWheel += RollFloat);
+            fieldArray.ForEach(x =>
+            {
+                x.eventMouseWheel += RollFloat;
+                x.tooltip = Locale.Get("K45_CMNS_FLOAT_EDITOR_TOOLTIP_HELP");
+            });
             fieldArray[0].zOrder = 1;
             fieldArray[1].zOrder = 2;
             fieldArray[2].zOrder = 3;
         }
 
+        private static readonly MethodInfo m_submitField = typeof(UITextField).GetMethod("OnSubmit", RedirectorUtils.allFlags);
         public static void RollFloat(UIComponent component, UIMouseEventParameter eventParam)
         {
             if (component is UITextField tf && tf.numericalOnly && float.TryParse(tf.text, out float currentValue))
@@ -61,12 +68,14 @@ namespace Klyte.DynamicTextProps.UI
                 bool shiftPressed = Event.current.shift;
                 bool altPressed = Event.current.alt;
                 tf.text = Mathf.Max(tf.allowNegative ? float.MinValue : 0, currentValue + 0.0003f + (eventParam.wheelDelta * (altPressed && ctrlPressed ? 0.001f : ctrlPressed ? 0.1f : altPressed ? 0.01f : shiftPressed ? 10 : 1))).ToString("F3");
+                m_submitField.Invoke(tf, new object[0]);
             }
         }
 
         public static void AddFloatField(string label, out UITextField field, UIHelperExtension parentHelper, Action<float> onChange, bool acceptNegative)
         {
             field = parentHelper.AddFloatField(label, 0, onChange, acceptNegative);
+            field.width = 90;
             KlyteMonoUtils.LimitWidthAndBox(field.parent.GetComponentInChildren<UILabel>(), (parentHelper.Self.width / 2) - 10, true);
             field.eventMouseWheel += RollFloat;
         }

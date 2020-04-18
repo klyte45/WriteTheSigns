@@ -6,6 +6,7 @@ using Klyte.Commons.UI.SpriteNames;
 using Klyte.Commons.Utils;
 using Klyte.DynamicTextProps.Xml;
 using System;
+using System.Linq;
 using UnityEngine;
 
 namespace Klyte.DynamicTextProps.UI
@@ -21,8 +22,8 @@ namespace Klyte.DynamicTextProps.UI
         private UIButton m_deleteButton;
         private UIButton m_refreshListButton;
 
-        internal BoardDescriptorGeneralXml EditingInstance { get; private set; } = new BoardDescriptorGeneralXml();
-
+        private BoardDescriptorGeneralXml m_editingInstance = new BoardDescriptorGeneralXml();
+        internal ref BoardDescriptorGeneralXml EditingInstance => ref m_editingInstance;
         internal PropInfo CurrentInfo
         {
             get => m_currentInfo;
@@ -48,6 +49,8 @@ namespace Klyte.DynamicTextProps.UI
         private PropInfo m_currentInfo;
 
         internal Color32 CurrentSelectedColor => EditingInstance.FixedColor;
+
+        internal event Action<int> CurrentTabChanged;
 
         public void Awake()
         {
@@ -131,12 +134,14 @@ namespace Klyte.DynamicTextProps.UI
             CurrentTab = idx;
             m_basicInfoEditor.isVisible = CurrentTab == 0;
             m_textInfoEditor.isVisible = CurrentTab != 0;
+            CurrentTabChanged?.Invoke(idx);
         }
 
         private void AddTabToItem(UIComponent x, UIMouseEventParameter y)
         {
             InitTabButton(m_editTabstrip, out UIButton button, "", new Vector2(m_editTabstrip.size.x, 30));
             button.text = $"Tab {button.zOrder - 1}";
+            EditingInstance.m_textDescriptors = EditingInstance.m_textDescriptors.Union(new BoardTextDescriptorGeneralXml[] { new BoardTextDescriptorGeneralXml() }).ToArray();
             m_plusButton.zOrder = 9999999;
         }
 
