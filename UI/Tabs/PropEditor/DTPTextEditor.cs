@@ -87,7 +87,7 @@ namespace Klyte.DynamicTextProps.UI
             AddDropdown(Locale.Get("K45_DTP_OVERRIDE_FONT"), out m_overrideFontSelect, helperConfig, new string[0], OnSetOverrideFont);
             AddTextField(Locale.Get("K45_DTP_PREFIX"), out m_textPrefix, helperConfig, OnSetPrefix);
             AddTextField(Locale.Get("K45_DTP_SUFFIX"), out m_textSuffix, helperConfig, OnSetSuffix);
-            m_allCaps = helperConfig.AddCheckboxLocale("K45_DTP_TEXT_ALL_CAPS", false, OnSetAllCaps); ;
+            m_allCaps = helperConfig.AddCheckboxLocale("K45_DTP_TEXT_ALL_CAPS", false, OnSetAllCaps);
 
             DTPUtils.ReloadFontsOf(m_overrideFontSelect, true);
 
@@ -141,9 +141,10 @@ namespace Klyte.DynamicTextProps.UI
                 m_isEditing = true;
                 try
                 {
-                    if (Math.Max(0, targetTab ?? TabToEdit) < DTPPropTextLayoutEditor.Instance.EditingInstance.m_textDescriptors.Length)
+                    int effTargetTab = Math.Max(0, targetTab ?? TabToEdit);
+                    if (effTargetTab < DTPPropTextLayoutEditor.Instance.EditingInstance.m_textDescriptors.Length)
                     {
-                        action(ref DTPPropTextLayoutEditor.Instance.EditingInstance.m_textDescriptors[targetTab ?? TabToEdit]);
+                        action(ref DTPPropTextLayoutEditor.Instance.EditingInstance.m_textDescriptors[effTargetTab]);
                     }
                 }
                 finally

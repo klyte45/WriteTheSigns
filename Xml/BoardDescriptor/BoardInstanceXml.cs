@@ -47,5 +47,4 @@ namespace Klyte.DynamicTextProps.Xml
         public BoardDescriptorGeneralXml Descriptor { get; internal set; } = new BoardDescriptorGeneralXml();
     }
 
-
 }

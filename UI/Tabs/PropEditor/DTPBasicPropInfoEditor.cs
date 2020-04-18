@@ -35,6 +35,17 @@ namespace Klyte.DynamicTextProps.UI
 
         private BoardDescriptorGeneralXml EditingInstance => DTPPropTextLayoutEditor.Instance.EditingInstance;
 
+        public Dictionary<string, string> PropsLoaded
+        {
+            get {
+                if (m_propsLoaded == null)
+                {
+                    m_propsLoaded = PrefabUtils<PropInfo>.AssetsLoaded.ToDictionary(x => GetListName(x), x => x?.name);
+                }
+                return m_propsLoaded;
+            }
+        }
+
         public void Awake()
         {
             Instance = this;
@@ -113,18 +124,21 @@ namespace Klyte.DynamicTextProps.UI
         }
 
         private void OnSetName(string text) => EditingInstance.SaveName = text;
-        public void Start() => m_propsLoaded = PrefabUtils<PropInfo>.AssetsLoaded.ToDictionary(x => GetListName(x), x => x?.name);
 
-        private string[] GetFilterResult() => m_propsLoaded
+        private string[] GetFilterResult() => PropsLoaded
             .ToList()
             .Where((x) => m_propFilter.text.IsNullOrWhiteSpace() ? true : LocaleManager.cultureInfo.CompareInfo.IndexOf(x.Value + (PrefabUtils.AuthorList.TryGetValue(x.Value.Split('.')[0], out string author) ? "\n" + author : ""), m_propFilter.text, CompareOptions.IgnoreCase) >= 0)
             .Select(x => x.Key)
             .OrderBy((x) => x)
             .ToArray();
-        private static string GetListName(PropInfo x) => (x?.name?.EndsWith("_Data") ?? true) ? $"{x?.GetLocalizedTitle()}" : x?.name;
+        private static string GetListName(PropInfo x)
+        {
+            LogUtils.DoWarnLog($"x = {x}");
+            return (x?.name?.EndsWith("_Data") ?? false) ? $"{x?.GetLocalizedTitle()}" : x?.name ?? "";
+        }
 
         #region Actions        
-        private void OnSetProp(int sel) => EventPropChanged?.Invoke(sel < 0 ? null : m_lastSelection = PrefabUtils<PropInfo>.AssetsLoaded.Where(x => x.name == m_propsLoaded[m_popup.items[sel]]).FirstOrDefault());
+        private void OnSetProp(int sel) => EventPropChanged?.Invoke(sel < 0 ? null : m_lastSelection = PrefabUtils<PropInfo>.AssetsLoaded.Where(x => x.name == PropsLoaded[m_popup.items[sel]]).FirstOrDefault());
 
 
         protected void OnSetFont(int idx)

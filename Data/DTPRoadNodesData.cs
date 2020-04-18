@@ -14,7 +14,7 @@ namespace Klyte.DynamicTextProps.Data
         public override string SaveId => "K45_DTP3_DTPNetNodesData";
 
         [XmlElement("CurrentDescriptor")]
-        public BoardDescriptorRoadNodeXml CurrentDescriptor { get; set; } = new BoardDescriptorRoadNodeXml();
+        public BoardInstanceRoadNodeXml CurrentDescriptor { get; set; } = new BoardInstanceRoadNodeXml();
     }
 
 }

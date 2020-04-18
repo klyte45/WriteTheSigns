@@ -10,7 +10,7 @@ namespace Klyte.DynamicTextProps.UI
     {
         private readonly Camera m_camera;
         private readonly MaterialPropertyBlock m_block = new MaterialPropertyBlock();
-        private readonly BoardInstanceXml m_defaultInstance = new BoardInstanceXml();
+        private readonly BoardPreviewInstanceXml m_defaultInstance = new BoardPreviewInstanceXml();
 
 
         public Vector2 Size
@@ -26,9 +26,6 @@ namespace Klyte.DynamicTextProps.UI
         }
 
         public RenderTexture Texture => m_camera.targetTexture;
-
-        public float CameraRotation { get; set; } = 120f;
-
         public float Zoom { get; set; } = 3f;
 
         public DTPPropPreviewRenderer()
@@ -47,9 +44,9 @@ namespace Klyte.DynamicTextProps.UI
             m_camera.name = "DTPCamera";
         }
 
-        public Matrix4x4 RenderProp(PropInfo info, BoardDescriptorGeneralXml descriptor) => RenderProp(info, default, info.m_color0, descriptor);
+        public Matrix4x4 RenderProp(PropInfo info, BoardDescriptorGeneralXml descriptor, int referenceIdx) => RenderProp(info, default, default, descriptor, referenceIdx);
 
-        public Matrix4x4 RenderProp(PropInfo info, Vector3 offset, Color color, BoardDescriptorGeneralXml descriptor)
+        public Matrix4x4 RenderProp(PropInfo info, Vector3 offsetPosition, Vector3 offsetRotation, BoardDescriptorGeneralXml descriptor, int referenceIdx)
         {
             InfoManager instanceInfo = Singleton<InfoManager>.instance;
             InfoManager.InfoMode currentMode = instanceInfo.CurrentMode;
@@ -70,23 +67,37 @@ namespace Klyte.DynamicTextProps.UI
                 DayNightProperties.instance.sunLightSource.enabled = true;
                 DayNightProperties.instance.moonLightSource.enabled = false;
             }
-            float magnitude = info.m_mesh.bounds.extents.magnitude;
-            float num = magnitude + 16f;
-            float num2 = magnitude * Zoom;
-            m_camera.transform.position = Vector3.forward * num2;
-            m_camera.transform.rotation = Quaternion.AngleAxis(180f, Vector3.up);
-            m_camera.nearClipPlane = Mathf.Max(num2 - num * 1.5f, 0.01f);
-            m_camera.farClipPlane = num2 + num * 1.5f;
 
-            Quaternion quaternion = Quaternion.Euler(0f, 0f, 0f) * Quaternion.Euler(0f, CameraRotation, 0f);
-            Vector3 pos = quaternion * -new Vector3(info.m_mesh.bounds.center.x, 0, info.m_mesh.bounds.max.z);
-            Matrix4x4 matrix = Matrix4x4.TRS(offset, Quaternion.identity, Vector3.one) * Matrix4x4.TRS(Vector3.zero, quaternion, Vector3.one);
+            m_defaultInstance.Descriptor = descriptor;
+
+            Matrix4x4 propMatrix;
+            float magnitude;
+            float dist;
+            float zoom = 1;
+            if (referenceIdx < 0 || referenceIdx >= descriptor.m_textDescriptors.Length)
+            {
+                magnitude = info.m_mesh.bounds.extents.magnitude;
+                propMatrix = Matrix4x4.TRS(offsetPosition, Quaternion.Euler(offsetRotation.x, offsetRotation.y, offsetRotation.z), Vector3.one);
+            }
+            else
+            {
+                var sourceMatrix = Matrix4x4.Inverse(DTPPropRenderingRules.CalculateTextMatrix(m_defaultInstance, descriptor.m_textDescriptors[referenceIdx], DTPPropRenderingRules.GetTextMesh(FontServer.instance[DTPController.DEFAULT_FONT_KEY], descriptor.m_textDescriptors[referenceIdx], 0, 0, referenceIdx, m_defaultInstance), true));
+                magnitude = Mathf.Max(info.m_mesh.bounds.extents.magnitude, DTPPropRenderingRules.GetTextMesh(FontServer.instance[descriptor.FontName ?? DTPController.DEFAULT_FONT_KEY], descriptor.m_textDescriptors[referenceIdx], 0, 0, referenceIdx, m_defaultInstance)?.m_mesh?.bounds.extents.magnitude ?? 0);
+                propMatrix = Matrix4x4.TRS(offsetPosition, Quaternion.Euler(offsetRotation.x, offsetRotation.y, offsetRotation.z), Vector3.one) * sourceMatrix;
+            }
+            dist = magnitude + 16f;
+            zoom *= magnitude * Zoom;
+            m_camera.transform.position = Vector3.forward * zoom;
+            m_camera.transform.rotation = Quaternion.AngleAxis(180f, Vector3.up);
+            m_camera.nearClipPlane = Mathf.Max(zoom - dist * 1.5f, 0.01f);
+            m_camera.farClipPlane = zoom + dist * 1.5f;
+
 
 
             PropManager instance = Singleton<PropManager>.instance;
             MaterialPropertyBlock materialBlock = instance.m_materialBlock;
             materialBlock.Clear();
-            materialBlock.SetColor(instance.ID_Color, color);
+            materialBlock.SetColor(instance.ID_Color, DTPPropRenderingRules.GetColor(0, 0, 0, m_defaultInstance) ?? Color.white);
             if (info.m_rollLocation != null)
             {
                 info.m_material.SetVectorArray(instance.ID_RollLocation, info.m_rollLocation);
@@ -94,12 +105,12 @@ namespace Klyte.DynamicTextProps.UI
             }
             PropManager propManager = instance;
             propManager.m_drawCallData.m_defaultCalls += 1;
-            Graphics.DrawMesh(info.m_mesh, matrix, info.m_material, info.m_prefabDataLayer, m_camera, 0, materialBlock, false, false, false);
+            Graphics.DrawMesh(info.m_mesh, propMatrix, info.m_material, info.m_prefabDataLayer, m_camera, 0, materialBlock, false, false, false);
 
             m_defaultInstance.Descriptor = descriptor;
             for (ushort i = 0; i < descriptor.m_textDescriptors.Length; i++)
             {
-                DTPPropRenderingRules.RenderTextMesh(0, 0, i, m_defaultInstance, matrix, descriptor.m_textDescriptors[i], m_block, FontServer.instance[DTPController.DEFAULT_FONT_KEY], m_camera);
+                DTPPropRenderingRules.RenderTextMesh(0, 0, i, m_defaultInstance, propMatrix, descriptor.m_textDescriptors[i], m_block, FontServer.instance[descriptor.FontName ?? DTPController.DEFAULT_FONT_KEY], m_camera);
             }
 
 
@@ -118,7 +129,7 @@ namespace Klyte.DynamicTextProps.UI
             instanceInfo.SetCurrentMode(currentMode, currentSubMode);
             instanceInfo.UpdateInfoMode();
 
-            return matrix;
+            return propMatrix;
         }
     }
 }

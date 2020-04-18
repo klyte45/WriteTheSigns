@@ -19,16 +19,19 @@ namespace Klyte.DynamicTextProps.UI
         private UIButton m_lockToSelection;
         private float m_targetRotation = 0;
         private Vector2 m_targetCameraPosition = default;
-        private Vector2 m_cameraPosition = default;
+        private Vector3 m_cameraPosition = default;
         private bool m_viewLocked;
 
 
         private PropInfo CurrentInfo => DTPPropTextLayoutEditor.Instance.CurrentInfo;
         private Color32? CurrentSelectedColor => DTPPropTextLayoutEditor.Instance.CurrentSelectedColor;
-        private int TabToPreview => DTPPropTextLayoutEditor.Instance.CurrentTab;
+        private int TabToPreview => DTPPropTextLayoutEditor.Instance.CurrentTab - 1;
         private BoardDescriptorGeneralXml EditingInstance => DTPPropTextLayoutEditor.Instance.EditingInstance;
 
+        private BoardTextDescriptorGeneralXml CurrentTextDescriptor => TabToPreview >= 0 && TabToPreview < EditingInstance.m_textDescriptors.Length ? EditingInstance.m_textDescriptors[TabToPreview] : default;
+
         public float TargetZoom { get; set; } = 3;
+        public float CameraRotation { get; private set; }
 
         private float m_maxZoom = 2f;
 
@@ -123,7 +126,7 @@ namespace Klyte.DynamicTextProps.UI
         {
             if (!m_viewLocked)
             {
-                TargetZoom = Mathf.Max(Mathf.Min(TargetZoom + eventParam.wheelDelta * 0.125f, m_maxZoom), 1f / CurrentInfo.m_mesh.bounds.extents.magnitude / CurrentInfo.m_mesh.bounds.extents.magnitude);
+                TargetZoom = Mathf.Max(Mathf.Min(TargetZoom + eventParam.wheelDelta * 0.125f, m_maxZoom), 1f / CurrentInfo.m_mesh.bounds.extents.magnitude / CurrentInfo.m_mesh.bounds.extents.magnitude * Mathf.Min(1, CurrentTextDescriptor?.m_textScale ?? 1));
             }
         }
         private void RedrawModel()
@@ -133,7 +136,7 @@ namespace Klyte.DynamicTextProps.UI
                 return;
             }
             m_preview.isVisible = true;
-            m_previewRenderer.RenderProp(CurrentInfo, m_cameraPosition, CurrentSelectedColor ?? Color.white, EditingInstance);
+            m_previewRenderer.RenderProp(CurrentInfo, m_cameraPosition, new Vector3(0, CameraRotation), EditingInstance, CurrentTextDescriptor != null ? TabToPreview : -1);
         }
 
         public void Update()
@@ -144,9 +147,9 @@ namespace Klyte.DynamicTextProps.UI
                 {
                     m_previewRenderer.Zoom = Mathf.Lerp(m_previewRenderer.Zoom, TargetZoom, 0.25f);
                 }
-                if (Mathf.Abs(m_previewRenderer.CameraRotation - m_targetRotation) > 0.01f)
+                if (Mathf.Abs(CameraRotation - m_targetRotation) > 0.01f)
                 {
-                    m_previewRenderer.CameraRotation = Mathf.Lerp(m_previewRenderer.CameraRotation, m_targetRotation, 0.25f);
+                    CameraRotation = Mathf.Lerp(CameraRotation, m_targetRotation, 0.25f);
                 }
                 if (Mathf.Abs(m_cameraPosition.sqrMagnitude - m_targetCameraPosition.sqrMagnitude) > 0.0001f)
                 {

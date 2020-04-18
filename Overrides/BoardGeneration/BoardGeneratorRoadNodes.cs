@@ -90,7 +90,7 @@ namespace Klyte.DynamicTextProps.Overrides
         {
             if (Data.CurrentDescriptor == null)
             {
-                Data.CurrentDescriptor = new BoardDescriptorRoadNodeXml();
+                Data.CurrentDescriptor = new BoardInstanceRoadNodeXml();
             }
             if (Data.CurrentDescriptor?.Descriptor.m_propName == null || m_lastFrameUpdate[nodeID] >= m_getCurrentFrame(RenderManager.instance))
             {
@@ -262,7 +262,7 @@ namespace Klyte.DynamicTextProps.Overrides
             };
 
         }
-        public void CleanDescriptor() => Data.CurrentDescriptor = new BoardDescriptorRoadNodeXml();
+        public void CleanDescriptor() => Data.CurrentDescriptor = new BoardInstanceRoadNodeXml();
     }
 
 }

@@ -63,42 +63,9 @@ namespace Klyte.DynamicTextProps.Rendering
                 return;
             }
 
-            float overflowScaleX = 1f;
-            float overflowScaleY = 1f;
-            float defaultMultiplierX = textDescriptor.m_textScale * SCALING_FACTOR;
-            float defaultMultiplierY = textDescriptor.m_textScale * SCALING_FACTOR;
-            float realWidth = defaultMultiplierX * renderInfo.m_sizeMetersUnscaled.x;
-            float realHeight = defaultMultiplierY * renderInfo.m_sizeMetersUnscaled.y;
-            Vector3 targetRelativePosition = textDescriptor.m_textRelativePosition;
-            //LogUtils.DoWarnLog($"[{renderInfo},{refID},{boardIdx},{secIdx}] realWidth = {realWidth}; realHeight = {realHeight};");
-            if (textDescriptor.m_maxWidthMeters > 0 && textDescriptor.m_maxWidthMeters < realWidth)
-            {
-                overflowScaleX = textDescriptor.m_maxWidthMeters / realWidth;
-                if (textDescriptor.m_applyOverflowResizingOnY)
-                {
-                    overflowScaleY = overflowScaleX;
-                }
-            }
-            else
-            {
-                if (textDescriptor.m_maxWidthMeters > 0 && textDescriptor.m_textAlign != UIHorizontalAlignment.Center)
-                {
-                    float factor = textDescriptor.m_textAlign == UIHorizontalAlignment.Left == (((textDescriptor.m_textRelativeRotation.y % 360) + 810) % 360 > 180) ? 0.5f : -0.5f;
-                    targetRelativePosition += new Vector3((textDescriptor.m_maxWidthMeters - realWidth) * factor / descriptor.ScaleX, 0, 0);
-                }
-            }
+            Matrix4x4 textMatrix = CalculateTextMatrix(descriptor, textDescriptor, renderInfo);
 
-
-            if (textDescriptor.m_verticalAlign != UIVerticalAlignment.Middle)
-            {
-                float factor = textDescriptor.m_verticalAlign == UIVerticalAlignment.Bottom == (((textDescriptor.m_textRelativeRotation.x % 360) + 810) % 360 > 180) ? -.5f : .5f;
-                targetRelativePosition += new Vector3(0, realHeight * factor, 0);
-            }
-
-            Matrix4x4 matrix = propMatrix * Matrix4x4.TRS(
-                targetRelativePosition,
-                Quaternion.AngleAxis(textDescriptor.m_textRelativeRotation.x, Vector3.left) * Quaternion.AngleAxis(textDescriptor.m_textRelativeRotation.y, Vector3.down) * Quaternion.AngleAxis(textDescriptor.m_textRelativeRotation.z, Vector3.back),
-                new Vector3(defaultMultiplierX * overflowScaleX / descriptor.ScaleX, defaultMultiplierY * overflowScaleY / descriptor.PropScale.y, 1));
+            Matrix4x4 matrix = propMatrix * textMatrix;
 
             Color colorToSet = Color.white;
             if (textDescriptor.m_useContrastColor)
@@ -122,10 +89,52 @@ namespace Klyte.DynamicTextProps.Rendering
             Graphics.DrawMesh(renderInfo.m_mesh, matrix, renderInfo.m_generatedMaterial, 10, targetCamera, 0, materialPropertyBlock, false);
 
         }
-        public static Color? GetColor(ushort refId, int boardIdx, int textIdx, BoardInstanceXml descriptor)
+
+        internal static Matrix4x4 CalculateTextMatrix(BoardInstanceXml instance, BoardTextDescriptorGeneralXml textDescriptor, BasicRenderInformation renderInfo, bool centerReference = false)
+        {
+            float overflowScaleX = 1f;
+            float overflowScaleY = 1f;
+            float defaultMultiplierX = textDescriptor.m_textScale * SCALING_FACTOR;
+            float defaultMultiplierY = textDescriptor.m_textScale * SCALING_FACTOR;
+            float realWidth = defaultMultiplierX * renderInfo.m_sizeMetersUnscaled.x;
+            float realHeight = defaultMultiplierY * renderInfo.m_sizeMetersUnscaled.y;
+            Vector3 targetRelativePosition = textDescriptor.m_textRelativePosition;
+            //LogUtils.DoWarnLog($"[{renderInfo},{refID},{boardIdx},{secIdx}] realWidth = {realWidth}; realHeight = {realHeight};");
+            if (textDescriptor.m_maxWidthMeters > 0 && textDescriptor.m_maxWidthMeters < realWidth)
+            {
+                overflowScaleX = textDescriptor.m_maxWidthMeters / realWidth;
+                if (textDescriptor.m_applyOverflowResizingOnY)
+                {
+                    overflowScaleY = overflowScaleX;
+                }
+            }
+            else
+            {
+                if (textDescriptor.m_maxWidthMeters > 0 && textDescriptor.m_textAlign != UIHorizontalAlignment.Center)
+                {
+                    float factor = textDescriptor.m_textAlign == UIHorizontalAlignment.Left == (((textDescriptor.m_textRelativeRotation.y % 360) + 810) % 360 > 180) ? 0.5f : -0.5f;
+                    targetRelativePosition += new Vector3((textDescriptor.m_maxWidthMeters - realWidth) * factor / instance.ScaleX, 0, 0);
+                }
+            }
+
+
+            if (textDescriptor.m_verticalAlign != UIVerticalAlignment.Middle)
+            {
+                float factor = textDescriptor.m_verticalAlign == UIVerticalAlignment.Bottom == (((textDescriptor.m_textRelativeRotation.x % 360) + 810) % 360 > 180) ? -.5f : .5f;
+                targetRelativePosition += new Vector3(0, realHeight * factor, 0);
+            }
+
+            var textMatrix = Matrix4x4.TRS(
+                targetRelativePosition,
+               Quaternion.AngleAxis(textDescriptor.m_textRelativeRotation.x, Vector3.left) * Quaternion.AngleAxis(textDescriptor.m_textRelativeRotation.y, Vector3.down) * Quaternion.AngleAxis(textDescriptor.m_textRelativeRotation.z, Vector3.back),
+           centerReference ? new Vector3(SCALING_FACTOR, SCALING_FACTOR, SCALING_FACTOR) : new Vector3(defaultMultiplierX * overflowScaleX / instance.ScaleX, defaultMultiplierY * overflowScaleY / instance.PropScale.y, 1));
+            return textMatrix;
+        }
+
+        public static Color? GetColor(ushort refId, int boardIdx, int textIdx, BoardInstanceXml instance)
         {
 
-            if (descriptor is BoardDescriptorRoadNodeXml)
+            if (instance is BoardInstanceRoadNodeXml)
             {
                 if (textIdx == 0)
                 {
@@ -136,12 +145,46 @@ namespace Klyte.DynamicTextProps.Rendering
                     return DTPRoadNodesData.Instance.BoardsContainers[refId].m_boardsData[boardIdx]?.m_cachedColor2;
                 }
             }
-            return descriptor.Descriptor.FixedColor;
+            return instance.Descriptor.FixedColor ?? GetCurrentSimulationColor();
+
         }
 
-        public static Color GetContrastColor(ushort refID, int boardIdx, int textIdx, BoardInstanceXml descriptor)
+        private static Color[] m_spectreSteps = new Color[]
         {
-            if (descriptor is BoardDescriptorRoadNodeXml)
+            new Color32(170,170,170,255),
+            Color.white,
+            Color.red,
+            Color.yellow ,
+            Color.green  ,
+            Color.cyan   ,
+            Color.blue   ,
+            Color.magenta,
+            new Color32(128,0,0,255),
+            new Color32(128,128,0,255),
+            new Color32(0,128,0,255),
+            new Color32(0,128,128,255),
+            new Color32(0,0,128,255),
+            new Color32(128,0,128,255),
+            Color.black,
+            new Color32(85,85,85,255),
+        };
+        private static Color GetCurrentSimulationColor()
+        {
+            if (SimulationManager.exists)
+            {
+                uint frame = SimulationManager.instance.m_currentTickIndex & 0x3FFF;
+                byte currColor = (byte)(frame >> 10);
+                byte nextColor = (byte)((currColor + 1) & 0xf);
+
+                return Color.Lerp(m_spectreSteps[currColor], m_spectreSteps[nextColor], (frame & 0x3FF) / 1024f);
+
+            }
+            return Color.gray;
+        }
+
+        public static Color GetContrastColor(ushort refID, int boardIdx, int textIdx, BoardInstanceXml instance)
+        {
+            if (instance is BoardInstanceRoadNodeXml)
             {
                 if (textIdx == 0)
                 {
@@ -152,12 +195,22 @@ namespace Klyte.DynamicTextProps.Rendering
                     return DTPRoadNodesData.Instance.BoardsContainers[refID].m_boardsData[boardIdx]?.m_cachedContrastColor2 ?? Color.black;
                 }
             }
-            return KlyteMonoUtils.ContrastColor(descriptor.Descriptor.FixedColor ?? Color.white);
+            return KlyteMonoUtils.ContrastColor(instance.Descriptor.FixedColor ?? GetCurrentSimulationColor());
         }
 
-        private static BasicRenderInformation GetTextMesh(DynamicSpriteFont baseFont, BoardTextDescriptorGeneralXml textDescriptor, ushort refID, int boardIdx, int secIdx, BoardInstanceXml descriptor)
+        internal static BasicRenderInformation GetTextMesh(DynamicSpriteFont baseFont, BoardTextDescriptorGeneralXml textDescriptor, ushort refID, int boardIdx, int secIdx, BoardInstanceXml instance)
         {
-            if (descriptor is BoardDescriptorRoadNodeXml)
+            if (instance is BoardPreviewInstanceXml preview)
+            {
+                switch (textDescriptor.m_textType)
+                {
+                    case TextType.Fixed:
+                        return RenderUtils.GetTextData(textDescriptor.m_fixedText ?? "", textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, baseFont, textDescriptor.m_overrideFont);
+                    default:
+                        return RenderUtils.GetTextData($"{textDescriptor.m_textType}: {preview.m_currentText}", textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, baseFont, textDescriptor.m_overrideFont);
+                }
+            }
+            else if (instance is BoardInstanceRoadNodeXml)
             {
                 switch (textDescriptor.m_textType)
                 {

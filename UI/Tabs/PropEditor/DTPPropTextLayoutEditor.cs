@@ -105,14 +105,14 @@ namespace Klyte.DynamicTextProps.UI
 
             m_propInfoEditor.EventPropChanged += (x) =>
             {
-                if (x != null)
+                if (x != null) 
                 {
                     CurrentInfo = x;
                     propPreview.ResetCamera();
                 }
             };
 
-            m_propInfoEditor.EventPropColorChanged += (x) => EditingInstance.FixedColor = x;
+            m_propInfoEditor.EventPropColorChanged += (x) => EditingInstance.FixedColor = (x == default(Color) ? (Color?)null : x);
         }
 
         private void InitTabButton(UIComponent parent, out UIButton tabTemplate, string text, Vector2 size, bool useDefaultAction = true)
