@@ -4,10 +4,10 @@ using System.Xml;
 using System.Xml.Serialization;
 using static Klyte.Commons.Utils.XmlUtils;
 
-namespace Klyte.DynamicTextProps.Overrides
+namespace Klyte.DynamicTextProps.Xml
 {
 
-    public class BoardBunchContainerHighwaySignXml : IBoardBunchContainer<CacheControlHighwaySign>, ILibable
+    public class BoardBunchContainerOnNetXml : IBoardBunchContainer<CacheControlOnNet>, ILibable
     {
         [XmlIgnore]
         public bool cached = false;
@@ -15,7 +15,7 @@ namespace Klyte.DynamicTextProps.Overrides
         public ListWrapper<BoardDescriptorOnNetXml> Descriptors
         {
             get => new ListWrapper<BoardDescriptorOnNetXml> { listVal = m_boardsData.Select(x => x.descriptor).ToList() };
-            set => m_boardsData = value.listVal.Select(x => new CacheControlHighwaySign { descriptor = x }).ToArray();
+            set => m_boardsData = value.listVal.Select(x => new CacheControlOnNet { descriptor = x }).ToArray();
         }
 
         [XmlAttribute("saveName")]

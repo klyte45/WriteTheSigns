@@ -1,4 +1,4 @@
-﻿namespace Klyte.DynamicTextProps.Overrides
+﻿namespace Klyte.DynamicTextProps.Xml
 {
 
     public partial class BoardGeneratorBuildings

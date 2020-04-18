@@ -1,15 +1,13 @@
 ﻿using System.Xml.Serialization;
 
-namespace Klyte.DynamicTextProps.Overrides
+namespace Klyte.DynamicTextProps.Xml
 {
     [XmlRoot("mileageMarkerDescriptor")]
-    public class BoardDescriptorMileageMarkerXml : IBoardDescriptor
+    public class BoardDescriptorMileageMarkerXml 
     {
 
         [XmlAttribute("useMiles")]
         public bool UseMiles { get; set; }
-        [XmlElement("BasicConfig")]
-        public BoardDescriptorGeneralXml BasicConfig { get; private set; } = new BoardDescriptorGeneralXml();
 
     }
 

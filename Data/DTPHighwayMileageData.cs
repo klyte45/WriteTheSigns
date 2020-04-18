@@ -1,4 +1,4 @@
-﻿using Klyte.DynamicTextProps.Overrides;
+﻿using Klyte.DynamicTextProps.Xml;
 using System.Xml.Serialization;
 
 namespace Klyte.DynamicTextProps.Data
@@ -7,10 +7,10 @@ namespace Klyte.DynamicTextProps.Data
     [XmlRoot("DTPHighwayMileageData")]
     public class DTPHighwayMileageData : DTPBaseData<DTPHighwayMileageData, IBoardBunchContainer<CacheControl>>
     {
-        public override string DefaultFont { get => CurrentDescriptor.BasicConfig.FontName; set => CurrentDescriptor.BasicConfig.FontName = value; }
+        public override string DefaultFont { get => CurrentDescriptor.FontName; set => CurrentDescriptor.FontName = value; }
         public override int ObjArraySize => NetManager.MAX_SEGMENT_COUNT;
         [XmlElement("CurrentDescriptor")]
-        public BoardDescriptorMileageMarkerXml CurrentDescriptor { get; set; } = new BoardDescriptorMileageMarkerXml();
+        public BoardDescriptorGeneralXml CurrentDescriptor { get; set; } = new BoardDescriptorGeneralXml();
 
         public override string SaveId => "K45_DTP3_DTPHighwayMileageData";
     }

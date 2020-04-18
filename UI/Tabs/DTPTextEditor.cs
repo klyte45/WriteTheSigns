@@ -3,7 +3,7 @@ using ColossalFramework.UI;
 using Klyte.Commons.Extensors;
 using Klyte.Commons.UI.SpriteNames;
 using Klyte.Commons.Utils;
-using Klyte.DynamicTextProps.Overrides;
+using Klyte.DynamicTextProps.Xml;
 using Klyte.DynamicTextProps.Utils;
 using System;
 using System.Linq;

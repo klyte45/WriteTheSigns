@@ -2,10 +2,10 @@
 using System.Xml.Serialization;
 using UnityEngine;
 
-namespace Klyte.DynamicTextProps.Overrides
+namespace Klyte.DynamicTextProps.Xml
 {
 
-    public class CacheControlHighwaySign : CacheControl
+    public class CacheControlOnNet : CacheControl
     {
         [XmlElement("descriptor")]
         public BoardDescriptorOnNetXml descriptor;

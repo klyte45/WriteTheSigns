@@ -1,8 +1,8 @@
 ﻿using UnityEngine;
 
-namespace Klyte.DynamicTextProps.Overrides
+namespace Klyte.DynamicTextProps.Xml
 {
-    public class CacheControlStreetPlate : CacheControl
+    public class CacheControlRoadNode : CacheControl
     {
         public Vector3 m_platePosition;
         public float m_streetDirection1;

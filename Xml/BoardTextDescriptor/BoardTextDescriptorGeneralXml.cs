@@ -5,7 +5,7 @@ using System.Xml;
 using System.Xml.Serialization;
 using UnityEngine;
 
-namespace Klyte.DynamicTextProps.Overrides
+namespace Klyte.DynamicTextProps.Xml
 {
     [XmlRoot("textDescriptor")]
     public class BoardTextDescriptorGeneralXml

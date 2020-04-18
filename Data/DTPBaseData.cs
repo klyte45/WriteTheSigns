@@ -2,6 +2,7 @@
 using Klyte.Commons.Interfaces;
 using Klyte.Commons.Utils;
 using Klyte.DynamicTextProps.Overrides;
+using Klyte.DynamicTextProps.Xml;
 using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Serialization;

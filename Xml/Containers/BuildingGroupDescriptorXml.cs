@@ -2,7 +2,7 @@
 using System.Xml;
 using System.Xml.Serialization;
 
-namespace Klyte.DynamicTextProps.Overrides
+namespace Klyte.DynamicTextProps.Xml
 {
     [XmlRoot("buildingConfig")]
     public class BuildingGroupDescriptorXml : ILibable

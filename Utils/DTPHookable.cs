@@ -4,6 +4,7 @@ using Klyte.Commons.UI.Sprites;
 using Klyte.Commons.Utils;
 using Klyte.DynamicTextProps.Data;
 using Klyte.DynamicTextProps.Overrides;
+using Klyte.DynamicTextProps.Xml;
 using System;
 using UnityEngine;
 using static ItemClass;
@@ -19,7 +20,7 @@ namespace Klyte.DynamicTextProps.Utils
             string result = GetStreetFullName(idx);
             if (result.Contains(" "))
             {
-                switch (DTPNetNodesData.Instance.CurrentDescriptor.RoadQualifierExtraction)
+                switch (DTPNetNodesData.Instance.CurrentDescriptor.NetNodeSettings.RoadQualifierExtraction)
                 {
                     case RoadQualifierExtractionMode.START:
                         result = result.Substring(result.IndexOf(' ') + 1);

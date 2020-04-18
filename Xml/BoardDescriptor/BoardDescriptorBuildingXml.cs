@@ -2,10 +2,10 @@
 using System.Xml.Serialization;
 using UnityEngine;
 
-namespace Klyte.DynamicTextProps.Overrides
+namespace Klyte.DynamicTextProps.Xml
 {
 
-    public class BoardDescriptorBuildingXml : IBoardDescriptor
+    public class BoardDescriptorBuildingXml
 
     {
         [XmlArray("platformOrder")]
@@ -39,9 +39,6 @@ namespace Klyte.DynamicTextProps.Overrides
 
         [XmlIgnore]
         private ColoringMode? m_colorMode;
-
-        [XmlElement("BasicConfig")]
-        public BoardDescriptorGeneralXml BasicConfig { get; private set; } = new BoardDescriptorGeneralXml();
     }
 
     public enum ColoringMode

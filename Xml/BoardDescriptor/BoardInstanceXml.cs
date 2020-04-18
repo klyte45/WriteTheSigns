@@ -2,9 +2,9 @@
 using System.Xml.Serialization;
 using UnityEngine;
 
-namespace Klyte.DynamicTextProps.Overrides
+namespace Klyte.DynamicTextProps.Xml
 {
-    public class BoardInstanceXml<B> where B : IBoardDescriptor, new()
+    public class BoardInstanceXml
     {
         [XmlIgnore]
         public Vector3 m_propPosition;
@@ -44,7 +44,7 @@ namespace Klyte.DynamicTextProps.Overrides
         [XmlAttribute("scaleZ")]
         public float? ScaleZ;
 
-        public B Descriptor { get; private set; } = new B();
+        public BoardDescriptorGeneralXml Descriptor { get; private set; } = new BoardDescriptorGeneralXml();
     }
 
 

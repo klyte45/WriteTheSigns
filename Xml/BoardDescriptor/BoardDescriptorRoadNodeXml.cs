@@ -1,9 +1,9 @@
 ﻿using System.Xml.Serialization;
 
-namespace Klyte.DynamicTextProps.Overrides
+namespace Klyte.DynamicTextProps.Xml
 {
     [XmlRoot("roadCornerDescriptor")]
-    public class BoardDescriptorNetNodesXml: IBoardDescriptor
+    public class BoardDescriptorRoadNodeXml
     {
         [XmlAttribute("placeOnDistrictBorder")]
         public bool PlaceOnDistrictBorder { get; set; } = true;
@@ -17,9 +17,6 @@ namespace Klyte.DynamicTextProps.Overrides
 
         [XmlAttribute("useDistrictColor")]
         public bool UseDistrictColor = false;
-        [XmlElement("BasicConfig")]
-        public BoardDescriptorGeneralXml BasicConfig { get; private set; } = new BoardDescriptorGeneralXml();
-
     }
 
     public enum RoadQualifierExtractionMode
