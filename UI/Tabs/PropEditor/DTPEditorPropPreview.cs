@@ -1,6 +1,7 @@
 ﻿using ColossalFramework.UI;
 using Klyte.Commons.UI.SpriteNames;
 using Klyte.Commons.Utils;
+using Klyte.DynamicTextProps.Xml;
 using UnityEngine;
 
 namespace Klyte.DynamicTextProps.UI
@@ -22,8 +23,10 @@ namespace Klyte.DynamicTextProps.UI
         private bool m_viewLocked;
 
 
-        internal PropInfo CurrentInfo => DTPPropTextLayoutEditor.Instance.CurrentInfo;
+        private PropInfo CurrentInfo => DTPPropTextLayoutEditor.Instance.CurrentInfo;
         private Color32 CurrentSelectedColor => DTPPropTextLayoutEditor.Instance.CurrentSelectedColor;
+        private int TabToPreview => DTPPropTextLayoutEditor.Instance.CurrentTab;
+        private BoardDescriptorGeneralXml EditingInstance => DTPPropTextLayoutEditor.Instance.EditingInstance;
 
         public float TargetZoom { get; set; } = 3;
 

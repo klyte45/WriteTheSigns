@@ -4,6 +4,7 @@ using ColossalFramework.UI;
 using Klyte.Commons.Extensors;
 using Klyte.Commons.Utils;
 using Klyte.DynamicTextProps.Utils;
+using Klyte.DynamicTextProps.Xml;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -32,6 +33,9 @@ namespace Klyte.DynamicTextProps.UI
 
         private PropInfo m_lastSelection;
 
+        private int TabToPreview => DTPPropTextLayoutEditor.Instance.CurrentTab;
+        private BoardDescriptorGeneralXml EditingInstance => DTPPropTextLayoutEditor.Instance.EditingInstance;
+
         public void Awake()
         {
             Instance = this;
@@ -56,8 +60,7 @@ namespace Klyte.DynamicTextProps.UI
             selectorPanel.wrapLayout = true;
 
 
-            AddTextField("Name", out m_name, helper, (x) => { });
-            KlyteMonoUtils.AddHelpButton(m_name.parent.GetComponentInChildren<UILabel>(), m_name, () => K45DialogControl.ShowModalHelp("PropEditor.NameField", "Name"));
+            AddTextField("Name", out m_name, helper, OnSetName);
             AddColorField(helper, "Fixed Color", out m_fixedColor, (x, y) => EventPropColorChanged?.Invoke(y));
 
             AddDropdown("Override font", out m_fontSelect, helper, new string[0], OnSetFont);
@@ -110,6 +113,7 @@ namespace Klyte.DynamicTextProps.UI
             };
         }
 
+        private void OnSetName(string text) => EditingInstance.SaveName = text;
         public void Start() => m_propsLoaded = PrefabUtils<PropInfo>.AssetsLoaded.ToDictionary(x => GetListName(x), x => x?.name);
 
         private string[] GetFilterResult() => m_propsLoaded
@@ -126,9 +130,13 @@ namespace Klyte.DynamicTextProps.UI
 
         protected void OnSetFont(int idx)
         {
-            if (idx >= 0)
+            if (idx > 0)
             {
-
+                EditingInstance.FontName = m_fontSelect.items[idx];
+            }
+            else
+            {
+                EditingInstance.FontName = null;
             }
         }
         #endregion

@@ -6,8 +6,6 @@ namespace Klyte.DynamicTextProps.UI
     public class DTPPropPreviewRenderer : MonoBehaviour
     {
         private readonly Camera m_camera;
-        private float m_zoom = 3f;
-
 
         public Vector2 Size
         {
@@ -25,11 +23,7 @@ namespace Klyte.DynamicTextProps.UI
 
         public float CameraRotation { get; set; } = 120f;
 
-        public float Zoom
-        {
-            get => m_zoom;
-            set => m_zoom = value;
-        }
+        public float Zoom { get; set; } = 3f;
 
         public DTPPropPreviewRenderer()
         {
@@ -72,7 +66,7 @@ namespace Klyte.DynamicTextProps.UI
             }
             float magnitude = info.m_mesh.bounds.extents.magnitude;
             float num = magnitude + 16f;
-            float num2 = magnitude * m_zoom;
+            float num2 = magnitude * Zoom;
             m_camera.transform.position = Vector3.forward * num2;
             m_camera.transform.rotation = Quaternion.AngleAxis(180f, Vector3.up);
             m_camera.nearClipPlane = Mathf.Max(num2 - num * 1.5f, 0.01f);

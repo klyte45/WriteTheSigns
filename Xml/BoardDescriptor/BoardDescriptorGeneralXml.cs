@@ -1,4 +1,5 @@
 ﻿using ColossalFramework;
+using Klyte.Commons.Interfaces;
 using Klyte.Commons.Utils;
 using System.Xml;
 using System.Xml.Serialization;
@@ -7,7 +8,7 @@ using UnityEngine;
 namespace Klyte.DynamicTextProps.Xml
 {
 
-    public class BoardDescriptorGeneralXml
+    public class BoardDescriptorGeneralXml : ILibable
     {
         [XmlAttribute("propName")]
         public string m_propName;
@@ -21,6 +22,9 @@ namespace Klyte.DynamicTextProps.Xml
 
         [XmlAttribute("fontName")]
         public string FontName { get; set; }
+
+        [XmlAttribute("saveName")]
+        public string SaveName { get; set; }
 
         [XmlElement("textDescriptor")]
         public BoardTextDescriptorGeneralXml[] m_textDescriptors = new BoardTextDescriptorGeneralXml[0];

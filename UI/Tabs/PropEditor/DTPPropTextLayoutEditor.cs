@@ -4,6 +4,7 @@ using ColossalFramework.UI;
 using Klyte.Commons.Extensors;
 using Klyte.Commons.UI.SpriteNames;
 using Klyte.Commons.Utils;
+using Klyte.DynamicTextProps.Xml;
 using System;
 using UnityEngine;
 
@@ -20,8 +21,16 @@ namespace Klyte.DynamicTextProps.UI
         private UIButton m_deleteButton;
         private UIButton m_refreshListButton;
 
+        internal BoardDescriptorGeneralXml EditingInstance { get; private set; } = new BoardDescriptorGeneralXml();
 
-        internal PropInfo CurrentInfo { get; private set; }
+        internal PropInfo CurrentInfo
+        {
+            get => m_currentInfo;
+            private set {
+                m_currentInfo = value;
+                EditingInstance.m_propName = value.name;
+            }
+        }
 
 
         private UIPanel m_topBar;
@@ -32,11 +41,13 @@ namespace Klyte.DynamicTextProps.UI
 
         private UIButton m_plusButton;
 
-        private int m_currentTab;
+        internal int CurrentTab { get; private set; }
 
         private UIPanel m_basicInfoEditor;
         private UIPanel m_textInfoEditor;
-        internal Color32 CurrentSelectedColor { get; private set; }
+        private PropInfo m_currentInfo;
+
+        internal Color32 CurrentSelectedColor => EditingInstance.FixedColor;
 
         public void Awake()
         {
@@ -98,7 +109,7 @@ namespace Klyte.DynamicTextProps.UI
                 }
             };
 
-            m_propInfoEditor.EventPropColorChanged += (x) => CurrentSelectedColor = x;
+            m_propInfoEditor.EventPropColorChanged += (x) => EditingInstance.FixedColor = x;
         }
 
         private void InitTabButton(UIComponent parent, out UIButton tabTemplate, string text, Vector2 size, bool useDefaultAction = true)
@@ -117,9 +128,9 @@ namespace Klyte.DynamicTextProps.UI
 
         private void OnTabChange(int idx)
         {
-            m_currentTab = idx;
-            m_basicInfoEditor.isVisible = m_currentTab == 0;
-            m_textInfoEditor.isVisible = m_currentTab != 0;
+            CurrentTab = idx;
+            m_basicInfoEditor.isVisible = CurrentTab == 0;
+            m_textInfoEditor.isVisible = CurrentTab != 0;
         }
 
         private void AddTabToItem(UIComponent x, UIMouseEventParameter y)
@@ -207,7 +218,7 @@ namespace Klyte.DynamicTextProps.UI
             {
                 if (btn != m_plusButton)
                 {
-                    if (btn.zOrder == m_currentTab)
+                    if (btn.zOrder == CurrentTab)
                     {
                         btn.state |= UIButton.ButtonState.Focused;
                     }
