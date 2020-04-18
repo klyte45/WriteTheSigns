@@ -186,10 +186,11 @@
     <Compile Include="Overrides\DistrictManagerOverrides.cs" />
     <Compile Include="Tools\BuildingTool.cs" />
     <Compile Include="UI\DTPPropPreviewRenderer.cs" />
-    <Compile Include="UI\Tabs\DTPEditorLib.cs" />
-    <Compile Include="UI\Tabs\DTPTextEditor.cs" />
-    <Compile Include="UI\Tabs\DTPBasicPropInfoEditor.cs" />
-    <Compile Include="UI\Tabs\DTPPropTextLayoutEditor.cs" />
+    <Compile Include="UI\Tabs\PropEditor\DTPEditorPropPreview.cs" />
+    <Compile Include="UI\Tabs\PropEditor\DTPEditorLib.cs" />
+    <Compile Include="UI\Tabs\PropEditor\DTPTextEditor.cs" />
+    <Compile Include="UI\Tabs\PropEditor\DTPBasicPropInfoEditor.cs" />
+    <Compile Include="UI\Tabs\PropEditor\DTPPropTextLayoutEditor.cs" />
     <Compile Include="Utils\DTPLineUtils.cs" />
     <Compile Include="Utils\PrefabUtils.cs" />
     <Compile Include="Utils\RenderUtils.cs" />

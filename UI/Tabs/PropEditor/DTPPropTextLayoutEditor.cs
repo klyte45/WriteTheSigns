@@ -20,44 +20,23 @@ namespace Klyte.DynamicTextProps.UI
         private UIButton m_deleteButton;
         private UIButton m_refreshListButton;
 
-        private DTPPropPreviewRenderer m_previewRenderer;
-        private UIPanel m_previewPanel;
-        private UITextureSprite m_preview;
-        private UIPanel m_previewControls;
-        private UIButton m_lockToSelection;
 
-        private PropInfo m_currentInfo;
+        internal PropInfo CurrentInfo { get; private set; }
 
-        private float m_targetZoom = 3;
-        private float m_targetZoomSqrt = 9;
-        private float m_targetRotation = 0;
-        private Vector2 m_targetCameraPosition = default;
-        private Vector2 m_cameraPosition = default;
 
         private UIPanel m_topBar;
-        private UIPanel m_previewBar;
+        private UIPanel m_middleBar;
         private UIScrollablePanel m_editTabstrip;
         private UIPanel m_editArea;
         private DTPBasicPropInfoEditor m_propInfoEditor;
 
         private UIButton m_plusButton;
 
-        private bool m_viewLocked;
         private int m_currentTab;
 
         private UIPanel m_basicInfoEditor;
         private UIPanel m_textInfoEditor;
-        private Color32 CurrentSelectedColor { get; set; }
-        public float TargetZoom
-        {
-            get => m_targetZoom;
-            set {
-                m_targetZoom = value;
-                m_targetZoomSqrt = Mathf.Sqrt(value);
-            }
-        }
-
-        private float m_maxZoom = 2f;
+        internal Color32 CurrentSelectedColor { get; private set; }
 
         public void Awake()
         {
@@ -66,6 +45,7 @@ namespace Klyte.DynamicTextProps.UI
             MainContainer = GetComponent<UIPanel>();
             MainContainer.autoLayout = true;
             MainContainer.autoLayoutDirection = LayoutDirection.Vertical;
+            MainContainer.autoLayoutPadding = new RectOffset(5, 5, 5, 5);
 
 
             KlyteMonoUtils.CreateUIElement(out m_topBar, MainContainer.transform, "topBar", new UnityEngine.Vector4(0, 0, MainContainer.width, 50));
@@ -81,38 +61,16 @@ namespace Klyte.DynamicTextProps.UI
             KlyteMonoUtils.InitCircledButton(m_topBar, out m_newButton, CommonsSpriteNames.K45_New, OnNewConfig, "K45_DTP_CREATE_NEW_CONFIG");
             KlyteMonoUtils.InitCircledButton(m_topBar, out m_deleteButton, CommonsSpriteNames.K45_Delete, OnDeleteConfig, "K45_DTP_DELETE_SELECTED_CONFIG");
 
-            KlyteMonoUtils.CreateUIElement(out m_previewBar, MainContainer.transform, "previewBar", new UnityEngine.Vector4(0, 0, MainContainer.width, 300));
-            m_previewBar.autoLayout = true;
-            m_previewBar.autoLayoutDirection = LayoutDirection.Horizontal;
+            KlyteMonoUtils.CreateUIElement(out m_middleBar, MainContainer.transform, "previewBar", new UnityEngine.Vector4(0, 0, MainContainer.width, 300));
+            m_middleBar.autoLayout = true;
+            m_middleBar.autoLayoutDirection = LayoutDirection.Horizontal;
 
 
-            KlyteMonoUtils.CreateUIElement(out m_previewPanel, m_previewBar.transform, "previewPanel", new UnityEngine.Vector4(0, 0, m_previewBar.width * .6f, 300));
-            m_previewPanel.padding = new RectOffset(16, 16, 16, 16);
-            m_previewPanel.backgroundSprite = "MenuPanel3";
-            m_previewPanel.autoLayout = true;
-
-            KlyteMonoUtils.CreateUIElement(out m_preview, m_previewPanel.transform, "preview", new UnityEngine.Vector4(0, 0, m_previewPanel.width - 32, m_previewPanel.height - 32));
-            KlyteMonoUtils.CreateElement(out m_previewRenderer, MainContainer.transform);
-            m_previewRenderer.Size = m_preview.size * 2f;
-            m_preview.texture = m_previewRenderer.Texture;
-            m_preview.eventMouseWheel += ChangeViewZoom;
-            m_preview.eventMouseMove += OnMouseMove;
-            m_previewRenderer.Zoom = TargetZoom;
-
-            KlyteMonoUtils.CreateUIElement(out m_previewControls, m_previewBar.transform, "previewPanel", new UnityEngine.Vector4(0, 0, 50, 300));
-            m_previewControls.padding = new RectOffset(5, 5, 5, 5);
-            m_previewControls.autoLayout = true;
-            m_previewControls.autoLayoutDirection = LayoutDirection.Vertical;
+            KlyteMonoUtils.CreateUIElement(out UIPanel previewContainer, m_middleBar.transform, "previewContainer", new UnityEngine.Vector4(0, 0, m_middleBar.width * .6f, m_middleBar.height - m_middleBar.padding.vertical));
+            DTPEditorPropPreview propPreview = previewContainer.gameObject.AddComponent<DTPEditorPropPreview>();
 
 
-            KlyteMonoUtils.InitCircledButton(m_previewControls, out m_lockToSelection, CommonsSpriteNames.K45_Unlock, (x, y) => ToggleLock(), "K45_DTP_LOCK_UNLOCK_TO_CURRENT_ITEM");
-            m_lockToSelection.focusedBgSprite = null;
-            m_viewLocked = true;
-            ToggleLock();
-
-            KlyteMonoUtils.InitCircledButton(m_previewControls, out UIButton resetView, CommonsSpriteNames.K45_Reload, (x, y) => ResetCamera(), "K45_DTP_RESET_VIEW");
-
-            KlyteMonoUtils.CreateScrollPanel(m_previewBar, out m_editTabstrip, out _, m_previewBar.width - m_previewPanel.width - m_previewControls.width - m_previewBar.padding.horizontal - (m_previewBar.autoLayoutPadding.horizontal * 2) - 20, 300);
+            KlyteMonoUtils.CreateScrollPanel(m_middleBar, out m_editTabstrip, out _, m_middleBar.width - previewContainer.width - m_middleBar.padding.horizontal - (m_middleBar.autoLayoutPadding.horizontal * 2) - 20, 300);
             m_editTabstrip.autoLayout = true;
             m_editTabstrip.autoLayoutDirection = LayoutDirection.Vertical;
 
@@ -120,7 +78,7 @@ namespace Klyte.DynamicTextProps.UI
             InitTabButton(m_editTabstrip, out m_plusButton, Locale.Get("K45_DTP_ADD_NEW_TEXT_ENTRY"), new Vector2(m_editTabstrip.size.x, 30), false);
             m_plusButton.eventClicked += AddTabToItem;
 
-            KlyteMonoUtils.CreateUIElement(out m_editArea, MainContainer.transform, "editArea", new UnityEngine.Vector4(0, 0, MainContainer.width - MainContainer.padding.horizontal, MainContainer.height - m_previewBar.height - m_topBar.height - MainContainer.padding.vertical - (MainContainer.autoLayoutPadding.vertical * 2) - 5));
+            KlyteMonoUtils.CreateUIElement(out m_editArea, MainContainer.transform, "editArea", new UnityEngine.Vector4(0, 0, MainContainer.width - MainContainer.padding.horizontal, MainContainer.height - m_middleBar.height - m_topBar.height - MainContainer.padding.vertical - (MainContainer.autoLayoutPadding.vertical * 2) - 5));
             m_editArea.padding = new RectOffset(5, 5, 5, 5);
 
 
@@ -135,38 +93,13 @@ namespace Klyte.DynamicTextProps.UI
             {
                 if (x != null)
                 {
-                    m_currentInfo = x;
-                    ResetCamera();
+                    CurrentInfo = x;
+                    propPreview.ResetCamera();
                 }
             };
 
             m_propInfoEditor.EventPropColorChanged += (x) => CurrentSelectedColor = x;
         }
-
-        private void ToggleLock()
-        {
-            m_viewLocked = !m_viewLocked;
-            if (m_viewLocked)
-            {
-                m_lockToSelection.normalFgSprite = KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_Lock);
-                m_lockToSelection.hoveredFgSprite = KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_Unlock);
-                m_lockToSelection.color = Color.red;
-                m_lockToSelection.focusedColor = Color.red;
-                m_lockToSelection.textColor = Color.yellow;
-                m_lockToSelection.hoveredColor = Color.green;
-                ResetCamera();
-            }
-            else
-            {
-                m_lockToSelection.normalFgSprite = KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_Unlock);
-                m_lockToSelection.hoveredFgSprite = KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_Lock);
-                m_lockToSelection.color = Color.white;
-                m_lockToSelection.focusedColor = Color.white;
-                m_lockToSelection.textColor = Color.white;
-                m_lockToSelection.hoveredColor = Color.red;
-            }
-        }
-
 
         private void InitTabButton(UIComponent parent, out UIButton tabTemplate, string text, Vector2 size, bool useDefaultAction = true)
         {
@@ -180,16 +113,6 @@ namespace Klyte.DynamicTextProps.UI
             {
                 tabTemplate.eventClicked += (x, y) => OnTabChange(x.zOrder);
             }
-        }
-
-        private void ResetCamera()
-        {
-            m_maxZoom = Mathf.Max(Mathf.Pow(m_currentInfo.m_mesh.bounds.extents.y / m_currentInfo.m_mesh.bounds.extents.x, 1 / 3f) * 3f, 3f);
-            TargetZoom = m_maxZoom;
-            m_targetRotation = 0;
-            Vector3 target = m_currentInfo.m_mesh.bounds.center;
-            target.y *= -1;
-            m_targetCameraPosition = target;
         }
 
         private void OnTabChange(int idx)
@@ -272,51 +195,12 @@ namespace Klyte.DynamicTextProps.UI
 
         private void OnConfigSelectionChange(int sel) { }
 
-        private void OnMouseMove(UIComponent component, UIMouseEventParameter eventParam)
-        {
-            if (m_currentInfo != default && !m_viewLocked)
-            {
-                if ((eventParam.buttons & UIMouseButton.Left) != 0)
-                {
-                    Vector3 min = m_currentInfo.m_mesh.bounds.min;
-                    Vector3 max = m_currentInfo.m_mesh.bounds.max;
-                    min.y = -max.y;
-                    max.y = -m_currentInfo.m_mesh.bounds.min.y;
-                    m_targetCameraPosition = Vector2.Max(min, Vector2.Min(max, new Vector2(-eventParam.moveDelta.x / component.width, eventParam.moveDelta.y / component.height) + m_targetCameraPosition));
-                }
-                else if ((eventParam.buttons & UIMouseButton.Right) != 0)
-                {
-                    m_targetRotation += eventParam.moveDelta.x;
-                }
-            }
-        }
-        private void ChangeViewZoom(UIComponent component, UIMouseEventParameter eventParam)
-        {
-            if (!m_viewLocked)
-            {
-                TargetZoom = Mathf.Max(Mathf.Min(TargetZoom + eventParam.wheelDelta * 0.125f, m_maxZoom), 1f / m_currentInfo.m_mesh.bounds.extents.magnitude / m_currentInfo.m_mesh.bounds.extents.magnitude);
-            }
-        }
+        #region Preview Area
+
+        #endregion
 
         public void Update()
         {
-            if (m_currentInfo != default && MainContainer.isVisible)
-            {
-                if (Mathf.Abs(m_previewRenderer.Zoom - TargetZoom) > 0.01f)
-                {
-                    m_previewRenderer.Zoom = Mathf.Lerp(m_previewRenderer.Zoom, TargetZoom, 0.25f);
-                }
-                if (Mathf.Abs(m_previewRenderer.CameraRotation - m_targetRotation) > 0.01f)
-                {
-                    m_previewRenderer.CameraRotation = Mathf.Lerp(m_previewRenderer.CameraRotation, m_targetRotation, 0.25f);
-                }
-                if (Mathf.Abs(m_cameraPosition.sqrMagnitude - m_targetCameraPosition.sqrMagnitude) > 0.0001f)
-                {
-                    m_cameraPosition = Vector2.Lerp(m_cameraPosition, m_targetCameraPosition, 0.25f);
-                }
-
-                RedrawModel();
-            }
 
 
             foreach (UIButton btn in m_editTabstrip.GetComponentsInChildren<UIButton>())
@@ -335,15 +219,6 @@ namespace Klyte.DynamicTextProps.UI
             }
         }
 
-        private void RedrawModel()
-        {
-            if (m_currentInfo == default)
-            {
-                return;
-            }
-            m_preview.isVisible = true;
-            m_previewRenderer.RenderProp(m_currentInfo, m_cameraPosition, CurrentSelectedColor);
-        }
 
 
     }
