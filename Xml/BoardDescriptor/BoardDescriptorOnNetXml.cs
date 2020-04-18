@@ -5,7 +5,7 @@ namespace Klyte.DynamicTextProps.Xml
 {
 
     [XmlRoot("onNetDescriptor")]
-    public class BoardDescriptorOnNetXml
+    public class BoardDescriptorOnNetXml : BoardInstanceXml
     {
         [XmlAttribute("inverted")]
         public bool m_invertSign = false;

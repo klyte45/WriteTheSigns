@@ -3,7 +3,6 @@ using ColossalFramework.Math;
 using Klyte.Commons.UI.Sprites;
 using Klyte.Commons.Utils;
 using Klyte.DynamicTextProps.Data;
-using Klyte.DynamicTextProps.Overrides;
 using Klyte.DynamicTextProps.Xml;
 using System;
 using UnityEngine;
@@ -20,7 +19,7 @@ namespace Klyte.DynamicTextProps.Utils
             string result = GetStreetFullName(idx);
             if (result.Contains(" "))
             {
-                switch (DTPNetNodesData.Instance.CurrentDescriptor.NetNodeSettings.RoadQualifierExtraction)
+                switch (DTPNetNodesData.Instance.CurrentDescriptor.RoadQualifierExtraction)
                 {
                     case RoadQualifierExtractionMode.START:
                         result = result.Substring(result.IndexOf(' ') + 1);
@@ -41,7 +40,6 @@ namespace Klyte.DynamicTextProps.Utils
                 var randomizer = new Randomizer(NetManager.instance.m_segments.m_buffer[idx].m_nameSeed);
                 randomizer.Int32(12);
                 result = ReflectionUtils.RunPrivateMethod<string>(ai, "GenerateStreetName", randomizer);
-                //}
             }
             else
             {

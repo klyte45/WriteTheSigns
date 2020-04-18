@@ -13,7 +13,7 @@ namespace Klyte.DynamicTextProps.Xml
         [XmlIgnore]
         public Vector3 m_textRelativePosition;
         [XmlIgnore]
-        public Vector3 m_textRelativeRotation = new Vector3(0, 180, 0);
+        public Vector3 m_textRelativeRotation;
 
         [XmlAttribute("textScale")]
         public float m_textScale = 1f;

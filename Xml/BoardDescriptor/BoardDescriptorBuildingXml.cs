@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Klyte.DynamicTextProps.Xml
 {
 
-    public class BoardDescriptorBuildingXml
+    public class BoardDescriptorBuildingXml : BoardInstanceXml
 
     {
         [XmlArray("platformOrder")]

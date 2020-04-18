@@ -29,16 +29,6 @@ namespace Klyte.DynamicTextProps.Xml
         public Matrix4x4 TextMatrixTranslation(int idx) => Matrix4x4.Translate(m_textDescriptors[idx].m_textRelativePosition);
         public Matrix4x4 TextMatrixRotation(int idx) => Matrix4x4.TRS(Vector3.zero, Quaternion.Euler(m_textDescriptors[idx].m_textRelativeRotation), Vector3.one);
 
-        [XmlElement("buildingConfig")]
-        public BoardDescriptorBuildingXml BuildingSettings { get; set; }
-        [XmlElement("mileageMarkerConfig")]
-        public BoardDescriptorMileageMarkerXml MileageMarkerSettings { get; set; }
-        [XmlElement("onNetConfig")]
-        public BoardDescriptorOnNetXml OnNetSettings { get; set; }
-
-        [XmlElement("netNodeConfig")]
-        public BoardDescriptorRoadNodeXml NetNodeSettings { get; set; }
-
     }
 
 

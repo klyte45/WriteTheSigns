@@ -9,12 +9,12 @@ namespace Klyte.DynamicTextProps.Data
     {
         public override int ObjArraySize => NetManager.MAX_NODE_COUNT;
 
-        public override string DefaultFont { get => CurrentDescriptor.FontName; set => CurrentDescriptor.FontName = value; }
+        public override string DefaultFont { get => CurrentDescriptor.Descriptor.FontName; set => CurrentDescriptor.Descriptor.FontName = value; }
 
         public override string SaveId => "K45_DTP3_DTPNetNodesData";
 
         [XmlElement("CurrentDescriptor")]
-        public BoardDescriptorGeneralXml CurrentDescriptor { get; set; } = new BoardDescriptorGeneralXml();
+        public BoardDescriptorRoadNodeXml CurrentDescriptor { get; set; } = new BoardDescriptorRoadNodeXml();
     }
 
 }
