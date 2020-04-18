@@ -11,7 +11,7 @@
         District,
         LinesSymbols,
         Custom1,
-        Custom2,
+        DistanceFromCenter,
         Custom3,
         Custom4,
         Custom5,

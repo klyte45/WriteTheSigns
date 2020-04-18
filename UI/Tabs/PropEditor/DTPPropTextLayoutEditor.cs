@@ -62,7 +62,7 @@ namespace Klyte.DynamicTextProps.UI
             MainContainer.autoLayoutPadding = new RectOffset(5, 5, 5, 5);
 
 
-            KlyteMonoUtils.CreateUIElement(out m_topBar, MainContainer.transform, "topBar", new UnityEngine.Vector4(0, 0, MainContainer.width, 50));
+            KlyteMonoUtils.CreateUIElement(out m_topBar, MainContainer.transform, "topBar", new UnityEngine.Vector4(0, 0, MainContainer.width - MainContainer.padding.horizontal, 50));
             m_topBar.autoLayout = true;
             m_topBar.autoLayoutDirection = LayoutDirection.Horizontal;
             m_topBar.padding = new RectOffset(5, 5, 5, 5);
@@ -70,12 +70,12 @@ namespace Klyte.DynamicTextProps.UI
             KlyteMonoUtils.InitCircledButton(m_topBar, out m_refreshListButton, CommonsSpriteNames.K45_Reload, RefreshConfigList, "K45_DTP_REFRESH_CONFIG_LIST");
 
             m_configList = UIHelperExtension.CloneBasicDropDownNoLabel(new string[0], OnConfigSelectionChange, m_topBar);
-            m_configList.width = 745;
+            m_configList.width = 735;
 
             KlyteMonoUtils.InitCircledButton(m_topBar, out m_newButton, CommonsSpriteNames.K45_New, OnNewConfig, "K45_DTP_CREATE_NEW_CONFIG");
             KlyteMonoUtils.InitCircledButton(m_topBar, out m_deleteButton, CommonsSpriteNames.K45_Delete, OnDeleteConfig, "K45_DTP_DELETE_SELECTED_CONFIG");
 
-            KlyteMonoUtils.CreateUIElement(out m_middleBar, MainContainer.transform, "previewBar", new UnityEngine.Vector4(0, 0, MainContainer.width, 300));
+            KlyteMonoUtils.CreateUIElement(out m_middleBar, MainContainer.transform, "previewBar", new UnityEngine.Vector4(0, 0, MainContainer.width - MainContainer.padding.horizontal, 300));
             m_middleBar.autoLayout = true;
             m_middleBar.autoLayoutDirection = LayoutDirection.Horizontal;
 

@@ -4,8 +4,8 @@ using System.Xml.Serialization;
 namespace Klyte.DynamicTextProps.Data
 {
 
-    [XmlRoot("DTPNetNodesData")]
-    public class DTPNetNodesData : DTPBaseData<DTPNetNodesData, IBoardBunchContainer<CacheControlRoadNode>>
+    [XmlRoot("DTPRoadNodesData")]
+    public class DTPRoadNodesData : DTPBaseData<DTPRoadNodesData, IBoardBunchContainer<CacheControlRoadNode>>
     {
         public override int ObjArraySize => NetManager.MAX_NODE_COUNT;
 

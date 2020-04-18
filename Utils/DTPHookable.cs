@@ -19,7 +19,7 @@ namespace Klyte.DynamicTextProps.Utils
             string result = GetStreetFullName(idx);
             if (result.Contains(" "))
             {
-                switch (DTPNetNodesData.Instance.CurrentDescriptor.RoadQualifierExtraction)
+                switch (DTPRoadNodesData.Instance.CurrentDescriptor.RoadQualifierExtraction)
                 {
                     case RoadQualifierExtractionMode.START:
                         result = result.Substring(result.IndexOf(' ') + 1);

@@ -38,7 +38,7 @@ namespace Klyte.DynamicTextProps.Utils
 
         public static string ApplyAbbreviations(string name)
         {
-            if (DynamicTextPropsMod.Controller.AbbreviationFiles.TryGetValue(DTPNetNodesData.Instance.CurrentDescriptor.AbbreviationFile ?? "", out Dictionary<string, string> translations))
+            if (DynamicTextPropsMod.Controller.AbbreviationFiles.TryGetValue(DTPRoadNodesData.Instance.CurrentDescriptor.AbbreviationFile ?? "", out Dictionary<string, string> translations))
             {
                 foreach (string key in translations.Keys.Where(x => x.Contains(" ")))
                 {

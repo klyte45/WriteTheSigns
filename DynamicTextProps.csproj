@@ -182,8 +182,10 @@
     <Compile Include="DynamicFont\src\Utility\IOUtils.cs" />
     <Compile Include="Libraries\BasicLib.cs" />
     <Compile Include="DynamicFont\src\Utility\BasicRenderInformation.cs" />
+    <Compile Include="Overrides\BoardGeneration\BoardGeneratorRoadNodes.cs" />
     <Compile Include="Overrides\BuildingManagerOverrides.cs" />
     <Compile Include="Overrides\DistrictManagerOverrides.cs" />
+    <Compile Include="Rendering\DTPTextRenderingRules.cs" />
     <Compile Include="Tools\BuildingTool.cs" />
     <Compile Include="UI\DTPPropPreviewRenderer.cs" />
     <Compile Include="UI\Tabs\PropEditor\DTPEditorPropPreview.cs" />
@@ -200,7 +202,7 @@
     <Compile Include="Xml\BoardTextDescriptor\BoardTextDescriptorGeneralXml.cs" />
     <Compile Include="Xml\Containers\BuildingGroupDescriptorXml.cs" />
     <Compile Include="Xml\Containers\BoardBunchContainerBuilding.cs" />
-    <Compile Include="Overrides\BoardGeneration\PathCrawler\MileagePlateDescriptor.cs" />
+    <Compile Include="Overrides\BoardGeneration\PathCrawler\MileageMarkerDescriptor.cs" />
     <Compile Include="Overrides\BoardGeneration\PathCrawler\RoadIdentifier.cs" />
     <Compile Include="Xml\BoardDescriptor\BoardDescriptorMileageMarkerXml.cs" />
     <Compile Include="Xml\Cache\CacheControlRoadNode.cs" />
@@ -208,7 +210,7 @@
     <Compile Include="Xml\BoardDescriptor\BoardDescriptorOnNetXml.cs" />
     <Compile Include="Overrides\TransportManagerOverrides.cs" />
     <Compile Include="Xml\BoardDescriptor\BoardDescriptorRoadNodeXml.cs" />
-    <Compile Include="Overrides\BoardGeneration\BoardGeneratorParent.cs" />
+    <Compile Include="Overrides\RenderEventsRedirector.cs" />
     <Compile Include="DynamicTextPropsMod.cs" />
     <Compile Include="DTPController.cs" />
     <Compile Include="Xml\Cache\CacheControl.cs" />
@@ -279,7 +281,6 @@
   </ProjectExtensions>
   <ItemGroup>
     <Folder Include="Properties\" />
-    <Folder Include="Rendering\" />
     <Folder Include="UI\Tabs\Base\" />
   </ItemGroup>
   <ItemGroup>
