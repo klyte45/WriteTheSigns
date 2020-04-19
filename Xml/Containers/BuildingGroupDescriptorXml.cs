@@ -2,7 +2,7 @@
 using System.Xml;
 using System.Xml.Serialization;
 
-namespace Klyte.DynamicTextProps.Xml
+namespace Klyte.WriteTheCity.Xml
 {
     [XmlRoot("buildingConfig")]
     public class BuildingGroupDescriptorXml : ILibable
@@ -18,10 +18,10 @@ namespace Klyte.DynamicTextProps.Xml
         [XmlAttribute("stopMappingThresold")]
         public float StopMappingThresold { get; set; } = 1f;
 
-        [XmlAttribute("versionDTPLastEdit")]
-        public string VersionDTPLastEdit { get; } = DynamicTextPropsMod.FullVersion;
+        [XmlAttribute("versionWTCLastEdit")]
+        public string VersionWTCLastEdit { get; } = WriteTheCityMod.FullVersion;
 
-        [XmlAttribute("versionDTPCreation")]
-        public string VersionDTPCreation { get; private set; } = DynamicTextPropsMod.FullVersion;
+        [XmlAttribute("versionWTCCreation")]
+        public string VersionWTCCreation { get; private set; } = WriteTheCityMod.FullVersion;
     }
 }

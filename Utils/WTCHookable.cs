@@ -2,15 +2,15 @@ using ColossalFramework;
 using ColossalFramework.Math;
 using Klyte.Commons.UI.Sprites;
 using Klyte.Commons.Utils;
-using Klyte.DynamicTextProps.Data;
-using Klyte.DynamicTextProps.Xml;
+using Klyte.WriteTheCity.Data;
+using Klyte.WriteTheCity.Xml;
 using System;
 using UnityEngine;
 using static ItemClass;
 
-namespace Klyte.DynamicTextProps.Utils
+namespace Klyte.WriteTheCity.Utils
 {
-    internal static class DTPHookable
+    internal static class WTCHookable
     {
         public static Func<ushort, string> GetStreetFullName = (ushort idx) => NetManager.instance.GetSegmentName(idx);
 
@@ -19,7 +19,7 @@ namespace Klyte.DynamicTextProps.Utils
             string result = GetStreetFullName(idx);
             if (result.Contains(" "))
             {
-                switch (DTPRoadNodesData.Instance.CurrentDescriptor.RoadQualifierExtraction)
+                switch (WTCRoadNodesData.Instance.CurrentDescriptor.RoadQualifierExtraction)
                 {
                     case RoadQualifierExtractionMode.START:
                         result = result.Substring(result.IndexOf(' ') + 1);
@@ -125,7 +125,7 @@ namespace Klyte.DynamicTextProps.Utils
 
         public static Func<ushort, ushort, string> GetStopName = (ushort stopId, ushort lineId) =>
         {
-            ushort buildingID = DTPLineUtils.GetStopBuilding(stopId, lineId);
+            ushort buildingID = WTCLineUtils.GetStopBuilding(stopId, lineId);
 
             if (buildingID > 0)
             {

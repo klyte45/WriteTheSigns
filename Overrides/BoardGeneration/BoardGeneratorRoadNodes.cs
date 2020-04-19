@@ -2,23 +2,23 @@
 using ColossalFramework.Math;
 using Klyte.Commons.Extensors;
 using Klyte.Commons.Utils;
-using Klyte.DynamicTextProps.Data;
-using Klyte.DynamicTextProps.Rendering;
-using Klyte.DynamicTextProps.Utils;
-using Klyte.DynamicTextProps.Xml;
+using Klyte.WriteTheCity.Data;
+using Klyte.WriteTheCity.Rendering;
+using Klyte.WriteTheCity.Utils;
+using Klyte.WriteTheCity.Xml;
 using SpriteFontPlus;
 using System;
 using System.Linq;
 using UnityEngine;
 
-namespace Klyte.DynamicTextProps.Overrides
+namespace Klyte.WriteTheCity.Overrides
 {
 
     public class BoardGeneratorRoadNodes : Redirector, IRedirectable
     {
         public static BoardGeneratorRoadNodes Instance;
-        public DynamicSpriteFont DrawFont => FontServer.instance[Data.DefaultFont] ?? FontServer.instance[DTPController.DEFAULT_FONT_KEY];
-        public DTPRoadNodesData Data => DTPRoadNodesData.Instance;
+        public DynamicSpriteFont DrawFont => FontServer.instance[Data.DefaultFont] ?? FontServer.instance[WTCController.DEFAULT_FONT_KEY];
+        public WTCRoadNodesData Data => WTCRoadNodesData.Instance;
         public bool[] m_updatedStreetPositions;
         public uint[] m_lastFrameUpdate;
 
@@ -205,11 +205,11 @@ namespace Klyte.DynamicTextProps.Overrides
 
                             Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_platePosition = platePos;
                             Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_renderPlate = true;
-                            Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_cachedColor = Data.CurrentDescriptor.UseDistrictColor ? DTPHookable.GetDistrictColor(Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_districtId1) : Data.CurrentDescriptor.Descriptor.FixedColor ?? Color.white;
-                            Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_cachedColor2 = Data.CurrentDescriptor.UseDistrictColor ? DTPHookable.GetDistrictColor(Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_districtId2) : Data.CurrentDescriptor.Descriptor.FixedColor ?? Color.white;
+                            Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_cachedColor = Data.CurrentDescriptor.UseDistrictColor ? WTCHookable.GetDistrictColor(Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_districtId1) : Data.CurrentDescriptor.Descriptor.FixedColor ?? Color.white;
+                            Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_cachedColor2 = Data.CurrentDescriptor.UseDistrictColor ? WTCHookable.GetDistrictColor(Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_districtId2) : Data.CurrentDescriptor.Descriptor.FixedColor ?? Color.white;
                             Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_cachedContrastColor = KlyteMonoUtils.ContrastColor(Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_cachedColor);
                             Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_cachedContrastColor2 = KlyteMonoUtils.ContrastColor(Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_cachedColor2);
-                            Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_distanceRef = Vector2.Distance(VectorUtils.XZ(Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_platePosition), DTPHookable.GetStartPoint());
+                            Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_distanceRef = Vector2.Distance(VectorUtils.XZ(Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_platePosition), WTCHookable.GetStartPoint());
                             controlBoardIdx++;
                         }
                     }
@@ -228,17 +228,17 @@ namespace Klyte.DynamicTextProps.Overrides
                         Data.BoardsContainers[nodeID].m_boardsData[boardIdx].m_cachedProp = null;
                     }
 
-                    DTPPropRenderingRules.RenderPropMesh(ref Data.BoardsContainers[nodeID].m_boardsData[boardIdx].m_cachedProp, cameraInfo, nodeID, boardIdx, 0, 0xFFFFFFF, 0, Data.BoardsContainers[nodeID].m_boardsData[boardIdx].m_platePosition, Vector4.zero, ref Data.CurrentDescriptor.Descriptor.m_propName, new Vector3(0, Data.BoardsContainers[nodeID].m_boardsData[boardIdx].m_streetDirection1) + Data.CurrentDescriptor.m_propRotation, Data.CurrentDescriptor.PropScale, Data.CurrentDescriptor, out Matrix4x4 propMatrix, out bool rendered, GetPropRenderID(nodeID));
+                    WTCPropRenderingRules.RenderPropMesh(ref Data.BoardsContainers[nodeID].m_boardsData[boardIdx].m_cachedProp, cameraInfo, nodeID, boardIdx, 0, 0xFFFFFFF, 0, Data.BoardsContainers[nodeID].m_boardsData[boardIdx].m_platePosition, Vector4.zero, ref Data.CurrentDescriptor.Descriptor.m_propName, new Vector3(0, Data.BoardsContainers[nodeID].m_boardsData[boardIdx].m_streetDirection1) + Data.CurrentDescriptor.m_propRotation, Data.CurrentDescriptor.PropScale, Data.CurrentDescriptor, out Matrix4x4 propMatrix, out bool rendered, GetPropRenderID(nodeID));
                     if (rendered)
                     {
                         for (int j = 0; j < Data.CurrentDescriptor.Descriptor.m_textDescriptors.Length; j++)
                         {
                             MaterialPropertyBlock properties = PropManager.instance.m_materialBlock;
                             properties.Clear();
-                            DTPPropRenderingRules.RenderTextMesh(nodeID, boardIdx, 0, Data.CurrentDescriptor, propMatrix, Data.CurrentDescriptor.Descriptor.m_textDescriptors[j], properties, DrawFont);
+                            WTCPropRenderingRules.RenderTextMesh(nodeID, boardIdx, 0, Data.CurrentDescriptor, propMatrix, Data.CurrentDescriptor.Descriptor.m_textDescriptors[j], properties, DrawFont);
                         }
                     }
-                    DTPPropRenderingRules.RenderPropMesh(ref Data.BoardsContainers[nodeID].m_boardsData[boardIdx].m_cachedProp, cameraInfo, nodeID, boardIdx, 1, 0xFFFFFFF, 0, Data.BoardsContainers[nodeID].m_boardsData[boardIdx].m_platePosition, Vector4.zero, ref Data.CurrentDescriptor.Descriptor.m_propName, new Vector3(0, Data.BoardsContainers[nodeID].m_boardsData[boardIdx].m_streetDirection2) + Data.CurrentDescriptor.m_propRotation, Data.CurrentDescriptor.PropScale, Data.CurrentDescriptor, out propMatrix, out rendered, GetPropRenderID(nodeID));
+                    WTCPropRenderingRules.RenderPropMesh(ref Data.BoardsContainers[nodeID].m_boardsData[boardIdx].m_cachedProp, cameraInfo, nodeID, boardIdx, 1, 0xFFFFFFF, 0, Data.BoardsContainers[nodeID].m_boardsData[boardIdx].m_platePosition, Vector4.zero, ref Data.CurrentDescriptor.Descriptor.m_propName, new Vector3(0, Data.BoardsContainers[nodeID].m_boardsData[boardIdx].m_streetDirection2) + Data.CurrentDescriptor.m_propRotation, Data.CurrentDescriptor.PropScale, Data.CurrentDescriptor, out propMatrix, out rendered, GetPropRenderID(nodeID));
                     if (rendered)
                     {
 
@@ -246,7 +246,7 @@ namespace Klyte.DynamicTextProps.Overrides
                         {
                             MaterialPropertyBlock properties = PropManager.instance.m_materialBlock;
                             properties.Clear();
-                            DTPPropRenderingRules.RenderTextMesh(nodeID, boardIdx, 1, Data.CurrentDescriptor, propMatrix, Data.CurrentDescriptor.Descriptor.m_textDescriptors[j], properties, DrawFont);
+                            WTCPropRenderingRules.RenderTextMesh(nodeID, boardIdx, 1, Data.CurrentDescriptor, propMatrix, Data.CurrentDescriptor.Descriptor.m_textDescriptors[j], properties, DrawFont);
                         }
                     }
 

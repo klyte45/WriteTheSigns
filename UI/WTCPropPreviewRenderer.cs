@@ -1,13 +1,13 @@
 ﻿using ColossalFramework;
-using Klyte.DynamicTextProps.Rendering;
-using Klyte.DynamicTextProps.Xml;
+using Klyte.WriteTheCity.Rendering;
+using Klyte.WriteTheCity.Xml;
 using SpriteFontPlus;
 using System.Linq;
 using UnityEngine;
 
-namespace Klyte.DynamicTextProps.UI
+namespace Klyte.WriteTheCity.UI
 {
-    public class DTPPropPreviewRenderer : MonoBehaviour
+    public class WTCPropPreviewRenderer : MonoBehaviour
     {
         private readonly Camera m_camera;
         private readonly MaterialPropertyBlock m_block = new MaterialPropertyBlock();
@@ -29,7 +29,7 @@ namespace Klyte.DynamicTextProps.UI
         public RenderTexture Texture => m_camera.targetTexture;
         public float Zoom { get; set; } = 3f;
 
-        public DTPPropPreviewRenderer()
+        public WTCPropPreviewRenderer()
         {
             m_camera = new GameObject("Camera").AddComponent<Camera>();
             m_camera.transform.SetParent(base.transform);
@@ -42,7 +42,7 @@ namespace Klyte.DynamicTextProps.UI
             m_camera.targetTexture = new RenderTexture(512, 512, 24, RenderTextureFormat.ARGB32);
             m_camera.pixelRect = new Rect(0f, 0f, 512f, 512f);
             m_camera.clearFlags = CameraClearFlags.Color;
-            m_camera.name = "DTPCamera";
+            m_camera.name = "WTCCamera";
         }
 
         public Matrix4x4 RenderProp(PropInfo info, BoardDescriptorGeneralXml descriptor, int referenceIdx) => RenderProp(info, default, default, descriptor, referenceIdx);
@@ -69,9 +69,9 @@ namespace Klyte.DynamicTextProps.UI
                 DayNightProperties.instance.moonLightSource.enabled = false;
             }
 
-            if (info.m_material.shader == DTPController.DISALLOWED_SHADER_PROP)
+            if (info.m_material.shader == WTCController.DISALLOWED_SHADER_PROP)
             {
-                info.m_material.shader = DTPController.DEFAULT_SHADER_TEXT;
+                info.m_material.shader = WTCController.DEFAULT_SHADER_TEXT;
             }
 
             m_defaultInstance.Descriptor = descriptor;
@@ -87,8 +87,8 @@ namespace Klyte.DynamicTextProps.UI
             }
             else
             {
-                var sourceMatrix = Matrix4x4.Inverse(DTPPropRenderingRules.CalculateTextMatrix(m_defaultInstance, descriptor.m_textDescriptors[referenceIdx], DTPPropRenderingRules.GetTextMesh(FontServer.instance[DTPController.DEFAULT_FONT_KEY], descriptor.m_textDescriptors[referenceIdx], 0, 0, referenceIdx, m_defaultInstance), true).FirstOrDefault());
-                magnitude = Mathf.Max(info.m_mesh.bounds.extents.magnitude, DTPPropRenderingRules.GetTextMesh(FontServer.instance[descriptor.FontName ?? DTPController.DEFAULT_FONT_KEY], descriptor.m_textDescriptors[referenceIdx], 0, 0, referenceIdx, m_defaultInstance)?.m_mesh?.bounds.extents.magnitude ?? 0);
+                var sourceMatrix = Matrix4x4.Inverse(WTCPropRenderingRules.CalculateTextMatrix(m_defaultInstance, descriptor.m_textDescriptors[referenceIdx], WTCPropRenderingRules.GetTextMesh(FontServer.instance[WTCController.DEFAULT_FONT_KEY], descriptor.m_textDescriptors[referenceIdx], 0, 0, referenceIdx, m_defaultInstance), true).FirstOrDefault());
+                magnitude = Mathf.Max(info.m_mesh.bounds.extents.magnitude, WTCPropRenderingRules.GetTextMesh(FontServer.instance[descriptor.FontName ?? WTCController.DEFAULT_FONT_KEY], descriptor.m_textDescriptors[referenceIdx], 0, 0, referenceIdx, m_defaultInstance)?.m_mesh?.bounds.extents.magnitude ?? 0);
                 propMatrix = Matrix4x4.TRS(offsetPosition, Quaternion.Euler(offsetRotation.x, offsetRotation.y, offsetRotation.z), Vector3.one) * sourceMatrix;
             }
             dist = magnitude + 16f;
@@ -103,7 +103,7 @@ namespace Klyte.DynamicTextProps.UI
             PropManager instance = Singleton<PropManager>.instance;
             MaterialPropertyBlock materialBlock = instance.m_materialBlock;
             materialBlock.Clear();
-            materialBlock.SetColor(instance.ID_Color, DTPPropRenderingRules.GetColor(0, 0, 0, m_defaultInstance) ?? Color.white);
+            materialBlock.SetColor(instance.ID_Color, WTCPropRenderingRules.GetColor(0, 0, 0, m_defaultInstance) ?? Color.white);
             if (info.m_rollLocation != null)
             {
                 info.m_material.SetVectorArray(instance.ID_RollLocation, info.m_rollLocation);
@@ -116,7 +116,7 @@ namespace Klyte.DynamicTextProps.UI
             m_defaultInstance.Descriptor = descriptor;
             for (ushort i = 0; i < descriptor.m_textDescriptors.Length; i++)
             {
-                DTPPropRenderingRules.RenderTextMesh(0, 0, i, m_defaultInstance, propMatrix, descriptor.m_textDescriptors[i], m_block, FontServer.instance[descriptor.FontName ?? DTPController.DEFAULT_FONT_KEY], m_camera);
+                WTCPropRenderingRules.RenderTextMesh(0, 0, i, m_defaultInstance, propMatrix, descriptor.m_textDescriptors[i], m_block, FontServer.instance[descriptor.FontName ?? WTCController.DEFAULT_FONT_KEY], m_camera);
             }
 
 

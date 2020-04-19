@@ -8,7 +8,7 @@
     <ProjectGuid>{BE788EF8-D9ED-4409-826B-8C859CC18C88}</ProjectGuid>
     <OutputType>Library</OutputType>
     <RootNamespace>Klyte</RootNamespace>
-    <AssemblyName>KlyteDynamicTextProps</AssemblyName>
+    <AssemblyName>KlyteWriteTheCity</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <TargetFrameworkProfile />
     <LangVersion>8.0</LangVersion>
@@ -160,11 +160,11 @@
     <Compile Include="commons\Utils\UtilitiesClasses\Tuple.cs" />
     <Compile Include="commons\Utils\VehicleUtils.cs" />
     <Compile Include="commons\Utils\XmlUtils.cs" />
-    <Compile Include="Data\DTPBaseData.cs" />
-    <Compile Include="Data\DTPBuildingsData.cs" />
-    <Compile Include="Data\DTPHighwayMileageData.cs" />
-    <Compile Include="Data\DTPRoadNodesData.cs" />
-    <Compile Include="Data\DTPHighwaySignsData.cs" />
+    <Compile Include="Data\WTCBaseData.cs" />
+    <Compile Include="Data\WTCBuildingsData.cs" />
+    <Compile Include="Data\WTCHighwayMileageData.cs" />
+    <Compile Include="Data\WTCRoadNodesData.cs" />
+    <Compile Include="Data\WTCHighwaySignsData.cs" />
     <Compile Include="DynamicFont\src\CharacterRange.cs" />
     <Compile Include="DynamicFont\src\DynamicSpriteFont.cs" />
     <Compile Include="DynamicFont\src\FontStashSharp\Bounds.cs" />
@@ -185,15 +185,16 @@
     <Compile Include="Overrides\BoardGeneration\BoardGeneratorRoadNodes.cs" />
     <Compile Include="Overrides\BuildingManagerOverrides.cs" />
     <Compile Include="Overrides\DistrictManagerOverrides.cs" />
-    <Compile Include="Rendering\DTPTextRenderingRules.cs" />
+    <Compile Include="Rendering\TextRenderingClass.cs" />
+    <Compile Include="Rendering\WTCPropRenderingRules.cs" />
     <Compile Include="Tools\BuildingTool.cs" />
-    <Compile Include="UI\DTPPropPreviewRenderer.cs" />
-    <Compile Include="UI\Tabs\PropEditor\DTPEditorPropPreview.cs" />
-    <Compile Include="UI\Tabs\PropEditor\DTPEditorLib.cs" />
-    <Compile Include="UI\Tabs\PropEditor\DTPTextEditor.cs" />
-    <Compile Include="UI\Tabs\PropEditor\DTPBasicPropInfoEditor.cs" />
-    <Compile Include="UI\Tabs\PropEditor\DTPPropTextLayoutEditor.cs" />
-    <Compile Include="Utils\DTPLineUtils.cs" />
+    <Compile Include="UI\WTCPropPreviewRenderer.cs" />
+    <Compile Include="UI\Tabs\PropEditor\WTCEditorPropPreview.cs" />
+    <Compile Include="UI\Tabs\PropEditor\WTCEditorUILib.cs" />
+    <Compile Include="UI\Tabs\PropEditor\WTCTextEditor.cs" />
+    <Compile Include="UI\Tabs\PropEditor\WTCBasicPropInfoEditor.cs" />
+    <Compile Include="UI\Tabs\PropEditor\WTCPropTextLayoutEditor.cs" />
+    <Compile Include="Utils\WTCLineUtils.cs" />
     <Compile Include="Utils\PrefabUtils.cs" />
     <Compile Include="Utils\RenderUtils.cs" />
     <Compile Include="Xml\BoardDescriptor\BoardDescriptorBuildingXml.cs" />
@@ -212,8 +213,8 @@
     <Compile Include="Overrides\TransportManagerOverrides.cs" />
     <Compile Include="Xml\BoardDescriptor\BoardDescriptorRoadNodeXml.cs" />
     <Compile Include="Overrides\RenderEventsRedirector.cs" />
-    <Compile Include="DynamicTextPropsMod.cs" />
-    <Compile Include="DTPController.cs" />
+    <Compile Include="WriteTheCityMod.cs" />
+    <Compile Include="WTCController.cs" />
     <Compile Include="Xml\Cache\CacheControl.cs" />
     <Compile Include="Xml\Cache\CacheControlOnNet.cs" />
     <Compile Include="Xml\Containers\IBoardBunchContainer.cs" />
@@ -221,9 +222,9 @@
     <Compile Include="Overrides\NetManagerOverrides.cs" />
     <Compile Include="Xml\Enums\TextType.cs" />
     <Compile Include="Tools\RoadSegmentTool.cs" />
-    <Compile Include="UI\DTPPanel.cs" />
-    <Compile Include="Utils\DTPHookable.cs" />
-    <Compile Include="Utils\DTPUtils.cs" />
+    <Compile Include="UI\WTCPanel.cs" />
+    <Compile Include="Utils\WTCHookable.cs" />
+    <Compile Include="Utils\WTCUtils.cs" />
     <Compile Include="_StbTrueTypeSharp\src\Bmp.cs" />
     <Compile Include="_StbTrueTypeSharp\src\Buf.cs" />
     <Compile Include="_StbTrueTypeSharp\src\CharStringContext.cs" />
@@ -374,7 +375,7 @@
     <EmbeddedResource Include="UI\i18n\en.properties" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="UI\Images\%25K45_KDTPIcon.png" />
+    <EmbeddedResource Include="UI\Images\%25K45_KWTCIcon.png" />
     <None Include="commons\README.md" />
     <None Include="commons\UI\Images\lineFormats.psd" />
     <None Include="README.md" />
@@ -405,12 +406,12 @@
   <PropertyGroup>
     <PostBuildEvent>xcopy /Y "$(TargetDir)0Harmony.dll" "$(ProjectDir)\_requiredDLLs\"
 xcopy /Y "$(TargetPath)" "$(ProjectDir)\_requiredDLLs\"
-xcopy /Y /e "$(ProjectDir)\_requiredDLLs\*" "C:\Users\Leandro\AppData\Local\Colossal Order\Cities_Skylines\Addons\Mods\DTB\"
+xcopy /Y /e "$(ProjectDir)\_requiredDLLs\*" "C:\Users\Leandro\AppData\Local\Colossal Order\Cities_Skylines\Addons\Mods\WTC\"
 rem xcopy /Y /e "$(ProjectDir)\_requiredDLLs\*"  "S:\Steam\steamapps\workshop\content\255710\???\"</PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
     <PreBuildEvent>rem del /S /Q "S:\Steam\steamapps\workshop\content\255710\???\*"
-del /S /Q "C:\Users\Leandro\AppData\Local\Colossal Order\Cities_Skylines\Addons\Mods\DTB\*"
+del /S /Q "C:\Users\Leandro\AppData\Local\Colossal Order\Cities_Skylines\Addons\Mods\WTC\*"
 del /Q "$(ProjectDir)\_requiredDLLs\*.dll"</PreBuildEvent>
   </PropertyGroup>
 </Project>

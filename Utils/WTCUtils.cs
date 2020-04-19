@@ -2,27 +2,27 @@ using ColossalFramework;
 using ColossalFramework.Globalization;
 using ColossalFramework.UI;
 using Klyte.Commons.Utils;
-using Klyte.DynamicTextProps.Data;
+using Klyte.WriteTheCity.Data;
 using SpriteFontPlus;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Klyte.DynamicTextProps.Utils
+namespace Klyte.WriteTheCity.Utils
 {
-    internal class DTPUtils
+    internal class WTCUtils
     {
 
         public static void ReloadFontsOf(UIDropDown target, bool hasDefaultOption = false)
         {
-            DTPController.ReloadFontsFromPath();
+            WTCController.ReloadFontsFromPath();
             var items = FontServer.instance.GetAllFonts().ToList();
             items.Sort();
-            items.Remove(DTPController.DEFAULT_FONT_KEY);
-            items.Insert(0, Locale.Get("K45_DTP_DEFAULT_FONT_LABEL"));
+            items.Remove(WTCController.DEFAULT_FONT_KEY);
+            items.Insert(0, Locale.Get("K45_WTC_DEFAULT_FONT_LABEL"));
             if (hasDefaultOption)
             {
-                items.Insert(0, Locale.Get("K45_DTP_USE_GROUP_SETTING_FONT"));
+                items.Insert(0, Locale.Get("K45_WTC_USE_GROUP_SETTING_FONT"));
             }
             target.items = items.ToArray();
             string filename = target.selectedValue;
@@ -38,7 +38,7 @@ namespace Klyte.DynamicTextProps.Utils
 
         public static string ApplyAbbreviations(string name)
         {
-            if (DynamicTextPropsMod.Controller.AbbreviationFiles.TryGetValue(DTPRoadNodesData.Instance.CurrentDescriptor.AbbreviationFile ?? "", out Dictionary<string, string> translations))
+            if (WriteTheCityMod.Controller.AbbreviationFiles.TryGetValue(WTCRoadNodesData.Instance.CurrentDescriptor.AbbreviationFile ?? "", out Dictionary<string, string> translations))
             {
                 foreach (string key in translations.Keys.Where(x => x.Contains(" ")))
                 {

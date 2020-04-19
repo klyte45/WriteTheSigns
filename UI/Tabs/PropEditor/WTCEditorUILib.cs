@@ -8,10 +8,10 @@ using System.Reflection;
 using UnityEngine;
 
 
-namespace Klyte.DynamicTextProps.UI
+namespace Klyte.WriteTheCity.UI
 {
 
-    internal static class DTPEditorUILib
+    internal static class WTCEditorUILib
     {
         #region UI Utils
         public static void AddColorField(UIHelperExtension helper, string text, out UIColorField m_colorEditor, PropertyChangedEventHandler<Color> onSelectedColorChanged)
@@ -28,7 +28,7 @@ namespace Klyte.DynamicTextProps.UI
 
         public static UIButton ConfigureActionButton(UIComponent parent)
         {
-            KlyteMonoUtils.CreateUIElement(out UIButton actionButton, parent.transform, "DTPBtn");
+            KlyteMonoUtils.CreateUIElement(out UIButton actionButton, parent.transform, "WTCBtn");
             KlyteMonoUtils.InitButton(actionButton, false, "ButtonMenu");
             actionButton.focusedBgSprite = "";
             actionButton.autoSize = false;

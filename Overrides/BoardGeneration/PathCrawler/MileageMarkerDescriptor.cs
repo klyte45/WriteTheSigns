@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Klyte.DynamicTextProps.Overrides
+namespace Klyte.WriteTheCity.Overrides
 {
 
     public struct MileageMarkerDescriptor

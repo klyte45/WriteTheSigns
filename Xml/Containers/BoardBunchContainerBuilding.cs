@@ -1,4 +1,4 @@
-﻿namespace Klyte.DynamicTextProps.Xml
+﻿namespace Klyte.WriteTheCity.Xml
 {
 
     public partial class BoardGeneratorBuildings

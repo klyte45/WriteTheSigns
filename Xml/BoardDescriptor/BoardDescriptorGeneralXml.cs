@@ -1,12 +1,12 @@
 ﻿using ColossalFramework;
 using Klyte.Commons.Interfaces;
 using Klyte.Commons.Utils;
-using Klyte.DynamicTextProps.Rendering;
+using Klyte.WriteTheCity.Rendering;
 using System.Xml;
 using System.Xml.Serialization;
 using UnityEngine;
 
-namespace Klyte.DynamicTextProps.Xml
+namespace Klyte.WriteTheCity.Xml
 {
 
     public class BoardDescriptorGeneralXml : ILibable

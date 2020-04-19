@@ -4,7 +4,7 @@ using System.Xml;
 using System.Xml.Serialization;
 using static Klyte.Commons.Utils.XmlUtils;
 
-namespace Klyte.DynamicTextProps.Xml
+namespace Klyte.WriteTheCity.Xml
 {
 
     public class BoardBunchContainerOnNetXml : IBoardBunchContainer<CacheControlOnNet>, ILibable

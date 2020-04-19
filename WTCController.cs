@@ -1,7 +1,7 @@
 ﻿using Klyte.Commons.Interfaces;
 using Klyte.Commons.Utils;
-using Klyte.DynamicTextProps.Tools;
-using Klyte.DynamicTextProps.Utils;
+using Klyte.WriteTheCity.Tools;
+using Klyte.WriteTheCity.Utils;
 using SpriteFontPlus;
 using System;
 using System.Collections.Generic;
@@ -10,10 +10,10 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 
-namespace Klyte.DynamicTextProps
+namespace Klyte.WriteTheCity
 {
 
-    public class DTPController : BaseController<DynamicTextPropsMod, DTPController>
+    public class WTCController : BaseController<WriteTheCityMod, WTCController>
     {
 
         public RoadSegmentTool RoadSegmentToolInstance => FindObjectOfType<RoadSegmentTool>();
@@ -73,7 +73,7 @@ namespace Klyte.DynamicTextProps
         }
 
 
-        public static readonly string FOLDER_NAME = FileUtils.BASE_FOLDER_PATH + "DynamicTextProps";
+        public static readonly string FOLDER_NAME = FileUtils.BASE_FOLDER_PATH + "WriteTheCity";
         public const string m_defaultFileNameXml = "DefaultBuildingsConfig";
         public const string DEFAULT_GAME_BUILDINGS_CONFIG_FOLDER = "BuildingsDefaultPlacing";
         public const string DEFAULT_GAME_VEHICLES_CONFIG_FOLDER = "VehiclesDefaultPlacing";

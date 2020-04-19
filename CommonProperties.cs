@@ -1,15 +1,15 @@
-using Klyte.DynamicTextProps;
+using Klyte.WriteTheCity;
 
 namespace Klyte.Commons
 {
     public static class CommonProperties
     {
-        public static bool DebugMode => DynamicTextPropsMod.DebugMode;
-        public static string Version => DynamicTextPropsMod.Version;
-        public static string ModName => DynamicTextPropsMod.Instance.SimpleName;
-        public static string Acronym { get; } = "DTP";
-        public static string ModRootFolder { get; } = DTPController.FOLDER_NAME;
-        public static string ModDllRootFolder { get; } = DynamicTextPropsMod.RootFolder;
-        public static string ModIcon => DynamicTextPropsMod.Instance.IconName;
+        public static bool DebugMode => WriteTheCityMod.DebugMode;
+        public static string Version => WriteTheCityMod.Version;
+        public static string ModName => WriteTheCityMod.Instance.SimpleName;
+        public static string Acronym { get; } = "WTC";
+        public static string ModRootFolder { get; } = WTCController.FOLDER_NAME;
+        public static string ModDllRootFolder { get; } = WriteTheCityMod.RootFolder;
+        public static string ModIcon => WriteTheCityMod.Instance.IconName;
     }
 }

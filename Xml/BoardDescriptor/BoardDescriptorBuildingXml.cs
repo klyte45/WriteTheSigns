@@ -2,7 +2,7 @@
 using System.Xml.Serialization;
 using UnityEngine;
 
-namespace Klyte.DynamicTextProps.Xml
+namespace Klyte.WriteTheCity.Xml
 {
 
     public class BoardDescriptorBuildingXml : BoardInstanceXml

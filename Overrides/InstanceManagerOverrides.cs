@@ -4,7 +4,7 @@ using System.Collections;
 using System.Reflection;
 using UnityEngine;
 
-namespace Klyte.DynamicTextProps.Overrides
+namespace Klyte.WriteTheCity.Overrides
 {
     public class InstanceManagerOverrides : MonoBehaviour, IRedirectable
     {

@@ -3,22 +3,22 @@ using ColossalFramework.Globalization;
 using ColossalFramework.UI;
 using Klyte.Commons.Extensors;
 using Klyte.Commons.Utils;
-using Klyte.DynamicTextProps.Rendering;
-using Klyte.DynamicTextProps.Utils;
-using Klyte.DynamicTextProps.Xml;
+using Klyte.WriteTheCity.Rendering;
+using Klyte.WriteTheCity.Utils;
+using Klyte.WriteTheCity.Xml;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using UnityEngine;
-using static Klyte.DynamicTextProps.UI.DTPEditorUILib;
+using static Klyte.WriteTheCity.UI.WTCEditorUILib;
 
-namespace Klyte.DynamicTextProps.UI
+namespace Klyte.WriteTheCity.UI
 {
 
-    internal class DTPBasicPropInfoEditor : UICustomControl
+    internal class WTCBasicPropInfoEditor : UICustomControl
     {
-        public static DTPBasicPropInfoEditor Instance { get; private set; }
+        public static WTCBasicPropInfoEditor Instance { get; private set; }
         public UIPanel MainContainer { get; protected set; }
 
         protected UITextField m_propFilter;
@@ -35,7 +35,7 @@ namespace Klyte.DynamicTextProps.UI
 
         private PropInfo m_lastSelection;
 
-        private BoardDescriptorGeneralXml EditingInstance => DTPPropTextLayoutEditor.Instance.EditingInstance;
+        private BoardDescriptorGeneralXml EditingInstance => WTCPropTextLayoutEditor.Instance.EditingInstance;
 
         public Dictionary<string, string> PropsLoaded
         {
@@ -60,7 +60,7 @@ namespace Klyte.DynamicTextProps.UI
 
             var helper = new UIHelperExtension(MainContainer);
 
-            AddTextField(Locale.Get("K45_DTP_PROP_MODEL_SELECT"), out m_propFilter, helper, null);
+            AddTextField(Locale.Get("K45_WTC_PROP_MODEL_SELECT"), out m_propFilter, helper, null);
 
             KlyteMonoUtils.UiTextFieldDefaultsForm(m_propFilter);
             var selectorPanel = m_propFilter.parent as UIPanel;
@@ -72,14 +72,14 @@ namespace Klyte.DynamicTextProps.UI
             selectorPanel.wrapLayout = true;
 
 
-            AddTextField(Locale.Get("K45_DTP_PROP_TAB_TITLE"), out m_name, helper, OnSetName);
-            AddColorField(helper, Locale.Get("K45_DTP_PROP_COLOR"), out m_fixedColor, (x, y) => EventPropColorChanged?.Invoke(y));
+            AddTextField(Locale.Get("K45_WTC_PROP_TAB_TITLE"), out m_name, helper, OnSetName);
+            AddColorField(helper, Locale.Get("K45_WTC_PROP_COLOR"), out m_fixedColor, (x, y) => EventPropColorChanged?.Invoke(y));
 
-            AddDropdown(Locale.Get("K45_DTP_OVERRIDE_FONT"), out m_fontSelect, helper, new string[0], OnSetFont);
-            DTPUtils.ReloadFontsOf(m_fontSelect, true);
+            AddDropdown(Locale.Get("K45_WTC_OVERRIDE_FONT"), out m_fontSelect, helper, new string[0], OnSetFont);
+            WTCUtils.ReloadFontsOf(m_fontSelect, true);
 
 
-            AddDropdown(Locale.Get("K45_DTP_TEXT_AVAILABILITY"), out m_dropdownTextContent, helper, Enum.GetNames(typeof(TextRenderingClass)).Select(x => Locale.Get("K45_DTP_BOARD_TEXT_AVAILABILITY_DESC", x.ToString())).ToArray(), OnSetTextOwnNameContent);
+            AddDropdown(Locale.Get("K45_WTC_TEXT_AVAILABILITY"), out m_dropdownTextContent, helper, Enum.GetNames(typeof(TextRenderingClass)).Select(x => Locale.Get("K45_WTC_BOARD_TEXT_AVAILABILITY_DESC", x.ToString())).ToArray(), OnSetTextOwnNameContent);
 
             m_popup = CreatePopup(m_fontSelect, selectorPanel);
             m_popup.isVisible = false;

@@ -1,17 +1,17 @@
 ﻿using Klyte.Commons.Extensors;
 using Klyte.Commons.Utils;
-using Klyte.DynamicTextProps.Utils;
+using Klyte.WriteTheCity.Utils;
 using System.Reflection;
 using UnityEngine;
 
-namespace Klyte.DynamicTextProps.Overrides
+namespace Klyte.WriteTheCity.Overrides
 {
     public class BuildingManagerOverrides : MonoBehaviour, IRedirectable
     {
         public Redirector RedirectorInstance { get; private set; }
 
 
-        public static void OnBuildingRemoved(ushort building) => DTPLineUtils.PurgeBuildingCache(building);
+        public static void OnBuildingRemoved(ushort building) => WTCLineUtils.PurgeBuildingCache(building);
 
         #region Hooking
 

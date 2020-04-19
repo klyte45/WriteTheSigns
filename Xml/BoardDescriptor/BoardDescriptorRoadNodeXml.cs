@@ -1,6 +1,6 @@
 ﻿using System.Xml.Serialization;
 
-namespace Klyte.DynamicTextProps.Xml
+namespace Klyte.WriteTheCity.Xml
 {
     [XmlRoot("roadCornerDescriptor")]
     public class BoardInstanceRoadNodeXml : BoardInstanceXml

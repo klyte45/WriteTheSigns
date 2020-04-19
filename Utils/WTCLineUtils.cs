@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Klyte.DynamicTextProps.Utils
+namespace Klyte.WriteTheCity.Utils
 {
-    internal class DTPLineUtils
+    internal class WTCLineUtils
     {
         private static Dictionary<uint, ushort> m_stopsBuildingsCache = new Dictionary<uint, ushort>();
 
@@ -34,7 +34,7 @@ namespace Klyte.DynamicTextProps.Utils
             uint id = (uint) ((lineId << 16) | stopId);
             if (!m_stopsBuildingsCache.TryGetValue(id, out ushort buildingId))
             {
-                buildingId = DTPHookable.GetStopBuildingInternal(stopId, lineId);
+                buildingId = WTCHookable.GetStopBuildingInternal(stopId, lineId);
                 m_stopsBuildingsCache[id] = buildingId;
             }
             return buildingId;

@@ -1,18 +1,18 @@
 ﻿using ColossalFramework.UI;
 using Klyte.Commons.UI.SpriteNames;
 using Klyte.Commons.Utils;
-using Klyte.DynamicTextProps.Xml;
+using Klyte.WriteTheCity.Xml;
 using UnityEngine;
 
-namespace Klyte.DynamicTextProps.UI
+namespace Klyte.WriteTheCity.UI
 {
 
-    internal class DTPEditorPropPreview : UICustomControl
+    internal class WTCEditorPropPreview : UICustomControl
     {
 
         public UIPanel MainContainer { get; protected set; }
 
-        private DTPPropPreviewRenderer m_previewRenderer;
+        private WTCPropPreviewRenderer m_previewRenderer;
         private UIPanel m_previewPanel;
         private UITextureSprite m_preview;
         private UIPanel m_previewControls;
@@ -23,9 +23,9 @@ namespace Klyte.DynamicTextProps.UI
         private bool m_viewLocked;
 
 
-        private PropInfo CurrentInfo => DTPPropTextLayoutEditor.Instance.CurrentInfo;
-        private int TabToPreview => DTPPropTextLayoutEditor.Instance.CurrentTab - 1;
-        private BoardDescriptorGeneralXml EditingInstance => DTPPropTextLayoutEditor.Instance.EditingInstance;
+        private PropInfo CurrentInfo => WTCPropTextLayoutEditor.Instance.CurrentInfo;
+        private int TabToPreview => WTCPropTextLayoutEditor.Instance.CurrentTab - 1;
+        private BoardDescriptorGeneralXml EditingInstance => WTCPropTextLayoutEditor.Instance.EditingInstance;
 
         private BoardTextDescriptorGeneralXml CurrentTextDescriptor => TabToPreview >= 0 && TabToPreview < EditingInstance.m_textDescriptors.Length ? EditingInstance.m_textDescriptors[TabToPreview] : default;
 
@@ -59,12 +59,12 @@ namespace Klyte.DynamicTextProps.UI
             m_previewControls.autoLayoutDirection = LayoutDirection.Vertical;
 
 
-            KlyteMonoUtils.InitCircledButton(m_previewControls, out m_lockToSelection, CommonsSpriteNames.K45_Unlock, (x, y) => ToggleLock(), "K45_DTP_LOCK_UNLOCK_TO_CURRENT_ITEM");
+            KlyteMonoUtils.InitCircledButton(m_previewControls, out m_lockToSelection, CommonsSpriteNames.K45_Unlock, (x, y) => ToggleLock(), "K45_WTC_LOCK_UNLOCK_TO_CURRENT_ITEM");
             m_lockToSelection.focusedBgSprite = null;
             m_viewLocked = true;
             ToggleLock();
 
-            KlyteMonoUtils.InitCircledButton(m_previewControls, out UIButton resetView, CommonsSpriteNames.K45_Reload, (x, y) => ResetCamera(), "K45_DTP_RESET_VIEW");
+            KlyteMonoUtils.InitCircledButton(m_previewControls, out UIButton resetView, CommonsSpriteNames.K45_Reload, (x, y) => ResetCamera(), "K45_WTC_RESET_VIEW");
         }
 
         private void ToggleLock()

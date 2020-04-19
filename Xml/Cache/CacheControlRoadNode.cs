@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Klyte.DynamicTextProps.Xml
+namespace Klyte.WriteTheCity.Xml
 {
     public class CacheControlRoadNode : CacheControl
     {

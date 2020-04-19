@@ -1,11 +1,11 @@
 ﻿using Klyte.Commons.Extensors;
 using Klyte.Commons.Utils;
-using Klyte.DynamicTextProps.Utils;
+using Klyte.WriteTheCity.Utils;
 using System;
 using System.Reflection;
 using UnityEngine;
 
-namespace Klyte.DynamicTextProps.Overrides
+namespace Klyte.WriteTheCity.Overrides
 {
     public class NetManagerOverrides : MonoBehaviour, IRedirectable
     {
@@ -24,7 +24,7 @@ namespace Klyte.DynamicTextProps.Overrides
             ushort node_ = node;
             new AsyncAction(() => EventNodeChanged?.Invoke(node_)).Execute();
 
-            DTPLineUtils.PurgeStopCache(node);
+            WTCLineUtils.PurgeStopCache(node);
         }
         private static void OnSegmentCreated(ref ushort segment, ref ushort startNode, ref ushort endNode)
         {

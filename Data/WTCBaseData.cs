@@ -1,15 +1,15 @@
 ﻿using ColossalFramework.UI;
 using Klyte.Commons.Interfaces;
 using Klyte.Commons.Utils;
-using Klyte.DynamicTextProps.Overrides;
-using Klyte.DynamicTextProps.Xml;
+using Klyte.WriteTheCity.Overrides;
+using Klyte.WriteTheCity.Xml;
 using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Serialization;
 
-namespace Klyte.DynamicTextProps.Data
+namespace Klyte.WriteTheCity.Data
 {
-    public abstract class DTPBaseData<D, BBC> : DataExtensorBase<D> where D : DTPBaseData<D, BBC>, new() where BBC : IBoardBunchContainer
+    public abstract class WTCBaseData<D, BBC> : DataExtensorBase<D> where D : WTCBaseData<D, BBC>, new() where BBC : IBoardBunchContainer
     {
         public BBC[] BoardsContainers { get; private set; }
         public abstract int ObjArraySize { get; }

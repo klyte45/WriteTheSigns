@@ -3,7 +3,7 @@ using ColossalFramework.Packaging;
 using ColossalFramework.PlatformServices;
 using System.Collections.Generic;
 
-namespace Klyte.DynamicTextProps.Utils
+namespace Klyte.WriteTheCity.Utils
 {
     internal static class PrefabUtils<T> where T : PrefabInfo
     {

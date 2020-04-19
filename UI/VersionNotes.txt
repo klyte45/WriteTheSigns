@@ -1,9 +1,2 @@
-﻿V2.3.1
-	- Fixed "machine code labels" bug
-	- Fixed some minor bugs. NOTE: Some configuration in street can be lost....
-V2.3
-	- Added field in building descriptor to set the thresold distance to consider two platforms in same line (in platform mapping)
-	- Fixed: All caps not applied for prefix/suffix
-	- Fixed: Next and prev stops aren't being well setted in the last station of a non-circular line
-	- Fixed some glitches with labels when they are too large (being resized but still ocupping all space as normal size)
-	- Fixed: Stops at a sub building aren't being right mapped to the main building (and refers to "DUMMY!!!!")
+﻿V1.0
+	Initial release!

@@ -4,19 +4,19 @@ using ColossalFramework.UI;
 using Klyte.Commons.Extensors;
 using Klyte.Commons.UI.SpriteNames;
 using Klyte.Commons.Utils;
-using Klyte.DynamicTextProps.Rendering;
-using Klyte.DynamicTextProps.Utils;
-using Klyte.DynamicTextProps.Xml;
+using Klyte.WriteTheCity.Rendering;
+using Klyte.WriteTheCity.Utils;
+using Klyte.WriteTheCity.Xml;
 using System;
 using System.Linq;
 using UnityEngine;
-using static Klyte.DynamicTextProps.UI.DTPEditorUILib;
+using static Klyte.WriteTheCity.UI.WTCEditorUILib;
 
 
-namespace Klyte.DynamicTextProps.UI
+namespace Klyte.WriteTheCity.UI
 {
 
-    internal class DTPTextEditor : UICustomControl
+    internal class WTCTextEditor : UICustomControl
     {
         public UIPanel MainContainer { get; protected set; }
 
@@ -52,7 +52,7 @@ namespace Klyte.DynamicTextProps.UI
         private UITextField m_textPrefix;
         private UITextField m_textSuffix;
 
-        private int TabToEdit => DTPPropTextLayoutEditor.Instance.CurrentTab - 1;
+        private int TabToEdit => WTCPropTextLayoutEditor.Instance.CurrentTab - 1;
         private bool m_isEditing = true;
         private UICheckBox m_allCaps;
 
@@ -65,47 +65,47 @@ namespace Klyte.DynamicTextProps.UI
             MainContainer.autoLayoutPadding = new RectOffset(0, 0, 3, 3);
 
             KlyteMonoUtils.CreateTabsComponent(out m_tabstrip, out m_tabContainer, MainContainer.transform, "TextEditor", new Vector4(0, 0, MainContainer.width, 40), new Vector4(0, 0, MainContainer.width, MainContainer.height - 40));
-            m_tabSettings = TabCommons.CreateNonScrollableTabLocalized(m_tabstrip, KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_Settings), "K45_DTP_GENERAL_SETTINGS", "TxtSettings");
-            m_tabSize = TabCommons.CreateNonScrollableTabLocalized(m_tabstrip, KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_MoveCross), "K45_DTP_TEXT_SIZE_ATTRIBUTES", "TxtSize");
-            m_tabAppearence = TabCommons.CreateNonScrollableTabLocalized(m_tabstrip, KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_AutoColorIcon), "K45_DTP_TEXT_APPEARENCE_ATTRIBUTES", "TxtApp");
-            m_tabConfig = TabCommons.CreateNonScrollableTabLocalized(m_tabstrip, KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_AutoNameIcon), "K45_DTP_TEXT_CONFIGURATION_ATTRIBUTES", "TxtCnf");
+            m_tabSettings = TabCommons.CreateNonScrollableTabLocalized(m_tabstrip, KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_Settings), "K45_WTC_GENERAL_SETTINGS", "TxtSettings");
+            m_tabSize = TabCommons.CreateNonScrollableTabLocalized(m_tabstrip, KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_MoveCross), "K45_WTC_TEXT_SIZE_ATTRIBUTES", "TxtSize");
+            m_tabAppearence = TabCommons.CreateNonScrollableTabLocalized(m_tabstrip, KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_AutoColorIcon), "K45_WTC_TEXT_APPEARENCE_ATTRIBUTES", "TxtApp");
+            m_tabConfig = TabCommons.CreateNonScrollableTabLocalized(m_tabstrip, KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_AutoNameIcon), "K45_WTC_TEXT_CONFIGURATION_ATTRIBUTES", "TxtCnf");
 
             var helperSettings = new UIHelperExtension(m_tabSettings, LayoutDirection.Vertical);
             var helperSize = new UIHelperExtension(m_tabSize, LayoutDirection.Vertical);
             var helperAppearance = new UIHelperExtension(m_tabAppearence, LayoutDirection.Vertical);
             var helperConfig = new UIHelperExtension(m_tabConfig, LayoutDirection.Vertical);
 
-            AddTextField(Locale.Get("K45_DTP_TEXT_TAB_TITLE"), out m_tabName, helperSettings, OnTabNameChanged);
+            AddTextField(Locale.Get("K45_WTC_TEXT_TAB_TITLE"), out m_tabName, helperSettings, OnTabNameChanged);
 
-            AddVector3Field(Locale.Get("K45_DTP_RELATIVE_POS"), out m_arrayCoord, helperSize, OnPositionChange);
-            AddVector3Field(Locale.Get("K45_DTP_RELATIVE_ROT"), out m_arrayRotation, helperSize, OnRotationChange);
-            AddFloatField(Locale.Get("K45_DTP_TEXT_SCALE"), out m_textScale, helperSize, OnScaleSubmit, false);
-            AddFloatField(Locale.Get("K45_DTP_MAX_WIDTH_METERS"), out m_maxWidth, helperSize, OnMaxWidthChange, false);
-            m_applyScaleOnY = helperSize.AddCheckboxLocale("K45_DTP_RESIZE_Y_TEXT_OVERFLOW", false, OnChangeApplyRescaleOnY);
-            m_create180degSimmetricClone = helperSize.AddCheckboxLocale("K45_DTP_CREATE_CLONE_180DEG", false, OnChangeCreateSimmetricClone);
-            m_invertTextHorizontalAlignClone = helperSize.AddCheckboxLocale("K45_DTP_CLONE_180DEG_INVERT_TEXT_HOR_ALIGN", false, OnChangeInvertCloneTextHorizontalAlignment);
+            AddVector3Field(Locale.Get("K45_WTC_RELATIVE_POS"), out m_arrayCoord, helperSize, OnPositionChange);
+            AddVector3Field(Locale.Get("K45_WTC_RELATIVE_ROT"), out m_arrayRotation, helperSize, OnRotationChange);
+            AddFloatField(Locale.Get("K45_WTC_TEXT_SCALE"), out m_textScale, helperSize, OnScaleSubmit, false);
+            AddFloatField(Locale.Get("K45_WTC_MAX_WIDTH_METERS"), out m_maxWidth, helperSize, OnMaxWidthChange, false);
+            m_applyScaleOnY = helperSize.AddCheckboxLocale("K45_WTC_RESIZE_Y_TEXT_OVERFLOW", false, OnChangeApplyRescaleOnY);
+            m_create180degSimmetricClone = helperSize.AddCheckboxLocale("K45_WTC_CREATE_CLONE_180DEG", false, OnChangeCreateSimmetricClone);
+            m_invertTextHorizontalAlignClone = helperSize.AddCheckboxLocale("K45_WTC_CLONE_180DEG_INVERT_TEXT_HOR_ALIGN", false, OnChangeInvertCloneTextHorizontalAlignment);
 
 
-            AddDropdown(Locale.Get("K45_DTP_TEXT_ALIGN_HOR"), out m_dropdownTextAlignHorizontal, helperAppearance, Enum.GetNames(typeof(UIHorizontalAlignment)).Select(x => Locale.Get("K45_ALIGNMENT", x)).ToArray(), OnSetTextAlignmentHorizontal);
-            AddDropdown(Locale.Get("K45_DTP_TEXT_ALIGN_VER"), out m_dropdownTextAlignVertical, helperAppearance, Enum.GetNames(typeof(UIVerticalAlignment)).Select(x => Locale.Get("K45_VERT_ALIGNMENT", x)).ToArray(), OnSetTextAlignmentVertical);
+            AddDropdown(Locale.Get("K45_WTC_TEXT_ALIGN_HOR"), out m_dropdownTextAlignHorizontal, helperAppearance, Enum.GetNames(typeof(UIHorizontalAlignment)).Select(x => Locale.Get("K45_ALIGNMENT", x)).ToArray(), OnSetTextAlignmentHorizontal);
+            AddDropdown(Locale.Get("K45_WTC_TEXT_ALIGN_VER"), out m_dropdownTextAlignVertical, helperAppearance, Enum.GetNames(typeof(UIVerticalAlignment)).Select(x => Locale.Get("K45_VERT_ALIGNMENT", x)).ToArray(), OnSetTextAlignmentVertical);
             helperAppearance.AddSpace(5);
-            m_useContrastColor = helperAppearance.AddCheckboxLocale("K45_DTP_USE_CONTRAST_COLOR", false, OnContrastColorChange);
-            AddColorField(helperAppearance, Locale.Get("K45_DTP_TEXT_COLOR"), out m_textFixedColor, OnFixedColorChanged);
+            m_useContrastColor = helperAppearance.AddCheckboxLocale("K45_WTC_USE_CONTRAST_COLOR", false, OnContrastColorChange);
+            AddColorField(helperAppearance, Locale.Get("K45_WTC_TEXT_COLOR"), out m_textFixedColor, OnFixedColorChanged);
             //helperAppearance.AddSpace(5);
-            //AddDropdown(Locale.Get("K45_DTP_OVERRIDE_TEXT_SHADER"), out UIDropDown shaderSelector, helperAppearance, new string[] { Locale.Get("K45_DTP_DEFAULT_SHADER_OPTION") }.Union(Shader.FindObjectsOfType<Shader>().Select(x => x.name).OrderBy(x => x)).ToArray(), OnSetShader);
+            //AddDropdown(Locale.Get("K45_WTC_OVERRIDE_TEXT_SHADER"), out UIDropDown shaderSelector, helperAppearance, new string[] { Locale.Get("K45_WTC_DEFAULT_SHADER_OPTION") }.Union(Shader.FindObjectsOfType<Shader>().Select(x => x.name).OrderBy(x => x)).ToArray(), OnSetShader);
 
 
-            AddDropdown(Locale.Get("K45_DTP_TEXT_CONTENT"), out m_dropdownTextContent, helperConfig, Enum.GetNames(typeof(TextType)).Select(x => Locale.Get("K45_DTP_BOARD_TEXT_TYPE_DESC", x.ToString())).ToArray(), OnSetTextOwnNameContent);
-            AddTextField(Locale.Get("K45_DTP_CUSTOM_TEXT"), out m_customText, helperConfig, OnSetTextCustom);
+            AddDropdown(Locale.Get("K45_WTC_TEXT_CONTENT"), out m_dropdownTextContent, helperConfig, Enum.GetNames(typeof(TextType)).Select(x => Locale.Get("K45_WTC_BOARD_TEXT_TYPE_DESC", x.ToString())).ToArray(), OnSetTextOwnNameContent);
+            AddTextField(Locale.Get("K45_WTC_CUSTOM_TEXT"), out m_customText, helperConfig, OnSetTextCustom);
             helperConfig.AddSpace(5);
-            AddDropdown(Locale.Get("K45_DTP_OVERRIDE_FONT"), out m_overrideFontSelect, helperConfig, new string[0], OnSetOverrideFont);
-            AddTextField(Locale.Get("K45_DTP_PREFIX"), out m_textPrefix, helperConfig, OnSetPrefix);
-            AddTextField(Locale.Get("K45_DTP_SUFFIX"), out m_textSuffix, helperConfig, OnSetSuffix);
-            m_allCaps = helperConfig.AddCheckboxLocale("K45_DTP_TEXT_ALL_CAPS", false, OnSetAllCaps);
+            AddDropdown(Locale.Get("K45_WTC_OVERRIDE_FONT"), out m_overrideFontSelect, helperConfig, new string[0], OnSetOverrideFont);
+            AddTextField(Locale.Get("K45_WTC_PREFIX"), out m_textPrefix, helperConfig, OnSetPrefix);
+            AddTextField(Locale.Get("K45_WTC_SUFFIX"), out m_textSuffix, helperConfig, OnSetSuffix);
+            m_allCaps = helperConfig.AddCheckboxLocale("K45_WTC_TEXT_ALL_CAPS", false, OnSetAllCaps);
 
-            DTPUtils.ReloadFontsOf(m_overrideFontSelect, true);
+            WTCUtils.ReloadFontsOf(m_overrideFontSelect, true);
 
-            DTPPropTextLayoutEditor.Instance.CurrentTabChanged += (newVal) =>
+            WTCPropTextLayoutEditor.Instance.CurrentTabChanged += (newVal) =>
             {
                 int targetTab = newVal - 1;
                 SafeObtain((ref BoardTextDescriptorGeneralXml x) =>
@@ -129,8 +129,8 @@ namespace Klyte.DynamicTextProps.UI
                     m_useContrastColor.isChecked = x.m_useContrastColor;
                     m_textFixedColor.selectedColor = x.m_defaultColor;
 
-                    m_dropdownTextContent.items = DTPPropRenderingRules.ALLOWED_TYPES_PER_RENDERING_CLASS[DTPPropTextLayoutEditor.Instance.EditingInstance.m_allowedRenderClass].Select(x => Locale.Get("K45_DTP_BOARD_TEXT_TYPE_DESC", x.ToString())).ToArray();
-                    m_dropdownTextContent.selectedIndex = Array.IndexOf(DTPPropRenderingRules.ALLOWED_TYPES_PER_RENDERING_CLASS[DTPPropTextLayoutEditor.Instance.EditingInstance.m_allowedRenderClass], x.m_textType);
+                    m_dropdownTextContent.items = WTCPropRenderingRules.ALLOWED_TYPES_PER_RENDERING_CLASS[WTCPropTextLayoutEditor.Instance.EditingInstance.m_allowedRenderClass].Select(x => Locale.Get("K45_WTC_BOARD_TEXT_TYPE_DESC", x.ToString())).ToArray();
+                    m_dropdownTextContent.selectedIndex = Array.IndexOf(WTCPropRenderingRules.ALLOWED_TYPES_PER_RENDERING_CLASS[WTCPropTextLayoutEditor.Instance.EditingInstance.m_allowedRenderClass], x.m_textType);
                     m_customText.text = x.m_fixedText ?? "";
                     m_overrideFontSelect.selectedIndex = x.m_overrideFont == null ? 0 : Array.IndexOf(m_overrideFontSelect.items, x.m_overrideFont);
                     m_textPrefix.text = x.m_prefix ?? "";
@@ -162,9 +162,9 @@ namespace Klyte.DynamicTextProps.UI
                 try
                 {
                     int effTargetTab = Math.Max(0, targetTab ?? TabToEdit);
-                    if (effTargetTab < DTPPropTextLayoutEditor.Instance.EditingInstance.m_textDescriptors.Length)
+                    if (effTargetTab < WTCPropTextLayoutEditor.Instance.EditingInstance.m_textDescriptors.Length)
                     {
-                        action(ref DTPPropTextLayoutEditor.Instance.EditingInstance.m_textDescriptors[effTargetTab]);
+                        action(ref WTCPropTextLayoutEditor.Instance.EditingInstance.m_textDescriptors[effTargetTab]);
                     }
                 }
                 finally
@@ -183,7 +183,7 @@ namespace Klyte.DynamicTextProps.UI
             else
             {
                 desc.SaveName = text;
-                DTPPropTextLayoutEditor.Instance.SetCurrentTabName(text);
+                WTCPropTextLayoutEditor.Instance.SetCurrentTabName(text);
             }
         });
         private void OnSetSuffix(string text) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_suffix = text);
@@ -206,7 +206,7 @@ namespace Klyte.DynamicTextProps.UI
             {
                 if (sel >= 0)
                 {
-                    desc.m_textType = DTPPropRenderingRules.ALLOWED_TYPES_PER_RENDERING_CLASS[DTPPropTextLayoutEditor.Instance.EditingInstance.m_allowedRenderClass][sel];
+                    desc.m_textType = WTCPropRenderingRules.ALLOWED_TYPES_PER_RENDERING_CLASS[WTCPropTextLayoutEditor.Instance.EditingInstance.m_allowedRenderClass][sel];
                     m_customText.parent.isVisible = desc.m_textType == TextType.Fixed;
                 }
             });

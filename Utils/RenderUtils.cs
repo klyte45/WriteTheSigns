@@ -4,7 +4,7 @@ using SpriteFontPlus;
 using SpriteFontPlus.Utility;
 using UnityEngine;
 
-namespace Klyte.DynamicTextProps.Utils
+namespace Klyte.WriteTheCity.Utils
 {
     internal static class RenderUtils
     {
@@ -44,7 +44,7 @@ namespace Klyte.DynamicTextProps.Utils
         {
             if (name == null)
             {
-                name = DTPHookable.GetStreetFullName(idx);
+                name = WTCHookable.GetStreetFullName(idx);
                 LogUtils.DoLog($"!GenName {name} for {idx}");
             }
             return GetTextData(name, prefix, suffix, allCaps, primaryFont, overrideFont);
@@ -53,14 +53,14 @@ namespace Klyte.DynamicTextProps.Utils
         {
             if (name == null)
             {
-                name = DTPHookable.GetStreetFullName(idx);
+                name = WTCHookable.GetStreetFullName(idx);
                 if ((NetManager.instance.m_segments.m_buffer[idx].m_flags & NetSegment.Flags.CustomName) == 0)
                 {
-                    name = DTPUtils.ApplyAbbreviations(name.Replace(DTPHookable.GetStreetSuffix(idx), ""));
+                    name = WTCUtils.ApplyAbbreviations(name.Replace(WTCHookable.GetStreetSuffix(idx), ""));
                 }
                 else
                 {
-                    name = DTPUtils.ApplyAbbreviations(name.Replace(DTPHookable.GetStreetSuffixCustom(idx), ""));
+                    name = WTCUtils.ApplyAbbreviations(name.Replace(WTCHookable.GetStreetSuffixCustom(idx), ""));
                 }
                 LogUtils.DoLog($"!GenName {name} for {idx}");
             }
@@ -88,11 +88,11 @@ namespace Klyte.DynamicTextProps.Utils
                 LogUtils.DoLog($"!UpdateMeshStreetSuffix {idx}");
                 if ((NetManager.instance.m_segments.m_buffer[idx].m_flags & NetSegment.Flags.CustomName) == 0)
                 {
-                    name = DTPUtils.ApplyAbbreviations(DTPHookable.GetStreetSuffix(idx));
+                    name = WTCUtils.ApplyAbbreviations(WTCHookable.GetStreetSuffix(idx));
                 }
                 else
                 {
-                    name = DTPUtils.ApplyAbbreviations(DTPHookable.GetStreetSuffixCustom(idx));
+                    name = WTCUtils.ApplyAbbreviations(WTCHookable.GetStreetSuffixCustom(idx));
                 }
             }
             return GetTextData(name, prefix, suffix, allCaps, primaryFont, overrideFont);

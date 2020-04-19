@@ -4,7 +4,7 @@ using System;
 using System.Reflection;
 using UnityEngine;
 
-namespace Klyte.DynamicTextProps.Overrides
+namespace Klyte.WriteTheCity.Overrides
 {
     public class DistrictManagerOverrides : MonoBehaviour, IRedirectable
     {

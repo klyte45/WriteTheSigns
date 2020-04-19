@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using static Klyte.Commons.Utils.SegmentUtils;
 
-namespace Klyte.DynamicTextProps.Overrides
+namespace Klyte.WriteTheCity.Overrides
 {
     public struct RoadIdentifier
     {

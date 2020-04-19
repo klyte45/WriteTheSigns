@@ -6,7 +6,7 @@ using System;
 using System.Diagnostics;
 using UnityEngine;
 
-namespace Klyte.DynamicTextProps.Tools
+namespace Klyte.WriteTheCity.Tools
 {
 
     public class RoadSegmentTool : BasicNetTool<RoadSegmentTool>
