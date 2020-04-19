@@ -2,10 +2,10 @@
 {
     public enum TextRenderingClass
     {
-        RoadNodes = 1,
-        MileageMarker = 2,
-        Buildings = 4,
-        PlaceOnNet = 8,
+        RoadNodes,
+        MileageMarker,
+        Buildings,
+        PlaceOnNet,
     }
 
 }

@@ -13,6 +13,7 @@ namespace Klyte.WriteTheCity.UI
         private readonly MaterialPropertyBlock m_block = new MaterialPropertyBlock();
         private readonly BoardPreviewInstanceXml m_defaultInstance = new BoardPreviewInstanceXml();
 
+        public BoardPreviewInstanceXml GetDefaultInstance() => m_defaultInstance;
 
         public Vector2 Size
         {
@@ -45,9 +46,9 @@ namespace Klyte.WriteTheCity.UI
             m_camera.name = "WTCCamera";
         }
 
-        public Matrix4x4 RenderProp(PropInfo info, BoardDescriptorGeneralXml descriptor, int referenceIdx) => RenderProp(info, default, default, descriptor, referenceIdx);
+        public Matrix4x4 RenderProp(PropInfo info, BoardDescriptorGeneralXml descriptor, int referenceIdx, string overrideText) => RenderProp(info, default, default, descriptor, referenceIdx, overrideText);
 
-        public Matrix4x4 RenderProp(PropInfo info, Vector3 offsetPosition, Vector3 offsetRotation, BoardDescriptorGeneralXml descriptor, int referenceIdx)
+        public Matrix4x4 RenderProp(PropInfo info, Vector3 offsetPosition, Vector3 offsetRotation, BoardDescriptorGeneralXml descriptor, int referenceIdx, string overrideText)
         {
             InfoManager instanceInfo = Singleton<InfoManager>.instance;
             InfoManager.InfoMode currentMode = instanceInfo.CurrentMode;
@@ -75,6 +76,7 @@ namespace Klyte.WriteTheCity.UI
             }
 
             m_defaultInstance.Descriptor = descriptor;
+            m_defaultInstance.m_overrideText = overrideText;
 
             Matrix4x4 propMatrix;
             float magnitude;
@@ -88,7 +90,14 @@ namespace Klyte.WriteTheCity.UI
             else
             {
                 var sourceMatrix = Matrix4x4.Inverse(WTCPropRenderingRules.CalculateTextMatrix(m_defaultInstance, descriptor.m_textDescriptors[referenceIdx], WTCPropRenderingRules.GetTextMesh(FontServer.instance[WTCController.DEFAULT_FONT_KEY], descriptor.m_textDescriptors[referenceIdx], 0, 0, referenceIdx, m_defaultInstance), true).FirstOrDefault());
-                magnitude = Mathf.Max(info.m_mesh.bounds.extents.magnitude, WTCPropRenderingRules.GetTextMesh(FontServer.instance[descriptor.FontName ?? WTCController.DEFAULT_FONT_KEY], descriptor.m_textDescriptors[referenceIdx], 0, 0, referenceIdx, m_defaultInstance)?.m_mesh?.bounds.extents.magnitude ?? 0);
+                float regularMagn = info.m_mesh.bounds.extents.magnitude / WTCPropRenderingRules.SCALING_FACTOR;
+                Vector3 textExt = WTCPropRenderingRules.GetTextMesh(FontServer.instance[descriptor.FontName ?? WTCController.DEFAULT_FONT_KEY], descriptor.m_textDescriptors[referenceIdx], 0, 0, referenceIdx, m_defaultInstance)?.m_mesh?.bounds.extents ?? default;
+
+                if (descriptor.m_textDescriptors[referenceIdx].m_maxWidthMeters > 0)
+                {
+                    textExt.x = Mathf.Min(textExt.x * descriptor.m_textDescriptors[referenceIdx].m_textScale, descriptor.m_textDescriptors[referenceIdx].m_maxWidthMeters / WTCPropRenderingRules.SCALING_FACTOR) / descriptor.m_textDescriptors[referenceIdx].m_textScale;
+                }
+                magnitude = Mathf.Min(regularMagn * 3, Mathf.Max(0.1f / WTCPropRenderingRules.SCALING_FACTOR, (textExt * descriptor.m_textDescriptors[referenceIdx].m_textScale).magnitude));
                 propMatrix = Matrix4x4.TRS(offsetPosition, Quaternion.Euler(offsetRotation.x, offsetRotation.y, offsetRotation.z), Vector3.one) * sourceMatrix;
             }
             dist = magnitude + 16f;

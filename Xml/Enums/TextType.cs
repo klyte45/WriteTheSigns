@@ -7,7 +7,7 @@
         StreetPrefix,
         StreetSuffix,
         StreetNameComplete,
-        BuildingNumber,
+        Mileage,
         District,
         LinesSymbols,
         Direction,

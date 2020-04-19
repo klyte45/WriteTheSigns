@@ -1,7 +1,11 @@
-﻿using ColossalFramework.UI;
+﻿using ColossalFramework.Globalization;
+using ColossalFramework.UI;
+using Klyte.Commons.Extensors;
 using Klyte.Commons.UI.SpriteNames;
 using Klyte.Commons.Utils;
+using Klyte.WriteTheCity.Rendering;
 using Klyte.WriteTheCity.Xml;
+using SpriteFontPlus;
 using UnityEngine;
 
 namespace Klyte.WriteTheCity.UI
@@ -22,6 +26,7 @@ namespace Klyte.WriteTheCity.UI
         private Vector3 m_cameraPosition = default;
         private bool m_viewLocked;
 
+        private string m_overrideText = null;
 
         private PropInfo CurrentInfo => WTCPropTextLayoutEditor.Instance.CurrentInfo;
         private int TabToPreview => WTCPropTextLayoutEditor.Instance.CurrentTab - 1;
@@ -65,6 +70,19 @@ namespace Klyte.WriteTheCity.UI
             ToggleLock();
 
             KlyteMonoUtils.InitCircledButton(m_previewControls, out UIButton resetView, CommonsSpriteNames.K45_Reload, (x, y) => ResetCamera(), "K45_WTC_RESET_VIEW");
+
+            UIHelperExtension.AddSpace(m_previewControls, 10);
+
+            KlyteMonoUtils.InitCircledButton(m_previewControls, out UIButton useCurrentText, CommonsSpriteNames.K45_FontIcon, (x, y) => m_overrideText = null,    "K45_WTC_USE_CURRENT_TEXT");
+            KlyteMonoUtils.InitCircledButtonText(m_previewControls, out UIButton use1lText, "x1", (x, y) => m_overrideText = "1",                      Locale.Get("K45_WTC_USE_1LENGHT_TEXT"  )   );
+            KlyteMonoUtils.InitCircledButtonText(m_previewControls, out UIButton use10lText, "x10", (x, y) => m_overrideText = new string('X', 10),    Locale.Get("K45_WTC_USE_10LENGHT_TEXT" )  );
+            KlyteMonoUtils.InitCircledButtonText(m_previewControls, out UIButton use50lText, "x50", (x, y) => m_overrideText = new string('L', 50),    Locale.Get("K45_WTC_USE_50LENGHT_TEXT" )  );
+            KlyteMonoUtils.InitCircledButtonText(m_previewControls, out UIButton use100lText, "x200", (x, y) => m_overrideText = new string('C', 200), Locale.Get("K45_WTC_USE_200LENGHT_TEXT"));
+
+            WTCPropTextLayoutEditor.Instance.CurrentTabChanged += (x) =>
+            {
+                ResetCamera();
+            };
         }
 
         private void ToggleLock()
@@ -109,11 +127,29 @@ namespace Klyte.WriteTheCity.UI
             {
                 if ((eventParam.buttons & UIMouseButton.Left) != 0)
                 {
-                    Vector3 min = CurrentInfo.m_mesh.bounds.min;
-                    Vector3 max = CurrentInfo.m_mesh.bounds.max;
+                    Vector3 min;
+                    Vector3 max;
+                    min = CurrentInfo.m_mesh.bounds.min;
+                    max = CurrentInfo.m_mesh.bounds.max;
                     min.y = -max.y;
                     max.y = -CurrentInfo.m_mesh.bounds.min.y;
-                    m_targetCameraPosition = Vector2.Max(min, Vector2.Min(max, new Vector2(-eventParam.moveDelta.x / component.width, eventParam.moveDelta.y / component.height) + m_targetCameraPosition));
+                    float multiplier = 1 / TargetZoom;
+                    float moveMultiplier = 1;
+                    if (CurrentTextDescriptor != null)
+                    {
+                        float regularMagn = CurrentInfo.m_mesh.bounds.extents.magnitude / WTCPropRenderingRules.SCALING_FACTOR;
+                        Vector3 textExt = WTCPropRenderingRules.GetTextMesh(FontServer.instance[EditingInstance.FontName ?? WTCController.DEFAULT_FONT_KEY], CurrentTextDescriptor, 0, 0, 0, m_previewRenderer.GetDefaultInstance())?.m_mesh?.bounds.extents ?? default;
+
+                        if (CurrentTextDescriptor.m_maxWidthMeters > 0)
+                        {
+                            textExt.x = Mathf.Min(textExt.x * CurrentTextDescriptor.m_textScale, CurrentTextDescriptor.m_maxWidthMeters / WTCPropRenderingRules.SCALING_FACTOR) / CurrentTextDescriptor.m_textScale;
+                        }
+                        float magnitude = Mathf.Min(regularMagn * 3, Mathf.Max(regularMagn, (textExt * CurrentTextDescriptor.m_textScale).magnitude)) / CurrentTextDescriptor.m_textScale;
+                        multiplier *= magnitude / regularMagn / WTCPropRenderingRules.SCALING_FACTOR;
+                        moveMultiplier /= WTCPropRenderingRules.SCALING_FACTOR;
+                    }
+
+                    m_targetCameraPosition = Vector2.Max(min * multiplier, Vector2.Min(max * multiplier, new Vector2(-eventParam.moveDelta.x / component.width * moveMultiplier, eventParam.moveDelta.y / component.height * moveMultiplier) + m_targetCameraPosition));
                 }
                 else if ((eventParam.buttons & UIMouseButton.Right) != 0)
                 {
@@ -135,7 +171,7 @@ namespace Klyte.WriteTheCity.UI
                 return;
             }
             m_preview.isVisible = true;
-            m_previewRenderer.RenderProp(CurrentInfo, m_cameraPosition, new Vector3(0, CameraRotation), EditingInstance, CurrentTextDescriptor != null ? TabToPreview : -1);
+            m_previewRenderer.RenderProp(CurrentInfo, m_cameraPosition, new Vector3(0, CameraRotation), EditingInstance, CurrentTextDescriptor != null ? TabToPreview : -1, m_overrideText);
         }
 
         public void Update()

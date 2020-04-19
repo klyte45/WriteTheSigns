@@ -82,8 +82,11 @@ namespace Klyte.WriteTheCity.UI
             AddFloatField(Locale.Get("K45_WTC_TEXT_SCALE"), out m_textScale, helperSize, OnScaleSubmit, false);
             AddFloatField(Locale.Get("K45_WTC_MAX_WIDTH_METERS"), out m_maxWidth, helperSize, OnMaxWidthChange, false);
             m_applyScaleOnY = helperSize.AddCheckboxLocale("K45_WTC_RESIZE_Y_TEXT_OVERFLOW", false, OnChangeApplyRescaleOnY);
+            KlyteMonoUtils.LimitWidthAndBox(m_applyScaleOnY.label, m_applyScaleOnY.parent.width - 50);
             m_create180degSimmetricClone = helperSize.AddCheckboxLocale("K45_WTC_CREATE_CLONE_180DEG", false, OnChangeCreateSimmetricClone);
+            KlyteMonoUtils.LimitWidthAndBox(m_create180degSimmetricClone.label, m_applyScaleOnY.parent.width - 50);
             m_invertTextHorizontalAlignClone = helperSize.AddCheckboxLocale("K45_WTC_CLONE_180DEG_INVERT_TEXT_HOR_ALIGN", false, OnChangeInvertCloneTextHorizontalAlignment);
+            KlyteMonoUtils.LimitWidthAndBox(m_invertTextHorizontalAlignClone.label, m_applyScaleOnY.parent.width - 50);
 
 
             AddDropdown(Locale.Get("K45_WTC_TEXT_ALIGN_HOR"), out m_dropdownTextAlignHorizontal, helperAppearance, Enum.GetNames(typeof(UIHorizontalAlignment)).Select(x => Locale.Get("K45_ALIGNMENT", x)).ToArray(), OnSetTextAlignmentHorizontal);

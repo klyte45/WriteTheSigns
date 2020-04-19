@@ -1,4 +1,5 @@
-﻿using ColossalFramework.UI;
+﻿using ColossalFramework;
+using ColossalFramework.UI;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheCity.Data;
 using Klyte.WriteTheCity.Utils;
@@ -24,25 +25,26 @@ namespace Klyte.WriteTheCity.Rendering
         {
             [TextRenderingClass.RoadNodes] = new TextType[]
             {
+                TextType.Fixed,
                 TextType.StreetPrefix,
                 TextType.StreetSuffix,
                 TextType.StreetNameComplete,
                 TextType.District,
                 TextType.DistanceFromCenter,
-                TextType.Fixed,
             },
             [TextRenderingClass.MileageMarker] = new TextType[]
             {
+                TextType.Fixed,
                 TextType.Direction,
-                TextType.BuildingNumber,
+                TextType.Mileage,
                 TextType.StreetCode,
                 TextType.StreetPrefix,
                 TextType.StreetSuffix,
                 TextType.StreetNameComplete,
-                TextType.Fixed,
             },
             [TextRenderingClass.Buildings] = new TextType[]
             {
+               TextType.Fixed,
                TextType.OwnName,
                TextType.StreetPrefix,
                TextType.StreetSuffix,
@@ -51,11 +53,11 @@ namespace Klyte.WriteTheCity.Rendering
                TextType.NextStopLine, // Next Station Line 1
                TextType.PrevStopLine, // Previous Station Line 2
                TextType.LastStopLine, // Line Destination (Last stop before get back) 3
-               TextType.Fixed,
             },
             [TextRenderingClass.PlaceOnNet] = new TextType[]
             {
-               TextType.OwnName,
+               TextType.Fixed,
+
                TextType.StreetPrefix,
                TextType.StreetSuffix,
                TextType.StreetNameComplete,
@@ -74,7 +76,6 @@ namespace Klyte.WriteTheCity.Rendering
                TextType.Next2ExitDestination4,
                TextType.Next2ExitDistance,
 
-               TextType.Fixed,
             },
         };
 
@@ -207,7 +208,7 @@ namespace Klyte.WriteTheCity.Rendering
             var textMatrix = Matrix4x4.TRS(
                 targetRelativePosition,
                Quaternion.AngleAxis(textRotation.x, Vector3.left) * Quaternion.AngleAxis(textRotation.y, Vector3.down) * Quaternion.AngleAxis(textRotation.z, Vector3.back),
-           centerReference ? new Vector3(SCALING_FACTOR * textScale, SCALING_FACTOR * textScale, SCALING_FACTOR * textScale) : new Vector3(defaultMultiplierX * overflowScaleX / propScale.x, defaultMultiplierY * overflowScaleY / propScale.y, 1));
+           centerReference ? new Vector3(SCALING_FACTOR, SCALING_FACTOR, SCALING_FACTOR) : new Vector3(defaultMultiplierX * overflowScaleX / propScale.x, defaultMultiplierY * overflowScaleY / propScale.y, 1));
             return textMatrix;
         }
 
@@ -282,13 +283,15 @@ namespace Klyte.WriteTheCity.Rendering
         {
             if (instance is BoardPreviewInstanceXml preview)
             {
-                switch (textDescriptor.m_textType)
+                if (!preview.m_overrideText.IsNullOrWhiteSpace())
                 {
-                    case TextType.Fixed:
-                        return RenderUtils.GetTextData(textDescriptor.m_fixedText ?? "", textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, baseFont, textDescriptor.m_overrideFont);
-                    default:
-                        return RenderUtils.GetTextData($"{textDescriptor.m_textType}: {preview.m_currentText}", textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, baseFont, textDescriptor.m_overrideFont);
+                    return RenderUtils.GetTextData(preview.m_overrideText, "", "", false, baseFont, textDescriptor.m_overrideFont);
                 }
+                return textDescriptor.m_textType switch
+                {
+                    TextType.Fixed => RenderUtils.GetTextData(textDescriptor.m_fixedText ?? "", textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, baseFont, textDescriptor.m_overrideFont),
+                    _ => RenderUtils.GetTextData($"{textDescriptor.m_textType}: {preview.m_currentText}", textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, baseFont, textDescriptor.m_overrideFont),
+                };
             }
             else if (instance is BoardInstanceRoadNodeXml)
             {

@@ -9,7 +9,7 @@ using System.IO;
 using System.Reflection;
 using UnityEngine;
 
-[assembly: AssemblyVersion("1.0.0.*")]
+[assembly: AssemblyVersion("0.0.0.*")]
 namespace Klyte.WriteTheCity
 {
     public class WriteTheCityMod : BasicIUserMod<WriteTheCityMod, WTCController, WTCPanel>

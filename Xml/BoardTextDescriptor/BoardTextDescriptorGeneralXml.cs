@@ -39,7 +39,7 @@ namespace Klyte.WriteTheCity.Xml
         [XmlAttribute("textType")]
         public TextType m_textType = TextType.Fixed;
         [XmlAttribute("fixedText")]
-        public string m_fixedText = null;
+        public string m_fixedText = "Text";
 
 
         [XmlAttribute("overrideFont")]
