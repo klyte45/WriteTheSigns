@@ -5,6 +5,7 @@ using Klyte.DynamicTextProps.Utils;
 using Klyte.DynamicTextProps.Xml;
 using SpriteFontPlus;
 using SpriteFontPlus.Utility;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Klyte.DynamicTextProps.Rendering
@@ -44,6 +45,10 @@ namespace Klyte.DynamicTextProps.Rendering
                         LogUtils.DoErrorLog($"PREFAB NOT FOUND: {propName}");
                         propName = null;
                     }
+                    if (propInfo.m_material.shader == DTPController.DISALLOWED_SHADER_PROP)
+                    {
+                        propInfo.m_material.shader = DTPController.DEFAULT_SHADER_TEXT;
+                    }
                 }
                 propInfo.m_color0 = propColor.GetValueOrDefault();
             }
@@ -63,71 +68,92 @@ namespace Klyte.DynamicTextProps.Rendering
                 return;
             }
 
-            Matrix4x4 textMatrix = CalculateTextMatrix(descriptor, textDescriptor, renderInfo);
-
-            Matrix4x4 matrix = propMatrix * textMatrix;
-
-            Color colorToSet = Color.white;
-            if (textDescriptor.m_useContrastColor)
+            List<Matrix4x4> textMatrixes = CalculateTextMatrix(descriptor, textDescriptor, renderInfo);
+            foreach (Matrix4x4 textMatrix in textMatrixes)
             {
-                colorToSet = GetContrastColor(refID, boardIdx, secIdx, descriptor);
+                Matrix4x4 matrix = propMatrix * textMatrix;
+
+                Color colorToSet = Color.white;
+                if (textDescriptor.m_useContrastColor)
+                {
+                    colorToSet = GetContrastColor(refID, boardIdx, secIdx, descriptor);
+                }
+                else if (textDescriptor.m_defaultColor != null)
+                {
+                    colorToSet = textDescriptor.m_defaultColor;
+                }
+                materialPropertyBlock.Clear();
+                materialPropertyBlock.SetColor(SHADER_PROP_COLOR, colorToSet);
+                materialPropertyBlock.SetColor(SHADER_PROP_COLOR0, colorToSet);
+                materialPropertyBlock.SetColor(SHADER_PROP_COLOR1, colorToSet);
+                materialPropertyBlock.SetColor(SHADER_PROP_COLOR2, colorToSet);
+                materialPropertyBlock.SetColor(SHADER_PROP_COLOR3, colorToSet);
+
+                //materialPropertyBlock.SetColor(m_shaderPropEmissive, Color.white * (SimulationManager.instance.m_isNightTime ? textDescriptor.m_nightEmissiveMultiplier : textDescriptor.m_dayEmissiveMultiplier));
+                renderInfo.m_generatedMaterial.shader = DTPController.DEFAULT_SHADER_TEXT;
+                Graphics.DrawMesh(renderInfo.m_mesh, matrix, renderInfo.m_generatedMaterial, 10, targetCamera, 0, materialPropertyBlock, false);
             }
-            else if (textDescriptor.m_defaultColor != null)
-            {
-                colorToSet = textDescriptor.m_defaultColor;
-            }
-            materialPropertyBlock.Clear();
-            materialPropertyBlock.SetColor(SHADER_PROP_COLOR, colorToSet);
-            materialPropertyBlock.SetColor(SHADER_PROP_COLOR0, colorToSet);
-            materialPropertyBlock.SetColor(SHADER_PROP_COLOR1, colorToSet);
-            materialPropertyBlock.SetColor(SHADER_PROP_COLOR2, colorToSet);
-            materialPropertyBlock.SetColor(SHADER_PROP_COLOR3, colorToSet);
-
-
-            //materialPropertyBlock.SetColor(m_shaderPropEmissive, Color.white * (SimulationManager.instance.m_isNightTime ? textDescriptor.m_nightEmissiveMultiplier : textDescriptor.m_dayEmissiveMultiplier));
-            renderInfo.m_generatedMaterial.shader = DTPController.DEFAULT_SHADER_TEXT;
-            Graphics.DrawMesh(renderInfo.m_mesh, matrix, renderInfo.m_generatedMaterial, 10, targetCamera, 0, materialPropertyBlock, false);
-
         }
 
-        internal static Matrix4x4 CalculateTextMatrix(BoardInstanceXml instance, BoardTextDescriptorGeneralXml textDescriptor, BasicRenderInformation renderInfo, bool centerReference = false)
+        internal static List<Matrix4x4> CalculateTextMatrix(BoardInstanceXml instance, BoardTextDescriptorGeneralXml textDescriptor, BasicRenderInformation renderInfo, bool centerReference = false)
+        {
+            var result = new List<Matrix4x4>();
+
+            Matrix4x4 textMatrix = ApplyTextAdjustments(textDescriptor.m_textRelativePosition, textDescriptor.m_textRelativeRotation, renderInfo, instance.PropScale, textDescriptor.m_textScale, textDescriptor.m_textAlign, textDescriptor.m_verticalAlign, textDescriptor.m_maxWidthMeters, textDescriptor.m_applyOverflowResizingOnY, centerReference);
+
+            result.Add(textMatrix);
+
+            if (textDescriptor.m_create180degYClone)
+            {
+                UIHorizontalAlignment targetTextAlignment = textDescriptor.m_textAlign;
+                if (textDescriptor.m_invertYCloneHorizontalAlign)
+                {
+                    targetTextAlignment = 2 - targetTextAlignment;
+                }
+                result.Add(ApplyTextAdjustments(new Vector3(textDescriptor.m_textRelativePosition.x, textDescriptor.m_textRelativePosition.y, -textDescriptor.m_textRelativePosition.z), textDescriptor.m_textRelativeRotation + new Vector3(0, 180), renderInfo, instance.PropScale, textDescriptor.m_textScale, targetTextAlignment, textDescriptor.m_verticalAlign, textDescriptor.m_maxWidthMeters, textDescriptor.m_applyOverflowResizingOnY, centerReference));
+            }
+
+            return result;
+        }
+
+        private static Matrix4x4 ApplyTextAdjustments(Vector3 textPosition, Vector3 textRotation, BasicRenderInformation renderInfo, Vector3 propScale, float textScale, UIHorizontalAlignment horizontalAlignment, UIVerticalAlignment verticalAlignment, float maxWidth, bool applyResizeOverflowOnY, bool centerReference)
         {
             float overflowScaleX = 1f;
             float overflowScaleY = 1f;
-            float defaultMultiplierX = textDescriptor.m_textScale * SCALING_FACTOR;
-            float defaultMultiplierY = textDescriptor.m_textScale * SCALING_FACTOR;
+            float defaultMultiplierX = textScale * SCALING_FACTOR;
+            float defaultMultiplierY = textScale * SCALING_FACTOR;
             float realWidth = defaultMultiplierX * renderInfo.m_sizeMetersUnscaled.x;
             float realHeight = defaultMultiplierY * renderInfo.m_sizeMetersUnscaled.y;
-            Vector3 targetRelativePosition = textDescriptor.m_textRelativePosition;
+            Vector3 targetRelativePosition = textPosition;
             //LogUtils.DoWarnLog($"[{renderInfo},{refID},{boardIdx},{secIdx}] realWidth = {realWidth}; realHeight = {realHeight};");
-            if (textDescriptor.m_maxWidthMeters > 0 && textDescriptor.m_maxWidthMeters < realWidth)
+            if (maxWidth > 0 && maxWidth < realWidth)
             {
-                overflowScaleX = textDescriptor.m_maxWidthMeters / realWidth;
-                if (textDescriptor.m_applyOverflowResizingOnY)
+                overflowScaleX = maxWidth / realWidth;
+                if (applyResizeOverflowOnY)
                 {
                     overflowScaleY = overflowScaleX;
                 }
             }
             else
             {
-                if (textDescriptor.m_maxWidthMeters > 0 && textDescriptor.m_textAlign != UIHorizontalAlignment.Center)
+                if (maxWidth > 0 && horizontalAlignment != UIHorizontalAlignment.Center)
                 {
-                    float factor = textDescriptor.m_textAlign == UIHorizontalAlignment.Left == (((textDescriptor.m_textRelativeRotation.y % 360) + 810) % 360 > 180) ? 0.5f : -0.5f;
-                    targetRelativePosition += new Vector3((textDescriptor.m_maxWidthMeters - realWidth) * factor / instance.ScaleX, 0, 0);
+                    float factor = horizontalAlignment == UIHorizontalAlignment.Left == (((textRotation.y % 360) + 810) % 360 > 180) ? 0.5f : -0.5f;
+                    targetRelativePosition += new Vector3((maxWidth - realWidth) * factor / propScale.x, 0, 0);
                 }
             }
 
 
-            if (textDescriptor.m_verticalAlign != UIVerticalAlignment.Middle)
+            if (verticalAlignment != UIVerticalAlignment.Middle)
             {
-                float factor = textDescriptor.m_verticalAlign == UIVerticalAlignment.Bottom == (((textDescriptor.m_textRelativeRotation.x % 360) + 810) % 360 > 180) ? -.5f : .5f;
+                float factor = verticalAlignment == UIVerticalAlignment.Bottom == (((textRotation.x % 360) + 810) % 360 > 180) ? -.5f : .5f;
                 targetRelativePosition += new Vector3(0, realHeight * factor, 0);
             }
 
             var textMatrix = Matrix4x4.TRS(
                 targetRelativePosition,
-               Quaternion.AngleAxis(textDescriptor.m_textRelativeRotation.x, Vector3.left) * Quaternion.AngleAxis(textDescriptor.m_textRelativeRotation.y, Vector3.down) * Quaternion.AngleAxis(textDescriptor.m_textRelativeRotation.z, Vector3.back),
-           centerReference ? new Vector3(SCALING_FACTOR, SCALING_FACTOR, SCALING_FACTOR) : new Vector3(defaultMultiplierX * overflowScaleX / instance.ScaleX, defaultMultiplierY * overflowScaleY / instance.PropScale.y, 1));
+               Quaternion.AngleAxis(textRotation.x, Vector3.left) * Quaternion.AngleAxis(textRotation.y, Vector3.down) * Quaternion.AngleAxis(textRotation.z, Vector3.back),
+           centerReference ? new Vector3(SCALING_FACTOR * textScale, SCALING_FACTOR * textScale, SCALING_FACTOR * textScale) : new Vector3(defaultMultiplierX * overflowScaleX / propScale.x, defaultMultiplierY * overflowScaleY / propScale.y, 1));
             return textMatrix;
         }
 

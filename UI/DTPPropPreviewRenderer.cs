@@ -2,6 +2,7 @@
 using Klyte.DynamicTextProps.Rendering;
 using Klyte.DynamicTextProps.Xml;
 using SpriteFontPlus;
+using System.Linq;
 using UnityEngine;
 
 namespace Klyte.DynamicTextProps.UI
@@ -68,6 +69,11 @@ namespace Klyte.DynamicTextProps.UI
                 DayNightProperties.instance.moonLightSource.enabled = false;
             }
 
+            if (info.m_material.shader == DTPController.DISALLOWED_SHADER_PROP)
+            {
+                info.m_material.shader = DTPController.DEFAULT_SHADER_TEXT;
+            }
+
             m_defaultInstance.Descriptor = descriptor;
 
             Matrix4x4 propMatrix;
@@ -81,7 +87,7 @@ namespace Klyte.DynamicTextProps.UI
             }
             else
             {
-                var sourceMatrix = Matrix4x4.Inverse(DTPPropRenderingRules.CalculateTextMatrix(m_defaultInstance, descriptor.m_textDescriptors[referenceIdx], DTPPropRenderingRules.GetTextMesh(FontServer.instance[DTPController.DEFAULT_FONT_KEY], descriptor.m_textDescriptors[referenceIdx], 0, 0, referenceIdx, m_defaultInstance), true));
+                var sourceMatrix = Matrix4x4.Inverse(DTPPropRenderingRules.CalculateTextMatrix(m_defaultInstance, descriptor.m_textDescriptors[referenceIdx], DTPPropRenderingRules.GetTextMesh(FontServer.instance[DTPController.DEFAULT_FONT_KEY], descriptor.m_textDescriptors[referenceIdx], 0, 0, referenceIdx, m_defaultInstance), true).FirstOrDefault());
                 magnitude = Mathf.Max(info.m_mesh.bounds.extents.magnitude, DTPPropRenderingRules.GetTextMesh(FontServer.instance[descriptor.FontName ?? DTPController.DEFAULT_FONT_KEY], descriptor.m_textDescriptors[referenceIdx], 0, 0, referenceIdx, m_defaultInstance)?.m_mesh?.bounds.extents.magnitude ?? 0);
                 propMatrix = Matrix4x4.TRS(offsetPosition, Quaternion.Euler(offsetRotation.x, offsetRotation.y, offsetRotation.z), Vector3.one) * sourceMatrix;
             }

@@ -51,8 +51,10 @@ namespace Klyte.DynamicTextProps.Xml
         public string m_prefix = "";
         [XmlAttribute("suffix")]
         public string m_suffix = "";
-
-
+        [XmlAttribute("cloneInvertHorizontalAlign")]
+        internal bool m_invertYCloneHorizontalAlign;
+        [XmlAttribute("clone180DegY")]
+        internal bool m_create180degYClone;
 
         [XmlAttribute("relativePositionX")]
         public float RelPositionX { get => m_textRelativePosition.x; set => m_textRelativePosition.x = value; }

@@ -24,7 +24,6 @@ namespace Klyte.DynamicTextProps.UI
 
 
         private PropInfo CurrentInfo => DTPPropTextLayoutEditor.Instance.CurrentInfo;
-        private Color32? CurrentSelectedColor => DTPPropTextLayoutEditor.Instance.CurrentSelectedColor;
         private int TabToPreview => DTPPropTextLayoutEditor.Instance.CurrentTab - 1;
         private BoardDescriptorGeneralXml EditingInstance => DTPPropTextLayoutEditor.Instance.EditingInstance;
 

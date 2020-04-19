@@ -30,6 +30,8 @@ namespace Klyte.DynamicTextProps.UI
         private UITextField m_textScale;
         private UITextField m_maxWidth;
         private UICheckBox m_applyScaleOnY;
+        private UICheckBox m_create180degSimmetricClone;
+        private UICheckBox m_invertTextHorizontalAlignClone;
 
 
         private UIDropDown m_dropdownTextAlignHorizontal;
@@ -70,6 +72,8 @@ namespace Klyte.DynamicTextProps.UI
             AddFloatField(Locale.Get("K45_DTP_TEXT_SCALE"), out m_textScale, helperSize, OnScaleSubmit, false);
             AddFloatField(Locale.Get("K45_DTP_MAX_WIDTH_METERS"), out m_maxWidth, helperSize, OnMaxWidthChange, false);
             m_applyScaleOnY = helperSize.AddCheckboxLocale("K45_DTP_RESIZE_Y_TEXT_OVERFLOW", false, OnChangeApplyRescaleOnY);
+            m_create180degSimmetricClone = helperSize.AddCheckboxLocale("K45_DTP_CREATE_CLONE_180DEG", false, OnChangeCreateSimmetricClone);
+            m_invertTextHorizontalAlignClone = helperSize.AddCheckboxLocale("K45_DTP_CLONE_180DEG_INVERT_TEXT_HOR_ALIGN", false, OnChangeInvertCloneTextHorizontalAlignment);
 
 
             AddDropdown(Locale.Get("K45_DTP_TEXT_ALIGN_HOR"), out m_dropdownTextAlignHorizontal, helperAppearance, Enum.GetNames(typeof(UIHorizontalAlignment)).Select(x => Locale.Get("K45_ALIGNMENT", x)).ToArray(), OnSetTextAlignmentHorizontal);
@@ -105,6 +109,8 @@ namespace Klyte.DynamicTextProps.UI
                     m_textScale.text = x.m_textScale.ToString("F3");
                     m_maxWidth.text = x.m_maxWidthMeters.ToString("F3");
                     m_applyScaleOnY.isChecked = x.m_applyOverflowResizingOnY;
+                    m_invertTextHorizontalAlignClone.isChecked = x.m_invertYCloneHorizontalAlign;
+                    m_create180degSimmetricClone.isChecked = x.m_create180degYClone;
 
                     m_dropdownTextAlignHorizontal.selectedIndex = (int)x.m_textAlign;
                     m_dropdownTextAlignVertical.selectedIndex = (int)x.m_verticalAlign;
@@ -121,6 +127,7 @@ namespace Klyte.DynamicTextProps.UI
 
                     m_customText.parent.isVisible = x.m_textType == TextType.Fixed;
                     m_textFixedColor.parent.isVisible = !x.m_useContrastColor;
+                    m_invertTextHorizontalAlignClone.isVisible = x.m_create180degYClone;
                 }, targetTab);
             };
             m_isEditing = false;
@@ -176,6 +183,13 @@ namespace Klyte.DynamicTextProps.UI
 
         //private void OnSetShader(int sel) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => { });
         private void OnChangeApplyRescaleOnY(bool isChecked) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_applyOverflowResizingOnY = isChecked);
+        private void OnChangeInvertCloneTextHorizontalAlignment(bool isChecked) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_invertYCloneHorizontalAlign = isChecked);
+        private void OnChangeCreateSimmetricClone(bool isChecked)
+        {
+            SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_create180degYClone = isChecked);
+            m_invertTextHorizontalAlignClone.isVisible = isChecked;
+        }
+
         private void OnSetTextAlignmentHorizontal(int sel) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_textAlign = (UIHorizontalAlignment)sel);
         private void OnSetTextAlignmentVertical(int sel) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_verticalAlign = (UIVerticalAlignment)sel);
         private void OnFixedColorChanged(UIComponent component, Color value) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_defaultColor = value);
