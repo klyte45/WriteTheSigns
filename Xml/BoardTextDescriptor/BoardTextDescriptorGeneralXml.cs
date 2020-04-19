@@ -1,6 +1,8 @@
 ﻿using ColossalFramework;
 using ColossalFramework.UI;
+using Klyte.Commons.Interfaces;
 using Klyte.Commons.Utils;
+using Klyte.DynamicTextProps.Rendering;
 using System.Xml;
 using System.Xml.Serialization;
 using UnityEngine;
@@ -8,7 +10,7 @@ using UnityEngine;
 namespace Klyte.DynamicTextProps.Xml
 {
     [XmlRoot("textDescriptor")]
-    public class BoardTextDescriptorGeneralXml
+    public class BoardTextDescriptorGeneralXml : ILibable
     {
         [XmlIgnore]
         public Vector3 m_textRelativePosition;
@@ -34,10 +36,8 @@ namespace Klyte.DynamicTextProps.Xml
         [XmlAttribute("shader")]
         public string m_shader = null;
 
-
         [XmlAttribute("textType")]
-        public TextType m_textType = TextType.OwnName;
-
+        public TextType m_textType = TextType.Fixed;
         [XmlAttribute("fixedText")]
         public string m_fixedText = null;
 
@@ -72,6 +72,9 @@ namespace Klyte.DynamicTextProps.Xml
 
         [XmlAttribute("color")]
         public string ForceColor { get => m_defaultColor == Color.clear ? null : ColorExtensions.ToRGB(m_defaultColor); set => m_defaultColor = value.IsNullOrWhiteSpace() ? Color.clear : (Color)ColorExtensions.FromRGB(value); }
+
+        [XmlAttribute("saveName")]
+        public string SaveName { get; set; }
     }
 
 

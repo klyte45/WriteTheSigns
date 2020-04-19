@@ -1,8 +1,10 @@
-﻿using ColossalFramework.Globalization;
+﻿using ColossalFramework;
+using ColossalFramework.Globalization;
 using ColossalFramework.UI;
 using Klyte.Commons.Extensors;
 using Klyte.Commons.UI.SpriteNames;
 using Klyte.Commons.Utils;
+using Klyte.DynamicTextProps.Rendering;
 using Klyte.DynamicTextProps.Utils;
 using Klyte.DynamicTextProps.Xml;
 using System;
@@ -21,9 +23,13 @@ namespace Klyte.DynamicTextProps.UI
         private UITabstrip m_tabstrip;
         private UITabContainer m_tabContainer;
 
+        private UIPanel m_tabSettings;
         private UIPanel m_tabSize;
         private UIPanel m_tabAppearence;
         private UIPanel m_tabConfig;
+
+        private UITextField m_tabName;
+
 
         private UITextField[] m_arrayCoord;
         private UITextField[] m_arrayRotation;
@@ -59,13 +65,17 @@ namespace Klyte.DynamicTextProps.UI
             MainContainer.autoLayoutPadding = new RectOffset(0, 0, 3, 3);
 
             KlyteMonoUtils.CreateTabsComponent(out m_tabstrip, out m_tabContainer, MainContainer.transform, "TextEditor", new Vector4(0, 0, MainContainer.width, 40), new Vector4(0, 0, MainContainer.width, MainContainer.height - 40));
+            m_tabSettings = TabCommons.CreateNonScrollableTabLocalized(m_tabstrip, KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_Settings), "K45_DTP_GENERAL_SETTINGS", "TxtSettings");
             m_tabSize = TabCommons.CreateNonScrollableTabLocalized(m_tabstrip, KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_MoveCross), "K45_DTP_TEXT_SIZE_ATTRIBUTES", "TxtSize");
             m_tabAppearence = TabCommons.CreateNonScrollableTabLocalized(m_tabstrip, KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_AutoColorIcon), "K45_DTP_TEXT_APPEARENCE_ATTRIBUTES", "TxtApp");
             m_tabConfig = TabCommons.CreateNonScrollableTabLocalized(m_tabstrip, KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_AutoNameIcon), "K45_DTP_TEXT_CONFIGURATION_ATTRIBUTES", "TxtCnf");
 
+            var helperSettings = new UIHelperExtension(m_tabSettings, LayoutDirection.Vertical);
             var helperSize = new UIHelperExtension(m_tabSize, LayoutDirection.Vertical);
             var helperAppearance = new UIHelperExtension(m_tabAppearence, LayoutDirection.Vertical);
             var helperConfig = new UIHelperExtension(m_tabConfig, LayoutDirection.Vertical);
+
+            AddTextField(Locale.Get("K45_DTP_TEXT_TAB_TITLE"), out m_tabName, helperSettings, OnTabNameChanged);
 
             AddVector3Field(Locale.Get("K45_DTP_RELATIVE_POS"), out m_arrayCoord, helperSize, OnPositionChange);
             AddVector3Field(Locale.Get("K45_DTP_RELATIVE_ROT"), out m_arrayRotation, helperSize, OnRotationChange);
@@ -100,6 +110,8 @@ namespace Klyte.DynamicTextProps.UI
                 int targetTab = newVal - 1;
                 SafeObtain((ref BoardTextDescriptorGeneralXml x) =>
                 {
+                    m_tabName.text = x.SaveName;
+
                     m_arrayCoord[0].text = x.m_textRelativePosition.x.ToString("F3");
                     m_arrayCoord[1].text = x.m_textRelativePosition.y.ToString("F3");
                     m_arrayCoord[2].text = x.m_textRelativePosition.z.ToString("F3");
@@ -117,7 +129,8 @@ namespace Klyte.DynamicTextProps.UI
                     m_useContrastColor.isChecked = x.m_useContrastColor;
                     m_textFixedColor.selectedColor = x.m_defaultColor;
 
-                    m_dropdownTextContent.selectedIndex = (int)x.m_textType;
+                    m_dropdownTextContent.items = DTPPropRenderingRules.ALLOWED_TYPES_PER_RENDERING_CLASS[DTPPropTextLayoutEditor.Instance.EditingInstance.m_allowedRenderClass].Select(x => Locale.Get("K45_DTP_BOARD_TEXT_TYPE_DESC", x.ToString())).ToArray();
+                    m_dropdownTextContent.selectedIndex = Array.IndexOf(DTPPropRenderingRules.ALLOWED_TYPES_PER_RENDERING_CLASS[DTPPropTextLayoutEditor.Instance.EditingInstance.m_allowedRenderClass], x.m_textType);
                     m_customText.text = x.m_fixedText ?? "";
                     m_overrideFontSelect.selectedIndex = x.m_overrideFont == null ? 0 : Array.IndexOf(m_overrideFontSelect.items, x.m_overrideFont);
                     m_textPrefix.text = x.m_prefix ?? "";
@@ -161,6 +174,18 @@ namespace Klyte.DynamicTextProps.UI
             }
         }
 
+        private void OnTabNameChanged(string text) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) =>
+        {
+            if (text.IsNullOrWhiteSpace())
+            {
+                m_tabName.text = desc.SaveName;
+            }
+            else
+            {
+                desc.SaveName = text;
+                DTPPropTextLayoutEditor.Instance.SetCurrentTabName(text);
+            }
+        });
         private void OnSetSuffix(string text) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_suffix = text);
         private void OnSetPrefix(string text) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_prefix = text);
         private void OnSetOverrideFont(int sel) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) =>
@@ -177,8 +202,14 @@ namespace Klyte.DynamicTextProps.UI
         private void OnSetTextCustom(string text) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_fixedText = text);
         private void OnSetTextOwnNameContent(int sel)
         {
-            SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_textType = (TextType)sel);
-            m_customText.parent.isVisible = (TextType)sel == TextType.Fixed;
+            SafeObtain((ref BoardTextDescriptorGeneralXml desc) =>
+            {
+                if (sel >= 0)
+                {
+                    desc.m_textType = DTPPropRenderingRules.ALLOWED_TYPES_PER_RENDERING_CLASS[DTPPropTextLayoutEditor.Instance.EditingInstance.m_allowedRenderClass][sel];
+                    m_customText.parent.isVisible = desc.m_textType == TextType.Fixed;
+                }
+            });
         }
 
         //private void OnSetShader(int sel) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => { });

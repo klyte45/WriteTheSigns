@@ -1,6 +1,7 @@
 ﻿using ColossalFramework;
 using Klyte.Commons.Interfaces;
 using Klyte.Commons.Utils;
+using Klyte.DynamicTextProps.Rendering;
 using System.Xml;
 using System.Xml.Serialization;
 using UnityEngine;
@@ -12,6 +13,9 @@ namespace Klyte.DynamicTextProps.Xml
     {
         [XmlAttribute("propName")]
         public string m_propName;
+
+        [XmlAttribute("availability")]
+        public TextRenderingClass m_allowedRenderClass = TextRenderingClass.RoadNodes;
 
         [XmlIgnore]
         public Color? FixedColor { get => m_cachedColor; set => m_cachedColor = value; }

@@ -397,6 +397,7 @@
     <Content Include="commons\UI\Images\%25K45_RelativeMode.png" />
     <Content Include="commons\UI\Images\%25K45_RemoveUnwantedIcon.png" />
     <EmbeddedResource Include="commons\UI\Images\%25K45_Unlock.png" />
+    <EmbeddedResource Include="commons\UI\Images\%25K45_Settings.png" />
     <Content Include="commons\UI\Images\lineFormat.png" />
     <Content Include="commons\UI\Images\lineFormat.psd" />
     <Content Include="commons\UI\Images\sprites.psd" />

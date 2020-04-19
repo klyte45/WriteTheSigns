@@ -10,7 +10,13 @@ using UnityEngine;
 
 namespace Klyte.DynamicTextProps.Rendering
 {
-
+    public enum TextRenderingClass
+    {
+        RoadNodes = 1,
+        MileageMarker = 2,
+        Buildings = 4,
+        PlaceOnNet = 8,
+    }
 
     internal static class DTPPropRenderingRules
     {
@@ -22,7 +28,63 @@ namespace Klyte.DynamicTextProps.Rendering
         public static readonly int SHADER_PROP_COLOR3 = Shader.PropertyToID("_ColorV3");
         public static readonly int SHADER_PROP_SPECULAR = Shader.PropertyToID("_SpecColor");
 
+        public static readonly Dictionary<TextRenderingClass, TextType[]> ALLOWED_TYPES_PER_RENDERING_CLASS = new Dictionary<TextRenderingClass, TextType[]>
+        {
+            [TextRenderingClass.RoadNodes] = new TextType[]
+            {
+                TextType.StreetPrefix,
+                TextType.StreetSuffix,
+                TextType.StreetNameComplete,
+                TextType.District,
+                TextType.DistanceFromCenter,
+                TextType.Fixed,
+            },
+            [TextRenderingClass.MileageMarker] = new TextType[]
+            {
+                TextType.Direction,
+                TextType.BuildingNumber,
+                TextType.StreetCode,
+                TextType.StreetPrefix,
+                TextType.StreetSuffix,
+                TextType.StreetNameComplete,
+                TextType.Fixed,
+            },
+            [TextRenderingClass.Buildings] = new TextType[]
+            {
+               TextType.OwnName,
+               TextType.StreetPrefix,
+               TextType.StreetSuffix,
+               TextType.StreetNameComplete,
+               TextType.LinesSymbols,
+               TextType.NextStopLine, // Next Station Line 1
+               TextType.PrevStopLine, // Previous Station Line 2
+               TextType.LastStopLine, // Line Destination (Last stop before get back) 3
+               TextType.Fixed,
+            },
+            [TextRenderingClass.PlaceOnNet] = new TextType[]
+            {
+               TextType.OwnName,
+               TextType.StreetPrefix,
+               TextType.StreetSuffix,
+               TextType.StreetNameComplete,
 
+               TextType.NextExitText,
+               TextType.NextExitDestination1,
+               TextType.NextExitDestination2,
+               TextType.NextExitDestination3,
+               TextType.NextExitDestination4,
+               TextType.NextExitDistance,
+
+               TextType.Next2ExitText,
+               TextType.Next2ExitDestination1,
+               TextType.Next2ExitDestination2,
+               TextType.Next2ExitDestination3,
+               TextType.Next2ExitDestination4,
+               TextType.Next2ExitDistance,
+
+               TextType.Fixed,
+            },
+        };
 
 
         public static void RenderPropMesh(ref PropInfo propInfo, RenderManager.CameraInfo cameraInfo, ushort refId, int boardIdx, int secIdx, int layerMask, float refAngleRad, Vector3 position, Vector4 dataVector, ref string propName, Vector3 propAngle, Vector3 propScale, BoardInstanceXml descriptor, out Matrix4x4 propMatrix, out bool rendered, InstanceID propRenderID)

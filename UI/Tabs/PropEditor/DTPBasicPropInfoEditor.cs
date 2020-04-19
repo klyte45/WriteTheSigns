@@ -3,6 +3,7 @@ using ColossalFramework.Globalization;
 using ColossalFramework.UI;
 using Klyte.Commons.Extensors;
 using Klyte.Commons.Utils;
+using Klyte.DynamicTextProps.Rendering;
 using Klyte.DynamicTextProps.Utils;
 using Klyte.DynamicTextProps.Xml;
 using System;
@@ -24,6 +25,7 @@ namespace Klyte.DynamicTextProps.UI
         protected UIDropDown m_fontSelect;
         protected UITextField m_name;
         protected UIColorField m_fixedColor;
+        private UIDropDown m_dropdownTextContent;
         private UIListBox m_popup;
 
         private Dictionary<string, string> m_propsLoaded;
@@ -58,7 +60,7 @@ namespace Klyte.DynamicTextProps.UI
 
             var helper = new UIHelperExtension(MainContainer);
 
-            AddTextField("Prop", out m_propFilter, helper, null);
+            AddTextField(Locale.Get("K45_DTP_PROP_MODEL_SELECT"), out m_propFilter, helper, null);
 
             KlyteMonoUtils.UiTextFieldDefaultsForm(m_propFilter);
             var selectorPanel = m_propFilter.parent as UIPanel;
@@ -70,11 +72,14 @@ namespace Klyte.DynamicTextProps.UI
             selectorPanel.wrapLayout = true;
 
 
-            AddTextField("Name", out m_name, helper, OnSetName);
-            AddColorField(helper, "Fixed Color", out m_fixedColor, (x, y) => EventPropColorChanged?.Invoke(y));
+            AddTextField(Locale.Get("K45_DTP_PROP_TAB_TITLE"), out m_name, helper, OnSetName);
+            AddColorField(helper, Locale.Get("K45_DTP_PROP_COLOR"), out m_fixedColor, (x, y) => EventPropColorChanged?.Invoke(y));
 
-            AddDropdown("Override font", out m_fontSelect, helper, new string[0], OnSetFont);
+            AddDropdown(Locale.Get("K45_DTP_OVERRIDE_FONT"), out m_fontSelect, helper, new string[0], OnSetFont);
             DTPUtils.ReloadFontsOf(m_fontSelect, true);
+
+
+            AddDropdown(Locale.Get("K45_DTP_TEXT_AVAILABILITY"), out m_dropdownTextContent, helper, Enum.GetNames(typeof(TextRenderingClass)).Select(x => Locale.Get("K45_DTP_BOARD_TEXT_AVAILABILITY_DESC", x.ToString())).ToArray(), OnSetTextOwnNameContent);
 
             m_popup = CreatePopup(m_fontSelect, selectorPanel);
             m_popup.isVisible = false;
@@ -152,6 +157,7 @@ namespace Klyte.DynamicTextProps.UI
                 EditingInstance.FontName = null;
             }
         }
+        private void OnSetTextOwnNameContent(int sel) => EditingInstance.m_allowedRenderClass = (TextRenderingClass)sel;
         #endregion
 
     }

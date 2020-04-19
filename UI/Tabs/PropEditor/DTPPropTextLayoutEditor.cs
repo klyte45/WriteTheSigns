@@ -105,7 +105,7 @@ namespace Klyte.DynamicTextProps.UI
 
             m_propInfoEditor.EventPropChanged += (x) =>
             {
-                if (x != null) 
+                if (x != null)
                 {
                     CurrentInfo = x;
                     propPreview.ResetCamera();
@@ -140,9 +140,20 @@ namespace Klyte.DynamicTextProps.UI
         private void AddTabToItem(UIComponent x, UIMouseEventParameter y)
         {
             InitTabButton(m_editTabstrip, out UIButton button, "", new Vector2(m_editTabstrip.size.x, 30));
+            EditingInstance.m_textDescriptors = EditingInstance.m_textDescriptors.Union(new BoardTextDescriptorGeneralXml[] { new BoardTextDescriptorGeneralXml{
+                SaveName = $"Tab {button.zOrder - 1}"
+            }
+            }).ToArray();
             button.text = $"Tab {button.zOrder - 1}";
-            EditingInstance.m_textDescriptors = EditingInstance.m_textDescriptors.Union(new BoardTextDescriptorGeneralXml[] { new BoardTextDescriptorGeneralXml() }).ToArray();
             m_plusButton.zOrder = 9999999;
+        }
+
+        public void SetCurrentTabName(string name)
+        {
+            if (CurrentTab > 0 && CurrentTab < m_editTabstrip.components.Count - 1)
+            {
+                (m_editTabstrip.components[CurrentTab] as UIButton).text = name;
+            }
         }
 
         private void OnDeleteConfig(UIComponent component, UIMouseEventParameter eventParam)
