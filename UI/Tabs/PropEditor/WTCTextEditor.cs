@@ -41,7 +41,6 @@ namespace Klyte.WriteTheCity.UI
 
 
         private UIDropDown m_dropdownTextAlignHorizontal;
-        private UIDropDown m_dropdownTextAlignVertical;
         private UICheckBox m_useContrastColor;
         private UIColorField m_textFixedColor;
 
@@ -90,12 +89,9 @@ namespace Klyte.WriteTheCity.UI
 
 
             AddDropdown(Locale.Get("K45_WTC_TEXT_ALIGN_HOR"), out m_dropdownTextAlignHorizontal, helperAppearance, Enum.GetNames(typeof(UIHorizontalAlignment)).Select(x => Locale.Get("K45_ALIGNMENT", x)).ToArray(), OnSetTextAlignmentHorizontal);
-            AddDropdown(Locale.Get("K45_WTC_TEXT_ALIGN_VER"), out m_dropdownTextAlignVertical, helperAppearance, Enum.GetNames(typeof(UIVerticalAlignment)).Select(x => Locale.Get("K45_VERT_ALIGNMENT", x)).ToArray(), OnSetTextAlignmentVertical);
             helperAppearance.AddSpace(5);
             m_useContrastColor = helperAppearance.AddCheckboxLocale("K45_WTC_USE_CONTRAST_COLOR", false, OnContrastColorChange);
             AddColorField(helperAppearance, Locale.Get("K45_WTC_TEXT_COLOR"), out m_textFixedColor, OnFixedColorChanged);
-            //helperAppearance.AddSpace(5);
-            //AddDropdown(Locale.Get("K45_WTC_OVERRIDE_TEXT_SHADER"), out UIDropDown shaderSelector, helperAppearance, new string[] { Locale.Get("K45_WTC_DEFAULT_SHADER_OPTION") }.Union(Shader.FindObjectsOfType<Shader>().Select(x => x.name).OrderBy(x => x)).ToArray(), OnSetShader);
 
 
             AddDropdown(Locale.Get("K45_WTC_TEXT_CONTENT"), out m_dropdownTextContent, helperConfig, Enum.GetNames(typeof(TextType)).Select(x => Locale.Get("K45_WTC_BOARD_TEXT_TYPE_DESC", x.ToString())).ToArray(), OnSetTextOwnNameContent);
@@ -128,7 +124,6 @@ namespace Klyte.WriteTheCity.UI
                     m_create180degSimmetricClone.isChecked = x.m_create180degYClone;
 
                     m_dropdownTextAlignHorizontal.selectedIndex = (int)x.m_textAlign;
-                    m_dropdownTextAlignVertical.selectedIndex = (int)x.m_verticalAlign;
                     m_useContrastColor.isChecked = x.m_useContrastColor;
                     m_textFixedColor.selectedColor = x.m_defaultColor;
 
@@ -225,7 +220,6 @@ namespace Klyte.WriteTheCity.UI
         }
 
         private void OnSetTextAlignmentHorizontal(int sel) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_textAlign = (UIHorizontalAlignment)sel);
-        private void OnSetTextAlignmentVertical(int sel) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_verticalAlign = (UIVerticalAlignment)sel);
         private void OnFixedColorChanged(UIComponent component, Color value) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_defaultColor = value);
         private void OnMaxWidthChange(float obj) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_maxWidthMeters = obj);
         private void OnScaleSubmit(float scale) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_textScale = scale);

@@ -1,5 +1,6 @@
 using ColossalFramework;
 using ColossalFramework.UI;
+using Klyte.Commons.Utils;
 using SpriteFontPlus.Utility;
 using System;
 using System.Collections.Generic;
@@ -134,7 +135,10 @@ namespace FontStashSharp
                 return bri;
             }
 
-            bri = new BasicRenderInformation();
+            bri = new BasicRenderInformation
+            {
+                m_YAxisOverflows = new RangeVector { min = float.MaxValue, max = float.MinValue },
+            };
 
             Dictionary<int, FontGlyph> glyphs = GetGlyphsCollection(FontHeight);
 
@@ -198,6 +202,10 @@ namespace FontStashSharp
                     }
 
                     GetQuad(glyph, prevGlyph, Spacing, ref originX, ref originY, ref q);
+                    bri.m_YAxisOverflows.min = Mathf.Min(bri.m_YAxisOverflows.min, glyph.YOffset - glyph.Font.Descent + glyph.Font.Ascent);
+                    bri.m_YAxisOverflows.max = Mathf.Max(bri.m_YAxisOverflows.max, glyph.Bounds.height + glyph.YOffset - glyph.Font.Ascent + glyph.Font.Descent);
+
+                    LogUtils.DoWarnLog($"bounds '{str[i]}' = {glyph.Bounds}; Yoffset = {glyph.YOffset}; current bri.m_YAxisOverflows = {bri.m_YAxisOverflows}");
 
                     q.X0 = (int)(q.X0 * -Scale.x);
                     q.X1 = (int)(q.X1 * -Scale.x);
@@ -224,9 +232,11 @@ namespace FontStashSharp
                 bri.m_mesh.uv = uvs.ToArray();
                 bri.m_mesh.triangles = triangles.ToArray();
                 bri.m_materialGeneratedTick = LastUpdateAtlas;
+                bri.m_fontBaseLimits = new RangeVector { min = prevGlyph.Font.Descent, max = prevGlyph.Font.Ascent };
             }
             finally
             {
+                LogUtils.DoWarnLog($"minMax Y '{str}' = {bri.m_YAxisOverflows}");
                 uirenderData.Release();
             }
             bri.m_mesh.RecalculateNormals();
@@ -759,11 +769,8 @@ namespace FontStashSharp
                 x += (int)(adv + spacing + 0.5f);
             }
 
-            float rx = 0;
-            float ry = 0;
-
-            rx = x + glyph.XOffset;
-            ry = y + glyph.YOffset;
+            float rx = x + glyph.XOffset;
+            float ry = y + glyph.YOffset;
             q.X0 = rx;
             q.Y0 = ry;
             q.X1 = rx + glyph.Bounds.width;

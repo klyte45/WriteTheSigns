@@ -154,7 +154,7 @@ namespace Klyte.WriteTheCity.Rendering
         {
             var result = new List<Matrix4x4>();
 
-            Matrix4x4 textMatrix = ApplyTextAdjustments(textDescriptor.m_textRelativePosition, textDescriptor.m_textRelativeRotation, renderInfo, instance.PropScale, textDescriptor.m_textScale, textDescriptor.m_textAlign, textDescriptor.m_verticalAlign, textDescriptor.m_maxWidthMeters, textDescriptor.m_applyOverflowResizingOnY, centerReference);
+            Matrix4x4 textMatrix = ApplyTextAdjustments(textDescriptor.m_textRelativePosition, textDescriptor.m_textRelativeRotation, renderInfo, instance.PropScale, textDescriptor.m_textScale, textDescriptor.m_textAlign,  textDescriptor.m_maxWidthMeters, textDescriptor.m_applyOverflowResizingOnY, centerReference);
 
             result.Add(textMatrix);
 
@@ -165,13 +165,13 @@ namespace Klyte.WriteTheCity.Rendering
                 {
                     targetTextAlignment = 2 - targetTextAlignment;
                 }
-                result.Add(ApplyTextAdjustments(new Vector3(textDescriptor.m_textRelativePosition.x, textDescriptor.m_textRelativePosition.y, -textDescriptor.m_textRelativePosition.z), textDescriptor.m_textRelativeRotation + new Vector3(0, 180), renderInfo, instance.PropScale, textDescriptor.m_textScale, targetTextAlignment, textDescriptor.m_verticalAlign, textDescriptor.m_maxWidthMeters, textDescriptor.m_applyOverflowResizingOnY, centerReference));
+                result.Add(ApplyTextAdjustments(new Vector3(textDescriptor.m_textRelativePosition.x, textDescriptor.m_textRelativePosition.y, -textDescriptor.m_textRelativePosition.z), textDescriptor.m_textRelativeRotation + new Vector3(0, 180), renderInfo, instance.PropScale, textDescriptor.m_textScale, targetTextAlignment, textDescriptor.m_maxWidthMeters, textDescriptor.m_applyOverflowResizingOnY, centerReference));
             }
 
             return result;
         }
 
-        private static Matrix4x4 ApplyTextAdjustments(Vector3 textPosition, Vector3 textRotation, BasicRenderInformation renderInfo, Vector3 propScale, float textScale, UIHorizontalAlignment horizontalAlignment, UIVerticalAlignment verticalAlignment, float maxWidth, bool applyResizeOverflowOnY, bool centerReference)
+        private static Matrix4x4 ApplyTextAdjustments(Vector3 textPosition, Vector3 textRotation, BasicRenderInformation renderInfo, Vector3 propScale, float textScale, UIHorizontalAlignment horizontalAlignment, float maxWidth, bool applyResizeOverflowOnY, bool centerReference)
         {
             float overflowScaleX = 1f;
             float overflowScaleY = 1f;
@@ -197,13 +197,7 @@ namespace Klyte.WriteTheCity.Rendering
                     targetRelativePosition += new Vector3((maxWidth - realWidth) * factor / propScale.x, 0, 0);
                 }
             }
-
-
-            if (verticalAlignment != UIVerticalAlignment.Middle)
-            {
-                float factor = verticalAlignment == UIVerticalAlignment.Bottom == (((textRotation.x % 360) + 810) % 360 > 180) ? -.5f : .5f;
-                targetRelativePosition += new Vector3(0, realHeight * factor, 0);
-            }
+            targetRelativePosition += new Vector3(0, -(renderInfo.m_YAxisOverflows.min + renderInfo.m_YAxisOverflows.max) / 2 * defaultMultiplierY * overflowScaleY, 0);
 
             var textMatrix = Matrix4x4.TRS(
                 targetRelativePosition,

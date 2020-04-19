@@ -31,10 +31,6 @@ namespace Klyte.WriteTheCity.Xml
         public Color m_defaultColor = Color.clear;
         [XmlAttribute("textAlign")]
         public UIHorizontalAlignment m_textAlign = UIHorizontalAlignment.Center;
-        [XmlAttribute("verticalAlign")]
-        public UIVerticalAlignment m_verticalAlign = UIVerticalAlignment.Middle;
-        [XmlAttribute("shader")]
-        public string m_shader = null;
 
         [XmlAttribute("textType")]
         public TextType m_textType = TextType.Fixed;

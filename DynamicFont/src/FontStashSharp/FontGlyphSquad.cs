@@ -13,5 +13,7 @@ namespace FontStashSharp
 		public float Y1;
 		public float S1;
 		public float T1;
-	}
+
+        public override string ToString() => $"[x[{X0}-{X1}];y[{Y0}-{Y1}];s[{S0}-{S1}];t[{T0}-{T1}]]";
+    }
 }

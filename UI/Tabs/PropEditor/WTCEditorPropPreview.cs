@@ -73,11 +73,11 @@ namespace Klyte.WriteTheCity.UI
 
             UIHelperExtension.AddSpace(m_previewControls, 10);
 
-            KlyteMonoUtils.InitCircledButton(m_previewControls, out UIButton useCurrentText, CommonsSpriteNames.K45_FontIcon, (x, y) => m_overrideText = null,    "K45_WTC_USE_CURRENT_TEXT");
-            KlyteMonoUtils.InitCircledButtonText(m_previewControls, out UIButton use1lText, "x1", (x, y) => m_overrideText = "1",                      Locale.Get("K45_WTC_USE_1LENGHT_TEXT"  )   );
-            KlyteMonoUtils.InitCircledButtonText(m_previewControls, out UIButton use10lText, "x10", (x, y) => m_overrideText = new string('X', 10),    Locale.Get("K45_WTC_USE_10LENGHT_TEXT" )  );
-            KlyteMonoUtils.InitCircledButtonText(m_previewControls, out UIButton use50lText, "x50", (x, y) => m_overrideText = new string('L', 50),    Locale.Get("K45_WTC_USE_50LENGHT_TEXT" )  );
-            KlyteMonoUtils.InitCircledButtonText(m_previewControls, out UIButton use100lText, "x200", (x, y) => m_overrideText = new string('C', 200), Locale.Get("K45_WTC_USE_200LENGHT_TEXT"));
+            KlyteMonoUtils.InitCircledButton(m_previewControls, out UIButton useCurrentText, CommonsSpriteNames.K45_FontIcon, (x, y) => m_overrideText = null, "K45_WTC_USE_CURRENT_TEXT");
+            KlyteMonoUtils.InitCircledButtonText(m_previewControls, out UIButton use1lText, "x1", (x, y) => m_overrideText = "1", Locale.Get("K45_WTC_USE_1LENGHT_TEXT"));
+            KlyteMonoUtils.InitCircledButtonText(m_previewControls, out UIButton use10lText, "x10", (x, y) => m_overrideText = "Á" + new string('X', 8) + "j", Locale.Get("K45_WTC_USE_10LENGHT_TEXT"));
+            KlyteMonoUtils.InitCircledButtonText(m_previewControls, out UIButton use50lText, "x50", (x, y) => m_overrideText = "Á" + new string('L', 48) + "j", Locale.Get("K45_WTC_USE_50LENGHT_TEXT"));
+            KlyteMonoUtils.InitCircledButtonText(m_previewControls, out UIButton use100lText, "x200", (x, y) => m_overrideText = "Á" + new string('C', 198) + "j", Locale.Get("K45_WTC_USE_200LENGHT_TEXT"));
 
             WTCPropTextLayoutEditor.Instance.CurrentTabChanged += (x) =>
             {
