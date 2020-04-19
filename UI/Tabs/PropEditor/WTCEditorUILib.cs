@@ -1,9 +1,14 @@
-﻿using ColossalFramework.Globalization;
+﻿using ColossalFramework;
+using ColossalFramework.Globalization;
 using ColossalFramework.UI;
 using ICities;
 using Klyte.Commons.Extensors;
+using Klyte.Commons.Interfaces;
+using Klyte.Commons.UI.SpriteNames;
 using Klyte.Commons.Utils;
+using Klyte.WriteTheCity.Libraries;
 using System;
+using System.Linq;
 using System.Reflection;
 using UnityEngine;
 
@@ -147,6 +152,112 @@ namespace Klyte.WriteTheCity.UI
                 b = itemHeight / 2 + listPaddingVertical;
             }
             return new Vector2(num, b);
+        }
+
+        public static UIDropDown AddLibBox<LIB, DESC>(string groupTitle, UIHelperExtension parentHelper,
+    out UIButton copyButton, Action actionCopy,
+    out UIButton pasteButton, Action actionPaste,
+    out UIButton deleteButton, Action actionDelete,
+    Action<string> onLoad, Func<DESC> getContentToSave, Action<UIHelperExtension> doWithLibGroup = null) where LIB : BasicLib<LIB, DESC>, new() where DESC : ILibable
+        {
+            UIHelperExtension groupLibPropGroup = parentHelper.AddTogglableGroup(groupTitle);
+
+            UIHelperExtension subPanelActionsBar = groupLibPropGroup.AddGroupExtended("!!!!", out UILabel voide, out UIPanel voide2);
+            GameObject.Destroy(voide);
+            ((UIPanel)subPanelActionsBar.Self).autoLayoutDirection = LayoutDirection.Horizontal;
+            ((UIPanel)subPanelActionsBar.Self).wrapLayout = false;
+            ((UIPanel)subPanelActionsBar.Self).autoLayout = true;
+            ((UIPanel)subPanelActionsBar.Self).autoFitChildrenHorizontally = true;
+            ((UIPanel)subPanelActionsBar.Self).autoFitChildrenVertically = true;
+
+            if (actionCopy != null)
+            {
+                copyButton = ConfigureActionButton(subPanelActionsBar.Self);
+                copyButton.eventClick += (x, y) => actionCopy();
+                SetIcon(copyButton, CommonsSpriteNames.K45_Copy, Color.white);
+            }
+            else
+            {
+                copyButton = null;
+            }
+            if (actionPaste != null)
+            {
+                pasteButton = ConfigureActionButton(subPanelActionsBar.Self);
+                pasteButton.eventClick += (x, y) => actionPaste();
+                SetIcon(pasteButton, CommonsSpriteNames.K45_Paste, Color.white);
+                pasteButton.isVisible = false;
+            }
+            else
+            {
+                pasteButton = null;
+            }
+            if (actionDelete != null)
+            {
+                deleteButton = ConfigureActionButton(subPanelActionsBar.Self);
+                deleteButton.eventClick += (x, y) => actionDelete();
+                SetIcon(deleteButton, CommonsSpriteNames.K45_RemoveIcon, Color.white);
+                deleteButton.color = Color.red;
+            }
+            else
+            {
+                deleteButton = null;
+            }
+
+
+            AddDropdown(Locale.Get("K45_WTC_LOAD_FROM_LIB"), out UIDropDown loadDD, groupLibPropGroup, BasicLib<LIB, DESC>.Instance.List().ToArray(), (x) => { });
+            loadDD.width -= 80;
+            UIPanel parent = loadDD.GetComponentInParent<UIPanel>();
+            UIButton actionButton = ConfigureActionButton(parent);
+            SetIcon(actionButton, CommonsSpriteNames.K45_Load, Color.white);
+            actionButton.eventClick += (x, t) =>
+            {
+                DESC groupInfo = BasicLib<LIB, DESC>.Instance.Get(loadDD.selectedValue);
+                if (groupInfo != null)
+                {
+                    onLoad(XmlUtils.DefaultXmlSerialize(groupInfo));
+                }
+
+            };
+            KlyteMonoUtils.CreateUIElement(out actionButton, parent.transform, "DelBtn");
+            actionButton = ConfigureActionButton(parent);
+            actionButton.color = Color.red;
+            SetIcon(actionButton, CommonsSpriteNames.K45_RemoveIcon, Color.white);
+            actionButton.eventClick += (x, t) =>
+            {
+                DESC groupInfo = BasicLib<LIB, DESC>.Instance.Get(loadDD.selectedValue);
+                if (groupInfo != null)
+                {
+                    BasicLib<LIB, DESC>.Instance.Remove(loadDD.selectedValue);
+                    loadDD.items = BasicLib<LIB, DESC>.Instance.List().ToArray();
+                }
+
+            };
+
+            AddTextField(Locale.Get("K45_WTC_SAVE_TO_LIB"), out UITextField saveTxt, groupLibPropGroup, (x) => { });
+            saveTxt.width -= 40;
+            parent = saveTxt.GetComponentInParent<UIPanel>();
+            actionButton = ConfigureActionButton(parent);
+            SetIcon(actionButton, CommonsSpriteNames.K45_Save, Color.white);
+            actionButton.eventClick += (x, t) =>
+            {
+                if (!saveTxt.text.IsNullOrWhiteSpace())
+                {
+                    BasicLib<LIB, DESC>.Instance.Add(saveTxt.text, getContentToSave());
+                    loadDD.items = BasicLib<LIB, DESC>.Instance.List().ToArray();
+                    loadDD.selectedValue = saveTxt.text;
+                }
+            };
+            doWithLibGroup?.Invoke(groupLibPropGroup);
+            return loadDD;
+        }
+        public static void SetIcon(UIButton copyButton, CommonsSpriteNames spriteName, Color color)
+        {
+            UISprite icon = copyButton.AddUIComponent<UISprite>();
+            icon.relativePosition = new Vector3(2, 2);
+            icon.width = 36;
+            icon.height = 36;
+            icon.spriteName = KlyteResourceLoader.GetDefaultSpriteNameFor(spriteName);
+            icon.color = color;
         }
 
         #endregion

@@ -147,6 +147,12 @@ namespace Klyte.WriteTheCity.UI
             button.text = $"Tab {button.zOrder - 1}";
             m_plusButton.zOrder = 9999999;
         }
+        internal void RemoveTabFromItem(int tabToEdit)
+        {
+            Destroy(m_editTabstrip.components[tabToEdit + 1]);
+            EditingInstance.m_textDescriptors = EditingInstance.m_textDescriptors.Where((x, y) => y != tabToEdit).ToArray();
+            OnTabChange(Mathf.Min(CurrentTab, EditingInstance.m_textDescriptors.Length));
+        }
 
         public void SetCurrentTabName(string name)
         {
@@ -177,6 +183,7 @@ namespace Klyte.WriteTheCity.UI
                     return true;
                 }); ;
         }
+
         private void OnNewConfig(UIComponent component, UIMouseEventParameter eventParam) => ShowNewConfigModal();
 
         private void ShowNewConfigModal(string lastError = null)

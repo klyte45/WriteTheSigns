@@ -42,7 +42,7 @@ namespace Klyte.WriteTheCity.UI
             get {
                 if (m_propsLoaded == null)
                 {
-                    m_propsLoaded = PrefabUtils<PropInfo>.AssetsLoaded.ToDictionary(x => GetListName(x), x => x?.name);
+                    m_propsLoaded = PrefabUtils<PropInfo>.AssetsLoaded.Where(x => x != null).ToDictionary(x => GetListName(x), x => x?.name);
                 }
                 return m_propsLoaded;
             }

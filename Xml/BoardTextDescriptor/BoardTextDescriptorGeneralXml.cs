@@ -48,9 +48,9 @@ namespace Klyte.WriteTheCity.Xml
         [XmlAttribute("suffix")]
         public string m_suffix = "";
         [XmlAttribute("cloneInvertHorizontalAlign")]
-        internal bool m_invertYCloneHorizontalAlign;
+        public bool m_invertYCloneHorizontalAlign;
         [XmlAttribute("clone180DegY")]
-        internal bool m_create180degYClone;
+        public bool m_create180degYClone;
 
         [XmlAttribute("relativePositionX")]
         public float RelPositionX { get => m_textRelativePosition.x; set => m_textRelativePosition.x = value; }

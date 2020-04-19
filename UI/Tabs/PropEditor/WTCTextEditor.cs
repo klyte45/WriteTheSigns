@@ -4,6 +4,7 @@ using ColossalFramework.UI;
 using Klyte.Commons.Extensors;
 using Klyte.Commons.UI.SpriteNames;
 using Klyte.Commons.Utils;
+using Klyte.WriteTheCity.Libraries;
 using Klyte.WriteTheCity.Rendering;
 using Klyte.WriteTheCity.Utils;
 using Klyte.WriteTheCity.Xml;
@@ -107,43 +108,75 @@ namespace Klyte.WriteTheCity.UI
             WTCPropTextLayoutEditor.Instance.CurrentTabChanged += (newVal) =>
             {
                 int targetTab = newVal - 1;
-                SafeObtain((ref BoardTextDescriptorGeneralXml x) =>
-                {
-                    m_tabName.text = x.SaveName;
-
-                    m_arrayCoord[0].text = x.m_textRelativePosition.x.ToString("F3");
-                    m_arrayCoord[1].text = x.m_textRelativePosition.y.ToString("F3");
-                    m_arrayCoord[2].text = x.m_textRelativePosition.z.ToString("F3");
-                    m_arrayRotation[0].text = x.m_textRelativeRotation.x.ToString("F3");
-                    m_arrayRotation[1].text = x.m_textRelativeRotation.y.ToString("F3");
-                    m_arrayRotation[2].text = x.m_textRelativeRotation.z.ToString("F3");
-                    m_textScale.text = x.m_textScale.ToString("F3");
-                    m_maxWidth.text = x.m_maxWidthMeters.ToString("F3");
-                    m_applyScaleOnY.isChecked = x.m_applyOverflowResizingOnY;
-                    m_invertTextHorizontalAlignClone.isChecked = x.m_invertYCloneHorizontalAlign;
-                    m_create180degSimmetricClone.isChecked = x.m_create180degYClone;
-
-                    m_dropdownTextAlignHorizontal.selectedIndex = (int)x.m_textAlign;
-                    m_useContrastColor.isChecked = x.m_useContrastColor;
-                    m_textFixedColor.selectedColor = x.m_defaultColor;
-
-                    m_dropdownTextContent.items = WTCPropRenderingRules.ALLOWED_TYPES_PER_RENDERING_CLASS[WTCPropTextLayoutEditor.Instance.EditingInstance.m_allowedRenderClass].Select(x => Locale.Get("K45_WTC_BOARD_TEXT_TYPE_DESC", x.ToString())).ToArray();
-                    m_dropdownTextContent.selectedIndex = Array.IndexOf(WTCPropRenderingRules.ALLOWED_TYPES_PER_RENDERING_CLASS[WTCPropTextLayoutEditor.Instance.EditingInstance.m_allowedRenderClass], x.m_textType);
-                    m_customText.text = x.m_fixedText ?? "";
-                    m_overrideFontSelect.selectedIndex = x.m_overrideFont == null ? 0 : Array.IndexOf(m_overrideFontSelect.items, x.m_overrideFont);
-                    m_textPrefix.text = x.m_prefix ?? "";
-                    m_textSuffix.text = x.m_suffix ?? "";
-                    m_allCaps.isChecked = x.m_allCaps;
-
-
-                    m_customText.parent.isVisible = x.m_textType == TextType.Fixed;
-                    m_textFixedColor.parent.isVisible = !x.m_useContrastColor;
-                    m_invertTextHorizontalAlignClone.isVisible = x.m_create180degYClone;
-                }, targetTab);
+                SafeObtain(OnSetData, targetTab);
             };
             m_isEditing = false;
+
+
+            AddLibBox<WTCLibPropTextItem, BoardTextDescriptorGeneralXml>(Locale.Get("K45_WTC_PROP_TEXT_LIB_TITLE"), helperSettings,
+                                 out UIButton m_copyButtonText, DoCopyText,
+                                 out UIButton m_pasteButtonText, DoPasteText,
+                                 out UIButton m_deleteButtonText, DoDeleteText,
+                                 (loadedItem) => SafeObtain((ref BoardTextDescriptorGeneralXml x) =>
+                                    {
+                                        string name = x.SaveName;
+                                        x = XmlUtils.DefaultXmlDeserialize<BoardTextDescriptorGeneralXml>(loadedItem);
+                                        x.SaveName = name;
+                                        OnSetData(ref x);
+                                        x.SaveName = name;
+                                    }),
+                                 () => WTCPropTextLayoutEditor.Instance.EditingInstance.m_textDescriptors[Math.Max(0, TabToEdit)]);
+
         }
 
+        private void DoDeleteText() => WTCPropTextLayoutEditor.Instance.RemoveTabFromItem(TabToEdit);
+        private void DoPasteText() => SafeObtain((ref BoardTextDescriptorGeneralXml x) =>
+        {
+            if (m_clipboard != null)
+            {
+                string name = x.SaveName;
+                x = XmlUtils.DefaultXmlDeserialize<BoardTextDescriptorGeneralXml>(m_clipboard);
+                x.SaveName = name;
+                OnSetData(ref x);
+            }
+        });
+        private void DoCopyText() => SafeObtain((ref BoardTextDescriptorGeneralXml x) => m_clipboard = XmlUtils.DefaultXmlSerialize(x));
+
+        private string m_clipboard;
+
+        private void OnSetData(ref BoardTextDescriptorGeneralXml x)
+        {
+            m_tabName.text = x.SaveName;
+
+            m_arrayCoord[0].text = x.m_textRelativePosition.x.ToString("F3");
+            m_arrayCoord[1].text = x.m_textRelativePosition.y.ToString("F3");
+            m_arrayCoord[2].text = x.m_textRelativePosition.z.ToString("F3");
+            m_arrayRotation[0].text = x.m_textRelativeRotation.x.ToString("F3");
+            m_arrayRotation[1].text = x.m_textRelativeRotation.y.ToString("F3");
+            m_arrayRotation[2].text = x.m_textRelativeRotation.z.ToString("F3");
+            m_textScale.text = x.m_textScale.ToString("F3");
+            m_maxWidth.text = x.m_maxWidthMeters.ToString("F3");
+            m_applyScaleOnY.isChecked = x.m_applyOverflowResizingOnY;
+            m_invertTextHorizontalAlignClone.isChecked = x.m_invertYCloneHorizontalAlign;
+            m_create180degSimmetricClone.isChecked = x.m_create180degYClone;
+
+            m_dropdownTextAlignHorizontal.selectedIndex = (int)x.m_textAlign;
+            m_useContrastColor.isChecked = x.m_useContrastColor;
+            m_textFixedColor.selectedColor = x.m_defaultColor;
+
+            m_dropdownTextContent.items = WTCPropRenderingRules.ALLOWED_TYPES_PER_RENDERING_CLASS[WTCPropTextLayoutEditor.Instance.EditingInstance.m_allowedRenderClass].Select(x => Locale.Get("K45_WTC_BOARD_TEXT_TYPE_DESC", x.ToString())).ToArray();
+            m_dropdownTextContent.selectedIndex = Array.IndexOf(WTCPropRenderingRules.ALLOWED_TYPES_PER_RENDERING_CLASS[WTCPropTextLayoutEditor.Instance.EditingInstance.m_allowedRenderClass], x.m_textType);
+            m_customText.text = x.m_fixedText ?? "";
+            m_overrideFontSelect.selectedIndex = x.m_overrideFont == null ? 0 : Array.IndexOf(m_overrideFontSelect.items, x.m_overrideFont);
+            m_textPrefix.text = x.m_prefix ?? "";
+            m_textSuffix.text = x.m_suffix ?? "";
+            m_allCaps.isChecked = x.m_allCaps;
+
+
+            m_customText.parent.isVisible = x.m_textType == TextType.Fixed;
+            m_textFixedColor.parent.isVisible = !x.m_useContrastColor;
+            m_invertTextHorizontalAlignClone.isVisible = x.m_create180degYClone;
+        }
 
         private delegate void SafeObtainMethod(ref BoardTextDescriptorGeneralXml x);
 

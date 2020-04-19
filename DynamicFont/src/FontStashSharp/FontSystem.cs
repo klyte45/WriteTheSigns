@@ -205,8 +205,6 @@ namespace FontStashSharp
                     bri.m_YAxisOverflows.min = Mathf.Min(bri.m_YAxisOverflows.min, glyph.YOffset - glyph.Font.Descent + glyph.Font.Ascent);
                     bri.m_YAxisOverflows.max = Mathf.Max(bri.m_YAxisOverflows.max, glyph.Bounds.height + glyph.YOffset - glyph.Font.Ascent + glyph.Font.Descent);
 
-                    LogUtils.DoWarnLog($"bounds '{str[i]}' = {glyph.Bounds}; Yoffset = {glyph.YOffset}; current bri.m_YAxisOverflows = {bri.m_YAxisOverflows}");
-
                     q.X0 = (int)(q.X0 * -Scale.x);
                     q.X1 = (int)(q.X1 * -Scale.x);
                     q.Y0 = (int)(q.Y0 * Scale.y);
@@ -236,7 +234,6 @@ namespace FontStashSharp
             }
             finally
             {
-                LogUtils.DoWarnLog($"minMax Y '{str}' = {bri.m_YAxisOverflows}");
                 uirenderData.Release();
             }
             bri.m_mesh.RecalculateNormals();

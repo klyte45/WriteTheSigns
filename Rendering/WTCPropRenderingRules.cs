@@ -197,7 +197,7 @@ namespace Klyte.WriteTheCity.Rendering
                     targetRelativePosition += new Vector3((maxWidth - realWidth) * factor / propScale.x, 0, 0);
                 }
             }
-            targetRelativePosition += new Vector3(0, -(renderInfo.m_YAxisOverflows.min + renderInfo.m_YAxisOverflows.max) / 2 * defaultMultiplierY * overflowScaleY, 0);
+            targetRelativePosition.y -= (renderInfo.m_YAxisOverflows.min + renderInfo.m_YAxisOverflows.max) / 2 * defaultMultiplierY * overflowScaleY;
 
             var textMatrix = Matrix4x4.TRS(
                 targetRelativePosition,
