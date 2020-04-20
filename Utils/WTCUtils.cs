@@ -15,7 +15,6 @@ namespace Klyte.WriteTheCity.Utils
 
         public static void ReloadFontsOf(UIDropDown target, bool hasDefaultOption = false)
         {
-            WTCController.ReloadFontsFromPath();
             var items = FontServer.instance.GetAllFonts().ToList();
             items.Sort();
             items.Remove(WTCController.DEFAULT_FONT_KEY);

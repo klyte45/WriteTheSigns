@@ -154,7 +154,7 @@ namespace Klyte.WriteTheCity.Rendering
         {
             var result = new List<Matrix4x4>();
 
-            Matrix4x4 textMatrix = ApplyTextAdjustments(textDescriptor.m_textRelativePosition, textDescriptor.m_textRelativeRotation, renderInfo, instance.PropScale, textDescriptor.m_textScale, textDescriptor.m_textAlign,  textDescriptor.m_maxWidthMeters, textDescriptor.m_applyOverflowResizingOnY, centerReference);
+            Matrix4x4 textMatrix = ApplyTextAdjustments(textDescriptor.m_textRelativePosition, textDescriptor.m_textRelativeRotation, renderInfo, instance.PropScale, textDescriptor.m_textScale, textDescriptor.m_textAlign, textDescriptor.m_maxWidthMeters, textDescriptor.m_applyOverflowResizingOnY, centerReference);
 
             result.Add(textMatrix);
 
@@ -220,7 +220,7 @@ namespace Klyte.WriteTheCity.Rendering
                     return WTCRoadNodesData.Instance.BoardsContainers[refId].m_boardsData[boardIdx]?.m_cachedColor2;
                 }
             }
-            return instance.Descriptor.FixedColor ?? GetCurrentSimulationColor();
+            return instance?.Descriptor?.FixedColor ?? GetCurrentSimulationColor();
 
         }
 
@@ -270,7 +270,7 @@ namespace Klyte.WriteTheCity.Rendering
                     return WTCRoadNodesData.Instance.BoardsContainers[refID].m_boardsData[boardIdx]?.m_cachedContrastColor2 ?? Color.black;
                 }
             }
-            return KlyteMonoUtils.ContrastColor(instance.Descriptor.FixedColor ?? GetCurrentSimulationColor());
+            return KlyteMonoUtils.ContrastColor(instance?.Descriptor?.FixedColor ?? GetCurrentSimulationColor());
         }
 
         internal static BasicRenderInformation GetTextMesh(DynamicSpriteFont baseFont, BoardTextDescriptorGeneralXml textDescriptor, ushort refID, int boardIdx, int secIdx, BoardInstanceXml instance)

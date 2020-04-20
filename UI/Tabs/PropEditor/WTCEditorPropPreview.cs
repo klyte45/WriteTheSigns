@@ -28,11 +28,11 @@ namespace Klyte.WriteTheCity.UI
 
         private string m_overrideText = null;
 
-        private PropInfo CurrentInfo => WTCPropTextLayoutEditor.Instance.CurrentInfo;
+        private PropInfo CurrentInfo => WTCPropTextLayoutEditor.Instance.CurrentPropInfo;
         private int TabToPreview => WTCPropTextLayoutEditor.Instance.CurrentTab - 1;
-        private BoardDescriptorGeneralXml EditingInstance => WTCPropTextLayoutEditor.Instance.EditingInstance;
+        private BoardDescriptorGeneralXml EditingInstancePreview => WTCPropTextLayoutEditor.Instance.EditingInstance;
 
-        private BoardTextDescriptorGeneralXml CurrentTextDescriptor => TabToPreview >= 0 && TabToPreview < EditingInstance.m_textDescriptors.Length ? EditingInstance.m_textDescriptors[TabToPreview] : default;
+        private BoardTextDescriptorGeneralXml CurrentTextDescriptor => TabToPreview >= 0 && TabToPreview < EditingInstancePreview.m_textDescriptors.Length ? EditingInstancePreview.m_textDescriptors[TabToPreview] : default;
 
         public float TargetZoom { get; set; } = 3;
         public float CameraRotation { get; private set; }
@@ -138,7 +138,7 @@ namespace Klyte.WriteTheCity.UI
                     if (CurrentTextDescriptor != null)
                     {
                         float regularMagn = CurrentInfo.m_mesh.bounds.extents.magnitude / WTCPropRenderingRules.SCALING_FACTOR;
-                        Vector3 textExt = WTCPropRenderingRules.GetTextMesh(FontServer.instance[EditingInstance.FontName ?? WTCController.DEFAULT_FONT_KEY], CurrentTextDescriptor, 0, 0, 0, m_previewRenderer.GetDefaultInstance())?.m_mesh?.bounds.extents ?? default;
+                        Vector3 textExt = WTCPropRenderingRules.GetTextMesh(FontServer.instance[EditingInstancePreview.FontName ?? WTCController.DEFAULT_FONT_KEY], CurrentTextDescriptor, 0, 0, 0, m_previewRenderer.GetDefaultInstance())?.m_mesh?.bounds.extents ?? default;
 
                         if (CurrentTextDescriptor.m_maxWidthMeters > 0)
                         {
@@ -171,7 +171,8 @@ namespace Klyte.WriteTheCity.UI
                 return;
             }
             m_preview.isVisible = true;
-            m_previewRenderer.RenderProp(CurrentInfo, m_cameraPosition, new Vector3(0, CameraRotation), EditingInstance, CurrentTextDescriptor != null ? TabToPreview : -1, m_overrideText);
+            m_previewControls.isVisible = true;
+            m_previewRenderer.RenderProp(CurrentInfo, m_cameraPosition, new Vector3(0, CameraRotation), EditingInstancePreview, CurrentTextDescriptor != null ? TabToPreview : -1, m_overrideText);
         }
 
         public void Update()
@@ -193,6 +194,13 @@ namespace Klyte.WriteTheCity.UI
 
                 RedrawModel();
             }
+            else
+            {
+                m_preview.isVisible = false;
+                m_previewControls.isVisible = false;
+            }
+
+
         }
     }
 

@@ -91,7 +91,7 @@ namespace Klyte.WriteTheCity.UI
             {
                 var sourceMatrix = Matrix4x4.Inverse(WTCPropRenderingRules.CalculateTextMatrix(m_defaultInstance, descriptor.m_textDescriptors[referenceIdx], WTCPropRenderingRules.GetTextMesh(FontServer.instance[WTCController.DEFAULT_FONT_KEY], descriptor.m_textDescriptors[referenceIdx], 0, 0, referenceIdx, m_defaultInstance), true).FirstOrDefault());
                 float regularMagn = info.m_mesh.bounds.extents.magnitude / WTCPropRenderingRules.SCALING_FACTOR;
-                Vector3 textExt = WTCPropRenderingRules.GetTextMesh(FontServer.instance[descriptor.FontName ?? WTCController.DEFAULT_FONT_KEY], descriptor.m_textDescriptors[referenceIdx], 0, 0, referenceIdx, m_defaultInstance)?.m_mesh?.bounds.extents ?? default;
+                Vector3 textExt = WTCPropRenderingRules.GetTextMesh(FontServer.instance[descriptor.FontName] ?? FontServer.instance[WTCController.DEFAULT_FONT_KEY], descriptor.m_textDescriptors[referenceIdx], 0, 0, referenceIdx, m_defaultInstance)?.m_mesh?.bounds.extents ?? default;
 
                 if (descriptor.m_textDescriptors[referenceIdx].m_maxWidthMeters > 0)
                 {

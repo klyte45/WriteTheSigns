@@ -56,6 +56,8 @@ namespace Klyte.WriteTheCity.UI
         private bool m_isEditing = true;
         private UICheckBox m_allCaps;
 
+        private UIButton m_pasteButtonText;
+
         public void Awake()
         {
             MainContainer = GetComponent<UIPanel>();
@@ -108,14 +110,14 @@ namespace Klyte.WriteTheCity.UI
             WTCPropTextLayoutEditor.Instance.CurrentTabChanged += (newVal) =>
             {
                 int targetTab = newVal - 1;
-                SafeObtain(OnSetData, targetTab);
+                SafeObtain(OnSetData, false, targetTab);
             };
             m_isEditing = false;
 
 
             AddLibBox<WTCLibPropTextItem, BoardTextDescriptorGeneralXml>(Locale.Get("K45_WTC_PROP_TEXT_LIB_TITLE"), helperSettings,
                                  out UIButton m_copyButtonText, DoCopyText,
-                                 out UIButton m_pasteButtonText, DoPasteText,
+                                 out m_pasteButtonText, DoPasteText,
                                  out UIButton m_deleteButtonText, DoDeleteText,
                                  (loadedItem) => SafeObtain((ref BoardTextDescriptorGeneralXml x) =>
                                     {
@@ -126,6 +128,8 @@ namespace Klyte.WriteTheCity.UI
                                         x.SaveName = name;
                                     }),
                                  () => WTCPropTextLayoutEditor.Instance.EditingInstance.m_textDescriptors[Math.Max(0, TabToEdit)]);
+
+            WTCController.EventFontsReloadedFromFolder += () => WTCUtils.ReloadFontsOf(m_overrideFontSelect, true);
 
         }
 
@@ -140,7 +144,11 @@ namespace Klyte.WriteTheCity.UI
                 OnSetData(ref x);
             }
         });
-        private void DoCopyText() => SafeObtain((ref BoardTextDescriptorGeneralXml x) => m_clipboard = XmlUtils.DefaultXmlSerialize(x));
+        private void DoCopyText() => SafeObtain((ref BoardTextDescriptorGeneralXml x) =>
+        {
+            m_clipboard = XmlUtils.DefaultXmlSerialize(x);
+            m_pasteButtonText.isVisible = true;
+        });
 
         private string m_clipboard;
 
@@ -167,7 +175,7 @@ namespace Klyte.WriteTheCity.UI
             m_dropdownTextContent.items = WTCPropRenderingRules.ALLOWED_TYPES_PER_RENDERING_CLASS[WTCPropTextLayoutEditor.Instance.EditingInstance.m_allowedRenderClass].Select(x => Locale.Get("K45_WTC_BOARD_TEXT_TYPE_DESC", x.ToString())).ToArray();
             m_dropdownTextContent.selectedIndex = Array.IndexOf(WTCPropRenderingRules.ALLOWED_TYPES_PER_RENDERING_CLASS[WTCPropTextLayoutEditor.Instance.EditingInstance.m_allowedRenderClass], x.m_textType);
             m_customText.text = x.m_fixedText ?? "";
-            m_overrideFontSelect.selectedIndex = x.m_overrideFont == null ? 0 : Array.IndexOf(m_overrideFontSelect.items, x.m_overrideFont);
+            m_overrideFontSelect.selectedIndex = x.m_overrideFont == null ? 0 : x.m_overrideFont == WTCController.DEFAULT_FONT_KEY ? 1 : Array.IndexOf(m_overrideFontSelect.items, x.m_overrideFont);
             m_textPrefix.text = x.m_prefix ?? "";
             m_textSuffix.text = x.m_suffix ?? "";
             m_allCaps.isChecked = x.m_allCaps;
@@ -180,9 +188,9 @@ namespace Klyte.WriteTheCity.UI
 
         private delegate void SafeObtainMethod(ref BoardTextDescriptorGeneralXml x);
 
-        private void SafeObtain(SafeObtainMethod action, int? targetTab = null)
+        private void SafeObtain(SafeObtainMethod action, bool markDirty = true, int? targetTab = null)
         {
-            if (m_isEditing)
+            if (m_isEditing || WTCPropTextLayoutEditor.Instance.EditingInstance == null)
             {
                 return;
             }
@@ -196,6 +204,10 @@ namespace Klyte.WriteTheCity.UI
                     if (effTargetTab < WTCPropTextLayoutEditor.Instance.EditingInstance.m_textDescriptors.Length)
                     {
                         action(ref WTCPropTextLayoutEditor.Instance.EditingInstance.m_textDescriptors[effTargetTab]);
+                        if (markDirty)
+                        {
+                            WTCPropTextLayoutEditor.Instance.MarkDirty();
+                        }
                     }
                 }
                 finally
@@ -221,9 +233,13 @@ namespace Klyte.WriteTheCity.UI
         private void OnSetPrefix(string text) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_prefix = text);
         private void OnSetOverrideFont(int sel) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) =>
         {
-            if (sel > 0 && sel < (m_overrideFontSelect?.items?.Length ?? 0))
+            if (sel > 1 && sel < (m_overrideFontSelect?.items?.Length ?? 0))
             {
                 desc.m_overrideFont = m_overrideFontSelect.items[sel];
+            }
+            else if (sel == 1)
+            {
+                desc.m_overrideFont = WTCController.DEFAULT_FONT_KEY;
             }
             else
             {

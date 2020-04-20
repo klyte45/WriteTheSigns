@@ -42,7 +42,7 @@ namespace Klyte.WriteTheCity.Libraries
             set {
                 if (value != null)
                 {
-                    m_savedDescriptors = value.listVal.ToDictionary(x => x.SaveName, x => x);
+                    m_savedDescriptors = value.listVal.GroupBy(x => x.SaveName).Select(y => y.First()).ToDictionary(x => x.SaveName, x => x);
                 }
             }
         }

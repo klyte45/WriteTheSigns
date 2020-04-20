@@ -21,6 +21,8 @@ namespace Klyte.WriteTheCity
         public Dictionary<string, Dictionary<string, string>> AbbreviationFiles { get; private set; }
         public FontServer FontServer => FontServer.instance;
 
+        public static event Action EventFontsReloadedFromFolder;
+
         public void Awake()
         {
             if (RoadSegmentToolInstance == null)
@@ -35,9 +37,8 @@ namespace Klyte.WriteTheCity
             ReloadAbbreviationFiles();
 
             FontServer.Ensure();
-            ReloadFontsFromPath();
         }
-
+        public void Start() => ReloadFontsFromPath();
         public static void ReloadFontsFromPath()
         {
             FontServer.instance.ResetCollection();
@@ -47,6 +48,7 @@ namespace Klyte.WriteTheCity
             {
                 FontServer.instance.RegisterFont(Path.GetFileNameWithoutExtension(fontFile), File.ReadAllBytes(fontFile));
             }
+            EventFontsReloadedFromFolder?.Invoke();
         }
 
         public void ReloadAbbreviationFiles()

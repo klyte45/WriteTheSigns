@@ -106,7 +106,7 @@ namespace Klyte.WriteTheCity.Utils
             {
                 str = str.ToUpper();
             }
-            return (FontServer.instance[overrideFont] ?? primaryFont).DrawString(str, default, Color.white, FontServer.instance.ScaleEffective);
+            return (FontServer.instance[overrideFont] ?? primaryFont)?.DrawString(str, default, Color.white, FontServer.instance.ScaleEffective);
         }
 
         public static Matrix4x4 RenderProp(ushort refId, float refAngleRad, RenderManager.CameraInfo cameraInfo,
