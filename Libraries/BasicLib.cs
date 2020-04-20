@@ -66,10 +66,13 @@ namespace Klyte.WriteTheCity.Libraries
 
         public void Remove(string indexName)
         {
-            bool removed = m_savedDescriptors.Remove(indexName);
-            if (removed)
+            if (indexName != null)
             {
-                Save();
+                bool removed = m_savedDescriptors.Remove(indexName);
+                if (removed)
+                {
+                    Save();
+                }
             }
         }
 

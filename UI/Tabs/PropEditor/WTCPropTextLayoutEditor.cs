@@ -124,6 +124,7 @@ namespace Klyte.WriteTheCity.UI
 
         }
 
+
         public void SetCurrentSelectionNewName(string newName)
         {
             m_configList.items[m_configList.selectedIndex] = newName;
@@ -200,7 +201,8 @@ namespace Klyte.WriteTheCity.UI
                 {
                     if (x == 1)
                     {
-                        //do delete
+                        WTCLibPropSettings.Instance.Remove(m_configList.selectedValue);
+                        RefreshConfigList();
                     }
                     return true;
                 }); ;
@@ -216,9 +218,9 @@ namespace Klyte.WriteTheCity.UI
                       title = Locale.Get("K45_WTC_PROPEDIT_CONFIGNEW_TITLE"),
                       message = (lastError.IsNullOrWhiteSpace() ? "" : $"{ Locale.Get("K45_WTC_PROPEDIT_CONFIGNEW_ANERROROCURRED")} {lastError}\n\n") + Locale.Get("K45_WTC_PROPEDIT_CONFIGNEW_MESSAGE"),
                       showButton1 = true,
-                      textButton1 = Locale.Get("EXCEPTION_OK"),
+                      textButton1 = Locale.Get("OK"),
                       showButton2 = true,
-                      textButton2 = Locale.Get("MODS_DECLINE")
+                      textButton2 = Locale.Get("CANCEL")
                   }, (x, text) =>
                   {
                       if (x == 1)
@@ -331,6 +333,7 @@ namespace Klyte.WriteTheCity.UI
         {
             if (EditingInstance != null)
             {
+                WTCLibPropSettings.Instance.Remove(EditingInstance.OriginalSaveName);
                 WTCLibPropSettings.Instance.Add(EditingInstance.SaveName, EditingInstance);
                 m_saveButton.Disable();
             }
