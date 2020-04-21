@@ -19,7 +19,7 @@ namespace Klyte.WriteTheCity.Utils
             string result = GetStreetFullName(idx);
             if (result.Contains(" "))
             {
-                switch (WTCRoadNodesData.Instance.CurrentDescriptor.RoadQualifierExtraction)
+                switch (WTCRoadNodesData.Instance.RoadQualifierExtraction)
                 {
                     case RoadQualifierExtractionMode.START:
                         result = result.Substring(result.IndexOf(' ') + 1);

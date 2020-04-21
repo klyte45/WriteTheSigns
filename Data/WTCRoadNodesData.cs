@@ -15,6 +15,12 @@ namespace Klyte.WriteTheCity.Data
 
         [XmlElement("CurrentDescriptor")]
         public BoardInstanceRoadNodeXml CurrentDescriptor { get; set; } = new BoardInstanceRoadNodeXml();
+
+        [XmlAttribute("roadQualifierExtraction")]
+        public RoadQualifierExtractionMode RoadQualifierExtraction { get; set; } = RoadQualifierExtractionMode.NONE;
+
+        [XmlAttribute("abbreviationFile")]
+        public string AbbreviationFile { get; set; } = "";
     }
 
 }

@@ -2,7 +2,9 @@
 using ColossalFramework.Globalization;
 using ColossalFramework.UI;
 using Klyte.Commons.Extensors;
+using Klyte.Commons.UI.SpriteNames;
 using Klyte.Commons.Utils;
+using Klyte.WriteTheCity.Data;
 using Klyte.WriteTheCity.Libraries;
 using Klyte.WriteTheCity.Rendering;
 using Klyte.WriteTheCity.Utils;
@@ -22,12 +24,20 @@ namespace Klyte.WriteTheCity.UI
         public static WTCBasicPropInfoEditor Instance { get; private set; }
         public UIPanel MainContainer { get; protected set; }
 
+        private UITabstrip m_tabstrip;
+        private UITabContainer m_tabContainer;
+
+        private UIPanel m_tabSettings;
+        private UIPanel m_tabLib;
+
         protected UITextField m_propFilter;
         protected UIDropDown m_fontSelect;
         protected UITextField m_name;
         protected UIColorField m_fixedColor;
         private UIDropDown m_dropdownTextContent;
         private UIListBox m_popup;
+
+        private UIButton m_pasteButton;
 
         private Dictionary<string, string> m_propsLoaded;
 
@@ -40,10 +50,28 @@ namespace Klyte.WriteTheCity.UI
             get {
                 if (m_propsLoaded == null)
                 {
-                    m_propsLoaded = PrefabUtils<PropInfo>.AssetsLoaded.Where(x => x != null).ToDictionary(x => GetListName(x), x => x?.name);
+                    m_propsLoaded = GetInfos<PropInfo>().Where(x => x != null).ToDictionary(x => GetListName(x), x => x?.name);
                 }
                 return m_propsLoaded;
             }
+        }
+
+
+
+        private List<T> GetInfos<T>() where T : PrefabInfo
+        {
+            var list = new List<T>();
+            uint num = 0u;
+            while (num < (ulong)PrefabCollection<T>.LoadedCount())
+            {
+                T prefabInfo = PrefabCollection<T>.GetLoaded(num);
+                if (prefabInfo != null)
+                {
+                    list.Add(prefabInfo);
+                }
+                num += 1u;
+            }
+            return list;
         }
 
         public void Awake()
@@ -56,9 +84,22 @@ namespace Klyte.WriteTheCity.UI
             MainContainer.padding = new RectOffset(5, 5, 5, 5);
             MainContainer.autoLayoutPadding = new RectOffset(0, 0, 3, 3);
 
-            var helper = new UIHelperExtension(MainContainer);
+            m_propsLoaded = null;
 
-            AddTextField(Locale.Get("K45_WTC_PROP_MODEL_SELECT"), out m_propFilter, helper, null);
+
+            KlyteMonoUtils.CreateTabsComponent(out m_tabstrip, out m_tabContainer, MainContainer.transform, "TextEditor", new Vector4(0, 0, MainContainer.width, 40), new Vector4(0, 0, MainContainer.width, MainContainer.height - 40));
+            m_tabSettings = TabCommons.CreateNonScrollableTabLocalized(m_tabstrip, KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_Settings), "K45_WTC_GENERAL_SETTINGS", "PrpSettings");
+            m_tabLib = TabCommons.CreateNonScrollableTabLocalized(m_tabstrip, KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_Load), "K45_WTC_PROP_ITEM_LIB_TITLE", "PrpLib");
+
+            m_tabSettings.clipChildren = true;
+            m_tabLib.clipChildren = true;
+
+            var helperSettings = new UIHelperExtension(m_tabSettings, LayoutDirection.Vertical);
+            var helperLib = new UIHelperExtension(m_tabLib, LayoutDirection.Vertical);
+
+
+
+            AddTextField(Locale.Get("K45_WTC_PROP_MODEL_SELECT"), out m_propFilter, helperSettings, null);
 
             KlyteMonoUtils.UiTextFieldDefaultsForm(m_propFilter);
             var selectorPanel = m_propFilter.parent as UIPanel;
@@ -70,13 +111,13 @@ namespace Klyte.WriteTheCity.UI
             selectorPanel.wrapLayout = true;
 
 
-            AddTextField(Locale.Get("K45_WTC_PROP_TAB_TITLE"), out m_name, helper, OnSetName);
-            AddColorField(helper, Locale.Get("K45_WTC_PROP_COLOR"), out m_fixedColor, OnSetPropColor);
+            AddTextField(Locale.Get("K45_WTC_PROP_TAB_TITLE"), out m_name, helperSettings, OnSetName);
+            AddColorField(helperSettings, Locale.Get("K45_WTC_PROP_COLOR"), out m_fixedColor, OnSetPropColor);
 
-            AddDropdown(Locale.Get("K45_WTC_OVERRIDE_FONT"), out m_fontSelect, helper, new string[0], OnSetFont);
+            AddDropdown(Locale.Get("K45_WTC_OVERRIDE_FONT"), out m_fontSelect, helperSettings, new string[0], OnSetFont);
             WTCUtils.ReloadFontsOf(m_fontSelect, true);
 
-            AddDropdown(Locale.Get("K45_WTC_TEXT_AVAILABILITY"), out m_dropdownTextContent, helper, Enum.GetNames(typeof(TextRenderingClass)).Select(x => Locale.Get("K45_WTC_BOARD_TEXT_AVAILABILITY_DESC", x.ToString())).ToArray(), OnSetTextOwnNameContent);
+            AddDropdown(Locale.Get("K45_WTC_TEXT_AVAILABILITY"), out m_dropdownTextContent, helperSettings, Enum.GetNames(typeof(TextRenderingClass)).Select(x => Locale.Get("K45_WTC_BOARD_TEXT_AVAILABILITY_DESC", x.ToString())).ToArray(), OnSetTextOwnNameContent);
 
             WTCPropTextLayoutEditor.Instance.CurrentTabChanged += (x) =>
             {
@@ -86,16 +127,11 @@ namespace Klyte.WriteTheCity.UI
                     m_fixedColor.selectedColor = EditingInstance.FixedColor ?? default;
                     m_fontSelect.selectedIndex = EditingInstance.FontName == null ? 0 : EditingInstance.FontName == WTCController.DEFAULT_FONT_KEY ? 1 : Array.IndexOf(m_fontSelect.items, EditingInstance.FontName);
                     m_dropdownTextContent.selectedIndex = (int)EditingInstance.m_allowedRenderClass;
-                    if (PrefabUtils<PropInfo>.AssetsLoaded == null)
-                    {
 
-                    }
-                    else
-                    {
-                        m_lastSelection = PrefabUtils<PropInfo>.AssetsLoaded.Where(x => x?.name == EditingInstance.m_propName).FirstOrDefault();
-                        WTCPropTextLayoutEditor.Instance.CurrentPropInfo = m_lastSelection;
-                        m_propFilter.text = (m_lastSelection != null) ? GetListName(m_lastSelection) : "";
-                    }
+                    m_lastSelection = GetInfos<PropInfo>().Where(x => x?.name == EditingInstance.m_propName).FirstOrDefault();
+                    WTCPropTextLayoutEditor.Instance.CurrentPropInfo = m_lastSelection;
+                    m_propFilter.text = (m_lastSelection != null) ? GetListName(m_lastSelection) : "";
+
 
                 }
             };
@@ -104,6 +140,25 @@ namespace Klyte.WriteTheCity.UI
 
             m_popup = ConfigurePropSelectionPopup(selectorPanel);
 
+
+            AddLibBox<WTCLibPropSettings, BoardDescriptorGeneralXml>(helperLib, out UIButton m_copyButtonText,
+                DoCopyText, out m_pasteButton,
+                DoPasteText, out _,
+                null, LoadIntoCurrentConfig,
+                () => WTCPropTextLayoutEditor.Instance.EditingInstance);
+            m_pasteButton.isVisible = m_clipboard != null;
+
+        }
+
+        private void LoadIntoCurrentConfig(string loadedItem) => WTCPropTextLayoutEditor.Instance.ReplaceItem(EditingInstance.SaveName, loadedItem);
+
+
+        private string m_clipboard;
+        private void DoPasteText() => LoadIntoCurrentConfig(m_clipboard);
+        private void DoCopyText()
+        {
+            m_clipboard = XmlUtils.DefaultXmlSerialize(EditingInstance);
+            m_pasteButton.isVisible = true;
         }
 
         private UIListBox ConfigurePropSelectionPopup(UIPanel selectorPanel)
@@ -169,7 +224,6 @@ namespace Klyte.WriteTheCity.UI
                 else
                 {
                     EditingInstance.SaveName = text;
-                    WTCPropTextLayoutEditor.Instance.MarkDirty();
                     WTCPropTextLayoutEditor.Instance.SetCurrentSelectionNewName(text);
                 }
             }
@@ -183,7 +237,7 @@ namespace Klyte.WriteTheCity.UI
                       title = Locale.Get("K45_WTC_PROPEDIT_NAMECHANGE_TITLE"),
                       message = (lastError.IsNullOrWhiteSpace() ? "" : $"{ Locale.Get("K45_WTC_PROPEDIT_NAMECHANGE_ANERROROCURRED")} {lastError}\n\n") + Locale.Get("K45_WTC_PROPEDIT_NAMECHANGE_MESSAGE"),
                       showButton1 = true,
-                      textButton1 = Locale.Get("OK"),
+                      textButton1 = Locale.Get("EXCEPTION_OK"),
                       showButton2 = true,
                       textButton2 = Locale.Get("CANCEL")
                   }, (x, text) =>
@@ -195,7 +249,6 @@ namespace Klyte.WriteTheCity.UI
                           if (error.IsNullOrWhiteSpace())
                           {
                               EditingInstance.SaveName = text;
-                              WTCPropTextLayoutEditor.Instance.MarkDirty();
                               WTCPropTextLayoutEditor.Instance.SetCurrentSelectionNewName(text);
                           }
                           else
@@ -219,7 +272,7 @@ namespace Klyte.WriteTheCity.UI
             {
                 error = $"{ Locale.Get("K45_WTC_PROPEDIT_CONFIGNEW_INVALIDNAME")}";
             }
-            else if (text != EditingInstance.SaveName && WTCLibPropSettings.Instance.Get(text) != null)
+            else if (text != EditingInstance.SaveName && WTCPropLayoutData.Instance.Get(text) != null)
             {
                 error = $"{ Locale.Get("K45_WTC_PROPEDIT_CONFIGNEW_ALREADY_EXISTS")}";
             }
@@ -229,24 +282,19 @@ namespace Klyte.WriteTheCity.UI
 
         private string[] GetFilterResult() => PropsLoaded
             .ToList()
-            .Where((x) => m_propFilter.text.IsNullOrWhiteSpace() ? true : LocaleManager.cultureInfo.CompareInfo.IndexOf(x.Value + (PrefabUtils.AuthorList.TryGetValue(x.Value.Split('.')[0], out string author) ? "\n" + author : ""), m_propFilter.text, CompareOptions.IgnoreCase) >= 0)
+            .Where((x) => m_propFilter.text.IsNullOrWhiteSpace() ? true : LocaleManager.cultureInfo.CompareInfo.IndexOf(x.Value + (PrefabUtils.instance.AuthorList.TryGetValue(x.Value.Split('.')[0], out string author) ? "\n" + author : ""), m_propFilter.text, CompareOptions.IgnoreCase) >= 0)
             .Select(x => x.Key)
             .OrderBy((x) => x)
             .ToArray();
         private static string GetListName(PropInfo x) => (x?.name?.EndsWith("_Data") ?? false) ? $"{x?.GetLocalizedTitle()}" : x?.name ?? "";
 
         #region Actions        
-        private void OnSetPropColor(UIComponent component, Color value)
-        {
-            EditingInstance.FixedColor = (value == default ? (Color?)null : value);
-            WTCPropTextLayoutEditor.Instance.MarkDirty();
-        }
+        private void OnSetPropColor(UIComponent component, Color value) => EditingInstance.FixedColor = (value == default ? (Color?)null : value);
 
         private void OnSetProp(int sel)
         {
-            PropInfo targetProp = (sel < 0 ? null : m_lastSelection = PrefabUtils<PropInfo>.AssetsLoaded.Where(x => x.name == PropsLoaded[m_popup.items[sel]]).FirstOrDefault());
+            PropInfo targetProp = (sel < 0 ? null : m_lastSelection = GetInfos<PropInfo>().Where(x => x.name == PropsLoaded[m_popup.items[sel]]).FirstOrDefault());
             WTCPropTextLayoutEditor.Instance.CurrentPropInfo = targetProp;
-            WTCPropTextLayoutEditor.Instance.MarkDirty();
         }
 
         protected void OnSetFont(int idx)
@@ -265,14 +313,9 @@ namespace Klyte.WriteTheCity.UI
                 {
                     EditingInstance.FontName = null;
                 }
-                WTCPropTextLayoutEditor.Instance.MarkDirty();
             }
         }
-        private void OnSetTextOwnNameContent(int sel)
-        {
-            EditingInstance.m_allowedRenderClass = (TextRenderingClass)sel;
-            WTCPropTextLayoutEditor.Instance.MarkDirty();
-        }
+        private void OnSetTextOwnNameContent(int sel) => EditingInstance.m_allowedRenderClass = (TextRenderingClass)sel;
         #endregion
 
     }

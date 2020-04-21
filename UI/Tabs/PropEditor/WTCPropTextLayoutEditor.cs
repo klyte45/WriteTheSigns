@@ -4,7 +4,7 @@ using ColossalFramework.UI;
 using Klyte.Commons.Extensors;
 using Klyte.Commons.UI.SpriteNames;
 using Klyte.Commons.Utils;
-using Klyte.WriteTheCity.Libraries;
+using Klyte.WriteTheCity.Data;
 using Klyte.WriteTheCity.Xml;
 using System;
 using System.Linq;
@@ -28,10 +28,8 @@ namespace Klyte.WriteTheCity.UI
 
         #region Top bar controls
         private UIDropDown m_configList;
-        private UIButton m_saveButton;
         private UIButton m_newButton;
         private UIButton m_deleteButton;
-        private UIButton m_refreshListButton;
         #endregion
         #region Mid bar controls
         private UIScrollablePanel m_editTabstrip;
@@ -76,22 +74,12 @@ namespace Klyte.WriteTheCity.UI
             m_topBar.autoLayoutDirection = LayoutDirection.Horizontal;
             m_topBar.padding = new RectOffset(5, 5, 5, 5);
 
-            KlyteMonoUtils.InitCircledButton(m_topBar, out m_refreshListButton, CommonsSpriteNames.K45_Reload, (x, y) => RefreshConfigList(), "K45_WTC_REFRESH_CONFIG_LIST");
 
             m_configList = UIHelperExtension.CloneBasicDropDownNoLabel(new string[0], (x) => OnConfigSelectionChange(x), m_topBar);
-            m_configList.width = 685;
-            m_configList.eventVisibilityChanged += (x, y) =>
-            {
-                if (!y && m_saveButton.state != UIButton.ButtonState.Disabled)
-                {
-                    OnConfigSelectionChange(m_configList.selectedIndex, false);
-                }
-            };
+            m_configList.width = 765;
 
-            KlyteMonoUtils.InitCircledButton(m_topBar, out m_saveButton, CommonsSpriteNames.K45_Save, (x, y) => OnSaveConfig(), "K45_WTC_SAVE_CONFIG");
             KlyteMonoUtils.InitCircledButton(m_topBar, out m_newButton, CommonsSpriteNames.K45_New, OnNewConfig, "K45_WTC_CREATE_NEW_CONFIG");
             KlyteMonoUtils.InitCircledButton(m_topBar, out m_deleteButton, CommonsSpriteNames.K45_Delete, OnDeleteConfig, "K45_WTC_DELETE_SELECTED_CONFIG");
-            m_saveButton.Disable();
 
             KlyteMonoUtils.CreateUIElement(out m_middleBar, MainContainer.transform, "previewBar", new Vector4(0, 0, MainContainer.width - MainContainer.padding.horizontal, 300));
             m_middleBar.autoLayout = true;
@@ -156,10 +144,13 @@ namespace Klyte.WriteTheCity.UI
         private void AddTabToItem(UIComponent x, UIMouseEventParameter y)
         {
             UIButton button = AddTabButton($"Tab {m_plusButton.zOrder - 1}");
-            EditingInstance.m_textDescriptors = EditingInstance.m_textDescriptors.Union(new BoardTextDescriptorGeneralXml[] { new BoardTextDescriptorGeneralXml{
+            var newItem = new BoardTextDescriptorGeneralXml
+            {
                 SaveName = $"Tab {button.zOrder}"
-            }
+            };
+            EditingInstance.m_textDescriptors = EditingInstance.m_textDescriptors.Union(new BoardTextDescriptorGeneralXml[] { newItem
             }).ToArray();
+            button.text = newItem.SaveName;
         }
 
         private UIButton AddTabButton(string tabName)
@@ -201,7 +192,7 @@ namespace Klyte.WriteTheCity.UI
                 {
                     if (x == 1)
                     {
-                        WTCLibPropSettings.Instance.Remove(m_configList.selectedValue);
+                        WTCPropLayoutData.Instance.Remove(m_configList.selectedValue);
                         RefreshConfigList();
                     }
                     return true;
@@ -218,7 +209,7 @@ namespace Klyte.WriteTheCity.UI
                       title = Locale.Get("K45_WTC_PROPEDIT_CONFIGNEW_TITLE"),
                       message = (lastError.IsNullOrWhiteSpace() ? "" : $"{ Locale.Get("K45_WTC_PROPEDIT_CONFIGNEW_ANERROROCURRED")} {lastError}\n\n") + Locale.Get("K45_WTC_PROPEDIT_CONFIGNEW_MESSAGE"),
                       showButton1 = true,
-                      textButton1 = Locale.Get("OK"),
+                      textButton1 = Locale.Get("EXCEPTION_OK"),
                       showButton2 = true,
                       textButton2 = Locale.Get("CANCEL")
                   }, (x, text) =>
@@ -237,8 +228,8 @@ namespace Klyte.WriteTheCity.UI
 
                           if (error.IsNullOrWhiteSpace())
                           {
-                              WTCLibPropSettings.Instance.Add(text, new BoardDescriptorGeneralXml());
-                              m_configList.items = WTCLibPropSettings.Instance.List().ToArray();
+                              WTCPropLayoutData.Instance.Add(text, new BoardDescriptorGeneralXml());
+                              m_configList.items = WTCPropLayoutData.Instance.List().ToArray();
                               m_configList.selectedValue = text;
                           }
                           else
@@ -251,55 +242,28 @@ namespace Klyte.WriteTheCity.UI
          );
         }
 
+        internal void ReplaceItem(string key, string data)
+        {
+            WTCPropLayoutData.Instance.Replace(key, XmlUtils.DefaultXmlDeserialize<BoardDescriptorGeneralXml>(data));
+            RefreshConfigList();
+            OnTabChange(0);
+        }
+
         private void RefreshConfigList()
         {
             string currentSelection = m_configList.selectedValue;
-            WTCLibPropSettings.Reload();
-            m_configList.items = WTCLibPropSettings.Instance.List().ToArray();
+            m_configList.items = WTCPropLayoutData.Instance.List().ToArray();
             m_configList.selectedValue = currentSelection;
 
         }
 
-        private void OnConfigSelectionChange(int sel, bool canCancel = true)
+        private void OnConfigSelectionChange(int sel)
         {
             string targetValue = m_configList.selectedValue;
             bool isValidSelection = sel >= 0;
-            if (EditingInstance != null && (!canCancel || m_saveButton.isVisible) && m_saveButton.state != UIButton.ButtonState.Disabled)
-            {
-                K45DialogControl.ShowModal(
-                new K45DialogControl.BindProperties
-                {
-                    title = Locale.Get("K45_WTC_PROPEDIT_DIRTYDATA_TITLE"),
-                    message = string.Format(Locale.Get("K45_WTC_PROPEDIT_DIRTYDATA_MESSAGE"), EditingInstance?.SaveName),
-                    showButton1 = true,
-                    textButton1 = Locale.Get("YES"),
-                    showButton2 = true,
-                    textButton2 = Locale.Get("NO"),
-                    showButton3 = canCancel,
-                    textButton3 = Locale.Get("CANCEL")
-                }, (x) =>
-                {
-                    if (x == 1)
-                    {
-                        OnSaveConfig();
-                    }
-                    m_saveButton.Disable();
-                    if (x == 3)
-                    {
-                        m_configList.selectedValue = EditingInstance?.SaveName;
-                        m_saveButton.Enable();
-                    }
-                    else
-                    {
-                        ExecuteItemChange(targetValue, isValidSelection);
-                    }
-                    return true;
-                });
-            }
-            else
-            {
-                ExecuteItemChange(targetValue, isValidSelection);
-            }
+
+            ExecuteItemChange(targetValue, isValidSelection);
+
         }
 
         private void ExecuteItemChange(string targetValue, bool isValidSelection)
@@ -309,7 +273,7 @@ namespace Klyte.WriteTheCity.UI
             m_editArea.isVisible = isValidSelection;
             if (isValidSelection)
             {
-                EditingInstance = XmlUtils.DefaultXmlDeserialize<BoardDescriptorGeneralXml>(XmlUtils.DefaultXmlSerialize(WTCLibPropSettings.Instance.Get(targetValue)));
+                EditingInstance = WTCPropLayoutData.Instance.Get(targetValue);
                 OnTabChange(0);
                 while (m_editTabstrip.components.Count > EditingInstance.m_textDescriptors.Length + 2)
                 {
@@ -325,21 +289,11 @@ namespace Klyte.WriteTheCity.UI
                     (m_editTabstrip.components[i] as UIButton).text = EditingInstance.m_textDescriptors[i - 1].SaveName;
                 }
 
-                m_saveButton.Disable();
             }
         }
 
-        private void OnSaveConfig()
-        {
-            if (EditingInstance != null)
-            {
-                WTCLibPropSettings.Instance.Remove(EditingInstance.OriginalSaveName);
-                WTCLibPropSettings.Instance.Add(EditingInstance.SaveName, EditingInstance);
-                m_saveButton.Disable();
-            }
-        }
 
-        public void MarkDirty() => m_saveButton.Enable();
+
 
         public void Update()
         {

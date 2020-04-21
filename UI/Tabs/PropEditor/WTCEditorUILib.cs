@@ -31,15 +31,9 @@ namespace Klyte.WriteTheCity.UI
             KlyteMonoUtils.LimitWidthAndBox(field.parent.GetComponentInChildren<UILabel>(), (parentHelper.Self.width / 2) - 10, true);
         }
 
-        public static UIButton ConfigureActionButton(UIComponent parent)
+        public static UIButton ConfigureActionButton(UIComponent parent, CommonsSpriteNames sprite, MouseEventHandler onClicked, string tooltipLocale)
         {
-            KlyteMonoUtils.CreateUIElement(out UIButton actionButton, parent.transform, "WTCBtn");
-            KlyteMonoUtils.InitButton(actionButton, false, "ButtonMenu");
-            actionButton.focusedBgSprite = "";
-            actionButton.autoSize = false;
-            actionButton.width = 40;
-            actionButton.height = 40;
-            actionButton.foregroundSpriteMode = UIForegroundSpriteMode.Scale;
+            KlyteMonoUtils.InitCircledButton(parent, out UIButton actionButton, sprite, onClicked, tooltipLocale);
             return actionButton;
         }
 
@@ -154,27 +148,26 @@ namespace Klyte.WriteTheCity.UI
             return new Vector2(num, b);
         }
 
-        public static UIDropDown AddLibBox<LIB, DESC>(string groupTitle, UIHelperExtension parentHelper,
-    out UIButton copyButton, Action actionCopy,
-    out UIButton pasteButton, Action actionPaste,
-    out UIButton deleteButton, Action actionDelete,
-    Action<string> onLoad, Func<DESC> getContentToSave, Action<UIHelperExtension> doWithLibGroup = null) where LIB : BasicLib<LIB, DESC>, new() where DESC : ILibable
+        public static UIDropDown AddLibBox<LIB, DESC>(UIHelperExtension parentHelper, out UIButton copyButton,
+            Action actionCopy, out UIButton pasteButton,
+            Action actionPaste, out UIButton deleteButton,
+            Action actionDelete, Action<string> onLoad,
+            Func<DESC> getContentToSave, Action<UIHelperExtension> doWithLibGroup = null) where LIB : BasicFileLib<LIB, DESC>, new() where DESC : ILibable
         {
-            UIHelperExtension groupLibPropGroup = parentHelper.AddTogglableGroup(groupTitle);
-
-            UIHelperExtension subPanelActionsBar = groupLibPropGroup.AddGroupExtended("!!!!", out UILabel voide, out UIPanel voide2);
-            GameObject.Destroy(voide);
-            ((UIPanel)subPanelActionsBar.Self).autoLayoutDirection = LayoutDirection.Horizontal;
-            ((UIPanel)subPanelActionsBar.Self).wrapLayout = false;
-            ((UIPanel)subPanelActionsBar.Self).autoLayout = true;
-            ((UIPanel)subPanelActionsBar.Self).autoFitChildrenHorizontally = true;
-            ((UIPanel)subPanelActionsBar.Self).autoFitChildrenVertically = true;
+            UILabel label = parentHelper.AddLabel(Locale.Get("K45_WTC_CLIPBOARD_TITLE"));
+            var cbPanel = label.parent as UIPanel;
+            cbPanel.autoLayoutDirection = LayoutDirection.Horizontal;
+            cbPanel.wrapLayout = false;
+            cbPanel.autoLayout = true;
+            cbPanel.autoFitChildrenHorizontally = true;
+            cbPanel.autoFitChildrenVertically = true;
+            label.verticalAlignment = UIVerticalAlignment.Middle;
+            label.minimumSize = new Vector2( parentHelper.Self.width / 2,40);
+            KlyteMonoUtils.LimitWidthAndBox(label);
 
             if (actionCopy != null)
             {
-                copyButton = ConfigureActionButton(subPanelActionsBar.Self);
-                copyButton.eventClick += (x, y) => actionCopy();
-                SetIcon(copyButton, CommonsSpriteNames.K45_Copy, Color.white);
+                copyButton = ConfigureActionButton(cbPanel, CommonsSpriteNames.K45_Copy, (x, y) => actionCopy(), "EXCEPTION_COPY");
             }
             else
             {
@@ -182,10 +175,7 @@ namespace Klyte.WriteTheCity.UI
             }
             if (actionPaste != null)
             {
-                pasteButton = ConfigureActionButton(subPanelActionsBar.Self);
-                pasteButton.eventClick += (x, y) => actionPaste();
-                SetIcon(pasteButton, CommonsSpriteNames.K45_Paste, Color.white);
-                pasteButton.isVisible = false;
+                pasteButton = ConfigureActionButton(cbPanel, CommonsSpriteNames.K45_Paste, (x, y) => actionPaste(), "K45_CMNS_PASTE");
             }
             else
             {
@@ -193,9 +183,7 @@ namespace Klyte.WriteTheCity.UI
             }
             if (actionDelete != null)
             {
-                deleteButton = ConfigureActionButton(subPanelActionsBar.Self);
-                deleteButton.eventClick += (x, y) => actionDelete();
-                SetIcon(deleteButton, CommonsSpriteNames.K45_RemoveIcon, Color.white);
+                deleteButton = ConfigureActionButton(cbPanel, CommonsSpriteNames.K45_RemoveIcon, (x, y) => actionPaste(), "K45_CMNS_DELETE_CURRENT_ITEM");
                 deleteButton.color = Color.red;
             }
             else
@@ -204,50 +192,43 @@ namespace Klyte.WriteTheCity.UI
             }
 
 
-            AddDropdown(Locale.Get("K45_WTC_LOAD_FROM_LIB"), out UIDropDown loadDD, groupLibPropGroup, BasicLib<LIB, DESC>.Instance.List().ToArray(), (x) => { });
+            AddDropdown(Locale.Get("K45_WTC_LOAD_FROM_LIB"), out UIDropDown loadDD, parentHelper, BasicFileLib<LIB, DESC>.Instance.List().ToArray(), (x) => { });
             loadDD.width -= 80;
             UIPanel parent = loadDD.GetComponentInParent<UIPanel>();
-            UIButton actionButton = ConfigureActionButton(parent);
-            SetIcon(actionButton, CommonsSpriteNames.K45_Load, Color.white);
-            actionButton.eventClick += (x, t) =>
+            ConfigureActionButton(parent, CommonsSpriteNames.K45_Load, (x, t) =>
             {
-                DESC groupInfo = BasicLib<LIB, DESC>.Instance.Get(loadDD.selectedValue);
+                DESC groupInfo = BasicFileLib<LIB, DESC>.Instance.Get(loadDD.selectedValue);
                 if (groupInfo != null)
                 {
                     onLoad(XmlUtils.DefaultXmlSerialize(groupInfo));
                 }
 
-            };
-            KlyteMonoUtils.CreateUIElement(out actionButton, parent.transform, "DelBtn");
-            actionButton = ConfigureActionButton(parent);
-            actionButton.color = Color.red;
-            SetIcon(actionButton, CommonsSpriteNames.K45_RemoveIcon, Color.white);
-            actionButton.eventClick += (x, t) =>
+            }, "LOAD");
+
+            ConfigureActionButton(parent, CommonsSpriteNames.K45_RemoveIcon, (x, t) =>
             {
-                DESC groupInfo = BasicLib<LIB, DESC>.Instance.Get(loadDD.selectedValue);
+                DESC groupInfo = BasicFileLib<LIB, DESC>.Instance.Get(loadDD.selectedValue);
                 if (groupInfo != null)
                 {
-                    BasicLib<LIB, DESC>.Instance.Remove(loadDD.selectedValue);
-                    loadDD.items = BasicLib<LIB, DESC>.Instance.List().ToArray();
+                    BasicFileLib<LIB, DESC>.Instance.Remove(loadDD.selectedValue);
+                    loadDD.items = BasicFileLib<LIB, DESC>.Instance.List().ToArray();
                 }
 
-            };
+            }, "CONTENT_DELETE");
 
-            AddTextField(Locale.Get("K45_WTC_SAVE_TO_LIB"), out UITextField saveTxt, groupLibPropGroup, (x) => { });
+            AddTextField(Locale.Get("K45_WTC_SAVE_TO_LIB"), out UITextField saveTxt, parentHelper, (x) => { });
             saveTxt.width -= 40;
             parent = saveTxt.GetComponentInParent<UIPanel>();
-            actionButton = ConfigureActionButton(parent);
-            SetIcon(actionButton, CommonsSpriteNames.K45_Save, Color.white);
-            actionButton.eventClick += (x, t) =>
+            ConfigureActionButton(parent, CommonsSpriteNames.K45_Save, (x, t) =>
             {
                 if (!saveTxt.text.IsNullOrWhiteSpace())
                 {
-                    BasicLib<LIB, DESC>.Instance.Add(saveTxt.text, getContentToSave());
-                    loadDD.items = BasicLib<LIB, DESC>.Instance.List().ToArray();
+                    BasicFileLib<LIB, DESC>.Instance.Add(saveTxt.text, getContentToSave());
+                    loadDD.items = BasicFileLib<LIB, DESC>.Instance.List().ToArray();
                     loadDD.selectedValue = saveTxt.text;
                 }
-            };
-            doWithLibGroup?.Invoke(groupLibPropGroup);
+            }, "SAVE");
+            doWithLibGroup?.Invoke(parentHelper);
             return loadDD;
         }
         public static void SetIcon(UIButton copyButton, CommonsSpriteNames spriteName, Color color)

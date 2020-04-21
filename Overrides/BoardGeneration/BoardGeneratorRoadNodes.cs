@@ -8,6 +8,7 @@ using Klyte.WriteTheCity.Utils;
 using Klyte.WriteTheCity.Xml;
 using SpriteFontPlus;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
@@ -23,6 +24,23 @@ namespace Klyte.WriteTheCity.Overrides
         public uint[] m_lastFrameUpdate;
 
         private readonly Func<RenderManager, uint> m_getCurrentFrame = ReflectionUtils.GetGetFieldDelegate<RenderManager, uint>("m_currentFrame", typeof(RenderManager));
+
+        private Dictionary<ItemClass, List<NetInfo>> m_allClasses;
+
+        private Dictionary<ItemClass, List<NetInfo>> AllClasses
+        {
+            get {
+                if (m_allClasses == null)
+                {
+                    m_allClasses = ((FastList<PrefabCollection<NetInfo>.PrefabData>)typeof(PrefabCollection<NetInfo>).GetField("m_scenePrefabs", RedirectorUtils.allFlags).GetValue(null)).m_buffer
+                        .Select(x => x.m_prefab)
+                        .Where(x => x?.m_class != null && x.m_class.m_service == ItemClass.Service.Road)
+                        .GroupBy(x => x.m_class.name)
+                        .ToDictionary(x => x.First().m_class, x => x.ToList());
+                }
+                return m_allClasses;
+            }
+        }
 
         #region Initialize
         public void Awake()

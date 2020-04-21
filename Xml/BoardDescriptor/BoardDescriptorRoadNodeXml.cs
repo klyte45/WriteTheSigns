@@ -6,24 +6,10 @@ namespace Klyte.WriteTheCity.Xml
     public class BoardInstanceRoadNodeXml : BoardInstanceXml
     {
         [XmlAttribute("placeOnDistrictBorder")]
-        public bool PlaceOnDistrictBorder { get; set; } = true;
-
-
-        [XmlAttribute("roadQualifierExtraction")]
-        public RoadQualifierExtractionMode RoadQualifierExtraction { get; set; } = RoadQualifierExtractionMode.NONE;
-
-        [XmlAttribute("abbreviationFile")]
-        public string AbbreviationFile { get; set; } = "";
+        public bool PlaceOnDistrictBorder { get; set; } = true;        
 
         [XmlAttribute("useDistrictColor")]
         public bool UseDistrictColor = false;
-    }
-
-    public enum RoadQualifierExtractionMode
-    {
-        NONE,
-        START,
-        END
     }
 
 

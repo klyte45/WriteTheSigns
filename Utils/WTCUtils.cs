@@ -37,7 +37,7 @@ namespace Klyte.WriteTheCity.Utils
 
         public static string ApplyAbbreviations(string name)
         {
-            if (WriteTheCityMod.Controller.AbbreviationFiles.TryGetValue(WTCRoadNodesData.Instance.CurrentDescriptor.AbbreviationFile ?? "", out Dictionary<string, string> translations))
+            if (WriteTheCityMod.Controller.AbbreviationFiles.TryGetValue(WTCRoadNodesData.Instance.AbbreviationFile ?? "", out Dictionary<string, string> translations))
             {
                 foreach (string key in translations.Keys.Where(x => x.Contains(" ")))
                 {

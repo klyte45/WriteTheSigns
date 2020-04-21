@@ -160,9 +160,11 @@
     <Compile Include="commons\Utils\UtilitiesClasses\Tuple.cs" />
     <Compile Include="commons\Utils\VehicleUtils.cs" />
     <Compile Include="commons\Utils\XmlUtils.cs" />
+    <Compile Include="Data\WTCLibBaseData.cs" />
     <Compile Include="Data\WTCBaseData.cs" />
     <Compile Include="Data\WTCBuildingsData.cs" />
     <Compile Include="Data\WTCHighwayMileageData.cs" />
+    <Compile Include="Data\WTCPropLayoutData.cs" />
     <Compile Include="Data\WTCRoadNodesData.cs" />
     <Compile Include="Data\WTCHighwaySignsData.cs" />
     <Compile Include="DynamicFont\src\CharacterRange.cs" />
@@ -180,8 +182,9 @@
     <Compile Include="DynamicFont\src\TtfFontBaker.cs" />
     <Compile Include="DynamicFont\src\TtfFontBakerResult.cs" />
     <Compile Include="DynamicFont\src\Utility\IOUtils.cs" />
-    <Compile Include="Libraries\BasicLib.cs" />
+    <Compile Include="Libraries\BasicFileLib.cs" />
     <Compile Include="DynamicFont\src\Utility\BasicRenderInformation.cs" />
+    <Compile Include="Libraries\BasicLib.cs" />
     <Compile Include="Overrides\BoardGeneration\BoardGeneratorRoadNodes.cs" />
     <Compile Include="Overrides\BuildingManagerOverrides.cs" />
     <Compile Include="Overrides\DistrictManagerOverrides.cs" />
@@ -201,6 +204,7 @@
     <Compile Include="Xml\BoardDescriptor\BoardDescriptorGeneralXml.cs" />
     <Compile Include="Xml\BoardDescriptor\BoardInstanceXml.cs" />
     <Compile Include="Xml\BoardDescriptor\BoardPreviewInstanceXml.cs" />
+    <Compile Include="Xml\Enums\RoadQualifierExtractionMode.cs" />
     <Compile Include="Xml\BoardTextDescriptor\BoardTextDescriptorGeneralXml.cs" />
     <Compile Include="Xml\Containers\BuildingGroupDescriptorXml.cs" />
     <Compile Include="Xml\Containers\BoardBunchContainerBuilding.cs" />

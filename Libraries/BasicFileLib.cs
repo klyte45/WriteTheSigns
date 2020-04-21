@@ -1,65 +1,45 @@
 ﻿using Klyte.Commons.Interfaces;
-using System.Collections.Generic;
-using System.Linq;
+using Klyte.Commons.Utils;
+using Klyte.WriteTheCity.Xml;
+using System.IO;
 using System.Xml.Serialization;
-using static Klyte.Commons.Utils.XmlUtils;
 
 namespace Klyte.WriteTheCity.Libraries
 {
-    public abstract class BasicLib<LIB, DESC>
-        where LIB : BasicLib<LIB, DESC>, new()
-        where DESC : ILibable
+    public abstract class BasicFileLib<LIB, DESC> : BasicLib<LIB, DESC>
+    where LIB : BasicFileLib<LIB, DESC>, new()
+    where DESC : ILibable
     {
-
-        [XmlElement("descriptorsData")]
-        public ListWrapper<DESC> SavedDescriptorsSerialized
+        private static LIB m_instance;
+        public static LIB Instance
         {
-            get => new ListWrapper<DESC>() { listVal = m_savedDescriptors.Values.ToList() };
-            set {
-                if (value != null)
+            get {
+                if (m_instance == null)
                 {
-                    m_savedDescriptors = value.listVal.GroupBy(x => x.SaveName).Select(y => y.First()).ToDictionary(x => x.SaveName, x => x);
+                    m_instance = LoadInstance();
                 }
+                return m_instance;
             }
         }
+        protected abstract string XmlName { get; }
 
-        [XmlIgnore]
-        private Dictionary<string, DESC> m_savedDescriptors = new Dictionary<string, DESC>();
-
-        public void Add(string indexName, DESC descriptor)
+        public static void Reload() => m_instance = null;
+        private static string DefaultXmlFileBasePath => WTCController.FOLDER_NAME + Path.DirectorySeparatorChar;
+        private string DefaultXmlFileBaseFullPath => $"{DefaultXmlFileBasePath}{XmlName}.xml";
+        protected sealed override void Save() => File.WriteAllText(DefaultXmlFileBaseFullPath, XmlUtils.DefaultXmlSerialize<LIB>((LIB)this));
+        protected static LIB LoadInstance()
         {
-            descriptor.SaveName = indexName;
-            m_savedDescriptors[indexName] = descriptor;
-            Save();
-        }
-        public DESC Get(string indexName)
-        {
-            m_savedDescriptors.TryGetValue(indexName, out DESC descriptor);
-            return descriptor;
-        }
-
-        public IEnumerable<string> List() => m_savedDescriptors.Keys;
-
-        public void Remove(string indexName)
-        {
-            if (indexName != null)
+            var newVal = new LIB();
+            if (File.Exists(newVal.DefaultXmlFileBaseFullPath))
             {
-                bool removed = m_savedDescriptors.Remove(indexName);
-                if (removed)
-                {
-                    Save();
-                }
+                return XmlUtils.DefaultXmlDeserialize<LIB>(File.ReadAllText(newVal.DefaultXmlFileBaseFullPath));
             }
+            return newVal;
         }
-        protected abstract void Save();
-
-        public void Replace(string key, DESC newFile)
-        {
-            Remove(key);
-            Add(key, newFile);
-        }
-
     }
+
+    [XmlRoot("LibPropSettings")] public class WTCLibPropSettings : BasicFileLib<WTCLibPropSettings, BoardDescriptorGeneralXml> { protected override string XmlName => "LibPropSettings"; }
+    [XmlRoot("LibPropTextItem")] public class WTCLibPropTextItem : BasicFileLib<WTCLibPropTextItem, BoardTextDescriptorGeneralXml> { protected override string XmlName => "LibPropTextItem"; }
 
     //#region Mileage Marker
     //[XmlRoot("LibMileageMarkerProp")] public class WTCLibMileageMarkerGroup : BasicLib<WTCLibMileageMarkerGroup, BoardDescriptorMileageMarkerXml> { protected override string XmlName => "LibMileageMarkerProp"; }

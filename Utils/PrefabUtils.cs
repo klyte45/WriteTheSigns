@@ -5,46 +5,11 @@ using System.Collections.Generic;
 
 namespace Klyte.WriteTheCity.Utils
 {
-    internal static class PrefabUtils<T> where T : PrefabInfo
+    public class PrefabUtils : SingletonLite<PrefabUtils>
     {
-        private static List<T> m_assetsLoaded;
+        private Dictionary<string, string> m_authorList;
 
-        public static List<T> AssetsLoaded
-        {
-            get {
-                if (m_assetsLoaded == null)
-                {
-                    m_assetsLoaded = GetInfos();
-                }
-                return m_assetsLoaded;
-            }
-        }
-
-
-
-        private static List<T> GetInfos()
-        {
-            var list = new List<T>();
-            uint num = 0u;
-            while (num < (ulong)PrefabCollection<T>.LoadedCount())
-            {
-                T prefabInfo = PrefabCollection<T>.GetLoaded(num);
-                if (prefabInfo != null)
-                {
-                    list.Add(prefabInfo);
-                }
-                num += 1u;
-            }
-            return list;
-        }
-
-    }
-
-    public static class PrefabUtils
-    {
-        private static Dictionary<string, string> m_authorList;
-
-        public static Dictionary<string, string> AuthorList
+        public Dictionary<string, string> AuthorList
         {
             get {
                 if (m_authorList == null)
@@ -55,7 +20,7 @@ namespace Klyte.WriteTheCity.Utils
             }
         }
 
-        private static Dictionary<string, string> LoadAuthors()
+        private Dictionary<string, string> LoadAuthors()
         {
             var authors = new Dictionary<string, string>();
             foreach (Package.Asset current in PackageManager.FilterAssets(new Package.AssetType[] { UserAssetType.CustomAssetMetaData }))

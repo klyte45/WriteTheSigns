@@ -110,24 +110,23 @@ namespace Klyte.WriteTheCity.UI
             WTCPropTextLayoutEditor.Instance.CurrentTabChanged += (newVal) =>
             {
                 int targetTab = newVal - 1;
-                SafeObtain(OnSetData, false, targetTab);
+                SafeObtain(OnSetData,  targetTab);
             };
             m_isEditing = false;
 
 
-            AddLibBox<WTCLibPropTextItem, BoardTextDescriptorGeneralXml>(Locale.Get("K45_WTC_PROP_TEXT_LIB_TITLE"), helperSettings,
-                                 out UIButton m_copyButtonText, DoCopyText,
-                                 out m_pasteButtonText, DoPasteText,
-                                 out UIButton m_deleteButtonText, DoDeleteText,
-                                 (loadedItem) => SafeObtain((ref BoardTextDescriptorGeneralXml x) =>
-                                    {
-                                        string name = x.SaveName;
-                                        x = XmlUtils.DefaultXmlDeserialize<BoardTextDescriptorGeneralXml>(loadedItem);
-                                        x.SaveName = name;
-                                        OnSetData(ref x);
-                                        x.SaveName = name;
-                                    }),
-                                 () => WTCPropTextLayoutEditor.Instance.EditingInstance.m_textDescriptors[Math.Max(0, TabToEdit)]);
+            AddLibBox<WTCLibPropTextItem, BoardTextDescriptorGeneralXml>(helperSettings, out UIButton m_copyButtonText,
+                DoCopyText, out m_pasteButtonText,
+                DoPasteText, out UIButton m_deleteButtonText,
+                DoDeleteText, (loadedItem) => SafeObtain((ref BoardTextDescriptorGeneralXml x) =>
+                   {
+                       string name = x.SaveName;
+                       x = XmlUtils.DefaultXmlDeserialize<BoardTextDescriptorGeneralXml>(loadedItem);
+                       x.SaveName = name;
+                       OnSetData(ref x);
+                       x.SaveName = name;
+                   }),
+                () => WTCPropTextLayoutEditor.Instance.EditingInstance.m_textDescriptors[Math.Max(0, TabToEdit)]);
 
             WTCController.EventFontsReloadedFromFolder += () => WTCUtils.ReloadFontsOf(m_overrideFontSelect, true);
 
@@ -188,7 +187,7 @@ namespace Klyte.WriteTheCity.UI
 
         private delegate void SafeObtainMethod(ref BoardTextDescriptorGeneralXml x);
 
-        private void SafeObtain(SafeObtainMethod action, bool markDirty = true, int? targetTab = null)
+        private void SafeObtain(SafeObtainMethod action,  int? targetTab = null)
         {
             if (m_isEditing || WTCPropTextLayoutEditor.Instance.EditingInstance == null)
             {
@@ -204,10 +203,6 @@ namespace Klyte.WriteTheCity.UI
                     if (effTargetTab < WTCPropTextLayoutEditor.Instance.EditingInstance.m_textDescriptors.Length)
                     {
                         action(ref WTCPropTextLayoutEditor.Instance.EditingInstance.m_textDescriptors[effTargetTab]);
-                        if (markDirty)
-                        {
-                            WTCPropTextLayoutEditor.Instance.MarkDirty();
-                        }
                     }
                 }
                 finally
