@@ -44,7 +44,7 @@ namespace Klyte.WriteTheCity.Xml
         [XmlAttribute("scaleZ")]
         public float? ScaleZ;
 
-        public BoardDescriptorGeneralXml Descriptor { get; internal set; } = new BoardDescriptorGeneralXml();
+        public virtual BoardDescriptorGeneralXml Descriptor { get; internal set; } = new BoardDescriptorGeneralXml();
     }
 
 }

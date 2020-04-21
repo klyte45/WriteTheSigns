@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using Klyte.Commons.Interfaces;
+using Klyte.WriteTheCity.Data;
+using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Serialization;
 using static ItemClass;
@@ -6,7 +8,7 @@ using static ItemClass;
 namespace Klyte.WriteTheCity.Xml
 {
     [XmlRoot("roadCornerDescriptor")]
-    public class BoardInstanceRoadNodeXml : BoardInstanceXml
+    public class BoardInstanceRoadNodeXml : BoardInstanceXml, ILibable
     {
         [XmlArray("ReferenceSelection")]
         [XmlArrayItem("ItemClass")]
@@ -24,9 +26,43 @@ namespace Klyte.WriteTheCity.Xml
         public bool ApplyAbreviationsOnSuffix { get; set; } = true;
         [XmlAttribute("spawnChance")]
         public byte SpawnChance { get; set; } = 255;
+        [XmlAttribute("saveName")]
+        public string SaveName { get; set; }
 
         [XmlAttribute("useDistrictColor")]
         public bool UseDistrictColor = false;
+
+        [XmlAttribute("propLayoutName")]
+        public string PropLayoutName
+        {
+            get => Descriptor?.SaveName;
+            set {
+                m_propLayoutName = value;
+                Descriptor = WTCPropLayoutData.Instance.Get(m_propLayoutName);
+            }
+        }
+
+        private string m_propLayoutName;
+
+        [XmlIgnore]
+        private BoardDescriptorGeneralXml m_descriptor;
+
+        [XmlIgnore]
+        public override BoardDescriptorGeneralXml Descriptor
+        {
+            get {
+                if (m_descriptor == null && m_propLayoutName != null)
+                {
+                    m_descriptor = WTCPropLayoutData.Instance.Get(m_propLayoutName);
+                    m_propLayoutName = null;
+                }
+                return m_descriptor;
+            }
+            internal set {
+                m_propLayoutName = value?.SaveName;
+                m_descriptor = WTCPropLayoutData.Instance.Get(m_propLayoutName);
+            }
+        }
 
         public bool AllowsClass(ItemClass source) => ReferenceSelection.Where(x => x.IsSame(source)).Count() == 0 == AsBlackList;
 
@@ -59,6 +95,8 @@ namespace Klyte.WriteTheCity.Xml
                 m_level == from.m_level &&
                 name == from.name;
         }
+
+        public override string ToString() => name;
     }
 
 

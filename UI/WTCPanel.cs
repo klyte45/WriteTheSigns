@@ -25,10 +25,10 @@ namespace Klyte.WriteTheCity.UI
             m_stripMain.tabPages = tabContainer;
 
             //m_stripMain.CreateTabLocalized<WTCPropPlacingTab2>("InfoIconEscapeRoutes", "K45_WTC_HIGHWAY_SIGN_CONFIG_TAB", "WTCHighwaySign");
-            //m_stripMain.CreateTabLocalized<WTCStreetSignTab3>("InfoIconTrafficRoutes", "K45_WTC_STREET_SIGN_CONFIG_TAB", "WTCStreetSign");
             //m_stripMain.CreateTabLocalized<WTCMileageMarkerTab3>("LocationMarkerNormal", "K45_WTC_MILEAGE_MARKERS_CONFIG_TAB", "WTCMileageMarkerTab");
             //m_stripMain.CreateTabLocalized<WTCBuildingEditorTab2>("IconAssetBuilding", "K45_WTC_BUILDING_CONFIG_TAB", "WTCBuildingEditorTab");
             m_stripMain.CreateTabLocalized<WTCPropTextLayoutEditor>("IconAssetProp", "K45_WTC_PROP_LIBRARY_EDITOR_TAB", "WTCBuildingEditorTab", false);
+            m_stripMain.CreateTabLocalized<WTCRoadCornerEditor>("InfoIconTrafficRoutes", "K45_WTC_STREET_SIGN_CONFIG_TAB", "WTCStreetSign",false);
         }
 
         #endregion

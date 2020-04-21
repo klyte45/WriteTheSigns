@@ -162,7 +162,7 @@ namespace Klyte.WriteTheCity.UI
             cbPanel.autoFitChildrenHorizontally = true;
             cbPanel.autoFitChildrenVertically = true;
             label.verticalAlignment = UIVerticalAlignment.Middle;
-            label.minimumSize = new Vector2( parentHelper.Self.width / 2,40);
+            label.minimumSize = new Vector2(parentHelper.Self.width / 2, 40);
             KlyteMonoUtils.LimitWidthAndBox(label);
 
             if (actionCopy != null)
@@ -241,6 +241,11 @@ namespace Klyte.WriteTheCity.UI
             icon.color = color;
         }
 
+        public static void AddButtonInEditorRow(UIComponent m_fontSelect, CommonsSpriteNames icon, Action onClick)
+        {
+            m_fontSelect.width -= 40;
+            ConfigureActionButton(m_fontSelect.GetComponentInParent<UIPanel>(), icon, (x, y) => onClick(), null);
+        }
         #endregion
     }
 
