@@ -106,11 +106,11 @@ namespace Klyte.WriteTheCity.Overrides
 
         public void AfterRenderInstanceImpl(RenderManager.CameraInfo cameraInfo, ushort nodeID, ref NetNode data)
         {
-            if (Data.CurrentDescriptor == null)
+            if (Data.CurrentDescriptorOrder == null)
             {
-                Data.CurrentDescriptor = new BoardInstanceRoadNodeXml();
+                Data.CurrentDescriptorOrder = new List<BoardInstanceRoadNodeXml>();
             }
-            if (Data.CurrentDescriptor?.Descriptor.m_propName == null || m_lastFrameUpdate[nodeID] >= m_getCurrentFrame(RenderManager.instance))
+            if (Data.CurrentDescriptorOrder.Count == 0)
             {
                 return;
             }
@@ -185,9 +185,16 @@ namespace Klyte.WriteTheCity.Overrides
                                     }
                                 }
                             }
+                            NetSegment netSegmentJ = Singleton<NetManager>.instance.m_segments.m_buffer[resultOtherSegment];
+
+                            BoardInstanceRoadNodeXml targetDescriptor = Data.CurrentDescriptorOrder.FirstOrDefault(x => x.AllowsClass(netSegmentI.Info.m_class) || x.AllowsClass(netSegmentJ.Info.m_class));
+                            if (targetDescriptor == null)
+                            {
+                                continue;
+                            }
                             if (resultOtherSegment == 0
                                 || !(Singleton<NetManager>.instance.m_segments.m_buffer[resultOtherSegment].Info.m_netAI is RoadBaseAI roadAiJ)
-                                || SegmentUtils.IsSameName(resultOtherSegment, segmentIid, false, false, true, Data.CurrentDescriptor.PlaceOnDistrictBorder, true)
+                                || SegmentUtils.IsSameName(resultOtherSegment, segmentIid, false, false, true, targetDescriptor.PlaceOnDistrictBorder, true)
                                 || (roadAiJ.m_highwayRules && roadAiI.m_highwayRules)
                                 || roadAiI.GenerateName(segmentIid, ref Singleton<NetManager>.instance.m_segments.m_buffer[segmentIid]).IsNullOrWhiteSpace()
                                 || roadAiJ.GenerateName(resultOtherSegment, ref Singleton<NetManager>.instance.m_segments.m_buffer[resultOtherSegment]).IsNullOrWhiteSpace())
@@ -195,16 +202,15 @@ namespace Klyte.WriteTheCity.Overrides
                                 continue;
                             }
                             bool start = netSegmentI.m_startNode == nodeID;
-
                             netSegmentI.CalculateCorner(segmentIid, true, start, false, out Vector3 startPos, out Vector3 startAng, out _);
-                            NetSegment netSegmentJ = Singleton<NetManager>.instance.m_segments.m_buffer[resultOtherSegment];
-                            start = (netSegmentJ.m_startNode == nodeID);
 
+                            start = (netSegmentJ.m_startNode == nodeID);
                             netSegmentJ.CalculateCorner(resultOtherSegment, true, start, true, out Vector3 endPos, out Vector3 endAng, out bool flag);
 
                             NetSegment.CalculateMiddlePoints(startPos, -startAng, endPos, -endAng, true, true, out Vector3 rhs, out Vector3 lhs);
                             Vector3 relativePos = (((rhs + lhs) * 0.5f) - data.m_position);
                             Vector3 platePos = relativePos - relativePos.normalized + data.m_position;
+
 
                             if (Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx] == null)
                             {
@@ -223,11 +229,12 @@ namespace Klyte.WriteTheCity.Overrides
 
                             Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_platePosition = platePos;
                             Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_renderPlate = true;
-                            Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_cachedColor = Data.CurrentDescriptor.UseDistrictColor ? WTCHookable.GetDistrictColor(Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_districtId1) : Data.CurrentDescriptor.Descriptor.FixedColor ?? Color.white;
-                            Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_cachedColor2 = Data.CurrentDescriptor.UseDistrictColor ? WTCHookable.GetDistrictColor(Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_districtId2) : Data.CurrentDescriptor.Descriptor.FixedColor ?? Color.white;
+                            Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_cachedColor = targetDescriptor.UseDistrictColor ? WTCHookable.GetDistrictColor(Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_districtId1) : targetDescriptor.Descriptor.FixedColor ?? Color.white;
+                            Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_cachedColor2 = targetDescriptor.UseDistrictColor ? WTCHookable.GetDistrictColor(Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_districtId2) : targetDescriptor.Descriptor.FixedColor ?? Color.white;
                             Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_cachedContrastColor = KlyteMonoUtils.ContrastColor(Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_cachedColor);
                             Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_cachedContrastColor2 = KlyteMonoUtils.ContrastColor(Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_cachedColor2);
                             Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_distanceRef = Vector2.Distance(VectorUtils.XZ(Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_platePosition), WTCHookable.GetStartPoint());
+                            Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_currentDescriptor = targetDescriptor;
                             controlBoardIdx++;
                         }
                     }
@@ -241,30 +248,32 @@ namespace Klyte.WriteTheCity.Overrides
             {
                 if (Data.BoardsContainers[nodeID].m_boardsData[boardIdx]?.m_renderPlate ?? false)
                 {
-                    if (Data.BoardsContainers[nodeID].m_boardsData[boardIdx]?.m_cachedProp?.name != Data.CurrentDescriptor?.Descriptor.m_propName)
+                    ref BoardInstanceRoadNodeXml targetDescriptor = ref Data.BoardsContainers[nodeID].m_boardsData[boardIdx].m_currentDescriptor;
+
+                    if (Data.BoardsContainers[nodeID].m_boardsData[boardIdx]?.m_cachedProp?.name != targetDescriptor?.Descriptor.m_propName)
                     {
                         Data.BoardsContainers[nodeID].m_boardsData[boardIdx].m_cachedProp = null;
                     }
 
-                    WTCPropRenderingRules.RenderPropMesh(ref Data.BoardsContainers[nodeID].m_boardsData[boardIdx].m_cachedProp, cameraInfo, nodeID, boardIdx, 0, 0xFFFFFFF, 0, Data.BoardsContainers[nodeID].m_boardsData[boardIdx].m_platePosition, Vector4.zero, ref Data.CurrentDescriptor.Descriptor.m_propName, new Vector3(0, Data.BoardsContainers[nodeID].m_boardsData[boardIdx].m_streetDirection1) + Data.CurrentDescriptor.m_propRotation, Data.CurrentDescriptor.PropScale, Data.CurrentDescriptor, out Matrix4x4 propMatrix, out bool rendered, GetPropRenderID(nodeID));
+                    WTCPropRenderingRules.RenderPropMesh(ref Data.BoardsContainers[nodeID].m_boardsData[boardIdx].m_cachedProp, cameraInfo, nodeID, boardIdx, 0, 0xFFFFFFF, 0, Data.BoardsContainers[nodeID].m_boardsData[boardIdx].m_platePosition, Vector4.zero, ref targetDescriptor.Descriptor.m_propName, new Vector3(0, Data.BoardsContainers[nodeID].m_boardsData[boardIdx].m_streetDirection1) + targetDescriptor.m_propRotation, targetDescriptor.PropScale, targetDescriptor, out Matrix4x4 propMatrix, out bool rendered, GetPropRenderID(nodeID));
                     if (rendered)
                     {
-                        for (int j = 0; j < Data.CurrentDescriptor.Descriptor.m_textDescriptors.Length; j++)
+                        for (int j = 0; j < targetDescriptor.Descriptor.m_textDescriptors.Length; j++)
                         {
                             MaterialPropertyBlock properties = PropManager.instance.m_materialBlock;
                             properties.Clear();
-                            WTCPropRenderingRules.RenderTextMesh(nodeID, boardIdx, 0, Data.CurrentDescriptor, propMatrix, Data.CurrentDescriptor.Descriptor.m_textDescriptors[j], properties, DrawFont);
+                            WTCPropRenderingRules.RenderTextMesh(nodeID, boardIdx, 0, targetDescriptor, propMatrix, targetDescriptor.Descriptor.m_textDescriptors[j], properties, DrawFont);
                         }
                     }
-                    WTCPropRenderingRules.RenderPropMesh(ref Data.BoardsContainers[nodeID].m_boardsData[boardIdx].m_cachedProp, cameraInfo, nodeID, boardIdx, 1, 0xFFFFFFF, 0, Data.BoardsContainers[nodeID].m_boardsData[boardIdx].m_platePosition, Vector4.zero, ref Data.CurrentDescriptor.Descriptor.m_propName, new Vector3(0, Data.BoardsContainers[nodeID].m_boardsData[boardIdx].m_streetDirection2) + Data.CurrentDescriptor.m_propRotation, Data.CurrentDescriptor.PropScale, Data.CurrentDescriptor, out propMatrix, out rendered, GetPropRenderID(nodeID));
+                    WTCPropRenderingRules.RenderPropMesh(ref Data.BoardsContainers[nodeID].m_boardsData[boardIdx].m_cachedProp, cameraInfo, nodeID, boardIdx, 1, 0xFFFFFFF, 0, Data.BoardsContainers[nodeID].m_boardsData[boardIdx].m_platePosition, Vector4.zero, ref targetDescriptor.Descriptor.m_propName, new Vector3(0, Data.BoardsContainers[nodeID].m_boardsData[boardIdx].m_streetDirection2) + targetDescriptor.m_propRotation, targetDescriptor.PropScale, targetDescriptor, out propMatrix, out rendered, GetPropRenderID(nodeID));
                     if (rendered)
                     {
 
-                        for (int j = 0; j < Data.CurrentDescriptor.Descriptor.m_textDescriptors.Length; j++)
+                        for (int j = 0; j < targetDescriptor.Descriptor.m_textDescriptors.Length; j++)
                         {
                             MaterialPropertyBlock properties = PropManager.instance.m_materialBlock;
                             properties.Clear();
-                            WTCPropRenderingRules.RenderTextMesh(nodeID, boardIdx, 1, Data.CurrentDescriptor, propMatrix, Data.CurrentDescriptor.Descriptor.m_textDescriptors[j], properties, DrawFont);
+                            WTCPropRenderingRules.RenderTextMesh(nodeID, boardIdx, 1, targetDescriptor, propMatrix, targetDescriptor.Descriptor.m_textDescriptors[j], properties, DrawFont);
                         }
                     }
 
@@ -280,7 +289,7 @@ namespace Klyte.WriteTheCity.Overrides
             };
 
         }
-        public void CleanDescriptor() => Data.CurrentDescriptor = new BoardInstanceRoadNodeXml();
+        public void CleanDescriptor() => Data.CurrentDescriptorOrder.Clear();
     }
 
 }

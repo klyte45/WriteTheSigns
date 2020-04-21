@@ -1,4 +1,5 @@
 ﻿using Klyte.WriteTheCity.Xml;
+using System.Collections.Generic;
 using System.Xml.Serialization;
 
 namespace Klyte.WriteTheCity.Data
@@ -9,12 +10,14 @@ namespace Klyte.WriteTheCity.Data
     {
         public override int ObjArraySize => NetManager.MAX_NODE_COUNT;
 
-        public override string DefaultFont { get => CurrentDescriptor.Descriptor.FontName; set => CurrentDescriptor.Descriptor.FontName = value; }
+        [XmlElement("DefaultFont")]
+        public override string DefaultFont { get; set; } = WTCController.DEFAULT_FONT_KEY;
 
+        [XmlIgnore]
         public override string SaveId => "K45_WTC3_WTCNetNodesData";
 
         [XmlElement("CurrentDescriptor")]
-        public BoardInstanceRoadNodeXml CurrentDescriptor { get; set; } = new BoardInstanceRoadNodeXml();
+        public List<BoardInstanceRoadNodeXml> CurrentDescriptorOrder { get; set; } = new List<BoardInstanceRoadNodeXml>();
 
         [XmlAttribute("roadQualifierExtraction")]
         public RoadQualifierExtractionMode RoadQualifierExtraction { get; set; } = RoadQualifierExtractionMode.NONE;

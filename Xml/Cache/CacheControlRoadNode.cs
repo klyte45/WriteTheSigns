@@ -18,6 +18,7 @@ namespace Klyte.WriteTheCity.Xml
         internal Color m_propColor = Color.white;
         internal Color m_cachedContrastColor;
         internal Color m_cachedContrastColor2;
+        public BoardInstanceRoadNodeXml m_currentDescriptor;
     }
 
 }
