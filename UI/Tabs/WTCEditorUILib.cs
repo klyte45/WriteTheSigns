@@ -31,9 +31,9 @@ namespace Klyte.WriteTheCity.UI
             KlyteMonoUtils.LimitWidthAndBox(field.parent.GetComponentInChildren<UILabel>(), (parentHelper.Self.width / 2) - 10, true);
         }
 
-        public static UIButton ConfigureActionButton(UIComponent parent, CommonsSpriteNames sprite, MouseEventHandler onClicked, string tooltipLocale)
+        public static UIButton ConfigureActionButton(UIComponent parent, CommonsSpriteNames sprite, MouseEventHandler onClicked, string tooltipLocale, float size = 40)
         {
-            KlyteMonoUtils.InitCircledButton(parent, out UIButton actionButton, sprite, onClicked, tooltipLocale);
+            KlyteMonoUtils.InitCircledButton(parent, out UIButton actionButton, sprite, onClicked, tooltipLocale, size);
             return actionButton;
         }
 
@@ -217,7 +217,7 @@ namespace Klyte.WriteTheCity.UI
             }, "CONTENT_DELETE");
 
             AddTextField(Locale.Get("K45_WTC_SAVE_TO_LIB"), out UITextField saveTxt, parentHelper, (x) => { });
-            saveTxt.width -= 40;
+            saveTxt.width -= 30;
             parent = saveTxt.GetComponentInParent<UIPanel>();
             ConfigureActionButton(parent, CommonsSpriteNames.K45_Save, (x, t) =>
             {
@@ -227,7 +227,7 @@ namespace Klyte.WriteTheCity.UI
                     loadDD.items = BasicFileLib<LIB, DESC>.Instance.List().ToArray();
                     loadDD.selectedValue = saveTxt.text;
                 }
-            }, "SAVE");
+            }, "SAVE", 30);
             doWithLibGroup?.Invoke(parentHelper);
             return loadDD;
         }
@@ -241,10 +241,20 @@ namespace Klyte.WriteTheCity.UI
             icon.color = color;
         }
 
-        public static void AddButtonInEditorRow(UIComponent m_fontSelect, CommonsSpriteNames icon, Action onClick)
+        public static void AddButtonInEditorRow(UIComponent component, CommonsSpriteNames icon, Action onClick, bool reduceSize = true)
         {
-            m_fontSelect.width -= 40;
-            ConfigureActionButton(m_fontSelect.GetComponentInParent<UIPanel>(), icon, (x, y) => onClick(), null);
+            if (reduceSize)
+            {
+                component.minimumSize -= new Vector2(0, 40);
+                component.width -= 40;
+            }
+            ConfigureActionButton(component.GetComponentInParent<UIPanel>(), icon, (x, y) => onClick(), null);
+        }
+
+        public static void AddCheckboxLocale(string localeId, out UICheckBox checkbox, UIHelperExtension helper, OnCheckChanged onCheckChanged)
+        {
+            checkbox = helper.AddCheckboxLocale(localeId, false, onCheckChanged);
+            KlyteMonoUtils.LimitWidthAndBox(checkbox.label, helper.Self.width - 50);
         }
         #endregion
     }

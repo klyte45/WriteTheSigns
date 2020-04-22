@@ -14,7 +14,7 @@ namespace Klyte.WriteTheCity.Data
         public override string DefaultFont { get; set; } = WTCController.DEFAULT_FONT_KEY;
 
         [XmlIgnore]
-        public override string SaveId => "K45_WTC3_WTCNetNodesData";
+        public override string SaveId => "K45_WTC_WTCNetNodesData";
 
         [XmlElement("CurrentDescriptor")]
         public List<BoardInstanceRoadNodeXml> CurrentDescriptorOrder { get; set; } = new List<BoardInstanceRoadNodeXml>();

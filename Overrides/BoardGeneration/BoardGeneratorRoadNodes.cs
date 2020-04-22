@@ -27,7 +27,7 @@ namespace Klyte.WriteTheCity.Overrides
 
         private Dictionary<ItemClass, List<NetInfo>> m_allClasses;
 
-        private Dictionary<ItemClass, List<NetInfo>> AllClasses
+        public Dictionary<ItemClass, List<NetInfo>> AllClasses
         {
             get {
                 if (m_allClasses == null)

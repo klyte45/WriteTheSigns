@@ -15,7 +15,6 @@ namespace Klyte.WriteTheCity
 
     public class WTCController : BaseController<WriteTheCityMod, WTCController>
     {
-
         public RoadSegmentTool RoadSegmentToolInstance => FindObjectOfType<RoadSegmentTool>();
         public BuildingEditorTool BuildingEditorToolInstance => FindObjectOfType<BuildingEditorTool>();
         public Dictionary<string, Dictionary<string, string>> AbbreviationFiles { get; private set; }
@@ -38,7 +37,7 @@ namespace Klyte.WriteTheCity
 
             FontServer.Ensure();
         }
-        public void Start() => ReloadFontsFromPath();
+        protected override void StartActions() => ReloadFontsFromPath();
         public static void ReloadFontsFromPath()
         {
             FontServer.instance.ResetCollection();

@@ -1,7 +1,6 @@
 ﻿using Klyte.Commons.Interfaces;
 using Klyte.WriteTheCity.Data;
 using System.Collections.Generic;
-using System.Linq;
 using System.Xml.Serialization;
 using static ItemClass;
 
@@ -10,27 +9,7 @@ namespace Klyte.WriteTheCity.Xml
     [XmlRoot("roadCornerDescriptor")]
     public class BoardInstanceRoadNodeXml : BoardInstanceXml, ILibable
     {
-        [XmlArray("ReferenceSelection")]
-        [XmlArrayItem("ItemClass")]
-        public List<ItemClassSimpleDefinition> ReferenceSelection { get; set; } = new List<ItemClassSimpleDefinition>();
-
-        [XmlAttribute("selectionAsBlacklist")]
-        public bool AsBlackList { get; set; }
-
-        [XmlAttribute("placeOnDistrictBorder")]
-        public bool PlaceOnDistrictBorder { get; set; } = true;
-
-        [XmlAttribute("applyAbreviationsOnFullName")]
-        public bool ApplyAbreviationsOnFullName { get; set; } = true;
-        [XmlAttribute("applyAbreviationsOnSuffix")]
-        public bool ApplyAbreviationsOnSuffix { get; set; } = true;
-        [XmlAttribute("spawnChance")]
-        public byte SpawnChance { get; set; } = 255;
-        [XmlAttribute("saveName")]
-        public string SaveName { get; set; }
-
-        [XmlAttribute("useDistrictColor")]
-        public bool UseDistrictColor = false;
+        [XmlAttribute("saveName")] public string SaveName { get; set; }
 
         [XmlAttribute("propLayoutName")]
         public string PropLayoutName
@@ -64,39 +43,25 @@ namespace Klyte.WriteTheCity.Xml
             }
         }
 
-        public bool AllowsClass(ItemClass source) => ReferenceSelection.Where(x => x.IsSame(source)).Count() == 0 == AsBlackList;
+        [XmlArray("ReferenceSelection")] [XmlArrayItem("ItemClass")] public HashSet<ItemClass.Level> AllowedLevels { get; set; } = new HashSet<Level>();
+        [XmlAttribute("spawnChance")] public byte SpawnChance { get; set; } = 255;
+        [XmlAttribute("placeOnDistrictBorder")] public bool PlaceOnDistrictBorder { get; set; } = true;
+        [XmlAttribute("placeOnMidSegment")] public bool PlaceOnSegmentInsteadOfCorner { get; set; } = false;
+        [XmlAttribute("placeOnlyIfOutboundTraffic")] public bool PlaceOnlyIfOutboundTraffic { get; set; } = false;
 
-    }
-    public struct ItemClassSimpleDefinition
-    {
-        public Service m_service;
-        public SubService m_subService;
-        public Level m_level;
-        public Layer m_layer;
-        public string name;
 
-        public static ItemClassSimpleDefinition FromItemClass(ItemClass from)
-        {
-            return new ItemClassSimpleDefinition
-            {
-                m_layer = from.m_layer,
-                m_subService = from.m_subService,
-                m_service = from.m_service,
-                m_level = from.m_level,
-                name = from.name,
-            };
-        }
 
-        public bool IsSame(ItemClass from)
-        {
-            return m_layer == from.m_layer &&
-                m_subService == from.m_subService &&
-                m_service == from.m_service &&
-                m_level == from.m_level &&
-                name == from.name;
-        }
+        [XmlAttribute("useDistrictColor")] public bool UseDistrictColor = false;
+        [XmlAttribute("applyAbreviationsOnFullName")] public bool ApplyAbreviationsOnFullName { get; set; } = true;
+        [XmlAttribute("applyAbreviationsOnSuffix")] public bool ApplyAbreviationsOnSuffix { get; set; } = true;
 
-        public override string ToString() => name;
+        [XmlAttribute("selectedDistricts")] public HashSet<ushort> SelectedDistricts { get; set; } = new HashSet<ushort>();
+        [XmlAttribute("districtSelectionIsBlacklist")] public bool SelectedDistrictsIsBlacklist { get; set; } = true;
+
+        public bool AllowsClass(ItemClass source) => AllowedLevels.Contains(source.m_level);
+        public bool AllowsDistrict(byte districtId) => SelectedDistricts.Contains(districtId) == SelectedDistrictsIsBlacklist;
+        public bool AllowsPark(byte districtId) => SelectedDistricts.Contains((ushort)(0x100 | districtId)) == SelectedDistrictsIsBlacklist;
+
     }
 
 

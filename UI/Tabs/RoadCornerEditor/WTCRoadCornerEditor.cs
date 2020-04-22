@@ -5,6 +5,9 @@ using Klyte.Commons.UI.SpriteNames;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheCity.Data;
 using Klyte.WriteTheCity.Utils;
+using Klyte.WriteTheCity.Xml;
+using System;
+using System.Linq;
 using UnityEngine;
 using static Klyte.WriteTheCity.UI.WTCEditorUILib;
 
@@ -18,6 +21,7 @@ namespace Klyte.WriteTheCity.UI
 
 
         private UIDropDown m_fontSelect;
+        private bool m_loadingAbbreviations;
 
         public void Awake()
         {
@@ -28,14 +32,22 @@ namespace Klyte.WriteTheCity.UI
             MainContainer.autoLayoutDirection = LayoutDirection.Vertical;
             MainContainer.autoLayoutPadding = new RectOffset(5, 5, 5, 5);
 
+
+
+
             var m_uiHelperHS = new UIHelperExtension(MainContainer);
 
             AddDropdown(Locale.Get("K45_WTC_FONT_ST_CORNERS"), out m_fontSelect, m_uiHelperHS, new string[0], OnSetFont);
 
             AddButtonInEditorRow(m_fontSelect, CommonsSpriteNames.K45_Reload, () => WTCUtils.ReloadFontsOf(m_fontSelect));
             WTCUtils.ReloadFontsOf(m_fontSelect);
+            AddDropdown(Locale.Get("K45_WTC_ABBREVIATION_FILE"), out UIDropDown m_abbriviationFile, m_uiHelperHS, new string[0], OnSetAbbreviationFile);
+            AddButtonInEditorRow(m_abbriviationFile, CommonsSpriteNames.K45_Reload, () => ReloadAbbreviations(m_abbriviationFile));
+            ReloadAbbreviations(m_abbriviationFile);
+            AddDropdown(Locale.Get("K45_WTC_CUSTOM_NAME_EXTRACTION_QUALIFIER"), out UIDropDown m_qualifierExtractionDropdown, m_uiHelperHS, Enum.GetNames(typeof(RoadQualifierExtractionMode)).Select(x => Locale.Get($"K45_WTC_RoadQualifierExtractionMode", x)).ToArray(), SetRoadQualifierExtractionMode);
 
-            KlyteMonoUtils.CreateUIElement(out UIPanel secondaryContainer, MainContainer.transform, "SecContainer", new Vector4(0, 0, MainContainer.width, 705));
+
+            KlyteMonoUtils.CreateUIElement(out UIPanel secondaryContainer, MainContainer.transform, "SecContainer", new Vector4(0, 0, MainContainer.width, 605));
             secondaryContainer.autoLayout = true;
             secondaryContainer.autoLayoutDirection = LayoutDirection.Horizontal;
             secondaryContainer.autoLayoutPadding = new RectOffset(0, 10, 0, 0);
@@ -50,86 +62,46 @@ namespace Klyte.WriteTheCity.UI
             m_topPanel.autoLayout = true;
             m_topPanel.autoLayoutDirection = LayoutDirection.Horizontal;
             m_topPanel.wrapLayout = true;
-            m_topPanel.autoLayoutPadding = new RectOffset(7, 7, 5, 5);
+            m_topPanel.autoLayoutPadding = new RectOffset(4, 3, 5, 5);
 
             KlyteMonoUtils.CreateUIElement(out UILabel m_topPanelTitle, m_topPanel.transform, "topListPanelTitle", new UnityEngine.Vector4(0, 0, m_topPanel.width, 15));
             KlyteMonoUtils.LimitWidthAndBox(m_topPanelTitle, tertiaryContainer.width - 10, true);
             m_topPanelTitle.text = Locale.Get("K45_WTC_ROADCORNER_LISTORDERTITLE");
             m_topPanelTitle.textAlignment = UIHorizontalAlignment.Center;
 
-            KlyteMonoUtils.InitCircledButton(m_topPanel, out _, CommonsSpriteNames.K45_New, OnAddItemOnList, "K45_WTC_ROADCORNER_ADDITEMLIST");
-            KlyteMonoUtils.InitCircledButton(m_topPanel, out _, CommonsSpriteNames.K45_Up, OnMoveItemUpOnList, "K45_WTC_ROADCORNER_MOVEITEMUP");
-            KlyteMonoUtils.InitCircledButton(m_topPanel, out _, CommonsSpriteNames.K45_Down, OnMoveItemDownOnList, "K45_WTC_ROADCORNER_MOVEITEMDOWN");
-            KlyteMonoUtils.InitCircledButton(m_topPanel, out _, CommonsSpriteNames.K45_X, OnRemoveItemOnList, "K45_WTC_ROADCORNER_REMOVEITEM");
+            var btnSize = 36;
+            KlyteMonoUtils.InitCircledButton(m_topPanel, out _, CommonsSpriteNames.K45_New, OnAddItemOnList, "K45_WTC_ROADCORNER_ADDITEMLIST",btnSize);
+            KlyteMonoUtils.InitCircledButton(m_topPanel, out _, CommonsSpriteNames.K45_Up, OnMoveItemUpOnList, "K45_WTC_ROADCORNER_MOVEITEMUP", btnSize);
+            KlyteMonoUtils.InitCircledButton(m_topPanel, out _, CommonsSpriteNames.K45_Down, OnMoveItemDownOnList, "K45_WTC_ROADCORNER_MOVEITEMDOWN", btnSize);
+            KlyteMonoUtils.InitCircledButton(m_topPanel, out _, CommonsSpriteNames.K45_X, Help_RulesList, "K45_WTC_ROADCORNER_REMOVEITEM", btnSize);
+            KlyteMonoUtils.InitCircledButton(m_topPanel, out _, CommonsSpriteNames.K45_QuestionMark, Help_RulesList, "K45_CMNS_HELP", btnSize);
 
-            KlyteMonoUtils.CreateUIElement(out UIPanel m_listContainer, tertiaryContainer.transform, "previewPanel", new UnityEngine.Vector4(0, 0, tertiaryContainer.width, tertiaryContainer.height - 320));
+            KlyteMonoUtils.CreateUIElement(out UIPanel m_listContainer, tertiaryContainer.transform, "previewPanel", new UnityEngine.Vector4(0, 0, tertiaryContainer.width, tertiaryContainer.height - 85));
             KlyteMonoUtils.CreateScrollPanel(m_listContainer, out UIScrollablePanel orderedRulesList, out _, m_listContainer.width - 20, m_listContainer.height);
             orderedRulesList.backgroundSprite = "OptionsScrollbarTrack";
             orderedRulesList.autoLayout = true;
             orderedRulesList.autoLayoutDirection = LayoutDirection.Vertical;
 
-            KlyteMonoUtils.CreateUIElement(out UIPanel m_previewPanel, tertiaryContainer.transform, "previewPanel", new UnityEngine.Vector4(0, 0, tertiaryContainer.width - 10, 220));
-            m_previewPanel.backgroundSprite = "GenericPanel";
-            m_previewPanel.autoLayout = true;
-
-            KlyteMonoUtils.CreateUIElement(out UITextureSprite m_preview, m_previewPanel.transform, "preview", new UnityEngine.Vector4(0, 0, m_previewPanel.width, m_previewPanel.height));
-            m_preview.eventMouseWheel += ChangeViewZoom;
-            m_preview.eventMouseMove += OnMouseMove;
-
-            KlyteMonoUtils.CreateUIElement(out UIPanel editorPanel, secondaryContainer.transform, "EditPanel", new Vector4(0, 0, secondaryContainer.width * 0.75f - 10, secondaryContainer.height));
-            editorPanel.autoLayout = true;
-            editorPanel.autoLayoutDirection = LayoutDirection.Vertical;
-            editorPanel.autoLayoutPadding = new RectOffset(0, 0, 4, 4);
-
-            var m_editorHelper = new UIHelperExtension(editorPanel);
-
-            AddTextField(Locale.Get("K45_WTC_ROADCORNER_NAME"), out UITextField name, m_editorHelper, OnSetName);
-
-            m_editorHelper.AddSpace(5);
-            m_editorHelper.AddCheckbox(Locale.Get("K45_WTC_ROADCORNER_USEDISTRICTCOLOR"), false, OnChangeUseDistrictColor);
-            m_editorHelper.AddCheckbox(Locale.Get("K45_WTC_ROADCORNER_APPLYABBREVIATIONS_FULLNAME"), false, OnChangeApplyAbbreviationsFullName);
-            m_editorHelper.AddCheckbox(Locale.Get("K45_WTC_ROADCORNER_APPLYABBREVIATIONS_SUFFIX"), false, OnChangeApplyAbbreviationsSuffix);
-            AddSlider(Locale.Get("K45_WTC_ROADCORNER_SPAWN_CHANCE"), out UISlider m_spawnChance, m_editorHelper, OnChangeSpawnChance, 0, 255, 1);
-
-            m_editorHelper.AddSpace(5);
-            m_editorHelper.AddCheckbox(Locale.Get("K45_WTC_ROADCORNER_USEASWHITELIST"), false, OnSetWhiteList);
-            m_editorHelper.AddCheckbox(Locale.Get("K45_WTC_ROADCORNER_USEASBLACKLIST"), false, OnSetBlackList);
-            AddDropdown(Locale.Get("K45_WTC_ROADCORNER_CLASSESDD"), out UIDropDown m_classesDD, m_editorHelper, new string[0], (x) => { });
-            AddButtonInEditorRow(m_classesDD, CommonsSpriteNames.K45_Plus, AddToSelectionList);
-            KlyteMonoUtils.CreateUIElement(out UIPanel m_listClassesContainer, m_editorHelper.Self.transform, "previewPanel", new UnityEngine.Vector4(0, 0, m_editorHelper.Self.width - 10, 200));
-            KlyteMonoUtils.CreateScrollPanel(m_listClassesContainer, out UIScrollablePanel m_selectedClassesList, out _, m_listClassesContainer.width - 25, m_listClassesContainer.height);
-            m_selectedClassesList.backgroundSprite = "OptionsScrollbarTrack";
-            m_selectedClassesList.autoLayout = true;
-            m_selectedClassesList.autoLayoutDirection = LayoutDirection.Horizontal;
-            m_selectedClassesList.autoLayoutPadding = new RectOffset(5, 5, 5, 5);
-            m_editorHelper.AddSpace(5);
-
-            AddDropdown(Locale.Get("K45_WTC_ROADCORNER_PROPLAYOUT"), out UIDropDown m_propLayoutSelect, m_editorHelper, new string[0], OnPropLayoutChange);
-            AddVector3Field(Locale.Get("K45_WTC_ROADCORNER_POSITION"), out UITextField[] m_position, m_editorHelper, OnPositionChanged);
-            AddVector3Field(Locale.Get("K45_WTC_ROADCORNER_ROTATION"), out UITextField[] m_rotation, m_editorHelper, OnRotationChanged);
-            AddVector3Field(Locale.Get("K45_WTC_ROADCORNER_SCALE"), out UITextField[] m_scale, m_editorHelper, OnScaleChanged);
+            KlyteMonoUtils.CreateUIElement(out UIPanel editorPanel, secondaryContainer.transform, "EditPanel", new Vector4(0, 0, secondaryContainer.width * 0.75f - 35, secondaryContainer.height));
+            editorPanel.gameObject.AddComponent<WTCRoadCornerEditorDetailTabs>();
 
         }
+        private void ReloadAbbreviations(UIDropDown m_abbriviationFile)
+        {
+            m_loadingAbbreviations = true;
+            WriteTheCityMod.Controller.ReloadAbbreviationFiles();
+            m_abbriviationFile.items = new string[] { Locale.Get("K45_WTC_NO_ABBREVIATION_FILE_OPTION") }.Union(WriteTheCityMod.Controller.AbbreviationFiles.Keys.OrderBy(x => x)).ToArray();
+            m_abbriviationFile.selectedValue = WTCRoadNodesData.Instance.AbbreviationFile;
+            m_loadingAbbreviations = false;
+        }
+        private void SetRoadQualifierExtractionMode(int sel) { }
+
+        private void OnSetAbbreviationFile(int sel) { }
 
         private void OnMoveItemUpOnList(UIComponent component, UIMouseEventParameter eventParam) { }
         private void OnMoveItemDownOnList(UIComponent component, UIMouseEventParameter eventParam) { }
-        private void OnRemoveItemOnList(UIComponent component, UIMouseEventParameter eventParam) { }
+        private void Help_RulesList(UIComponent component, UIMouseEventParameter eventParam) { }
         private void OnAddItemOnList(UIComponent component, UIMouseEventParameter eventParam) { }
-        private void OnMouseMove(UIComponent component, UIMouseEventParameter eventParam) { }
-        private void ChangeViewZoom(UIComponent component, UIMouseEventParameter eventParam) { }
-
-        private void AddToSelectionList() { }
-        private void OnSetBlackList(bool isChecked) { }
-        private void OnSetWhiteList(bool isChecked) { }
-        private void OnRotationChanged(Vector3 obj) { }
-        private void OnScaleChanged(Vector3 obj) { }
-        private void OnPositionChanged(Vector3 obj) { }
-        private void OnPropLayoutChange(int sel) { }
-        private void OnChangeUseDistrictColor(bool isChecked) { }
-        private void OnChangeSpawnChance(float val) { }
-        private void OnChangeApplyAbbreviationsSuffix(bool isChecked) { }
-        private void OnChangeApplyAbbreviationsFullName(bool isChecked) { }
-        private void OnSetName(string text) { }
 
         private void OnSetFont(int sel)
         {

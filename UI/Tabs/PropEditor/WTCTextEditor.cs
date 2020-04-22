@@ -69,7 +69,7 @@ namespace Klyte.WriteTheCity.UI
             KlyteMonoUtils.CreateTabsComponent(out m_tabstrip, out m_tabContainer, MainContainer.transform, "TextEditor", new Vector4(0, 0, MainContainer.width, 40), new Vector4(0, 0, MainContainer.width, MainContainer.height - 40));
             m_tabSettings = TabCommons.CreateNonScrollableTabLocalized(m_tabstrip, KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_Settings), "K45_WTC_GENERAL_SETTINGS", "TxtSettings");
             m_tabSize = TabCommons.CreateNonScrollableTabLocalized(m_tabstrip, KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_MoveCross), "K45_WTC_TEXT_SIZE_ATTRIBUTES", "TxtSize");
-            m_tabAppearence = TabCommons.CreateNonScrollableTabLocalized(m_tabstrip, KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_AutoColorIcon), "K45_WTC_TEXT_APPEARENCE_ATTRIBUTES", "TxtApp");
+            m_tabAppearence = TabCommons.CreateNonScrollableTabLocalized(m_tabstrip, KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_AutoColorIcon), "K45_WTC_TEXT_APPEARANCE_ATTRIBUTES", "TxtApp");
             m_tabConfig = TabCommons.CreateNonScrollableTabLocalized(m_tabstrip, KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_AutoNameIcon), "K45_WTC_TEXT_CONFIGURATION_ATTRIBUTES", "TxtCnf");
 
             var helperSettings = new UIHelperExtension(m_tabSettings, LayoutDirection.Vertical);
@@ -83,17 +83,13 @@ namespace Klyte.WriteTheCity.UI
             AddVector3Field(Locale.Get("K45_WTC_RELATIVE_ROT"), out m_arrayRotation, helperSize, OnRotationChange);
             AddFloatField(Locale.Get("K45_WTC_TEXT_SCALE"), out m_textScale, helperSize, OnScaleSubmit, false);
             AddFloatField(Locale.Get("K45_WTC_MAX_WIDTH_METERS"), out m_maxWidth, helperSize, OnMaxWidthChange, false);
-            m_applyScaleOnY = helperSize.AddCheckboxLocale("K45_WTC_RESIZE_Y_TEXT_OVERFLOW", false, OnChangeApplyRescaleOnY);
-            KlyteMonoUtils.LimitWidthAndBox(m_applyScaleOnY.label, m_applyScaleOnY.parent.width - 50);
-            m_create180degSimmetricClone = helperSize.AddCheckboxLocale("K45_WTC_CREATE_CLONE_180DEG", false, OnChangeCreateSimmetricClone);
-            KlyteMonoUtils.LimitWidthAndBox(m_create180degSimmetricClone.label, m_applyScaleOnY.parent.width - 50);
-            m_invertTextHorizontalAlignClone = helperSize.AddCheckboxLocale("K45_WTC_CLONE_180DEG_INVERT_TEXT_HOR_ALIGN", false, OnChangeInvertCloneTextHorizontalAlignment);
-            KlyteMonoUtils.LimitWidthAndBox(m_invertTextHorizontalAlignClone.label, m_applyScaleOnY.parent.width - 50);
-
+            AddCheckboxLocale("K45_WTC_RESIZE_Y_TEXT_OVERFLOW", out m_applyScaleOnY, helperSize, OnChangeApplyRescaleOnY);
+            AddCheckboxLocale("K45_WTC_CREATE_CLONE_180DEG", out m_create180degSimmetricClone, helperSize, OnChangeCreateSimmetricClone);
+            AddCheckboxLocale("K45_WTC_CLONE_180DEG_INVERT_TEXT_HOR_ALIGN", out m_invertTextHorizontalAlignClone, helperSize, OnChangeInvertCloneTextHorizontalAlignment);
 
             AddDropdown(Locale.Get("K45_WTC_TEXT_ALIGN_HOR"), out m_dropdownTextAlignHorizontal, helperAppearance, Enum.GetNames(typeof(UIHorizontalAlignment)).Select(x => Locale.Get("K45_ALIGNMENT", x)).ToArray(), OnSetTextAlignmentHorizontal);
             helperAppearance.AddSpace(5);
-            m_useContrastColor = helperAppearance.AddCheckboxLocale("K45_WTC_USE_CONTRAST_COLOR", false, OnContrastColorChange);
+            AddCheckboxLocale("K45_WTC_USE_CONTRAST_COLOR", out m_useContrastColor, helperAppearance, OnContrastColorChange);
             AddColorField(helperAppearance, Locale.Get("K45_WTC_TEXT_COLOR"), out m_textFixedColor, OnFixedColorChanged);
 
 
@@ -103,14 +99,14 @@ namespace Klyte.WriteTheCity.UI
             AddDropdown(Locale.Get("K45_WTC_OVERRIDE_FONT"), out m_overrideFontSelect, helperConfig, new string[0], OnSetOverrideFont);
             AddTextField(Locale.Get("K45_WTC_PREFIX"), out m_textPrefix, helperConfig, OnSetPrefix);
             AddTextField(Locale.Get("K45_WTC_SUFFIX"), out m_textSuffix, helperConfig, OnSetSuffix);
-            m_allCaps = helperConfig.AddCheckboxLocale("K45_WTC_TEXT_ALL_CAPS", false, OnSetAllCaps);
+            AddCheckboxLocale("K45_WTC_TEXT_ALL_CAPS", out m_allCaps, helperConfig, OnSetAllCaps);
 
             WTCUtils.ReloadFontsOf(m_overrideFontSelect, true);
 
             WTCPropTextLayoutEditor.Instance.CurrentTabChanged += (newVal) =>
             {
                 int targetTab = newVal - 1;
-                SafeObtain(OnSetData,  targetTab);
+                SafeObtain(OnSetData, targetTab);
             };
             m_isEditing = false;
 
@@ -119,18 +115,20 @@ namespace Klyte.WriteTheCity.UI
                 DoCopyText, out m_pasteButtonText,
                 DoPasteText, out UIButton m_deleteButtonText,
                 DoDeleteText, (loadedItem) => SafeObtain((ref BoardTextDescriptorGeneralXml x) =>
-                   {
-                       string name = x.SaveName;
-                       x = XmlUtils.DefaultXmlDeserialize<BoardTextDescriptorGeneralXml>(loadedItem);
-                       x.SaveName = name;
-                       OnSetData(ref x);
-                       x.SaveName = name;
-                   }),
+                {
+                    string name = x.SaveName;
+                    x = XmlUtils.DefaultXmlDeserialize<BoardTextDescriptorGeneralXml>(loadedItem);
+                    x.SaveName = name;
+                    OnSetData(ref x);
+                    x.SaveName = name;
+                }),
                 () => WTCPropTextLayoutEditor.Instance.EditingInstance.m_textDescriptors[Math.Max(0, TabToEdit)]);
 
             WTCController.EventFontsReloadedFromFolder += () => WTCUtils.ReloadFontsOf(m_overrideFontSelect, true);
 
         }
+
+
 
         private void DoDeleteText() => WTCPropTextLayoutEditor.Instance.RemoveTabFromItem(TabToEdit);
         private void DoPasteText() => SafeObtain((ref BoardTextDescriptorGeneralXml x) =>
@@ -187,7 +185,7 @@ namespace Klyte.WriteTheCity.UI
 
         private delegate void SafeObtainMethod(ref BoardTextDescriptorGeneralXml x);
 
-        private void SafeObtain(SafeObtainMethod action,  int? targetTab = null)
+        private void SafeObtain(SafeObtainMethod action, int? targetTab = null)
         {
             if (m_isEditing || WTCPropTextLayoutEditor.Instance.EditingInstance == null)
             {

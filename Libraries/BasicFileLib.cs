@@ -40,6 +40,7 @@ namespace Klyte.WriteTheCity.Libraries
 
     [XmlRoot("LibPropSettings")] public class WTCLibPropSettings : BasicFileLib<WTCLibPropSettings, BoardDescriptorGeneralXml> { protected override string XmlName => "LibPropSettings"; }
     [XmlRoot("LibPropTextItem")] public class WTCLibPropTextItem : BasicFileLib<WTCLibPropTextItem, BoardTextDescriptorGeneralXml> { protected override string XmlName => "LibPropTextItem"; }
+    [XmlRoot("LibRoadCornerRule")] public class WTCLibRoadCornerRule : BasicFileLib<WTCLibRoadCornerRule, BoardInstanceRoadNodeXml> { protected override string XmlName => "LibRoadCornerRule"; }
 
     //#region Mileage Marker
     //[XmlRoot("LibMileageMarkerProp")] public class WTCLibMileageMarkerGroup : BasicLib<WTCLibMileageMarkerGroup, BoardDescriptorMileageMarkerXml> { protected override string XmlName => "LibMileageMarkerProp"; }
