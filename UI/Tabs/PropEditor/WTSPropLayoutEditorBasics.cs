@@ -112,7 +112,7 @@ namespace Klyte.WriteTheSigns.UI
             AddColorField(helperSettings, Locale.Get("K45_WTS_PROP_COLOR"), out m_fixedColor, OnSetPropColor);
 
             AddDropdown(Locale.Get("K45_WTS_OVERRIDE_FONT"), out m_fontSelect, helperSettings, new string[0], OnSetFont);
-            WTSUtils.ReloadFontsOf(m_fontSelect, true);
+            WTSUtils.ReloadFontsOf(m_fontSelect, null, true);
 
             AddDropdown(Locale.Get("K45_WTS_TEXT_AVAILABILITY"), out m_dropdownTextContent, helperSettings, Enum.GetNames(typeof(TextRenderingClass)).Select(x => Locale.Get("K45_WTS_BOARD_TEXT_AVAILABILITY_DESC", x.ToString())).ToArray(), OnSetTextOwnNameContent);
 
@@ -133,7 +133,7 @@ namespace Klyte.WriteTheSigns.UI
                 }
             };
 
-            WTSController.EventFontsReloadedFromFolder += () => WTSUtils.ReloadFontsOf(m_fontSelect, true);
+            WTSController.EventFontsReloadedFromFolder += () => WTSUtils.ReloadFontsOf(m_fontSelect, EditingInstance?.FontName, true);
 
             m_popup = ConfigurePropSelectionPopup(selectorPanel);
 

@@ -13,8 +13,12 @@ namespace Klyte.WriteTheSigns.Utils
     internal class WTSUtils
     {
 
-        public static void ReloadFontsOf(UIDropDown target, bool hasDefaultOption = false)
+        public static void ReloadFontsOf(UIDropDown target, string targetValue, bool hasDefaultOption = false, bool force = false)
         {
+            if (force)
+            {
+                WTSController.ReloadFontsFromPath();
+            }
             var items = FontServer.instance.GetAllFonts().ToList();
             items.Sort();
             items.Remove(WTSController.DEFAULT_FONT_KEY);
@@ -24,10 +28,9 @@ namespace Klyte.WriteTheSigns.Utils
                 items.Insert(0, Locale.Get("K45_WTS_USE_GROUP_SETTING_FONT"));
             }
             target.items = items.ToArray();
-            string filename = target.selectedValue;
-            if (items.Contains(filename))
+            if (items.Contains(targetValue))
             {
-                target.selectedIndex = items.IndexOf(filename);
+                target.selectedIndex = items.IndexOf(targetValue);
             }
             else
             {

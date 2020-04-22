@@ -11,7 +11,7 @@ namespace Klyte.WriteTheSigns.Data
         public override int ObjArraySize => NetManager.MAX_NODE_COUNT;
 
         [XmlElement("DefaultFont")]
-        public override string DefaultFont { get; set; } = WTSController.DEFAULT_FONT_KEY;
+        public override string DefaultFont { get; set; }
 
         [XmlIgnore]
         public override string SaveId => "K45_WTS_WTSNetNodesData";
@@ -23,7 +23,7 @@ namespace Klyte.WriteTheSigns.Data
         public RoadQualifierExtractionMode RoadQualifierExtraction { get; set; } = RoadQualifierExtractionMode.NONE;
 
         [XmlAttribute("abbreviationFile")]
-        public string AbbreviationFile { get; set; } = "";
+        public string AbbreviationFile { get; set; }
     }
 
 }

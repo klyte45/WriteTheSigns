@@ -193,12 +193,13 @@
     <Compile Include="Tools\BuildingTool.cs" />
     <Compile Include="UI\Tabs\RoadCornerEditor\WTSRoadCornerEditorDetailTabs.cs" />
     <Compile Include="UI\Tabs\RoadCornerEditor\WTSRoadCornerEditor.cs" />
+    <Compile Include="UI\Tabs\RoadCornerEditor\WTSRoadCornerEditorRuleList.cs" />
     <Compile Include="UI\WTSPropPreviewRenderer.cs" />
-    <Compile Include="UI\Tabs\PropEditor\WTSEditorPropPreview.cs" />
+    <Compile Include="UI\Tabs\PropEditor\WTSPropLayoutEditorPreview.cs" />
     <Compile Include="UI\Tabs\WTSEditorUILib.cs" />
-    <Compile Include="UI\Tabs\PropEditor\WTSTextEditor.cs" />
-    <Compile Include="UI\Tabs\PropEditor\WTSBasicPropInfoEditor.cs" />
-    <Compile Include="UI\Tabs\PropEditor\WTSPropTextLayoutEditor.cs" />
+    <Compile Include="UI\Tabs\PropEditor\WTSPropLayoutEditorTexts.cs" />
+    <Compile Include="UI\Tabs\PropEditor\WTSPropLayoutEditorBasics.cs" />
+    <Compile Include="UI\Tabs\PropEditor\WTSPropLayoutEditor.cs" />
     <Compile Include="Utils\WTSLineUtils.cs" />
     <Compile Include="Utils\PrefabUtils.cs" />
     <Compile Include="Utils\RenderUtils.cs" />
