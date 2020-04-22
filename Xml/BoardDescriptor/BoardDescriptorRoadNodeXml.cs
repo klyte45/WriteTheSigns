@@ -1,5 +1,6 @@
 ﻿using Klyte.Commons.Interfaces;
 using Klyte.WriteTheSigns.Data;
+using System;
 using System.Collections.Generic;
 using System.Xml.Serialization;
 using static ItemClass;
@@ -58,10 +59,11 @@ namespace Klyte.WriteTheSigns.Xml
         [XmlAttribute("selectedDistricts")] public HashSet<ushort> SelectedDistricts { get; set; } = new HashSet<ushort>();
         [XmlAttribute("districtSelectionIsBlacklist")] public bool SelectedDistrictsIsBlacklist { get; set; } = true;
 
+        [XmlAttribute("allowOnlyIfBothRoadsApply")] public bool AllowOnlyIfBothRoadsApply { get; set; } = false;
+
         public bool AllowsClass(ItemClass source) => AllowedLevels.Contains(source.m_level);
         public bool AllowsDistrict(byte districtId) => SelectedDistricts.Contains(districtId) == SelectedDistrictsIsBlacklist;
         public bool AllowsPark(byte districtId) => SelectedDistricts.Contains((ushort)(0x100 | districtId)) == SelectedDistrictsIsBlacklist;
-
     }
 
 

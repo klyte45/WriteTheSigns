@@ -108,9 +108,9 @@ namespace Klyte.WriteTheSigns.Overrides
         {
             if (Data.CurrentDescriptorOrder == null)
             {
-                Data.CurrentDescriptorOrder = new List<BoardInstanceRoadNodeXml>();
+                Data.CurrentDescriptorOrder = new BoardInstanceRoadNodeXml[0];
             }
-            if (Data.CurrentDescriptorOrder.Count == 0)
+            if (Data.CurrentDescriptorOrder.Length == 0)
             {
                 return;
             }
@@ -289,7 +289,6 @@ namespace Klyte.WriteTheSigns.Overrides
             };
 
         }
-        public void CleanDescriptor() => Data.CurrentDescriptorOrder.Clear();
     }
 
 }

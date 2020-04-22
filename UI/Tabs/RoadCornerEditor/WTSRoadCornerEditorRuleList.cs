@@ -5,6 +5,7 @@ using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Data;
 using Klyte.WriteTheSigns.Xml;
 using System;
+using System.Linq;
 using UnityEngine;
 using static Klyte.WriteTheSigns.UI.WTSEditorUILib;
 
@@ -80,14 +81,15 @@ namespace Klyte.WriteTheSigns.UI
             return button;
         }
 
-        private void FixTabstrip()
+        public void FixTabstrip()
         {
-            while (m_orderedRulesList.components.Count > WTSRoadNodesData.Instance.CurrentDescriptorOrder.Count)
+
+            while (m_orderedRulesList.components.Count > WTSRoadNodesData.Instance.CurrentDescriptorOrder.Length)
             {
-                Destroy(m_orderedRulesList.components[WTSRoadNodesData.Instance.CurrentDescriptorOrder.Count]);
+                Destroy(m_orderedRulesList.components[WTSRoadNodesData.Instance.CurrentDescriptorOrder.Length]);
                 m_orderedRulesList.RemoveUIComponent(m_orderedRulesList.components[m_orderedRulesList.components.Count - 1]);
             }
-            while (m_orderedRulesList.components.Count < WTSRoadNodesData.Instance.CurrentDescriptorOrder.Count)
+            while (m_orderedRulesList.components.Count < WTSRoadNodesData.Instance.CurrentDescriptorOrder.Length)
             {
                 AddTabButton("!!!").eventClicked += (x, y) =>
                 {
@@ -95,10 +97,11 @@ namespace Klyte.WriteTheSigns.UI
                     FixTabstrip();
                 };
             }
-            for (int i = 0; i < WTSRoadNodesData.Instance.CurrentDescriptorOrder.Count; i++)
+            for (int i = 0; i < WTSRoadNodesData.Instance.CurrentDescriptorOrder.Length; i++)
             {
                 (m_orderedRulesList.components[i] as UIButton).text = WTSRoadNodesData.Instance.CurrentDescriptorOrder[i].SaveName;
             }
+            WTSRoadNodesData.Instance.ResetBoards();
             if (SelectedIndex < 1)
             {
                 m_up.Disable();
@@ -107,7 +110,7 @@ namespace Klyte.WriteTheSigns.UI
             {
                 m_up.Enable();
             }
-            if (SelectedIndex <= -1 || SelectedIndex >= WTSRoadNodesData.Instance.CurrentDescriptorOrder.Count - 1)
+            if (SelectedIndex <= -1 || SelectedIndex >= WTSRoadNodesData.Instance.CurrentDescriptorOrder.Length - 1)
             {
                 m_down.Disable();
             }
@@ -115,7 +118,7 @@ namespace Klyte.WriteTheSigns.UI
             {
                 m_down.Enable();
             }
-            if (SelectedIndex < 0 || SelectedIndex >= WTSRoadNodesData.Instance.CurrentDescriptorOrder.Count)
+            if (SelectedIndex < 0 || SelectedIndex >= WTSRoadNodesData.Instance.CurrentDescriptorOrder.Length)
             {
                 m_remove.Disable();
             }
@@ -127,13 +130,13 @@ namespace Klyte.WriteTheSigns.UI
 
         private void OnRemoveItem(UIComponent component, UIMouseEventParameter eventParam)
         {
-            WTSRoadNodesData.Instance.CurrentDescriptorOrder.RemoveAt(SelectedIndex);
-            SelectedIndex = -1;
+            WTSRoadNodesData.Instance.CurrentDescriptorOrder = WTSRoadNodesData.Instance.CurrentDescriptorOrder.Where((x, y) => y != SelectedIndex).ToArray();
+            SelectedIndex = Math.Min(SelectedIndex, WTSRoadNodesData.Instance.CurrentDescriptorOrder.Length - 1);
             FixTabstrip();
         }
         private void OnMoveItemUpOnList(UIComponent component, UIMouseEventParameter eventParam)
         {
-            if (SelectedIndex > 0 && WTSRoadNodesData.Instance.CurrentDescriptorOrder.Count > 1)
+            if (SelectedIndex > 0 && WTSRoadNodesData.Instance.CurrentDescriptorOrder.Length > 1)
             {
                 BoardInstanceRoadNodeXml temp = WTSRoadNodesData.Instance.CurrentDescriptorOrder[SelectedIndex];
                 WTSRoadNodesData.Instance.CurrentDescriptorOrder[SelectedIndex] = WTSRoadNodesData.Instance.CurrentDescriptorOrder[SelectedIndex - 1];
@@ -144,7 +147,7 @@ namespace Klyte.WriteTheSigns.UI
         }
         private void OnMoveItemDownOnList(UIComponent component, UIMouseEventParameter eventParam)
         {
-            if (SelectedIndex < WTSRoadNodesData.Instance.CurrentDescriptorOrder.Count && WTSRoadNodesData.Instance.CurrentDescriptorOrder.Count > 1)
+            if (SelectedIndex < WTSRoadNodesData.Instance.CurrentDescriptorOrder.Length && WTSRoadNodesData.Instance.CurrentDescriptorOrder.Length > 1)
             {
                 BoardInstanceRoadNodeXml temp = WTSRoadNodesData.Instance.CurrentDescriptorOrder[SelectedIndex];
                 WTSRoadNodesData.Instance.CurrentDescriptorOrder[SelectedIndex] = WTSRoadNodesData.Instance.CurrentDescriptorOrder[SelectedIndex + 1];
@@ -155,11 +158,11 @@ namespace Klyte.WriteTheSigns.UI
         }
         private void OnAddItemOnList(UIComponent component, UIMouseEventParameter eventParam)
         {
-            WTSRoadNodesData.Instance.CurrentDescriptorOrder.Add(new BoardInstanceRoadNodeXml
+            WTSRoadNodesData.Instance.CurrentDescriptorOrder = WTSRoadNodesData.Instance.CurrentDescriptorOrder.Union(new BoardInstanceRoadNodeXml[] { new BoardInstanceRoadNodeXml
             {
                 SaveName = "New rule",
-            });
-            SelectedIndex = WTSRoadNodesData.Instance.CurrentDescriptorOrder.Count - 1;
+            } }).ToArray();
+            SelectedIndex = WTSRoadNodesData.Instance.CurrentDescriptorOrder.Length - 1;
             FixTabstrip();
         }
         private void Help_RulesList(UIComponent component, UIMouseEventParameter eventParam) { }

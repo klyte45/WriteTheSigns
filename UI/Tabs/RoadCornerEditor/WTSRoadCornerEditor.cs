@@ -33,6 +33,7 @@ namespace Klyte.WriteTheSigns.UI
         private UIDropDown m_fontSelect;
         private UIDropDown m_abbriviationFile;
         private UIDropDown m_qualifierExtractionDropdown;
+        public WTSRoadCornerEditorRuleList RuleList { get; private set; }
 
         public void Awake()
         {
@@ -61,17 +62,14 @@ namespace Klyte.WriteTheSigns.UI
             secondaryContainer.autoLayoutPadding = new RectOffset(0, 10, 0, 0);
 
             KlyteMonoUtils.CreateUIElement(out UIPanel tertiaryContainer, secondaryContainer.transform, "TrcContainer", new Vector4(0, 0, secondaryContainer.width * 0.25f, secondaryContainer.height));
-            tertiaryContainer.gameObject.AddComponent<WTSRoadCornerEditorRuleList>();
+            RuleList = tertiaryContainer.gameObject.AddComponent<WTSRoadCornerEditorRuleList>();
 
             KlyteMonoUtils.CreateUIElement(out UIPanel editorPanel, secondaryContainer.transform, "EditPanel", new Vector4(0, 0, secondaryContainer.width * 0.75f - 35, secondaryContainer.height));
             editorPanel.gameObject.AddComponent<WTSRoadCornerEditorDetailTabs>();
 
         }
 
-        private void ReloadFonts()
-        {
-            WTSUtils.ReloadFontsOf(m_fontSelect, WTSRoadNodesData.Instance.DefaultFont, false, true);
-        }
+        private void ReloadFonts() => WTSUtils.ReloadFontsOf(m_fontSelect, WTSRoadNodesData.Instance.DefaultFont, false, true);
 
         private void ReloadAbbreviations()
         {
@@ -91,6 +89,8 @@ namespace Klyte.WriteTheSigns.UI
             {
                 WTSRoadNodesData.Instance.DefaultFont = null;
             }
+            RenderUtils.ClearCacheFullStreetName();
+            RenderUtils.ClearCacheStreetName();
         }
 
 

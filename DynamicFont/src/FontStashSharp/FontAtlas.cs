@@ -45,6 +45,20 @@ namespace FontStashSharp
                 return m_material;
             }
         }
+        private Material m_materialDayNight;
+        public Material MaterialDayNight
+        {
+            get {
+                if (m_materialDayNight == null)
+                {
+                    m_materialDayNight = new Material(Shader.Find("Custom/Buildings/Building/NoBase"))
+                    {
+                        mainTexture = Texture
+                    };
+                }
+                return m_materialDayNight;
+            }
+        }
 
         public FontAtlas(int w, int h, int count)
         {
@@ -274,9 +288,15 @@ namespace FontStashSharp
                 Material.mainTexture = Texture;
                 Material.SetTexture("_MainTex", Texture);
                 Texture2D aciTex = Material.GetTexture("_ACIMap") as Texture2D ?? new Texture2D(Texture.width, Texture.height);
-                aciTex.SetPixels(Texture.GetPixels().Select(x => new Color(1 - x.a, 0, 1 - x.a / 2, 1)).ToArray());
+                aciTex.SetPixels(Texture.GetPixels().Select(x => new Color(1 - x.a, 0, 1, 1)).ToArray());
                 aciTex.Apply();
                 Material.SetTexture("_ACIMap", aciTex);
+
+                MaterialDayNight.mainTexture = Texture;
+                aciTex = MaterialDayNight.GetTexture("_ACIMap") as Texture2D ?? new Texture2D(Texture.width, Texture.height);
+                aciTex.SetPixels(Texture.GetPixels().Select(x => new Color(1 - x.a, 0, 0.25f, 1)).ToArray());
+                aciTex.Apply();
+                MaterialDayNight.SetTexture("_ACIMap", aciTex);
 
                 IsDirty = false;
             }

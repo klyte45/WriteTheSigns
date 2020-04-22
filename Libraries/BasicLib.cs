@@ -1,4 +1,6 @@
 ﻿using Klyte.Commons.Interfaces;
+using Klyte.Commons.Utils;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Serialization;
@@ -14,51 +16,67 @@ namespace Klyte.WriteTheSigns.Libraries
         [XmlElement("descriptorsData")]
         public ListWrapper<DESC> SavedDescriptorsSerialized
         {
-            get => new ListWrapper<DESC>() { listVal = m_savedDescriptors.Values.ToList() };
+            get => new ListWrapper<DESC>() { listVal = m_savedDescriptorsSerialized.ToList() };
             set {
-                if (value != null)
-                {
-                    m_savedDescriptors = value.listVal.GroupBy(x => x.SaveName).Select(y => y.First()).ToDictionary(x => x.SaveName, x => x);
-                }
+                m_savedDescriptorsSerialized = value.listVal.ToArray();
+                UpdateIndex();
             }
         }
 
-        [XmlIgnore]
-        private Dictionary<string, DESC> m_savedDescriptors = new Dictionary<string, DESC>();
+        private void UpdateIndex() => m_indexes = m_savedDescriptorsSerialized.Select((x, y) => Tuple.New(x.SaveName, y)).ToDictionary(x => x.First, (x) => x.Second);
 
-        public void Add(string indexName, DESC descriptor)
+        [XmlIgnore]
+        private Dictionary<string, int> m_indexes = new Dictionary<string, int>();
+
+        private DESC[] m_savedDescriptorsSerialized;
+
+        public void Add(string indexName, ref DESC descriptor)
         {
             descriptor.SaveName = indexName;
-            m_savedDescriptors[indexName] = descriptor;
+            if (!m_indexes.TryGetValue(indexName, out int idxArray))
+            {
+                m_savedDescriptorsSerialized = m_savedDescriptorsSerialized.Union(new DESC[] { descriptor }).ToArray();
+            }
+            else
+            {
+                m_savedDescriptorsSerialized[idxArray] = descriptor;
+
+            }
+            UpdateIndex();
             Save();
         }
-        public DESC Get(string indexName)
+
+        private DESC m_nullDesc = default;
+
+        public ref DESC Get(string indexName)
         {
-            m_savedDescriptors.TryGetValue(indexName, out DESC descriptor);
-            return descriptor;
+            if (m_indexes.TryGetValue(indexName, out int idxArray))
+            {
+                return ref m_savedDescriptorsSerialized[idxArray];
+            }
+            else
+            {
+                m_nullDesc = default;
+                return ref m_nullDesc;
+            }
         }
 
-        public IEnumerable<string> List() => m_savedDescriptors.Keys;
+        public IEnumerable<string> List() => m_indexes.Keys;
+        public IEnumerable<string> ListWhere(Func<DESC, bool> filter) => m_savedDescriptorsSerialized.Where(x => filter(x)).Select(x => x.SaveName);
 
         public void Remove(string indexName)
         {
             if (indexName != null)
             {
-                bool removed = m_savedDescriptors.Remove(indexName);
-                if (removed)
+                if (m_indexes.TryGetValue(indexName, out int idxArray))
                 {
+                    m_savedDescriptorsSerialized = m_savedDescriptorsSerialized.Where(x => x.SaveName != indexName).ToArray();
+                    UpdateIndex();
                     Save();
                 }
             }
         }
         protected abstract void Save();
-
-        public void Replace(string key, DESC newFile)
-        {
-            Remove(key);
-            Add(key, newFile);
-        }
-
     }
 
     //#region Mileage Marker

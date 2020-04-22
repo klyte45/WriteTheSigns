@@ -142,7 +142,7 @@ namespace Klyte.WriteTheSigns.UI
                 DoCopyText, out m_pasteButton,
                 DoPasteText, out _,
                 null, LoadIntoCurrentConfig,
-                () => WTSPropLayoutEditor.Instance.EditingInstance);
+                () => ref WTSPropLayoutEditor.Instance.EditingInstance);
             m_pasteButton.isVisible = m_clipboard != null;
 
         }

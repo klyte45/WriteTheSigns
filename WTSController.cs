@@ -1,5 +1,6 @@
 ﻿using Klyte.Commons.Interfaces;
 using Klyte.Commons.Utils;
+using Klyte.WriteTheSigns.Overrides;
 using Klyte.WriteTheSigns.Tools;
 using Klyte.WriteTheSigns.Utils;
 using SpriteFontPlus;
@@ -17,6 +18,8 @@ namespace Klyte.WriteTheSigns
     {
         public RoadSegmentTool RoadSegmentToolInstance => FindObjectOfType<RoadSegmentTool>();
         public BuildingEditorTool BuildingEditorToolInstance => FindObjectOfType<BuildingEditorTool>();
+
+        public BoardGeneratorRoadNodes bgRoadNodes => BoardGeneratorRoadNodes.Instance;
         public Dictionary<string, Dictionary<string, string>> AbbreviationFiles { get; private set; }
         public FontServer FontServer => FontServer.instance;
 

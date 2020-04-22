@@ -44,8 +44,9 @@ namespace Klyte.WriteTheSigns.UI
 
         internal int CurrentTab { get; private set; }
         private PropInfo m_currentInfo;
+        private BoardDescriptorGeneralXml m_editingInstance;
 
-        internal BoardDescriptorGeneralXml EditingInstance { get; private set; }
+        internal ref BoardDescriptorGeneralXml EditingInstance => ref m_editingInstance;
         internal PropInfo CurrentPropInfo
         {
             get => m_currentInfo;
@@ -216,7 +217,8 @@ namespace Klyte.WriteTheSigns.UI
 
                           if (error.IsNullOrWhiteSpace())
                           {
-                              WTSPropLayoutData.Instance.Add(text, new BoardDescriptorGeneralXml());
+                              var newModel = new BoardDescriptorGeneralXml();
+                              WTSPropLayoutData.Instance.Add(text, ref newModel);
                               m_configList.items = WTSPropLayoutData.Instance.List().ToArray();
                               m_configList.selectedValue = text;
                           }
@@ -232,7 +234,8 @@ namespace Klyte.WriteTheSigns.UI
 
         internal void ReplaceItem(string key, string data)
         {
-            WTSPropLayoutData.Instance.Replace(key, XmlUtils.DefaultXmlDeserialize<BoardDescriptorGeneralXml>(data));
+            BoardDescriptorGeneralXml newItem = XmlUtils.DefaultXmlDeserialize<BoardDescriptorGeneralXml>(data);
+            WTSPropLayoutData.Instance.Add(key, ref newItem);
             RefreshConfigList();
             OnTabChange(0);
         }

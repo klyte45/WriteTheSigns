@@ -37,12 +37,21 @@ namespace Klyte.WriteTheSigns.UI
             return actionButton;
         }
 
-        public static void AddSlider(string label, out UISlider slider, UIHelperExtension parentHelper, OnValueChanged onChange, float min, float max, float step)
+        public static void AddSlider(string label, out UISlider slider, UIHelperExtension parentHelper, OnValueChanged onChange, float min, float max, float step, Func<float, string> valueLabelFunc)
         {
-            slider = (UISlider)parentHelper.AddSlider(label, min, max, step, min, onChange);
+            UILabel labelValue = null;
+            slider = (UISlider)parentHelper.AddSlider(label, min, max, step, min, (x) =>
+            {
+                onChange(x);
+                labelValue.text = valueLabelFunc(x);
+            });
             slider.GetComponentInParent<UIPanel>().autoLayoutDirection = LayoutDirection.Horizontal;
             slider.GetComponentInParent<UIPanel>().autoFitChildrenVertically = true;
             KlyteMonoUtils.LimitWidthAndBox(slider.parent.GetComponentInChildren<UILabel>(), (parentHelper.Self.width / 2) - 10, true);
+            labelValue = slider.GetComponentInParent<UIPanel>().AddUIComponent<UILabel>();
+            labelValue.textAlignment = UIHorizontalAlignment.Center;
+            labelValue.padding = new RectOffset(4, 4, 0, 0);
+            KlyteMonoUtils.LimitWidthAndBox(labelValue, (parentHelper.Self.width / 2) - slider.width, true);
         }
         public static void AddVector3Field(string label, out UITextField[] fieldArray, UIHelperExtension parentHelper, Action<Vector3> onChange)
         {
@@ -148,11 +157,13 @@ namespace Klyte.WriteTheSigns.UI
             return new Vector2(num, b);
         }
 
+        public delegate ref T GetItemReference<T>();
+
         public static UIDropDown AddLibBox<LIB, DESC>(UIHelperExtension parentHelper, out UIButton copyButton,
             Action actionCopy, out UIButton pasteButton,
             Action actionPaste, out UIButton deleteButton,
             Action actionDelete, Action<string> onLoad,
-            Func<DESC> getContentToSave, Action<UIHelperExtension> doWithLibGroup = null) where LIB : BasicFileLib<LIB, DESC>, new() where DESC : ILibable
+            GetItemReference<DESC> getContentToSave, Action<UIHelperExtension> doWithLibGroup = null) where LIB : BasicFileLib<LIB, DESC>, new() where DESC : ILibable
         {
             UILabel label = parentHelper.AddLabel(Locale.Get("K45_WTS_CLIPBOARD_TITLE"));
             var cbPanel = label.parent as UIPanel;
@@ -223,7 +234,7 @@ namespace Klyte.WriteTheSigns.UI
             {
                 if (!saveTxt.text.IsNullOrWhiteSpace())
                 {
-                    BasicFileLib<LIB, DESC>.Instance.Add(saveTxt.text, getContentToSave());
+                    BasicFileLib<LIB, DESC>.Instance.Add(saveTxt.text, ref getContentToSave());
                     loadDD.items = BasicFileLib<LIB, DESC>.Instance.List().ToArray();
                     loadDD.selectedValue = saveTxt.text;
                 }
