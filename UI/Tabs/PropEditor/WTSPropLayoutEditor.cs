@@ -9,6 +9,7 @@ using Klyte.WriteTheSigns.Xml;
 using System;
 using System.Linq;
 using UnityEngine;
+using static Klyte.WriteTheSigns.UI.WTSEditorUILib;
 
 namespace Klyte.WriteTheSigns.UI
 {
@@ -94,8 +95,8 @@ namespace Klyte.WriteTheSigns.UI
             m_editTabstrip.autoLayout = true;
             m_editTabstrip.autoLayoutDirection = LayoutDirection.Vertical;
 
-            InitTabButton(m_editTabstrip, out _, Locale.Get("K45_WTS_BASIC_INFO_TAB_TITLE"), new Vector2(m_editTabstrip.size.x, 30));
-            InitTabButton(m_editTabstrip, out m_plusButton, Locale.Get("K45_WTS_ADD_NEW_TEXT_ENTRY"), new Vector2(m_editTabstrip.size.x, 30), false);
+            InitTabButton(m_editTabstrip, out _, Locale.Get("K45_WTS_BASIC_INFO_TAB_TITLE"), new Vector2(m_editTabstrip.size.x, 30), (x, y) => OnTabChange(x.zOrder));
+            InitTabButton(m_editTabstrip, out m_plusButton, Locale.Get("K45_WTS_ADD_NEW_TEXT_ENTRY"), new Vector2(m_editTabstrip.size.x, 30), null);
             m_plusButton.eventClicked += AddTabToItem;
 
             KlyteMonoUtils.CreateUIElement(out m_editArea, MainContainer.transform, "editArea", new UnityEngine.Vector4(0, 0, MainContainer.width - MainContainer.padding.horizontal, MainContainer.height - m_middleBar.height - m_topBar.height - MainContainer.padding.vertical - (MainContainer.autoLayoutPadding.vertical * 2) - 5));
@@ -119,19 +120,6 @@ namespace Klyte.WriteTheSigns.UI
             m_configList.Invalidate();
         }
 
-        private void InitTabButton(UIComponent parent, out UIButton tabTemplate, string text, Vector2 size, bool useDefaultAction = true)
-        {
-            KlyteMonoUtils.CreateUIElement(out tabTemplate, parent.transform, name, new UnityEngine.Vector4(0, 0, 40, 40));
-            KlyteMonoUtils.InitButton(tabTemplate, false, "GenericTab");
-            tabTemplate.autoSize = false;
-            tabTemplate.size = size;
-            tabTemplate.text = text;
-            tabTemplate.group = parent;
-            if (useDefaultAction)
-            {
-                tabTemplate.eventClicked += (x, y) => OnTabChange(x.zOrder);
-            }
-        }
 
         private void OnTabChange(int idx)
         {
@@ -155,7 +143,7 @@ namespace Klyte.WriteTheSigns.UI
 
         private UIButton AddTabButton(string tabName)
         {
-            InitTabButton(m_editTabstrip, out UIButton button, "", new Vector2(m_editTabstrip.size.x, 30));
+            InitTabButton(m_editTabstrip, out UIButton button, "", new Vector2(m_editTabstrip.size.x, 30), (x, y) => OnTabChange(x.zOrder));
             button.text = tabName;
             m_plusButton.zOrder = 9999999;
             return button;
@@ -297,25 +285,24 @@ namespace Klyte.WriteTheSigns.UI
 
         public void Update()
         {
-
-
-            foreach (UIButton btn in m_editTabstrip.GetComponentsInChildren<UIButton>())
+            if (MainContainer.isVisible)
             {
-                if (btn != m_plusButton)
+                foreach (UIButton btn in m_editTabstrip.GetComponentsInChildren<UIButton>())
                 {
-                    if (btn.zOrder == CurrentTab)
+                    if (btn != m_plusButton)
                     {
-                        btn.state = UIButton.ButtonState.Focused;
-                    }
-                    else
-                    {
-                        btn.state = UIButton.ButtonState.Normal;
+                        if (btn.zOrder == CurrentTab)
+                        {
+                            btn.state = UIButton.ButtonState.Focused;
+                        }
+                        else
+                        {
+                            btn.state = UIButton.ButtonState.Normal;
+                        }
                     }
                 }
             }
         }
-
-
 
     }
 

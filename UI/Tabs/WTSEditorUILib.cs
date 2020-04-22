@@ -256,6 +256,20 @@ namespace Klyte.WriteTheSigns.UI
             checkbox = helper.AddCheckboxLocale(localeId, false, onCheckChanged);
             KlyteMonoUtils.LimitWidthAndBox(checkbox.label, helper.Self.width - 50);
         }
+
+        public static void InitTabButton(UIComponent parent, out UIButton tabTemplate, string text, Vector2 size, MouseEventHandler onClicked)
+        {
+            KlyteMonoUtils.CreateUIElement(out tabTemplate, parent.transform, text, new UnityEngine.Vector4(0, 0, 40, 40));
+            KlyteMonoUtils.InitButton(tabTemplate, false, "GenericTab");
+            tabTemplate.autoSize = false;
+            tabTemplate.size = size;
+            tabTemplate.text = text;
+            tabTemplate.group = parent;
+            if (onClicked != null)
+            {
+                tabTemplate.eventClicked += onClicked;
+            }
+        }
         #endregion
     }
 
