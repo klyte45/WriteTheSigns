@@ -13,9 +13,9 @@ using UnityEngine;
 namespace Klyte.WriteTheSigns.UI
 {
 
-    internal class WTSPropTextLayoutEditor : UICustomControl
+    internal class WTSPropLayoutEditor : UICustomControl
     {
-        public static WTSPropTextLayoutEditor Instance { get; private set; }
+        public static WTSPropLayoutEditor Instance { get; private set; }
         public UIPanel MainContainer { get; protected set; }
 
 
@@ -34,7 +34,7 @@ namespace Klyte.WriteTheSigns.UI
         #region Mid bar controls
         private UIScrollablePanel m_editTabstrip;
         private UIButton m_plusButton;
-        private WTSEditorPropPreview m_propPreview;
+        private WTSPropLayoutEditorPreview m_propPreview;
         #endregion
         #region Bottom bar panels
         private UIPanel m_basicInfoEditor;
@@ -87,7 +87,7 @@ namespace Klyte.WriteTheSigns.UI
 
 
             KlyteMonoUtils.CreateUIElement(out UIPanel previewContainer, m_middleBar.transform, "previewContainer", new UnityEngine.Vector4(0, 0, m_middleBar.width * .6f, m_middleBar.height - m_middleBar.padding.vertical));
-            m_propPreview = previewContainer.gameObject.AddComponent<WTSEditorPropPreview>();
+            m_propPreview = previewContainer.gameObject.AddComponent<WTSPropLayoutEditorPreview>();
 
 
             KlyteMonoUtils.CreateScrollPanel(m_middleBar, out m_editTabstrip, out _, m_middleBar.width - previewContainer.width - m_middleBar.padding.horizontal - (m_middleBar.autoLayoutPadding.horizontal * 2) - 20, 300);
@@ -103,9 +103,9 @@ namespace Klyte.WriteTheSigns.UI
 
 
             KlyteMonoUtils.CreateUIElement(out m_basicInfoEditor, m_editArea.transform, "basicTab", new UnityEngine.Vector4(0, 0, m_editArea.width - m_editArea.padding.horizontal, m_editArea.height - m_editArea.padding.vertical));
-            m_basicInfoEditor.gameObject.AddComponent<WTSBasicPropInfoEditor>();
+            m_basicInfoEditor.gameObject.AddComponent<WTSPropLayoutEditorBasics>();
             KlyteMonoUtils.CreateUIElement(out m_textInfoEditor, m_editArea.transform, "textTab", new UnityEngine.Vector4(0, 0, m_editArea.width - m_editArea.padding.horizontal, m_editArea.height - m_editArea.padding.vertical));
-            m_textInfoEditor.gameObject.AddComponent<WTSTextEditor>();
+            m_textInfoEditor.gameObject.AddComponent<WTSPropLayoutEditorTexts>();
 
             RefreshConfigList();
             OnTabChange(0);

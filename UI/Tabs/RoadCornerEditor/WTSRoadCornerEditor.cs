@@ -32,9 +32,6 @@ namespace Klyte.WriteTheSigns.UI
             MainContainer.autoLayoutDirection = LayoutDirection.Vertical;
             MainContainer.autoLayoutPadding = new RectOffset(5, 5, 5, 5);
 
-
-
-
             var m_uiHelperHS = new UIHelperExtension(MainContainer);
 
             AddDropdown(Locale.Get("K45_WTS_FONT_ST_CORNERS"), out m_fontSelect, m_uiHelperHS, new string[0], OnSetFont);

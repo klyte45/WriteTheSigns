@@ -17,7 +17,7 @@ using static Klyte.WriteTheSigns.UI.WTSEditorUILib;
 namespace Klyte.WriteTheSigns.UI
 {
 
-    internal class WTSTextEditor : UICustomControl
+    internal class WTSPropLayoutEditorTexts : UICustomControl
     {
         public UIPanel MainContainer { get; protected set; }
 
@@ -52,7 +52,7 @@ namespace Klyte.WriteTheSigns.UI
         private UITextField m_textPrefix;
         private UITextField m_textSuffix;
 
-        private int TabToEdit => WTSPropTextLayoutEditor.Instance.CurrentTab - 1;
+        private int TabToEdit => WTSPropLayoutEditor.Instance.CurrentTab - 1;
         private bool m_isEditing = true;
         private UICheckBox m_allCaps;
 
@@ -103,7 +103,7 @@ namespace Klyte.WriteTheSigns.UI
 
             WTSUtils.ReloadFontsOf(m_overrideFontSelect, true);
 
-            WTSPropTextLayoutEditor.Instance.CurrentTabChanged += (newVal) =>
+            WTSPropLayoutEditor.Instance.CurrentTabChanged += (newVal) =>
             {
                 int targetTab = newVal - 1;
                 SafeObtain(OnSetData, targetTab);
@@ -122,7 +122,7 @@ namespace Klyte.WriteTheSigns.UI
                     OnSetData(ref x);
                     x.SaveName = name;
                 }),
-                () => WTSPropTextLayoutEditor.Instance.EditingInstance.m_textDescriptors[Math.Max(0, TabToEdit)]);
+                () => WTSPropLayoutEditor.Instance.EditingInstance.m_textDescriptors[Math.Max(0, TabToEdit)]);
 
             WTSController.EventFontsReloadedFromFolder += () => WTSUtils.ReloadFontsOf(m_overrideFontSelect, true);
 
@@ -130,7 +130,7 @@ namespace Klyte.WriteTheSigns.UI
 
 
 
-        private void DoDeleteText() => WTSPropTextLayoutEditor.Instance.RemoveTabFromItem(TabToEdit);
+        private void DoDeleteText() => WTSPropLayoutEditor.Instance.RemoveTabFromItem(TabToEdit);
         private void DoPasteText() => SafeObtain((ref BoardTextDescriptorGeneralXml x) =>
         {
             if (m_clipboard != null)
@@ -169,8 +169,8 @@ namespace Klyte.WriteTheSigns.UI
             m_useContrastColor.isChecked = x.m_useContrastColor;
             m_textFixedColor.selectedColor = x.m_defaultColor;
 
-            m_dropdownTextContent.items = WTSPropRenderingRules.ALLOWED_TYPES_PER_RENDERING_CLASS[WTSPropTextLayoutEditor.Instance.EditingInstance.m_allowedRenderClass].Select(x => Locale.Get("K45_WTS_BOARD_TEXT_TYPE_DESC", x.ToString())).ToArray();
-            m_dropdownTextContent.selectedIndex = Array.IndexOf(WTSPropRenderingRules.ALLOWED_TYPES_PER_RENDERING_CLASS[WTSPropTextLayoutEditor.Instance.EditingInstance.m_allowedRenderClass], x.m_textType);
+            m_dropdownTextContent.items = WTSPropRenderingRules.ALLOWED_TYPES_PER_RENDERING_CLASS[WTSPropLayoutEditor.Instance.EditingInstance.m_allowedRenderClass].Select(x => Locale.Get("K45_WTS_BOARD_TEXT_TYPE_DESC", x.ToString())).ToArray();
+            m_dropdownTextContent.selectedIndex = Array.IndexOf(WTSPropRenderingRules.ALLOWED_TYPES_PER_RENDERING_CLASS[WTSPropLayoutEditor.Instance.EditingInstance.m_allowedRenderClass], x.m_textType);
             m_customText.text = x.m_fixedText ?? "";
             m_overrideFontSelect.selectedIndex = x.m_overrideFont == null ? 0 : x.m_overrideFont == WTSController.DEFAULT_FONT_KEY ? 1 : Array.IndexOf(m_overrideFontSelect.items, x.m_overrideFont);
             m_textPrefix.text = x.m_prefix ?? "";
@@ -187,7 +187,7 @@ namespace Klyte.WriteTheSigns.UI
 
         private void SafeObtain(SafeObtainMethod action, int? targetTab = null)
         {
-            if (m_isEditing || WTSPropTextLayoutEditor.Instance.EditingInstance == null)
+            if (m_isEditing || WTSPropLayoutEditor.Instance.EditingInstance == null)
             {
                 return;
             }
@@ -198,9 +198,9 @@ namespace Klyte.WriteTheSigns.UI
                 try
                 {
                     int effTargetTab = Math.Max(0, targetTab ?? TabToEdit);
-                    if (effTargetTab < WTSPropTextLayoutEditor.Instance.EditingInstance.m_textDescriptors.Length)
+                    if (effTargetTab < WTSPropLayoutEditor.Instance.EditingInstance.m_textDescriptors.Length)
                     {
-                        action(ref WTSPropTextLayoutEditor.Instance.EditingInstance.m_textDescriptors[effTargetTab]);
+                        action(ref WTSPropLayoutEditor.Instance.EditingInstance.m_textDescriptors[effTargetTab]);
                     }
                 }
                 finally
@@ -219,7 +219,7 @@ namespace Klyte.WriteTheSigns.UI
             else
             {
                 desc.SaveName = text;
-                WTSPropTextLayoutEditor.Instance.SetCurrentTabName(text);
+                WTSPropLayoutEditor.Instance.SetCurrentTabName(text);
             }
         });
         private void OnSetSuffix(string text) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_suffix = text);
@@ -246,7 +246,7 @@ namespace Klyte.WriteTheSigns.UI
             {
                 if (sel >= 0)
                 {
-                    desc.m_textType = WTSPropRenderingRules.ALLOWED_TYPES_PER_RENDERING_CLASS[WTSPropTextLayoutEditor.Instance.EditingInstance.m_allowedRenderClass][sel];
+                    desc.m_textType = WTSPropRenderingRules.ALLOWED_TYPES_PER_RENDERING_CLASS[WTSPropLayoutEditor.Instance.EditingInstance.m_allowedRenderClass][sel];
                     m_customText.parent.isVisible = desc.m_textType == TextType.Fixed;
                 }
             });

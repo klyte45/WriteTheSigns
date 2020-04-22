@@ -11,7 +11,7 @@ using UnityEngine;
 namespace Klyte.WriteTheSigns.UI
 {
 
-    internal class WTSEditorPropPreview : UICustomControl
+    internal class WTSPropLayoutEditorPreview : UICustomControl
     {
 
         public UIPanel MainContainer { get; protected set; }
@@ -28,9 +28,9 @@ namespace Klyte.WriteTheSigns.UI
 
         private string m_overrideText = null;
 
-        private PropInfo CurrentInfo => WTSPropTextLayoutEditor.Instance.CurrentPropInfo;
-        private int TabToPreview => WTSPropTextLayoutEditor.Instance.CurrentTab - 1;
-        private BoardDescriptorGeneralXml EditingInstancePreview => WTSPropTextLayoutEditor.Instance.EditingInstance;
+        private PropInfo CurrentInfo => WTSPropLayoutEditor.Instance.CurrentPropInfo;
+        private int TabToPreview => WTSPropLayoutEditor.Instance.CurrentTab - 1;
+        private BoardDescriptorGeneralXml EditingInstancePreview => WTSPropLayoutEditor.Instance.EditingInstance;
 
         private BoardTextDescriptorGeneralXml CurrentTextDescriptor => TabToPreview >= 0 && TabToPreview < EditingInstancePreview.m_textDescriptors.Length ? EditingInstancePreview.m_textDescriptors[TabToPreview] : default;
 
@@ -79,7 +79,7 @@ namespace Klyte.WriteTheSigns.UI
             KlyteMonoUtils.InitCircledButtonText(m_previewControls, out UIButton use50lText, "x50", (x, y) => m_overrideText = "Á" + new string('L', 48) + "j", Locale.Get("K45_WTS_USE_50LENGHT_TEXT"));
             KlyteMonoUtils.InitCircledButtonText(m_previewControls, out UIButton use100lText, "x200", (x, y) => m_overrideText = "Á" + new string('C', 198) + "j", Locale.Get("K45_WTS_USE_200LENGHT_TEXT"));
 
-            WTSPropTextLayoutEditor.Instance.CurrentTabChanged += (x) =>
+            WTSPropLayoutEditor.Instance.CurrentTabChanged += (x) =>
             {
                 ResetCamera();
             };

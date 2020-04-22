@@ -19,9 +19,8 @@ using static Klyte.WriteTheSigns.UI.WTSEditorUILib;
 namespace Klyte.WriteTheSigns.UI
 {
 
-    internal class WTSBasicPropInfoEditor : UICustomControl
+    internal class WTSPropLayoutEditorBasics : UICustomControl
     {
-        public static WTSBasicPropInfoEditor Instance { get; private set; }
         public UIPanel MainContainer { get; protected set; }
 
         private UITabstrip m_tabstrip;
@@ -43,7 +42,7 @@ namespace Klyte.WriteTheSigns.UI
 
         private PropInfo m_lastSelection;
 
-        private BoardDescriptorGeneralXml EditingInstance => WTSPropTextLayoutEditor.Instance.EditingInstance;
+        private BoardDescriptorGeneralXml EditingInstance => WTSPropLayoutEditor.Instance.EditingInstance;
 
         public Dictionary<string, string> PropsLoaded
         {
@@ -76,8 +75,6 @@ namespace Klyte.WriteTheSigns.UI
 
         public void Awake()
         {
-            Instance = this;
-
             MainContainer = GetComponent<UIPanel>();
             MainContainer.autoLayout = true;
             MainContainer.autoLayoutDirection = LayoutDirection.Vertical;
@@ -119,7 +116,7 @@ namespace Klyte.WriteTheSigns.UI
 
             AddDropdown(Locale.Get("K45_WTS_TEXT_AVAILABILITY"), out m_dropdownTextContent, helperSettings, Enum.GetNames(typeof(TextRenderingClass)).Select(x => Locale.Get("K45_WTS_BOARD_TEXT_AVAILABILITY_DESC", x.ToString())).ToArray(), OnSetTextOwnNameContent);
 
-            WTSPropTextLayoutEditor.Instance.CurrentTabChanged += (x) =>
+            WTSPropLayoutEditor.Instance.CurrentTabChanged += (x) =>
             {
                 if (x == 0 && EditingInstance != null)
                 {
@@ -129,7 +126,7 @@ namespace Klyte.WriteTheSigns.UI
                     m_dropdownTextContent.selectedIndex = (int)EditingInstance.m_allowedRenderClass;
 
                     m_lastSelection = GetInfos<PropInfo>().Where(x => x?.name == EditingInstance.m_propName).FirstOrDefault();
-                    WTSPropTextLayoutEditor.Instance.CurrentPropInfo = m_lastSelection;
+                    WTSPropLayoutEditor.Instance.CurrentPropInfo = m_lastSelection;
                     m_propFilter.text = (m_lastSelection != null) ? GetListName(m_lastSelection) : "";
 
 
@@ -145,12 +142,12 @@ namespace Klyte.WriteTheSigns.UI
                 DoCopyText, out m_pasteButton,
                 DoPasteText, out _,
                 null, LoadIntoCurrentConfig,
-                () => WTSPropTextLayoutEditor.Instance.EditingInstance);
+                () => WTSPropLayoutEditor.Instance.EditingInstance);
             m_pasteButton.isVisible = m_clipboard != null;
 
         }
 
-        private void LoadIntoCurrentConfig(string loadedItem) => WTSPropTextLayoutEditor.Instance.ReplaceItem(EditingInstance.SaveName, loadedItem);
+        private void LoadIntoCurrentConfig(string loadedItem) => WTSPropLayoutEditor.Instance.ReplaceItem(EditingInstance.SaveName, loadedItem);
 
 
         private string m_clipboard;
@@ -224,7 +221,7 @@ namespace Klyte.WriteTheSigns.UI
                 else
                 {
                     EditingInstance.SaveName = text;
-                    WTSPropTextLayoutEditor.Instance.SetCurrentSelectionNewName(text);
+                    WTSPropLayoutEditor.Instance.SetCurrentSelectionNewName(text);
                 }
             }
         }
@@ -249,7 +246,7 @@ namespace Klyte.WriteTheSigns.UI
                           if (error.IsNullOrWhiteSpace())
                           {
                               EditingInstance.SaveName = text;
-                              WTSPropTextLayoutEditor.Instance.SetCurrentSelectionNewName(text);
+                              WTSPropLayoutEditor.Instance.SetCurrentSelectionNewName(text);
                           }
                           else
                           {
@@ -294,7 +291,7 @@ namespace Klyte.WriteTheSigns.UI
         private void OnSetProp(int sel)
         {
             PropInfo targetProp = (sel < 0 ? null : m_lastSelection = GetInfos<PropInfo>().Where(x => x.name == PropsLoaded[m_popup.items[sel]]).FirstOrDefault());
-            WTSPropTextLayoutEditor.Instance.CurrentPropInfo = targetProp;
+            WTSPropLayoutEditor.Instance.CurrentPropInfo = targetProp;
         }
 
         protected void OnSetFont(int idx)
