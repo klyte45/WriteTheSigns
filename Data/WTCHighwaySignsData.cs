@@ -1,16 +1,16 @@
-﻿using Klyte.WriteTheCity.Xml;
+﻿using Klyte.WriteTheSigns.Xml;
 using System.Xml.Serialization;
 
-namespace Klyte.WriteTheCity.Data
+namespace Klyte.WriteTheSigns.Data
 {
 
-    [XmlRoot("WTCHighwaySignsData")]
-    public class WTCHighwaySignsData : WTCBaseData<WTCHighwaySignsData, BoardBunchContainerOnNetXml>
+    [XmlRoot("WTSHighwaySignsData")]
+    public class WTSHighwaySignsData : WTSBaseData<WTSHighwaySignsData, BoardBunchContainerOnNetXml>
     {
         public override int ObjArraySize => NetManager.MAX_SEGMENT_COUNT;
 
 
-        public override string SaveId => "K45_WTC3_WTCHighwaySignsData";
+        public override string SaveId => "K45_WTS_WTSHighwaySignsData";
     }
 
 }

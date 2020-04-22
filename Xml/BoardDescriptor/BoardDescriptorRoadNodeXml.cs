@@ -1,10 +1,10 @@
 ﻿using Klyte.Commons.Interfaces;
-using Klyte.WriteTheCity.Data;
+using Klyte.WriteTheSigns.Data;
 using System.Collections.Generic;
 using System.Xml.Serialization;
 using static ItemClass;
 
-namespace Klyte.WriteTheCity.Xml
+namespace Klyte.WriteTheSigns.Xml
 {
     [XmlRoot("roadCornerDescriptor")]
     public class BoardInstanceRoadNodeXml : BoardInstanceXml, ILibable
@@ -17,7 +17,7 @@ namespace Klyte.WriteTheCity.Xml
             get => Descriptor?.SaveName;
             set {
                 m_propLayoutName = value;
-                Descriptor = WTCPropLayoutData.Instance.Get(m_propLayoutName);
+                Descriptor = WTSPropLayoutData.Instance.Get(m_propLayoutName);
             }
         }
 
@@ -32,14 +32,14 @@ namespace Klyte.WriteTheCity.Xml
             get {
                 if (m_descriptor == null && m_propLayoutName != null)
                 {
-                    m_descriptor = WTCPropLayoutData.Instance.Get(m_propLayoutName);
+                    m_descriptor = WTSPropLayoutData.Instance.Get(m_propLayoutName);
                     m_propLayoutName = null;
                 }
                 return m_descriptor;
             }
             internal set {
                 m_propLayoutName = value?.SaveName;
-                m_descriptor = WTCPropLayoutData.Instance.Get(m_propLayoutName);
+                m_descriptor = WTSPropLayoutData.Instance.Get(m_propLayoutName);
             }
         }
 

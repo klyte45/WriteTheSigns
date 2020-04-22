@@ -1,4 +1,4 @@
-﻿namespace Klyte.WriteTheCity.Xml
+﻿namespace Klyte.WriteTheSigns.Xml
 {
     public enum RoadQualifierExtractionMode
     {

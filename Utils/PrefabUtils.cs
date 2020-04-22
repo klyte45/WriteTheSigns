@@ -3,7 +3,7 @@ using ColossalFramework.Packaging;
 using ColossalFramework.PlatformServices;
 using System.Collections.Generic;
 
-namespace Klyte.WriteTheCity.Utils
+namespace Klyte.WriteTheSigns.Utils
 {
     public class PrefabUtils : SingletonLite<PrefabUtils>
     {

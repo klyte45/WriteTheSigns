@@ -1,13 +1,13 @@
 ﻿using ColossalFramework;
-using Klyte.WriteTheCity.Rendering;
-using Klyte.WriteTheCity.Xml;
+using Klyte.WriteTheSigns.Rendering;
+using Klyte.WriteTheSigns.Xml;
 using SpriteFontPlus;
 using System.Linq;
 using UnityEngine;
 
-namespace Klyte.WriteTheCity.UI
+namespace Klyte.WriteTheSigns.UI
 {
-    public class WTCPropPreviewRenderer : MonoBehaviour
+    public class WTSPropPreviewRenderer : MonoBehaviour
     {
         private readonly Camera m_camera;
         private readonly MaterialPropertyBlock m_block = new MaterialPropertyBlock();
@@ -30,7 +30,7 @@ namespace Klyte.WriteTheCity.UI
         public RenderTexture Texture => m_camera.targetTexture;
         public float Zoom { get; set; } = 3f;
 
-        public WTCPropPreviewRenderer()
+        public WTSPropPreviewRenderer()
         {
             m_camera = new GameObject("Camera").AddComponent<Camera>();
             m_camera.transform.SetParent(base.transform);
@@ -43,7 +43,7 @@ namespace Klyte.WriteTheCity.UI
             m_camera.targetTexture = new RenderTexture(512, 512, 24, RenderTextureFormat.ARGB32);
             m_camera.pixelRect = new Rect(0f, 0f, 512f, 512f);
             m_camera.clearFlags = CameraClearFlags.Color;
-            m_camera.name = "WTCCamera";
+            m_camera.name = "WTSCamera";
         }
 
         public Matrix4x4 RenderProp(PropInfo info, BoardDescriptorGeneralXml descriptor, int referenceIdx, string overrideText) => RenderProp(info, default, default, descriptor, referenceIdx, overrideText);
@@ -70,9 +70,9 @@ namespace Klyte.WriteTheCity.UI
                 DayNightProperties.instance.moonLightSource.enabled = false;
             }
 
-            if (info.m_material.shader == WTCController.DISALLOWED_SHADER_PROP)
+            if (info.m_material.shader == WTSController.DISALLOWED_SHADER_PROP)
             {
-                info.m_material.shader = WTCController.DEFAULT_SHADER_TEXT;
+                info.m_material.shader = WTSController.DEFAULT_SHADER_TEXT;
             }
 
             m_defaultInstance.Descriptor = descriptor;
@@ -89,15 +89,15 @@ namespace Klyte.WriteTheCity.UI
             }
             else
             {
-                var sourceMatrix = Matrix4x4.Inverse(WTCPropRenderingRules.CalculateTextMatrix(m_defaultInstance, descriptor.m_textDescriptors[referenceIdx], WTCPropRenderingRules.GetTextMesh(FontServer.instance[WTCController.DEFAULT_FONT_KEY], descriptor.m_textDescriptors[referenceIdx], 0, 0, referenceIdx, m_defaultInstance), true).FirstOrDefault());
-                float regularMagn = info.m_mesh.bounds.extents.magnitude / WTCPropRenderingRules.SCALING_FACTOR;
-                Vector3 textExt = WTCPropRenderingRules.GetTextMesh(FontServer.instance[descriptor.FontName] ?? FontServer.instance[WTCController.DEFAULT_FONT_KEY], descriptor.m_textDescriptors[referenceIdx], 0, 0, referenceIdx, m_defaultInstance)?.m_mesh?.bounds.extents ?? default;
+                var sourceMatrix = Matrix4x4.Inverse(WTSPropRenderingRules.CalculateTextMatrix(m_defaultInstance, descriptor.m_textDescriptors[referenceIdx], WTSPropRenderingRules.GetTextMesh(FontServer.instance[WTSController.DEFAULT_FONT_KEY], descriptor.m_textDescriptors[referenceIdx], 0, 0, referenceIdx, m_defaultInstance), true).FirstOrDefault());
+                float regularMagn = info.m_mesh.bounds.extents.magnitude / WTSPropRenderingRules.SCALING_FACTOR;
+                Vector3 textExt = WTSPropRenderingRules.GetTextMesh(FontServer.instance[descriptor.FontName] ?? FontServer.instance[WTSController.DEFAULT_FONT_KEY], descriptor.m_textDescriptors[referenceIdx], 0, 0, referenceIdx, m_defaultInstance)?.m_mesh?.bounds.extents ?? default;
 
                 if (descriptor.m_textDescriptors[referenceIdx].m_maxWidthMeters > 0)
                 {
-                    textExt.x = Mathf.Min(textExt.x * descriptor.m_textDescriptors[referenceIdx].m_textScale, descriptor.m_textDescriptors[referenceIdx].m_maxWidthMeters / WTCPropRenderingRules.SCALING_FACTOR) / descriptor.m_textDescriptors[referenceIdx].m_textScale;
+                    textExt.x = Mathf.Min(textExt.x * descriptor.m_textDescriptors[referenceIdx].m_textScale, descriptor.m_textDescriptors[referenceIdx].m_maxWidthMeters / WTSPropRenderingRules.SCALING_FACTOR) / descriptor.m_textDescriptors[referenceIdx].m_textScale;
                 }
-                magnitude = Mathf.Min(regularMagn * 3, Mathf.Max(0.1f / WTCPropRenderingRules.SCALING_FACTOR, (textExt * descriptor.m_textDescriptors[referenceIdx].m_textScale).magnitude));
+                magnitude = Mathf.Min(regularMagn * 3, Mathf.Max(0.1f / WTSPropRenderingRules.SCALING_FACTOR, (textExt * descriptor.m_textDescriptors[referenceIdx].m_textScale).magnitude));
                 propMatrix = Matrix4x4.TRS(offsetPosition, Quaternion.Euler(offsetRotation.x, offsetRotation.y, offsetRotation.z), Vector3.one) * sourceMatrix;
             }
             dist = magnitude + 16f;
@@ -112,7 +112,7 @@ namespace Klyte.WriteTheCity.UI
             PropManager instance = Singleton<PropManager>.instance;
             MaterialPropertyBlock materialBlock = instance.m_materialBlock;
             materialBlock.Clear();
-            materialBlock.SetColor(instance.ID_Color, WTCPropRenderingRules.GetColor(0, 0, 0, m_defaultInstance) ?? Color.white);
+            materialBlock.SetColor(instance.ID_Color, WTSPropRenderingRules.GetColor(0, 0, 0, m_defaultInstance) ?? Color.white);
             if (info.m_rollLocation != null)
             {
                 info.m_material.SetVectorArray(instance.ID_RollLocation, info.m_rollLocation);
@@ -125,7 +125,7 @@ namespace Klyte.WriteTheCity.UI
             m_defaultInstance.Descriptor = descriptor;
             for (ushort i = 0; i < descriptor.m_textDescriptors.Length; i++)
             {
-                WTCPropRenderingRules.RenderTextMesh(0, 0, i, m_defaultInstance, propMatrix, descriptor.m_textDescriptors[i], m_block, FontServer.instance[descriptor.FontName ?? WTCController.DEFAULT_FONT_KEY], m_camera);
+                WTSPropRenderingRules.RenderTextMesh(0, 0, i, m_defaultInstance, propMatrix, descriptor.m_textDescriptors[i], m_block, FontServer.instance[descriptor.FontName ?? WTSController.DEFAULT_FONT_KEY], m_camera);
             }
 
 

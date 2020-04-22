@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Klyte.WriteTheCity.Xml
+namespace Klyte.WriteTheSigns.Xml
 {
     public class CacheControlRoadNode : CacheControl
     {

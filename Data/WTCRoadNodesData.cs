@@ -1,20 +1,20 @@
-﻿using Klyte.WriteTheCity.Xml;
+﻿using Klyte.WriteTheSigns.Xml;
 using System.Collections.Generic;
 using System.Xml.Serialization;
 
-namespace Klyte.WriteTheCity.Data
+namespace Klyte.WriteTheSigns.Data
 {
 
-    [XmlRoot("WTCRoadNodesData")]
-    public class WTCRoadNodesData : WTCBaseData<WTCRoadNodesData, IBoardBunchContainer<CacheControlRoadNode>>
+    [XmlRoot("WTSRoadNodesData")]
+    public class WTSRoadNodesData : WTSBaseData<WTSRoadNodesData, IBoardBunchContainer<CacheControlRoadNode>>
     {
         public override int ObjArraySize => NetManager.MAX_NODE_COUNT;
 
         [XmlElement("DefaultFont")]
-        public override string DefaultFont { get; set; } = WTCController.DEFAULT_FONT_KEY;
+        public override string DefaultFont { get; set; } = WTSController.DEFAULT_FONT_KEY;
 
         [XmlIgnore]
-        public override string SaveId => "K45_WTC_WTCNetNodesData";
+        public override string SaveId => "K45_WTS_WTSNetNodesData";
 
         [XmlElement("CurrentDescriptor")]
         public List<BoardInstanceRoadNodeXml> CurrentDescriptorOrder { get; set; } = new List<BoardInstanceRoadNodeXml>();

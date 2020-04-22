@@ -12,7 +12,7 @@ They'll be called as *types of layout* in this page.
 ## Mod integrations
 ### Addresses & Names Mod
 
-All the configurations generated at the Addresses & Names mod that can be relevant for WTC are used, like the district color, 
+All the configurations generated at the Addresses & Names mod that can be relevant for WTS are used, like the district color, 
 zero marker and road name generation strategy.
 
 ## Mod Resources
@@ -20,7 +20,7 @@ zero marker and road name generation strategy.
 All assets can have a own config file, allowing it to be published at Steam Workshop. The file must be called `DefaultBuildingsConfig.xml`
 and will be loaded on game load.
 
-All local configurations files are stored at `<Cities Skylines AppData folder>/Klyte45Mods/WriteTheCity/`.
+All local configurations files are stored at `<Cities Skylines AppData folder>/Klyte45Mods/WriteTheSigns/`.
 
 In the root folder, are placed all **Libraries** that store defaults models that can be used to easily replicate a layout 
 in various different configurations.

@@ -1,7 +1,7 @@
 ﻿using Klyte.Commons.Interfaces;
 using Klyte.Commons.Utils;
-using Klyte.WriteTheCity.Tools;
-using Klyte.WriteTheCity.Utils;
+using Klyte.WriteTheSigns.Tools;
+using Klyte.WriteTheSigns.Utils;
 using SpriteFontPlus;
 using System;
 using System.Collections.Generic;
@@ -10,10 +10,10 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 
-namespace Klyte.WriteTheCity
+namespace Klyte.WriteTheSigns
 {
 
-    public class WTCController : BaseController<WriteTheCityMod, WTCController>
+    public class WTSController : BaseController<WriteTheSignsMod, WTSController>
     {
         public RoadSegmentTool RoadSegmentToolInstance => FindObjectOfType<RoadSegmentTool>();
         public BuildingEditorTool BuildingEditorToolInstance => FindObjectOfType<BuildingEditorTool>();
@@ -74,7 +74,7 @@ namespace Klyte.WriteTheCity
         }
 
 
-        public static readonly string FOLDER_NAME = FileUtils.BASE_FOLDER_PATH + "WriteTheCity";
+        public static readonly string FOLDER_NAME = FileUtils.BASE_FOLDER_PATH + "WriteTheSigns";
         public const string m_defaultFileNameXml = "DefaultBuildingsConfig";
         public const string DEFAULT_GAME_BUILDINGS_CONFIG_FOLDER = "BuildingsDefaultPlacing";
         public const string DEFAULT_GAME_VEHICLES_CONFIG_FOLDER = "VehiclesDefaultPlacing";

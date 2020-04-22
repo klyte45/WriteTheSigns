@@ -1,4 +1,4 @@
-﻿namespace Klyte.WriteTheCity.Rendering
+﻿namespace Klyte.WriteTheSigns.Rendering
 {
     public enum TextRenderingClass
     {

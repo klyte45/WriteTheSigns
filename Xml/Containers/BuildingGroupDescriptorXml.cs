@@ -2,7 +2,7 @@
 using System.Xml;
 using System.Xml.Serialization;
 
-namespace Klyte.WriteTheCity.Xml
+namespace Klyte.WriteTheSigns.Xml
 {
     [XmlRoot("buildingConfig")]
     public class BuildingGroupDescriptorXml : ILibable
@@ -18,10 +18,10 @@ namespace Klyte.WriteTheCity.Xml
         [XmlAttribute("stopMappingThresold")]
         public float StopMappingThresold { get; set; } = 1f;
 
-        [XmlAttribute("versionWTCLastEdit")]
-        public string VersionWTCLastEdit { get; } = WriteTheCityMod.FullVersion;
+        [XmlAttribute("versionWTSLastEdit")]
+        public string VersionWTSLastEdit { get; } = WriteTheSignsMod.FullVersion;
 
-        [XmlAttribute("versionWTCCreation")]
-        public string VersionWTCCreation { get; private set; } = WriteTheCityMod.FullVersion;
+        [XmlAttribute("versionWTSCreation")]
+        public string VersionWTSCreation { get; private set; } = WriteTheSignsMod.FullVersion;
     }
 }

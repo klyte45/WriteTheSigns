@@ -1,12 +1,12 @@
-﻿using Klyte.WriteTheCity.Xml;
+﻿using Klyte.WriteTheSigns.Xml;
 using System.Xml.Serialization;
 
-namespace Klyte.WriteTheCity.Data
+namespace Klyte.WriteTheSigns.Data
 {
     [XmlRoot("PropLayoutData")]
-    public class WTCPropLayoutData : WTCLibBaseData<WTCPropLayoutData, BoardDescriptorGeneralXml>
+    public class WTSPropLayoutData : WTSLibBaseData<WTSPropLayoutData, BoardDescriptorGeneralXml>
     {
 
-        public override string SaveId => "K45_WTC_PropLayoutData";
+        public override string SaveId => "K45_WTS_PropLayoutData";
     }
 }

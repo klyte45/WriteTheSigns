@@ -4,7 +4,7 @@ using System;
 using System.Reflection;
 using UnityEngine;
 
-namespace Klyte.WriteTheCity.Overrides
+namespace Klyte.WriteTheSigns.Overrides
 {
     public class DistrictManagerOverrides : MonoBehaviour, IRedirectable
     {

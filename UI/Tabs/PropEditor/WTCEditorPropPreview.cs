@@ -3,20 +3,20 @@ using ColossalFramework.UI;
 using Klyte.Commons.Extensors;
 using Klyte.Commons.UI.SpriteNames;
 using Klyte.Commons.Utils;
-using Klyte.WriteTheCity.Rendering;
-using Klyte.WriteTheCity.Xml;
+using Klyte.WriteTheSigns.Rendering;
+using Klyte.WriteTheSigns.Xml;
 using SpriteFontPlus;
 using UnityEngine;
 
-namespace Klyte.WriteTheCity.UI
+namespace Klyte.WriteTheSigns.UI
 {
 
-    internal class WTCEditorPropPreview : UICustomControl
+    internal class WTSEditorPropPreview : UICustomControl
     {
 
         public UIPanel MainContainer { get; protected set; }
 
-        private WTCPropPreviewRenderer m_previewRenderer;
+        private WTSPropPreviewRenderer m_previewRenderer;
         private UIPanel m_previewPanel;
         private UITextureSprite m_preview;
         private UIPanel m_previewControls;
@@ -28,9 +28,9 @@ namespace Klyte.WriteTheCity.UI
 
         private string m_overrideText = null;
 
-        private PropInfo CurrentInfo => WTCPropTextLayoutEditor.Instance.CurrentPropInfo;
-        private int TabToPreview => WTCPropTextLayoutEditor.Instance.CurrentTab - 1;
-        private BoardDescriptorGeneralXml EditingInstancePreview => WTCPropTextLayoutEditor.Instance.EditingInstance;
+        private PropInfo CurrentInfo => WTSPropTextLayoutEditor.Instance.CurrentPropInfo;
+        private int TabToPreview => WTSPropTextLayoutEditor.Instance.CurrentTab - 1;
+        private BoardDescriptorGeneralXml EditingInstancePreview => WTSPropTextLayoutEditor.Instance.EditingInstance;
 
         private BoardTextDescriptorGeneralXml CurrentTextDescriptor => TabToPreview >= 0 && TabToPreview < EditingInstancePreview.m_textDescriptors.Length ? EditingInstancePreview.m_textDescriptors[TabToPreview] : default;
 
@@ -64,22 +64,22 @@ namespace Klyte.WriteTheCity.UI
             m_previewControls.autoLayoutDirection = LayoutDirection.Vertical;
 
 
-            KlyteMonoUtils.InitCircledButton(m_previewControls, out m_lockToSelection, CommonsSpriteNames.K45_Unlock, (x, y) => ToggleLock(), "K45_WTC_LOCK_UNLOCK_TO_CURRENT_ITEM");
+            KlyteMonoUtils.InitCircledButton(m_previewControls, out m_lockToSelection, CommonsSpriteNames.K45_Unlock, (x, y) => ToggleLock(), "K45_WTS_LOCK_UNLOCK_TO_CURRENT_ITEM");
             m_lockToSelection.focusedBgSprite = null;
             m_viewLocked = true;
             ToggleLock();
 
-            KlyteMonoUtils.InitCircledButton(m_previewControls, out UIButton resetView, CommonsSpriteNames.K45_Reload, (x, y) => ResetCamera(), "K45_WTC_RESET_VIEW");
+            KlyteMonoUtils.InitCircledButton(m_previewControls, out UIButton resetView, CommonsSpriteNames.K45_Reload, (x, y) => ResetCamera(), "K45_WTS_RESET_VIEW");
 
             UIHelperExtension.AddSpace(m_previewControls, 10);
 
-            KlyteMonoUtils.InitCircledButton(m_previewControls, out UIButton useCurrentText, CommonsSpriteNames.K45_FontIcon, (x, y) => m_overrideText = null, "K45_WTC_USE_CURRENT_TEXT");
-            KlyteMonoUtils.InitCircledButtonText(m_previewControls, out UIButton use1lText, "x1", (x, y) => m_overrideText = "1", Locale.Get("K45_WTC_USE_1LENGHT_TEXT"));
-            KlyteMonoUtils.InitCircledButtonText(m_previewControls, out UIButton use10lText, "x10", (x, y) => m_overrideText = "Á" + new string('X', 8) + "j", Locale.Get("K45_WTC_USE_10LENGHT_TEXT"));
-            KlyteMonoUtils.InitCircledButtonText(m_previewControls, out UIButton use50lText, "x50", (x, y) => m_overrideText = "Á" + new string('L', 48) + "j", Locale.Get("K45_WTC_USE_50LENGHT_TEXT"));
-            KlyteMonoUtils.InitCircledButtonText(m_previewControls, out UIButton use100lText, "x200", (x, y) => m_overrideText = "Á" + new string('C', 198) + "j", Locale.Get("K45_WTC_USE_200LENGHT_TEXT"));
+            KlyteMonoUtils.InitCircledButton(m_previewControls, out UIButton useCurrentText, CommonsSpriteNames.K45_FontIcon, (x, y) => m_overrideText = null, "K45_WTS_USE_CURRENT_TEXT");
+            KlyteMonoUtils.InitCircledButtonText(m_previewControls, out UIButton use1lText, "x1", (x, y) => m_overrideText = "1", Locale.Get("K45_WTS_USE_1LENGHT_TEXT"));
+            KlyteMonoUtils.InitCircledButtonText(m_previewControls, out UIButton use10lText, "x10", (x, y) => m_overrideText = "Á" + new string('X', 8) + "j", Locale.Get("K45_WTS_USE_10LENGHT_TEXT"));
+            KlyteMonoUtils.InitCircledButtonText(m_previewControls, out UIButton use50lText, "x50", (x, y) => m_overrideText = "Á" + new string('L', 48) + "j", Locale.Get("K45_WTS_USE_50LENGHT_TEXT"));
+            KlyteMonoUtils.InitCircledButtonText(m_previewControls, out UIButton use100lText, "x200", (x, y) => m_overrideText = "Á" + new string('C', 198) + "j", Locale.Get("K45_WTS_USE_200LENGHT_TEXT"));
 
-            WTCPropTextLayoutEditor.Instance.CurrentTabChanged += (x) =>
+            WTSPropTextLayoutEditor.Instance.CurrentTabChanged += (x) =>
             {
                 ResetCamera();
             };
@@ -137,16 +137,16 @@ namespace Klyte.WriteTheCity.UI
                     float moveMultiplier = 1;
                     if (CurrentTextDescriptor != null)
                     {
-                        float regularMagn = CurrentInfo.m_mesh.bounds.extents.magnitude / WTCPropRenderingRules.SCALING_FACTOR;
-                        Vector3 textExt = WTCPropRenderingRules.GetTextMesh(FontServer.instance[EditingInstancePreview.FontName ?? WTCController.DEFAULT_FONT_KEY], CurrentTextDescriptor, 0, 0, 0, m_previewRenderer.GetDefaultInstance())?.m_mesh?.bounds.extents ?? default;
+                        float regularMagn = CurrentInfo.m_mesh.bounds.extents.magnitude / WTSPropRenderingRules.SCALING_FACTOR;
+                        Vector3 textExt = WTSPropRenderingRules.GetTextMesh(FontServer.instance[EditingInstancePreview.FontName ?? WTSController.DEFAULT_FONT_KEY], CurrentTextDescriptor, 0, 0, 0, m_previewRenderer.GetDefaultInstance())?.m_mesh?.bounds.extents ?? default;
 
                         if (CurrentTextDescriptor.m_maxWidthMeters > 0)
                         {
-                            textExt.x = Mathf.Min(textExt.x * CurrentTextDescriptor.m_textScale, CurrentTextDescriptor.m_maxWidthMeters / WTCPropRenderingRules.SCALING_FACTOR) / CurrentTextDescriptor.m_textScale;
+                            textExt.x = Mathf.Min(textExt.x * CurrentTextDescriptor.m_textScale, CurrentTextDescriptor.m_maxWidthMeters / WTSPropRenderingRules.SCALING_FACTOR) / CurrentTextDescriptor.m_textScale;
                         }
                         float magnitude = Mathf.Min(regularMagn * 3, Mathf.Max(regularMagn, (textExt * CurrentTextDescriptor.m_textScale).magnitude)) / CurrentTextDescriptor.m_textScale;
-                        multiplier *= magnitude / regularMagn / WTCPropRenderingRules.SCALING_FACTOR;
-                        moveMultiplier /= WTCPropRenderingRules.SCALING_FACTOR;
+                        multiplier *= magnitude / regularMagn / WTSPropRenderingRules.SCALING_FACTOR;
+                        moveMultiplier /= WTSPropRenderingRules.SCALING_FACTOR;
                     }
 
                     m_targetCameraPosition = Vector2.Max(min * multiplier, Vector2.Min(max * multiplier, new Vector2(-eventParam.moveDelta.x / component.width * moveMultiplier, eventParam.moveDelta.y / component.height * moveMultiplier) + m_targetCameraPosition));

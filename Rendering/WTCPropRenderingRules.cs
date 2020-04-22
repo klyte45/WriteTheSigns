@@ -1,17 +1,17 @@
 ﻿using ColossalFramework;
 using ColossalFramework.UI;
 using Klyte.Commons.Utils;
-using Klyte.WriteTheCity.Data;
-using Klyte.WriteTheCity.Utils;
-using Klyte.WriteTheCity.Xml;
+using Klyte.WriteTheSigns.Data;
+using Klyte.WriteTheSigns.Utils;
+using Klyte.WriteTheSigns.Xml;
 using SpriteFontPlus;
 using SpriteFontPlus.Utility;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Klyte.WriteTheCity.Rendering
+namespace Klyte.WriteTheSigns.Rendering
 {
-    internal static class WTCPropRenderingRules
+    internal static class WTSPropRenderingRules
     {
         public const float SCALING_FACTOR = 0.005f;
         public static readonly int SHADER_PROP_COLOR = Shader.PropertyToID("_Color");
@@ -82,7 +82,7 @@ namespace Klyte.WriteTheCity.Rendering
 
         public static void RenderPropMesh(ref PropInfo propInfo, RenderManager.CameraInfo cameraInfo, ushort refId, int boardIdx, int secIdx, int layerMask, float refAngleRad, Vector3 position, Vector4 dataVector, ref string propName, Vector3 propAngle, Vector3 propScale, BoardInstanceXml descriptor, out Matrix4x4 propMatrix, out bool rendered, InstanceID propRenderID)
         {
-            Color? propColor = WTCPropRenderingRules.GetColor(refId, boardIdx, secIdx, descriptor);
+            Color? propColor = WTSPropRenderingRules.GetColor(refId, boardIdx, secIdx, descriptor);
             if (propColor == null)
             {
                 rendered = false;
@@ -100,9 +100,9 @@ namespace Klyte.WriteTheCity.Rendering
                         LogUtils.DoErrorLog($"PREFAB NOT FOUND: {propName}");
                         propName = null;
                     }
-                    if (propInfo.m_material.shader == WTCController.DISALLOWED_SHADER_PROP)
+                    if (propInfo.m_material.shader == WTSController.DISALLOWED_SHADER_PROP)
                     {
-                        propInfo.m_material.shader = WTCController.DEFAULT_SHADER_TEXT;
+                        propInfo.m_material.shader = WTSController.DEFAULT_SHADER_TEXT;
                     }
                 }
                 propInfo.m_color0 = propColor.GetValueOrDefault();
@@ -145,7 +145,7 @@ namespace Klyte.WriteTheCity.Rendering
                 materialPropertyBlock.SetColor(SHADER_PROP_COLOR3, colorToSet);
 
                 //materialPropertyBlock.SetColor(m_shaderPropEmissive, Color.white * (SimulationManager.instance.m_isNightTime ? textDescriptor.m_nightEmissiveMultiplier : textDescriptor.m_dayEmissiveMultiplier));
-                renderInfo.m_generatedMaterial.shader = WTCController.DEFAULT_SHADER_TEXT;
+                renderInfo.m_generatedMaterial.shader = WTSController.DEFAULT_SHADER_TEXT;
                 Graphics.DrawMesh(renderInfo.m_mesh, matrix, renderInfo.m_generatedMaterial, 10, targetCamera, 0, materialPropertyBlock, false);
             }
         }
@@ -213,11 +213,11 @@ namespace Klyte.WriteTheCity.Rendering
             {
                 if (textIdx == 0)
                 {
-                    return WTCRoadNodesData.Instance.BoardsContainers[refId].m_boardsData[boardIdx]?.m_cachedColor;
+                    return WTSRoadNodesData.Instance.BoardsContainers[refId].m_boardsData[boardIdx]?.m_cachedColor;
                 }
                 else
                 {
-                    return WTCRoadNodesData.Instance.BoardsContainers[refId].m_boardsData[boardIdx]?.m_cachedColor2;
+                    return WTSRoadNodesData.Instance.BoardsContainers[refId].m_boardsData[boardIdx]?.m_cachedColor2;
                 }
             }
             return instance?.Descriptor?.FixedColor ?? GetCurrentSimulationColor();
@@ -263,11 +263,11 @@ namespace Klyte.WriteTheCity.Rendering
             {
                 if (textIdx == 0)
                 {
-                    return WTCRoadNodesData.Instance.BoardsContainers[refID].m_boardsData[boardIdx]?.m_cachedContrastColor ?? Color.black;
+                    return WTSRoadNodesData.Instance.BoardsContainers[refID].m_boardsData[boardIdx]?.m_cachedContrastColor ?? Color.black;
                 }
                 else
                 {
-                    return WTCRoadNodesData.Instance.BoardsContainers[refID].m_boardsData[boardIdx]?.m_cachedContrastColor2 ?? Color.black;
+                    return WTSRoadNodesData.Instance.BoardsContainers[refID].m_boardsData[boardIdx]?.m_cachedContrastColor2 ?? Color.black;
                 }
             }
             return KlyteMonoUtils.ContrastColor(instance?.Descriptor?.FixedColor ?? GetCurrentSimulationColor());
@@ -292,15 +292,15 @@ namespace Klyte.WriteTheCity.Rendering
                 switch (textDescriptor.m_textType)
                 {
                     case TextType.StreetSuffix:
-                        return RenderUtils.GetFromCacheArray((secIdx == 0 ? WTCRoadNodesData.Instance.BoardsContainers[refID].m_boardsData[boardIdx].m_segmentId1 : WTCRoadNodesData.Instance.BoardsContainers[refID].m_boardsData[boardIdx].m_segmentId2), textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, RenderUtils.CacheArrayTypes.SuffixStreetName, baseFont);
+                        return RenderUtils.GetFromCacheArray((secIdx == 0 ? WTSRoadNodesData.Instance.BoardsContainers[refID].m_boardsData[boardIdx].m_segmentId1 : WTSRoadNodesData.Instance.BoardsContainers[refID].m_boardsData[boardIdx].m_segmentId2), textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, RenderUtils.CacheArrayTypes.SuffixStreetName, baseFont);
                     case TextType.StreetPrefix:
-                        return RenderUtils.GetFromCacheArray((secIdx == 0 ? WTCRoadNodesData.Instance.BoardsContainers[refID].m_boardsData[boardIdx].m_segmentId1 : WTCRoadNodesData.Instance.BoardsContainers[refID].m_boardsData[boardIdx].m_segmentId2), textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, RenderUtils.CacheArrayTypes.StreetQualifier, baseFont);
+                        return RenderUtils.GetFromCacheArray((secIdx == 0 ? WTSRoadNodesData.Instance.BoardsContainers[refID].m_boardsData[boardIdx].m_segmentId1 : WTSRoadNodesData.Instance.BoardsContainers[refID].m_boardsData[boardIdx].m_segmentId2), textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, RenderUtils.CacheArrayTypes.StreetQualifier, baseFont);
                     case TextType.StreetNameComplete:
-                        return RenderUtils.GetFromCacheArray((secIdx == 0 ? WTCRoadNodesData.Instance.BoardsContainers[refID].m_boardsData[boardIdx].m_segmentId1 : WTCRoadNodesData.Instance.BoardsContainers[refID].m_boardsData[boardIdx].m_segmentId2), textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, RenderUtils.CacheArrayTypes.FullStreetName, baseFont);
+                        return RenderUtils.GetFromCacheArray((secIdx == 0 ? WTSRoadNodesData.Instance.BoardsContainers[refID].m_boardsData[boardIdx].m_segmentId1 : WTSRoadNodesData.Instance.BoardsContainers[refID].m_boardsData[boardIdx].m_segmentId2), textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, RenderUtils.CacheArrayTypes.FullStreetName, baseFont);
                     case TextType.District:
-                        return RenderUtils.GetFromCacheArray((secIdx == 0 ? WTCRoadNodesData.Instance.BoardsContainers[refID].m_boardsData[boardIdx].m_districtId1 : WTCRoadNodesData.Instance.BoardsContainers[refID].m_boardsData[boardIdx].m_districtId2), textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, RenderUtils.CacheArrayTypes.District, baseFont);
+                        return RenderUtils.GetFromCacheArray((secIdx == 0 ? WTSRoadNodesData.Instance.BoardsContainers[refID].m_boardsData[boardIdx].m_districtId1 : WTSRoadNodesData.Instance.BoardsContainers[refID].m_boardsData[boardIdx].m_districtId2), textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, RenderUtils.CacheArrayTypes.District, baseFont);
                     case TextType.DistanceFromCenter:
-                        int distanceRef = (int)Mathf.Floor(WTCRoadNodesData.Instance.BoardsContainers[refID].m_boardsData[boardIdx].m_distanceRef / 1000);
+                        int distanceRef = (int)Mathf.Floor(WTSRoadNodesData.Instance.BoardsContainers[refID].m_boardsData[boardIdx].m_distanceRef / 1000);
                         return RenderUtils.GetTextData(distanceRef.ToString(), textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, baseFont);
                     case TextType.Fixed:
                         return RenderUtils.GetTextData(textDescriptor.m_fixedText ?? "", textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, baseFont, textDescriptor.m_overrideFont);

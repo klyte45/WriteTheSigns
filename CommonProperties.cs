@@ -1,15 +1,15 @@
-using Klyte.WriteTheCity;
+using Klyte.WriteTheSigns;
 
 namespace Klyte.Commons
 {
     public static class CommonProperties
     {
-        public static bool DebugMode => WriteTheCityMod.DebugMode;
-        public static string Version => WriteTheCityMod.Version;
-        public static string ModName => WriteTheCityMod.Instance.SimpleName;
-        public static string Acronym { get; } = "WTC";
-        public static string ModRootFolder { get; } = WTCController.FOLDER_NAME;
-        public static string ModDllRootFolder { get; } = WriteTheCityMod.RootFolder;
-        public static string ModIcon => WriteTheCityMod.Instance.IconName;
+        public static bool DebugMode => WriteTheSignsMod.DebugMode;
+        public static string Version => WriteTheSignsMod.Version;
+        public static string ModName => WriteTheSignsMod.Instance.SimpleName;
+        public static string Acronym { get; } = "WTS";
+        public static string ModRootFolder { get; } = WTSController.FOLDER_NAME;
+        public static string ModDllRootFolder { get; } = WriteTheSignsMod.RootFolder;
+        public static string ModIcon => WriteTheSignsMod.Instance.IconName;
     }
 }

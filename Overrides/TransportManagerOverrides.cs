@@ -1,12 +1,12 @@
 ﻿using Klyte.Commons.Extensors;
 using Klyte.Commons.Utils;
-using Klyte.WriteTheCity.Utils;
+using Klyte.WriteTheSigns.Utils;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 
-namespace Klyte.WriteTheCity.Overrides
+namespace Klyte.WriteTheSigns.Overrides
 {
     public class TransportManagerOverrides : MonoBehaviour, IRedirectable
     {
@@ -52,9 +52,9 @@ namespace Klyte.WriteTheCity.Overrides
                     break;
                 }
             }
-            WTCLineUtils.PurgeStopCache(num);
+            WTSLineUtils.PurgeStopCache(num);
         }
-        public static void AfterRemoveLine(ushort lineID) => WTCLineUtils.PurgeLineCache(lineID);
+        public static void AfterRemoveLine(ushort lineID) => WTSLineUtils.PurgeLineCache(lineID);
 
         public static void PushIntoStackLine(ushort lineID)
         {

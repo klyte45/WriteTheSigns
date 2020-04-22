@@ -1,15 +1,15 @@
 ﻿using System.Xml.Serialization;
-using static Klyte.WriteTheCity.Xml.BoardGeneratorBuildings;
+using static Klyte.WriteTheSigns.Xml.BoardGeneratorBuildings;
 
-namespace Klyte.WriteTheCity.Data
+namespace Klyte.WriteTheSigns.Data
 {
 
-    [XmlRoot("WTCBuildingsData")]
-    public class WTCBuildingsData : WTCBaseData<WTCBuildingsData, BoardBunchContainerBuilding>
+    [XmlRoot("WTSBuildingsData")]
+    public class WTSBuildingsData : WTSBaseData<WTSBuildingsData, BoardBunchContainerBuilding>
     {
         public override int ObjArraySize => BuildingManager.MAX_BUILDING_COUNT;
 
-        public override string SaveId => "K45_WTC3_WTCBuildingsData";
+        public override string SaveId => "K45_WTS_WTSBuildingsData";
     }
 
 }

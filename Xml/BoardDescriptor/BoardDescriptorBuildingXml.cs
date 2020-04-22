@@ -2,7 +2,7 @@
 using System.Xml.Serialization;
 using UnityEngine;
 
-namespace Klyte.WriteTheCity.Xml
+namespace Klyte.WriteTheSigns.Xml
 {
 
     public class BoardDescriptorBuildingXml : BoardInstanceXml

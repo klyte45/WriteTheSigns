@@ -1,13 +1,13 @@
 ﻿using Klyte.Commons.Interfaces;
 using Klyte.Commons.Utils;
-using Klyte.WriteTheCity.Libraries;
+using Klyte.WriteTheSigns.Libraries;
 using System;
 using System.Text;
 
-namespace Klyte.WriteTheCity.Data
+namespace Klyte.WriteTheSigns.Data
 {
-    public abstract class WTCLibBaseData<LIB, DESC> : BasicLib<LIB, DESC>, IDataExtensor
-        where LIB : WTCLibBaseData<LIB, DESC>, new()
+    public abstract class WTSLibBaseData<LIB, DESC> : BasicLib<LIB, DESC>, IDataExtensor
+        where LIB : WTSLibBaseData<LIB, DESC>, new()
         where DESC : ILibable
     {
         public abstract string SaveId { get; }

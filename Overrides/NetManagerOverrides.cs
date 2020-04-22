@@ -1,11 +1,11 @@
 ﻿using Klyte.Commons.Extensors;
 using Klyte.Commons.Utils;
-using Klyte.WriteTheCity.Utils;
+using Klyte.WriteTheSigns.Utils;
 using System;
 using System.Reflection;
 using UnityEngine;
 
-namespace Klyte.WriteTheCity.Overrides
+namespace Klyte.WriteTheSigns.Overrides
 {
     public class NetManagerOverrides : MonoBehaviour, IRedirectable
     {
@@ -24,7 +24,7 @@ namespace Klyte.WriteTheCity.Overrides
             ushort node_ = node;
             new AsyncAction(() => EventNodeChanged?.Invoke(node_)).Execute();
 
-            WTCLineUtils.PurgeStopCache(node);
+            WTSLineUtils.PurgeStopCache(node);
         }
         private static void OnSegmentCreated(ref ushort segment, ref ushort startNode, ref ushort endNode)
         {

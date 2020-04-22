@@ -1,6 +1,6 @@
 ﻿using System.Xml.Serialization;
 
-namespace Klyte.WriteTheCity.Xml
+namespace Klyte.WriteTheSigns.Xml
 {
     [XmlRoot("mileageMarkerDescriptor")]
     public class BoardDescriptorMileageMarkerXml : BoardInstanceXml

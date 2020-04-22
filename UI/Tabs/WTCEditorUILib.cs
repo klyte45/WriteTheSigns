@@ -6,17 +6,17 @@ using Klyte.Commons.Extensors;
 using Klyte.Commons.Interfaces;
 using Klyte.Commons.UI.SpriteNames;
 using Klyte.Commons.Utils;
-using Klyte.WriteTheCity.Libraries;
+using Klyte.WriteTheSigns.Libraries;
 using System;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
 
 
-namespace Klyte.WriteTheCity.UI
+namespace Klyte.WriteTheSigns.UI
 {
 
-    internal static class WTCEditorUILib
+    internal static class WTSEditorUILib
     {
         #region UI Utils
         public static void AddColorField(UIHelperExtension helper, string text, out UIColorField m_colorEditor, PropertyChangedEventHandler<Color> onSelectedColorChanged)
@@ -154,7 +154,7 @@ namespace Klyte.WriteTheCity.UI
             Action actionDelete, Action<string> onLoad,
             Func<DESC> getContentToSave, Action<UIHelperExtension> doWithLibGroup = null) where LIB : BasicFileLib<LIB, DESC>, new() where DESC : ILibable
         {
-            UILabel label = parentHelper.AddLabel(Locale.Get("K45_WTC_CLIPBOARD_TITLE"));
+            UILabel label = parentHelper.AddLabel(Locale.Get("K45_WTS_CLIPBOARD_TITLE"));
             var cbPanel = label.parent as UIPanel;
             cbPanel.autoLayoutDirection = LayoutDirection.Horizontal;
             cbPanel.wrapLayout = false;
@@ -192,7 +192,7 @@ namespace Klyte.WriteTheCity.UI
             }
 
 
-            AddDropdown(Locale.Get("K45_WTC_LOAD_FROM_LIB"), out UIDropDown loadDD, parentHelper, BasicFileLib<LIB, DESC>.Instance.List().ToArray(), (x) => { });
+            AddDropdown(Locale.Get("K45_WTS_LOAD_FROM_LIB"), out UIDropDown loadDD, parentHelper, BasicFileLib<LIB, DESC>.Instance.List().ToArray(), (x) => { });
             loadDD.width -= 80;
             UIPanel parent = loadDD.GetComponentInParent<UIPanel>();
             ConfigureActionButton(parent, CommonsSpriteNames.K45_Load, (x, t) =>
@@ -216,7 +216,7 @@ namespace Klyte.WriteTheCity.UI
 
             }, "CONTENT_DELETE");
 
-            AddTextField(Locale.Get("K45_WTC_SAVE_TO_LIB"), out UITextField saveTxt, parentHelper, (x) => { });
+            AddTextField(Locale.Get("K45_WTS_SAVE_TO_LIB"), out UITextField saveTxt, parentHelper, (x) => { });
             saveTxt.width -= 30;
             parent = saveTxt.GetComponentInParent<UIPanel>();
             ConfigureActionButton(parent, CommonsSpriteNames.K45_Save, (x, t) =>

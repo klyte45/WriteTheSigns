@@ -1,9 +1,9 @@
 ﻿using Klyte.Commons.Extensors;
 using Klyte.Commons.Utils;
-using Klyte.WriteTheCity.Utils;
+using Klyte.WriteTheSigns.Utils;
 using System;
 
-namespace Klyte.WriteTheCity.Overrides
+namespace Klyte.WriteTheSigns.Overrides
 {
 
     public class RenderEventsRedirector : Redirector, IRedirectable

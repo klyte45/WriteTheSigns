@@ -2,7 +2,7 @@
 using System.Linq;
 using System.Xml.Serialization;
 
-namespace Klyte.WriteTheCity.Xml
+namespace Klyte.WriteTheSigns.Xml
 {
     public interface IBoardBunchContainer
     {

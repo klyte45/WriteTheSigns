@@ -4,24 +4,24 @@ using ColossalFramework.UI;
 using Klyte.Commons.Extensors;
 using Klyte.Commons.UI.SpriteNames;
 using Klyte.Commons.Utils;
-using Klyte.WriteTheCity.Data;
-using Klyte.WriteTheCity.Libraries;
-using Klyte.WriteTheCity.Rendering;
-using Klyte.WriteTheCity.Utils;
-using Klyte.WriteTheCity.Xml;
+using Klyte.WriteTheSigns.Data;
+using Klyte.WriteTheSigns.Libraries;
+using Klyte.WriteTheSigns.Rendering;
+using Klyte.WriteTheSigns.Utils;
+using Klyte.WriteTheSigns.Xml;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using UnityEngine;
-using static Klyte.WriteTheCity.UI.WTCEditorUILib;
+using static Klyte.WriteTheSigns.UI.WTSEditorUILib;
 
-namespace Klyte.WriteTheCity.UI
+namespace Klyte.WriteTheSigns.UI
 {
 
-    internal class WTCBasicPropInfoEditor : UICustomControl
+    internal class WTSBasicPropInfoEditor : UICustomControl
     {
-        public static WTCBasicPropInfoEditor Instance { get; private set; }
+        public static WTSBasicPropInfoEditor Instance { get; private set; }
         public UIPanel MainContainer { get; protected set; }
 
         private UITabstrip m_tabstrip;
@@ -43,7 +43,7 @@ namespace Klyte.WriteTheCity.UI
 
         private PropInfo m_lastSelection;
 
-        private BoardDescriptorGeneralXml EditingInstance => WTCPropTextLayoutEditor.Instance.EditingInstance;
+        private BoardDescriptorGeneralXml EditingInstance => WTSPropTextLayoutEditor.Instance.EditingInstance;
 
         public Dictionary<string, string> PropsLoaded
         {
@@ -88,8 +88,8 @@ namespace Klyte.WriteTheCity.UI
 
 
             KlyteMonoUtils.CreateTabsComponent(out m_tabstrip, out m_tabContainer, MainContainer.transform, "TextEditor", new Vector4(0, 0, MainContainer.width, 40), new Vector4(0, 0, MainContainer.width, MainContainer.height - 40));
-            m_tabSettings = TabCommons.CreateNonScrollableTabLocalized(m_tabstrip, KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_Settings), "K45_WTC_GENERAL_SETTINGS", "PrpSettings");
-            m_tabLib = TabCommons.CreateNonScrollableTabLocalized(m_tabstrip, KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_Load), "K45_WTC_PROP_ITEM_LIB_TITLE", "PrpLib");
+            m_tabSettings = TabCommons.CreateNonScrollableTabLocalized(m_tabstrip, KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_Settings), "K45_WTS_GENERAL_SETTINGS", "PrpSettings");
+            m_tabLib = TabCommons.CreateNonScrollableTabLocalized(m_tabstrip, KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_Load), "K45_WTS_PROP_ITEM_LIB_TITLE", "PrpLib");
 
             m_tabSettings.clipChildren = true;
             m_tabLib.clipChildren = true;
@@ -99,7 +99,7 @@ namespace Klyte.WriteTheCity.UI
 
 
 
-            AddTextField(Locale.Get("K45_WTC_PROP_MODEL_SELECT"), out m_propFilter, helperSettings, null);
+            AddTextField(Locale.Get("K45_WTS_PROP_MODEL_SELECT"), out m_propFilter, helperSettings, null);
 
             KlyteMonoUtils.UiTextFieldDefaultsForm(m_propFilter);
             var selectorPanel = m_propFilter.parent as UIPanel;
@@ -111,46 +111,46 @@ namespace Klyte.WriteTheCity.UI
             selectorPanel.wrapLayout = true;
 
 
-            AddTextField(Locale.Get("K45_WTC_PROP_TAB_TITLE"), out m_name, helperSettings, OnSetName);
-            AddColorField(helperSettings, Locale.Get("K45_WTC_PROP_COLOR"), out m_fixedColor, OnSetPropColor);
+            AddTextField(Locale.Get("K45_WTS_PROP_TAB_TITLE"), out m_name, helperSettings, OnSetName);
+            AddColorField(helperSettings, Locale.Get("K45_WTS_PROP_COLOR"), out m_fixedColor, OnSetPropColor);
 
-            AddDropdown(Locale.Get("K45_WTC_OVERRIDE_FONT"), out m_fontSelect, helperSettings, new string[0], OnSetFont);
-            WTCUtils.ReloadFontsOf(m_fontSelect, true);
+            AddDropdown(Locale.Get("K45_WTS_OVERRIDE_FONT"), out m_fontSelect, helperSettings, new string[0], OnSetFont);
+            WTSUtils.ReloadFontsOf(m_fontSelect, true);
 
-            AddDropdown(Locale.Get("K45_WTC_TEXT_AVAILABILITY"), out m_dropdownTextContent, helperSettings, Enum.GetNames(typeof(TextRenderingClass)).Select(x => Locale.Get("K45_WTC_BOARD_TEXT_AVAILABILITY_DESC", x.ToString())).ToArray(), OnSetTextOwnNameContent);
+            AddDropdown(Locale.Get("K45_WTS_TEXT_AVAILABILITY"), out m_dropdownTextContent, helperSettings, Enum.GetNames(typeof(TextRenderingClass)).Select(x => Locale.Get("K45_WTS_BOARD_TEXT_AVAILABILITY_DESC", x.ToString())).ToArray(), OnSetTextOwnNameContent);
 
-            WTCPropTextLayoutEditor.Instance.CurrentTabChanged += (x) =>
+            WTSPropTextLayoutEditor.Instance.CurrentTabChanged += (x) =>
             {
                 if (x == 0 && EditingInstance != null)
                 {
                     m_name.text = EditingInstance.SaveName;
                     m_fixedColor.selectedColor = EditingInstance.FixedColor ?? default;
-                    m_fontSelect.selectedIndex = EditingInstance.FontName == null ? 0 : EditingInstance.FontName == WTCController.DEFAULT_FONT_KEY ? 1 : Array.IndexOf(m_fontSelect.items, EditingInstance.FontName);
+                    m_fontSelect.selectedIndex = EditingInstance.FontName == null ? 0 : EditingInstance.FontName == WTSController.DEFAULT_FONT_KEY ? 1 : Array.IndexOf(m_fontSelect.items, EditingInstance.FontName);
                     m_dropdownTextContent.selectedIndex = (int)EditingInstance.m_allowedRenderClass;
 
                     m_lastSelection = GetInfos<PropInfo>().Where(x => x?.name == EditingInstance.m_propName).FirstOrDefault();
-                    WTCPropTextLayoutEditor.Instance.CurrentPropInfo = m_lastSelection;
+                    WTSPropTextLayoutEditor.Instance.CurrentPropInfo = m_lastSelection;
                     m_propFilter.text = (m_lastSelection != null) ? GetListName(m_lastSelection) : "";
 
 
                 }
             };
 
-            WTCController.EventFontsReloadedFromFolder += () => WTCUtils.ReloadFontsOf(m_fontSelect, true);
+            WTSController.EventFontsReloadedFromFolder += () => WTSUtils.ReloadFontsOf(m_fontSelect, true);
 
             m_popup = ConfigurePropSelectionPopup(selectorPanel);
 
 
-            AddLibBox<WTCLibPropSettings, BoardDescriptorGeneralXml>(helperLib, out UIButton m_copyButtonText,
+            AddLibBox<WTSLibPropSettings, BoardDescriptorGeneralXml>(helperLib, out UIButton m_copyButtonText,
                 DoCopyText, out m_pasteButton,
                 DoPasteText, out _,
                 null, LoadIntoCurrentConfig,
-                () => WTCPropTextLayoutEditor.Instance.EditingInstance);
+                () => WTSPropTextLayoutEditor.Instance.EditingInstance);
             m_pasteButton.isVisible = m_clipboard != null;
 
         }
 
-        private void LoadIntoCurrentConfig(string loadedItem) => WTCPropTextLayoutEditor.Instance.ReplaceItem(EditingInstance.SaveName, loadedItem);
+        private void LoadIntoCurrentConfig(string loadedItem) => WTSPropTextLayoutEditor.Instance.ReplaceItem(EditingInstance.SaveName, loadedItem);
 
 
         private string m_clipboard;
@@ -224,7 +224,7 @@ namespace Klyte.WriteTheCity.UI
                 else
                 {
                     EditingInstance.SaveName = text;
-                    WTCPropTextLayoutEditor.Instance.SetCurrentSelectionNewName(text);
+                    WTSPropTextLayoutEditor.Instance.SetCurrentSelectionNewName(text);
                 }
             }
         }
@@ -234,8 +234,8 @@ namespace Klyte.WriteTheCity.UI
             K45DialogControl.ShowModalPromptText(
                   new K45DialogControl.BindProperties
                   {
-                      title = Locale.Get("K45_WTC_PROPEDIT_NAMECHANGE_TITLE"),
-                      message = (lastError.IsNullOrWhiteSpace() ? "" : $"{ Locale.Get("K45_WTC_PROPEDIT_NAMECHANGE_ANERROROCURRED")} {lastError}\n\n") + Locale.Get("K45_WTC_PROPEDIT_NAMECHANGE_MESSAGE"),
+                      title = Locale.Get("K45_WTS_PROPEDIT_NAMECHANGE_TITLE"),
+                      message = (lastError.IsNullOrWhiteSpace() ? "" : $"{ Locale.Get("K45_WTS_PROPEDIT_NAMECHANGE_ANERROROCURRED")} {lastError}\n\n") + Locale.Get("K45_WTS_PROPEDIT_NAMECHANGE_MESSAGE"),
                       showButton1 = true,
                       textButton1 = Locale.Get("EXCEPTION_OK"),
                       showButton2 = true,
@@ -249,7 +249,7 @@ namespace Klyte.WriteTheCity.UI
                           if (error.IsNullOrWhiteSpace())
                           {
                               EditingInstance.SaveName = text;
-                              WTCPropTextLayoutEditor.Instance.SetCurrentSelectionNewName(text);
+                              WTSPropTextLayoutEditor.Instance.SetCurrentSelectionNewName(text);
                           }
                           else
                           {
@@ -270,11 +270,11 @@ namespace Klyte.WriteTheCity.UI
             string error = null;
             if (text.IsNullOrWhiteSpace())
             {
-                error = $"{ Locale.Get("K45_WTC_PROPEDIT_CONFIGNEW_INVALIDNAME")}";
+                error = $"{ Locale.Get("K45_WTS_PROPEDIT_CONFIGNEW_INVALIDNAME")}";
             }
-            else if (text != EditingInstance.SaveName && WTCPropLayoutData.Instance.Get(text) != null)
+            else if (text != EditingInstance.SaveName && WTSPropLayoutData.Instance.Get(text) != null)
             {
-                error = $"{ Locale.Get("K45_WTC_PROPEDIT_CONFIGNEW_ALREADY_EXISTS")}";
+                error = $"{ Locale.Get("K45_WTS_PROPEDIT_CONFIGNEW_ALREADY_EXISTS")}";
             }
 
             return error;
@@ -294,7 +294,7 @@ namespace Klyte.WriteTheCity.UI
         private void OnSetProp(int sel)
         {
             PropInfo targetProp = (sel < 0 ? null : m_lastSelection = GetInfos<PropInfo>().Where(x => x.name == PropsLoaded[m_popup.items[sel]]).FirstOrDefault());
-            WTCPropTextLayoutEditor.Instance.CurrentPropInfo = targetProp;
+            WTSPropTextLayoutEditor.Instance.CurrentPropInfo = targetProp;
         }
 
         protected void OnSetFont(int idx)
@@ -307,7 +307,7 @@ namespace Klyte.WriteTheCity.UI
                 }
                 else if (idx == 1)
                 {
-                    EditingInstance.FontName = WTCController.DEFAULT_FONT_KEY;
+                    EditingInstance.FontName = WTSController.DEFAULT_FONT_KEY;
                 }
                 else
                 {

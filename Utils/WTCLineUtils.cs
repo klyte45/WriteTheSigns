@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Klyte.WriteTheCity.Utils
+namespace Klyte.WriteTheSigns.Utils
 {
-    internal class WTCLineUtils
+    internal class WTSLineUtils
     {
         private static Dictionary<uint, ushort> m_stopsBuildingsCache = new Dictionary<uint, ushort>();
 
@@ -34,7 +34,7 @@ namespace Klyte.WriteTheCity.Utils
             uint id = (uint) ((lineId << 16) | stopId);
             if (!m_stopsBuildingsCache.TryGetValue(id, out ushort buildingId))
             {
-                buildingId = WTCHookable.GetStopBuildingInternal(stopId, lineId);
+                buildingId = WTSHookable.GetStopBuildingInternal(stopId, lineId);
                 m_stopsBuildingsCache[id] = buildingId;
             }
             return buildingId;

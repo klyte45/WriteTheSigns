@@ -6,7 +6,7 @@ using System;
 using System.Diagnostics;
 using UnityEngine;
 
-namespace Klyte.WriteTheCity.Tools
+namespace Klyte.WriteTheSigns.Tools
 {
 
     public class BuildingEditorTool : BasicBuildingTool<BuildingEditorTool>

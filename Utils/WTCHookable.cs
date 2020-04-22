@@ -2,15 +2,15 @@ using ColossalFramework;
 using ColossalFramework.Math;
 using Klyte.Commons.UI.Sprites;
 using Klyte.Commons.Utils;
-using Klyte.WriteTheCity.Data;
-using Klyte.WriteTheCity.Xml;
+using Klyte.WriteTheSigns.Data;
+using Klyte.WriteTheSigns.Xml;
 using System;
 using UnityEngine;
 using static ItemClass;
 
-namespace Klyte.WriteTheCity.Utils
+namespace Klyte.WriteTheSigns.Utils
 {
-    internal static class WTCHookable
+    internal static class WTSHookable
     {
         public static Func<ushort, string> GetStreetFullName = (ushort idx) => NetManager.instance.GetSegmentName(idx);
 
@@ -19,7 +19,7 @@ namespace Klyte.WriteTheCity.Utils
             string result = GetStreetFullName(idx);
             if (result.Contains(" "))
             {
-                switch (WTCRoadNodesData.Instance.RoadQualifierExtraction)
+                switch (WTSRoadNodesData.Instance.RoadQualifierExtraction)
                 {
                     case RoadQualifierExtractionMode.START:
                         result = result.Substring(result.IndexOf(' ') + 1);
@@ -125,7 +125,7 @@ namespace Klyte.WriteTheCity.Utils
 
         public static Func<ushort, ushort, string> GetStopName = (ushort stopId, ushort lineId) =>
         {
-            ushort buildingID = WTCLineUtils.GetStopBuilding(stopId, lineId);
+            ushort buildingID = WTSLineUtils.GetStopBuilding(stopId, lineId);
 
             if (buildingID > 0)
             {
