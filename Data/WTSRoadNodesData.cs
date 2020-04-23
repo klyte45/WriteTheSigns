@@ -1,5 +1,7 @@
 ﻿using Klyte.WriteTheSigns.Xml;
+using System.Linq;
 using System.Xml.Serialization;
+using static Klyte.Commons.Utils.XmlUtils;
 
 namespace Klyte.WriteTheSigns.Data
 {
@@ -11,14 +13,20 @@ namespace Klyte.WriteTheSigns.Data
 
         public override int ObjArraySize => NetManager.MAX_NODE_COUNT;
 
-        [XmlElement("DefaultFont")]
+        [XmlAttribute("DefaultFont")]
         public override string DefaultFont { get; set; }
 
         [XmlIgnore]
         public override string SaveId => "K45_WTS_WTSNetNodesData";
 
-        [XmlElement("CurrentDescriptor")]
-        public BoardInstanceRoadNodeXml[] CurrentDescriptorOrder
+        [XmlElement("DescriptorRulesOrder")]
+        public ListWrapper<BoardInstanceRoadNodeXml> DescriptorRulesOrderXml
+        {
+            get => new ListWrapper<BoardInstanceRoadNodeXml> { listVal = DescriptorRulesOrder.ToList() };
+            set => m_currentDescriptorOrder = value.listVal.ToArray();
+        }
+        [XmlIgnore]
+        public BoardInstanceRoadNodeXml[] DescriptorRulesOrder
         {
             get {
                 if (m_currentDescriptorOrder == null)

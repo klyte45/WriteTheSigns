@@ -113,6 +113,7 @@ namespace Klyte.WriteTheSigns.UI
             WTSRoadCornerEditor.Instance.RuleList.EventSelectionChanged += OnChangeTab;
             LoadAvailableLayouts();
             MainContainer.isVisible = false;
+            m_pasteSettings.isVisible = false;
         }
 
         private void LoadAvailableLayouts()
@@ -136,9 +137,9 @@ namespace Klyte.WriteTheSigns.UI
                 m_isEditing = true;
                 try
                 {
-                    if (effTargetTab < WTSRoadNodesData.Instance.CurrentDescriptorOrder.Length)
+                    if (effTargetTab < WTSRoadNodesData.Instance.DescriptorRulesOrder.Length)
                     {
-                        action(ref WTSRoadNodesData.Instance.CurrentDescriptorOrder[effTargetTab]);
+                        action(ref WTSRoadNodesData.Instance.DescriptorRulesOrder[effTargetTab]);
                         WTSRoadNodesData.Instance.ResetBoards();
                     }
                 }
@@ -196,9 +197,9 @@ namespace Klyte.WriteTheSigns.UI
         private ref BoardInstanceRoadNodeXml GetRuleSerialized()
         {
             int effTargetTab = Math.Max(-1, m_currentIdx);
-            if (effTargetTab >= 0 && effTargetTab < WTSRoadNodesData.Instance.CurrentDescriptorOrder.Length)
+            if (effTargetTab >= 0 && effTargetTab < WTSRoadNodesData.Instance.DescriptorRulesOrder.Length)
             {
-                return ref WTSRoadNodesData.Instance.CurrentDescriptorOrder[effTargetTab];
+                return ref WTSRoadNodesData.Instance.DescriptorRulesOrder[effTargetTab];
             }
             else
             {

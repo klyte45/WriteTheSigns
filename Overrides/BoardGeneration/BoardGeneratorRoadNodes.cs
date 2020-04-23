@@ -106,11 +106,11 @@ namespace Klyte.WriteTheSigns.Overrides
 
         public void AfterRenderInstanceImpl(RenderManager.CameraInfo cameraInfo, ushort nodeID, ref NetNode data)
         {
-            if (Data.CurrentDescriptorOrder == null)
+            if (Data.DescriptorRulesOrder == null)
             {
-                Data.CurrentDescriptorOrder = new BoardInstanceRoadNodeXml[0];
+                Data.DescriptorRulesOrder = new BoardInstanceRoadNodeXml[0];
             }
-            if (Data.CurrentDescriptorOrder.Length == 0)
+            if (Data.DescriptorRulesOrder.Length == 0 || m_lastFrameUpdate[nodeID] == m_getCurrentFrame(RenderManager.instance))
             {
                 return;
             }
@@ -135,112 +135,7 @@ namespace Klyte.WriteTheSigns.Overrides
                 {
                     return;
                 }
-
-                m_lastTickUpdate = SimulationManager.instance.m_currentTickIndex;
-
-                LogUtils.DoLog($"updatedStreets! {nodeID} {data.CountSegments()}");
-                Data.BoardsContainers[nodeID].m_boardsData = new CacheControlRoadNode[data.CountSegments()];
-                int controlBoardIdx = 0;
-                for (int i = 0; i < 8; i++)
-                {
-                    ushort segmentIid = data.GetSegment(i);
-                    if (segmentIid != 0)
-                    {
-                        NetSegment netSegmentI = Singleton<NetManager>.instance.m_segments.m_buffer[segmentIid];
-                        if (netSegmentI.Info != null && netSegmentI.Info.m_netAI is RoadBaseAI roadAiI)
-                        {
-                            Vector3 segmentIDirection = (nodeID != netSegmentI.m_startNode) ? netSegmentI.m_endDirection : netSegmentI.m_startDirection;
-                            Vector3 otherSegmentDirection = Vector3.zero;
-                            float resultAngle = -4f;
-                            ushort resultOtherSegment = 0;
-                            for (int j = 0; j < 8; j++)
-                            {
-                                ushort segmentJid = data.GetSegment(j);
-                                if (segmentJid != 0 && segmentJid != segmentIid)
-                                {
-                                    NetSegment netSegmentCand = Singleton<NetManager>.instance.m_segments.m_buffer[segmentJid];
-                                    if (netSegmentCand.Info != null)
-                                    {
-                                        Vector3 segmentJDirection = (nodeID != netSegmentCand.m_startNode) ? netSegmentCand.m_endDirection : netSegmentCand.m_startDirection;
-                                        float angle = (segmentIDirection.x * segmentJDirection.x) + (segmentIDirection.z * segmentJDirection.z);
-                                        if ((segmentJDirection.z * segmentIDirection.x) - (segmentJDirection.x * segmentIDirection.z) < 0f)
-                                        {
-                                            if (angle > resultAngle)
-                                            {
-                                                resultAngle = angle;
-                                                resultOtherSegment = segmentJid;
-                                                otherSegmentDirection = segmentJDirection;
-                                            }
-                                        }
-                                        else
-                                        {
-                                            angle = -2f - angle;
-                                            if (angle > resultAngle)
-                                            {
-                                                resultAngle = angle;
-                                                resultOtherSegment = segmentJid;
-                                                otherSegmentDirection = segmentJDirection;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            NetSegment netSegmentJ = Singleton<NetManager>.instance.m_segments.m_buffer[resultOtherSegment];
-
-                            BoardInstanceRoadNodeXml targetDescriptor = Data.CurrentDescriptorOrder.FirstOrDefault(x => x.AllowsClass(netSegmentI.Info.m_class) || x.AllowsClass(netSegmentJ.Info.m_class));
-                            if (targetDescriptor == null)
-                            {
-                                continue;
-                            }
-                            if (resultOtherSegment == 0
-                                || !(Singleton<NetManager>.instance.m_segments.m_buffer[resultOtherSegment].Info.m_netAI is RoadBaseAI roadAiJ)
-                                || SegmentUtils.IsSameName(resultOtherSegment, segmentIid, false, false, true, targetDescriptor.PlaceOnDistrictBorder, true)
-                                || (roadAiJ.m_highwayRules && roadAiI.m_highwayRules)
-                                || roadAiI.GenerateName(segmentIid, ref Singleton<NetManager>.instance.m_segments.m_buffer[segmentIid]).IsNullOrWhiteSpace()
-                                || roadAiJ.GenerateName(resultOtherSegment, ref Singleton<NetManager>.instance.m_segments.m_buffer[resultOtherSegment]).IsNullOrWhiteSpace())
-                            {
-                                continue;
-                            }
-                            bool start = netSegmentI.m_startNode == nodeID;
-                            netSegmentI.CalculateCorner(segmentIid, true, start, false, out Vector3 startPos, out Vector3 startAng, out _);
-
-                            start = (netSegmentJ.m_startNode == nodeID);
-                            netSegmentJ.CalculateCorner(resultOtherSegment, true, start, true, out Vector3 endPos, out Vector3 endAng, out bool flag);
-
-                            NetSegment.CalculateMiddlePoints(startPos, -startAng, endPos, -endAng, true, true, out Vector3 rhs, out Vector3 lhs);
-                            Vector3 relativePos = (((rhs + lhs) * 0.5f) - data.m_position);
-                            Vector3 platePos = relativePos - relativePos.normalized + data.m_position;
-
-
-                            if (Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx] == null)
-                            {
-                                Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx] = new CacheControlRoadNode();
-                            }
-
-                            float dir1 = Vector2.zero.GetAngleToPoint(VectorUtils.XZ(segmentIDirection));
-                            float dir2 = Vector2.zero.GetAngleToPoint(VectorUtils.XZ(otherSegmentDirection));
-                            Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_streetDirection1 = -dir1;
-                            Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_streetDirection2 = -dir2;
-
-                            Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_segmentId1 = segmentIid;
-                            Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_segmentId2 = resultOtherSegment;
-                            Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_districtId1 = DistrictManager.instance.GetDistrict(NetManager.instance.m_segments.m_buffer[segmentIid].m_middlePosition);
-                            Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_districtId2 = DistrictManager.instance.GetDistrict(NetManager.instance.m_segments.m_buffer[resultOtherSegment].m_middlePosition);
-
-                            Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_platePosition = platePos;
-                            Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_renderPlate = true;
-                            Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_cachedColor = targetDescriptor.UseDistrictColor ? WTSHookable.GetDistrictColor(Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_districtId1) : targetDescriptor.Descriptor.FixedColor ?? Color.white;
-                            Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_cachedColor2 = targetDescriptor.UseDistrictColor ? WTSHookable.GetDistrictColor(Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_districtId2) : targetDescriptor.Descriptor.FixedColor ?? Color.white;
-                            Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_cachedContrastColor = KlyteMonoUtils.ContrastColor(Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_cachedColor);
-                            Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_cachedContrastColor2 = KlyteMonoUtils.ContrastColor(Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_cachedColor2);
-                            Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_distanceRef = Vector2.Distance(VectorUtils.XZ(Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_platePosition), WTSHookable.GetStartPoint());
-                            Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_currentDescriptor = targetDescriptor;
-                            controlBoardIdx++;
-                        }
-                    }
-                }
-
-                m_updatedStreetPositions[nodeID] = true;
+                CalculateSigns(nodeID, ref data);
             }
 
 
@@ -254,33 +149,149 @@ namespace Klyte.WriteTheSigns.Overrides
                     {
                         Data.BoardsContainers[nodeID].m_boardsData[boardIdx].m_cachedProp = null;
                     }
-
-                    WTSPropRenderingRules.RenderPropMesh(ref Data.BoardsContainers[nodeID].m_boardsData[boardIdx].m_cachedProp, cameraInfo, nodeID, boardIdx, 0, 0xFFFFFFF, 0, Data.BoardsContainers[nodeID].m_boardsData[boardIdx].m_platePosition, Vector4.zero, ref targetDescriptor.Descriptor.m_propName, new Vector3(0, Data.BoardsContainers[nodeID].m_boardsData[boardIdx].m_streetDirection1) + targetDescriptor.m_propRotation, targetDescriptor.PropScale, targetDescriptor, out Matrix4x4 propMatrix, out bool rendered, GetPropRenderID(nodeID));
-                    if (rendered)
-                    {
-                        for (int j = 0; j < targetDescriptor.Descriptor.m_textDescriptors.Length; j++)
-                        {
-                            MaterialPropertyBlock properties = PropManager.instance.m_materialBlock;
-                            properties.Clear();
-                            WTSPropRenderingRules.RenderTextMesh(nodeID, boardIdx, 0, targetDescriptor, propMatrix, targetDescriptor.Descriptor.m_textDescriptors[j], properties, DrawFont);
-                        }
-                    }
-                    WTSPropRenderingRules.RenderPropMesh(ref Data.BoardsContainers[nodeID].m_boardsData[boardIdx].m_cachedProp, cameraInfo, nodeID, boardIdx, 1, 0xFFFFFFF, 0, Data.BoardsContainers[nodeID].m_boardsData[boardIdx].m_platePosition, Vector4.zero, ref targetDescriptor.Descriptor.m_propName, new Vector3(0, Data.BoardsContainers[nodeID].m_boardsData[boardIdx].m_streetDirection2) + targetDescriptor.m_propRotation, targetDescriptor.PropScale, targetDescriptor, out propMatrix, out rendered, GetPropRenderID(nodeID));
-                    if (rendered)
-                    {
-
-                        for (int j = 0; j < targetDescriptor.Descriptor.m_textDescriptors.Length; j++)
-                        {
-                            MaterialPropertyBlock properties = PropManager.instance.m_materialBlock;
-                            properties.Clear();
-                            WTSPropRenderingRules.RenderTextMesh(nodeID, boardIdx, 1, targetDescriptor, propMatrix, targetDescriptor.Descriptor.m_textDescriptors[j], properties, DrawFont);
-                        }
-                    }
+                    RenderSign(cameraInfo, nodeID, boardIdx, 0, Data.BoardsContainers[nodeID].m_boardsData[boardIdx].m_streetDirection1, targetDescriptor);
+                    RenderSign(cameraInfo, nodeID, boardIdx, 1, Data.BoardsContainers[nodeID].m_boardsData[boardIdx].m_streetDirection2, targetDescriptor);
 
                 }
             }
 
         }
+
+        private void RenderSign(RenderManager.CameraInfo cameraInfo, ushort nodeID, int boardIdx, int secIdx, float direction, BoardInstanceRoadNodeXml targetDescriptor)
+        {
+            WTSPropRenderingRules.RenderPropMesh(ref Data.BoardsContainers[nodeID].m_boardsData[boardIdx].m_cachedProp, cameraInfo, nodeID, boardIdx, secIdx, 0xFFFFFFF, 0, Data.BoardsContainers[nodeID].m_boardsData[boardIdx].m_platePosition, Vector4.zero, ref targetDescriptor.Descriptor.m_propName, new Vector3(0, direction) + targetDescriptor.m_propRotation, targetDescriptor.PropScale, targetDescriptor, out Matrix4x4 propMatrix, out bool rendered, GetPropRenderID(nodeID));
+            if (rendered)
+            {
+
+                for (int j = 0; j < targetDescriptor.Descriptor.m_textDescriptors.Length; j++)
+                {
+                    MaterialPropertyBlock properties = PropManager.instance.m_materialBlock;
+                    properties.Clear();
+                    WTSPropRenderingRules.RenderTextMesh(nodeID, boardIdx, secIdx, targetDescriptor, propMatrix, targetDescriptor.Descriptor.m_textDescriptors[j], properties, DrawFont);
+                }
+            }
+        }
+
+        private void CalculateSigns(ushort nodeID, ref NetNode data)
+        {
+            m_lastTickUpdate = SimulationManager.instance.m_currentTickIndex;
+
+            LogUtils.DoLog($"updatedStreets! {nodeID} {data.CountSegments()}");
+            Data.BoardsContainers[nodeID].m_boardsData = new CacheControlRoadNode[data.CountSegments()];
+            int controlBoardIdx = 0;
+            for (int i = 0; i < 8; i++)
+            {
+                ushort segmentIid = data.GetSegment(i);
+                if (segmentIid != 0)
+                {
+                    NetSegment netSegmentI = Singleton<NetManager>.instance.m_segments.m_buffer[segmentIid];
+                    if (netSegmentI.Info != null && netSegmentI.Info.m_netAI is RoadBaseAI roadAiI)
+                    {
+                        GetNeigborSegment(nodeID, ref data, segmentIid, ref netSegmentI, out Vector3 segmentIDirection, out Vector3 otherSegmentDirection, out ushort resultOtherSegment);
+
+                        NetSegment netSegmentJ = Singleton<NetManager>.instance.m_segments.m_buffer[resultOtherSegment];
+
+                        BoardInstanceRoadNodeXml targetDescriptor = Data.DescriptorRulesOrder.FirstOrDefault(x => x.AllowsClass(netSegmentI.Info.m_class) || x.AllowsClass(netSegmentJ.Info.m_class));
+                        if (targetDescriptor == null || targetDescriptor.Descriptor == null)
+                        {
+                            continue;
+                        }
+                        if (resultOtherSegment == 0
+                            || !(Singleton<NetManager>.instance.m_segments.m_buffer[resultOtherSegment].Info.m_netAI is RoadBaseAI roadAiJ)
+                            || SegmentUtils.IsSameName(resultOtherSegment, segmentIid, false, false, true, targetDescriptor.PlaceOnDistrictBorder, true)
+                            || roadAiI.GenerateName(segmentIid, ref Singleton<NetManager>.instance.m_segments.m_buffer[segmentIid]).IsNullOrWhiteSpace()
+                            || roadAiJ.GenerateName(resultOtherSegment, ref Singleton<NetManager>.instance.m_segments.m_buffer[resultOtherSegment]).IsNullOrWhiteSpace())
+                        {
+                            continue;
+                        }
+                        bool start = netSegmentI.m_startNode == nodeID;
+                        netSegmentI.CalculateCorner(segmentIid, true, start, false, out Vector3 startPos, out Vector3 startAng, out _);
+
+                        start = (netSegmentJ.m_startNode == nodeID);
+                        netSegmentJ.CalculateCorner(resultOtherSegment, true, start, true, out Vector3 endPos, out Vector3 endAng, out bool flag);
+
+                        NetSegment.CalculateMiddlePoints(startPos, -startAng, endPos, -endAng, true, true, out Vector3 rhs, out Vector3 lhs);
+                        Vector3 relativePos = (((rhs + lhs) * 0.5f) - data.m_position);
+                        Vector3 platePos = relativePos - relativePos.normalized + data.m_position;
+
+                        FillCacheData(nodeID, controlBoardIdx, segmentIid, segmentIDirection, otherSegmentDirection, resultOtherSegment, targetDescriptor, platePos);
+                        controlBoardIdx++;
+                    }
+                }
+            }
+
+            m_updatedStreetPositions[nodeID] = true;
+        }
+
+        private void FillCacheData(ushort nodeID, int controlBoardIdx, ushort segmentIid, Vector3 segmentIDirection, Vector3 otherSegmentDirection, ushort resultOtherSegment, BoardInstanceRoadNodeXml targetDescriptor, Vector3 platePos)
+        {
+            if (Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx] == null)
+            {
+                Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx] = new CacheControlRoadNode();
+
+            }
+
+            float dir1 = Vector2.zero.GetAngleToPoint(VectorUtils.XZ(segmentIDirection));
+            float dir2 = Vector2.zero.GetAngleToPoint(VectorUtils.XZ(otherSegmentDirection));
+
+            Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_streetDirection1 = -dir1 + 90;
+            Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_streetDirection2 = -dir2 + 90;
+
+            Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_segmentId1 = segmentIid;
+            Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_segmentId2 = resultOtherSegment;
+            Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_districtId1 = DistrictManager.instance.GetDistrict(NetManager.instance.m_segments.m_buffer[segmentIid].m_middlePosition);
+            Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_districtId2 = DistrictManager.instance.GetDistrict(NetManager.instance.m_segments.m_buffer[resultOtherSegment].m_middlePosition);
+
+            Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_platePosition = platePos;
+            Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_renderPlate = true;
+            Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_cachedColor = targetDescriptor.UseDistrictColor ? WTSHookable.GetDistrictColor(Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_districtId1) : targetDescriptor.Descriptor.FixedColor ?? Color.white;
+            Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_cachedColor2 = targetDescriptor.UseDistrictColor ? WTSHookable.GetDistrictColor(Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_districtId2) : targetDescriptor.Descriptor.FixedColor ?? Color.white;
+            Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_cachedContrastColor = KlyteMonoUtils.ContrastColor(Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_cachedColor);
+            Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_cachedContrastColor2 = KlyteMonoUtils.ContrastColor(Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_cachedColor2);
+            Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_distanceRef = Vector2.Distance(VectorUtils.XZ(Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_platePosition), WTSHookable.GetStartPoint());
+            Data.BoardsContainers[nodeID].m_boardsData[controlBoardIdx].m_currentDescriptor = targetDescriptor;
+        }
+
+        private static void GetNeigborSegment(ushort nodeID, ref NetNode data, ushort segmentIid, ref NetSegment netSegmentI, out Vector3 segmentIDirection, out Vector3 otherSegmentDirection, out ushort resultOtherSegment)
+        {
+            segmentIDirection = (nodeID != netSegmentI.m_startNode) ? netSegmentI.m_endDirection : netSegmentI.m_startDirection;
+            otherSegmentDirection = Vector3.zero;
+            float resultAngle = -4f;
+            resultOtherSegment = 0;
+            for (int j = 0; j < 8; j++)
+            {
+                ushort segmentJid = data.GetSegment(j);
+                if (segmentJid != 0 && segmentJid != segmentIid)
+                {
+                    ref NetSegment netSegmentCand = ref Singleton<NetManager>.instance.m_segments.m_buffer[segmentJid];
+                    if (netSegmentCand.Info != null)
+                    {
+                        Vector3 segmentJDirection = (nodeID != netSegmentCand.m_startNode) ? netSegmentCand.m_endDirection : netSegmentCand.m_startDirection;
+                        float angle = (segmentIDirection.x * segmentJDirection.x) + (segmentIDirection.z * segmentJDirection.z);
+                        if ((segmentJDirection.z * segmentIDirection.x) - (segmentJDirection.x * segmentIDirection.z) < 0f)
+                        {
+                            if (angle > resultAngle)
+                            {
+                                resultAngle = angle;
+                                resultOtherSegment = segmentJid;
+                                otherSegmentDirection = segmentJDirection;
+                            }
+                        }
+                        else
+                        {
+                            angle = -2f - angle;
+                            if (angle > resultAngle)
+                            {
+                                resultAngle = angle;
+                                resultOtherSegment = segmentJid;
+                                otherSegmentDirection = segmentJDirection;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         protected InstanceID GetPropRenderID(ushort nodeId)
         {
             return new InstanceID

@@ -7,6 +7,7 @@ using SpriteFontPlus;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 
 namespace Klyte.WriteTheSigns.Utils
 {
@@ -15,26 +16,33 @@ namespace Klyte.WriteTheSigns.Utils
 
         public static void ReloadFontsOf(UIDropDown target, string targetValue, bool hasDefaultOption = false, bool force = false)
         {
-            if (force)
+            try
             {
-                WTSController.ReloadFontsFromPath();
+                if (force)
+                {
+                    WTSController.ReloadFontsFromPath();
+                }
+                var items = FontServer.instance.GetAllFonts().ToList();
+                items.Sort();
+                items.Remove(WTSController.DEFAULT_FONT_KEY);
+                items.Insert(0, Locale.Get("K45_WTS_DEFAULT_FONT_LABEL"));
+                if (hasDefaultOption)
+                {
+                    items.Insert(0, Locale.Get("K45_WTS_USE_GROUP_SETTING_FONT"));
+                }
+                target.items = items.ToArray();
+                if (items.Contains(targetValue))
+                {
+                    target.selectedIndex = items.IndexOf(targetValue);
+                }
+                else
+                {
+                    target.selectedIndex = 0;
+                }
             }
-            var items = FontServer.instance.GetAllFonts().ToList();
-            items.Sort();
-            items.Remove(WTSController.DEFAULT_FONT_KEY);
-            items.Insert(0, Locale.Get("K45_WTS_DEFAULT_FONT_LABEL"));
-            if (hasDefaultOption)
+            catch
             {
-                items.Insert(0, Locale.Get("K45_WTS_USE_GROUP_SETTING_FONT"));
-            }
-            target.items = items.ToArray();
-            if (items.Contains(targetValue))
-            {
-                target.selectedIndex = items.IndexOf(targetValue);
-            }
-            else
-            {
-                target.selectedIndex = 0;
+                GameObject.DestroyImmediate(target);
             }
         }
 

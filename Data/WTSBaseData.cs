@@ -1,7 +1,6 @@
 ﻿using ColossalFramework.UI;
 using Klyte.Commons.Interfaces;
 using Klyte.Commons.Utils;
-using Klyte.WriteTheSigns.Overrides;
 using Klyte.WriteTheSigns.Xml;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,7 +10,9 @@ namespace Klyte.WriteTheSigns.Data
 {
     public abstract class WTSBaseData<D, BBC> : DataExtensorBase<D> where D : WTSBaseData<D, BBC>, new() where BBC : IBoardBunchContainer
     {
+        [XmlIgnore]
         public BBC[] BoardsContainers { get; private set; }
+        [XmlIgnore]
         public abstract int ObjArraySize { get; }
 
         public override void LoadDefaults()
@@ -24,7 +25,7 @@ namespace Klyte.WriteTheSigns.Data
         [XmlAttribute("defaultFont")]
         public virtual string DefaultFont { get; set; }
 
-        [XmlElement("BoardsContainer")]
+        [XmlIgnore]
         public SimpleNonSequentialList<BBC> BoardSerialData
         {
             get {

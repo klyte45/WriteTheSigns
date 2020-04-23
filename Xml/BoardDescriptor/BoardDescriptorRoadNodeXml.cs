@@ -1,6 +1,5 @@
 ﻿using Klyte.Commons.Interfaces;
 using Klyte.WriteTheSigns.Data;
-using System;
 using System.Collections.Generic;
 using System.Xml.Serialization;
 using static ItemClass;
@@ -56,7 +55,7 @@ namespace Klyte.WriteTheSigns.Xml
         [XmlAttribute("applyAbreviationsOnFullName")] public bool ApplyAbreviationsOnFullName { get; set; } = true;
         [XmlAttribute("applyAbreviationsOnSuffix")] public bool ApplyAbreviationsOnSuffix { get; set; } = true;
 
-        [XmlAttribute("selectedDistricts")] public HashSet<ushort> SelectedDistricts { get; set; } = new HashSet<ushort>();
+        [XmlArray("SelectedDistricts")] [XmlArrayItem("District")] public HashSet<ushort> SelectedDistricts { get; set; } = new HashSet<ushort>();
         [XmlAttribute("districtSelectionIsBlacklist")] public bool SelectedDistrictsIsBlacklist { get; set; } = true;
 
         [XmlAttribute("allowOnlyIfBothRoadsApply")] public bool AllowOnlyIfBothRoadsApply { get; set; } = false;

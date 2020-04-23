@@ -194,7 +194,7 @@ namespace Klyte.WriteTheSigns.UI
             }
             if (actionDelete != null)
             {
-                deleteButton = ConfigureActionButton(cbPanel, CommonsSpriteNames.K45_RemoveIcon, (x, y) => actionPaste(), "K45_CMNS_DELETE_CURRENT_ITEM");
+                deleteButton = ConfigureActionButton(cbPanel, CommonsSpriteNames.K45_RemoveIcon, (x, y) => actionDelete(), "K45_CMNS_DELETE_CURRENT_ITEM");
                 deleteButton.color = Color.red;
             }
             else
