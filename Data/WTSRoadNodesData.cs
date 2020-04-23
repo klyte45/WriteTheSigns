@@ -13,7 +13,7 @@ namespace Klyte.WriteTheSigns.Data
 
         public override int ObjArraySize => NetManager.MAX_NODE_COUNT;
         public override int BoardCount => 8;
-        public override int SubBoardCount => 2;
+        public override int SubBoardCount => 4;
 
         [XmlAttribute("DefaultFont")]
         public override string DefaultFont { get; set; }

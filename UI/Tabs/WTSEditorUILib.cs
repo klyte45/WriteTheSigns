@@ -67,6 +67,22 @@ namespace Klyte.WriteTheSigns.UI
             fieldArray[2].zOrder = 3;
         }
 
+        public static void AddVector2Field(string label, out UITextField[] fieldArray, UIHelperExtension parentHelper, Action<Vector2> onChange, bool addRollEvent = true)
+        {
+            fieldArray = parentHelper.AddVector2Field(label, Vector3.zero, onChange);
+            KlyteMonoUtils.LimitWidthAndBox(fieldArray[0].parent.GetComponentInChildren<UILabel>(), (parentHelper.Self.width / 2) - 10, true);
+            if (addRollEvent)
+            {
+                fieldArray.ForEach(x =>
+                    {
+                        x.eventMouseWheel += RollFloat;
+                        x.tooltip = Locale.Get("K45_CMNS_FLOAT_EDITOR_TOOLTIP_HELP");
+                    });
+            }
+            fieldArray[0].zOrder = 1;
+            fieldArray[1].zOrder = 2;
+        }
+
         private static readonly MethodInfo m_submitField = typeof(UITextField).GetMethod("OnSubmit", RedirectorUtils.allFlags);
         public static void RollFloat(UIComponent component, UIMouseEventParameter eventParam)
         {

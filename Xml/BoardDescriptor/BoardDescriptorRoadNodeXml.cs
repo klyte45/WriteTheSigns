@@ -47,8 +47,11 @@ namespace Klyte.WriteTheSigns.Xml
         [XmlAttribute("spawnChance")] public byte SpawnChance { get; set; } = 255;
         [XmlAttribute("placeOnDistrictBorder")] public bool PlaceOnDistrictBorder { get; set; } = true;
         [XmlAttribute("placeOnMidSegment")] public bool PlaceOnSegmentInsteadOfCorner { get; set; } = false;
-        [XmlAttribute("placeOnlyIfOutboundTraffic")] public bool PlaceOnlyIfOutboundTraffic { get; set; } = false;//
-
+        [XmlAttribute("ensureSegmentTypeInAllowedTypes")] public bool EnsureSegmentTypeInAllowedTypes { get; set; } = false;
+        [XmlAttribute("allowAnotherRuleForCorner")] public bool AllowAnotherRuleForCorner { get; set; } = false;
+        [XmlAttribute("trafficDirectionRequired")] public TrafficDirectionRequired TrafficDirectionRequired { get; set; } = TrafficDirectionRequired.NONE;
+        [XmlAttribute("minIncomeOutcomeLanes")] public int MinIncomeOutcomeLanes { get; set; } = 1;
+        [XmlAttribute("maxIncomeOutcomeLanes")] public int MaxIncomeOutcomeLanes { get; set; } = 99;
 
 
         [XmlAttribute("useDistrictColor")] public bool UseDistrictColor = false;
@@ -64,5 +67,10 @@ namespace Klyte.WriteTheSigns.Xml
         public bool AllowsPark(byte districtId) => SelectedDistricts.Contains((ushort)(0x100 | districtId)) == SelectedDistrictsIsBlacklist;
     }
 
-
+    public enum TrafficDirectionRequired
+    {
+        NONE,
+        INCOMING,
+        OUTCOMING,
+    }
 }
