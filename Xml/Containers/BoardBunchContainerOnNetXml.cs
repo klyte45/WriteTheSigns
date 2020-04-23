@@ -7,8 +7,10 @@ using static Klyte.Commons.Utils.XmlUtils;
 namespace Klyte.WriteTheSigns.Xml
 {
 
-    public class BoardBunchContainerOnNetXml : IBoardBunchContainer<CacheControlOnNet>, ILibable
+    public class BoardBunchContainerOnNetXml : IBoardBunchContainer, ILibable
     {
+        [XmlIgnore]
+        private CacheControlOnNet[] m_boardsData;
         [XmlIgnore]
         public bool cached = false;
         [XmlElement("descriptors")]
@@ -20,6 +22,8 @@ namespace Klyte.WriteTheSigns.Xml
 
         [XmlAttribute("saveName")]
         public string SaveName { get; set; }
+
+        public bool HasAnyBoard() => (m_boardsData?.Where(y => y != null)?.Count() ?? 0) > 0;
     }
 
 

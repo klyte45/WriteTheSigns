@@ -222,7 +222,6 @@
     <Compile Include="Overrides\RenderEventsRedirector.cs" />
     <Compile Include="WriteTheSignsMod.cs" />
     <Compile Include="WTSController.cs" />
-    <Compile Include="Xml\Cache\CacheControl.cs" />
     <Compile Include="Xml\Cache\CacheControlOnNet.cs" />
     <Compile Include="Xml\Containers\IBoardBunchContainer.cs" />
     <Compile Include="Overrides\InstanceManagerOverrides.cs" />

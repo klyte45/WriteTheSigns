@@ -7,11 +7,13 @@ namespace Klyte.WriteTheSigns.Data
 {
 
     [XmlRoot("WTSRoadNodesData")]
-    public class WTSRoadNodesData : WTSBaseData<WTSRoadNodesData, IBoardBunchContainer<CacheControlRoadNode>>
+    public class WTSRoadNodesData : WTSBaseData<WTSRoadNodesData, CacheRoadNodeItem>
     {
         private BoardInstanceRoadNodeXml[] m_currentDescriptorOrder = new BoardInstanceRoadNodeXml[0];
 
         public override int ObjArraySize => NetManager.MAX_NODE_COUNT;
+        public override int BoardCount => 8;
+        public override int SubBoardCount => 2;
 
         [XmlAttribute("DefaultFont")]
         public override string DefaultFont { get; set; }
@@ -42,6 +44,7 @@ namespace Klyte.WriteTheSigns.Data
 
         [XmlAttribute("abbreviationFile")]
         public string AbbreviationFile { get; set; }
+
     }
 
 }

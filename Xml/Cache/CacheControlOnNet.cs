@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Klyte.WriteTheSigns.Xml
 {
 
-    public class CacheControlOnNet : CacheControl
+    public class CacheControlOnNet 
     {
         [XmlElement("descriptor")]
         public BoardDescriptorOnNetXml descriptor;

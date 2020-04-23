@@ -10,6 +10,10 @@ namespace Klyte.WriteTheSigns.Data
         public override int ObjArraySize => BuildingManager.MAX_BUILDING_COUNT;
 
         public override string SaveId => "K45_WTS_WTSBuildingsData";
+
+        public override int BoardCount => 1;
+
+        public override int SubBoardCount => 1;
     }
 
 }

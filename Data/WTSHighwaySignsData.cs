@@ -11,6 +11,10 @@ namespace Klyte.WriteTheSigns.Data
 
 
         public override string SaveId => "K45_WTS_WTSHighwaySignsData";
+
+        public override int BoardCount => 1;
+
+        public override int SubBoardCount => 1;
     }
 
 }

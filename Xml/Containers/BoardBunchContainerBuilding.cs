@@ -3,10 +3,12 @@
 
     public partial class BoardGeneratorBuildings
     {
-        public class BoardBunchContainerBuilding : IBoardBunchContainer<CacheControl>
+        public class BoardBunchContainerBuilding : IBoardBunchContainer
         {
             public StopInformation[][] m_platformToLine;
             public uint m_linesUpdateFrame;
+
+            public bool HasAnyBoard() => false;
         }
 
         public struct StopInformation

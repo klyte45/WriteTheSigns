@@ -47,18 +47,17 @@ namespace Klyte.WriteTheSigns.Xml
         [XmlAttribute("spawnChance")] public byte SpawnChance { get; set; } = 255;
         [XmlAttribute("placeOnDistrictBorder")] public bool PlaceOnDistrictBorder { get; set; } = true;
         [XmlAttribute("placeOnMidSegment")] public bool PlaceOnSegmentInsteadOfCorner { get; set; } = false;
-        [XmlAttribute("placeOnlyIfOutboundTraffic")] public bool PlaceOnlyIfOutboundTraffic { get; set; } = false;
+        [XmlAttribute("placeOnlyIfOutboundTraffic")] public bool PlaceOnlyIfOutboundTraffic { get; set; } = false;//
 
 
 
         [XmlAttribute("useDistrictColor")] public bool UseDistrictColor = false;
-        [XmlAttribute("applyAbreviationsOnFullName")] public bool ApplyAbreviationsOnFullName { get; set; } = true;
-        [XmlAttribute("applyAbreviationsOnSuffix")] public bool ApplyAbreviationsOnSuffix { get; set; } = true;
+        [XmlAttribute("applyAbreviationsOnFullName")] public bool ApplyAbreviationsOnFullName { get; set; } = true;//
+        [XmlAttribute("applyAbreviationsOnSuffix")] public bool ApplyAbreviationsOnSuffix { get; set; } = true;//
 
-        [XmlArray("SelectedDistricts")] [XmlArrayItem("District")] public HashSet<ushort> SelectedDistricts { get; set; } = new HashSet<ushort>();
-        [XmlAttribute("districtSelectionIsBlacklist")] public bool SelectedDistrictsIsBlacklist { get; set; } = true;
+        [XmlArray("SelectedDistricts")] [XmlArrayItem("District")] public HashSet<ushort> SelectedDistricts { get; set; } = new HashSet<ushort>();//
+        [XmlAttribute("districtSelectionIsBlacklist")] public bool SelectedDistrictsIsBlacklist { get; set; } = true;//
 
-        [XmlAttribute("allowOnlyIfBothRoadsApply")] public bool AllowOnlyIfBothRoadsApply { get; set; } = false;
 
         public bool AllowsClass(ItemClass source) => AllowedLevels.Contains(source.m_level);
         public bool AllowsDistrict(byte districtId) => SelectedDistricts.Contains(districtId) == SelectedDistrictsIsBlacklist;

@@ -1,54 +1,28 @@
-﻿using ColossalFramework.UI;
-using Klyte.Commons.Interfaces;
-using Klyte.Commons.Utils;
-using Klyte.WriteTheSigns.Xml;
-using System.Collections.Generic;
-using System.Linq;
+﻿using Klyte.Commons.Interfaces;
 using System.Xml.Serialization;
 
 namespace Klyte.WriteTheSigns.Data
 {
-    public abstract class WTSBaseData<D, BBC> : DataExtensorBase<D> where D : WTSBaseData<D, BBC>, new() where BBC : IBoardBunchContainer
+    public abstract class WTSBaseData<D, CC> : DataExtensorBase<D> where D : WTSBaseData<D, CC>, new()
     {
         [XmlIgnore]
-        public BBC[] BoardsContainers { get; private set; }
+        public CC[,,] BoardsContainers { get; private set; }
         [XmlIgnore]
         public abstract int ObjArraySize { get; }
+        [XmlIgnore]
+        public abstract int BoardCount { get; }
+        [XmlIgnore]
+        public abstract int SubBoardCount { get; }
 
         public override void LoadDefaults()
         {
             base.LoadDefaults();
-            BoardsContainers = new BBC[ObjArraySize];
+            BoardsContainers = new CC[ObjArraySize, BoardCount, SubBoardCount];
         }
-        public void ResetBoards() => BoardSerialData = null;
+        public void ResetBoards() => BoardsContainers = new CC[ObjArraySize, BoardCount, SubBoardCount];
 
         [XmlAttribute("defaultFont")]
         public virtual string DefaultFont { get; set; }
-
-        [XmlIgnore]
-        public SimpleNonSequentialList<BBC> BoardSerialData
-        {
-            get {
-                var temp = new SimpleNonSequentialList<BBC>();
-                BoardsContainers.Select((x, i) => Tuple.New(i, x)).Where((x) => x?.Second?.HasAnyBoard() ?? false).ForEach(x => temp[x.First] = x.Second);
-                return temp;
-            }
-            set {
-                BoardsContainers = new BBC[ObjArraySize];
-                if (value != null)
-                {
-                    foreach (KeyValuePair<long, BBC> item in value)
-                    {
-                        LogUtils.DoLog($"item: {item}");
-                        if (item.Key == 0)
-                        {
-                            continue;
-                        }
-                        BoardsContainers[item.Key] = item.Value;
-                    }
-                }
-            }
-        }
 
     }
 
