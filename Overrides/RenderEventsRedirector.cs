@@ -11,8 +11,6 @@ namespace Klyte.WriteTheSigns.Overrides
         public void Awake()
         {
 
-            NetManagerOverrides.EventSegmentNameChanged += OnNameSeedChanged;
-            DistrictManagerOverrides.EventOnDistrictChanged += OnDistrictChanged;
 
             var adrEventsType = Type.GetType("Klyte.Addresses.ModShared.AdrEvents, KlyteAddresses");
             if (adrEventsType != null)
@@ -21,6 +19,12 @@ namespace Klyte.WriteTheSigns.Overrides
                 RegisterEvent("EventRoadNamingChange", adrEventsType, new Action(OnNameSeedChanged));
                 RegisterEvent("EventDistrictColorChanged", adrEventsType, new Action(OnDistrictChanged));
             }
+        }
+
+        public void Start()
+        {
+            NetManagerOverrides.EventSegmentNameChanged += OnNameSeedChanged;
+            WTSController.EventOnDistrictChanged += OnDistrictChanged;
         }
         private void OnNameSeedChanged()
         {

@@ -19,7 +19,7 @@ namespace Klyte.WriteTheSigns.Data
             base.LoadDefaults();
             BoardsContainers = new CC[ObjArraySize, BoardCount, SubBoardCount];
         }
-        public void ResetBoards() => BoardsContainers = new CC[ObjArraySize, BoardCount, SubBoardCount];
+        public virtual void ResetBoards() => BoardsContainers = new CC[ObjArraySize, BoardCount, SubBoardCount];
 
         [XmlAttribute("defaultFont")]
         public virtual string DefaultFont { get; set; }

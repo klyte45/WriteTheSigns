@@ -200,6 +200,7 @@
     <Compile Include="UI\Tabs\PropEditor\WTSPropLayoutEditorTexts.cs" />
     <Compile Include="UI\Tabs\PropEditor\WTSPropLayoutEditorBasics.cs" />
     <Compile Include="UI\Tabs\PropEditor\WTSPropLayoutEditor.cs" />
+    <Compile Include="Utils\UITemplateUtils.cs" />
     <Compile Include="Utils\WTSLineUtils.cs" />
     <Compile Include="Utils\PrefabUtils.cs" />
     <Compile Include="Utils\RenderUtils.cs" />

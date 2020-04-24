@@ -20,6 +20,8 @@ namespace Klyte.WriteTheSigns.UI
     internal class WTSRoadCornerEditorDetailTabs : UICustomControl
     {
         public UIPanel MainContainer { get; protected set; }
+
+        private const string DISTRICT_SELECTOR_TEMPLATE = "K45_WTS_DistrictSelectorTemplate";
         private int m_currentIdx = -1;
         private bool m_isEditing;
 
@@ -114,16 +116,119 @@ namespace Klyte.WriteTheSigns.UI
 
             AddCheckboxLocale("K45_WTS_ROADCORNER_DISTRICTSELECTIONASWHITELIST", out m_districtWhiteList, helperDistricts, OnSetDistrictsAsWhitelist);
             AddCheckboxLocale("K45_WTS_ROADCORNER_DISTRICTSELECTIONASBLACKLIST", out m_districtBlackList, helperDistricts, OnSetDistrictsAsBlacklist);
-            KlyteMonoUtils.CreateUIElement(out m_listContainer, helperDistricts.Self.transform, "previewPanel", new UnityEngine.Vector4(0, 0, helperDistricts.Self.width, helperDistricts.Self.height - 90));
+            AddDropdown(Locale.Get("K45_WTS_ROADCORNER_DISTRICTRESTRICTIONSOLVEORDER"), out m_districtResolutionOrder, helperDistricts, Enum.GetNames(typeof(DistrictRestrictionOrder)).Select(x => Locale.Get("K45_WTS_DISTRICTRESTRICTIONORDER", x)).ToArray(), OnChangeDistrictRestrictionOrder);
+            KlyteMonoUtils.CreateUIElement(out m_listContainer, helperDistricts.Self.transform, "previewPanel", new UnityEngine.Vector4(0, 0, helperDistricts.Self.width, helperDistricts.Self.height - 160));
             KlyteMonoUtils.CreateScrollPanel(m_listContainer, out m_districtList, out _, m_listContainer.width - 20, m_listContainer.height);
             m_districtList.backgroundSprite = "OptionsScrollbarTrack";
             m_districtList.autoLayout = true;
             m_districtList.autoLayoutDirection = LayoutDirection.Vertical;
 
+            CreateTemplateDistrict();
+            m_checkboxTemplateList = new UITemplateList<UIPanel>(m_districtList, DISTRICT_SELECTOR_TEMPLATE);
+
+
             WTSRoadCornerEditor.Instance.RuleList.EventSelectionChanged += OnChangeTab;
             LoadAvailableLayouts();
             MainContainer.isVisible = false;
             m_pasteSettings.isVisible = false;
+        }
+
+
+        private void UpdateDistrictList(ref BoardInstanceRoadNodeXml reference)
+        {
+            var districts = DistrictUtils.GetValidParks().ToDictionary(x => x.Key, x => 0x100 | x.Value).Union(DistrictUtils.GetValidDistricts()).OrderBy(x => x.Value == 0 ? "" : x.Key).ToDictionary(x => x.Key, x => x.Value);
+            ref DistrictPark[] parkBuffer = ref Singleton<DistrictManager>.instance.m_parks.m_buffer;
+            UIPanel[] districtChecks = m_checkboxTemplateList.SetItemCount(districts.Count);
+
+            for (int i = 0; i < districts.Count; i++)
+            {
+                string districtName = districts.Keys.ElementAt(i);
+                UICheckBox checkbox = districtChecks[i].GetComponentInChildren<UICheckBox>();
+                checkbox.stringUserData = districts[districtName].ToString();
+                if (checkbox.label.objectUserData == null)
+                {
+                    checkbox.eventCheckChanged += (x, y) =>
+                    {
+                        SafeObtain((ref BoardInstanceRoadNodeXml z) =>
+                        {
+                            if (ushort.TryParse(x.stringUserData, out ushort districtIdx))
+                            {
+                                if (y)
+                                {
+                                    z.SelectedDistricts.Add(districtIdx);
+                                }
+                                else
+                                {
+                                    z.SelectedDistricts.Remove(districtIdx);
+                                }
+                            }
+                        });
+
+                    };
+                    KlyteMonoUtils.LimitWidthAndBox(checkbox.label, m_districtList.width - 50);
+
+
+                    checkbox.label.objectUserData = true;
+                }
+                checkbox.text = districtName;
+                if (districts[districtName] >= 256)
+                {
+                    int parkId = districts[districtName] & 0xFF;
+                    if (parkBuffer[parkId].IsCampus)
+                    {
+                        checkbox.tooltip = Locale.Get("MAIN_TOOL", "PlayerEducation");
+                        checkbox.label.textColor = Color.cyan;
+                    }
+                    else if (parkBuffer[parkId].IsIndustry)
+                    {
+                        checkbox.tooltip = Locale.Get("PARKSOVERVIEW_TOOLTIP", "Industry");
+                        checkbox.label.textColor = Color.yellow;
+                    }
+                    else if (parkBuffer[parkId].IsPark)
+                    {
+                        checkbox.tooltip = Locale.Get("PARKSOVERVIEW_TOOLTIP", "Generic");
+                        checkbox.label.textColor = Color.green;
+                    }
+                    else
+                    {
+                        checkbox.tooltip = Locale.Get("MAIN_AREAS");
+                        checkbox.label.textColor = Color.Lerp(Color.magenta, Color.blue, 0.5f);
+                    }
+                }
+                else
+                {
+                    checkbox.tooltip = Locale.Get("TUTORIAL_ADVISER_TITLE", "District");
+                    checkbox.label.textColor = Color.white;
+                }
+
+            }
+            for (int i = 0; i < m_checkboxTemplateList.items.Count; i++)
+            {
+                UICheckBox checkbox = m_checkboxTemplateList.items[i].GetComponentInChildren<UICheckBox>();
+                if (ushort.TryParse(checkbox.stringUserData, out ushort districtIdx))
+                {
+                    checkbox.isChecked = reference.SelectedDistricts.Contains(districtIdx);
+                }
+            }
+        }
+
+        private void CreateTemplateDistrict()
+        {
+            var go = new GameObject();
+            UIPanel panel = go.AddComponent<UIPanel>();
+            panel.size = new Vector2(m_districtList.width, 36);
+            panel.autoLayout = true;
+            panel.wrapLayout = false;
+            panel.autoLayoutDirection = LayoutDirection.Horizontal;
+
+            UICheckBox uiCheckbox = UIHelperExtension.AddCheckbox(panel, "AAAAAA", false);
+            uiCheckbox.name = "AssetCheckbox";
+            uiCheckbox.height = 29f;
+            uiCheckbox.width = 290f;
+            uiCheckbox.label.processMarkup = true;
+            uiCheckbox.label.textScale = 0.8f;
+
+            UITemplateUtils.GetTemplateDict()[DISTRICT_SELECTOR_TEMPLATE] = panel;
         }
 
 
@@ -162,7 +267,6 @@ namespace Klyte.WriteTheSigns.UI
         }
         private void OnChangeTab(int obj)
         {
-            LogUtils.DoWarnLog($"SEL IDX: {obj}");
             MainContainer.isVisible = obj >= 0;
             m_currentIdx = obj;
             SafeObtain((ref BoardInstanceRoadNodeXml x) =>
@@ -204,7 +308,7 @@ namespace Klyte.WriteTheSigns.UI
                 m_minMaxLaneRequired[0].parent.isVisible = x.TrafficDirectionRequired != TrafficDirectionRequired.NONE;
                 //m_districtList.isChecked = x.;
 
-
+                UpdateDistrictList(ref x);
                 m_spawnInSegmentOptions.isVisible = x.PlaceOnSegmentInsteadOfCorner;
             });
         }
@@ -214,6 +318,8 @@ namespace Klyte.WriteTheSigns.UI
         private BoardInstanceRoadNodeXml nullValue = null;
         private UITextField[] m_minMaxLaneRequired;
         private UIDropDown m_flowRequirement;
+        private UITemplateList<UIPanel> m_checkboxTemplateList;
+        private UIDropDown m_districtResolutionOrder;
 
         private ref BoardInstanceRoadNodeXml GetRuleSerialized()
         {
@@ -238,7 +344,13 @@ namespace Klyte.WriteTheSigns.UI
         });
         private void OnSetDistrictsAsBlacklist(bool isChecked) => SafeObtain((ref BoardInstanceRoadNodeXml x) => { x.SelectedDistrictsIsBlacklist = isChecked; m_districtWhiteList.isChecked = !isChecked; });
         private void OnSetDistrictsAsWhitelist(bool isChecked) => SafeObtain((ref BoardInstanceRoadNodeXml x) => { x.SelectedDistrictsIsBlacklist = !isChecked; m_districtBlackList.isChecked = !isChecked; });
-
+        private void OnChangeDistrictRestrictionOrder(int sel) => SafeObtain((ref BoardInstanceRoadNodeXml x) =>
+        {
+            if (sel >= 0)
+            {
+                x.DistrictRestrictionOrder = (DistrictRestrictionOrder)sel;
+            }
+        });
         private void OnChangeSpawnOnDistrictBorder(bool isChecked) => SafeObtain((ref BoardInstanceRoadNodeXml x) => x.PlaceOnDistrictBorder = isChecked);
 
 

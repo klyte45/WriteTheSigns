@@ -25,6 +25,10 @@ namespace Klyte.WriteTheSigns
 
         public static event Action EventFontsReloadedFromFolder;
 
+        public static event Action EventOnDistrictChanged;
+
+        public static void OnDistrictChanged() => EventOnDistrictChanged?.Invoke();
+
         public void Awake()
         {
             if (RoadSegmentToolInstance == null)
@@ -39,6 +43,11 @@ namespace Klyte.WriteTheSigns
             ReloadAbbreviationFiles();
 
             FontServer.Ensure();
+        }
+        public void OnDestroy()
+        {
+            EventFontsReloadedFromFolder = null;
+            EventOnDistrictChanged = null;
         }
         protected override void StartActions() => ReloadFontsFromPath();
         public static void ReloadFontsFromPath()

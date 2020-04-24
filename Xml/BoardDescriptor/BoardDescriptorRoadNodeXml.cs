@@ -58,13 +58,34 @@ namespace Klyte.WriteTheSigns.Xml
         [XmlAttribute("applyAbreviationsOnFullName")] public bool ApplyAbreviationsOnFullName { get; set; } = true;//
         [XmlAttribute("applyAbreviationsOnSuffix")] public bool ApplyAbreviationsOnSuffix { get; set; } = true;//
 
-        [XmlArray("SelectedDistricts")] [XmlArrayItem("District")] public HashSet<ushort> SelectedDistricts { get; set; } = new HashSet<ushort>();//
-        [XmlAttribute("districtSelectionIsBlacklist")] public bool SelectedDistrictsIsBlacklist { get; set; } = true;//
+        [XmlArray("SelectedDistricts")] [XmlArrayItem("District")] public HashSet<ushort> SelectedDistricts { get; set; } = new HashSet<ushort>();
+        [XmlAttribute("districtSelectionIsBlacklist")] public bool SelectedDistrictsIsBlacklist { get; set; } = true;
+        [XmlAttribute("districtRestrictionOrder")] public DistrictRestrictionOrder DistrictRestrictionOrder { get; set; }//
 
 
         public bool AllowsClass(ItemClass source) => AllowedLevels.Contains(source.m_level);
-        public bool AllowsDistrict(byte districtId) => SelectedDistricts.Contains(districtId) == SelectedDistrictsIsBlacklist;
-        public bool AllowsPark(byte districtId) => SelectedDistricts.Contains((ushort)(0x100 | districtId)) == SelectedDistrictsIsBlacklist;
+        public bool AllowsDistrict(byte districtId) => SelectedDistricts.Contains(districtId) != SelectedDistrictsIsBlacklist;
+        public bool AllowsPark(byte districtId) => SelectedDistricts.Contains((ushort)(0x100 | districtId)) != SelectedDistrictsIsBlacklist;
+
+        public bool Allows(byte park, byte district)
+        {
+            if (district == 0 && park > 0)
+            {
+                return AllowsPark(park);
+            }
+            if (park == 0)
+            {
+                return AllowsDistrict(district);
+            }
+            switch (DistrictRestrictionOrder)
+            {
+                case DistrictRestrictionOrder.ParksOrDistricts:
+                default:
+                    return AllowsDistrict(district) || AllowsPark(park);
+                case DistrictRestrictionOrder.ParksAndDistricts:
+                    return AllowsDistrict(district) && AllowsPark(park);
+            }
+        }
     }
 
     public enum TrafficDirectionRequired
@@ -72,5 +93,11 @@ namespace Klyte.WriteTheSigns.Xml
         NONE,
         INCOMING,
         OUTCOMING,
+    }
+
+    public enum DistrictRestrictionOrder
+    {
+        ParksOrDistricts,
+        ParksAndDistricts
     }
 }

@@ -45,6 +45,11 @@ namespace Klyte.WriteTheSigns.Data
         [XmlAttribute("abbreviationFile")]
         public string AbbreviationFile { get; set; }
 
+        public override void ResetBoards()
+        {
+            WriteTheSignsMod.Controller.StopAllCoroutines();
+            base.ResetBoards();
+        }
     }
 
 }

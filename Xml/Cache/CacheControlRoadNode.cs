@@ -8,6 +8,7 @@ namespace Klyte.WriteTheSigns.Xml
         public float m_streetDirection;
         public ushort m_segmentId;
         public byte m_districtId;
+        public byte m_districtParkId;
         public float m_distanceRef;
         public bool m_renderPlate;
         public Color m_cachedColor = Color.white;
