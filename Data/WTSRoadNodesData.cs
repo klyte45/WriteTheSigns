@@ -1,4 +1,5 @@
-﻿using Klyte.WriteTheSigns.Xml;
+﻿using ColossalFramework.UI;
+using Klyte.WriteTheSigns.Xml;
 using System.Linq;
 using System.Xml.Serialization;
 using static Klyte.Commons.Utils.XmlUtils;
@@ -49,6 +50,12 @@ namespace Klyte.WriteTheSigns.Data
         {
             WriteTheSignsMod.Controller.StopAllCoroutines();
             base.ResetBoards();
+        }
+
+        public void ResetCacheDescriptors()
+        {
+            m_currentDescriptorOrder.ForEach(x => x.ResetCacheDescriptor());
+            ResetBoards();
         }
     }
 

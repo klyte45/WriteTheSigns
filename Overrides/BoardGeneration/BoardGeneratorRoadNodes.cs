@@ -138,8 +138,12 @@ namespace Klyte.WriteTheSigns.Overrides
                     if (item?.m_renderPlate ?? false)
                     {
                         ref BoardInstanceRoadNodeXml targetDescriptor = ref item.m_currentDescriptor;
+                        if (targetDescriptor?.Descriptor?.m_propName == null)
+                        {
+                            continue;
+                        }
 
-                        if (item.m_cachedProp?.name != targetDescriptor.Descriptor.m_propName)
+                        if (item.m_cachedProp?.name != targetDescriptor?.Descriptor?.m_propName)
                         {
                             item.m_cachedProp = null;
                         }
@@ -215,7 +219,7 @@ namespace Klyte.WriteTheSigns.Overrides
                         while (matchingDescriptors.Count > 0 && !hasSpawned)
                         {
                             targetDescriptor = matchingDescriptors.Pop()?.Second;
-                            hasSpawned = ProcessDescriptor(nodeID, ref NetManager.instance.m_nodes.m_buffer[nodeID], controlBoardIdx, segmentIid, ref Singleton<NetManager>.instance.m_segments.m_buffer[segmentIid], segmentIDirection, roadAiI, segmentJid, ref Singleton<NetManager>.instance.m_segments.m_buffer[segmentJid], segmentJDirection, invertIJ, targetDescriptor, incomingTraffic, outcomingTraffic, ref secondaryIdx);
+                            hasSpawned = ProcessDescriptor(nodeID, ref NetManager.instance.m_nodes.m_buffer[nodeID], controlBoardIdx, segmentIid, ref Singleton<NetManager>.instance.m_segments.m_buffer[segmentIid], segmentIDirection, segmentJid, ref Singleton<NetManager>.instance.m_segments.m_buffer[segmentJid], segmentJDirection, invertIJ, targetDescriptor, incomingTraffic, outcomingTraffic, ref secondaryIdx);
 
                             yield return 0;
                         }
@@ -224,7 +228,7 @@ namespace Klyte.WriteTheSigns.Overrides
                             targetDescriptor = matchingDescriptors.Where((x) => !x.Second.PlaceOnSegmentInsteadOfCorner).FirstOrDefault()?.Second;
                             if (targetDescriptor != null)
                             {
-                                hasSpawned |= ProcessDescriptor(nodeID, ref NetManager.instance.m_nodes.m_buffer[nodeID], controlBoardIdx, segmentIid, ref Singleton<NetManager>.instance.m_segments.m_buffer[segmentIid], segmentIDirection, roadAiI, segmentJid, ref Singleton<NetManager>.instance.m_segments.m_buffer[segmentJid], segmentJDirection, invertIJ, targetDescriptor, incomingTraffic, outcomingTraffic, ref secondaryIdx);
+                                hasSpawned |= ProcessDescriptor(nodeID, ref NetManager.instance.m_nodes.m_buffer[nodeID], controlBoardIdx, segmentIid, ref Singleton<NetManager>.instance.m_segments.m_buffer[segmentIid], segmentIDirection, segmentJid, ref Singleton<NetManager>.instance.m_segments.m_buffer[segmentJid], segmentJDirection, invertIJ, targetDescriptor, incomingTraffic, outcomingTraffic, ref secondaryIdx);
                             }
                         }
                         if (hasSpawned)
@@ -271,13 +275,12 @@ namespace Klyte.WriteTheSigns.Overrides
 
         private bool ProcessDescriptor(
             ushort nodeID, ref NetNode data, int controlBoardIdx,
-            ushort segmentIid, ref NetSegment netSegmentI, Vector3 segmentIDirection, RoadBaseAI roadAiI,
-            ushort segmentJid, ref NetSegment netSegmentJ, Vector3 segmentJDirection,
-            bool invertIJ, BoardInstanceRoadNodeXml targetDescriptor,
-            HashSet<ushort> incoming, HashSet<ushort> outcoming,
-            ref int subboardOffset)
+            ushort segmentIid, ref NetSegment netSegmentI, Vector3 segmentIDirection, 
+            ushort segmentJid, ref NetSegment netSegmentJ, Vector3 segmentJDirection, bool invertIJ,
+            BoardInstanceRoadNodeXml targetDescriptor, HashSet<ushort> incoming,
+            HashSet<ushort> outcoming, ref int subboardOffset)
         {
-            if (targetDescriptor == null)
+            if (targetDescriptor?.Descriptor?.m_propName == null)
             {
                 return false;
             }
@@ -287,10 +290,9 @@ namespace Klyte.WriteTheSigns.Overrides
             bool isSegmentJinverted = invertFlagJ == (netSegmentJ.m_startNode == nodeID) != (SimulationManager.instance.m_metaData.m_invertTraffic == SimulationMetaData.MetaBool.False);
 
             if (segmentJid == 0
-                || !(Singleton<NetManager>.instance.m_segments.m_buffer[segmentJid].Info.m_netAI is RoadBaseAI roadAiJ)
-                || Singleton<NetManager>.instance.GetSegmentName(segmentIid).IsNullOrWhiteSpace()
-                || Singleton<NetManager>.instance.GetSegmentName(segmentJid).IsNullOrWhiteSpace()
-                || SegmentUtils.IsSameName(segmentJid, segmentIid, false, false, true, targetDescriptor.PlaceOnDistrictBorder, true)
+                || !(Singleton<NetManager>.instance.m_segments.m_buffer[segmentJid].Info.m_netAI is RoadBaseAI)
+                || (targetDescriptor.IgnoreEmptyNameRoads && (Singleton<NetManager>.instance.GetSegmentName(segmentIid).IsNullOrWhiteSpace() || Singleton<NetManager>.instance.GetSegmentName(segmentJid).IsNullOrWhiteSpace()))
+                || SegmentUtils.IsSameName(segmentJid, segmentIid, false, false, true, targetDescriptor.PlaceOnDistrictBorder, targetDescriptor.PlaceOnTunnelBridgeStart)
                 || (new Randomizer(segmentIid | (segmentJid << 16)).UInt32(255) > targetDescriptor.SpawnChance))
             {
                 return false;
@@ -299,6 +301,12 @@ namespace Klyte.WriteTheSigns.Overrides
             Vector3 platePosJ;
             bool renderJ = true;
             bool renderI = true;
+
+            /*
+             
+                || Singleton<NetManager>.instance.m_segments.m_buffer[segmentJid].Info?.m_halfWidth > targetDescriptor.MaxRoadHalfWidth + 0.002f
+                || Singleton<NetManager>.instance.m_segments.m_buffer[segmentJid].Info?.m_halfWidth < targetDescriptor.MinRoadHalfWidth - 0.002f
+             */
             if (targetDescriptor.PlaceOnSegmentInsteadOfCorner)
             {
                 renderJ = !targetDescriptor.EnsureSegmentTypeInAllowedTypes || targetDescriptor.AllowsClass(netSegmentJ.Info.m_class);
@@ -309,38 +317,45 @@ namespace Klyte.WriteTheSigns.Overrides
                 {
                     renderI &= !invertIJ
                         && (
-                             (!isSegmentIinverted && netSegmentI.Info.m_backwardVehicleLaneCount >= targetDescriptor.MinIncomeOutcomeLanes && netSegmentI.Info.m_backwardVehicleLaneCount <= targetDescriptor.MaxIncomeOutcomeLanes)
-                           || (isSegmentIinverted && netSegmentI.Info.m_forwardVehicleLaneCount >= targetDescriptor.MinIncomeOutcomeLanes && netSegmentI.Info.m_forwardVehicleLaneCount <= targetDescriptor.MaxIncomeOutcomeLanes)
-                           );
-                    renderJ &= invertIJ && ((!isSegmentJinverted && netSegmentJ.Info.m_backwardVehicleLaneCount >= targetDescriptor.MinIncomeOutcomeLanes && netSegmentJ.Info.m_backwardVehicleLaneCount <= targetDescriptor.MaxIncomeOutcomeLanes)
-                                          || (isSegmentJinverted && netSegmentJ.Info.m_forwardVehicleLaneCount >= targetDescriptor.MinIncomeOutcomeLanes && netSegmentJ.Info.m_forwardVehicleLaneCount <= targetDescriptor.MaxIncomeOutcomeLanes));
+                             (!isSegmentIinverted && netSegmentI.Info.m_backwardVehicleLaneCount >= targetDescriptor.MinDirectionTrafficLanes && netSegmentI.Info.m_backwardVehicleLaneCount <= targetDescriptor.MaxDirectionTrafflcLanes)
+                           || (isSegmentIinverted && netSegmentI.Info.m_forwardVehicleLaneCount >= targetDescriptor.MinDirectionTrafficLanes && netSegmentI.Info.m_forwardVehicleLaneCount <= targetDescriptor.MaxDirectionTrafflcLanes)
+                           ) && netSegmentI.Info?.m_halfWidth < targetDescriptor.MaxRoadHalfWidth + 0.002f && netSegmentI.Info?.m_halfWidth > targetDescriptor.MinRoadHalfWidth - 0.002f;
+                    renderJ &= invertIJ && ((!isSegmentJinverted && netSegmentJ.Info.m_backwardVehicleLaneCount >= targetDescriptor.MinDirectionTrafficLanes && netSegmentJ.Info.m_backwardVehicleLaneCount <= targetDescriptor.MaxDirectionTrafflcLanes)
+                                          || (isSegmentJinverted && netSegmentJ.Info.m_forwardVehicleLaneCount >= targetDescriptor.MinDirectionTrafficLanes && netSegmentJ.Info.m_forwardVehicleLaneCount <= targetDescriptor.MaxDirectionTrafflcLanes))
+                                          && netSegmentJ.Info?.m_halfWidth < targetDescriptor.MaxRoadHalfWidth + 0.002f && netSegmentJ.Info?.m_halfWidth > targetDescriptor.MinRoadHalfWidth - 0.002f;
 
                     if (incoming.Count == 1)
                     {
-                        renderI &= !SegmentUtils.IsSameName(incoming.First(), segmentIid, false, false, true, targetDescriptor.PlaceOnDistrictBorder, true);
-                        renderJ &= !SegmentUtils.IsSameName(incoming.First(), segmentJid, false, false, true, targetDescriptor.PlaceOnDistrictBorder, true);
+                        renderI &= !SegmentUtils.IsSameName(incoming.First(), segmentIid, false, false, true, targetDescriptor.PlaceOnDistrictBorder, targetDescriptor.PlaceOnTunnelBridgeStart);
+                        renderJ &= !SegmentUtils.IsSameName(incoming.First(), segmentJid, false, false, true, targetDescriptor.PlaceOnDistrictBorder, targetDescriptor.PlaceOnTunnelBridgeStart);
                     }
                 }
                 else if (targetDescriptor.TrafficDirectionRequired == TrafficDirectionRequired.INCOMING)
                 {
+                    if (outcoming.Count < targetDescriptor.MinNodeOutcomingLanes || outcoming.Count > targetDescriptor.MaxNodeOutcomingLanes)
+                    {
+                        return false;
+                    }
                     renderI &= invertIJ
                         && (
-                             (isSegmentIinverted && netSegmentI.Info.m_backwardVehicleLaneCount >= targetDescriptor.MinIncomeOutcomeLanes && netSegmentI.Info.m_backwardVehicleLaneCount <= targetDescriptor.MaxIncomeOutcomeLanes)
-                           || (!isSegmentIinverted && netSegmentI.Info.m_forwardVehicleLaneCount >= targetDescriptor.MinIncomeOutcomeLanes && netSegmentI.Info.m_forwardVehicleLaneCount <= targetDescriptor.MaxIncomeOutcomeLanes)
-                           );
-                    renderJ &= !invertIJ && ((isSegmentJinverted && netSegmentJ.Info.m_backwardVehicleLaneCount >= targetDescriptor.MinIncomeOutcomeLanes && netSegmentJ.Info.m_backwardVehicleLaneCount <= targetDescriptor.MaxIncomeOutcomeLanes)
-                                          || (!isSegmentJinverted && netSegmentJ.Info.m_forwardVehicleLaneCount >= targetDescriptor.MinIncomeOutcomeLanes && netSegmentJ.Info.m_forwardVehicleLaneCount <= targetDescriptor.MaxIncomeOutcomeLanes));
+                             (isSegmentIinverted && netSegmentI.Info.m_backwardVehicleLaneCount >= targetDescriptor.MinDirectionTrafficLanes && netSegmentI.Info.m_backwardVehicleLaneCount <= targetDescriptor.MaxDirectionTrafflcLanes)
+                           || (!isSegmentIinverted && netSegmentI.Info.m_forwardVehicleLaneCount >= targetDescriptor.MinDirectionTrafficLanes && netSegmentI.Info.m_forwardVehicleLaneCount <= targetDescriptor.MaxDirectionTrafflcLanes)
+                           ) && netSegmentI.Info?.m_halfWidth < targetDescriptor.MaxRoadHalfWidth + 0.002f && netSegmentI.Info?.m_halfWidth > targetDescriptor.MinRoadHalfWidth - 0.002f;
+
+                    renderJ &= !invertIJ && ((isSegmentJinverted && netSegmentJ.Info.m_backwardVehicleLaneCount >= targetDescriptor.MinDirectionTrafficLanes && netSegmentJ.Info.m_backwardVehicleLaneCount <= targetDescriptor.MaxDirectionTrafflcLanes)
+                                          || (!isSegmentJinverted && netSegmentJ.Info.m_forwardVehicleLaneCount >= targetDescriptor.MinDirectionTrafficLanes && netSegmentJ.Info.m_forwardVehicleLaneCount <= targetDescriptor.MaxDirectionTrafflcLanes))
+                                          && netSegmentJ.Info?.m_halfWidth < targetDescriptor.MaxRoadHalfWidth + 0.002f && netSegmentJ.Info?.m_halfWidth > targetDescriptor.MinRoadHalfWidth - 0.002f;
 
                     if (outcoming.Count == 1)
                     {
-                        renderI &= !SegmentUtils.IsSameName(outcoming.First(), segmentIid, false, false, true, targetDescriptor.PlaceOnDistrictBorder, true);
-                        renderJ &= !SegmentUtils.IsSameName(outcoming.First(), segmentJid, false, false, true, targetDescriptor.PlaceOnDistrictBorder, true);
+                        renderI &= !SegmentUtils.IsSameName(outcoming.First(), segmentIid, false, false, true, targetDescriptor.PlaceOnDistrictBorder, targetDescriptor.PlaceOnTunnelBridgeStart);
+                        renderJ &= !SegmentUtils.IsSameName(outcoming.First(), segmentJid, false, false, true, targetDescriptor.PlaceOnDistrictBorder, targetDescriptor.PlaceOnTunnelBridgeStart);
                     }
                 }
                 else
                 {
-                    renderI &= (invertIJ == isSegmentIinverted && netSegmentI.Info.m_hasBackwardVehicleLanes) || (invertIJ != isSegmentIinverted && netSegmentI.Info.m_hasForwardVehicleLanes);
-                    renderJ &= (invertIJ != isSegmentJinverted && netSegmentJ.Info.m_hasBackwardVehicleLanes) || (invertIJ == isSegmentJinverted && netSegmentJ.Info.m_hasForwardVehicleLanes);
+                    renderI &= ((invertIJ == isSegmentIinverted && netSegmentI.Info.m_hasBackwardVehicleLanes) || (invertIJ != isSegmentIinverted && netSegmentI.Info.m_hasForwardVehicleLanes)) && netSegmentI.Info?.m_halfWidth < targetDescriptor.MaxRoadHalfWidth + 0.002f && netSegmentI.Info?.m_halfWidth > targetDescriptor.MinRoadHalfWidth - 0.002f; ;
+                    renderJ &= ((invertIJ != isSegmentJinverted && netSegmentJ.Info.m_hasBackwardVehicleLanes) || (invertIJ == isSegmentJinverted && netSegmentJ.Info.m_hasForwardVehicleLanes)) && netSegmentJ.Info?.m_halfWidth < targetDescriptor.MaxRoadHalfWidth + 0.002f && netSegmentJ.Info?.m_halfWidth > targetDescriptor.MinRoadHalfWidth - 0.002f; ;
                 }
 
 

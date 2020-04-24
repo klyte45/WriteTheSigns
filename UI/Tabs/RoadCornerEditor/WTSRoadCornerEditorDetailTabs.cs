@@ -36,18 +36,24 @@ namespace Klyte.WriteTheSigns.UI
         private UIButton m_copySettings;
         private UIButton m_pasteSettings;
 
-        private UILabel m_roadTypesTitle;
         private UICheckBox m_allowDirty;
         private UICheckBox m_allowAlleys;
         private UICheckBox m_allowSmallRoads;
         private UICheckBox m_allowMediumRoads;
         private UICheckBox m_allowLargeRoads;
         private UICheckBox m_allowHighways;
+
         private UISlider m_spawnChance;
+        private UITextField[] m_minMaxHalfWidth;
         private UICheckBox m_placeDistrictBorder;
+        private UICheckBox m_placeRoadTransition;
+        private UICheckBox m_ignoreEmpty;
         private UICheckBox m_spawnOnSegment;
 
         private UIPanel m_spawnInSegmentOptions;
+        private UIDropDown m_flowRequirement;
+        private UITextField[] m_minMaxLaneRequired;
+        private UITextField[] m_minMaxNodeOutgoingRequired;
         private UICheckBox m_ensureRoadTypeAllowed;
         private UICheckBox m_allowAnotherRuleForCorner;
 
@@ -57,8 +63,13 @@ namespace Klyte.WriteTheSigns.UI
 
         private UICheckBox m_districtWhiteList;
         private UICheckBox m_districtBlackList;
+        private UIDropDown m_districtResolutionOrder;
         private UIPanel m_listContainer;
         private UIScrollablePanel m_districtList;
+        private UITemplateList<UIPanel> m_checkboxTemplateList;
+
+
+
         public void Awake()
         {
             MainContainer = GetComponent<UIPanel>();
@@ -69,6 +80,7 @@ namespace Klyte.WriteTheSigns.UI
 
             KlyteMonoUtils.CreateTabsComponent(out m_tabstrip, out UITabContainer m_tabContainer, MainContainer.transform, "TextEditor", new Vector4(0, 0, MainContainer.width, 40), new Vector4(0, 0, MainContainer.width, MainContainer.height - 40));
             UIPanel m_tabSettings = TabCommons.CreateNonScrollableTabLocalized(m_tabstrip, KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_Settings), "K45_WTS_ROADCORNER_BASIC_SETTINGS", "RcSettings");
+            UIPanel m_tabRoads = TabCommons.CreateNonScrollableTabLocalized(m_tabstrip, "ToolbarIconRoads", "K45_WTS_ROADCORNER_ALLOWTITLE", "RcRoad");
             UIPanel m_tabSpawning = TabCommons.CreateNonScrollableTabLocalized(m_tabstrip, KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_Reload), "K45_WTS_ROADCORNER_SPAWNING_SETTINGS", "RcSpawning");
             UIPanel m_tabAppearence = TabCommons.CreateNonScrollableTabLocalized(m_tabstrip, KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_AutoColorIcon), "K45_WTS_ROADCORNER_APPEARANCE_SETTINGS", "RcAppearence");
             UIPanel m_tabDistricts = TabCommons.CreateNonScrollableTabLocalized(m_tabstrip, "ToolbarIconDistrict", "K45_WTS_ROADCORNER_DISTRICT_SETTINGS", "RcDistricts");
@@ -77,6 +89,8 @@ namespace Klyte.WriteTheSigns.UI
             var helperSpawning = new UIHelperExtension(m_tabSpawning, LayoutDirection.Vertical);
             var helperAppearence = new UIHelperExtension(m_tabAppearence, LayoutDirection.Vertical);
             var helperDistricts = new UIHelperExtension(m_tabDistricts, LayoutDirection.Vertical);
+
+            var helperRoads = new UIHelperExtension(m_tabRoads, LayoutDirection.Vertical);
 
 
             AddTextField(Locale.Get("K45_WTS_ROADCORNER_NAME"), out m_name, helperSettings, OnSetName);
@@ -90,22 +104,25 @@ namespace Klyte.WriteTheSigns.UI
             AddVector3Field(Locale.Get("K45_WTS_ROADCORNER_SCALE"), out m_scale, helperSettings, OnScaleChanged);
             AddLibBox<WTSLibRoadCornerRule, BoardInstanceRoadNodeXml>(helperSettings, out m_copySettings, OnCopyRule, out m_pasteSettings, OnPasteRule, out _, null, OnLoadRule, GetRuleSerialized);
 
-            UIHelperExtension helperAllowedTypes = helperSpawning.AddGroupExtended(Locale.Get("K45_WTS_ROADCORNER_ALLOWTITLE"), out m_roadTypesTitle, out _);
-            AddCheckboxLocale("K45_WTS_ROADCORNER_ALLOW_DIRTROADS", out m_allowDirty, helperAllowedTypes, (x) => ToggleAllow(Level.Level1, x));
-            AddCheckboxLocale("K45_WTS_ROADCORNER_ALLOW_ALLEYS", out m_allowAlleys, helperAllowedTypes, (x) => ToggleAllow((Level)5, x));
-            AddCheckboxLocale("K45_WTS_ROADCORNER_ALLOW_SMALLROADS", out m_allowSmallRoads, helperAllowedTypes, (x) => ToggleAllow(Level.Level2, x));
-            AddCheckboxLocale("K45_WTS_ROADCORNER_ALLOW_MEDIUMROADS", out m_allowMediumRoads, helperAllowedTypes, (x) => ToggleAllow(Level.Level3, x));
-            AddCheckboxLocale("K45_WTS_ROADCORNER_ALLOW_LARGEROADS", out m_allowLargeRoads, helperAllowedTypes, (x) => ToggleAllow(Level.Level4, x));
-            AddCheckboxLocale("K45_WTS_ROADCORNER_ALLOW_HIGHWAYS", out m_allowHighways, helperAllowedTypes, (x) => ToggleAllow(Level.Level5, x));
+            AddCheckboxLocale("K45_WTS_ROADCORNER_ALLOW_DIRTROADS", out m_allowDirty, helperRoads, (x) => ToggleAllow(Level.Level1, x));
+            AddCheckboxLocale("K45_WTS_ROADCORNER_ALLOW_ALLEYS", out m_allowAlleys, helperRoads, (x) => ToggleAllow((Level)5, x));
+            AddCheckboxLocale("K45_WTS_ROADCORNER_ALLOW_SMALLROADS", out m_allowSmallRoads, helperRoads, (x) => ToggleAllow(Level.Level2, x));
+            AddCheckboxLocale("K45_WTS_ROADCORNER_ALLOW_MEDIUMROADS", out m_allowMediumRoads, helperRoads, (x) => ToggleAllow(Level.Level3, x));
+            AddCheckboxLocale("K45_WTS_ROADCORNER_ALLOW_LARGEROADS", out m_allowLargeRoads, helperRoads, (x) => ToggleAllow(Level.Level4, x));
+            AddCheckboxLocale("K45_WTS_ROADCORNER_ALLOW_HIGHWAYS", out m_allowHighways, helperRoads, (x) => ToggleAllow(Level.Level5, x));
 
             AddSlider(Locale.Get("K45_WTS_ROADCORNER_SPAWN_CHANCE"), out m_spawnChance, helperSpawning, OnChangeSpawnChance, 0, 255, 1, (x) => (x / 255).ToString("P0"));
+            AddVector2Field(Locale.Get("K45_WTS_ROADCORNER_MINMAXHALFWIDTH"), out m_minMaxHalfWidth, helperSpawning, OnSetMinMaxHalfWidth);
             AddCheckboxLocale("K45_WTS_ROADCORNER_PLACEALSOONDISTRICTBORDER", out m_placeDistrictBorder, helperSpawning, OnChangeSpawnOnDistrictBorder);
+            AddCheckboxLocale("K45_WTS_ROADCORNER_PLACEONTUNNELBRIDGESTART", out m_placeRoadTransition, helperSpawning, OnChangePlaceRoadTransition);
+            AddCheckboxLocale("K45_WTS_ROADCORNER_IGNOREEMPTYNAMES", out m_ignoreEmpty, helperSpawning, OnChangeIgnoreEmpty);
             AddCheckboxLocale("K45_WTS_ROADCORNER_SPAWNONSEGMENT", out m_spawnOnSegment, helperSpawning, OnChangeSpawnOnSegment);
             UIHelperExtension helperSpawningSegment = helperSpawning.AddGroupExtended(Locale.Get("K45_WTS_ROADCORNER_SPAWNONSEGMENT_OPTIONS"));
             m_spawnInSegmentOptions = helperSpawningSegment.Self as UIPanel;
             m_spawnInSegmentOptions.width = 620;
             AddDropdown(Locale.Get("K45_WTS_ROADCORNER_FLOWREQUIREMENT"), out m_flowRequirement, helperSpawningSegment, Enum.GetNames(typeof(TrafficDirectionRequired)).Select(x => Locale.Get("K45_WTS_TRAFFICDIRECTIONREQUIRED", x)).ToArray(), OnChangeFlowRequirement);
             AddVector2Field(Locale.Get("K45_WTS_ROADCORNER_MINMAXLANESREQUIRED"), out m_minMaxLaneRequired, helperSpawningSegment, OnLanesRequiredChange, false);
+            AddVector2Field(Locale.Get("K45_WTS_ROADCORNER_MINMAXNODEOUTGOINGREQUIRED"), out m_minMaxNodeOutgoingRequired, helperSpawningSegment, OnOutgoingRequirementChange, false);
             helperSpawningSegment.AddSpace(10);
             AddCheckboxLocale("K45_WTS_ROADCORNER_ENSUREROADTYPEALLOWED", out m_ensureRoadTypeAllowed, helperSpawningSegment, OnChangeEnsureRoadTypeAllowed);
             AddCheckboxLocale("K45_WTS_ROADCORNER_ALLOWANOTHERRULEFORCORNER", out m_allowAnotherRuleForCorner, helperSpawningSegment, OnChangeAllowAnotherRuleForCorner);
@@ -289,12 +306,19 @@ namespace Klyte.WriteTheSigns.UI
                 m_allowMediumRoads.isChecked = x.AllowedLevels.Contains(Level.Level3);
                 m_allowLargeRoads.isChecked = x.AllowedLevels.Contains(Level.Level4);
                 m_allowHighways.isChecked = x.AllowedLevels.Contains(Level.Level5);
+
                 m_spawnChance.value = x.SpawnChance;
+                m_minMaxHalfWidth[0].text = x.MinRoadHalfWidth.ToString("F3");
+                m_minMaxHalfWidth[1].text = x.MaxRoadHalfWidth.ToString("F3");
                 m_placeDistrictBorder.isChecked = x.PlaceOnDistrictBorder;
+                m_placeRoadTransition.isChecked = x.PlaceOnTunnelBridgeStart;
+                m_ignoreEmpty.isChecked = x.IgnoreEmptyNameRoads;
                 m_spawnOnSegment.isChecked = x.PlaceOnSegmentInsteadOfCorner;
                 m_flowRequirement.selectedIndex = (int)x.TrafficDirectionRequired;
-                m_minMaxLaneRequired[0].text = x.MinIncomeOutcomeLanes.ToString("D0");
-                m_minMaxLaneRequired[1].text = x.MaxIncomeOutcomeLanes.ToString("D0");
+                m_minMaxLaneRequired[0].text = x.MinDirectionTrafficLanes.ToString("D0");
+                m_minMaxLaneRequired[1].text = x.MaxDirectionTrafflcLanes.ToString("D0");
+                m_minMaxNodeOutgoingRequired[0].text = x.MinNodeOutcomingLanes.ToString("D0");
+                m_minMaxNodeOutgoingRequired[1].text = x.MaxNodeOutcomingLanes.ToString("D0");
                 m_ensureRoadTypeAllowed.isChecked = x.EnsureSegmentTypeInAllowedTypes;
                 m_allowAnotherRuleForCorner.isChecked = x.AllowAnotherRuleForCorner;
 
@@ -305,8 +329,8 @@ namespace Klyte.WriteTheSigns.UI
                 m_districtWhiteList.isChecked = !x.SelectedDistrictsIsBlacklist;
                 m_districtBlackList.isChecked = x.SelectedDistrictsIsBlacklist;
 
+                m_minMaxNodeOutgoingRequired[0].parent.isVisible = x.TrafficDirectionRequired == TrafficDirectionRequired.INCOMING;
                 m_minMaxLaneRequired[0].parent.isVisible = x.TrafficDirectionRequired != TrafficDirectionRequired.NONE;
-                //m_districtList.isChecked = x.;
 
                 UpdateDistrictList(ref x);
                 m_spawnInSegmentOptions.isVisible = x.PlaceOnSegmentInsteadOfCorner;
@@ -316,10 +340,6 @@ namespace Klyte.WriteTheSigns.UI
         private string m_clipboard;
 
         private BoardInstanceRoadNodeXml nullValue = null;
-        private UITextField[] m_minMaxLaneRequired;
-        private UIDropDown m_flowRequirement;
-        private UITemplateList<UIPanel> m_checkboxTemplateList;
-        private UIDropDown m_districtResolutionOrder;
 
         private ref BoardInstanceRoadNodeXml GetRuleSerialized()
         {
@@ -342,6 +362,7 @@ namespace Klyte.WriteTheSigns.UI
             m_clipboard = XmlUtils.DefaultXmlSerialize(x);
             m_pasteSettings.isVisible = true;
         });
+
         private void OnSetDistrictsAsBlacklist(bool isChecked) => SafeObtain((ref BoardInstanceRoadNodeXml x) => { x.SelectedDistrictsIsBlacklist = isChecked; m_districtWhiteList.isChecked = !isChecked; });
         private void OnSetDistrictsAsWhitelist(bool isChecked) => SafeObtain((ref BoardInstanceRoadNodeXml x) => { x.SelectedDistrictsIsBlacklist = !isChecked; m_districtBlackList.isChecked = !isChecked; });
         private void OnChangeDistrictRestrictionOrder(int sel) => SafeObtain((ref BoardInstanceRoadNodeXml x) =>
@@ -353,22 +374,33 @@ namespace Klyte.WriteTheSigns.UI
         });
         private void OnChangeSpawnOnDistrictBorder(bool isChecked) => SafeObtain((ref BoardInstanceRoadNodeXml x) => x.PlaceOnDistrictBorder = isChecked);
 
-
+        private void OnChangePlaceRoadTransition(bool isChecked) => SafeObtain((ref BoardInstanceRoadNodeXml x) => x.PlaceOnTunnelBridgeStart = isChecked);
+        private void OnChangeIgnoreEmpty(bool isChecked) => SafeObtain((ref BoardInstanceRoadNodeXml x) => x.IgnoreEmptyNameRoads = isChecked);
         private void OnChangeFlowRequirement(int sel) => SafeObtain((ref BoardInstanceRoadNodeXml x) =>
         {
             if (sel >= 0)
             {
                 x.TrafficDirectionRequired = (TrafficDirectionRequired)sel;
                 m_minMaxLaneRequired[0].parent.isVisible = x.TrafficDirectionRequired != TrafficDirectionRequired.NONE;
+                m_minMaxNodeOutgoingRequired[0].parent.isVisible = x.TrafficDirectionRequired == TrafficDirectionRequired.INCOMING;
             }
         });
         private void OnLanesRequiredChange(Vector2 obj) => SafeObtain((ref BoardInstanceRoadNodeXml x) =>
         {
-            x.MinIncomeOutcomeLanes = Mathf.RoundToInt(Mathf.Max(1, Mathf.Min(obj.x, obj.y, 99)));
-            x.MaxIncomeOutcomeLanes = Mathf.RoundToInt(Mathf.Min(99, Mathf.Max(obj.x, obj.y, 1)));
+            x.MinDirectionTrafficLanes = Mathf.RoundToInt(Mathf.Max(1, Mathf.Min(obj.x, obj.y, 99)));
+            x.MaxDirectionTrafflcLanes = Mathf.RoundToInt(Mathf.Min(99, Mathf.Max(obj.x, obj.y, 1)));
 
-            m_minMaxLaneRequired[0].text = x.MinIncomeOutcomeLanes.ToString("D0");
-            m_minMaxLaneRequired[1].text = x.MaxIncomeOutcomeLanes.ToString("D0");
+            m_minMaxLaneRequired[0].text = x.MinDirectionTrafficLanes.ToString("D0");
+            m_minMaxLaneRequired[1].text = x.MaxDirectionTrafflcLanes.ToString("D0");
+
+        });
+        private void OnOutgoingRequirementChange(Vector2 obj) => SafeObtain((ref BoardInstanceRoadNodeXml x) =>
+        {
+            x.MinNodeOutcomingLanes = Mathf.RoundToInt(Mathf.Max(1, Mathf.Min(obj.x, obj.y, 8)));
+            x.MaxNodeOutcomingLanes = Mathf.RoundToInt(Mathf.Min(8, Mathf.Max(obj.x, obj.y, 1)));
+
+            m_minMaxNodeOutgoingRequired[0].text = x.MinNodeOutcomingLanes.ToString("D0");
+            m_minMaxNodeOutgoingRequired[1].text = x.MaxNodeOutcomingLanes.ToString("D0");
 
         });
         private void OnChangeSpawnOnSegment(bool isChecked) => SafeObtain((ref BoardInstanceRoadNodeXml x) =>
@@ -405,6 +437,15 @@ namespace Klyte.WriteTheSigns.UI
             }
         });
         private void OnChangeUseDistrictColor(bool isChecked) => SafeObtain((ref BoardInstanceRoadNodeXml x) => x.UseDistrictColor = isChecked);
+
+        private void OnSetMinMaxHalfWidth(Vector2 obj) => SafeObtain((ref BoardInstanceRoadNodeXml x) =>
+        {
+            x.MinRoadHalfWidth = Mathf.Max(0, Mathf.Min(obj.x, obj.y, 999));
+            x.MaxRoadHalfWidth = Mathf.Min(999, Mathf.Max(obj.x, obj.y, 0));
+
+            m_minMaxHalfWidth[0].text = x.MinRoadHalfWidth.ToString("F3");
+            m_minMaxHalfWidth[1].text = x.MaxRoadHalfWidth.ToString("F3");
+        });
         private void OnChangeSpawnChance(float val) => SafeObtain((ref BoardInstanceRoadNodeXml x) => x.SpawnChance = (byte)val);
         private void OnChangeApplyAbbreviationsSuffix(bool isChecked) => SafeObtain((ref BoardInstanceRoadNodeXml x) => x.ApplyAbreviationsOnSuffix = isChecked);
         private void OnChangeApplyAbbreviationsFullName(bool isChecked) => SafeObtain((ref BoardInstanceRoadNodeXml x) => x.ApplyAbreviationsOnFullName = isChecked);

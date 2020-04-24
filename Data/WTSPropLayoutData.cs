@@ -8,5 +8,11 @@ namespace Klyte.WriteTheSigns.Data
     {
 
         public override string SaveId => "K45_WTS_PropLayoutData";
+
+        protected override void Save()
+        {
+            base.Save();
+            WTSRoadNodesData.Instance.ResetCacheDescriptors();
+        }
     }
 }

@@ -33,7 +33,10 @@ namespace Klyte.WriteTheSigns.Xml
                 if (m_descriptor == null && m_propLayoutName != null)
                 {
                     m_descriptor = WTSPropLayoutData.Instance.Get(m_propLayoutName);
-                    m_propLayoutName = null;
+                    if (m_descriptor == null)
+                    {
+                        m_propLayoutName = null;
+                    }
                 }
                 return m_descriptor;
             }
@@ -45,13 +48,19 @@ namespace Klyte.WriteTheSigns.Xml
 
         [XmlArray("ReferenceSelection")] [XmlArrayItem("ItemClass")] public HashSet<ItemClass.Level> AllowedLevels { get; set; } = new HashSet<Level>();
         [XmlAttribute("spawnChance")] public byte SpawnChance { get; set; } = 255;
-        [XmlAttribute("placeOnDistrictBorder")] public bool PlaceOnDistrictBorder { get; set; } = true;
+        [XmlAttribute("placeOnDistrictBorder")] public bool PlaceOnDistrictBorder { get; set; } = false;
+        [XmlAttribute("placeOnTunnelBridgeStart")] public bool PlaceOnTunnelBridgeStart { get; set; } = false;
+        [XmlAttribute("ignoreEmptyNameRoads")] public bool IgnoreEmptyNameRoads { get; set; } = true;
         [XmlAttribute("placeOnMidSegment")] public bool PlaceOnSegmentInsteadOfCorner { get; set; } = false;
         [XmlAttribute("ensureSegmentTypeInAllowedTypes")] public bool EnsureSegmentTypeInAllowedTypes { get; set; } = false;
         [XmlAttribute("allowAnotherRuleForCorner")] public bool AllowAnotherRuleForCorner { get; set; } = false;
         [XmlAttribute("trafficDirectionRequired")] public TrafficDirectionRequired TrafficDirectionRequired { get; set; } = TrafficDirectionRequired.NONE;
-        [XmlAttribute("minIncomeOutcomeLanes")] public int MinIncomeOutcomeLanes { get; set; } = 1;
-        [XmlAttribute("maxIncomeOutcomeLanes")] public int MaxIncomeOutcomeLanes { get; set; } = 99;
+        [XmlAttribute("minDirectionTrafficLanes")] public int MinDirectionTrafficLanes { get; set; } = 1;
+        [XmlAttribute("maxDirectionTrafficLanes")] public int MaxDirectionTrafflcLanes { get; set; } = 99;
+        [XmlAttribute("minNodeOutcomingLanes")] public int MinNodeOutcomingLanes { get; set; } = 1;
+        [XmlAttribute("maxNodeOutcomingLanes")] public int MaxNodeOutcomingLanes { get; set; } = 8;
+        [XmlAttribute("minRoadHalfWidth")] public float MinRoadHalfWidth { get; set; } = 0;
+        [XmlAttribute("maxRoadHalfWidth")] public float MaxRoadHalfWidth { get; set; } = 999;
 
 
         [XmlAttribute("useDistrictColor")] public bool UseDistrictColor = false;
@@ -60,7 +69,7 @@ namespace Klyte.WriteTheSigns.Xml
 
         [XmlArray("SelectedDistricts")] [XmlArrayItem("District")] public HashSet<ushort> SelectedDistricts { get; set; } = new HashSet<ushort>();
         [XmlAttribute("districtSelectionIsBlacklist")] public bool SelectedDistrictsIsBlacklist { get; set; } = true;
-        [XmlAttribute("districtRestrictionOrder")] public DistrictRestrictionOrder DistrictRestrictionOrder { get; set; }//
+        [XmlAttribute("districtRestrictionOrder")] public DistrictRestrictionOrder DistrictRestrictionOrder { get; set; }
 
 
         public bool AllowsClass(ItemClass source) => AllowedLevels.Contains(source.m_level);
@@ -86,6 +95,8 @@ namespace Klyte.WriteTheSigns.Xml
                     return AllowsDistrict(district) && AllowsPark(park);
             }
         }
+
+        public void ResetCacheDescriptor() => m_descriptor = null;
     }
 
     public enum TrafficDirectionRequired
