@@ -27,7 +27,10 @@ namespace Klyte.WriteTheSigns
 
         public static event Action EventOnDistrictChanged;
 
+        public static event Action EventOnParkChanged;
+
         public static void OnDistrictChanged() => EventOnDistrictChanged?.Invoke();
+        public static void OnParkChanged() => EventOnParkChanged?.Invoke();
 
         public void Awake()
         {

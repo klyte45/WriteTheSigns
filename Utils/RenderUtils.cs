@@ -20,6 +20,7 @@ namespace Klyte.WriteTheSigns.Utils
             m_cache[(int)StreetQualifier] = new string[NetManager.MAX_SEGMENT_COUNT];
             m_cache[(int)SuffixStreetName] = new string[NetManager.MAX_SEGMENT_COUNT];
             m_cache[(int)Districts] = new string[DistrictManager.MAX_DISTRICT_COUNT];
+            m_cache[(int)Parks] = new string[DistrictManager.MAX_DISTRICT_COUNT];
             m_cache[(int)FullStreetNameAbbreviation] = new string[NetManager.MAX_SEGMENT_COUNT];
             m_cache[(int)SuffixStreetNameAbbreviation] = new string[NetManager.MAX_SEGMENT_COUNT];
 
@@ -27,6 +28,7 @@ namespace Klyte.WriteTheSigns.Utils
             m_cacheUpper[(int)StreetQualifier] = new string[NetManager.MAX_SEGMENT_COUNT];
             m_cacheUpper[(int)SuffixStreetName] = new string[NetManager.MAX_SEGMENT_COUNT];
             m_cacheUpper[(int)Districts] = new string[DistrictManager.MAX_DISTRICT_COUNT];
+            m_cacheUpper[(int)Parks] = new string[DistrictManager.MAX_DISTRICT_COUNT];
             m_cacheUpper[(int)FullStreetNameAbbreviation] = new string[NetManager.MAX_SEGMENT_COUNT];
             m_cacheUpper[(int)SuffixStreetNameAbbreviation] = new string[NetManager.MAX_SEGMENT_COUNT];
 
@@ -64,12 +66,20 @@ namespace Klyte.WriteTheSigns.Utils
             m_cacheUpper[(int)Districts] = new string[DistrictManager.MAX_DISTRICT_COUNT];
         }
 
+        public static void ClearCacheParkName()
+        {
+            m_cache[(int)Parks] = new string[DistrictManager.MAX_DISTRICT_COUNT];
+
+            m_cacheUpper[(int)Parks] = new string[DistrictManager.MAX_DISTRICT_COUNT];
+        }
+
         public enum CacheArrayTypes
         {
             FullStreetName,
             SuffixStreetName,
             StreetQualifier,
             Districts,
+            Parks,
             FullStreetNameAbbreviation,
             SuffixStreetNameAbbreviation,
         }
@@ -80,6 +90,7 @@ namespace Klyte.WriteTheSigns.Utils
             return type switch
             {
                 CacheArrayTypes.Districts => UpdateMeshDistrict(refId, ref (allCaps ? m_cacheUpper : m_cache)[(int)type][refId], prefix, suffix, allCaps, false, primaryFont, overrideFont),
+                CacheArrayTypes.Parks => UpdateMeshPark(refId, ref (allCaps ? m_cacheUpper : m_cache)[(int)type][refId], prefix, suffix, allCaps, false, primaryFont, overrideFont),
                 CacheArrayTypes.SuffixStreetName => UpdateMeshStreetSuffix(refId, ref (allCaps ? m_cacheUpper : m_cache)[(int)type][refId], prefix, suffix, allCaps, false, primaryFont, overrideFont),
                 CacheArrayTypes.FullStreetName => UpdateMeshFullNameStreet(refId, ref (allCaps ? m_cacheUpper : m_cache)[(int)type][refId], prefix, suffix, allCaps, false, primaryFont, overrideFont),
                 CacheArrayTypes.StreetQualifier => UpdateMeshStreetQualifier(refId, ref (allCaps ? m_cacheUpper : m_cache)[(int)type][refId], prefix, suffix, allCaps, false, primaryFont, overrideFont),
@@ -140,6 +151,18 @@ namespace Klyte.WriteTheSigns.Utils
                 {
                     name = DistrictManager.instance.GetDistrictName(districtId);
                 }
+                if (allCaps)
+                {
+                    name = name.ToUpper();
+                }
+            }
+            return GetTextData(name, prefix, suffix, primaryFont, overrideFont);
+        }
+        public static BasicRenderInformation UpdateMeshPark(ushort parkId, ref string name, string prefix, string suffix, bool allCaps, bool applyAbbreviations, DynamicSpriteFont primaryFont, string overrideFont)
+        {
+            if (name == null)
+            {
+                name = DistrictManager.instance.GetParkName(parkId);
                 if (allCaps)
                 {
                     name = name.ToUpper();

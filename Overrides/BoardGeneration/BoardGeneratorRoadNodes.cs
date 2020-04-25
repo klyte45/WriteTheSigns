@@ -1,5 +1,6 @@
 ﻿using ColossalFramework;
 using ColossalFramework.Math;
+using ColossalFramework.UI;
 using Klyte.Commons.Extensors;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Data;
@@ -22,6 +23,7 @@ namespace Klyte.WriteTheSigns.Overrides
         public DynamicSpriteFont DrawFont => FontServer.instance[Data.DefaultFont] ?? FontServer.instance[WTSController.DEFAULT_FONT_KEY];
         public WTSRoadNodesData Data => WTSRoadNodesData.Instance;
         public bool[] m_updatedStreetPositions;
+        public bool[] m_updatedDestinations;
         public uint[] m_lastFrameUpdate;
 
         private readonly Func<RenderManager, uint> m_getCurrentFrame = ReflectionUtils.GetGetFieldDelegate<RenderManager, uint>("m_currentFrame", typeof(RenderManager));
@@ -50,6 +52,7 @@ namespace Klyte.WriteTheSigns.Overrides
 
             m_lastFrameUpdate = new uint[NetManager.MAX_NODE_COUNT];
             m_updatedStreetPositions = new bool[Data.ObjArraySize];
+            m_updatedDestinations = new bool[Data.ObjArraySize];
 
 
             var adrEventsType = Type.GetType("Klyte.Addresses.ModShared.AdrEvents, KlyteAddresses");
@@ -77,24 +80,33 @@ namespace Klyte.WriteTheSigns.Overrides
             NetManagerOverrides.EventSegmentNameChanged += OnNameSeedChanged;
         }
 
-        private void OnNodeChanged(ushort nodeId) => m_updatedStreetPositions[nodeId] = false;
+        private void OnNodeChanged(ushort nodeId)
+        {
+            m_updatedStreetPositions[nodeId] = false;
+            InvalidateNodeDestinationPaths(nodeId);
+        }
+
         private void OnNameSeedChanged(ushort segmentId)
         {
             LogUtils.DoLog("onNameSeedChanged");
             m_updatedStreetPositions[NetManager.instance.m_segments.m_buffer[segmentId].m_endNode] = false;
             m_updatedStreetPositions[NetManager.instance.m_segments.m_buffer[segmentId].m_startNode] = false;
+            InvalidateNodeDestinationPaths(NetManager.instance.m_segments.m_buffer[segmentId].m_endNode);
+            InvalidateNodeDestinationPaths(NetManager.instance.m_segments.m_buffer[segmentId].m_startNode);
         }
 
         private void OnDistrictChanged()
         {
             LogUtils.DoLog("onDistrictChanged");
-            m_updatedStreetPositions = new bool[NetManager.MAX_NODE_COUNT];
+            m_updatedStreetPositions = new bool[Data.ObjArraySize];
+            m_updatedDestinations = new bool[Data.ObjArraySize];
             WriteTheSignsMod.Controller?.StopAllCoroutines();
         }
         private void OnZeroMarkChanged()
         {
             LogUtils.DoLog("onZeroMarkChanged");
-            m_updatedStreetPositions = new bool[NetManager.MAX_NODE_COUNT];
+            m_updatedStreetPositions = new bool[Data.ObjArraySize];
+            m_updatedDestinations = new bool[Data.ObjArraySize];
             WriteTheSignsMod.Controller?.StopAllCoroutines();
         }
         #endregion
@@ -170,7 +182,7 @@ namespace Klyte.WriteTheSigns.Overrides
                 }
             }
         }
-
+        #region calculation
         private IEnumerator CalculateSigns(ushort nodeID)
         {
             yield return 0;
@@ -478,6 +490,55 @@ namespace Klyte.WriteTheSigns.Overrides
             };
 
         }
+        #endregion
+
+        #region routing data cache
+        private readonly HashSet<ulong> m_validHashes = new HashSet<ulong>();
+
+        private readonly HashSet<ulong>[] m_passingHashes = new HashSet<ulong>[NetManager.MAX_NODE_COUNT];
+
+        public readonly CacheDestinationRoute[,,] m_destinationInfo = new CacheDestinationRoute[NetManager.MAX_NODE_COUNT, 8, 4];
+
+        public CacheDestinationRoute GetTargetDestination(ulong hash, int destination) => m_destinationInfo[hash & (NetManager.MAX_NODE_COUNT - 1), ((NetManager.MAX_NODE_COUNT << 3) - 1) >> 15, destination];
+
+        private void InvalidateNodeDestinationPaths(ushort nodeId)
+        {
+            m_updatedDestinations[nodeId] = false;
+            FilterValid(ref m_passingHashes[nodeId]);
+            m_passingHashes[nodeId].ForEach(x => m_updatedDestinations[x & (NetManager.MAX_NODE_COUNT - 1)] = false);
+            InvalidateHashes(ref m_passingHashes[nodeId]);
+
+        }
+
+        private ulong RegisterHash(ushort nodeId, uint segmentIdx)
+        {
+            m_nextHash += 0x40000;
+            ulong hash = m_nextHash | (nodeId & 0x7FFFFu) | ((segmentIdx & 3u) << 15);
+            m_validHashes.Add(hash);
+            return hash;
+        }
+
+        private void AddToPassingList(ref HashSet<ulong> passing, ushort hash) => (passing ??= new HashSet<ulong>()).Add(hash);
+        private void InvalidateHashes(ref HashSet<ulong> targets)
+        {
+            m_validHashes.ExceptWith(targets);
+            targets = null;
+        }
+
+        private void FilterValid(ref HashSet<ulong> source) => source.IntersectWith(m_validHashes);
+
+        private ulong m_nextHash = 0;
+
+        #endregion
+    }
+    public class CacheDestinationRoute
+    {
+        private ushort m_nodeId;
+        private byte m_districtId;
+        private byte m_parkId;
+        private float m_distance;
+        private int m_distanceKm;
+        private string m_distanceMeanString;
     }
 
 }

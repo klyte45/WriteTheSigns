@@ -25,6 +25,7 @@ namespace Klyte.WriteTheSigns.Overrides
         {
             NetManagerOverrides.EventSegmentNameChanged += OnNameSeedChanged;
             WTSController.EventOnDistrictChanged += OnDistrictChanged;
+            WTSController.EventOnParkChanged += OnParkChanged;
         }
         private void OnNameSeedChanged()
         {
@@ -44,6 +45,11 @@ namespace Klyte.WriteTheSigns.Overrides
         {
             LogUtils.DoLog("onDistrictChanged");
             RenderUtils.ClearCacheDistrictName();
+        }
+        private void OnParkChanged()
+        {
+            LogUtils.DoLog("onDistrictChanged");
+            RenderUtils.ClearCacheParkName();
         }
         #endregion
 
