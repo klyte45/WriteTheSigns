@@ -22,8 +22,8 @@ namespace Klyte.WriteTheSigns.Overrides
         public static BoardGeneratorRoadNodes Instance;
         public DynamicSpriteFont DrawFont => FontServer.instance[Data.DefaultFont] ?? FontServer.instance[WTSController.DEFAULT_FONT_KEY];
         public WTSRoadNodesData Data => WTSRoadNodesData.Instance;
-        public bool[] m_updatedStreetPositions;
-        public bool[] m_updatedDestinations;
+        public bool?[] m_updatedStreetPositions;
+        public bool?[] m_updatedDestinations;
         public uint[] m_lastFrameUpdate;
 
         private readonly Func<RenderManager, uint> m_getCurrentFrame = ReflectionUtils.GetGetFieldDelegate<RenderManager, uint>("m_currentFrame", typeof(RenderManager));
@@ -51,8 +51,8 @@ namespace Klyte.WriteTheSigns.Overrides
             Instance = this;
 
             m_lastFrameUpdate = new uint[NetManager.MAX_NODE_COUNT];
-            m_updatedStreetPositions = new bool[Data.ObjArraySize];
-            m_updatedDestinations = new bool[Data.ObjArraySize];
+            m_updatedStreetPositions = new bool?[Data.ObjArraySize];
+            m_updatedDestinations = new bool?[Data.ObjArraySize];
 
 
             var adrEventsType = Type.GetType("Klyte.Addresses.ModShared.AdrEvents, KlyteAddresses");
@@ -82,15 +82,15 @@ namespace Klyte.WriteTheSigns.Overrides
 
         private void OnNodeChanged(ushort nodeId)
         {
-            m_updatedStreetPositions[nodeId] = false;
+            m_updatedStreetPositions[nodeId] = null;
             InvalidateNodeDestinationPaths(nodeId);
         }
 
         private void OnNameSeedChanged(ushort segmentId)
         {
             LogUtils.DoLog("onNameSeedChanged");
-            m_updatedStreetPositions[NetManager.instance.m_segments.m_buffer[segmentId].m_endNode] = false;
-            m_updatedStreetPositions[NetManager.instance.m_segments.m_buffer[segmentId].m_startNode] = false;
+            m_updatedStreetPositions[NetManager.instance.m_segments.m_buffer[segmentId].m_endNode] = null;
+            m_updatedStreetPositions[NetManager.instance.m_segments.m_buffer[segmentId].m_startNode] = null;
             InvalidateNodeDestinationPaths(NetManager.instance.m_segments.m_buffer[segmentId].m_endNode);
             InvalidateNodeDestinationPaths(NetManager.instance.m_segments.m_buffer[segmentId].m_startNode);
         }
@@ -98,15 +98,15 @@ namespace Klyte.WriteTheSigns.Overrides
         private void OnDistrictChanged()
         {
             LogUtils.DoLog("onDistrictChanged");
-            m_updatedStreetPositions = new bool[Data.ObjArraySize];
-            m_updatedDestinations = new bool[Data.ObjArraySize];
+            m_updatedStreetPositions = new bool?[Data.ObjArraySize];
+            m_updatedDestinations = new bool?[Data.ObjArraySize];
             WriteTheSignsMod.Controller?.StopAllCoroutines();
         }
         private void OnZeroMarkChanged()
         {
             LogUtils.DoLog("onZeroMarkChanged");
-            m_updatedStreetPositions = new bool[Data.ObjArraySize];
-            m_updatedDestinations = new bool[Data.ObjArraySize];
+            m_updatedStreetPositions = new bool?[Data.ObjArraySize];
+            m_updatedDestinations = new bool?[Data.ObjArraySize];
             WriteTheSignsMod.Controller?.StopAllCoroutines();
         }
         #endregion
@@ -135,12 +135,13 @@ namespace Klyte.WriteTheSigns.Overrides
                 return;
             }
 
-            if (!m_updatedStreetPositions[nodeID] || Data.BoardsContainers[nodeID, 0, 0] == null)
+            if (m_updatedStreetPositions[nodeID] == null || Data.BoardsContainers[nodeID, 0, 0] == null)
             {
                 Data.BoardsContainers[nodeID, 0, 0] = new CacheRoadNodeItem();
-                m_updatedStreetPositions[nodeID] = true;
+                m_updatedStreetPositions[nodeID] = false;
                 WriteTheSignsMod.Controller.StartCoroutine(CalculateSigns(nodeID));
             }
+
 
             for (int y = 0; y < Data.BoardsContainers.GetLength(1); y++)
             {
@@ -186,6 +187,11 @@ namespace Klyte.WriteTheSigns.Overrides
         private IEnumerator CalculateSigns(ushort nodeID)
         {
             yield return 0;
+            if (m_updatedStreetPositions[nodeID] != false)
+            {
+                yield break;
+            }
+
             var incomingTraffic = new HashSet<ushort>();
             var outcomingTraffic = new HashSet<ushort>();
             for (int i = 0; i < 8; i++)
@@ -207,6 +213,10 @@ namespace Klyte.WriteTheSigns.Overrides
             }
 
             yield return 0;
+            if (m_updatedStreetPositions[nodeID] != false)
+            {
+                yield break;
+            }
             LogUtils.DoLog($"updatedStreets! {nodeID} {NetManager.instance.m_nodes.m_buffer[nodeID].CountSegments()}");
             int controlBoardIdx = 0;
             for (int i = 0; i < 8; i++)
@@ -234,6 +244,10 @@ namespace Klyte.WriteTheSigns.Overrides
                             hasSpawned = ProcessDescriptor(nodeID, ref NetManager.instance.m_nodes.m_buffer[nodeID], controlBoardIdx, segmentIid, ref Singleton<NetManager>.instance.m_segments.m_buffer[segmentIid], segmentIDirection, segmentJid, ref Singleton<NetManager>.instance.m_segments.m_buffer[segmentJid], segmentJDirection, invertIJ, targetDescriptor, incomingTraffic, outcomingTraffic, ref secondaryIdx);
 
                             yield return 0;
+                            if (m_updatedStreetPositions[nodeID] != false)
+                            {
+                                yield break;
+                            }
                         }
                         if (matchingDescriptors.Count > 0 && targetDescriptor.PlaceOnSegmentInsteadOfCorner && targetDescriptor.AllowAnotherRuleForCorner)
                         {
@@ -257,6 +271,10 @@ namespace Klyte.WriteTheSigns.Overrides
                         }
 
                         yield return 0;
+                        if (m_updatedStreetPositions[nodeID] != false)
+                        {
+                            yield break;
+                        }
                     }
                 }
             }
@@ -503,9 +521,9 @@ namespace Klyte.WriteTheSigns.Overrides
 
         private void InvalidateNodeDestinationPaths(ushort nodeId)
         {
-            m_updatedDestinations[nodeId] = false;
+            m_updatedDestinations[nodeId] = null;
             FilterValid(ref m_passingHashes[nodeId]);
-            m_passingHashes[nodeId].ForEach(x => m_updatedDestinations[x & (NetManager.MAX_NODE_COUNT - 1)] = false);
+            m_passingHashes[nodeId].ForEach(x => m_updatedDestinations[x & (NetManager.MAX_NODE_COUNT - 1)] = null);
             InvalidateHashes(ref m_passingHashes[nodeId]);
 
         }
@@ -531,6 +549,7 @@ namespace Klyte.WriteTheSigns.Overrides
 
         #endregion
     }
+
     public class CacheDestinationRoute
     {
         private ushort m_nodeId;

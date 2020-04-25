@@ -195,7 +195,7 @@ namespace Klyte.WriteTheSigns.Utils
         public static BasicRenderInformation GetTextData(string text, string prefix, string suffix, DynamicSpriteFont primaryFont, string overrideFont = null)
         {
             string str = $"{prefix}{text}{suffix}";
-            return (FontServer.instance[overrideFont] ?? primaryFont)?.DrawString(str, default, Color.white, FontServer.instance.ScaleEffective);
+            return (FontServer.instance[overrideFont] ?? primaryFont)?.DrawString(WriteTheSignsMod.Controller, str, default, Color.white, FontServer.instance.ScaleEffective);
         }
 
         public static Matrix4x4 RenderProp(ushort refId, float refAngleRad, RenderManager.CameraInfo cameraInfo,

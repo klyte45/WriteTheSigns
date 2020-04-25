@@ -80,14 +80,14 @@ namespace SpriteFontPlus
             _fontSystem.AddFontMem(ttf);
         }
 
-        public BasicRenderInformation DrawString(string text, Vector2 pos, Color color) => DrawString(text, pos, color, Vector2.one);
+        public BasicRenderInformation DrawString(MonoBehaviour referenceGO, string text, Vector2 pos, Color color) => DrawString(referenceGO, text, pos, color, Vector2.one);
 
-        public BasicRenderInformation DrawString(string text, Vector2 pos, Color color, Vector2 scale)
+        public BasicRenderInformation DrawString(MonoBehaviour referenceGO, string text, Vector2 pos, Color color, Vector2 scale)
         {
             _fontSystem.Color = color;
             _fontSystem.Scale = scale;
 
-            BasicRenderInformation result = _fontSystem.DrawText(pos.x, pos.y, text);
+            BasicRenderInformation result = _fontSystem.DrawText(referenceGO, pos.x, pos.y, text);
 
             _fontSystem.Scale = Vector2.one;
 

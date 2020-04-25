@@ -4,7 +4,6 @@ using Klyte.Commons.Extensors;
 using Klyte.Commons.Interfaces;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.UI;
-using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using UnityEngine;
@@ -18,7 +17,7 @@ namespace Klyte.WriteTheSigns
 
         public override string Description => "Texts, texts everywhere...";
         public override string IconName => "K45_KWTSIcon";
-        
+
         public override void OnReleased() => base.OnReleased();
 
         public override void TopSettingsUI(UIHelperExtension helper)
@@ -31,7 +30,7 @@ namespace Klyte.WriteTheSigns
             group8.AddLabel(Locale.Get("K45_WTS_GET_FILES_GITHUB"));
             group8.AddButton(Locale.Get("K45_WTS_GO_TO_GITHUB"), () => Application.OpenURL("https://github.com/klyte45/WriteTheSignsFiles"));
         }
-  
+
         private static void AddFolderButton(string filePath, UIHelperExtension helper, string localeId)
         {
             FileInfo fileInfo = FileUtils.EnsureFolderCreation(filePath);

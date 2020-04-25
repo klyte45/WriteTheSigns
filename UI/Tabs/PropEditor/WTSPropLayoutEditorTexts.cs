@@ -101,7 +101,7 @@ namespace Klyte.WriteTheSigns.UI
             AddTextField(Locale.Get("K45_WTS_SUFFIX"), out m_textSuffix, helperConfig, OnSetSuffix);
             AddCheckboxLocale("K45_WTS_TEXT_ALL_CAPS", out m_allCaps, helperConfig, OnSetAllCaps);
 
-            WTSUtils.ReloadFontsOf(m_overrideFontSelect, null, true);
+            WTSUtils.ReloadFontsOf(m_overrideFontSelect, null, true, true);
 
             WTSPropLayoutEditor.Instance.CurrentTabChanged += (newVal) =>
             {

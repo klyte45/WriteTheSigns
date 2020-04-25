@@ -1,8 +1,8 @@
 using ColossalFramework;
 using ColossalFramework.UI;
-using Klyte.Commons.Utils;
 using SpriteFontPlus.Utility;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -114,7 +114,7 @@ namespace FontStashSharp
             return result;
         }
 
-        public BasicRenderInformation DrawText(float x, float y, string str, UIHorizontalAlignment alignment = UIHorizontalAlignment.Center)
+        public BasicRenderInformation DrawText(MonoBehaviour referenceGO, float x, float y, string str, UIHorizontalAlignment alignment = UIHorizontalAlignment.Center)
         {
             BasicRenderInformation bri;
             if (string.IsNullOrEmpty(str))
@@ -134,8 +134,19 @@ namespace FontStashSharp
             {
                 return bri;
             }
+            else
+            {
+                m_textCache[str] = null;
+                referenceGO.StartCoroutine(WriteTextureCoroutine(x, y, str, alignment));
+                return null;
+            }
 
-            bri = new BasicRenderInformation
+        }
+
+        private IEnumerator WriteTextureCoroutine(float x, float y, string str, UIHorizontalAlignment alignment)
+        {
+            yield return 0;
+            var bri = new BasicRenderInformation
             {
                 m_YAxisOverflows = new RangeVector { min = float.MaxValue, max = float.MinValue },
             };
@@ -165,11 +176,10 @@ namespace FontStashSharp
             float originY = 0.0f;
 
             originY += ascent;
-
+            yield return 0;
             var uirenderData = UIRenderData.Obtain();
             try
             {
-            loop_retry:
                 long lastUpdateAtlasAtStart = LastUpdateAtlas;
                 uirenderData.Clear();
                 PoolList<Vector3> vertices = uirenderData.vertices;
@@ -194,7 +204,7 @@ namespace FontStashSharp
                     FontGlyph glyph = GetGlyph(glyphs, codepoint, out bool hasResetted);
                     if (hasResetted)
                     {
-                        goto loop_retry;
+                        yield break;
                     }
                     if (glyph == null)
                     {
@@ -236,13 +246,15 @@ namespace FontStashSharp
             {
                 uirenderData.Release();
             }
+            yield return 0;
+
             bri.m_mesh.RecalculateNormals();
             SolveTangents(bri.m_mesh);
             _currentAtlas.UpdateMaterial();
             bri.m_generatedMaterial = _currentAtlas.Material;
             bri.m_sizeMetersUnscaled = bri.m_mesh.bounds.size;
             m_textCache[str] = bri;
-            return bri;
+            yield break;
         }
 
         private Vector3[] AlignVertices(PoolList<Vector3> points, UIHorizontalAlignment alignment)
