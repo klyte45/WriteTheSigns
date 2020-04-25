@@ -1,5 +1,4 @@
-﻿using Klyte.Commons.Utils;
-using StbTrueTypeSharp;
+﻿using StbTrueTypeSharp;
 
 namespace FontStashSharp
 {

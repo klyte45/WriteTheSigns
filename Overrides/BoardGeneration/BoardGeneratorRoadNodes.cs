@@ -275,7 +275,7 @@ namespace Klyte.WriteTheSigns.Overrides
 
         private bool ProcessDescriptor(
             ushort nodeID, ref NetNode data, int controlBoardIdx,
-            ushort segmentIid, ref NetSegment netSegmentI, Vector3 segmentIDirection, 
+            ushort segmentIid, ref NetSegment netSegmentI, Vector3 segmentIDirection,
             ushort segmentJid, ref NetSegment netSegmentJ, Vector3 segmentJDirection, bool invertIJ,
             BoardInstanceRoadNodeXml targetDescriptor, HashSet<ushort> incoming,
             HashSet<ushort> outcoming, ref int subboardOffset)
@@ -425,6 +425,7 @@ namespace Klyte.WriteTheSigns.Overrides
             refBoard.m_cachedColor = targetDescriptor.UseDistrictColor ? WTSHookable.GetDistrictColor(refBoard.m_districtId) : targetDescriptor.Descriptor.FixedColor ?? Color.white;
             refBoard.m_cachedContrastColor = KlyteMonoUtils.ContrastColor(refBoard.m_cachedColor);
             refBoard.m_distanceRef = Vector2.Distance(VectorUtils.XZ(refBoard.m_platePosition), WTSHookable.GetStartPoint());
+            refBoard.m_distanceRefKm = Mathf.RoundToInt(refBoard.m_distanceRef / 1000);
             refBoard.m_currentDescriptor = targetDescriptor;
         }
 

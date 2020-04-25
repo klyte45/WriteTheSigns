@@ -10,6 +10,7 @@ namespace Klyte.WriteTheSigns.Xml
         public byte m_districtId;
         public byte m_districtParkId;
         public float m_distanceRef;
+        public int m_distanceRefKm;
         public bool m_renderPlate;
         public Color m_cachedColor = Color.white;
         internal Color m_propColor = Color.white;
