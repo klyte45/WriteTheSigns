@@ -8,6 +8,8 @@ namespace SpriteFontPlus.Utility
         public Vector2 m_sizeMetersUnscaled;
         public long m_materialGeneratedTick;
         public Material m_generatedMaterial;
+        public Material m_generatedMaterialDayNight;
+        public Material m_generatedMaterialBright;
         public RangeVector m_YAxisOverflows;
         public RangeVector m_fontBaseLimits;
 

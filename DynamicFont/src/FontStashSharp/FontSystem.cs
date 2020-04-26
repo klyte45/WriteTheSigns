@@ -251,7 +251,11 @@ namespace FontStashSharp
             bri.m_mesh.RecalculateNormals();
             SolveTangents(bri.m_mesh);
             _currentAtlas.UpdateMaterial();
+
             bri.m_generatedMaterial = _currentAtlas.Material;
+            bri.m_generatedMaterialDayNight = _currentAtlas.MaterialDayNight;
+            bri.m_generatedMaterialBright = _currentAtlas.MaterialBright;
+
             bri.m_sizeMetersUnscaled = bri.m_mesh.bounds.size;
             if (m_textCache.TryGetValue(str, out BasicRenderInformation currentVal) && currentVal == null)
             {
@@ -800,5 +804,11 @@ namespace FontStashSharp
         }
 
 
+    }
+    public enum MaterialType
+    {
+        OPAQUE,
+        DAYNIGHT,
+        BRIGHT
     }
 }

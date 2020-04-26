@@ -59,6 +59,20 @@ namespace FontStashSharp
                 return m_materialDayNight;
             }
         }
+        private Material m_materialBright;
+        public Material MaterialBright
+        {
+            get {
+                if (m_materialBright == null)
+                {
+                    m_materialBright = new Material(Shader.Find("Custom/Buildings/Building/NoBase"))
+                    {
+                        mainTexture = Texture
+                    };
+                }
+                return m_materialBright;
+            }
+        }
 
         public FontAtlas(int w, int h, int count)
         {
@@ -288,15 +302,21 @@ namespace FontStashSharp
                 Material.mainTexture = Texture;
                 Material.SetTexture("_MainTex", Texture);
                 Texture2D aciTex = Material.GetTexture("_ACIMap") as Texture2D ?? new Texture2D(Texture.width, Texture.height);
-                aciTex.SetPixels(Texture.GetPixels().Select(x => new Color(1 - x.a, 0, 1, 1)).ToArray());
+                aciTex.SetPixels(Texture.GetPixels().Select(x => new Color(1 - x.a, 0, 0, 1)).ToArray());
                 aciTex.Apply();
                 Material.SetTexture("_ACIMap", aciTex);
 
                 MaterialDayNight.mainTexture = Texture;
                 aciTex = MaterialDayNight.GetTexture("_ACIMap") as Texture2D ?? new Texture2D(Texture.width, Texture.height);
-                aciTex.SetPixels(Texture.GetPixels().Select(x => new Color(1 - x.a, 0, 0.25f, 1)).ToArray());
+                aciTex.SetPixels(Texture.GetPixels().Select(x => new Color(1 - x.a, 0, 0.75f, 1)).ToArray());
                 aciTex.Apply();
                 MaterialDayNight.SetTexture("_ACIMap", aciTex);
+
+                MaterialBright.mainTexture = Texture;
+                aciTex = MaterialBright.GetTexture("_ACIMap") as Texture2D ?? new Texture2D(Texture.width, Texture.height);
+                aciTex.SetPixels(Texture.GetPixels().Select(x => new Color(1 - x.a, 0, 0.49f, 1)).ToArray());
+                aciTex.Apply();
+                MaterialBright.SetTexture("_ACIMap", aciTex);
 
                 IsDirty = false;
             }

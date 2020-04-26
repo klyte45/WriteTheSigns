@@ -1,5 +1,6 @@
 ﻿using ColossalFramework;
 using ColossalFramework.UI;
+using FontStashSharp;
 using Klyte.Commons.Interfaces;
 using Klyte.Commons.Utils;
 using System.Xml;
@@ -73,6 +74,9 @@ namespace Klyte.WriteTheSigns.Xml
 
         [XmlAttribute("saveName")]
         public string SaveName { get; set; }
+
+        [XmlAttribute("appearenceType")]
+        public MaterialType MaterialType { get; set; } = MaterialType.OPAQUE;
 
         public bool IsTextRelativeToSegment()
         {

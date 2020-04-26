@@ -44,10 +44,12 @@ namespace Klyte.WriteTheSigns.UI
 
         private UISlider m_spawnChance;
         private UITextField[] m_minMaxHalfWidth;
-        private UICheckBox m_placeDistrictBorder;
-        private UICheckBox m_placeRoadTransition;
         private UICheckBox m_ignoreEmpty;
         private UICheckBox m_spawnOnSegment;
+
+        private UIPanel m_spawnInCornerOptions;
+        private UICheckBox m_placeDistrictBorder;
+        private UICheckBox m_placeRoadTransition;
 
         private UIPanel m_spawnInSegmentOptions;
         private UIDropDown m_flowRequirement;
@@ -113,13 +115,19 @@ namespace Klyte.WriteTheSigns.UI
 
             AddSlider(Locale.Get("K45_WTS_ROADCORNER_SPAWN_CHANCE"), out m_spawnChance, helperSpawning, OnChangeSpawnChance, 0, 255, 1, (x) => (x / 255).ToString("P0"));
             AddVector2Field(Locale.Get("K45_WTS_ROADCORNER_MINMAXHALFWIDTH"), out m_minMaxHalfWidth, helperSpawning, OnSetMinMaxHalfWidth);
-            AddCheckboxLocale("K45_WTS_ROADCORNER_PLACEALSOONDISTRICTBORDER", out m_placeDistrictBorder, helperSpawning, OnChangeSpawnOnDistrictBorder);
-            AddCheckboxLocale("K45_WTS_ROADCORNER_PLACEONTUNNELBRIDGESTART", out m_placeRoadTransition, helperSpawning, OnChangePlaceRoadTransition);
             AddCheckboxLocale("K45_WTS_ROADCORNER_IGNOREEMPTYNAMES", out m_ignoreEmpty, helperSpawning, OnChangeIgnoreEmpty);
             AddCheckboxLocale("K45_WTS_ROADCORNER_SPAWNONSEGMENT", out m_spawnOnSegment, helperSpawning, OnChangeSpawnOnSegment);
-            UIHelperExtension helperSpawningSegment = helperSpawning.AddGroupExtended(Locale.Get("K45_WTS_ROADCORNER_SPAWNONSEGMENT_OPTIONS"));
-            m_spawnInSegmentOptions = helperSpawningSegment.Self as UIPanel;
-            m_spawnInSegmentOptions.width = 620;
+
+            KlyteMonoUtils.CreateUIElement(out m_spawnInCornerOptions, m_tabSpawning.transform, "spawnInCorner", new Vector4(0, 0, 620, 0));
+            var helperSpawningCorner = new UIHelperExtension(m_spawnInCornerOptions, LayoutDirection.Vertical);
+            helperSpawningCorner.Self.width = 620;
+            AddCheckboxLocale("K45_WTS_ROADCORNER_PLACEALSOONDISTRICTBORDER", out m_placeDistrictBorder, helperSpawningCorner, OnChangeSpawnOnDistrictBorder);
+            AddCheckboxLocale("K45_WTS_ROADCORNER_PLACEONTUNNELBRIDGESTART", out m_placeRoadTransition, helperSpawningCorner, OnChangePlaceRoadTransition);
+
+            KlyteMonoUtils.CreateUIElement(out m_spawnInSegmentOptions, m_tabSpawning.transform, "spawnInCorner", new Vector4(0, 0, 620, 0));
+            var helperSpawningSegment = new UIHelperExtension(m_spawnInSegmentOptions, LayoutDirection.Vertical);
+            helperSpawningSegment.Self.width = 620;
+            LogUtils.DoWarnLog($"WIDTH={helperSpawningSegment.Self.width}");
             AddDropdown(Locale.Get("K45_WTS_ROADCORNER_FLOWREQUIREMENT"), out m_flowRequirement, helperSpawningSegment, Enum.GetNames(typeof(TrafficDirectionRequired)).Select(x => Locale.Get("K45_WTS_TRAFFICDIRECTIONREQUIRED", x)).ToArray(), OnChangeFlowRequirement);
             AddDropdown(Locale.Get("K45_WTS_ROADCORNER_EXITSIDEREQUIRED"), out m_exitSideRequired, helperSpawningSegment, Enum.GetNames(typeof(ExitSideRequired)).Select(x => Locale.Get("K45_WTS_EXITSIDEREQUIRED", x)).ToArray(), OnChangeExitSideRequirement);
             AddVector2Field(Locale.Get("K45_WTS_ROADCORNER_MINMAXLANESREQUIRED"), out m_minMaxLaneRequired, helperSpawningSegment, OnLanesRequiredChange, false);
@@ -330,6 +338,7 @@ namespace Klyte.WriteTheSigns.UI
 
                 UpdateDistrictList(ref x);
                 m_spawnInSegmentOptions.isVisible = x.PlaceOnSegmentInsteadOfCorner;
+                m_spawnInCornerOptions.isVisible = !x.PlaceOnSegmentInsteadOfCorner;
             });
         }
 
@@ -414,6 +423,7 @@ namespace Klyte.WriteTheSigns.UI
         {
             x.PlaceOnSegmentInsteadOfCorner = isChecked;
             m_spawnInSegmentOptions.isVisible = isChecked;
+            m_spawnInCornerOptions.isVisible = !isChecked;
         });
 
         private void OnChangeAllowAnotherRuleForCorner(bool isChecked) => SafeObtain((ref BoardInstanceRoadNodeXml x) => x.AllowAnotherRuleForCorner = isChecked);

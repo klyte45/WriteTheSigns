@@ -169,8 +169,22 @@ namespace Klyte.WriteTheSigns.Rendering
                 materialPropertyBlock.SetColor(SHADER_PROP_COLOR3, colorToSet);
 
                 //materialPropertyBlock.SetColor(m_shaderPropEmissive, Color.white * (SimulationManager.instance.m_isNightTime ? textDescriptor.m_nightEmissiveMultiplier : textDescriptor.m_dayEmissiveMultiplier));
-                renderInfo.m_generatedMaterial.shader = WTSController.DEFAULT_SHADER_TEXT;
-                Graphics.DrawMesh(renderInfo.m_mesh, matrix, renderInfo.m_generatedMaterial, 10, targetCamera, 0, materialPropertyBlock, false);
+                Material targetMaterial;
+                switch (textDescriptor.MaterialType)
+                {
+                    default:
+                    case FontStashSharp.MaterialType.OPAQUE:
+                        targetMaterial = renderInfo.m_generatedMaterial;
+                        break;
+                    case FontStashSharp.MaterialType.DAYNIGHT:
+                        targetMaterial = renderInfo.m_generatedMaterialDayNight;
+                        break;
+                    case FontStashSharp.MaterialType.BRIGHT:
+                        targetMaterial = renderInfo.m_generatedMaterialBright;
+                        break;
+                }
+                targetMaterial.shader = WTSController.DEFAULT_SHADER_TEXT;
+                Graphics.DrawMesh(renderInfo.m_mesh, matrix, targetMaterial, 10, targetCamera, 0, materialPropertyBlock, false);
             }
         }
 

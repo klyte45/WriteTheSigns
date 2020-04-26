@@ -1,6 +1,7 @@
 ﻿using ColossalFramework;
 using ColossalFramework.Globalization;
 using ColossalFramework.UI;
+using FontStashSharp;
 using Klyte.Commons.Extensors;
 using Klyte.Commons.UI.SpriteNames;
 using Klyte.Commons.Utils;
@@ -44,6 +45,7 @@ namespace Klyte.WriteTheSigns.UI
         private UIDropDown m_dropdownTextAlignHorizontal;
         private UICheckBox m_useContrastColor;
         private UIColorField m_textFixedColor;
+        private UIDropDown m_dropdownMaterialType;
 
 
         private UIDropDown m_dropdownTextContent;
@@ -90,6 +92,7 @@ namespace Klyte.WriteTheSigns.UI
 
             AddDropdown(Locale.Get("K45_WTS_TEXT_ALIGN_HOR"), out m_dropdownTextAlignHorizontal, helperAppearance, Enum.GetNames(typeof(UIHorizontalAlignment)).Select(x => Locale.Get("K45_ALIGNMENT", x)).ToArray(), OnSetTextAlignmentHorizontal);
             helperAppearance.AddSpace(5);
+            AddDropdown(Locale.Get("K45_WTS_TEXT_MATERIALTYPE"), out m_dropdownMaterialType, helperAppearance, Enum.GetNames(typeof(MaterialType)).Select(x => Locale.Get("K45_WTS_TEXTMATERIALTYPE", x.ToString())).ToArray(), OnSetMaterialType);
             AddCheckboxLocale("K45_WTS_USE_CONTRAST_COLOR", out m_useContrastColor, helperAppearance, OnContrastColorChange);
             AddColorField(helperAppearance, Locale.Get("K45_WTS_TEXT_COLOR"), out m_textFixedColor, OnFixedColorChanged);
 
@@ -170,6 +173,7 @@ namespace Klyte.WriteTheSigns.UI
 
             m_dropdownTextAlignHorizontal.selectedIndex = (int)x.m_textAlign;
             m_useContrastColor.isChecked = x.m_useContrastColor;
+            m_dropdownMaterialType.selectedIndex = (int)x.MaterialType;
             m_textFixedColor.selectedColor = x.m_defaultColor;
 
             m_dropdownTextContent.items = WTSPropRenderingRules.ALLOWED_TYPES_PER_RENDERING_CLASS[WTSPropLayoutEditor.Instance.EditingInstance.m_allowedRenderClass].Select(x => Locale.Get("K45_WTS_BOARD_TEXT_TYPE_DESC", x.ToString())).ToArray();
@@ -277,6 +281,7 @@ namespace Klyte.WriteTheSigns.UI
             SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_useContrastColor = isChecked);
             m_textFixedColor.parent.isVisible = !isChecked;
         }
+        private void OnSetMaterialType(int sel) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.MaterialType = (MaterialType)sel);
 
         private void OnRotationChange(Vector3 obj) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_textRelativeRotation = obj);
         private void OnPositionChange(Vector3 obj) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_textRelativePosition = obj);
