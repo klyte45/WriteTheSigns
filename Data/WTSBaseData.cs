@@ -5,8 +5,19 @@ namespace Klyte.WriteTheSigns.Data
 {
     public abstract class WTSBaseData<D, CC> : DataExtensorBase<D> where D : WTSBaseData<D, CC>, new()
     {
+        private CC[,,] m_boardsContainers;
+
         [XmlIgnore]
-        public CC[,,] BoardsContainers { get; private set; }
+        public ref CC[,,] BoardsContainers
+        {
+            get {
+                if (m_boardsContainers == null)
+                {
+                    ResetBoards();
+                }
+                return ref m_boardsContainers;
+            }
+        }
         [XmlIgnore]
         public abstract int ObjArraySize { get; }
         [XmlIgnore]
@@ -17,9 +28,9 @@ namespace Klyte.WriteTheSigns.Data
         public override void LoadDefaults()
         {
             base.LoadDefaults();
-            BoardsContainers = new CC[ObjArraySize, BoardCount, SubBoardCount];
+            m_boardsContainers = new CC[ObjArraySize, BoardCount, SubBoardCount];
         }
-        public virtual void ResetBoards() => BoardsContainers = new CC[ObjArraySize, BoardCount, SubBoardCount];
+        protected virtual void ResetBoards() => m_boardsContainers = new CC[ObjArraySize, BoardCount, SubBoardCount];
 
         [XmlAttribute("defaultFont")]
         public virtual string DefaultFont { get; set; }

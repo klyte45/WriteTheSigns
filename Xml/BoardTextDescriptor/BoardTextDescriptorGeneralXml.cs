@@ -2,7 +2,6 @@
 using ColossalFramework.UI;
 using Klyte.Commons.Interfaces;
 using Klyte.Commons.Utils;
-using Klyte.WriteTheSigns.Rendering;
 using System.Xml;
 using System.Xml.Serialization;
 using UnityEngine;
@@ -36,6 +35,9 @@ namespace Klyte.WriteTheSigns.Xml
         public TextType m_textType = TextType.Fixed;
         [XmlAttribute("fixedText")]
         public string m_fixedText = "Text";
+        [XmlAttribute("useOtherSegmentAsRef")]
+        public bool m_useOtherSegmentAsRef = false;
+
 
 
         [XmlAttribute("overrideFont")]
@@ -71,6 +73,24 @@ namespace Klyte.WriteTheSigns.Xml
 
         [XmlAttribute("saveName")]
         public string SaveName { get; set; }
+
+        public bool IsTextRelativeToSegment()
+        {
+            switch (m_textType)
+            {
+                case TextType.District:
+                case TextType.DistrictOrPark:
+                case TextType.Park:
+                case TextType.ParkOrDistrict:
+                case TextType.RoadEnd:
+                case TextType.RoadEndDistance:
+                case TextType.StreetCode:
+                case TextType.StreetNameComplete:
+                case TextType.StreetPrefix:
+                case TextType.StreetSuffix: return true;
+            }
+            return false;
+        }
     }
 
 

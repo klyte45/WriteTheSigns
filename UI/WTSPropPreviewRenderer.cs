@@ -125,7 +125,7 @@ namespace Klyte.WriteTheSigns.UI
             m_defaultInstance.Descriptor = descriptor;
             for (ushort i = 0; i < descriptor.m_textDescriptors.Length; i++)
             {
-                WTSPropRenderingRules.RenderTextMesh(0, 0, i, m_defaultInstance, propMatrix, descriptor.m_textDescriptors[i], m_block, FontServer.instance[descriptor.FontName ?? WTSController.DEFAULT_FONT_KEY], m_camera);
+                WTSPropRenderingRules.RenderTextMesh(0, 0, i, m_defaultInstance, propMatrix, ref descriptor.m_textDescriptors[i], m_block, FontServer.instance[descriptor.FontName ?? WTSController.DEFAULT_FONT_KEY], m_camera);
             }
 
 

@@ -77,6 +77,7 @@ namespace Klyte.WriteTheSigns.Overrides
         {
             NetManagerOverrides.EventNodeChanged += OnNodeChanged;
             WTSController.EventOnDistrictChanged += OnDistrictChanged;
+            WTSController.EventOnParkChanged += ResetViews;
             NetManagerOverrides.EventSegmentNameChanged += OnNameSeedChanged;
         }
 
@@ -95,16 +96,11 @@ namespace Klyte.WriteTheSigns.Overrides
             InvalidateNodeDestinationPaths(NetManager.instance.m_segments.m_buffer[segmentId].m_startNode);
         }
 
-        private void OnDistrictChanged()
+        public void OnDistrictChanged() => ResetViews();
+        public void OnZeroMarkChanged() => ResetViews();
+
+        public void ResetViews()
         {
-            LogUtils.DoLog("onDistrictChanged");
-            m_updatedStreetPositions = new bool?[Data.ObjArraySize];
-            m_updatedDestinations = new bool?[Data.ObjArraySize];
-            WriteTheSignsMod.Controller?.StopAllCoroutines();
-        }
-        private void OnZeroMarkChanged()
-        {
-            LogUtils.DoLog("onZeroMarkChanged");
             m_updatedStreetPositions = new bool?[Data.ObjArraySize];
             m_updatedDestinations = new bool?[Data.ObjArraySize];
             WriteTheSignsMod.Controller?.StopAllCoroutines();
@@ -135,13 +131,11 @@ namespace Klyte.WriteTheSigns.Overrides
                 return;
             }
 
-            if (m_updatedStreetPositions[nodeID] == null || Data.BoardsContainers[nodeID, 0, 0] == null)
+            if (m_updatedStreetPositions[nodeID] == null)
             {
-                Data.BoardsContainers[nodeID, 0, 0] = new CacheRoadNodeItem();
                 m_updatedStreetPositions[nodeID] = false;
                 WriteTheSignsMod.Controller.StartCoroutine(CalculateSigns(nodeID));
             }
-
 
             for (int y = 0; y < Data.BoardsContainers.GetLength(1); y++)
             {
@@ -176,14 +170,75 @@ namespace Klyte.WriteTheSigns.Overrides
                 {
                     if (cameraInfo.CheckRenderDistance(position, 200 * targetDescriptor.Descriptor.m_textDescriptors[j].m_textScale))
                     {
+                        if (IsDestinationText(targetDescriptor.Descriptor.m_textDescriptors[j].m_textType) && m_updatedDestinations[nodeID] == null)
+                        {
+                            m_updatedDestinations[nodeID] = false;
+                            WriteTheSignsMod.Controller.StartCoroutine(CalculateDestinations(nodeID));
+                        }
+
+
                         MaterialPropertyBlock properties = PropManager.instance.m_materialBlock;
                         properties.Clear();
-                        WTSPropRenderingRules.RenderTextMesh(nodeID, boardIdx, secIdx, targetDescriptor, propMatrix, targetDescriptor.Descriptor.m_textDescriptors[j], properties, DrawFont);
+                        WTSPropRenderingRules.RenderTextMesh(nodeID, boardIdx, secIdx, targetDescriptor, propMatrix, ref targetDescriptor.Descriptor.m_textDescriptors[j], properties, DrawFont);
                     }
                 }
             }
         }
-        #region calculation
+
+        private bool IsDestinationText(TextType textType)
+        {
+            switch (textType)
+            {
+                case TextType.NextExitDistance:
+                case TextType.NextExitMainRoad1:
+                case TextType.NextExitMainRoad1A:
+                case TextType.NextExitMainRoad1B:
+                case TextType.NextExitMainRoad2:
+                case TextType.NextExitMainRoad2A:
+                case TextType.NextExitMainRoad2B:
+                case TextType.NextExitText:
+
+                case TextType.Next2ExitDistance:
+                case TextType.Next2ExitMainRoad1:
+                case TextType.Next2ExitMainRoad1A:
+                case TextType.Next2ExitMainRoad1B:
+                case TextType.Next2ExitMainRoad2:
+                case TextType.Next2ExitMainRoad2A:
+                case TextType.Next2ExitMainRoad2B:
+                case TextType.Next2ExitText:
+
+                case TextType.RoadEnd:
+                case TextType.RoadEndDistance:
+                    return true;
+                default:
+                    return false;
+
+            }
+        }
+
+        #region Calculation destination
+
+        private IEnumerator CalculateDestinations(ushort nodeID)
+        {
+            yield return 0;
+            if (m_updatedDestinations[nodeID] != false)
+            {
+                yield break;
+            }
+            GetIncomingOutcomingTraffic(nodeID, out HashSet<ushort> incomingTraffic, out HashSet<ushort> outcomingTraffic);
+            if (outcomingTraffic.Count == 0)
+            {
+                yield break;
+            }
+
+
+
+            yield break;
+        }
+
+        #endregion
+
+        #region calculation basic
         private IEnumerator CalculateSigns(ushort nodeID)
         {
             yield return 0;
@@ -192,25 +247,7 @@ namespace Klyte.WriteTheSigns.Overrides
                 yield break;
             }
 
-            var incomingTraffic = new HashSet<ushort>();
-            var outcomingTraffic = new HashSet<ushort>();
-            for (int i = 0; i < 8; i++)
-            {
-                ushort segmentIid = NetManager.instance.m_nodes.m_buffer[nodeID].GetSegment(i);
-                if (segmentIid != 0)
-                {
-                    bool invertFlagI = (Singleton<NetManager>.instance.m_segments.m_buffer[segmentIid].m_flags & NetSegment.Flags.Invert) != 0;
-                    bool isSegmentIinverted = invertFlagI == (Singleton<NetManager>.instance.m_segments.m_buffer[segmentIid].m_startNode == nodeID) != (SimulationManager.instance.m_metaData.m_invertTraffic == SimulationMetaData.MetaBool.False);
-                    if ((isSegmentIinverted && Singleton<NetManager>.instance.m_segments.m_buffer[segmentIid].Info.m_hasBackwardVehicleLanes) || (!isSegmentIinverted && Singleton<NetManager>.instance.m_segments.m_buffer[segmentIid].Info.m_hasForwardVehicleLanes))
-                    {
-                        incomingTraffic.Add(segmentIid);
-                    }
-                    if ((!isSegmentIinverted && Singleton<NetManager>.instance.m_segments.m_buffer[segmentIid].Info.m_hasBackwardVehicleLanes) || (isSegmentIinverted && Singleton<NetManager>.instance.m_segments.m_buffer[segmentIid].Info.m_hasForwardVehicleLanes))
-                    {
-                        outcomingTraffic.Add(segmentIid);
-                    }
-                }
-            }
+            GetIncomingOutcomingTraffic(nodeID, out HashSet<ushort> incomingTraffic, out HashSet<ushort> outcomingTraffic);
 
             yield return 0;
             if (m_updatedStreetPositions[nodeID] != false)
@@ -227,6 +264,7 @@ namespace Klyte.WriteTheSigns.Overrides
                     if (Singleton<NetManager>.instance.m_segments.m_buffer[segmentIid].Info != null && Singleton<NetManager>.instance.m_segments.m_buffer[segmentIid].Info.m_netAI is RoadBaseAI roadAiI)
                     {
                         GetNeigborSegment(nodeID, ref NetManager.instance.m_nodes.m_buffer[nodeID], segmentIid, ref Singleton<NetManager>.instance.m_segments.m_buffer[segmentIid], out Vector3 segmentIDirection, out Vector3 segmentJDirection, out ushort segmentJid, out bool invertIJ);
+
 
                         ItemClass classI = Singleton<NetManager>.instance.m_segments.m_buffer[segmentIid].Info.m_class;
                         ItemClass classJ = Singleton<NetManager>.instance.m_segments.m_buffer[segmentJid].Info.m_class;
@@ -281,14 +319,6 @@ namespace Klyte.WriteTheSigns.Overrides
 
             lock (Data.BoardsContainers)
             {
-                if (controlBoardIdx == 0)
-                {
-                    Data.BoardsContainers[nodeID, 0, 0] = new CacheRoadNodeItem();
-                    Data.BoardsContainers[nodeID, 0, 1] = null;
-                    Data.BoardsContainers[nodeID, 0, 2] = null;
-                    Data.BoardsContainers[nodeID, 0, 3] = null;
-                    controlBoardIdx++;
-                }
                 while (controlBoardIdx < 8)
                 {
 
@@ -301,6 +331,29 @@ namespace Klyte.WriteTheSigns.Overrides
             }
 
             m_updatedStreetPositions[nodeID] = true;
+        }
+
+        private static void GetIncomingOutcomingTraffic(ushort nodeID, out HashSet<ushort> incomingTraffic, out HashSet<ushort> outcomingTraffic)
+        {
+            incomingTraffic = new HashSet<ushort>();
+            outcomingTraffic = new HashSet<ushort>();
+            for (int i = 0; i < 8; i++)
+            {
+                ushort segmentIid = NetManager.instance.m_nodes.m_buffer[nodeID].GetSegment(i);
+                if (segmentIid != 0)
+                {
+                    bool invertFlagI = (Singleton<NetManager>.instance.m_segments.m_buffer[segmentIid].m_flags & NetSegment.Flags.Invert) != 0;
+                    bool isSegmentIinverted = invertFlagI == (Singleton<NetManager>.instance.m_segments.m_buffer[segmentIid].m_startNode == nodeID) != (SimulationManager.instance.m_metaData.m_invertTraffic == SimulationMetaData.MetaBool.False);
+                    if ((isSegmentIinverted && Singleton<NetManager>.instance.m_segments.m_buffer[segmentIid].Info.m_hasBackwardVehicleLanes) || (!isSegmentIinverted && Singleton<NetManager>.instance.m_segments.m_buffer[segmentIid].Info.m_hasForwardVehicleLanes))
+                    {
+                        incomingTraffic.Add(segmentIid);
+                    }
+                    if ((!isSegmentIinverted && Singleton<NetManager>.instance.m_segments.m_buffer[segmentIid].Info.m_hasBackwardVehicleLanes) || (isSegmentIinverted && Singleton<NetManager>.instance.m_segments.m_buffer[segmentIid].Info.m_hasForwardVehicleLanes))
+                    {
+                        outcomingTraffic.Add(segmentIid);
+                    }
+                }
+            }
         }
 
         private bool ProcessDescriptor(
@@ -322,7 +375,7 @@ namespace Klyte.WriteTheSigns.Overrides
             if (segmentJid == 0
                 || !(Singleton<NetManager>.instance.m_segments.m_buffer[segmentJid].Info.m_netAI is RoadBaseAI)
                 || (targetDescriptor.IgnoreEmptyNameRoads && (Singleton<NetManager>.instance.GetSegmentName(segmentIid).IsNullOrWhiteSpace() || Singleton<NetManager>.instance.GetSegmentName(segmentJid).IsNullOrWhiteSpace()))
-                || SegmentUtils.IsSameName(segmentJid, segmentIid, false, false, true, targetDescriptor.PlaceOnDistrictBorder, targetDescriptor.PlaceOnTunnelBridgeStart)
+                || SegmentUtils.IsSameName(segmentJid, segmentIid, false, false, true, !targetDescriptor.PlaceOnSegmentInsteadOfCorner && targetDescriptor.PlaceOnDistrictBorder, !targetDescriptor.PlaceOnSegmentInsteadOfCorner && targetDescriptor.PlaceOnTunnelBridgeStart)
                 || (new Randomizer(segmentIid | (segmentJid << 16)).UInt32(255) > targetDescriptor.SpawnChance))
             {
                 return false;
@@ -346,10 +399,10 @@ namespace Klyte.WriteTheSigns.Overrides
                 if (targetDescriptor.TrafficDirectionRequired == TrafficDirectionRequired.OUTCOMING)
                 {
                     renderI &= !invertIJ
-                        && (
-                             (!isSegmentIinverted && netSegmentI.Info.m_backwardVehicleLaneCount >= targetDescriptor.MinDirectionTrafficLanes && netSegmentI.Info.m_backwardVehicleLaneCount <= targetDescriptor.MaxDirectionTrafflcLanes)
-                           || (isSegmentIinverted && netSegmentI.Info.m_forwardVehicleLaneCount >= targetDescriptor.MinDirectionTrafficLanes && netSegmentI.Info.m_forwardVehicleLaneCount <= targetDescriptor.MaxDirectionTrafflcLanes)
-                           ) && netSegmentI.Info?.m_halfWidth < targetDescriptor.MaxRoadHalfWidth + 0.002f && netSegmentI.Info?.m_halfWidth > targetDescriptor.MinRoadHalfWidth - 0.002f;
+                     && (
+                          (!isSegmentIinverted && netSegmentI.Info.m_backwardVehicleLaneCount >= targetDescriptor.MinDirectionTrafficLanes && netSegmentI.Info.m_backwardVehicleLaneCount <= targetDescriptor.MaxDirectionTrafflcLanes)
+                        || (isSegmentIinverted && netSegmentI.Info.m_forwardVehicleLaneCount >= targetDescriptor.MinDirectionTrafficLanes && netSegmentI.Info.m_forwardVehicleLaneCount <= targetDescriptor.MaxDirectionTrafflcLanes)
+                        ) && netSegmentI.Info?.m_halfWidth < targetDescriptor.MaxRoadHalfWidth + 0.002f && netSegmentI.Info?.m_halfWidth > targetDescriptor.MinRoadHalfWidth - 0.002f;
                     renderJ &= invertIJ && ((!isSegmentJinverted && netSegmentJ.Info.m_backwardVehicleLaneCount >= targetDescriptor.MinDirectionTrafficLanes && netSegmentJ.Info.m_backwardVehicleLaneCount <= targetDescriptor.MaxDirectionTrafflcLanes)
                                           || (isSegmentJinverted && netSegmentJ.Info.m_forwardVehicleLaneCount >= targetDescriptor.MinDirectionTrafficLanes && netSegmentJ.Info.m_forwardVehicleLaneCount <= targetDescriptor.MaxDirectionTrafflcLanes))
                                           && netSegmentJ.Info?.m_halfWidth < targetDescriptor.MaxRoadHalfWidth + 0.002f && netSegmentJ.Info?.m_halfWidth > targetDescriptor.MinRoadHalfWidth - 0.002f;
@@ -362,19 +415,26 @@ namespace Klyte.WriteTheSigns.Overrides
                 }
                 else if (targetDescriptor.TrafficDirectionRequired == TrafficDirectionRequired.INCOMING)
                 {
-                    if (outcoming.Count < targetDescriptor.MinNodeOutcomingLanes || outcoming.Count > targetDescriptor.MaxNodeOutcomingLanes)
+                    int outcomingCount = outcoming.Where(x => x != (invertIJ ? segmentIid : segmentJid)).Count();
+                    if (outcomingCount < targetDescriptor.MinNodeOutcomingSegments || outcomingCount > targetDescriptor.MaxNodeOutcomingSegments || !outcoming.Contains(!invertIJ ? segmentIid : segmentJid))
                     {
                         return false;
                     }
-                    renderI &= invertIJ
-                        && (
-                             (isSegmentIinverted && netSegmentI.Info.m_backwardVehicleLaneCount >= targetDescriptor.MinDirectionTrafficLanes && netSegmentI.Info.m_backwardVehicleLaneCount <= targetDescriptor.MaxDirectionTrafflcLanes)
-                           || (!isSegmentIinverted && netSegmentI.Info.m_forwardVehicleLaneCount >= targetDescriptor.MinDirectionTrafficLanes && netSegmentI.Info.m_forwardVehicleLaneCount <= targetDescriptor.MaxDirectionTrafflcLanes)
-                           ) && netSegmentI.Info?.m_halfWidth < targetDescriptor.MaxRoadHalfWidth + 0.002f && netSegmentI.Info?.m_halfWidth > targetDescriptor.MinRoadHalfWidth - 0.002f;
+                    if (targetDescriptor.ExitSideRequired != ExitSideRequired.NONE)
+                    {
+                        if ((targetDescriptor.ExitSideRequired == ExitSideRequired.INSIDE && ((netSegmentI.Info.m_halfWidth < netSegmentJ.Info.m_halfWidth) == !invertIJ))
+                            || (targetDescriptor.ExitSideRequired == ExitSideRequired.OUTSIDE && ((netSegmentI.Info.m_halfWidth < netSegmentJ.Info.m_halfWidth) == invertIJ)))
+                        {
+                            return false;
+                        }
+                        if (targetDescriptor.ExitSideRequired == ExitSideRequired.INSIDE)
+                        {
+                            invertIJ = !invertIJ;
+                        }
+                    }
 
-                    renderJ &= !invertIJ && ((isSegmentJinverted && netSegmentJ.Info.m_backwardVehicleLaneCount >= targetDescriptor.MinDirectionTrafficLanes && netSegmentJ.Info.m_backwardVehicleLaneCount <= targetDescriptor.MaxDirectionTrafflcLanes)
-                                          || (!isSegmentJinverted && netSegmentJ.Info.m_forwardVehicleLaneCount >= targetDescriptor.MinDirectionTrafficLanes && netSegmentJ.Info.m_forwardVehicleLaneCount <= targetDescriptor.MaxDirectionTrafflcLanes))
-                                          && netSegmentJ.Info?.m_halfWidth < targetDescriptor.MaxRoadHalfWidth + 0.002f && netSegmentJ.Info?.m_halfWidth > targetDescriptor.MinRoadHalfWidth - 0.002f;
+                    renderI &= invertIJ && EnsureTrafficLanes(ref netSegmentI, targetDescriptor, isSegmentIinverted) && EnsureRoadWidth(ref netSegmentI, targetDescriptor);
+                    renderJ &= !invertIJ && EnsureTrafficLanes(ref netSegmentJ, targetDescriptor, isSegmentJinverted) && EnsureRoadWidth(ref netSegmentJ, targetDescriptor);
 
                     if (outcoming.Count == 1)
                     {
@@ -411,11 +471,26 @@ namespace Klyte.WriteTheSigns.Overrides
             int id2 = subboardOffset++;
             lock (Data.BoardsContainers)
             {
-                FillCacheData(nodeID, controlBoardIdx, id1, segmentIid, platePosI, segmentIDirection, targetDescriptor, renderI);
-                FillCacheData(nodeID, controlBoardIdx, id2, segmentJid, platePosJ, segmentJDirection, targetDescriptor, renderJ);
+                CacheRoadNodeItem a = FillCacheData(nodeID, controlBoardIdx, id1, segmentIid, platePosI, segmentIDirection, targetDescriptor, ref renderI);
+                a.m_otherSegment = FillCacheData(nodeID, controlBoardIdx, id2, segmentJid, platePosJ, segmentJDirection, targetDescriptor, ref renderJ);
+                a.m_otherSegment.m_otherSegment = a;
+            }
+            if (!renderI && !renderJ)
+            {
+                subboardOffset--;
+                subboardOffset--;
+                return false;
             }
             return true;
         }
+
+        private static bool EnsureTrafficLanes(ref NetSegment netSegment, BoardInstanceRoadNodeXml targetDescriptor, bool isSegmentInverted)
+        {
+            return (isSegmentInverted && netSegment.Info.m_backwardVehicleLaneCount >= targetDescriptor.MinDirectionTrafficLanes && netSegment.Info.m_backwardVehicleLaneCount <= targetDescriptor.MaxDirectionTrafflcLanes)
+               || (!isSegmentInverted && netSegment.Info.m_forwardVehicleLaneCount >= targetDescriptor.MinDirectionTrafficLanes && netSegment.Info.m_forwardVehicleLaneCount <= targetDescriptor.MaxDirectionTrafflcLanes);
+        }
+
+        private static bool EnsureRoadWidth(ref NetSegment netSegment, BoardInstanceRoadNodeXml targetDescriptor) => netSegment.Info?.m_halfWidth < targetDescriptor.MaxRoadHalfWidth + 0.002f && netSegment.Info?.m_halfWidth > targetDescriptor.MinRoadHalfWidth - 0.002f;
 
         private static Vector3 CaculateCenterSegment(int nodeID, ref NetSegment segmentI, BoardInstanceRoadNodeXml descriptor, out float rotationOffsetZ, bool invertSide)
         {
@@ -424,7 +499,7 @@ namespace Klyte.WriteTheSigns.Overrides
             bool invertedSegment = invertActive != comingFromNode != (SimulationManager.instance.m_metaData.m_invertTraffic == SimulationMetaData.MetaBool.False);
             invertSide ^= invertActive;
             Vector3 platePosI;
-            Vector3 bezierPos = segmentI.GetBezier().Position(Mathf.Max(0, Mathf.Min(1, (descriptor.m_propPosition.x / 2) + 0.5f)));
+            Vector3 bezierPos = segmentI.GetBezier().Position(Mathf.Max(0, Mathf.Min(1, (descriptor.m_propPosition.z / (invertedSegment ? 2 : -2)) + 0.5f)));
 
             segmentI.GetClosestPositionAndDirection(bezierPos, out _, out Vector3 dir);
             int rotationOffsetSide = invertedSegment != invertSide ? 90 : -90;
@@ -432,13 +507,13 @@ namespace Klyte.WriteTheSigns.Overrides
             float rotation = dir.GetAngleXZ();
 
             Vector3 rotationVectorSide = VectorUtils.X_Y(KlyteMathUtils.DegreeToVector2(rotation + rotationOffsetSide));
-            platePosI = bezierPos + ((rotationVectorSide * segmentI.Info.m_halfWidth) + (rotationVectorSide * descriptor.m_propPosition.z));
+            platePosI = bezierPos + ((rotationVectorSide * (segmentI.Info.m_halfWidth - segmentI.Info.m_pavementWidth)) + (rotationVectorSide * descriptor.m_propPosition.x));
             platePosI.y += descriptor.m_propPosition.y;
 
             return platePosI;
         }
 
-        private void FillCacheData(ushort nodeID, int controlBoardIdx, int boardId, ushort segmentIid, Vector3 platePosI, Vector3 segmentIDirection, BoardInstanceRoadNodeXml targetDescriptor, bool render)
+        private ref CacheRoadNodeItem FillCacheData(ushort nodeID, int controlBoardIdx, int boardId, ushort segmentIid, Vector3 platePosI, Vector3 segmentIDirection, BoardInstanceRoadNodeXml targetDescriptor, ref bool render)
         {
 
             Data.BoardsContainers[nodeID, controlBoardIdx, boardId] = new CacheRoadNodeItem();
@@ -446,17 +521,18 @@ namespace Klyte.WriteTheSigns.Overrides
 
             float dir = Vector2.zero.GetAngleToPoint(VectorUtils.XZ(segmentIDirection));
 
-            refBoard.m_streetDirection = -dir + 90 + segmentIDirection.y;
-            refBoard.m_segmentId = segmentIid;
             refBoard.m_districtId = DistrictManager.instance.GetDistrict(NetManager.instance.m_segments.m_buffer[segmentIid].m_middlePosition);
             refBoard.m_districtParkId = DistrictManager.instance.GetPark(NetManager.instance.m_segments.m_buffer[segmentIid].m_middlePosition);
+            render = refBoard.m_renderPlate = render && targetDescriptor.Allows(refBoard.m_districtParkId, refBoard.m_districtId);
             refBoard.m_platePosition = platePosI;
-            refBoard.m_renderPlate = render && targetDescriptor.Allows(refBoard.m_districtParkId, refBoard.m_districtId);
+            refBoard.m_streetDirection = -dir + 90 + segmentIDirection.y;
+            refBoard.m_segmentId = segmentIid;
             refBoard.m_cachedColor = targetDescriptor.UseDistrictColor ? WTSHookable.GetDistrictColor(refBoard.m_districtId) : targetDescriptor.Descriptor.FixedColor ?? Color.white;
             refBoard.m_cachedContrastColor = KlyteMonoUtils.ContrastColor(refBoard.m_cachedColor);
             refBoard.m_distanceRef = Vector2.Distance(VectorUtils.XZ(refBoard.m_platePosition), WTSHookable.GetStartPoint());
             refBoard.m_distanceRefKm = Mathf.RoundToInt(refBoard.m_distanceRef / 1000);
             refBoard.m_currentDescriptor = targetDescriptor;
+            return ref Data.BoardsContainers[nodeID, controlBoardIdx, boardId];
         }
 
         private static void GetNeigborSegment(ushort nodeID, ref NetNode data, ushort segmentIid, ref NetSegment netSegmentI, out Vector3 segmentIDirection, out Vector3 otherSegmentDirection, out ushort resultOtherSegment, out bool invertIJ)
@@ -522,10 +598,12 @@ namespace Klyte.WriteTheSigns.Overrides
         private void InvalidateNodeDestinationPaths(ushort nodeId)
         {
             m_updatedDestinations[nodeId] = null;
-            FilterValid(ref m_passingHashes[nodeId]);
-            m_passingHashes[nodeId].ForEach(x => m_updatedDestinations[x & (NetManager.MAX_NODE_COUNT - 1)] = null);
-            InvalidateHashes(ref m_passingHashes[nodeId]);
-
+            if (m_passingHashes[nodeId] != null)
+            {
+                FilterValid(ref m_passingHashes[nodeId]);
+                m_passingHashes[nodeId]?.ForEach(x => m_updatedDestinations[x & (NetManager.MAX_NODE_COUNT - 1)] = null);
+                InvalidateHashes(ref m_passingHashes[nodeId]);
+            }
         }
 
         private ulong RegisterHash(ushort nodeId, uint segmentIdx)
@@ -558,6 +636,7 @@ namespace Klyte.WriteTheSigns.Overrides
         private float m_distance;
         private int m_distanceKm;
         private string m_distanceMeanString;
+        private string m_outsideConnectionName;
     }
 
 }

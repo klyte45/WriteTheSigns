@@ -57,10 +57,11 @@ namespace Klyte.WriteTheSigns.Xml
         [XmlAttribute("trafficDirectionRequired")] public TrafficDirectionRequired TrafficDirectionRequired { get; set; } = TrafficDirectionRequired.NONE;
         [XmlAttribute("minDirectionTrafficLanes")] public int MinDirectionTrafficLanes { get; set; } = 1;
         [XmlAttribute("maxDirectionTrafficLanes")] public int MaxDirectionTrafflcLanes { get; set; } = 99;
-        [XmlAttribute("minNodeOutcomingLanes")] public int MinNodeOutcomingLanes { get; set; } = 1;
-        [XmlAttribute("maxNodeOutcomingLanes")] public int MaxNodeOutcomingLanes { get; set; } = 8;
+        [XmlAttribute("minNodeOutcomingLanes")] public int MinNodeOutcomingSegments { get; set; } = 1;
+        [XmlAttribute("maxNodeOutcomingLanes")] public int MaxNodeOutcomingSegments { get; set; } = 8;
         [XmlAttribute("minRoadHalfWidth")] public float MinRoadHalfWidth { get; set; } = 0;
         [XmlAttribute("maxRoadHalfWidth")] public float MaxRoadHalfWidth { get; set; } = 999;
+        [XmlAttribute("exitSideRequired")] public ExitSideRequired ExitSideRequired { get; set; }
 
 
         [XmlAttribute("useDistrictColor")] public bool UseDistrictColor = false;
@@ -70,6 +71,8 @@ namespace Klyte.WriteTheSigns.Xml
         [XmlArray("SelectedDistricts")] [XmlArrayItem("District")] public HashSet<ushort> SelectedDistricts { get; set; } = new HashSet<ushort>();
         [XmlAttribute("districtSelectionIsBlacklist")] public bool SelectedDistrictsIsBlacklist { get; set; } = true;
         [XmlAttribute("districtRestrictionOrder")] public DistrictRestrictionOrder DistrictRestrictionOrder { get; set; }
+
+
 
 
         public bool AllowsClass(ItemClass source) => AllowedLevels.Contains(source.m_level);
@@ -98,7 +101,6 @@ namespace Klyte.WriteTheSigns.Xml
 
         public void ResetCacheDescriptor() => m_descriptor = null;
     }
-
     public enum TrafficDirectionRequired
     {
         NONE,
@@ -110,5 +112,12 @@ namespace Klyte.WriteTheSigns.Xml
     {
         ParksOrDistricts,
         ParksAndDistricts
+    }
+
+    public enum ExitSideRequired
+    {
+        NONE,
+        OUTSIDE,
+        INSIDE
     }
 }

@@ -101,7 +101,7 @@ namespace Klyte.WriteTheSigns.UI
             {
                 (m_orderedRulesList.components[i] as UIButton).text = WTSRoadNodesData.Instance.DescriptorRulesOrder[i].SaveName;
             }
-            WTSRoadNodesData.Instance.ResetBoards();
+            WTSRoadNodesData.Instance.ResetCacheDescriptors();
             if (SelectedIndex < 1)
             {
                 m_up.Disable();

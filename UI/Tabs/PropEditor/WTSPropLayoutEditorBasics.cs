@@ -116,6 +116,8 @@ namespace Klyte.WriteTheSigns.UI
 
             AddDropdown(Locale.Get("K45_WTS_TEXT_AVAILABILITY"), out m_dropdownTextContent, helperSettings, Enum.GetNames(typeof(TextRenderingClass)).Select(x => Locale.Get("K45_WTS_BOARD_TEXT_AVAILABILITY_DESC", x.ToString())).ToArray(), OnSetTextOwnNameContent);
 
+
+
             WTSPropLayoutEditor.Instance.CurrentTabChanged += (x) =>
             {
                 if (x == 0 && EditingInstance != null)
@@ -128,8 +130,6 @@ namespace Klyte.WriteTheSigns.UI
                     m_lastSelection = GetInfos<PropInfo>().Where(x => x?.name == EditingInstance.m_propName).FirstOrDefault();
                     WTSPropLayoutEditor.Instance.CurrentPropInfo = m_lastSelection;
                     m_propFilter.text = (m_lastSelection != null) ? GetListName(m_lastSelection) : "";
-
-
                 }
             };
 
@@ -151,6 +151,7 @@ namespace Klyte.WriteTheSigns.UI
 
 
         private string m_clipboard;
+
         private void DoPasteText() => LoadIntoCurrentConfig(m_clipboard);
         private void DoCopyText()
         {
@@ -313,6 +314,7 @@ namespace Klyte.WriteTheSigns.UI
             }
         }
         private void OnSetTextOwnNameContent(int sel) => EditingInstance.m_allowedRenderClass = (TextRenderingClass)sel;
+
         #endregion
 
     }

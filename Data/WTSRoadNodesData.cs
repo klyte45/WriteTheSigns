@@ -1,4 +1,5 @@
 ﻿using ColossalFramework.UI;
+using Klyte.WriteTheSigns.Overrides;
 using Klyte.WriteTheSigns.Xml;
 using System.Linq;
 using System.Xml.Serialization;
@@ -46,16 +47,10 @@ namespace Klyte.WriteTheSigns.Data
         [XmlAttribute("abbreviationFile")]
         public string AbbreviationFile { get; set; }
 
-        public override void ResetBoards()
-        {
-            WriteTheSignsMod.Controller.StopAllCoroutines();
-            base.ResetBoards();
-        }
-
         public void ResetCacheDescriptors()
         {
             m_currentDescriptorOrder.ForEach(x => x.ResetCacheDescriptor());
-            ResetBoards();
+            BoardGeneratorRoadNodes.Instance.ResetViews();
         }
     }
 

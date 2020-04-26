@@ -34,6 +34,27 @@ namespace Klyte.WriteTheSigns.Rendering
                 TextType.Park,
                 TextType.DistrictOrPark,
                 TextType.ParkOrDistrict,
+
+                TextType.NextExitDistance,
+                TextType.NextExitMainRoad1,
+                TextType.NextExitMainRoad1A,
+                TextType.NextExitMainRoad1B,
+                TextType.NextExitMainRoad2,
+                TextType.NextExitMainRoad2A,
+                TextType.NextExitMainRoad2B,
+                TextType.NextExitText,
+
+                TextType.Next2ExitDistance,
+                TextType.Next2ExitMainRoad1,
+                TextType.Next2ExitMainRoad1A,
+                TextType.Next2ExitMainRoad1B,
+                TextType.Next2ExitMainRoad2,
+                TextType.Next2ExitMainRoad2A,
+                TextType.Next2ExitMainRoad2B,
+                TextType.Next2ExitText,
+
+                TextType.RoadEnd,
+                TextType.RoadEndDistance,
             },
             [TextRenderingClass.MileageMarker] = new TextType[]
             {
@@ -57,29 +78,29 @@ namespace Klyte.WriteTheSigns.Rendering
                TextType.PrevStopLine, // Previous Station Line 2
                TextType.LastStopLine, // Line Destination (Last stop before get back) 3
             },
-            [TextRenderingClass.PlaceOnNet] = new TextType[]
-            {
-               TextType.Fixed,
+            //[TextRenderingClass.PlaceOnNet] = new TextType[]
+            //{
+            //   TextType.Fixed,
 
-               TextType.StreetPrefix,
-               TextType.StreetSuffix,
-               TextType.StreetNameComplete,
+            //   TextType.StreetPrefix,
+            //   TextType.StreetSuffix,
+            //   TextType.StreetNameComplete,
 
-               TextType.NextExitText,
-               TextType.NextExitDestination1,
-               TextType.NextExitDestination2,
-               TextType.NextExitDestination3,
-               TextType.NextExitDestination4,
-               TextType.NextExitDistance,
+            //   //TextType.NextExitText,
+            //   //TextType.NextExitDestination1,
+            //   //TextType.NextExitDestination2,
+            //   //TextType.NextExitDestination3,
+            //   //TextType.NextExitDestination4,
+            //   //TextType.NextExitDistance,
 
-               TextType.Next2ExitText,
-               TextType.Next2ExitDestination1,
-               TextType.Next2ExitDestination2,
-               TextType.Next2ExitDestination3,
-               TextType.Next2ExitDestination4,
-               TextType.Next2ExitDistance,
+            //   //TextType.Next2ExitText,
+            //   //TextType.Next2ExitDestination1,
+            //   //TextType.Next2ExitDestination2,
+            //   //TextType.Next2ExitDestination3,
+            //   //TextType.Next2ExitDestination4,
+            //   //TextType.Next2ExitDistance,
 
-            },
+            //},
         };
 
 
@@ -118,7 +139,7 @@ namespace Klyte.WriteTheSigns.Rendering
         }
 
 
-        public static void RenderTextMesh(ushort refID, int boardIdx, int secIdx, BoardInstanceXml descriptor, Matrix4x4 propMatrix, BoardTextDescriptorGeneralXml textDescriptor, MaterialPropertyBlock materialPropertyBlock, DynamicSpriteFont baseFont, Camera targetCamera = null)
+        public static void RenderTextMesh(ushort refID, int boardIdx, int secIdx, BoardInstanceXml descriptor, Matrix4x4 propMatrix, ref BoardTextDescriptorGeneralXml textDescriptor, MaterialPropertyBlock materialPropertyBlock, DynamicSpriteFont baseFont, Camera targetCamera = null)
         {
             BasicRenderInformation renderInfo = GetTextMesh(baseFont, textDescriptor, refID, boardIdx, secIdx, descriptor);
             if (renderInfo?.m_mesh == null || renderInfo?.m_generatedMaterial == null)
@@ -270,14 +291,22 @@ namespace Klyte.WriteTheSigns.Rendering
                 {
                     return RenderUtils.GetTextData(preview.m_overrideText, "", "", baseFont, textDescriptor.m_overrideFont ?? instance?.Descriptor?.FontName);
                 }
+                string otherText = "";
+                if (textDescriptor.IsTextRelativeToSegment() && textDescriptor.m_useOtherSegmentAsRef)
+                {
+                    otherText = "Other Segment ";
+                }
                 switch (textDescriptor.m_textType)
                 {
                     case TextType.Fixed: return RenderUtils.GetTextData(textDescriptor.m_fixedText ?? "", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont ?? instance?.Descriptor?.FontName);
                     case TextType.DistanceFromCenter: return RenderUtils.GetTextData("00", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont ?? instance?.Descriptor?.FontName);
-                    case TextType.StreetSuffix: return RenderUtils.GetTextData("Suffix", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont ?? instance?.Descriptor?.FontName);
-                    case TextType.StreetPrefix: return RenderUtils.GetTextData("Pre.", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont ?? instance?.Descriptor?.FontName);
-                    case TextType.StreetNameComplete: return RenderUtils.GetTextData("Full road name", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont ?? instance?.Descriptor?.FontName);
-                    case TextType.District: return RenderUtils.GetTextData("District", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont ?? instance?.Descriptor?.FontName);
+                    case TextType.StreetSuffix: return RenderUtils.GetTextData($"{otherText}Suffix", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont ?? instance?.Descriptor?.FontName);
+                    case TextType.StreetPrefix: return RenderUtils.GetTextData($"{otherText}Pre.", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont ?? instance?.Descriptor?.FontName);
+                    case TextType.StreetNameComplete: return RenderUtils.GetTextData($"{otherText}Full road name", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont ?? instance?.Descriptor?.FontName);
+                    case TextType.District: return RenderUtils.GetTextData($"{otherText}District", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont ?? instance?.Descriptor?.FontName);
+                    case TextType.DistrictOrPark: return RenderUtils.GetTextData($"{otherText}District or Area", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont ?? instance?.Descriptor?.FontName);
+                    case TextType.ParkOrDistrict: return RenderUtils.GetTextData($"{otherText}Area or District", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont ?? instance?.Descriptor?.FontName);
+                    case TextType.Park: return RenderUtils.GetTextData($"{otherText}Area", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont ?? instance?.Descriptor?.FontName);
 
                     default:
                         string text = $"{textDescriptor.m_textType}: {preview.m_currentText}";
@@ -290,12 +319,22 @@ namespace Klyte.WriteTheSigns.Rendering
             }
             else if (instance is BoardInstanceRoadNodeXml roadDescritpor)
             {
-                ref CacheRoadNodeItem data = ref WTSRoadNodesData.Instance.BoardsContainers[refID, boardIdx, secIdx];
+                CacheRoadNodeItem data = WTSRoadNodesData.Instance.BoardsContainers[refID, boardIdx, secIdx];
                 TextType targetType = textDescriptor.m_textType;
                 switch (targetType)
                 {
                     case TextType.ParkOrDistrict: targetType = data.m_districtParkId > 0 ? TextType.Park : TextType.District; break;
                     case TextType.DistrictOrPark: targetType = data.m_districtId == 0 && data.m_districtParkId > 0 ? TextType.Park : TextType.District; break;
+                    case TextType.Park:
+                        if (data.m_districtParkId == 0)
+                        {
+                            return null;
+                        }
+                        break;
+                }
+                if (textDescriptor.IsTextRelativeToSegment() && textDescriptor.m_useOtherSegmentAsRef)
+                {
+                    data = data.m_otherSegment;
                 }
                 return targetType switch
                 {

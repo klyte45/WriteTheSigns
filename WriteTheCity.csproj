@@ -206,6 +206,7 @@
     <Compile Include="Utils\RenderUtils.cs" />
     <Compile Include="Xml\BoardDescriptor\BoardDescriptorBuildingXml.cs" />
     <Compile Include="Xml\BoardDescriptor\BoardDescriptorGeneralXml.cs" />
+    <Compile Include="Xml\BoardDescriptor\BoardInstanceRoadNodeXml.cs" />
     <Compile Include="Xml\BoardDescriptor\BoardInstanceXml.cs" />
     <Compile Include="Xml\BoardDescriptor\BoardPreviewInstanceXml.cs" />
     <Compile Include="Xml\Enums\RoadQualifierExtractionMode.cs" />
@@ -219,7 +220,6 @@
     <Compile Include="Xml\Containers\BoardBunchContainerOnNetXml.cs" />
     <Compile Include="Xml\BoardDescriptor\BoardDescriptorOnNetXml.cs" />
     <Compile Include="Overrides\TransportManagerOverrides.cs" />
-    <Compile Include="Xml\BoardDescriptor\BoardDescriptorRoadNodeXml.cs" />
     <Compile Include="Overrides\RenderEventsRedirector.cs" />
     <Compile Include="WriteTheSignsMod.cs" />
     <Compile Include="WTSController.cs" />

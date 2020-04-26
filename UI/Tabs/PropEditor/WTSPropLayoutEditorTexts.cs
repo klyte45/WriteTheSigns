@@ -48,6 +48,7 @@ namespace Klyte.WriteTheSigns.UI
 
         private UIDropDown m_dropdownTextContent;
         private UITextField m_customText;
+        private UICheckBox m_useOtherSegmentAsRef;
         private UIDropDown m_overrideFontSelect;
         private UITextField m_textPrefix;
         private UITextField m_textSuffix;
@@ -95,6 +96,7 @@ namespace Klyte.WriteTheSigns.UI
 
             AddDropdown(Locale.Get("K45_WTS_TEXT_CONTENT"), out m_dropdownTextContent, helperConfig, Enum.GetNames(typeof(TextType)).Select(x => Locale.Get("K45_WTS_BOARD_TEXT_TYPE_DESC", x.ToString())).ToArray(), OnSetTextOwnNameContent);
             AddTextField(Locale.Get("K45_WTS_CUSTOM_TEXT"), out m_customText, helperConfig, OnSetTextCustom);
+            AddCheckboxLocale("K45_WTS_PROPLAYOUT_USEOTHERSEGMENTASREF", out m_useOtherSegmentAsRef, helperConfig, OnChangeUseOtherSegmentAsRef);
             helperConfig.AddSpace(5);
             AddDropdown(Locale.Get("K45_WTS_OVERRIDE_FONT"), out m_overrideFontSelect, helperConfig, new string[0], OnSetOverrideFont);
             AddTextField(Locale.Get("K45_WTS_PREFIX"), out m_textPrefix, helperConfig, OnSetPrefix);
@@ -128,6 +130,7 @@ namespace Klyte.WriteTheSigns.UI
 
         }
 
+        private void OnChangeUseOtherSegmentAsRef(bool isChecked) => SafeObtain((ref BoardTextDescriptorGeneralXml x) => x.m_useOtherSegmentAsRef = isChecked);
 
 
         private void DoDeleteText() => WTSPropLayoutEditor.Instance.RemoveTabFromItem(TabToEdit);
@@ -179,9 +182,12 @@ namespace Klyte.WriteTheSigns.UI
 
 
             m_customText.parent.isVisible = x.m_textType == TextType.Fixed;
+            m_useOtherSegmentAsRef.isVisible = x.IsTextRelativeToSegment();
             m_textFixedColor.parent.isVisible = !x.m_useContrastColor;
             m_invertTextHorizontalAlignClone.isVisible = x.m_create180degYClone;
         }
+
+
 
         private delegate void SafeObtainMethod(ref BoardTextDescriptorGeneralXml x);
 
@@ -248,6 +254,7 @@ namespace Klyte.WriteTheSigns.UI
                 {
                     desc.m_textType = WTSPropRenderingRules.ALLOWED_TYPES_PER_RENDERING_CLASS[WTSPropLayoutEditor.Instance.EditingInstance.m_allowedRenderClass][sel];
                     m_customText.parent.isVisible = desc.m_textType == TextType.Fixed;
+                    m_useOtherSegmentAsRef.isVisible = desc.IsTextRelativeToSegment();
                 }
             });
         }
