@@ -253,7 +253,14 @@ namespace FontStashSharp
             _currentAtlas.UpdateMaterial();
             bri.m_generatedMaterial = _currentAtlas.Material;
             bri.m_sizeMetersUnscaled = bri.m_mesh.bounds.size;
-            m_textCache[str] = bri;
+            if (m_textCache.TryGetValue(str, out BasicRenderInformation currentVal) && currentVal == null)
+            {
+                m_textCache[str] = bri;
+            }
+            else
+            {
+                m_textCache.Remove(str);
+            }
             yield break;
         }
 

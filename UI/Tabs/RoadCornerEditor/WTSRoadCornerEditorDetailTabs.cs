@@ -23,7 +23,6 @@ namespace Klyte.WriteTheSigns.UI
 
         private const string DISTRICT_SELECTOR_TEMPLATE = "K45_WTS_DistrictSelectorTemplate";
         private int m_currentIdx = -1;
-        private bool m_isEditing;
 
         private UITabstrip m_tabstrip;
 
@@ -262,32 +261,26 @@ namespace Klyte.WriteTheSigns.UI
         private void SafeObtain(SafeObtainMethod action, int? targetTab = null)
         {
             int effTargetTab = Math.Max(-1, targetTab ?? m_currentIdx);
-            if (m_isEditing || effTargetTab < 0)
+            if (effTargetTab < 0)
             {
                 return;
             }
 
-            lock (this)
+            if (effTargetTab < WTSRoadNodesData.Instance.DescriptorRulesOrder.Length)
             {
-                m_isEditing = true;
-                try
-                {
-                    if (effTargetTab < WTSRoadNodesData.Instance.DescriptorRulesOrder.Length)
-                    {
-                        action(ref WTSRoadNodesData.Instance.DescriptorRulesOrder[effTargetTab]);
-                        WTSRoadNodesData.Instance.ResetCacheDescriptors();
-                    }
-                }
-                finally
-                {
-                    m_isEditing = false;
-                }
+                action(ref WTSRoadNodesData.Instance.DescriptorRulesOrder[effTargetTab]);
+                WTSRoadNodesData.Instance.ResetCacheDescriptors();
             }
         }
         private void OnChangeTab(int obj)
         {
             MainContainer.isVisible = obj >= 0;
             m_currentIdx = obj;
+            ReloadData();
+        }
+
+        private void ReloadData()
+        {
             SafeObtain((ref BoardInstanceRoadNodeXml x) =>
             {
                 m_name.text = x.SaveName;
@@ -342,23 +335,25 @@ namespace Klyte.WriteTheSigns.UI
 
         private string m_clipboard;
 
-        private BoardInstanceRoadNodeXml nullValue = null;
-
-        private ref BoardInstanceRoadNodeXml GetRuleSerialized()
+        private string GetRuleSerialized()
         {
             int effTargetTab = Math.Max(-1, m_currentIdx);
             if (effTargetTab >= 0 && effTargetTab < WTSRoadNodesData.Instance.DescriptorRulesOrder.Length)
             {
-                return ref WTSRoadNodesData.Instance.DescriptorRulesOrder[effTargetTab];
+                return XmlUtils.DefaultXmlSerialize(WTSRoadNodesData.Instance.DescriptorRulesOrder[effTargetTab]);
             }
             else
             {
-                nullValue = null;
-                return ref nullValue;
+                return null;
             }
         }
 
-        private void OnLoadRule(string obj) => SafeObtain((ref BoardInstanceRoadNodeXml x) => x = XmlUtils.DefaultXmlDeserialize<BoardInstanceRoadNodeXml>(obj));
+        private void OnLoadRule(string obj) => SafeObtain((ref BoardInstanceRoadNodeXml x) =>
+        {
+            x = XmlUtils.DefaultXmlDeserialize<BoardInstanceRoadNodeXml>(obj);
+            WTSRoadCornerEditor.Instance.RuleList.FixTabstrip();
+            ReloadData();
+        });
         private void OnPasteRule() => OnLoadRule(m_clipboard);
         private void OnCopyRule() => SafeObtain((ref BoardInstanceRoadNodeXml x) =>
         {
@@ -467,6 +462,7 @@ namespace Klyte.WriteTheSigns.UI
             {
                 x.SaveName = text;
                 WTSRoadCornerEditor.Instance.RuleList.FixTabstrip();
+                OnChangeTab(m_currentIdx);
             }
             else
             {

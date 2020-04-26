@@ -179,7 +179,7 @@ namespace Klyte.WriteTheSigns.UI
             Action actionCopy, out UIButton pasteButton,
             Action actionPaste, out UIButton deleteButton,
             Action actionDelete, Action<string> onLoad,
-            GetItemReference<DESC> getContentToSave, Action<UIHelperExtension> doWithLibGroup = null) where LIB : BasicFileLib<LIB, DESC>, new() where DESC : ILibable
+            Func<string> getContentToSave, Action<UIHelperExtension> doWithLibGroup = null) where LIB : BasicFileLib<LIB, DESC>, new() where DESC : ILibable
         {
             UILabel label = parentHelper.AddLabel(Locale.Get("K45_WTS_CLIPBOARD_TITLE"));
             var cbPanel = label.parent as UIPanel;
@@ -250,9 +250,13 @@ namespace Klyte.WriteTheSigns.UI
             {
                 if (!saveTxt.text.IsNullOrWhiteSpace())
                 {
-                    BasicFileLib<LIB, DESC>.Instance.Add(saveTxt.text, ref getContentToSave());
-                    loadDD.items = BasicFileLib<LIB, DESC>.Instance.List().ToArray();
-                    loadDD.selectedValue = saveTxt.text;
+                    DESC newEntry = XmlUtils.DefaultXmlDeserialize<DESC>(getContentToSave() ?? "");
+                    if (newEntry != default)
+                    {
+                        BasicFileLib<LIB, DESC>.Instance.Add(saveTxt.text, ref newEntry);
+                        loadDD.items = BasicFileLib<LIB, DESC>.Instance.List().ToArray();
+                        loadDD.selectedValue = saveTxt.text;
+                    }
                 }
             }, "SAVE", 30);
             doWithLibGroup?.Invoke(parentHelper);

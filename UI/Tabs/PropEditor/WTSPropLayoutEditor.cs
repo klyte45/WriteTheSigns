@@ -117,6 +117,7 @@ namespace Klyte.WriteTheSigns.UI
 
         public void SetCurrentSelectionNewName(string newName)
         {
+            WTSPropLayoutData.Instance.Add(newName, ref EditingInstance);
             m_configList.items[m_configList.selectedIndex] = newName;
             m_configList.Invalidate();
         }

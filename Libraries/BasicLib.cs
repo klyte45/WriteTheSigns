@@ -35,7 +35,7 @@ namespace Klyte.WriteTheSigns.Libraries
             descriptor.SaveName = indexName;
             if (!m_indexes.TryGetValue(indexName, out int idxArray))
             {
-                m_savedDescriptorsSerialized = m_savedDescriptorsSerialized.Union(new DESC[] { descriptor }).ToArray();
+                m_savedDescriptorsSerialized = (m_savedDescriptorsSerialized ?? new DESC[0]).Union(new DESC[] { descriptor }).ToArray();
             }
             else
             {

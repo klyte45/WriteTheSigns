@@ -142,7 +142,7 @@ namespace Klyte.WriteTheSigns.UI
                 DoCopyText, out m_pasteButton,
                 DoPasteText, out _,
                 null, LoadIntoCurrentConfig,
-                () => ref WTSPropLayoutEditor.Instance.EditingInstance);
+                () => XmlUtils.DefaultXmlSerialize(WTSPropLayoutEditor.Instance.EditingInstance));
             m_pasteButton.isVisible = m_clipboard != null;
 
         }
@@ -246,7 +246,6 @@ namespace Klyte.WriteTheSigns.UI
 
                           if (error.IsNullOrWhiteSpace())
                           {
-                              EditingInstance.SaveName = text;
                               WTSPropLayoutEditor.Instance.SetCurrentSelectionNewName(text);
                           }
                           else
