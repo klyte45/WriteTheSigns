@@ -1,8 +1,10 @@
-﻿using ColossalFramework.Globalization;
+﻿using ColossalFramework;
+using ColossalFramework.Globalization;
 using ColossalFramework.UI;
 using Klyte.Commons.UI.SpriteNames;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Data;
+using Klyte.WriteTheSigns.Libraries;
 using Klyte.WriteTheSigns.Xml;
 using System;
 using System.Linq;
@@ -19,6 +21,8 @@ namespace Klyte.WriteTheSigns.UI
         private UIButton m_up;
         private UIButton m_down;
         private UIButton m_remove;
+        private UIButton m_import;
+        private UIButton m_export;
         private UIButton m_help;
 
         private UIScrollablePanel m_orderedRulesList;
@@ -44,25 +48,30 @@ namespace Klyte.WriteTheSigns.UI
             MainContainer.autoLayoutPadding = new RectOffset(0, 0, 4, 4);
 
 
-            KlyteMonoUtils.CreateUIElement(out UIPanel m_topPanel, MainContainer.transform, "topListPanel", new UnityEngine.Vector4(0, 0, MainContainer.width, 70));
+            KlyteMonoUtils.CreateUIElement(out UIPanel m_topPanel, MainContainer.transform, "topListPanel", new UnityEngine.Vector4(0, 0, MainContainer.width, 111));
             m_topPanel.autoLayout = true;
             m_topPanel.autoLayoutDirection = LayoutDirection.Horizontal;
             m_topPanel.wrapLayout = true;
-            m_topPanel.autoLayoutPadding = new RectOffset(4, 3, 5, 5);
+            m_topPanel.autoLayoutPadding = new RectOffset(8, 8, 5, 5);
 
-            KlyteMonoUtils.CreateUIElement(out UILabel m_topPanelTitle, m_topPanel.transform, "topListPanelTitle", new UnityEngine.Vector4(0, 0, m_topPanel.width, 15));
-            KlyteMonoUtils.LimitWidthAndBox(m_topPanelTitle, MainContainer.width - 10, true);
+            KlyteMonoUtils.CreateUIElement(out UILabel m_topPanelTitle, m_topPanel.transform, "topListPanelTitle", new UnityEngine.Vector4(0, 0, m_topPanel.width - 16, 15));
+            KlyteMonoUtils.LimitWidthAndBox(m_topPanelTitle, m_topPanel.width - 16, true);
             m_topPanelTitle.text = Locale.Get("K45_WTS_ROADCORNER_LISTORDERTITLE");
             m_topPanelTitle.textAlignment = UIHorizontalAlignment.Center;
 
             int btnSize = 36;
+            KlyteMonoUtils.CreateUIElement<UILabel>(out UILabel spacing, m_topPanel.transform, "_", new Vector4(0, 0, btnSize / 2, btnSize));
+            spacing.textScale = 0;
+            spacing.width = btnSize / 4;
+            KlyteMonoUtils.InitCircledButton(m_topPanel, out m_import, CommonsSpriteNames.K45_Import, OnImportData, "K45_WTS_ROADCORNER_IMPORTDATA", btnSize);
+            KlyteMonoUtils.InitCircledButton(m_topPanel, out m_export, CommonsSpriteNames.K45_Export, (x, y) => OnExportData(), "K45_WTS_ROADCORNER_EXPORTDATA", btnSize);
+            KlyteMonoUtils.InitCircledButton(m_topPanel, out m_help, CommonsSpriteNames.K45_QuestionMark, Help_RulesList, "K45_CMNS_HELP", btnSize);
             KlyteMonoUtils.InitCircledButton(m_topPanel, out m_new, CommonsSpriteNames.K45_New, OnAddItemOnList, "K45_WTS_ROADCORNER_ADDITEMLIST", btnSize);
             KlyteMonoUtils.InitCircledButton(m_topPanel, out m_up, CommonsSpriteNames.K45_Up, OnMoveItemUpOnList, "K45_WTS_ROADCORNER_MOVEITEMUP", btnSize);
             KlyteMonoUtils.InitCircledButton(m_topPanel, out m_down, CommonsSpriteNames.K45_Down, OnMoveItemDownOnList, "K45_WTS_ROADCORNER_MOVEITEMDOWN", btnSize);
             KlyteMonoUtils.InitCircledButton(m_topPanel, out m_remove, CommonsSpriteNames.K45_X, OnRemoveItem, "K45_WTS_ROADCORNER_REMOVEITEM", btnSize);
-            KlyteMonoUtils.InitCircledButton(m_topPanel, out m_help, CommonsSpriteNames.K45_QuestionMark, Help_RulesList, "K45_CMNS_HELP", btnSize);
 
-            KlyteMonoUtils.CreateUIElement(out UIPanel m_listContainer, MainContainer.transform, "previewPanel", new Vector4(0, 0, MainContainer.width, MainContainer.height - 85));
+            KlyteMonoUtils.CreateUIElement(out UIPanel m_listContainer, MainContainer.transform, "previewPanel", new Vector4(0, 0, MainContainer.width, MainContainer.height - 126));
             KlyteMonoUtils.CreateScrollPanel(m_listContainer, out m_orderedRulesList, out _, m_listContainer.width - 20, m_listContainer.height);
             m_orderedRulesList.backgroundSprite = "OptionsScrollbarTrack";
             m_orderedRulesList.autoLayout = true;
@@ -70,6 +79,137 @@ namespace Klyte.WriteTheSigns.UI
 
         }
 
+        private void OnExportData(string defaultText = null)
+        {
+            K45DialogControl.ShowModalPromptText(new K45DialogControl.BindProperties
+            {
+                defaultTextFieldContent = defaultText,
+                title = Locale.Get("K45_WTS_ROADCORNER_EXPORTRULESTITLE"),
+                message = Locale.Get("K45_WTS_ROADCORNER_EXPORTRULESMESSAGE"),
+                showButton1 = true,
+                textButton1 = Locale.Get("SAVE"),
+                showButton2 = true,
+                textButton2 = Locale.Get("CANCEL"),
+            }, (ret, text) =>
+             {
+                 if (ret == 1)
+                 {
+                     if (text.IsNullOrWhiteSpace())
+                     {
+                         K45DialogControl.UpdateCurrentMessage($"<color #FFFF00>{Locale.Get("K45_WTS_ROADCORNER_EXPORTRULESMESSAGE_INVALIDNAME")}</color>\n\n{Locale.Get("K45_WTS_ROADCORNER_EXPORTRULESMESSAGE")}");
+                         return false;
+                     }
+                     WTSLibRoadCornerRuleList.Reload();
+                     WTSLibContainerRoadCornerRuleList currentData = WTSLibRoadCornerRuleList.Instance.Get(text);
+                     if (currentData == null)
+                     {
+                         AddCurrentListToLibrary(text);
+                     }
+                     else
+                     {
+                         K45DialogControl.ShowModal(new K45DialogControl.BindProperties
+                         {
+                             title = Locale.Get("K45_WTS_ROADCORNER_EXPORTRULESTITLE"),
+                             message = string.Format(Locale.Get("K45_WTS_ROADCORNER_EXPORTRULESMESSAGE_CONFIRMOVERWRITE"), text),
+                             showButton1 = true,
+                             textButton1 = Locale.Get("YES"),
+                             showButton2 = true,
+                             textButton2 = Locale.Get("NO"),
+                         }, (x) =>
+                         {
+                             if (x == 1)
+                             {
+                                 AddCurrentListToLibrary(text);
+                             }
+                             else
+                             {
+                                 OnExportData(text);
+                             }
+                             return true;
+                         });
+                     }
+                 }
+                 return true;
+             });
+
+        }
+
+        private static void AddCurrentListToLibrary(string text)
+        {
+            WTSLibRoadCornerRuleList.Reload();
+            var newItem = new WTSLibContainerRoadCornerRuleList
+            {
+                DescriptorRulesOrderXml = WTSRoadNodesData.Instance.DescriptorRulesOrderXml
+            };
+            WTSLibRoadCornerRuleList.Instance.Add(text, ref newItem);
+            K45DialogControl.ShowModal(new K45DialogControl.BindProperties
+            {
+                title = Locale.Get("K45_WTS_ROADCORNER_EXPORTRULESTITLE"),
+                message = string.Format(Locale.Get("K45_WTS_ROADCORNER_EXPORTRULESMESSAGE_SUCCESSSAVEDATA"), WTSLibRoadCornerRuleList.Instance.DefaultXmlFileBaseFullPath),
+                showButton1 = true,
+                textButton1 = Locale.Get("EXCEPTION_OK"),
+                showButton2 = true,
+                textButton2 = Locale.Get("K45_CMNS_GOTO_FILELOC"),
+            }, (x) =>
+            {
+                if (x == 2)
+                {
+                    ColossalFramework.Utils.OpenInFileBrowser(WTSLibRoadCornerRuleList.Instance.DefaultXmlFileBaseFullPath);
+                    return false;
+                }
+                return true;
+            });
+        }
+
+        private void OnImportData(UIComponent component, UIMouseEventParameter eventParam)
+        {
+            WTSLibRoadCornerRuleList.Reload();
+            string[] optionList = WTSLibRoadCornerRuleList.Instance.List().ToArray();
+            if (optionList.Length > 0)
+            {
+                K45DialogControl.ShowModalPromptDropDown(new K45DialogControl.BindProperties
+                {
+                    title = Locale.Get("K45_WTS_ROADCORNER_IMPORTRULESTITLE"),
+                    message = Locale.Get("K45_WTS_ROADCORNER_IMPORTRULESMESSAGE"),
+                    showButton1 = true,
+                    textButton1 = Locale.Get("LOAD"),
+                    showButton2 = true,
+                    textButton2 = Locale.Get("CANCEL"),
+                }, optionList, 0, (ret, idx, selText) =>
+                {
+                    if (ret == 1)
+                    {
+                        WTSLibContainerRoadCornerRuleList newConfig = WTSLibRoadCornerRuleList.Instance.Get(selText);
+                        WTSRoadNodesData.Instance.DescriptorRulesOrderXml = newConfig.DescriptorRulesOrderXml;
+                        FixTabstrip();
+                        SelectedIndex = -1;
+                    }
+                    return true;
+                });
+            }
+            else
+            {
+                K45DialogControl.ShowModal(new K45DialogControl.BindProperties
+                {
+                    title = Locale.Get("K45_WTS_ROADCORNER_IMPORTRULESTITLE"),
+                    message = Locale.Get("K45_WTS_ROADCORNER_IMPORTRULESMESSAGE_NOENTRIESFOUND"),
+                    showButton1 = true,
+                    textButton1 = Locale.Get("EXCEPTION_OK"),
+                    showButton2 = true,
+                    textButton2 = Locale.Get("K45_CMNS_GOTO_FILELOC"),
+                }, (x) =>
+                {
+                    if (x == 2)
+                    {
+                        WTSLibRoadCornerRuleList.Instance.EnsureFileExists();
+                        ColossalFramework.Utils.OpenInFileBrowser(WTSLibRoadCornerRuleList.Instance.DefaultXmlFileBaseFullPath);
+                        return false;
+                    }
+                    return true;
+                });
+            }
+
+        }
 
         public void Start() => FixTabstrip();
 

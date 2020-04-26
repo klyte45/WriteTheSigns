@@ -28,7 +28,7 @@ namespace Klyte.WriteTheSigns.Libraries
         [XmlIgnore]
         private Dictionary<string, int> m_indexes = new Dictionary<string, int>();
 
-        private DESC[] m_savedDescriptorsSerialized;
+        private DESC[] m_savedDescriptorsSerialized = new DESC[0];
 
         public void Add(string indexName, ref DESC descriptor)
         {
@@ -50,7 +50,7 @@ namespace Klyte.WriteTheSigns.Libraries
 
         public ref DESC Get(string indexName)
         {
-            if (m_indexes.TryGetValue(indexName, out int idxArray))
+            if (m_indexes.TryGetValue(indexName ?? "", out int idxArray))
             {
                 return ref m_savedDescriptorsSerialized[idxArray];
             }
@@ -78,26 +78,4 @@ namespace Klyte.WriteTheSigns.Libraries
         }
         protected abstract void Save();
     }
-
-    //#region Mileage Marker
-    //[XmlRoot("LibMileageMarkerProp")] public class WTSLibMileageMarkerGroup : BasicLib<WTSLibMileageMarkerGroup, BoardDescriptorMileageMarkerXml> { protected override string XmlName => "LibMileageMarkerProp"; }
-    //[XmlRoot("LibMileageMarkerText")] public class WTSLibTextMeshMileageMarker : BasicLib<WTSLibTextMeshMileageMarker, BoardTextDescriptorMileageMarkerXml> { protected override string XmlName => "LibMileageMarkerText"; }
-    //#endregion
-
-    //#region Corner Signs
-    //[XmlRoot("LibCornerSignProp")] public class WTSLibStreetPropGroup : BasicLib<WTSLibStreetPropGroup, BoardDescriptorStreetSignXml> { protected override string XmlName => "LibCornerSignProp"; }
-    //[XmlRoot("LibCornerSignText")] public class WTSLibTextMeshStreetPlate : BasicLib<WTSLibTextMeshStreetPlate, BoardTextDescriptorSteetSignXml> { protected override string XmlName => "LibCornerSignText"; }
-    //#endregion
-
-    //#region In Segment props
-    //[XmlRoot("LibSegmentPropGroup")] public class WTSLibPropGroupHigwaySigns : BasicLib<WTSLibPropGroupHigwaySigns, BoardBunchContainerHighwaySignXml> { protected override string XmlName => "LibSegmentPropGroup"; }
-    //[XmlRoot("LibSegmentProp")] public class WTSLibPropSingleHighwaySigns : BasicLib<WTSLibPropSingleHighwaySigns, BoardDescriptorHigwaySignXml> { protected override string XmlName => "LibSegmentProp"; }
-    //[XmlRoot("LibSegmentText")] public class WTSLibTextMeshHighwaySigns : BasicLib<WTSLibTextMeshHighwaySigns, BoardTextDescriptorHighwaySignsXml> { protected override string XmlName => "LibSegmentText"; }
-    //#endregion
-
-    //#region Building extra props
-    //[XmlRoot("LibBuildingsPropGroup")] public class WTSLibPropGroupBuildingSigns : BasicLib<WTSLibPropGroupBuildingSigns, BuildingGroupDescriptorXml> { protected override string XmlName => "LibBuildingsPropGroup"; }
-    //[XmlRoot("LibBuildingsProp")] public class WTSLibPropSingleBuildingSigns : BasicLib<WTSLibPropSingleBuildingSigns, BoardDescriptorBuildingXml> { protected override string XmlName => "LibBuildingsProp"; }
-    //[XmlRoot("LibBuildingsText")] public class WTSLibTextMeshBuildingSigns : BasicLib<WTSLibTextMeshBuildingSigns, BoardTextDescriptorBuildingsXml> { protected override string XmlName => "LibBuildingsText"; }
-    //#endregion
 }

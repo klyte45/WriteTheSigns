@@ -25,8 +25,9 @@ namespace Klyte.WriteTheSigns.Libraries
 
         public static void Reload() => m_instance = null;
         private static string DefaultXmlFileBasePath => WTSController.FOLDER_NAME + Path.DirectorySeparatorChar;
-        private string DefaultXmlFileBaseFullPath => $"{DefaultXmlFileBasePath}{XmlName}.xml";
-        protected sealed override void Save() => File.WriteAllText(DefaultXmlFileBaseFullPath, XmlUtils.DefaultXmlSerialize<LIB>((LIB)this));
+        public string DefaultXmlFileBaseFullPath => $"{DefaultXmlFileBasePath}{XmlName}.xml";
+        protected sealed override void Save() => EnsureFileExists();
+        public void EnsureFileExists() => File.WriteAllText(DefaultXmlFileBaseFullPath, XmlUtils.DefaultXmlSerialize<LIB>((LIB)this));
         protected static LIB LoadInstance()
         {
             var newVal = new LIB();
@@ -38,9 +39,11 @@ namespace Klyte.WriteTheSigns.Libraries
         }
     }
 
+
     [XmlRoot("LibPropSettings")] public class WTSLibPropSettings : BasicFileLib<WTSLibPropSettings, BoardDescriptorGeneralXml> { protected override string XmlName => "LibPropSettings"; }
     [XmlRoot("LibPropTextItem")] public class WTSLibPropTextItem : BasicFileLib<WTSLibPropTextItem, BoardTextDescriptorGeneralXml> { protected override string XmlName => "LibPropTextItem"; }
     [XmlRoot("LibRoadCornerRule")] public class WTSLibRoadCornerRule : BasicFileLib<WTSLibRoadCornerRule, BoardInstanceRoadNodeXml> { protected override string XmlName => "LibRoadCornerRule"; }
+    [XmlRoot("LibRoadCornerRuleList")] public class WTSLibRoadCornerRuleList : BasicFileLib<WTSLibRoadCornerRuleList, WTSLibContainerRoadCornerRuleList> { protected override string XmlName => "LibRoadCornerRuleList"; }
 
     //#region Mileage Marker
     //[XmlRoot("LibMileageMarkerProp")] public class WTSLibMileageMarkerGroup : BasicLib<WTSLibMileageMarkerGroup, BoardDescriptorMileageMarkerXml> { protected override string XmlName => "LibMileageMarkerProp"; }

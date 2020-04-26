@@ -46,7 +46,7 @@ namespace Klyte.WriteTheSigns.Xml
             }
         }
 
-        [XmlArray("ReferenceSelection")] [XmlArrayItem("ItemClass")] public HashSet<ItemClass.Level> AllowedLevels { get; set; } = new HashSet<Level>();
+        [XmlArray("AllowedRoadLevels")] [XmlArrayItem("Level")] public HashSet<ItemClass.Level> AllowedLevels { get; set; } = new HashSet<Level>();
         [XmlAttribute("spawnChance")] public byte SpawnChance { get; set; } = 255;
         [XmlAttribute("placeOnDistrictBorder")] public bool PlaceOnDistrictBorder { get; set; } = false;
         [XmlAttribute("placeOnTunnelBridgeStart")] public bool PlaceOnTunnelBridgeStart { get; set; } = false;
