@@ -2,6 +2,7 @@
 using ColossalFramework.UI;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Data;
+using Klyte.WriteTheSigns.Overrides;
 using Klyte.WriteTheSigns.Utils;
 using Klyte.WriteTheSigns.Xml;
 using SpriteFontPlus;
@@ -29,32 +30,11 @@ namespace Klyte.WriteTheSigns.Rendering
                 TextType.StreetPrefix,
                 TextType.StreetSuffix,
                 TextType.StreetNameComplete,
-                TextType.DistanceFromCenter,
+                TextType.DistanceFromReference,
                 TextType.District,
                 TextType.Park,
                 TextType.DistrictOrPark,
                 TextType.ParkOrDistrict,
-
-                TextType.NextExitDistance,
-                TextType.NextExitMainRoad1,
-                TextType.NextExitMainRoad1A,
-                TextType.NextExitMainRoad1B,
-                TextType.NextExitMainRoad2,
-                TextType.NextExitMainRoad2A,
-                TextType.NextExitMainRoad2B,
-                TextType.NextExitText,
-
-                TextType.Next2ExitDistance,
-                TextType.Next2ExitMainRoad1,
-                TextType.Next2ExitMainRoad1A,
-                TextType.Next2ExitMainRoad1B,
-                TextType.Next2ExitMainRoad2,
-                TextType.Next2ExitMainRoad2A,
-                TextType.Next2ExitMainRoad2B,
-                TextType.Next2ExitText,
-
-                TextType.RoadEnd,
-                TextType.RoadEndDistance,
             },
             [TextRenderingClass.MileageMarker] = new TextType[]
             {
@@ -306,14 +286,14 @@ namespace Klyte.WriteTheSigns.Rendering
                     return RenderUtils.GetTextData(preview.m_overrideText, "", "", baseFont, textDescriptor.m_overrideFont ?? instance?.Descriptor?.FontName);
                 }
                 string otherText = "";
-                if (textDescriptor.IsTextRelativeToSegment() && textDescriptor.m_useOtherSegmentAsRef)
+                if (textDescriptor.IsTextRelativeToSegment())
                 {
-                    otherText = "Other Segment ";
+                    otherText = $"({textDescriptor.m_destinationRelative}) ";
                 }
                 switch (textDescriptor.m_textType)
                 {
                     case TextType.Fixed: return RenderUtils.GetTextData(textDescriptor.m_fixedText ?? "", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont ?? instance?.Descriptor?.FontName);
-                    case TextType.DistanceFromCenter: return RenderUtils.GetTextData("00", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont ?? instance?.Descriptor?.FontName);
+                    case TextType.DistanceFromReference: return RenderUtils.GetTextData("00", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont ?? instance?.Descriptor?.FontName);
                     case TextType.StreetSuffix: return RenderUtils.GetTextData($"{otherText}Suffix", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont ?? instance?.Descriptor?.FontName);
                     case TextType.StreetPrefix: return RenderUtils.GetTextData($"{otherText}Pre.", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont ?? instance?.Descriptor?.FontName);
                     case TextType.StreetNameComplete: return RenderUtils.GetTextData($"{otherText}Full road name", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont ?? instance?.Descriptor?.FontName);
@@ -346,13 +326,48 @@ namespace Klyte.WriteTheSigns.Rendering
                         }
                         break;
                 }
-                if (textDescriptor.IsTextRelativeToSegment() && textDescriptor.m_useOtherSegmentAsRef)
+                if (textDescriptor.IsTextRelativeToSegment())
                 {
-                    data = data.m_otherSegment;
+                    CacheDestinationRoute destination = null;
+                    switch (textDescriptor.m_destinationRelative)
+                    {
+                        case DestinationReference.NextExitMainRoad1:
+                        case DestinationReference.NextExitMainRoad2:
+                            data = data.m_otherSegment;
+                            destination = BoardGeneratorRoadNodes.Instance.GetTargetDestination(refID, data.m_segnentIndex, (int)textDescriptor.m_destinationRelative);
+                            break;
+                        case DestinationReference.Next2ExitMainRoad1:
+                        case DestinationReference.Next2ExitMainRoad2:
+                        case DestinationReference.RoadEnd:
+                        case DestinationReference.Next2Exit:
+                        case DestinationReference.NextExit:
+                            return null;
+                        case DestinationReference.NeighborNode:
+                            data = data.m_otherSegment;
+                            break;
+                        case DestinationReference.Self:
+                            break;
+                    }
+                    if (destination != null)
+                    {
+                        return targetType switch
+                        {
+                            TextType.DistanceFromReference => RenderUtils.GetTextData(destination.m_distanceMeanString, textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont ?? instance.Descriptor.FontName),
+                            TextType.StreetSuffix => RenderUtils.GetFromCacheArray(destination.m_segmentId, textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, roadDescritpor.ApplyAbreviationsOnFullName ? RenderUtils.CacheArrayTypes.SuffixStreetNameAbbreviation : RenderUtils.CacheArrayTypes.SuffixStreetName, baseFont, textDescriptor.m_overrideFont ?? instance.Descriptor.FontName),
+                            TextType.StreetPrefix => RenderUtils.GetFromCacheArray(destination.m_segmentId, textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, RenderUtils.CacheArrayTypes.StreetQualifier, baseFont, textDescriptor.m_overrideFont ?? instance.Descriptor.FontName),
+                            TextType.StreetNameComplete => RenderUtils.GetFromCacheArray(destination.m_segmentId, textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, roadDescritpor.ApplyAbreviationsOnFullName ? RenderUtils.CacheArrayTypes.FullStreetNameAbbreviation : RenderUtils.CacheArrayTypes.FullStreetName, baseFont, textDescriptor.m_overrideFont ?? instance.Descriptor.FontName),
+                            TextType.District => RenderUtils.GetFromCacheArray(destination.m_districtId, textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, RenderUtils.CacheArrayTypes.Districts, baseFont, textDescriptor.m_overrideFont ?? instance.Descriptor.FontName),
+                            TextType.Park => RenderUtils.GetFromCacheArray(destination.m_parkId, textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, RenderUtils.CacheArrayTypes.Parks, baseFont, textDescriptor.m_overrideFont ?? instance.Descriptor.FontName),
+
+
+                            _ => null,
+                        };
+
+                    }
                 }
                 return targetType switch
                 {
-                    TextType.DistanceFromCenter => RenderUtils.GetTextData($"{data.m_distanceRefKm}", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont ?? instance.Descriptor.FontName),
+                    TextType.DistanceFromReference => RenderUtils.GetTextData($"{data.m_distanceRefKm}", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont ?? instance.Descriptor.FontName),
                     TextType.Fixed => RenderUtils.GetTextData(textDescriptor.m_fixedText ?? "", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont ?? instance.Descriptor.FontName),
                     TextType.StreetSuffix => RenderUtils.GetFromCacheArray(data.m_segmentId, textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, roadDescritpor.ApplyAbreviationsOnFullName ? RenderUtils.CacheArrayTypes.SuffixStreetNameAbbreviation : RenderUtils.CacheArrayTypes.SuffixStreetName, baseFont, textDescriptor.m_overrideFont ?? instance.Descriptor.FontName),
                     TextType.StreetPrefix => RenderUtils.GetFromCacheArray(data.m_segmentId, textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, RenderUtils.CacheArrayTypes.StreetQualifier, baseFont, textDescriptor.m_overrideFont ?? instance.Descriptor.FontName),

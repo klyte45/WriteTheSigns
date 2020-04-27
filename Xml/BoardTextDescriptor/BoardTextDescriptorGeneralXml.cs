@@ -32,12 +32,12 @@ namespace Klyte.WriteTheSigns.Xml
         [XmlAttribute("textAlign")]
         public UIHorizontalAlignment m_textAlign = UIHorizontalAlignment.Center;
 
-        [XmlAttribute("textType")]
+        [XmlAttribute("textContent")]
         public TextType m_textType = TextType.Fixed;
+        [XmlAttribute("destinationRelative")]
+        public DestinationReference m_destinationRelative = DestinationReference.Self;
         [XmlAttribute("fixedText")]
         public string m_fixedText = "Text";
-        [XmlAttribute("useOtherSegmentAsRef")]
-        public bool m_useOtherSegmentAsRef = false;
 
 
 
@@ -86,12 +86,12 @@ namespace Klyte.WriteTheSigns.Xml
                 case TextType.DistrictOrPark:
                 case TextType.Park:
                 case TextType.ParkOrDistrict:
-                case TextType.RoadEnd:
-                case TextType.RoadEndDistance:
                 case TextType.StreetCode:
                 case TextType.StreetNameComplete:
                 case TextType.StreetPrefix:
-                case TextType.StreetSuffix: return true;
+                case TextType.StreetSuffix:
+                case TextType.DistanceFromReference:
+                    return true;
             }
             return false;
         }

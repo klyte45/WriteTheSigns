@@ -13,17 +13,21 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using static Klyte.Commons.Utils.SegmentUtils;
 
 namespace Klyte.WriteTheSigns.Overrides
 {
 
     public class BoardGeneratorRoadNodes : Redirector, IRedirectable
     {
+        public static readonly int DESTINATIONS_CALC_COUNT = Enum.GetValues(typeof(DestinationReference)).Length - 1;
+
         public static BoardGeneratorRoadNodes Instance;
         public DynamicSpriteFont DrawFont => FontServer.instance[Data.DefaultFont] ?? FontServer.instance[WTSController.DEFAULT_FONT_KEY];
         public WTSRoadNodesData Data => WTSRoadNodesData.Instance;
         public bool?[] m_updatedStreetPositions;
         public bool?[] m_updatedDestinations;
+        public bool?[,] m_couldReachDestinations;
         public uint[] m_lastFrameUpdate;
 
         private readonly Func<RenderManager, uint> m_getCurrentFrame = ReflectionUtils.GetGetFieldDelegate<RenderManager, uint>("m_currentFrame", typeof(RenderManager));
@@ -53,6 +57,7 @@ namespace Klyte.WriteTheSigns.Overrides
             m_lastFrameUpdate = new uint[NetManager.MAX_NODE_COUNT];
             m_updatedStreetPositions = new bool?[Data.ObjArraySize];
             m_updatedDestinations = new bool?[Data.ObjArraySize];
+            m_couldReachDestinations = new bool?[Data.ObjArraySize, DESTINATIONS_CALC_COUNT];
 
 
             var adrEventsType = Type.GetType("Klyte.Addresses.ModShared.AdrEvents, KlyteAddresses");
@@ -103,6 +108,7 @@ namespace Klyte.WriteTheSigns.Overrides
         {
             m_updatedStreetPositions = new bool?[Data.ObjArraySize];
             m_updatedDestinations = new bool?[Data.ObjArraySize];
+            m_couldReachDestinations = new bool?[Data.ObjArraySize, DESTINATIONS_CALC_COUNT];
             WriteTheSignsMod.Controller?.StopAllCoroutines();
         }
         #endregion
@@ -170,10 +176,18 @@ namespace Klyte.WriteTheSigns.Overrides
                 {
                     if (cameraInfo.CheckRenderDistance(position, 200 * targetDescriptor.Descriptor.m_textDescriptors[j].m_textScale))
                     {
-                        if (IsDestinationText(targetDescriptor.Descriptor.m_textDescriptors[j].m_textType) && m_updatedDestinations[nodeID] == null)
+                        if (targetDescriptor.Descriptor.m_textDescriptors[j].m_destinationRelative != DestinationReference.Self)
                         {
-                            m_updatedDestinations[nodeID] = false;
-                            WriteTheSignsMod.Controller.StartCoroutine(CalculateDestinations(nodeID));
+                            if (m_updatedDestinations[nodeID] == null)
+                            {
+                                m_updatedDestinations[nodeID] = false;
+                                WriteTheSignsMod.Controller.StartCoroutine(CalculateDestinations(nodeID));
+                            }
+                            else if (m_updatedDestinations[nodeID] == true && m_couldReachDestinations[nodeID, (int)targetDescriptor.Descriptor.m_textDescriptors[j].m_destinationRelative] == false)
+                            {
+                                Data.BoardsContainers[nodeID, boardIdx, secIdx] = null;
+                                return;
+                            }
                         }
 
 
@@ -185,55 +199,288 @@ namespace Klyte.WriteTheSigns.Overrides
             }
         }
 
-        private bool IsDestinationText(TextType textType)
-        {
-            switch (textType)
-            {
-                case TextType.NextExitDistance:
-                case TextType.NextExitMainRoad1:
-                case TextType.NextExitMainRoad1A:
-                case TextType.NextExitMainRoad1B:
-                case TextType.NextExitMainRoad2:
-                case TextType.NextExitMainRoad2A:
-                case TextType.NextExitMainRoad2B:
-                case TextType.NextExitText:
-
-                case TextType.Next2ExitDistance:
-                case TextType.Next2ExitMainRoad1:
-                case TextType.Next2ExitMainRoad1A:
-                case TextType.Next2ExitMainRoad1B:
-                case TextType.Next2ExitMainRoad2:
-                case TextType.Next2ExitMainRoad2A:
-                case TextType.Next2ExitMainRoad2B:
-                case TextType.Next2ExitText:
-
-                case TextType.RoadEnd:
-                case TextType.RoadEndDistance:
-                    return true;
-                default:
-                    return false;
-
-            }
-        }
-
         #region Calculation destination
 
         private IEnumerator CalculateDestinations(ushort nodeID)
         {
             yield return 0;
+            LogUtils.DoLog($"Start - Calculate destinations for {nodeID}");
             if (m_updatedDestinations[nodeID] != false)
             {
+                LogUtils.DoLog($"End - aborted!");
                 yield break;
             }
             GetIncomingOutcomingTraffic(nodeID, out HashSet<ushort> incomingTraffic, out HashSet<ushort> outcomingTraffic);
             if (outcomingTraffic.Count == 0)
             {
+                LogUtils.DoLog($"End - no outcoming for {nodeID}");
                 yield break;
             }
+            for (uint i = 0; i < 8; i++)
+            {
+                ushort targetSegmentId = NetManager.instance.m_nodes.m_buffer[nodeID].GetSegment((int)i);
+                IEnumerable<ushort> thisIncomingTraffic = incomingTraffic.Where(x => !SegmentUtils.IsSameName(targetSegmentId, x));
+                LogUtils.DoLog($"CD[{nodeID}] = Start segment {i} (id: {targetSegmentId})!");
+                if (targetSegmentId != 0)
+                {
+                    if (outcomingTraffic.Contains(targetSegmentId))
+                    {
+                        LogUtils.DoLog($"CD[{nodeID}/{i}] start tracking - MR1");
+                        if (MapSegmentFlow(nodeID, targetSegmentId, ref NetManager.instance.m_segments.m_buffer[targetSegmentId], 124000, 1, thisIncomingTraffic, out SegmentMappingObject endSegment, 10000, out HashSet<ushort> nodesSearched))
+                        {
+                            LogUtils.DoLog($"CD[{nodeID}/{i}] WRITING - MR1");
+                            //SegmentUtils.GetSegmentRoadEdges(endSegment.segmentId, false, false, false, out ComparableRoad startRef, out ComparableRoad endRef, out ushort[] nodesPath);
+                            MarkSuccessDestination(nodeID, i, DestinationReference.NextExitMainRoad1, endSegment.segmentId, endSegment.nodeList, endSegment.distanceWalked);
 
+                            LogUtils.DoLog($"CD[{nodeID}/{i}] SEARCHING - MR2");
+                            if (MapSegmentFlow(nodeID, targetSegmentId, ref NetManager.instance.m_segments.m_buffer[targetSegmentId], 124000, 2, thisIncomingTraffic, out endSegment, 20000, out nodesSearched))
+                            {
+                                LogUtils.DoLog($"CD[{nodeID}/{i}] WRITING - MR2");
+                                MarkSuccessDestination(nodeID, i, DestinationReference.NextExitMainRoad2, endSegment.segmentId, endSegment.nodeList, endSegment.distanceWalked);
+                            }
+                            else
+                            {
+                                LogUtils.DoLog($"CD[{nodeID}/{i}] NOTFOUND - MR2");
+                                MarkFailureDestination(nodeID, i, DestinationReference.NextExitMainRoad2, nodesSearched);
+                            }
+                        }
+                        else
+                        {
+                            LogUtils.DoLog($"CD[{nodeID}/{i}] NOTFOUND - MR1/2");
+                            MarkFailureDestination(nodeID, i, DestinationReference.NextExitMainRoad1, nodesSearched);
+                            MarkFailureDestination(nodeID, i, DestinationReference.NextExitMainRoad2, nodesSearched);
+                        }
+                    }
+                    else
+                    {
+                        LogUtils.DoLog($"CD[{nodeID}/{i}] has no outcoming!");
+                        m_couldReachDestinations[nodeID, (int)DestinationReference.NextExitMainRoad1] = false;
+                        m_couldReachDestinations[nodeID, (int)DestinationReference.NextExitMainRoad2] = false;
+                    }
 
-
+                }
+            }
             yield break;
+        }
+
+        private void MarkSuccessDestination(ushort nodeID, uint i, DestinationReference destinationId, ushort targetSegmentId, IEnumerable<ushort> trackPath, float distance)
+        {
+            m_couldReachDestinations[nodeID, (int)destinationId] = true;
+            ulong pathHash = RegisterHash(nodeID, i);
+            AddAllToHash(trackPath, pathHash);
+
+            ushort targetNodeId = trackPath.Last();
+            string outsideConnectionName = null;
+            ref NetNode targetNode = ref NetManager.instance.m_nodes.m_buffer[targetNodeId];
+            if ((targetNode.m_flags & NetNode.Flags.Outside) != 0)
+            {
+                ushort targetBuilding = BuildingManager.instance.FindBuilding(targetNode.m_position, 1000, 0, 0, 0, 0);
+                if (targetBuilding > 0)
+                {
+                    outsideConnectionName = BuildingManager.instance.GetBuildingName(targetBuilding, default);
+                }
+            }
+            m_destinationInfo[nodeID, i, (int)destinationId] = new CacheDestinationRoute
+            {
+                m_segmentId = targetSegmentId,
+                m_distance = distance,
+                m_distanceKm = Mathf.RoundToInt(distance / 1000),
+                m_distanceMeanString = DistanceToMeanString(distance),
+                m_nodeId = targetNodeId,
+                m_districtId = DistrictManager.instance.GetDistrict(targetNode.m_position),
+                m_parkId = DistrictManager.instance.GetPark(targetNode.m_position),
+                m_outsideConnectionName = outsideConnectionName
+            };
+        }
+
+        private void MarkFailureDestination(ushort nodeID, uint i, DestinationReference destinationId, IEnumerable<ushort> trackPath)
+        {
+            m_couldReachDestinations[nodeID, (int)destinationId] = false;
+            ulong pathHash = RegisterHash(nodeID, i);
+            AddAllToHash(trackPath, pathHash);
+            m_destinationInfo[nodeID, i, (int)destinationId] = null;
+        }
+
+        private string DistanceToMeanString(float distance)
+        {
+            if (distance > 100)
+            {
+                return "100 m";
+            }
+            else if (distance > 950)
+            {
+                return $"{Mathf.RoundToInt(distance / 100)}00 m";
+            }
+            else if (distance > 10000)
+            {
+                return $"{(distance / 1000).ToString("D1")} km";
+            }
+            else
+            {
+                return $"{Mathf.RoundToInt(distance / 1000)} km";
+            }
+        }
+
+        private class SegmentMapComparer : IComparer<SegmentMappingObject>
+        {
+            public int Compare(SegmentMappingObject x, SegmentMappingObject y) => (x.distanceWalked - x.pts).CompareTo(y.distanceWalked - y.pts);
+        }
+
+        private class SegmentMappingObject
+        {
+            public readonly ushort segmentId;
+            public readonly NetSegment refSegment;
+            public readonly int pts;
+            public readonly float distanceWalked;
+            public readonly ushort[] nodeList;
+            public SegmentMappingObject(SegmentMappingObject reference, ushort segmentId, ref NetSegment refSegment, int pts, float distanceWalked, ushort nodeToAdd)
+            {
+                this.segmentId = segmentId;
+                this.refSegment = refSegment;
+                this.pts = pts;
+                this.distanceWalked = (reference?.distanceWalked ?? 0) + distanceWalked;
+                nodeList = (reference?.nodeList ?? new ushort[0]).Union(new ushort[] { nodeToAdd }).ToArray();
+            }
+            public override string ToString() => $"[s={segmentId}; d={distanceWalked}; pts = {pts}; lastNode = {nodeList.Last()}]";
+        }
+
+        private static bool MapSegmentFlow(ushort nodeID, ushort targetSegmentId, ref NetSegment targetSegment, int minPoints, int nthSegmentFound, IEnumerable<ushort> incomingSegments, out SegmentMappingObject endSegmentData, float maxDistance, out HashSet<ushort> greedyMapping, SegmentMappingObject cache = null, int maxDepth = 15)
+        {
+            var priorityQueue = new PriorityQueue<SegmentMappingObject>(new SegmentMapComparer());
+            if (cache != null)
+            {
+                ushort prevNode = cache.nodeList.Last();
+                List<SegmentMappingObject> resultingList = MapNode(cache, incomingSegments, prevNode, true);
+                foreach (SegmentMappingObject item in resultingList)
+                {
+                    LogUtils.DoLog($"[CACHE] ADDING TO PQ: {item}");
+                    priorityQueue.Push(item);
+                }
+            }
+            else
+            {
+                priorityQueue.Push(new SegmentMappingObject(null, targetSegmentId, ref targetSegment, CalculatePoints(ref targetSegment), targetSegment.m_averageLength, nodeID));
+            }
+            greedyMapping = new HashSet<ushort>();
+            var banishedStreets = new List<ushort> { targetSegmentId };
+            banishedStreets.AddRange(incomingSegments);
+            SegmentMappingObject next;
+            do
+            {
+                next = priorityQueue.Pop();
+                LogUtils.DoLog($"Starting - {next}");
+                if (next.nodeList.Length > maxDepth)
+                {
+                    LogUtils.DoLog($"OVERFLOW! - skipping");
+                    continue;
+                }
+                if (next.pts >= minPoints && banishedStreets.Where(x => IsSameName(x, next.segmentId)).Count() == 0)
+                {
+                    LogUtils.DoLog($"PTS MATCH ({minPoints}) - {next}");
+                    nthSegmentFound--;
+                    banishedStreets.Add(next.segmentId);
+                }
+                if (nthSegmentFound == 0)
+                {
+                    LogUtils.DoLog($"BREAKING: SEGMENT FOUND");
+                    endSegmentData = next;
+                    return true;
+                }
+                List<SegmentMappingObject> resultingList = MapSegment(next, incomingSegments);
+                foreach (SegmentMappingObject item in resultingList)
+                {
+                    LogUtils.DoLog($"ADDING TO PQ: {item}");
+                    priorityQueue.Push(item);
+                }
+                if (resultingList.Count == 0)
+                {
+                    greedyMapping.UnionWith(next.nodeList);
+                }
+                LogUtils.DoLog($"NEXT TOP PQ: {priorityQueue.Top}");
+            } while (priorityQueue.Count > 0 && (priorityQueue.Top.nodeList.Length < maxDepth || priorityQueue.Top.distanceWalked < maxDistance));
+            endSegmentData = null;
+            return false;
+        }
+
+        private static List<SegmentMappingObject> MapSegment(SegmentMappingObject prevObj, IEnumerable<ushort> incomingSegments)
+        {
+            ushort nodeID = prevObj.nodeList.Last();
+            LogUtils.DoLog($"-<{nodeID}>-- Mapping on segment from {nodeID} ");
+            var listReturn = new List<SegmentMappingObject>();
+
+            bool canFlowThruThisSegment = CheckIfFlowIsAllowed(nodeID, prevObj.refSegment);
+            LogUtils.DoLog($"-<{nodeID}>-- canFlowThruThisSegment({prevObj.segmentId}) ={canFlowThruThisSegment}");
+            if (canFlowThruThisSegment)
+            {
+                ushort nextNodeId = prevObj.refSegment.GetOtherNode(nodeID);
+                LogUtils.DoLog($"-<{nodeID}>- nextNodeId ={nextNodeId}");
+                if (nextNodeId > 0 && !prevObj.nodeList.Contains(nextNodeId))
+                {
+                    listReturn = MapNode(prevObj, incomingSegments, nextNodeId);
+                }
+            }
+            return listReturn;
+        }
+
+        private static List<SegmentMappingObject> MapNode(SegmentMappingObject prevObj, IEnumerable<ushort> incomingSegments, ushort nextNodeId, bool ignoreSegmentCheck = false)
+        {
+            var listReturn = new List<SegmentMappingObject>();
+            ref NetNode nextNode = ref NetManager.instance.m_nodes.m_buffer[nextNodeId];
+            for (int i = 0; i < 8; i++)
+            {
+                ushort currentSegment = nextNode.GetSegment(i);
+                LogUtils.DoLog($"----<{nextNodeId}>- currentSegment ={currentSegment} (prev={prevObj.segmentId})");
+                if (currentSegment > 0 && (ignoreSegmentCheck || currentSegment != prevObj.segmentId) && !incomingSegments.Any(x => SegmentUtils.IsSameName(currentSegment, x)))
+                {
+                    int pts = CalculatePoints(ref NetManager.instance.m_segments.m_buffer[currentSegment]);
+                    listReturn.Add(new SegmentMappingObject(prevObj, currentSegment, ref NetManager.instance.m_segments.m_buffer[currentSegment], pts, NetManager.instance.m_segments.m_buffer[currentSegment].m_averageLength, nextNodeId));
+                }
+            }
+            return listReturn;
+        }
+
+        private static int CalculatePoints(ref NetSegment segment)
+        {
+            int basePoints = -1;
+            NetInfo info = segment.Info;
+            ItemClass.Level level = info.GetClassLevel();
+            int lanes = info.m_backwardVehicleLaneCount + info.m_forwardVehicleLaneCount;
+            switch (level)
+            {
+                case ItemClass.Level.Level5:
+                    if (info.m_hasBackwardVehicleLanes && info.m_hasForwardVehicleLanes)
+                    {
+                        basePoints = 50000 * lanes;
+                    }
+                    else
+                    {
+                        if (lanes < 2)
+                        {
+                            basePoints = 0;
+                        }
+                        else
+                        {
+                            basePoints = 100000 * lanes;
+                        }
+                    }
+                    break;
+                case ItemClass.Level.Level1:
+                case ItemClass.Level.Level2:
+                case ItemClass.Level.Level3:
+                case ItemClass.Level.Level4:
+                    int multiplier = 1 + (int)level;
+                    basePoints = Mathf.RoundToInt((1000 * info.m_halfWidth) + (multiplier * lanes * (info.m_hasBackwardVehicleLanes && info.m_hasForwardVehicleLanes ? 10000 : 15000)));
+                    break;
+            }
+
+            return basePoints;
+        }
+
+        private static bool CheckIfFlowIsAllowed(ushort nodeID, NetSegment targetSegment)
+        {
+            bool isSegmentInverted = CheckSegmentInverted(nodeID, ref targetSegment);
+            bool canFlowThruThisSegment = (isSegmentInverted && targetSegment.Info.m_hasBackwardVehicleLanes) || (!isSegmentInverted && targetSegment.Info.m_hasForwardVehicleLanes);
+            return canFlowThruThisSegment;
         }
 
         #endregion
@@ -263,7 +510,7 @@ namespace Klyte.WriteTheSigns.Overrides
                 {
                     if (Singleton<NetManager>.instance.m_segments.m_buffer[segmentIid].Info != null && Singleton<NetManager>.instance.m_segments.m_buffer[segmentIid].Info.m_netAI is RoadBaseAI roadAiI)
                     {
-                        GetNeigborSegment(nodeID, ref NetManager.instance.m_nodes.m_buffer[nodeID], segmentIid, ref Singleton<NetManager>.instance.m_segments.m_buffer[segmentIid], out Vector3 segmentIDirection, out Vector3 segmentJDirection, out ushort segmentJid, out bool invertIJ);
+                        GetNeighborSegment(nodeID, ref NetManager.instance.m_nodes.m_buffer[nodeID], segmentIid, ref Singleton<NetManager>.instance.m_segments.m_buffer[segmentIid], out Vector3 segmentIDirection, out Vector3 segmentJDirection, out ushort segmentJid, out bool invertIJ);
 
 
                         ItemClass classI = Singleton<NetManager>.instance.m_segments.m_buffer[segmentIid].Info.m_class;
@@ -367,10 +614,8 @@ namespace Klyte.WriteTheSigns.Overrides
             {
                 return false;
             }
-            bool invertFlagI = (netSegmentI.m_flags & NetSegment.Flags.Invert) != 0;
-            bool invertFlagJ = (netSegmentJ.m_flags & NetSegment.Flags.Invert) != 0;
-            bool isSegmentIinverted = invertFlagI == (netSegmentI.m_startNode == nodeID) != (SimulationManager.instance.m_metaData.m_invertTraffic == SimulationMetaData.MetaBool.False);
-            bool isSegmentJinverted = invertFlagJ == (netSegmentJ.m_startNode == nodeID) != (SimulationManager.instance.m_metaData.m_invertTraffic == SimulationMetaData.MetaBool.False);
+            bool isSegmentIinverted = CheckSegmentInverted(nodeID, ref netSegmentI);
+            bool isSegmentJinverted = CheckSegmentInverted(nodeID, ref netSegmentJ);
 
             if (segmentJid == 0
                 || !(Singleton<NetManager>.instance.m_segments.m_buffer[segmentJid].Info.m_netAI is RoadBaseAI)
@@ -433,8 +678,8 @@ namespace Klyte.WriteTheSigns.Overrides
                         }
                     }
 
-                    renderI &= invertIJ && EnsureTrafficLanes(ref netSegmentI, targetDescriptor, isSegmentIinverted) && EnsureRoadWidth(ref netSegmentI, targetDescriptor);
-                    renderJ &= !invertIJ && EnsureTrafficLanes(ref netSegmentJ, targetDescriptor, isSegmentJinverted) && EnsureRoadWidth(ref netSegmentJ, targetDescriptor);
+                    renderI &= invertIJ && EnsureTrafficLanes(ref netSegmentI, targetDescriptor, !isSegmentIinverted) && EnsureRoadWidth(ref netSegmentI, targetDescriptor);
+                    renderJ &= !invertIJ && EnsureTrafficLanes(ref netSegmentJ, targetDescriptor, !isSegmentJinverted) && EnsureRoadWidth(ref netSegmentJ, targetDescriptor);
 
                     if (outcoming.Count == 1)
                     {
@@ -482,6 +727,13 @@ namespace Klyte.WriteTheSigns.Overrides
                 return false;
             }
             return true;
+        }
+
+        private static bool CheckSegmentInverted(ushort nodeID, ref NetSegment netSegmentJ)
+        {
+            bool invertFlagJ = (netSegmentJ.m_flags & NetSegment.Flags.Invert) != 0;
+            bool isSegmentJinverted = invertFlagJ == (netSegmentJ.m_startNode == nodeID) == (SimulationManager.instance.m_metaData.m_invertTraffic == SimulationMetaData.MetaBool.False);
+            return isSegmentJinverted;
         }
 
         private static bool EnsureTrafficLanes(ref NetSegment netSegment, BoardInstanceRoadNodeXml targetDescriptor, bool isSegmentInverted)
@@ -532,10 +784,58 @@ namespace Klyte.WriteTheSigns.Overrides
             refBoard.m_distanceRef = Vector2.Distance(VectorUtils.XZ(refBoard.m_platePosition), WTSHookable.GetStartPoint());
             refBoard.m_distanceRefKm = Mathf.RoundToInt(refBoard.m_distanceRef / 1000);
             refBoard.m_currentDescriptor = targetDescriptor;
+            refBoard.m_segnentIndex = GetSegmentIndex(ref NetManager.instance.m_nodes.m_buffer[nodeID], segmentIid);
             return ref Data.BoardsContainers[nodeID, controlBoardIdx, boardId];
         }
 
-        private static void GetNeigborSegment(ushort nodeID, ref NetNode data, ushort segmentIid, ref NetSegment netSegmentI, out Vector3 segmentIDirection, out Vector3 otherSegmentDirection, out ushort resultOtherSegment, out bool invertIJ)
+        private int GetSegmentIndex(ref NetNode node, int segmentId)
+        {
+            if (segmentId == node.m_segment0)
+            {
+                return 0;
+            }
+
+            if (segmentId == node.m_segment1)
+            {
+                return 1;
+            }
+
+            if (segmentId == node.m_segment2)
+            {
+                return 2;
+            }
+
+            if (segmentId == node.m_segment3)
+            {
+                return 3;
+            }
+
+            if (segmentId == node.m_segment4)
+            {
+                return 4;
+            }
+
+            if (segmentId == node.m_segment5)
+            {
+                return 5;
+            }
+
+            if (segmentId == node.m_segment6)
+            {
+                return 6;
+            }
+
+            if (segmentId == node.m_segment7)
+            {
+                return 7;
+            }
+
+            return -1;
+        }
+
+
+
+        private static void GetNeighborSegment(ushort nodeID, ref NetNode data, ushort segmentIid, ref NetSegment netSegmentI, out Vector3 segmentIDirection, out Vector3 otherSegmentDirection, out ushort resultOtherSegment, out bool invertIJ)
         {
             segmentIDirection = (nodeID != netSegmentI.m_startNode) ? netSegmentI.m_endDirection : netSegmentI.m_startDirection;
             otherSegmentDirection = Vector3.zero;
@@ -591,17 +891,24 @@ namespace Klyte.WriteTheSigns.Overrides
 
         private readonly HashSet<ulong>[] m_passingHashes = new HashSet<ulong>[NetManager.MAX_NODE_COUNT];
 
-        public readonly CacheDestinationRoute[,,] m_destinationInfo = new CacheDestinationRoute[NetManager.MAX_NODE_COUNT, 8, 4];
+        private readonly CacheDestinationRoute[,,] m_destinationInfo = new CacheDestinationRoute[NetManager.MAX_NODE_COUNT, 8, DESTINATIONS_CALC_COUNT];
 
-        public CacheDestinationRoute GetTargetDestination(ulong hash, int destination) => m_destinationInfo[hash & (NetManager.MAX_NODE_COUNT - 1), ((NetManager.MAX_NODE_COUNT << 3) - 1) >> 15, destination];
+        public CacheDestinationRoute GetTargetDestination(ulong hash, int destination) => m_destinationInfo[hash & (NetManager.MAX_NODE_COUNT - 1), (hash & ((NetManager.MAX_NODE_COUNT << 3) - 1)) >> 15, destination];
+        public ref CacheDestinationRoute GetTargetDestination(ushort nodeId, int segmentIdx, int destination) => ref m_destinationInfo[nodeId, segmentIdx, destination];
 
         private void InvalidateNodeDestinationPaths(ushort nodeId)
         {
+            LogUtils.DoLog($"InvalidateNodeDestinationPaths Invalidating node: {nodeId} ({m_passingHashes[nodeId]?.Count} hashes)");
             m_updatedDestinations[nodeId] = null;
             if (m_passingHashes[nodeId] != null)
             {
                 FilterValid(ref m_passingHashes[nodeId]);
-                m_passingHashes[nodeId]?.ForEach(x => m_updatedDestinations[x & (NetManager.MAX_NODE_COUNT - 1)] = null);
+                m_passingHashes[nodeId]?.ForEach(x =>
+                {
+                    ulong targetNodeId = x & (NetManager.MAX_NODE_COUNT - 1);
+                    LogUtils.DoLog($"InvalidateNodeDestinationPaths Marking null: targetNodeId={targetNodeId} (hash = {x.ToString("X16")})");
+                    m_updatedDestinations[targetNodeId] = null;
+                });
                 InvalidateHashes(ref m_passingHashes[nodeId]);
             }
         }
@@ -609,12 +916,22 @@ namespace Klyte.WriteTheSigns.Overrides
         private ulong RegisterHash(ushort nodeId, uint segmentIdx)
         {
             m_nextHash += 0x40000;
-            ulong hash = m_nextHash | (nodeId & 0x7FFFFu) | ((segmentIdx & 3u) << 15);
+            ulong hash = m_nextHash | (nodeId & 0x7FFFFu) | ((segmentIdx & 7u) << 15);
             m_validHashes.Add(hash);
+            LogUtils.DoLog($"RegisterHash Registered hash for node: {nodeId}/{segmentIdx}({hash.ToString("X16")})");
             return hash;
         }
 
-        private void AddToPassingList(ref HashSet<ulong> passing, ushort hash) => (passing ??= new HashSet<ulong>()).Add(hash);
+        private void AddAllToHash(IEnumerable<ushort> nodeList, ulong hash)
+        {
+            LogUtils.DoLog($"AddAllToHash Adding hash ({hash.ToString("X16")}) to nodes: [{string.Join(",", nodeList.Select(x => x.ToString()).ToArray())}]");
+            foreach (ushort node in nodeList)
+            {
+                AddToPassingList(ref m_passingHashes[node], hash);
+            }
+        }
+
+        private void AddToPassingList(ref HashSet<ulong> passing, ulong hash) => (passing ??= new HashSet<ulong>()).Add(hash);
         private void InvalidateHashes(ref HashSet<ulong> targets)
         {
             m_validHashes.ExceptWith(targets);
@@ -630,13 +947,14 @@ namespace Klyte.WriteTheSigns.Overrides
 
     public class CacheDestinationRoute
     {
-        private ushort m_nodeId;
-        private byte m_districtId;
-        private byte m_parkId;
-        private float m_distance;
-        private int m_distanceKm;
-        private string m_distanceMeanString;
-        private string m_outsideConnectionName;
+        public ushort m_nodeId;
+        public ushort m_segmentId;
+        public byte m_districtId;
+        public byte m_parkId;
+        public float m_distance;
+        public int m_distanceKm;
+        public string m_distanceMeanString;
+        public string m_outsideConnectionName;
     }
 
 }

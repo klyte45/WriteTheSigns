@@ -16,6 +16,7 @@ namespace Klyte.WriteTheSigns.Xml
         internal Color m_propColor = Color.white;
         internal Color m_cachedContrastColor;
         public BoardInstanceRoadNodeXml m_currentDescriptor;
+        public int m_segnentIndex;
         public PropInfo m_cachedProp;
         public CacheRoadNodeItem m_otherSegment;
     }
