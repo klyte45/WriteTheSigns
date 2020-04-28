@@ -113,6 +113,7 @@
     <Compile Include="commons\UI\TLMWorkersChartPanel.cs" />
     <Compile Include="commons\UI\UIRadialChartExtended.cs" />
     <Compile Include="commons\Utils\TextUtils.cs" />
+    <Compile Include="commons\Utils\UtilitiesClasses\CoroutineWithData.cs" />
     <Compile Include="commons\Utils\UtilitiesClasses\PriorityQueue.cs" />
     <Compile Include="commons\Utils\ZipUtils.cs" />
     <Compile Include="commons\Utils\BuildingUtils.cs" />
