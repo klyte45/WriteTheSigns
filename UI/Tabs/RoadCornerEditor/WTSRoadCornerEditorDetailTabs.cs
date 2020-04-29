@@ -320,6 +320,7 @@ namespace Klyte.WriteTheSigns.UI
                 m_flowRequirement.selectedIndex = (int)x.TrafficDirectionRequired;
                 m_minMaxLaneRequired[0].text = x.MinDirectionTrafficLanes.ToString("D0");
                 m_minMaxLaneRequired[1].text = x.MaxDirectionTrafflcLanes.ToString("D0");
+                m_exitSideRequired.selectedIndex = (int)x.ExitSideRequired;
                 m_minMaxNodeOutgoingRequired[0].text = x.MinNodeOutcomingSegments.ToString("D0");
                 m_minMaxNodeOutgoingRequired[1].text = x.MaxNodeOutcomingSegments.ToString("D0");
                 m_ensureRoadTypeAllowed.isChecked = x.EnsureSegmentTypeInAllowedTypes;

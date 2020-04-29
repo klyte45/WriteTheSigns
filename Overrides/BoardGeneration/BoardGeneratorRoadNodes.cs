@@ -526,7 +526,7 @@ namespace Klyte.WriteTheSigns.Overrides
             {
                 yield break;
             }
-            LogUtils.DoLog($"updatedStreets! {nodeID} {NetManager.instance.m_nodes.m_buffer[nodeID].CountSegments()}");
+            //    LogUtils.DoLog($"updatedStreets! {nodeID} {NetManager.instance.m_nodes.m_buffer[nodeID].CountSegments()}");
             int controlBoardIdx = 0;
             for (int i = 0; i < 8; i++)
             {
@@ -662,76 +662,14 @@ namespace Klyte.WriteTheSigns.Overrides
              */
             if (targetDescriptor.PlaceOnSegmentInsteadOfCorner)
             {
-                renderJ = !targetDescriptor.EnsureSegmentTypeInAllowedTypes || targetDescriptor.AllowsClass(netSegmentJ.Info.m_class);
-                renderI = !targetDescriptor.EnsureSegmentTypeInAllowedTypes || targetDescriptor.AllowsClass(netSegmentI.Info.m_class);
-                platePosI = CaculateCenterSegment(nodeID, ref netSegmentI, targetDescriptor, out segmentIDirection.y, invertIJ);
-                platePosJ = CaculateCenterSegment(nodeID, ref netSegmentJ, targetDescriptor, out segmentJDirection.y, !invertIJ);
-                if (targetDescriptor.TrafficDirectionRequired == TrafficDirectionRequired.OUTCOMING)
+                if (!ProcessRulesPlaceOnSegment(nodeID, segmentIid, ref netSegmentI, ref segmentIDirection, segmentJid, ref netSegmentJ, ref segmentJDirection, targetDescriptor, incoming, outcoming, isSegmentIinverted, isSegmentJinverted, out platePosI, out platePosJ, out renderI, out renderJ))
                 {
-                    renderI &= !invertIJ
-                     && (
-                          (!isSegmentIinverted && netSegmentI.Info.m_backwardVehicleLaneCount >= targetDescriptor.MinDirectionTrafficLanes && netSegmentI.Info.m_backwardVehicleLaneCount <= targetDescriptor.MaxDirectionTrafflcLanes)
-                        || (isSegmentIinverted && netSegmentI.Info.m_forwardVehicleLaneCount >= targetDescriptor.MinDirectionTrafficLanes && netSegmentI.Info.m_forwardVehicleLaneCount <= targetDescriptor.MaxDirectionTrafflcLanes)
-                        ) && netSegmentI.Info?.m_halfWidth < targetDescriptor.MaxRoadHalfWidth + 0.002f && netSegmentI.Info?.m_halfWidth > targetDescriptor.MinRoadHalfWidth - 0.002f;
-                    renderJ &= invertIJ && ((!isSegmentJinverted && netSegmentJ.Info.m_backwardVehicleLaneCount >= targetDescriptor.MinDirectionTrafficLanes && netSegmentJ.Info.m_backwardVehicleLaneCount <= targetDescriptor.MaxDirectionTrafflcLanes)
-                                          || (isSegmentJinverted && netSegmentJ.Info.m_forwardVehicleLaneCount >= targetDescriptor.MinDirectionTrafficLanes && netSegmentJ.Info.m_forwardVehicleLaneCount <= targetDescriptor.MaxDirectionTrafflcLanes))
-                                          && netSegmentJ.Info?.m_halfWidth < targetDescriptor.MaxRoadHalfWidth + 0.002f && netSegmentJ.Info?.m_halfWidth > targetDescriptor.MinRoadHalfWidth - 0.002f;
-
-                    if (incoming.Count == 1)
-                    {
-                        renderI &= !SegmentUtils.IsSameName(incoming.First(), segmentIid, false, false, true, targetDescriptor.PlaceOnDistrictBorder, targetDescriptor.PlaceOnTunnelBridgeStart);
-                        renderJ &= !SegmentUtils.IsSameName(incoming.First(), segmentJid, false, false, true, targetDescriptor.PlaceOnDistrictBorder, targetDescriptor.PlaceOnTunnelBridgeStart);
-                    }
+                    return false;
                 }
-                else if (targetDescriptor.TrafficDirectionRequired == TrafficDirectionRequired.INCOMING)
-                {
-                    int outcomingCount = outcoming.Where(x => x != (invertIJ ? segmentIid : segmentJid)).Count();
-                    if (outcomingCount < targetDescriptor.MinNodeOutcomingSegments || outcomingCount > targetDescriptor.MaxNodeOutcomingSegments || !outcoming.Contains(!invertIJ ? segmentIid : segmentJid))
-                    {
-                        return false;
-                    }
-                    if (targetDescriptor.ExitSideRequired != ExitSideRequired.NONE)
-                    {
-                        if ((targetDescriptor.ExitSideRequired == ExitSideRequired.INSIDE && ((netSegmentI.Info.m_halfWidth < netSegmentJ.Info.m_halfWidth) == !invertIJ))
-                            || (targetDescriptor.ExitSideRequired == ExitSideRequired.OUTSIDE && ((netSegmentI.Info.m_halfWidth < netSegmentJ.Info.m_halfWidth) == invertIJ)))
-                        {
-                            return false;
-                        }
-                        if (targetDescriptor.ExitSideRequired == ExitSideRequired.INSIDE)
-                        {
-                            invertIJ = !invertIJ;
-                        }
-                    }
-
-                    renderI &= invertIJ && EnsureTrafficLanes(ref netSegmentI, targetDescriptor, !isSegmentIinverted) && EnsureRoadWidth(ref netSegmentI, targetDescriptor);
-                    renderJ &= !invertIJ && EnsureTrafficLanes(ref netSegmentJ, targetDescriptor, !isSegmentJinverted) && EnsureRoadWidth(ref netSegmentJ, targetDescriptor);
-
-                    if (outcoming.Count == 1)
-                    {
-                        renderI &= !SegmentUtils.IsSameName(outcoming.First(), segmentIid, false, false, true, targetDescriptor.PlaceOnDistrictBorder, targetDescriptor.PlaceOnTunnelBridgeStart);
-                        renderJ &= !SegmentUtils.IsSameName(outcoming.First(), segmentJid, false, false, true, targetDescriptor.PlaceOnDistrictBorder, targetDescriptor.PlaceOnTunnelBridgeStart);
-                    }
-                }
-                else
-                {
-                    renderI &= ((invertIJ == isSegmentIinverted && netSegmentI.Info.m_hasBackwardVehicleLanes) || (invertIJ != isSegmentIinverted && netSegmentI.Info.m_hasForwardVehicleLanes)) && netSegmentI.Info?.m_halfWidth < targetDescriptor.MaxRoadHalfWidth + 0.002f && netSegmentI.Info?.m_halfWidth > targetDescriptor.MinRoadHalfWidth - 0.002f; ;
-                    renderJ &= ((invertIJ != isSegmentJinverted && netSegmentJ.Info.m_hasBackwardVehicleLanes) || (invertIJ == isSegmentJinverted && netSegmentJ.Info.m_hasForwardVehicleLanes)) && netSegmentJ.Info?.m_halfWidth < targetDescriptor.MaxRoadHalfWidth + 0.002f && netSegmentJ.Info?.m_halfWidth > targetDescriptor.MinRoadHalfWidth - 0.002f; ;
-                }
-
-
             }
             else
             {
-                bool start = netSegmentI.m_startNode == nodeID;
-                netSegmentI.CalculateCorner(segmentIid, true, start, false, out Vector3 startPos, out Vector3 startAng, out _);
-
-                start = (netSegmentJ.m_startNode == nodeID);
-                netSegmentJ.CalculateCorner(segmentJid, true, start, true, out Vector3 endPos, out Vector3 endAng, out _);
-
-                NetSegment.CalculateMiddlePoints(startPos, -startAng, endPos, -endAng, true, true, out Vector3 rhs, out Vector3 lhs);
-                Vector3 relativePos = (((rhs + lhs) * 0.5f) - data.m_position);
-                platePosI = platePosJ = relativePos - relativePos.normalized + data.m_position;
-                segmentIDirection.y = segmentJDirection.y = 0;
+                CalculateCenterCorner(nodeID, ref data, segmentIid, ref netSegmentI, ref segmentIDirection, segmentJid, ref netSegmentJ, ref segmentJDirection, out platePosI, out platePosJ);
             }
             if (!renderI && !renderJ)
             {
@@ -754,6 +692,111 @@ namespace Klyte.WriteTheSigns.Overrides
             return true;
         }
 
+        private static void CalculateCenterCorner(ushort nodeID, ref NetNode data, ushort segmentIid, ref NetSegment netSegmentI, ref Vector3 segmentIDirection, ushort segmentJid, ref NetSegment netSegmentJ, ref Vector3 segmentJDirection, out Vector3 platePosI, out Vector3 platePosJ)
+        {
+            bool start = netSegmentI.m_startNode == nodeID;
+            netSegmentI.CalculateCorner(segmentIid, true, start, false, out Vector3 startPos, out Vector3 startAng, out _);
+
+            start = (netSegmentJ.m_startNode == nodeID);
+            netSegmentJ.CalculateCorner(segmentJid, true, start, true, out Vector3 endPos, out Vector3 endAng, out _);
+
+            NetSegment.CalculateMiddlePoints(startPos, -startAng, endPos, -endAng, true, true, out Vector3 rhs, out Vector3 lhs);
+            Vector3 relativePos = (((rhs + lhs) * 0.5f) - data.m_position);
+            platePosI = platePosJ = relativePos - relativePos.normalized + data.m_position;
+            segmentIDirection.y = segmentJDirection.y = 0;
+        }
+
+        private static bool ProcessRulesPlaceOnSegment(ushort nodeID, ushort segmentIid, ref NetSegment netSegmentI, ref Vector3 segmentIDirection, ushort segmentJid, ref NetSegment netSegmentJ, ref Vector3 segmentJDirection, BoardInstanceRoadNodeXml targetDescriptor, HashSet<ushort> incoming, HashSet<ushort> outcoming, bool isSegmentIinverted, bool isSegmentJinverted, out Vector3 platePosI, out Vector3 platePosJ, out bool renderJ, out bool renderI)
+        {
+            float angleIJ = (segmentIDirection.GetAngleXZ() - segmentJDirection.GetAngleXZ()) % 360;
+            if (angleIJ > 180)
+            {
+                angleIJ -= 360;
+            }
+
+            if (angleIJ < -180)
+            {
+                angleIJ += 360;
+            }
+
+            bool invertIJ = (angleIJ < 0) == (SimulationManager.instance.m_metaData.m_invertTraffic == SimulationMetaData.MetaBool.False);
+
+            LogUtils.DoLog($"[n{nodeID}]{segmentIid}x{segmentJid} -> dir = {segmentIDirection.GetAngleXZ() }x{ segmentJDirection.GetAngleXZ()} = {angleIJ}; invertIJ = {invertIJ}");
+
+            if (invertIJ)
+            {
+                return ProcessInternExternRule(nodeID, segmentJid, ref netSegmentJ, ref segmentJDirection, segmentIid, ref netSegmentI, ref segmentIDirection, targetDescriptor, incoming, outcoming, isSegmentJinverted, isSegmentIinverted, out platePosJ, out platePosI, out renderI, out renderJ);
+            }
+            else
+            {
+                return ProcessInternExternRule(nodeID, segmentIid, ref netSegmentI, ref segmentIDirection, segmentJid, ref netSegmentJ, ref segmentJDirection, targetDescriptor, incoming, outcoming, isSegmentIinverted, isSegmentJinverted, out platePosI, out platePosJ, out renderJ, out renderI);
+            }
+        }
+
+        private static bool ProcessInternExternRule(ushort nodeID, ushort segmentIntId, ref NetSegment netSegmentInt, ref Vector3 segmentIntDirection, ushort segmentExtId, ref NetSegment netSegmentExt, ref Vector3 segmentExtDirection, BoardInstanceRoadNodeXml targetDescriptor, HashSet<ushort> incoming, HashSet<ushort> outcoming, bool isSegmentIntInverted, bool isSegmentExtInverted, out Vector3 platePosInt, out Vector3 platePosExt, out bool renderInt, out bool renderExt)
+        {
+            LogUtils.DoLog($"[n{nodeID}]Int = {segmentIntId};Ext = {segmentExtId}");
+            renderInt = !targetDescriptor.EnsureSegmentTypeInAllowedTypes || targetDescriptor.AllowsClass(netSegmentInt.Info.m_class);
+            renderExt = !targetDescriptor.EnsureSegmentTypeInAllowedTypes || targetDescriptor.AllowsClass(netSegmentExt.Info.m_class);
+            platePosInt = CaculateCenterSegment(nodeID, ref netSegmentInt, ref netSegmentExt, segmentIntId, targetDescriptor, true);
+            platePosExt = CaculateCenterSegment(nodeID, ref netSegmentExt, ref netSegmentInt, segmentExtId, targetDescriptor, false);
+            segmentIntDirection.y = segmentExtDirection.y = -90;
+            if (targetDescriptor.TrafficDirectionRequired == TrafficDirectionRequired.OUTCOMING)
+            {
+                renderExt &= outcoming.Contains(segmentIntId) && EnsureTrafficLanes(ref netSegmentInt, targetDescriptor, !isSegmentIntInverted) && EnsureRoadWidth(ref netSegmentInt, targetDescriptor);
+                renderInt &= outcoming.Contains(segmentIntId) && netSegmentExt.Info.m_hasBackwardVehicleLanes != netSegmentExt.Info.m_hasForwardVehicleLanes && EnsureTrafficLanes(ref netSegmentExt, targetDescriptor, !isSegmentExtInverted) && EnsureRoadWidth(ref netSegmentExt, targetDescriptor);
+
+                if (incoming.Count == 1)
+                {
+                    renderExt &= (netSegmentExt.Info.m_forwardVehicleLaneCount == 1 && !netSegmentExt.Info.m_hasBackwardVehicleLanes && netSegmentExt.Info.m_netAI is RoadBaseAI aiExt && aiExt.m_highwayRules) || !SegmentUtils.IsSameName(incoming.First(), segmentIntId, false, false, true, false, false);
+                    renderInt &= (netSegmentInt.Info.m_forwardVehicleLaneCount == 1 && !netSegmentInt.Info.m_hasBackwardVehicleLanes && netSegmentInt.Info.m_netAI is RoadBaseAI aiInt && aiInt.m_highwayRules) || !SegmentUtils.IsSameName(incoming.First(), segmentExtId, false, false, true, false, false);
+                }
+            }
+            else if (targetDescriptor.TrafficDirectionRequired == TrafficDirectionRequired.INCOMING)
+            {
+                bool processed = false;
+                if (renderExt && incoming.Contains(segmentExtId) && outcoming.Contains(segmentIntId) && (targetDescriptor.ExitSideRequired == ExitSideRequired.NONE || targetDescriptor.ExitSideRequired == ExitSideRequired.OUTSIDE))
+                {
+                    LogUtils.DoLog($"[n{nodeID}]Inc = {segmentExtId};Out = {segmentIntId} ExitSideRequired.OUTSIDE");
+                    processed = ProcessIncomingTrafficSigns(nodeID, segmentExtId, ref netSegmentExt, targetDescriptor, outcoming, isSegmentExtInverted, ref renderExt, ref renderInt);
+                }
+                else if (renderInt && incoming.Contains(segmentIntId) && outcoming.Contains(segmentExtId) && (targetDescriptor.ExitSideRequired == ExitSideRequired.NONE || targetDescriptor.ExitSideRequired == ExitSideRequired.INSIDE))
+                {
+                    LogUtils.DoLog($"[n{nodeID}]Inc = {segmentIntId};Out = {segmentExtId} ExitSideRequired.INSIDE");
+                    processed = ProcessIncomingTrafficSigns(nodeID, segmentIntId, ref netSegmentInt, targetDescriptor, outcoming, isSegmentIntInverted, ref renderInt, ref renderExt);
+                }
+
+                if (!processed)
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                renderExt &= isSegmentIntInverted && netSegmentInt.Info.m_hasBackwardVehicleLanes && EnsureRoadWidth(ref netSegmentInt, targetDescriptor);
+                renderInt &= isSegmentExtInverted && netSegmentExt.Info.m_hasForwardVehicleLanes && EnsureRoadWidth(ref netSegmentExt, targetDescriptor);
+            }
+            return true;
+        }
+
+        private static bool ProcessIncomingTrafficSigns(ushort nodeID, ushort segmentIncId, ref NetSegment netSegmentInc, BoardInstanceRoadNodeXml targetDescriptor, HashSet<ushort> outcoming, bool isSegmentIncInverted, ref bool renderInc, ref bool renderOut)
+        {
+            int outcomingCount = outcoming.Where(x => x != segmentIncId).Count();
+            if (outcomingCount < targetDescriptor.MinNodeOutcomingSegments || outcomingCount > targetDescriptor.MaxNodeOutcomingSegments)
+            {
+                LogUtils.DoLog($"[n{nodeID}]outcomingCount out of range ({outcomingCount}) [{targetDescriptor.MinNodeOutcomingSegments},{targetDescriptor.MaxNodeOutcomingSegments}]");
+                return false;
+            }
+            renderOut = false;
+            renderInc &= EnsureTrafficLanes(ref netSegmentInc, targetDescriptor, !isSegmentIncInverted) && EnsureRoadWidth(ref netSegmentInc, targetDescriptor);
+            LogUtils.DoLog($"[n{nodeID}]segmentIncId = {segmentIncId}; renderOut = {renderOut};renderInc = {renderInc}({EnsureTrafficLanes(ref netSegmentInc, targetDescriptor, !isSegmentIncInverted) } && {EnsureRoadWidth(ref netSegmentInc, targetDescriptor)})");
+            if (outcoming.Count == 1)
+            {
+                renderInc &= (netSegmentInc.Info.m_forwardVehicleLaneCount == 1 && !netSegmentInc.Info.m_hasBackwardVehicleLanes && netSegmentInc.Info.m_netAI is RoadBaseAI aiExt && aiExt.m_highwayRules) || !SegmentUtils.IsSameName(outcoming.First(), segmentIncId, false, false, true, false, false);
+            }
+            return true;
+        }
+
         private static bool CheckSegmentInverted(ushort nodeID, ref NetSegment netSegmentJ)
         {
             bool invertFlagJ = (netSegmentJ.m_flags & NetSegment.Flags.Invert) != 0;
@@ -769,22 +812,38 @@ namespace Klyte.WriteTheSigns.Overrides
 
         private static bool EnsureRoadWidth(ref NetSegment netSegment, BoardInstanceRoadNodeXml targetDescriptor) => netSegment.Info?.m_halfWidth < targetDescriptor.MaxRoadHalfWidth + 0.002f && netSegment.Info?.m_halfWidth > targetDescriptor.MinRoadHalfWidth - 0.002f;
 
-        private static Vector3 CaculateCenterSegment(int nodeID, ref NetSegment segmentI, BoardInstanceRoadNodeXml descriptor, out float rotationOffsetZ, bool invertSide)
+        private static Vector3 CaculateCenterSegment(int nodeID, ref NetSegment segmentI, ref NetSegment segmentJ, ushort segmentId, BoardInstanceRoadNodeXml descriptor, bool invertSide)
         {
             bool comingFromNode = (segmentI.m_startNode == nodeID);
-            bool invertActive = (segmentI.m_flags & NetSegment.Flags.Invert) != 0;
-            bool invertedSegment = invertActive != comingFromNode != (SimulationManager.instance.m_metaData.m_invertTraffic == SimulationMetaData.MetaBool.False);
-            invertSide ^= invertActive;
+            bool invertedSegment = (segmentI.m_flags & NetSegment.Flags.Invert) != 0 != comingFromNode != (SimulationManager.instance.m_metaData.m_invertTraffic == SimulationMetaData.MetaBool.False);
             Vector3 platePosI;
-            Vector3 bezierPos = segmentI.GetBezier().Position(Mathf.Max(0, Mathf.Min(1, (descriptor.m_propPosition.z / (invertedSegment ? 2 : -2)) + 0.5f)));
+            Vector3 bezierPos;
+            float angle;
+            float targetOffsetX;
+            if (descriptor.PropPositionZ < 1)
+            {
+                bezierPos = segmentI.GetBezier().Position(Mathf.Max(0, Mathf.Min(1, (descriptor.m_propPosition.z / (invertedSegment ? 2 : -2)) + 0.5f)));
+                angle = default;
+                targetOffsetX = descriptor.m_propPosition.x;
+            }
+            else
+            {
+                segmentI.CalculateCorner(segmentId, true, comingFromNode, !invertSide, out bezierPos, out Vector3 angleVec, out _);
+                targetOffsetX = descriptor.m_propPosition.x * (segmentI.Info.m_pavementWidth + segmentJ.Info.m_pavementWidth) / (invertSide ? -2 : 2);
+                angle = angleVec.GetAngleXZ();
+
+                invertedSegment ^= angleVec.GetAngleXZ() < 0;
+
+                LogUtils.DoLog($"[n{nodeID}]{segmentId} angleVec = ({angleVec.GetAngleXZ()}) (invertSide = {invertSide})");
+            }
+
 
             segmentI.GetClosestPositionAndDirection(bezierPos, out _, out Vector3 dir);
-            int rotationOffsetSide = invertedSegment != invertSide ? 90 : -90;
-            rotationOffsetZ = invertSide == invertActive ? 90 : -90;
+            int rotationOffsetSide = invertedSegment ? 90 : -90;
             float rotation = dir.GetAngleXZ();
 
-            Vector3 rotationVectorSide = VectorUtils.X_Y(KlyteMathUtils.DegreeToVector2(rotation + rotationOffsetSide));
-            platePosI = bezierPos + ((rotationVectorSide * (segmentI.Info.m_halfWidth - segmentI.Info.m_pavementWidth)) + (rotationVectorSide * descriptor.m_propPosition.x));
+            Vector3 rotationVectorSide = VectorUtils.X_Y(KlyteMathUtils.DegreeToVector2(rotation + rotationOffsetSide - angle));
+            platePosI = bezierPos + (descriptor.PropPositionZ < 1 ? (rotationVectorSide * (segmentI.Info.m_halfWidth - segmentI.Info.m_pavementWidth)) : default) + (rotationVectorSide * targetOffsetX);
             platePosI.y += descriptor.m_propPosition.y;
 
             return platePosI;
