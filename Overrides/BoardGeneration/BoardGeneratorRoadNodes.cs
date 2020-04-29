@@ -20,7 +20,7 @@ namespace Klyte.WriteTheSigns.Overrides
 
     public class BoardGeneratorRoadNodes : Redirector, IRedirectable
     {
-        public static readonly int DESTINATIONS_CALC_COUNT = Enum.GetValues(typeof(DestinationReference)).Length - 1;
+        public static readonly int DESTINATIONS_CALC_COUNT = (int)(Enum.GetValues(typeof(DestinationReference)) as DestinationReference[]).Max() + 1;
 
         public static BoardGeneratorRoadNodes Instance;
         public DynamicSpriteFont DrawFont => FontServer.instance[Data.DefaultFont] ?? FontServer.instance[WTSController.DEFAULT_FONT_KEY];
@@ -180,13 +180,7 @@ namespace Klyte.WriteTheSigns.Overrides
                         {
                             if (m_updatedDestinations[nodeID] == null)
                             {
-                                m_updatedDestinations[nodeID] = false;
                                 WriteTheSignsMod.Controller.StartCoroutine(CalculateDestinations(nodeID));
-                            }
-                            else if (m_updatedDestinations[nodeID] == true && m_couldReachDestinations[nodeID, boardIdx, (int)targetDescriptor.Descriptor.m_textDescriptors[j].m_destinationRelative] == false)
-                            {
-                                Data.BoardsContainers[nodeID, boardIdx, secIdx] = null;
-                                return;
                             }
                         }
 
@@ -203,9 +197,11 @@ namespace Klyte.WriteTheSigns.Overrides
 
         private IEnumerator CalculateDestinations(ushort nodeID)
         {
+            m_updatedDestinations[nodeID] = false;
             uint startFrame = SimulationManager.instance.m_currentTickIndex;
+            LogUtils.DoLog($" m_updatedDestinations[nodeID] = { m_updatedDestinations[nodeID]}");
             yield return 0;
-            LogUtils.DoLog($"Start - Calculate destinations for {nodeID}");
+            LogUtils.DoLog($"Start - Calculate destinations for {nodeID} (m_updatedDestinations[nodeID] = { m_updatedDestinations[nodeID]})");
             if (m_updatedDestinations[nodeID] != false)
             {
                 LogUtils.DoLog($"End - aborted!");
@@ -232,6 +228,7 @@ namespace Klyte.WriteTheSigns.Overrides
                         yield return cd.Coroutine;
                         if (m_updatedDestinations[nodeID] != false)
                         {
+                            LogUtils.DoWarnLog($"[n{nodeID}] STOPPING B");
                             yield break;
                         }
                         if (cd.result.First.Count >= 1)
@@ -267,6 +264,7 @@ namespace Klyte.WriteTheSigns.Overrides
                 }
             }
             LogUtils.DoLog($"END - Calculate destinations for {nodeID} - { SimulationManager.instance.m_currentTickIndex - startFrame} Ticks");
+            m_updatedDestinations[nodeID] = true;
             yield break;
         }
 
@@ -381,6 +379,7 @@ namespace Klyte.WriteTheSigns.Overrides
             {
                 if (m_updatedDestinations[nodeID] != false)
                 {
+                    LogUtils.DoWarnLog($"[n{nodeID}] STOPPING C");
                     yield break;
                 }
                 next = priorityQueue.Pop();
@@ -455,10 +454,10 @@ namespace Klyte.WriteTheSigns.Overrides
                 if (currentSegment > 0 && (ignoreSegmentCheck || currentSegment != prevObj.segmentId) && !incomingSegments.Any(x => SegmentUtils.IsSameName(currentSegment, x)))
                 {
                     int pts = CalculatePoints(ref NetManager.instance.m_segments.m_buffer[currentSegment]);
-                    if (pts >= prevObj.pts * 0.5f || pts == 0)
-                    {
-                        listReturn.Add(new SegmentMappingObject(prevObj, currentSegment, ref NetManager.instance.m_segments.m_buffer[currentSegment], pts, NetManager.instance.m_segments.m_buffer[currentSegment].m_averageLength, nextNodeId, iteration));
-                    }
+                    // if (pts >= prevObj.pts * 0.5f || pts == 0)
+                    //   {
+                    listReturn.Add(new SegmentMappingObject(prevObj, currentSegment, ref NetManager.instance.m_segments.m_buffer[currentSegment], pts, NetManager.instance.m_segments.m_buffer[currentSegment].m_averageLength, nextNodeId, iteration));
+                    //  }
                 }
             }
             return listReturn;
@@ -475,7 +474,7 @@ namespace Klyte.WriteTheSigns.Overrides
                 case ItemClass.Level.Level5:
                     if (info.m_hasBackwardVehicleLanes && info.m_hasForwardVehicleLanes)
                     {
-                        basePoints = 45000 * lanes;
+                        basePoints = 75000 * lanes;
                     }
                     else
                     {
@@ -485,7 +484,7 @@ namespace Klyte.WriteTheSigns.Overrides
                         }
                         else
                         {
-                            basePoints = 60000 * lanes;
+                            basePoints = 125000 * lanes;
                         }
                     }
                     break;
@@ -537,10 +536,14 @@ namespace Klyte.WriteTheSigns.Overrides
                     {
                         GetNeighborSegment(nodeID, ref NetManager.instance.m_nodes.m_buffer[nodeID], segmentIid, ref Singleton<NetManager>.instance.m_segments.m_buffer[segmentIid], out Vector3 segmentIDirection, out Vector3 segmentJDirection, out ushort segmentJid, out bool invertIJ);
 
+                        int j = GetSegmentIndex(ref NetManager.instance.m_nodes.m_buffer[nodeID], segmentJid);
 
                         ItemClass classI = Singleton<NetManager>.instance.m_segments.m_buffer[segmentIid].Info.m_class;
                         ItemClass classJ = Singleton<NetManager>.instance.m_segments.m_buffer[segmentJid].Info.m_class;
-                        var matchingDescriptors = new Stack<Tuple<int, BoardInstanceRoadNodeXml>>(Data.DescriptorRulesOrder.Select((x, y) => Tuple.New(y, x)).Where(x => x.Second.AllowsClass(classI) || x.Second.AllowsClass(classJ)).OrderByDescending(x => x.First));
+                        var matchingDescriptors = new Stack<Tuple<int, BoardInstanceRoadNodeXml>>(Data.DescriptorRulesOrder.Select((x, y) => Tuple.New(y, x))
+                            .Where(x => (x.Second.AllowsClass(classI) && (m_updatedDestinations[nodeID] != true || x.Second.Descriptor.m_textDescriptors.All(t => !t.IsTextRelativeToSegment() || m_couldReachDestinations[nodeID, t.m_destinationRelative == DestinationReference.Self ? i : j, (int)t.m_destinationRelative] == true)))
+                                     || (x.Second.AllowsClass(classJ) && (m_updatedDestinations[nodeID] != true || x.Second.Descriptor.m_textDescriptors.All(t => !t.IsTextRelativeToSegment() || m_couldReachDestinations[nodeID, t.m_destinationRelative == DestinationReference.Self ? j : i, (int)t.m_destinationRelative] == true)))
+                            ).OrderByDescending(x => x.First));
                         if (matchingDescriptors.Count == 0)
                         {
                             continue;
@@ -556,6 +559,7 @@ namespace Klyte.WriteTheSigns.Overrides
                             yield return 0;
                             if (m_updatedStreetPositions[nodeID] != false)
                             {
+                                LogUtils.DoWarnLog($"[n{nodeID}] STOPPING X");
                                 yield break;
                             }
                         }
@@ -583,6 +587,7 @@ namespace Klyte.WriteTheSigns.Overrides
                         yield return 0;
                         if (m_updatedStreetPositions[nodeID] != false)
                         {
+                            LogUtils.DoWarnLog($"[n{nodeID}] STOPPING Y");
                             yield break;
                         }
                     }
@@ -644,8 +649,11 @@ namespace Klyte.WriteTheSigns.Overrides
 
             if (segmentJid == 0
                 || !(Singleton<NetManager>.instance.m_segments.m_buffer[segmentJid].Info.m_netAI is RoadBaseAI)
-                || (targetDescriptor.IgnoreEmptyNameRoads && (Singleton<NetManager>.instance.GetSegmentName(segmentIid).IsNullOrWhiteSpace() || Singleton<NetManager>.instance.GetSegmentName(segmentJid).IsNullOrWhiteSpace()))
-                || SegmentUtils.IsSameName(segmentJid, segmentIid, false, false, true, !targetDescriptor.PlaceOnSegmentInsteadOfCorner && targetDescriptor.PlaceOnDistrictBorder, !targetDescriptor.PlaceOnSegmentInsteadOfCorner && targetDescriptor.PlaceOnTunnelBridgeStart)
+                || (!targetDescriptor.PlaceOnSegmentInsteadOfCorner
+                    && (SegmentUtils.IsSameName(segmentJid, segmentIid, false, false, true, targetDescriptor.PlaceOnDistrictBorder, targetDescriptor.PlaceOnTunnelBridgeStart)
+                        || (targetDescriptor.IgnoreEmptyNameRoads
+                            && (Singleton<NetManager>.instance.GetSegmentName(segmentIid).IsNullOrWhiteSpace() || Singleton<NetManager>.instance.GetSegmentName(segmentJid).IsNullOrWhiteSpace()))))
+
                 || (new Randomizer(segmentIid | (segmentJid << 16)).UInt32(255) > targetDescriptor.SpawnChance))
             {
                 return false;
@@ -731,6 +739,7 @@ namespace Klyte.WriteTheSigns.Overrides
             {
                 return ProcessInternExternRule(nodeID, segmentIid, ref netSegmentI, ref segmentIDirection, segmentJid, ref netSegmentJ, ref segmentJDirection, targetDescriptor, incoming, outcoming, isSegmentIinverted, isSegmentJinverted, out platePosI, out platePosJ, out renderJ, out renderI);
             }
+
         }
 
         private static bool ProcessInternExternRule(ushort nodeID, ushort segmentIntId, ref NetSegment netSegmentInt, ref Vector3 segmentIntDirection, ushort segmentExtId, ref NetSegment netSegmentExt, ref Vector3 segmentExtDirection, BoardInstanceRoadNodeXml targetDescriptor, HashSet<ushort> incoming, HashSet<ushort> outcoming, bool isSegmentIntInverted, bool isSegmentExtInverted, out Vector3 platePosInt, out Vector3 platePosExt, out bool renderInt, out bool renderExt)
@@ -984,6 +993,7 @@ namespace Klyte.WriteTheSigns.Overrides
         {
             LogUtils.DoLog($"InvalidateNodeDestinationPaths Invalidating node: {nodeId} ({m_passingHashes[nodeId]?.Count} hashes)");
             m_updatedDestinations[nodeId] = null;
+            m_updatedStreetPositions[nodeId] = null;
             if (m_passingHashes[nodeId] != null)
             {
                 FilterValid(ref m_passingHashes[nodeId]);
@@ -992,6 +1002,7 @@ namespace Klyte.WriteTheSigns.Overrides
                     ulong targetNodeId = x & (NetManager.MAX_NODE_COUNT - 1);
                     LogUtils.DoLog($"InvalidateNodeDestinationPaths Marking null: targetNodeId={targetNodeId} (hash = {x.ToString("X16")})");
                     m_updatedDestinations[targetNodeId] = null;
+                    m_updatedStreetPositions[targetNodeId] = null;
                 });
                 InvalidateHashes(ref m_passingHashes[nodeId]);
             }

@@ -314,19 +314,13 @@ namespace Klyte.WriteTheSigns.Rendering
             else if (instance is BoardInstanceRoadNodeXml roadDescritpor)
             {
                 CacheRoadNodeItem data = WTSRoadNodesData.Instance.BoardsContainers[refID, boardIdx, secIdx];
-                TextType targetType = textDescriptor.m_textType;
-                switch (targetType)
+                if (data == null)
                 {
-                    case TextType.ParkOrDistrict: targetType = data.m_districtParkId > 0 ? TextType.Park : TextType.District; break;
-                    case TextType.DistrictOrPark: targetType = data.m_districtId == 0 && data.m_districtParkId > 0 ? TextType.Park : TextType.District; break;
-                    case TextType.Park:
-                        if (data.m_districtParkId == 0)
-                        {
-                            return null;
-                        }
-                        break;
+                    return null;
                 }
-                if (textDescriptor.IsTextRelativeToSegment())
+
+                TextType targetType = textDescriptor.m_textType;
+                if (textDescriptor.IsTextRelativeToSegment() && textDescriptor.m_destinationRelative >= 0)
                 {
                     CacheDestinationRoute destination = null;
                     switch (textDescriptor.m_destinationRelative)
@@ -348,8 +342,32 @@ namespace Klyte.WriteTheSigns.Rendering
                         case DestinationReference.Self:
                             break;
                     }
+
+                    if (BoardGeneratorRoadNodes.Instance.m_updatedDestinations[refID] == true && BoardGeneratorRoadNodes.Instance.m_couldReachDestinations[refID, data.m_segnentIndex, (int)textDescriptor.m_destinationRelative] == false)
+                    {
+                        LogUtils.DoWarnLog($"[n{refID}/{boardIdx}] REMOVING UNAVAILABLE {BoardGeneratorRoadNodes.Instance.Data.BoardsContainers[refID, boardIdx, secIdx] }");
+
+                        BoardGeneratorRoadNodes.Instance.Data.BoardsContainers[refID, boardIdx, secIdx] = null;
+                        BoardGeneratorRoadNodes.Instance.m_updatedStreetPositions[refID] = null;
+                        return null;
+                    }
+                    if (BoardGeneratorRoadNodes.Instance.m_updatedDestinations[refID] == false)
+                    {
+                        return RenderUtils.GetTextData("Loading" + new string('.', ((int)(SimulationManager.instance.m_currentTickIndex & 0x3F) >> 4) + 1), textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont ?? instance.Descriptor.FontName);
+                    }
                     if (destination != null)
                     {
+                        switch (targetType)
+                        {
+                            case TextType.ParkOrDistrict: targetType = destination.m_parkId > 0 ? TextType.Park : TextType.District; break;
+                            case TextType.DistrictOrPark: targetType = destination.m_districtId == 0 && destination.m_parkId > 0 ? TextType.Park : TextType.District; break;
+                            case TextType.Park:
+                                if (destination.m_parkId == 0)
+                                {
+                                    return null;
+                                }
+                                break;
+                        }
                         return targetType switch
                         {
                             TextType.DistanceFromReference => RenderUtils.GetTextData(destination.m_distanceMeanString, textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont ?? instance.Descriptor.FontName),
@@ -364,6 +382,17 @@ namespace Klyte.WriteTheSigns.Rendering
                         };
 
                     }
+                }
+                switch (targetType)
+                {
+                    case TextType.ParkOrDistrict: targetType = data.m_districtParkId > 0 ? TextType.Park : TextType.District; break;
+                    case TextType.DistrictOrPark: targetType = data.m_districtId == 0 && data.m_districtParkId > 0 ? TextType.Park : TextType.District; break;
+                    case TextType.Park:
+                        if (data.m_districtParkId == 0)
+                        {
+                            return null;
+                        }
+                        break;
                 }
                 return targetType switch
                 {
