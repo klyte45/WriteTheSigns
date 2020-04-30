@@ -10,7 +10,6 @@
         Next2Exit,
         NextExit,
         Self = -1,
-        NeighborNode = -2,
     }
 
 

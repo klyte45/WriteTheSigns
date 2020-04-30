@@ -18,7 +18,7 @@ namespace Klyte.WriteTheSigns.Xml
         public BoardInstanceRoadNodeXml m_currentDescriptor;
         public int m_segnentIndex;
         public PropInfo m_cachedProp;
-        public CacheRoadNodeItem m_otherSegment;
+        public int[] m_nodesOrder;
     }
 
 }

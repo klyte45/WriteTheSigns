@@ -2,12 +2,13 @@
 using ColossalFramework.UI;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Data;
-using Klyte.WriteTheSigns.Overrides;
+using Klyte.WriteTheSigns.Singleton;
 using Klyte.WriteTheSigns.Utils;
 using Klyte.WriteTheSigns.Xml;
 using SpriteFontPlus;
 using SpriteFontPlus.Utility;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace Klyte.WriteTheSigns.Rendering
@@ -323,12 +324,12 @@ namespace Klyte.WriteTheSigns.Rendering
                 if (textDescriptor.IsTextRelativeToSegment() && textDescriptor.m_destinationRelative >= 0)
                 {
                     CacheDestinationRoute destination = null;
+                    int segmentIdx = data.m_nodesOrder[(data.m_nodesOrder.Length + textDescriptor.m_targetNodeRelative) % data.m_nodesOrder.Length];
                     switch (textDescriptor.m_destinationRelative)
                     {
                         case DestinationReference.NextExitMainRoad1:
                         case DestinationReference.NextExitMainRoad2:
-                            data = data.m_otherSegment;
-                            destination = BoardGeneratorRoadNodes.Instance.GetTargetDestination(refID, data.m_segnentIndex, (int)textDescriptor.m_destinationRelative);
+                            destination = WTSDestinationSingleton.instance.GetTargetDestination(refID, segmentIdx, (int)textDescriptor.m_destinationRelative);
                             break;
                         case DestinationReference.Next2ExitMainRoad1:
                         case DestinationReference.Next2ExitMainRoad2:
@@ -336,22 +337,19 @@ namespace Klyte.WriteTheSigns.Rendering
                         case DestinationReference.Next2Exit:
                         case DestinationReference.NextExit:
                             return null;
-                        case DestinationReference.NeighborNode:
-                            data = data.m_otherSegment;
-                            break;
                         case DestinationReference.Self:
                             break;
                     }
 
-                    if (BoardGeneratorRoadNodes.Instance.m_updatedDestinations[refID] == true && BoardGeneratorRoadNodes.Instance.m_couldReachDestinations[refID, data.m_segnentIndex, (int)textDescriptor.m_destinationRelative] == false)
+                    if (WTSDestinationSingleton.instance.m_updatedDestinations[refID] == true && WTSDestinationSingleton.instance.m_couldReachDestinations[refID, segmentIdx, (int)textDescriptor.m_destinationRelative] == false)
                     {
-                        LogUtils.DoWarnLog($"[n{refID}/{boardIdx}] REMOVING UNAVAILABLE {BoardGeneratorRoadNodes.Instance.Data.BoardsContainers[refID, boardIdx, secIdx] }");
+                        LogUtils.DoWarnLog($"[n{refID}/{boardIdx}] REMOVING UNAVAILABLE {WTSRoadPropsSingleton.instance.Data.BoardsContainers[refID, boardIdx, secIdx] } (T={refID}, {segmentIdx}, {textDescriptor.m_destinationRelative} - rotationOrder = {string.Join(",", data.m_nodesOrder.Select(x => x.ToString()).ToArray())} - offset ={ textDescriptor.m_targetNodeRelative} )");
 
-                        BoardGeneratorRoadNodes.Instance.Data.BoardsContainers[refID, boardIdx, secIdx] = null;
-                        BoardGeneratorRoadNodes.Instance.m_updatedStreetPositions[refID] = null;
+                        WTSRoadPropsSingleton.instance.Data.BoardsContainers[refID, boardIdx, secIdx] = null;
+                        WTSRoadPropsSingleton.instance.m_updatedStreetPositions[refID] = null;
                         return null;
                     }
-                    if (BoardGeneratorRoadNodes.Instance.m_updatedDestinations[refID] == false)
+                    if (WTSDestinationSingleton.instance.m_updatedDestinations[refID] == false)
                     {
                         return RenderUtils.GetTextData("Loading" + new string('.', ((int)(SimulationManager.instance.m_currentTickIndex & 0x3F) >> 4) + 1), textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont ?? instance.Descriptor.FontName);
                     }

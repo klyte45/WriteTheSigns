@@ -188,7 +188,11 @@
     <Compile Include="DynamicFont\src\Utility\BasicRenderInformation.cs" />
     <Compile Include="Libraries\BasicLib.cs" />
     <Compile Include="Libraries\WTSLibContainerRoadCornerRuleList.cs" />
-    <Compile Include="Overrides\BoardGeneration\BoardGeneratorRoadNodes.cs" />
+    <Compile Include="Utils\WTSRoadNodeCommons.cs" />
+    <Compile Include="Singleton\CacheDestinationRoute.cs" />
+    <Compile Include="Overrides\BoardGeneration\RoadNodeOverrides.cs" />
+    <Compile Include="Singleton\WTSDestinationSingleton.cs" />
+    <Compile Include="Singleton\WTSRoadPropsSingleton.cs" />
     <Compile Include="Overrides\BuildingManagerOverrides.cs" />
     <Compile Include="Overrides\DistrictManagerOverrides.cs" />
     <Compile Include="Rendering\TextRenderingClass.cs" />

@@ -52,16 +52,11 @@ namespace Klyte.WriteTheSigns.Xml
         [XmlAttribute("placeOnTunnelBridgeStart")] public bool PlaceOnTunnelBridgeStart { get; set; } = false;
         [XmlAttribute("ignoreEmptyNameRoads")] public bool IgnoreEmptyNameRoads { get; set; } = true;
         [XmlAttribute("placeOnMidSegment")] public bool PlaceOnSegmentInsteadOfCorner { get; set; } = false;
-        [XmlAttribute("ensureSegmentTypeInAllowedTypes")] public bool EnsureSegmentTypeInAllowedTypes { get; set; } = false;
-        [XmlAttribute("allowAnotherRuleForCorner")] public bool AllowAnotherRuleForCorner { get; set; } = false;
         [XmlAttribute("trafficDirectionRequired")] public TrafficDirectionRequired TrafficDirectionRequired { get; set; } = TrafficDirectionRequired.NONE;
         [XmlAttribute("minDirectionTrafficLanes")] public int MinDirectionTrafficLanes { get; set; } = 1;
         [XmlAttribute("maxDirectionTrafficLanes")] public int MaxDirectionTrafflcLanes { get; set; } = 99;
-        [XmlAttribute("minNodeOutcomingLanes")] public int MinNodeOutcomingSegments { get; set; } = 1;
-        [XmlAttribute("maxNodeOutcomingLanes")] public int MaxNodeOutcomingSegments { get; set; } = 8;
         [XmlAttribute("minRoadHalfWidth")] public float MinRoadHalfWidth { get; set; } = 0;
         [XmlAttribute("maxRoadHalfWidth")] public float MaxRoadHalfWidth { get; set; } = 999;
-        [XmlAttribute("exitSideRequired")] public ExitSideRequired ExitSideRequired { get; set; }
 
 
         [XmlAttribute("useDistrictColor")] public bool UseDistrictColor = false;
@@ -71,7 +66,7 @@ namespace Klyte.WriteTheSigns.Xml
         [XmlArray("SelectedDistricts")] [XmlArrayItem("District")] public HashSet<ushort> SelectedDistricts { get; set; } = new HashSet<ushort>();
         [XmlAttribute("districtSelectionIsBlacklist")] public bool SelectedDistrictsIsBlacklist { get; set; } = true;
         [XmlAttribute("districtRestrictionOrder")] public DistrictRestrictionOrder DistrictRestrictionOrder { get; set; }
-
+        [XmlAttribute("placingSide")] public RoadSide RoadSide { get; set; } = RoadSide.CENTER;
 
 
 
@@ -119,5 +114,12 @@ namespace Klyte.WriteTheSigns.Xml
         NONE,
         OUTSIDE,
         INSIDE
+    }
+    public enum RoadSide
+    {
+        LEFT,
+        RIGHT,
+        CENTER
+
     }
 }

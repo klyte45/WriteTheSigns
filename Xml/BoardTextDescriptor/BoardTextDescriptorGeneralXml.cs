@@ -36,6 +36,8 @@ namespace Klyte.WriteTheSigns.Xml
         public TextType m_textType = TextType.Fixed;
         [XmlAttribute("destinationRelative")]
         public DestinationReference m_destinationRelative = DestinationReference.Self;
+        [XmlAttribute("targetNodeRelative")]
+        public int m_targetNodeRelative = 0;
         [XmlAttribute("fixedText")]
         public string m_fixedText = "Text";
 

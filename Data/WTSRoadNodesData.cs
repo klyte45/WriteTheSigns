@@ -1,5 +1,5 @@
 ﻿using ColossalFramework.UI;
-using Klyte.WriteTheSigns.Overrides;
+using Klyte.WriteTheSigns.Singleton;
 using Klyte.WriteTheSigns.Xml;
 using System.Linq;
 using System.Xml.Serialization;
@@ -50,7 +50,7 @@ namespace Klyte.WriteTheSigns.Data
         public void ResetCacheDescriptors()
         {
             m_currentDescriptorOrder.ForEach(x => x.ResetCacheDescriptor());
-            BoardGeneratorRoadNodes.Instance.ResetViews();
+            WTSRoadPropsSingleton.instance.ResetViews();
         }
     }
 

@@ -53,11 +53,8 @@ namespace Klyte.WriteTheSigns.UI
 
         private UIPanel m_spawnInSegmentOptions;
         private UIDropDown m_flowRequirement;
-        private UIDropDown m_exitSideRequired;
+        private UIDropDown m_roadSide;
         private UITextField[] m_minMaxLaneRequired;
-        private UITextField[] m_minMaxNodeOutgoingRequired;
-        private UICheckBox m_ensureRoadTypeAllowed;
-        private UICheckBox m_allowAnotherRuleForCorner;
 
         private UICheckBox m_useDistrictColor;
         private UICheckBox m_applyAbbreviations_full;
@@ -129,12 +126,8 @@ namespace Klyte.WriteTheSigns.UI
             helperSpawningSegment.Self.width = 620;
             LogUtils.DoWarnLog($"WIDTH={helperSpawningSegment.Self.width}");
             AddDropdown(Locale.Get("K45_WTS_ROADCORNER_FLOWREQUIREMENT"), out m_flowRequirement, helperSpawningSegment, Enum.GetNames(typeof(TrafficDirectionRequired)).Select(x => Locale.Get("K45_WTS_TRAFFICDIRECTIONREQUIRED", x)).ToArray(), OnChangeFlowRequirement);
-            AddDropdown(Locale.Get("K45_WTS_ROADCORNER_EXITSIDEREQUIRED"), out m_exitSideRequired, helperSpawningSegment, Enum.GetNames(typeof(ExitSideRequired)).Select(x => Locale.Get("K45_WTS_EXITSIDEREQUIRED", x)).ToArray(), OnChangeExitSideRequirement);
+            AddDropdown(Locale.Get("K45_WTS_ROADCORNER_PLOPPLACINGLOCATION"), out m_roadSide, helperSpawningSegment, Enum.GetNames(typeof(RoadSide)).Select(x => Locale.Get("K45_WTS_ROADSIDE", x)).ToArray(), OnChangRoadSide);
             AddVector2Field(Locale.Get("K45_WTS_ROADCORNER_MINMAXLANESREQUIRED"), out m_minMaxLaneRequired, helperSpawningSegment, OnLanesRequiredChange, false);
-            AddVector2Field(Locale.Get("K45_WTS_ROADCORNER_MINMAXNODEOUTGOINGREQUIRED"), out m_minMaxNodeOutgoingRequired, helperSpawningSegment, OnOutgoingRequirementChange, false);
-            helperSpawningSegment.AddSpace(10);
-            AddCheckboxLocale("K45_WTS_ROADCORNER_ENSUREROADTYPEALLOWED", out m_ensureRoadTypeAllowed, helperSpawningSegment, OnChangeEnsureRoadTypeAllowed);
-            AddCheckboxLocale("K45_WTS_ROADCORNER_ALLOWANOTHERRULEFORCORNER", out m_allowAnotherRuleForCorner, helperSpawningSegment, OnChangeAllowAnotherRuleForCorner);
 
             AddCheckboxLocale("K45_WTS_ROADCORNER_USEDISTRICTCOLOR", out m_useDistrictColor, helperAppearence, OnChangeUseDistrictColor);
             AddCheckboxLocale("K45_WTS_ROADCORNER_APPLYABBREVIATIONS_FULLNAME", out m_applyAbbreviations_full, helperAppearence, OnChangeApplyAbbreviationsFullName);
@@ -318,13 +311,9 @@ namespace Klyte.WriteTheSigns.UI
                 m_ignoreEmpty.isChecked = x.IgnoreEmptyNameRoads;
                 m_spawnOnSegment.isChecked = x.PlaceOnSegmentInsteadOfCorner;
                 m_flowRequirement.selectedIndex = (int)x.TrafficDirectionRequired;
+                m_roadSide.selectedIndex = (int)x.RoadSide;
                 m_minMaxLaneRequired[0].text = x.MinDirectionTrafficLanes.ToString("D0");
                 m_minMaxLaneRequired[1].text = x.MaxDirectionTrafflcLanes.ToString("D0");
-                m_exitSideRequired.selectedIndex = (int)x.ExitSideRequired;
-                m_minMaxNodeOutgoingRequired[0].text = x.MinNodeOutcomingSegments.ToString("D0");
-                m_minMaxNodeOutgoingRequired[1].text = x.MaxNodeOutcomingSegments.ToString("D0");
-                m_ensureRoadTypeAllowed.isChecked = x.EnsureSegmentTypeInAllowedTypes;
-                m_allowAnotherRuleForCorner.isChecked = x.AllowAnotherRuleForCorner;
 
                 m_useDistrictColor.isChecked = x.UseDistrictColor;
                 m_applyAbbreviations_full.isChecked = x.ApplyAbreviationsOnFullName;
@@ -333,9 +322,8 @@ namespace Klyte.WriteTheSigns.UI
                 m_districtWhiteList.isChecked = !x.SelectedDistrictsIsBlacklist;
                 m_districtBlackList.isChecked = x.SelectedDistrictsIsBlacklist;
 
-                m_minMaxNodeOutgoingRequired[0].parent.isVisible = x.TrafficDirectionRequired == TrafficDirectionRequired.INCOMING;
                 m_minMaxLaneRequired[0].parent.isVisible = x.TrafficDirectionRequired != TrafficDirectionRequired.NONE;
-                m_exitSideRequired.parent.isVisible = x.TrafficDirectionRequired == TrafficDirectionRequired.INCOMING;
+                m_roadSide.parent.isVisible = x.TrafficDirectionRequired == TrafficDirectionRequired.INCOMING;
 
                 UpdateDistrictList(ref x);
                 m_spawnInSegmentOptions.isVisible = x.PlaceOnSegmentInsteadOfCorner;
@@ -390,16 +378,15 @@ namespace Klyte.WriteTheSigns.UI
             {
                 x.TrafficDirectionRequired = (TrafficDirectionRequired)sel;
                 m_minMaxLaneRequired[0].parent.isVisible = x.TrafficDirectionRequired != TrafficDirectionRequired.NONE;
-                m_minMaxNodeOutgoingRequired[0].parent.isVisible = x.TrafficDirectionRequired == TrafficDirectionRequired.INCOMING;
-                m_exitSideRequired.parent.isVisible = x.TrafficDirectionRequired == TrafficDirectionRequired.INCOMING;
+                m_roadSide.parent.isVisible = x.TrafficDirectionRequired == TrafficDirectionRequired.INCOMING;
             }
         });
 
-        private void OnChangeExitSideRequirement(int sel) => SafeObtain((ref BoardInstanceRoadNodeXml x) =>
+        private void OnChangRoadSide(int sel) => SafeObtain((ref BoardInstanceRoadNodeXml x) =>
         {
             if (sel >= 0)
             {
-                x.ExitSideRequired = (ExitSideRequired)sel;
+                x.RoadSide = (RoadSide)sel;
             }
         });
         private void OnLanesRequiredChange(Vector2 obj) => SafeObtain((ref BoardInstanceRoadNodeXml x) =>
@@ -411,15 +398,6 @@ namespace Klyte.WriteTheSigns.UI
             m_minMaxLaneRequired[1].text = x.MaxDirectionTrafflcLanes.ToString("D0");
 
         });
-        private void OnOutgoingRequirementChange(Vector2 obj) => SafeObtain((ref BoardInstanceRoadNodeXml x) =>
-        {
-            x.MinNodeOutcomingSegments = Mathf.RoundToInt(Mathf.Max(1, Mathf.Min(obj.x, obj.y, 8)));
-            x.MaxNodeOutcomingSegments = Mathf.RoundToInt(Mathf.Min(8, Mathf.Max(obj.x, obj.y, 1)));
-
-            m_minMaxNodeOutgoingRequired[0].text = x.MinNodeOutcomingSegments.ToString("D0");
-            m_minMaxNodeOutgoingRequired[1].text = x.MaxNodeOutcomingSegments.ToString("D0");
-
-        });
         private void OnChangeSpawnOnSegment(bool isChecked) => SafeObtain((ref BoardInstanceRoadNodeXml x) =>
         {
             x.PlaceOnSegmentInsteadOfCorner = isChecked;
@@ -427,8 +405,6 @@ namespace Klyte.WriteTheSigns.UI
             m_spawnInCornerOptions.isVisible = !isChecked;
         });
 
-        private void OnChangeAllowAnotherRuleForCorner(bool isChecked) => SafeObtain((ref BoardInstanceRoadNodeXml x) => x.AllowAnotherRuleForCorner = isChecked);
-        private void OnChangeEnsureRoadTypeAllowed(bool isChecked) => SafeObtain((ref BoardInstanceRoadNodeXml x) => x.EnsureSegmentTypeInAllowedTypes = isChecked);
         private void ToggleAllow(Level targetLevel, bool value) => SafeObtain((ref BoardInstanceRoadNodeXml x) =>
         {
             if (value)
