@@ -27,7 +27,7 @@ namespace Klyte.WriteTheSigns.Singleton
                 LogUtils.DoLog($"End - aborted!");
                 yield break;
             }
-            WTSRoadNodeCommons.GetIncomingOutcomingTraffic(nodeID, out HashSet<ushort> incomingTraffic, out HashSet<ushort> outcomingTraffic, out int[] rotationOrder);
+            WTSRoadNodeCommons.GetIncomingOutcomingTraffic(nodeID, out HashSet<ushort> incomingTraffic, out HashSet<ushort> outcomingTraffic, out int[] rotationOrder, out _);
             if (outcomingTraffic.Count == 0)
             {
                 LogUtils.DoLog($"End - no outcoming for {nodeID}");

@@ -2,13 +2,14 @@
 using Klyte.Commons.Utils;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 
 namespace Klyte.WriteTheSigns.Utils
 {
 
     public static class WTSRoadNodeCommons
     {
-        public static void GetIncomingOutcomingTraffic(ushort nodeID, out HashSet<ushort> incomingTraffic, out HashSet<ushort> outcomingTraffic, out int[] rotationOrder)
+        public static void GetIncomingOutcomingTraffic(ushort nodeID, out HashSet<ushort> incomingTraffic, out HashSet<ushort> outcomingTraffic, out int[] rotationOrder, out int[] angles)
         {
             incomingTraffic = new HashSet<ushort>();
             outcomingTraffic = new HashSet<ushort>();
@@ -33,7 +34,9 @@ namespace Klyte.WriteTheSigns.Utils
                     appointingAngle.Add(Tuple.New(i, (isStart ? segment.m_startDirection : segment.m_endDirection).GetAngleXZ()));
                 }
             }
-            rotationOrder = appointingAngle.OrderBy(x => x.Second).Select(x => x.First).ToArray();
+            IOrderedEnumerable<Tuple<int, float>> x = appointingAngle.OrderBy(x => x.Second);
+            rotationOrder = x.Select(x => x.First).ToArray();
+            angles = x.Select(x => Mathf.RoundToInt(x.Second)).ToArray();
         }
         public static bool CheckSegmentInverted(ushort nodeID, ref NetSegment netSegmentJ)
         {

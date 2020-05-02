@@ -19,6 +19,7 @@ namespace Klyte.WriteTheSigns.Xml
         public int m_segnentIndex;
         public PropInfo m_cachedProp;
         public int[] m_nodesOrder;
+        public int[] m_nodesRotation;
     }
 
 }

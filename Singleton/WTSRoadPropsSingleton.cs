@@ -97,10 +97,10 @@ namespace Klyte.WriteTheSigns.Singleton
                 WriteTheSignsMod.Controller.StartCoroutine(CalculateSigns(nodeID));
             }
 
-            RenderNodeSighs(cameraInfo, nodeID);
+            RenderNodeSigns(cameraInfo, nodeID);
         }
 
-        private void RenderNodeSighs(RenderManager.CameraInfo cameraInfo, ushort nodeID)
+        private void RenderNodeSigns(RenderManager.CameraInfo cameraInfo, ushort nodeID)
         {
             for (int y = 0; y < Data.BoardsContainers.GetLength(1); y++)
             {
@@ -160,7 +160,7 @@ namespace Klyte.WriteTheSigns.Singleton
                 yield break;
             }
 
-            WTSRoadNodeCommons.GetIncomingOutcomingTraffic(nodeID, out HashSet<ushort> incomingTraffic, out HashSet<ushort> outcomingTraffic, out int[] rotationOrder);
+            WTSRoadNodeCommons.GetIncomingOutcomingTraffic(nodeID, out HashSet<ushort> incomingTraffic, out HashSet<ushort> outcomingTraffic, out int[] rotationOrder, out int[] rotationAnglesOrder);
 
             yield return 0;
             if (m_updatedStreetPositions[nodeID] != false)
@@ -175,14 +175,14 @@ namespace Klyte.WriteTheSigns.Singleton
                     if (Singleton<NetManager>.instance.m_segments.m_buffer[segmentIid].Info != null && Singleton<NetManager>.instance.m_segments.m_buffer[segmentIid].Info.m_netAI is RoadBaseAI)
                     {
                         LogUtils.DoLog($"[n{nodeID}/{i}] pre ProcessCorners");
-                        yield return StartCoroutine(ProcessCorners(nodeID, rotationOrder, i, segmentIid));
+                        yield return StartCoroutine(ProcessCorners(nodeID, rotationOrder, rotationAnglesOrder, i, segmentIid));
                         if (m_updatedStreetPositions[nodeID] != false)
                         {
                             yield break;
                         }
 
                         LogUtils.DoLog($"[n{nodeID}/{i}] pre ProcessRoadSigns");
-                        yield return StartCoroutine(ProcessRoadSigns(nodeID, incomingTraffic, outcomingTraffic, rotationOrder, i, segmentIid));
+                        yield return StartCoroutine(ProcessRoadSigns(nodeID, incomingTraffic, outcomingTraffic, rotationOrder, rotationAnglesOrder, i, segmentIid));
                         if (m_updatedStreetPositions[nodeID] != false)
                         {
                             yield break;
@@ -197,7 +197,7 @@ namespace Klyte.WriteTheSigns.Singleton
         }
 
         #region roadSigns process
-        private IEnumerator ProcessRoadSigns(ushort nodeID, HashSet<ushort> incomingTraffic, HashSet<ushort> outcomingTraffic, int[] originalNodeRotation, int i, ushort segmentIid)
+        private IEnumerator ProcessRoadSigns(ushort nodeID, HashSet<ushort> incomingTraffic, HashSet<ushort> outcomingTraffic, int[] originalNodeRotation, int[] originalRotationAnglesOrder, int i, ushort segmentIid)
         {
             yield return 0;
             if (m_updatedStreetPositions[nodeID] != false)
@@ -207,16 +207,20 @@ namespace Klyte.WriteTheSigns.Singleton
             }
             ItemClass classI = Singleton<NetManager>.instance.m_segments.m_buffer[segmentIid].Info.m_class;
 
-            int[] rotationOrder;
+            int[] rotationOrder, rotationAnglesOrder;
             int idx = Array.IndexOf(originalNodeRotation, i);
             rotationOrder = new int[originalNodeRotation.Length];
+            rotationAnglesOrder = new int[originalNodeRotation.Length];
             int itemsAfter = originalNodeRotation.Length - idx;
             Array.Copy(originalNodeRotation, idx, rotationOrder, 0, itemsAfter);
+            Array.Copy(originalRotationAnglesOrder, idx, rotationAnglesOrder, 0, itemsAfter);
             if (idx != 0)
             {
                 Array.Copy(originalNodeRotation, 0, rotationOrder, itemsAfter, originalNodeRotation.Length - itemsAfter);
+                Array.Copy(originalRotationAnglesOrder, 0, rotationAnglesOrder, itemsAfter, originalNodeRotation.Length - itemsAfter);
             }
-
+            int rot0 = rotationAnglesOrder[0];
+            rotationAnglesOrder = rotationAnglesOrder.Select(x => (((x - rot0) % 360) + 360) % 360).ToArray();
 
             int rotationOrderPosition = Array.IndexOf(rotationOrder, i);
             int leftSegmentIdx = rotationOrder[(rotationOrderPosition + rotationOrder.Length - 1) % rotationOrder.Length];
@@ -224,11 +228,21 @@ namespace Klyte.WriteTheSigns.Singleton
             bool freeSlotLeft = true;
             bool freeSlotRight = true;
 
-            //      LogUtils.DoLog($"[n{nodeID}/{i}] rotationOrderPosition = {rotationOrderPosition}; rotationOrder = {string.Join(",", rotationOrder.Select(x => x.ToString()).ToArray())}; originalNodeRotation = {string.Join(",", originalNodeRotation.Select(x => x.ToString()).ToArray())}");
+            //LogUtils.DoLog($"[n{nodeID}/{i}] rotationOrderPosition = {rotationOrderPosition}; rotationOrder = {string.Join(",", rotationOrder.Select(x => x.ToString()).ToArray())}; originalNodeRotation = {string.Join(",", originalNodeRotation.Select(x => x.ToString()).ToArray())}; rotationAnglesOrder = {string.Join(",", rotationAnglesOrder.Select(x => x.ToString()).ToArray())}; originalNodeRotation = {string.Join(",", originalNodeRotation.Select(x => x.ToString()).ToArray())}");
 
             var matchingDescriptors = new Stack<Tuple<int, BoardInstanceRoadNodeXml>>(Data.DescriptorRulesOrder.Select((x, y) => Tuple.New(y, x))
                 .Where(x => x.Second.PlaceOnSegmentInsteadOfCorner
                 && x.Second.AllowsClass(classI)
+                && x.Second.Descriptor.m_textDescriptors.All(
+                        t =>
+                        {
+                            if (!t.IsTextRelativeToSegment() || t.m_targetNodeRelative == 0)
+                            {
+                                return true;
+                            }
+                            int nodeIdx = (rotationOrder.Length + t.m_targetNodeRelative) % rotationOrder.Length;
+                            return rotationAnglesOrder[nodeIdx] > 40 && rotationAnglesOrder[nodeIdx] < 320;
+                        })
                 && (WTSDestinationSingleton.instance.m_updatedDestinations[nodeID] != true
                     || x.Second.Descriptor.m_textDescriptors.All(
                         t =>
@@ -241,25 +255,26 @@ namespace Klyte.WriteTheSigns.Singleton
                             {
                                 return false;
                             }
-                            int segmentIdx = rotationOrder[(rotationOrder.Length + t.m_targetNodeRelative) % rotationOrder.Length];
+                            int nodeIdx = (rotationOrder.Length + t.m_targetNodeRelative) % rotationOrder.Length;
+                            int segmentIdx = rotationOrder[nodeIdx];
                             return WTSDestinationSingleton.instance.m_couldReachDestinations[nodeID, segmentIdx, (int)t.m_destinationRelative] == true;
                         }))
 
                 ).OrderByDescending(x => x.First));
             int secondaryIdx = 2;
-            //       LogUtils.DoLog($"[n{nodeID}/{i}] matchingDescriptors = {matchingDescriptors.Count} [{string.Join(",", matchingDescriptors.Select(x => x.Second.SaveName).ToArray())}] ");
+            //LogUtils.DoLog($"[n{nodeID}/{i}] matchingDescriptors = {matchingDescriptors.Count} [{string.Join(",", matchingDescriptors.Select(x => x.Second.SaveName).ToArray())}] ");
             while (matchingDescriptors.Count > 0 && (freeSlotLeft || freeSlotRight))
             {
                 BoardInstanceRoadNodeXml targetDescriptor = matchingDescriptors.Pop()?.Second;
                 if ((freeSlotLeft || targetDescriptor.RoadSide == RoadSide.RIGHT) && (freeSlotRight || targetDescriptor.RoadSide == RoadSide.LEFT))
                 {
-                    ProcessDescriptorRoadSign(nodeID, ref NetManager.instance.m_nodes.m_buffer[nodeID], i, segmentIid, ref Singleton<NetManager>.instance.m_segments.m_buffer[segmentIid], leftSegmentIdx, rightSegmentIdx, targetDescriptor, incomingTraffic, outcomingTraffic, ref secondaryIdx, ref freeSlotLeft, ref freeSlotRight, rotationOrder);
+                    ProcessDescriptorRoadSign(nodeID, ref NetManager.instance.m_nodes.m_buffer[nodeID], i, segmentIid, ref Singleton<NetManager>.instance.m_segments.m_buffer[segmentIid], leftSegmentIdx, rightSegmentIdx, targetDescriptor, incomingTraffic, outcomingTraffic, ref secondaryIdx, ref freeSlotLeft, ref freeSlotRight, rotationOrder, rotationAnglesOrder);
                 }
                 yield return 0;
-                //  LogUtils.DoLog($"[n{nodeID}/{i}] ENDLOOP matchingDescriptors = {matchingDescriptors.Count} [{string.Join(",", matchingDescriptors.Select(x => x.Second.SaveName).ToArray())}] ");
+                //LogUtils.DoLog($"[n{nodeID}/{i}] ENDLOOP matchingDescriptors = {matchingDescriptors.Count} [{string.Join(",", matchingDescriptors.Select(x => x.Second.SaveName).ToArray())}] ");
                 if (m_updatedStreetPositions[nodeID] != false)
                 {
-                    //        LogUtils.DoLog($"[n{nodeID}/{i}] BREAK matchingDescriptors = {matchingDescriptors.Count} [{string.Join(",", matchingDescriptors.Select(x => x.Second.SaveName).ToArray())}] ");
+                    //LogUtils.DoLog($"[n{nodeID}/{i}] BREAK matchingDescriptors = {matchingDescriptors.Count} [{string.Join(",", matchingDescriptors.Select(x => x.Second.SaveName).ToArray())}] ");
                     break;
                 }
             }
@@ -281,7 +296,7 @@ namespace Klyte.WriteTheSigns.Singleton
             BoardInstanceRoadNodeXml targetDescriptor, HashSet<ushort> incoming,
             HashSet<ushort> outcoming, ref int subboardOffset,
             ref bool leftSlot, ref bool rightSlot,
-            int[] nodeRotationOrder)
+            int[] nodeRotationOrder, int[] rotationAnglesOrder)
         {
             bool isSegmentIinverted = WTSRoadNodeCommons.CheckSegmentInverted(nodeID, ref netSegmentI);
 
@@ -294,7 +309,7 @@ namespace Klyte.WriteTheSigns.Singleton
             bool render = true;
             lock (Data.BoardsContainers)
             {
-                CacheRoadNodeItem a = FillCacheData(nodeID, controlBoardIdx, subboardOffset++, segmentIid, platePosI, new Vector3(0, (netSegmentI.m_startNode == nodeID ? netSegmentI.m_startDirection : netSegmentI.m_endDirection).GetAngleXZ() - 90, 0), targetDescriptor, nodeRotationOrder, ref render);
+                CacheRoadNodeItem a = FillCacheData(nodeID, controlBoardIdx, subboardOffset++, segmentIid, platePosI, new Vector3(0, (netSegmentI.m_startNode == nodeID ? netSegmentI.m_startDirection : netSegmentI.m_endDirection).GetAngleXZ() - 90, 0), targetDescriptor, nodeRotationOrder, rotationAnglesOrder, ref render);
             }
             if (render)
             {
@@ -415,7 +430,7 @@ namespace Klyte.WriteTheSigns.Singleton
           ushort nodeID, ref NetNode data, int controlBoardIdx,
             ushort segmentIid, ref NetSegment netSegmentI, Vector3 segmentIDirection,
             ushort segmentJid, ref NetSegment netSegmentJ, Vector3 segmentJDirection,
-            BoardInstanceRoadNodeXml targetDescriptor, int[] nodeRotationOrder,
+            BoardInstanceRoadNodeXml targetDescriptor, int[] nodeRotationOrder, int[] anglesRotationOrder,
             ref int subboardOffset)
         {
             if (targetDescriptor?.Descriptor?.m_propName == null)
@@ -443,8 +458,8 @@ namespace Klyte.WriteTheSigns.Singleton
             int id2 = subboardOffset++;
             lock (Data.BoardsContainers)
             {
-                FillCacheData(nodeID, controlBoardIdx, id1, segmentIid, platePosI, segmentIDirection, targetDescriptor, nodeRotationOrder, ref renderI);
-                FillCacheData(nodeID, controlBoardIdx, id2, segmentJid, platePosJ, segmentJDirection, targetDescriptor, nodeRotationOrder, ref renderJ);
+                FillCacheData(nodeID, controlBoardIdx, id1, segmentIid, platePosI, segmentIDirection, targetDescriptor, nodeRotationOrder, anglesRotationOrder, ref renderI);
+                FillCacheData(nodeID, controlBoardIdx, id2, segmentJid, platePosJ, segmentJDirection, targetDescriptor, nodeRotationOrder, anglesRotationOrder, ref renderJ);
             }
             if (!renderI && !renderJ)
             {
@@ -455,7 +470,7 @@ namespace Klyte.WriteTheSigns.Singleton
             return true;
         }
 
-        private IEnumerator ProcessCorners(ushort nodeID, int[] nodeRotationOrder, int i, ushort segmentIid)
+        private IEnumerator ProcessCorners(ushort nodeID, int[] nodeRotationOrder, int[] anglesRotationOrder, int i, ushort segmentIid)
         {
             yield return 0;
             if (m_updatedStreetPositions[nodeID] != false)
@@ -477,7 +492,7 @@ namespace Klyte.WriteTheSigns.Singleton
             while (matchingDescriptors.Count > 0 && !hasSpawned)
             {
                 targetDescriptor = matchingDescriptors.Pop()?.Second;
-                hasSpawned = ProcessDescriptorCorner(nodeID, ref NetManager.instance.m_nodes.m_buffer[nodeID], i, segmentIid, ref Singleton<NetManager>.instance.m_segments.m_buffer[segmentIid], segmentIDirection, segmentJid, ref Singleton<NetManager>.instance.m_segments.m_buffer[segmentJid], segmentJDirection, targetDescriptor, nodeRotationOrder, ref secondaryIdx);
+                hasSpawned = ProcessDescriptorCorner(nodeID, ref NetManager.instance.m_nodes.m_buffer[nodeID], i, segmentIid, ref Singleton<NetManager>.instance.m_segments.m_buffer[segmentIid], segmentIDirection, segmentJid, ref Singleton<NetManager>.instance.m_segments.m_buffer[segmentJid], segmentJDirection, targetDescriptor, nodeRotationOrder, anglesRotationOrder, ref secondaryIdx);
 
                 yield return 0;
                 if (m_updatedStreetPositions[nodeID] != false)
@@ -551,7 +566,7 @@ namespace Klyte.WriteTheSigns.Singleton
         #endregion
 
         #region Cache write
-        private ref CacheRoadNodeItem FillCacheData(ushort nodeID, int controlBoardIdx, int boardId, ushort segmentIid, Vector3 platePosI, Vector3 segmentIDirection, BoardInstanceRoadNodeXml targetDescriptor, int[] rotationOrder, ref bool render)
+        private ref CacheRoadNodeItem FillCacheData(ushort nodeID, int controlBoardIdx, int boardId, ushort segmentIid, Vector3 platePosI, Vector3 segmentIDirection, BoardInstanceRoadNodeXml targetDescriptor, int[] rotationOrder, int[] rotationAnglesOrder, ref bool render)
         {
 
             Data.BoardsContainers[nodeID, controlBoardIdx, boardId] = new CacheRoadNodeItem();
@@ -572,6 +587,7 @@ namespace Klyte.WriteTheSigns.Singleton
             refBoard.m_currentDescriptor = targetDescriptor;
             refBoard.m_segnentIndex = GetSegmentIndex(ref NetManager.instance.m_nodes.m_buffer[nodeID], segmentIid);
             refBoard.m_nodesOrder = rotationOrder;
+            refBoard.m_nodesRotation = rotationAnglesOrder;
             return ref Data.BoardsContainers[nodeID, controlBoardIdx, boardId];
         }
 
