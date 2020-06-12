@@ -23,6 +23,7 @@ namespace Klyte.WriteTheSigns.Utils
             m_cache[(int)Parks] = new string[DistrictManager.MAX_DISTRICT_COUNT];
             m_cache[(int)FullStreetNameAbbreviation] = new string[NetManager.MAX_SEGMENT_COUNT];
             m_cache[(int)SuffixStreetNameAbbreviation] = new string[NetManager.MAX_SEGMENT_COUNT];
+            m_cache[(int)BuildingName] = new string[BuildingManager.MAX_BUILDING_COUNT];
 
             m_cacheUpper[(int)FullStreetName] = new string[NetManager.MAX_SEGMENT_COUNT];
             m_cacheUpper[(int)StreetQualifier] = new string[NetManager.MAX_SEGMENT_COUNT];
@@ -31,6 +32,7 @@ namespace Klyte.WriteTheSigns.Utils
             m_cacheUpper[(int)Parks] = new string[DistrictManager.MAX_DISTRICT_COUNT];
             m_cacheUpper[(int)FullStreetNameAbbreviation] = new string[NetManager.MAX_SEGMENT_COUNT];
             m_cacheUpper[(int)SuffixStreetNameAbbreviation] = new string[NetManager.MAX_SEGMENT_COUNT];
+            m_cacheUpper[(int)BuildingName] = new string[BuildingManager.MAX_BUILDING_COUNT];
 
         }
 
@@ -73,6 +75,19 @@ namespace Klyte.WriteTheSigns.Utils
             m_cacheUpper[(int)Parks] = new string[DistrictManager.MAX_DISTRICT_COUNT];
         }
 
+        public static void ClearCacheBuildingName()
+        {
+            m_cache[(int)BuildingName] = new string[BuildingManager.MAX_BUILDING_COUNT];
+
+            m_cacheUpper[(int)BuildingName] = new string[BuildingManager.MAX_BUILDING_COUNT];
+        }
+
+        public static void ClearCacheBuildingName(ushort buildingID)
+        {
+            m_cache[(int)BuildingName][buildingID] = null;
+            m_cacheUpper[(int)BuildingName][buildingID] = null;
+        }
+
         public enum CacheArrayTypes
         {
             FullStreetName,
@@ -82,6 +97,7 @@ namespace Klyte.WriteTheSigns.Utils
             Parks,
             FullStreetNameAbbreviation,
             SuffixStreetNameAbbreviation,
+            BuildingName
         }
 
 
@@ -96,8 +112,8 @@ namespace Klyte.WriteTheSigns.Utils
                 CacheArrayTypes.StreetQualifier => UpdateMeshStreetQualifier(refId, ref (allCaps ? m_cacheUpper : m_cache)[(int)type][refId], prefix, suffix, allCaps, false, primaryFont, overrideFont),
                 CacheArrayTypes.SuffixStreetNameAbbreviation => UpdateMeshStreetSuffix(refId, ref (allCaps ? m_cacheUpper : m_cache)[(int)type][refId], prefix, suffix, allCaps, true, primaryFont, overrideFont),
                 CacheArrayTypes.FullStreetNameAbbreviation => UpdateMeshFullNameStreet(refId, ref (allCaps ? m_cacheUpper : m_cache)[(int)type][refId], prefix, suffix, allCaps, true, primaryFont, overrideFont),
+                CacheArrayTypes.BuildingName => UpdateMeshBuildingName(refId, ref (allCaps ? m_cacheUpper : m_cache)[(int)type][refId], prefix, suffix, allCaps, false, primaryFont, overrideFont),
                 _ => null
-
             };
         }
 
@@ -105,7 +121,7 @@ namespace Klyte.WriteTheSigns.Utils
         {
             if (name == null)
             {
-                name = WTSHookable.GetStreetFullName(idx);
+                name = WTSHookable.GetStreetFullName(idx) ?? "";
                 if (applyAbbreviations)
                 {
                     name = WTSUtils.ApplyAbbreviations(name);
@@ -158,6 +174,18 @@ namespace Klyte.WriteTheSigns.Utils
             }
             return GetTextData(name, prefix, suffix, primaryFont, overrideFont);
         }
+        public static BasicRenderInformation UpdateMeshBuildingName(ushort buildingId, ref string name, string prefix, string suffix, bool allCaps, bool applyAbbreviations, DynamicSpriteFont primaryFont, string overrideFont)
+        {
+            if (name == null)
+            {
+                name = BuildingManager.instance.GetBuildingName(buildingId, InstanceID.Empty) ?? "";
+                if (allCaps)
+                {
+                    name = name?.ToUpper();
+                }
+            }
+            return GetTextData(name, prefix, suffix, primaryFont, overrideFont);
+        }
         public static BasicRenderInformation UpdateMeshPark(ushort parkId, ref string name, string prefix, string suffix, bool allCaps, bool applyAbbreviations, DynamicSpriteFont primaryFont, string overrideFont)
         {
             if (name == null)
@@ -199,8 +227,8 @@ namespace Klyte.WriteTheSigns.Utils
         }
 
         public static Matrix4x4 RenderProp(ushort refId, float refAngleRad, RenderManager.CameraInfo cameraInfo,
-                                    PropInfo propInfo, Vector3 position, Vector4 dataVector, int idx,
-                                    Vector3 rotation, Vector3 scale, out bool rendered, InstanceID propRenderID2)
+                                    PropInfo propInfo, Color propColor, Vector3 position, Vector4 dataVector, int idx,
+                                    Vector3 rotation, Vector3 scale, int layerMask, out bool rendered, InstanceID propRenderID2)
         {
             rendered = false;
             var randomizer = new Randomizer((refId << 6) | (idx + 32));
@@ -209,16 +237,15 @@ namespace Klyte.WriteTheSigns.Utils
             if (propInfo != null)
             {
                 propInfo = propInfo.GetVariation(ref randomizer);
-                Color color = propInfo.m_color0;
                 if (cameraInfo.CheckRenderDistance(position, propInfo.m_maxRenderDistance * scale.sqrMagnitude))
                 {
                     int oldLayerMask = cameraInfo.m_layerMask;
                     float oldRenderDist = propInfo.m_lodRenderDistance;
                     propInfo.m_lodRenderDistance *= scale.sqrMagnitude;
-                    cameraInfo.m_layerMask = 0x7FFFFFFF;
+                    cameraInfo.m_layerMask = layerMask;
                     try
                     {
-                        PropInstance.RenderInstance(cameraInfo, propInfo, propRenderID2, matrix, position, scale.y, refAngleRad + (rotation.y * Mathf.Deg2Rad), color, dataVector, true);
+                        PropInstance.RenderInstance(cameraInfo, propInfo, propRenderID2, matrix, position, scale.y, refAngleRad + (rotation.y * Mathf.Deg2Rad), propColor, dataVector, true);
                     }
                     finally
                     {

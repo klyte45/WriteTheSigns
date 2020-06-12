@@ -89,9 +89,9 @@ namespace Klyte.WriteTheSigns.UI
             }
             else
             {
-                var sourceMatrix = Matrix4x4.Inverse(WTSPropRenderingRules.CalculateTextMatrix(m_defaultInstance, descriptor.m_textDescriptors[referenceIdx], WTSPropRenderingRules.GetTextMesh(FontServer.instance[WTSController.DEFAULT_FONT_KEY], descriptor.m_textDescriptors[referenceIdx], 0, 0, referenceIdx, m_defaultInstance), true).FirstOrDefault());
+                var sourceMatrix = Matrix4x4.Inverse(WTSPropRenderingRules.CalculateTextMatrix(m_defaultInstance, descriptor.m_textDescriptors[referenceIdx], WTSPropRenderingRules.GetTextMesh(FontServer.instance[WTSController.DEFAULT_FONT_KEY], descriptor.m_textDescriptors[referenceIdx], 0, 0, referenceIdx, m_defaultInstance, descriptor), true).FirstOrDefault());
                 float regularMagn = info.m_mesh.bounds.extents.magnitude / WTSPropRenderingRules.SCALING_FACTOR;
-                Vector3 textExt = WTSPropRenderingRules.GetTextMesh(FontServer.instance[descriptor.FontName] ?? FontServer.instance[WTSController.DEFAULT_FONT_KEY], descriptor.m_textDescriptors[referenceIdx], 0, 0, referenceIdx, m_defaultInstance)?.m_mesh?.bounds.extents ?? default;
+                Vector3 textExt = WTSPropRenderingRules.GetTextMesh(FontServer.instance[descriptor.FontName] ?? FontServer.instance[WTSController.DEFAULT_FONT_KEY], descriptor.m_textDescriptors[referenceIdx], 0, 0, referenceIdx, m_defaultInstance, descriptor)?.m_mesh?.bounds.extents ?? default;
 
                 if (descriptor.m_textDescriptors[referenceIdx].m_maxWidthMeters > 0)
                 {
@@ -112,7 +112,7 @@ namespace Klyte.WriteTheSigns.UI
             PropManager instance = Singleton<PropManager>.instance;
             MaterialPropertyBlock materialBlock = instance.m_materialBlock;
             materialBlock.Clear();
-            materialBlock.SetColor(instance.ID_Color, WTSPropRenderingRules.GetColor(0, 0, 0, m_defaultInstance) ?? Color.white);
+            materialBlock.SetColor(instance.ID_Color, WTSPropRenderingRules.GetColor(0, 0, 0, m_defaultInstance, descriptor) ?? Color.white);
             if (info.m_rollLocation != null)
             {
                 info.m_material.SetVectorArray(instance.ID_RollLocation, info.m_rollLocation);
@@ -125,7 +125,7 @@ namespace Klyte.WriteTheSigns.UI
             m_defaultInstance.Descriptor = descriptor;
             for (ushort i = 0; i < descriptor.m_textDescriptors.Length; i++)
             {
-                WTSPropRenderingRules.RenderTextMesh(0, 0, i, m_defaultInstance, propMatrix, ref descriptor.m_textDescriptors[i], m_block, FontServer.instance[descriptor.FontName ?? WTSController.DEFAULT_FONT_KEY], m_camera);
+                WTSPropRenderingRules.RenderTextMesh(0, 0, i, m_defaultInstance, propMatrix, descriptor, ref descriptor.m_textDescriptors[i], m_block, FontServer.instance[descriptor.FontName ?? WTSController.DEFAULT_FONT_KEY], m_camera);
             }
 
 

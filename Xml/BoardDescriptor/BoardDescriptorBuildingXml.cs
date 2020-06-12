@@ -1,11 +1,12 @@
-﻿using System.Xml;
+﻿using Klyte.Commons.Interfaces;
+using System.Xml;
 using System.Xml.Serialization;
 using UnityEngine;
 
 namespace Klyte.WriteTheSigns.Xml
 {
 
-    public class BoardDescriptorBuildingXml : BoardInstanceXml
+    public class BoardInstanceBuildingXml : BoardInstanceXml, ILibable
 
     {
         [XmlArray("platformOrder")]
@@ -31,14 +32,20 @@ namespace Klyte.WriteTheSigns.Xml
         public int m_arrayRepeatTimes = 0;
 
         [XmlAttribute("coloringMode")]
-        public ColoringMode? ColorModeProp
+        public ColoringMode ColorModeProp
         {
             get => m_colorMode;
             set => m_colorMode = value;
         }
 
         [XmlIgnore]
-        private ColoringMode? m_colorMode;
+        private ColoringMode m_colorMode = ColoringMode.Fixed;
+
+        [XmlAttribute("saveName")] public string SaveName { get; set; }
+
+        [XmlAttribute("propLayoutName")]
+        public string PropLayoutName { get; set; }
+
     }
 
     public enum ColoringMode

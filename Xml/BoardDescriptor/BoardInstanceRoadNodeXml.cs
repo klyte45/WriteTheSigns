@@ -27,7 +27,7 @@ namespace Klyte.WriteTheSigns.Xml
         private BoardDescriptorGeneralXml m_descriptor;
 
         [XmlIgnore]
-        public override BoardDescriptorGeneralXml Descriptor
+        public  BoardDescriptorGeneralXml Descriptor
         {
             get {
                 if (m_descriptor == null && m_propLayoutName != null)

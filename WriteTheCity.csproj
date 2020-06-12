@@ -188,6 +188,8 @@
     <Compile Include="DynamicFont\src\Utility\BasicRenderInformation.cs" />
     <Compile Include="Libraries\BasicLib.cs" />
     <Compile Include="Libraries\WTSLibContainerRoadCornerRuleList.cs" />
+    <Compile Include="Overrides\BoardGeneration\BuildingAIOverrides.cs" />
+    <Compile Include="Singleton\WTSBuildingPropsSingleton.cs" />
     <Compile Include="Utils\WTSRoadNodeCommons.cs" />
     <Compile Include="Singleton\CacheDestinationRoute.cs" />
     <Compile Include="Overrides\BoardGeneration\RoadNodeOverrides.cs" />
@@ -196,7 +198,7 @@
     <Compile Include="Overrides\BuildingManagerOverrides.cs" />
     <Compile Include="Overrides\DistrictManagerOverrides.cs" />
     <Compile Include="Rendering\TextRenderingClass.cs" />
-    <Compile Include="Rendering\WTCPropRenderingRules.cs" />
+    <Compile Include="Rendering\WTSPropRenderingRules.cs" />
     <Compile Include="Tools\BuildingTool.cs" />
     <Compile Include="UI\Tabs\RoadCornerEditor\WTSRoadCornerEditorDetailTabs.cs" />
     <Compile Include="UI\Tabs\RoadCornerEditor\WTSRoadCornerEditor.cs" />
@@ -208,7 +210,7 @@
     <Compile Include="UI\Tabs\PropEditor\WTSPropLayoutEditorBasics.cs" />
     <Compile Include="UI\Tabs\PropEditor\WTSPropLayoutEditor.cs" />
     <Compile Include="Utils\UITemplateUtils.cs" />
-    <Compile Include="Utils\WTSLineUtils.cs" />
+    <Compile Include="Singleton\WTSBuildingDataCaches.cs" />
     <Compile Include="Utils\PrefabUtils.cs" />
     <Compile Include="Utils\RenderUtils.cs" />
     <Compile Include="Xml\BoardDescriptor\BoardDescriptorBuildingXml.cs" />
@@ -216,6 +218,7 @@
     <Compile Include="Xml\BoardDescriptor\BoardInstanceRoadNodeXml.cs" />
     <Compile Include="Xml\BoardDescriptor\BoardInstanceXml.cs" />
     <Compile Include="Xml\BoardDescriptor\BoardPreviewInstanceXml.cs" />
+    <Compile Include="Xml\Containers\ExportableBuildingGroupDescriptorXml.cs" />
     <Compile Include="Xml\Enums\DestinationReference.cs" />
     <Compile Include="Xml\Enums\RoadQualifierExtractionMode.cs" />
     <Compile Include="Xml\BoardTextDescriptor\BoardTextDescriptorGeneralXml.cs" />

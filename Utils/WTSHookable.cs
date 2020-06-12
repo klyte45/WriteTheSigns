@@ -125,7 +125,7 @@ namespace Klyte.WriteTheSigns.Utils
 
         public static Func<ushort, ushort, string> GetStopName = (ushort stopId, ushort lineId) =>
         {
-            ushort buildingID = WTSLineUtils.GetStopBuilding(stopId, lineId);
+            ushort buildingID = WTSBuildingDataCaches.GetStopBuilding(stopId, lineId);
 
             if (buildingID > 0)
             {

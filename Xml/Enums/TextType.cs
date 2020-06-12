@@ -19,6 +19,7 @@
         StreetCode,
         NextStopLine,
         PrevStopLine,
+        PlatformNumber
     }
 
 

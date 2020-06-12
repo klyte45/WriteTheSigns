@@ -3,6 +3,7 @@ using ColossalFramework.UI;
 using Klyte.Commons.Extensors;
 using Klyte.Commons.Interfaces;
 using Klyte.Commons.Utils;
+using Klyte.WriteTheSigns.Singleton;
 using Klyte.WriteTheSigns.UI;
 using System.IO;
 using System.Reflection;
@@ -20,6 +21,12 @@ namespace Klyte.WriteTheSigns
 
         public override void OnReleased() => base.OnReleased();
 
+        protected override void OnLevelLoadingInternal()
+        {
+            base.OnLevelLoadingInternal();
+            WTSBuildingPropsSingleton.instance.LoadAllBuildingConfigurations();
+        }
+
         public override void TopSettingsUI(UIHelperExtension helper)
         {
 
@@ -29,6 +36,7 @@ namespace Klyte.WriteTheSigns
             AddFolderButton(WTSController.FontFilesPath, group8, "K45_WTS_FONT_FILES_PATH_TITLE");
             group8.AddLabel(Locale.Get("K45_WTS_GET_FILES_GITHUB"));
             group8.AddButton(Locale.Get("K45_WTS_GO_TO_GITHUB"), () => Application.OpenURL("https://github.com/klyte45/WriteTheSignsFiles"));
+            group8.AddButton("TST LOAD", () => WTSBuildingPropsSingleton.instance.LoadAllBuildingConfigurations());
         }
 
         private static void AddFolderButton(string filePath, UIHelperExtension helper, string localeId)

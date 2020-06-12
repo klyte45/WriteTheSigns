@@ -52,9 +52,9 @@ namespace Klyte.WriteTheSigns.Overrides
                     break;
                 }
             }
-            WTSLineUtils.PurgeStopCache(num);
+            WTSBuildingDataCaches.PurgeStopCache(num);
         }
-        public static void AfterRemoveLine(ushort lineID) => WTSLineUtils.PurgeLineCache(lineID);
+        public static void AfterRemoveLine(ushort lineID) => WTSBuildingDataCaches.PurgeLineCache(lineID);
 
         public static void PushIntoStackLine(ushort lineID)
         {

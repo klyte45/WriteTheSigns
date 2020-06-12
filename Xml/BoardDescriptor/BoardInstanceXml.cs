@@ -43,8 +43,6 @@ namespace Klyte.WriteTheSigns.Xml
         public float? ScaleY;
         [XmlAttribute("scaleZ")]
         public float? ScaleZ;
-
-        public virtual BoardDescriptorGeneralXml Descriptor { get; internal set; } = new BoardDescriptorGeneralXml();
     }
 
 }

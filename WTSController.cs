@@ -19,7 +19,7 @@ namespace Klyte.WriteTheSigns
         public RoadSegmentTool RoadSegmentToolInstance => FindObjectOfType<RoadSegmentTool>();
         public BuildingEditorTool BuildingEditorToolInstance => FindObjectOfType<BuildingEditorTool>();
 
-        public WTSRoadPropsSingleton bgRoadNodes => WTSRoadPropsSingleton.instance;
+        public WTSRoadPropsSingleton BgRoadNodes => WTSRoadPropsSingleton.instance;
         public Dictionary<string, Dictionary<string, string>> AbbreviationFiles { get; private set; }
         public FontServer FontServer => FontServer.instance;
 
@@ -29,8 +29,11 @@ namespace Klyte.WriteTheSigns
 
         public static event Action EventOnParkChanged;
 
+        public static event Action<ushort> EventOnBuildingNameChanged;
+
         public static void OnDistrictChanged() => EventOnDistrictChanged?.Invoke();
         public static void OnParkChanged() => EventOnParkChanged?.Invoke();
+        public static void OnBuildingNameChanged(ushort building) => EventOnBuildingNameChanged?.Invoke(building);
 
         public void Awake()
         {
@@ -52,7 +55,13 @@ namespace Klyte.WriteTheSigns
             EventFontsReloadedFromFolder = null;
             EventOnDistrictChanged = null;
         }
-        protected override void StartActions() => ReloadFontsFromPath();
+        protected override void StartActions()
+        {
+            ReloadFontsFromPath();
+            BuildingManager.instance.EventBuildingReleased += WTSBuildingDataCaches.PurgeBuildingCache;
+            BuildingManager.instance.EventBuildingRelocated += WTSBuildingDataCaches.PurgeBuildingCache;
+        }
+
         public static void ReloadFontsFromPath()
         {
             FontServer.instance.ResetCollection();

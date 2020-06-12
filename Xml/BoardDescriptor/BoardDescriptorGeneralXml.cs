@@ -8,8 +8,7 @@ using UnityEngine;
 
 namespace Klyte.WriteTheSigns.Xml
 {
-
-    public class BoardDescriptorGeneralXml : ILibable
+    public class BoardDescriptorGeneralXml : ILibable, IKeyGetter<string>
     {
         [XmlAttribute("propName")]
         public string m_propName;
@@ -56,7 +55,7 @@ namespace Klyte.WriteTheSigns.Xml
         public BoardTextDescriptorGeneralXml[] m_textDescriptors = new BoardTextDescriptorGeneralXml[0];
         private string m_originalSaveName;
 
+        public string GetKeyString() => m_saveName;
     }
-
 
 }

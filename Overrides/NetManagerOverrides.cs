@@ -24,7 +24,7 @@ namespace Klyte.WriteTheSigns.Overrides
             ushort node_ = node;
             new AsyncAction(() => EventNodeChanged?.Invoke(node_)).Execute();
 
-            WTSLineUtils.PurgeStopCache(node);
+            WTSBuildingDataCaches.PurgeStopCache(node);
         }
         private static void OnSegmentCreated(ref ushort segment, ref ushort startNode, ref ushort endNode)
         {
