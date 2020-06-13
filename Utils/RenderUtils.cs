@@ -121,14 +121,21 @@ namespace Klyte.WriteTheSigns.Utils
         {
             if (name == null)
             {
-                name = WTSHookable.GetStreetFullName(idx) ?? "";
-                if (applyAbbreviations)
+                if (idx == 0)
                 {
-                    name = WTSUtils.ApplyAbbreviations(name);
+                    name = "";
                 }
-                if (allCaps)
+                else
                 {
-                    name = name.ToUpper();
+                    name = WTSHookable.GetStreetFullName(idx) ?? "";
+                    if (applyAbbreviations)
+                    {
+                        name = WTSUtils.ApplyAbbreviations(name);
+                    }
+                    if (allCaps)
+                    {
+                        name = name.ToUpper();
+                    }
                 }
                 LogUtils.DoLog($"!GenName {name} for {idx} (UC={allCaps})");
             }
@@ -138,18 +145,25 @@ namespace Klyte.WriteTheSigns.Utils
         {
             if (name == null)
             {
-                name = WTSHookable.GetStreetFullName(idx);
-                if ((NetManager.instance.m_segments.m_buffer[idx].m_flags & NetSegment.Flags.CustomName) == 0)
+                if (idx == 0)
                 {
-                    name = applyAbbreviations ? WTSUtils.ApplyAbbreviations(name.Replace(WTSHookable.GetStreetSuffix(idx), "")) : name.Replace(WTSHookable.GetStreetSuffix(idx), "");
+                    name = "";
                 }
                 else
                 {
-                    name = applyAbbreviations ? WTSUtils.ApplyAbbreviations(name.Replace(WTSHookable.GetStreetSuffixCustom(idx), "")) : name.Replace(WTSHookable.GetStreetSuffixCustom(idx), "");
-                }
-                if (allCaps)
-                {
-                    name = name.ToUpper();
+                    name = WTSHookable.GetStreetFullName(idx);
+                    if ((NetManager.instance.m_segments.m_buffer[idx].m_flags & NetSegment.Flags.CustomName) == 0)
+                    {
+                        name = applyAbbreviations ? WTSUtils.ApplyAbbreviations(name.Replace(WTSHookable.GetStreetSuffix(idx), "")) : name.Replace(WTSHookable.GetStreetSuffix(idx), "");
+                    }
+                    else
+                    {
+                        name = applyAbbreviations ? WTSUtils.ApplyAbbreviations(name.Replace(WTSHookable.GetStreetSuffixCustom(idx), "")) : name.Replace(WTSHookable.GetStreetSuffixCustom(idx), "");
+                    }
+                    if (allCaps)
+                    {
+                        name = name.ToUpper();
+                    }
                 }
                 LogUtils.DoLog($"!GenName {name} for {idx} (UC={allCaps})");
             }
@@ -202,18 +216,25 @@ namespace Klyte.WriteTheSigns.Utils
         {
             if (name == null)
             {
-                LogUtils.DoLog($"!UpdateMeshStreetSuffix {idx} (UC={allCaps})");
-                if ((NetManager.instance.m_segments.m_buffer[idx].m_flags & NetSegment.Flags.CustomName) == 0)
+                if (idx == 0)
                 {
-                    name = applyAbbreviations ? WTSUtils.ApplyAbbreviations(WTSHookable.GetStreetSuffix(idx)) : WTSHookable.GetStreetSuffix(idx);
+                    name = "";
                 }
                 else
                 {
-                    name = applyAbbreviations ? WTSUtils.ApplyAbbreviations(WTSHookable.GetStreetSuffixCustom(idx)) : WTSHookable.GetStreetSuffixCustom(idx);
-                }
-                if (allCaps)
-                {
-                    name = name.ToUpper();
+                    LogUtils.DoLog($"!UpdateMeshStreetSuffix {idx} (UC={allCaps})");
+                    if ((NetManager.instance.m_segments.m_buffer[idx].m_flags & NetSegment.Flags.CustomName) == 0)
+                    {
+                        name = applyAbbreviations ? WTSUtils.ApplyAbbreviations(WTSHookable.GetStreetSuffix(idx)) : WTSHookable.GetStreetSuffix(idx);
+                    }
+                    else
+                    {
+                        name = applyAbbreviations ? WTSUtils.ApplyAbbreviations(WTSHookable.GetStreetSuffixCustom(idx)) : WTSHookable.GetStreetSuffixCustom(idx);
+                    }
+                    if (allCaps)
+                    {
+                        name = name.ToUpper();
+                    }
                 }
             }
             return GetTextData(name, prefix, suffix, primaryFont, overrideFont);

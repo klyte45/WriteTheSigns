@@ -52,9 +52,6 @@ namespace Klyte.WriteTheSigns.Rendering
             {
                TextType.Fixed,
                TextType.OwnName,
-               TextType.StreetPrefix,
-               TextType.StreetSuffix,
-               TextType.StreetNameComplete,
                TextType.LinesSymbols,
                TextType.NextStopLine, // Next Station Line 1
                TextType.PrevStopLine, // Previous Station Line 2
