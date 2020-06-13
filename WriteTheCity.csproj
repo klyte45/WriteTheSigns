@@ -189,6 +189,7 @@
     <Compile Include="Libraries\BasicLib.cs" />
     <Compile Include="Libraries\WTSLibContainerRoadCornerRuleList.cs" />
     <Compile Include="Overrides\BoardGeneration\BuildingAIOverrides.cs" />
+    <Compile Include="Overrides\TransportLineOverrides.cs" />
     <Compile Include="Singleton\WTSBuildingPropsSingleton.cs" />
     <Compile Include="Utils\WTSRoadNodeCommons.cs" />
     <Compile Include="Singleton\CacheDestinationRoute.cs" />

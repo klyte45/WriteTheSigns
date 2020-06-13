@@ -27,7 +27,7 @@ namespace Klyte.WriteTheSigns.Singleton
         public WTSBuildingsData Data => WTSBuildingsData.Instance;
         public SimpleXmlDictionary<string, ExportableBuildingGroupDescriptorXml> GlobalDescriptors => WTSBuildingsData.Instance.GlobalDescriptors;
 
-        private readonly StopInformation[][][] m_platformToLine = new StopInformation[BuildingManager.MAX_BUILDING_COUNT][][];
+        internal readonly StopInformation[][][] m_platformToLine = new StopInformation[BuildingManager.MAX_BUILDING_COUNT][][];
         private ulong m_lastUpdateLines = SimulationManager.instance.m_currentTickIndex;
         private readonly ulong[] m_buildingLastUpdateLines = new ulong[BuildingManager.MAX_BUILDING_COUNT];
         private ulong[] m_lastDrawBuilding = new ulong[BuildingManager.MAX_BUILDING_COUNT];
@@ -180,7 +180,7 @@ namespace Klyte.WriteTheSigns.Singleton
             if (m_platformToLine[buildingID] == null || (m_buildingLastUpdateLines[buildingID] != m_lastUpdateLines && m_platformToLine[buildingID].Length > 0))
             {
                 NetManager nmInstance = NetManager.instance;
-                LogUtils.DoLog("--------------- UpdateLinesBuilding");
+                LogUtils.DoLog($"--------------- UpdateLinesBuilding {buildingID}");
                 m_platformToLine[buildingID] = null;
                 if (!m_buildingStopsDescriptor.ContainsKey(refName))
                 {
@@ -239,7 +239,7 @@ namespace Klyte.WriteTheSigns.Singleton
 
                         if (CommonProperties.DebugMode)
                         {
-                            LogUtils.DoLog($"[{InstanceManager.instance.GetName(new InstanceID { Building = buildingID })}] nearStops = [\n\t\t{string.Join(",\n\t\t", nearStops.Select(x => $"[{x} => {nmInstance.m_nodes.m_buffer[x].m_position} (TL { nmInstance.m_nodes.m_buffer[x].m_transportLine} => [{TransportManager.instance.m_lines.m_buffer[nmInstance.m_nodes.m_buffer[x].m_transportLine].Info.m_transportType}-{TransportManager.instance.m_lines.m_buffer[nmInstance.m_nodes.m_buffer[x].m_transportLine].m_lineNumber}] {InstanceManager.instance.GetName(new InstanceID { TransportLine = nmInstance.m_nodes.m_buffer[x].m_transportLine })} )]").ToArray())}\n\t] ");
+                            LogUtils.DoLog($"[{InstanceManager.instance.GetName(new InstanceID { Building = buildingID })}] nearStops = [\n\t\t{string.Join(",\n\t\t", nearStops.Select(x => $"[{x} => {nmInstance.m_nodes.m_buffer[x].m_position} (TL { nmInstance.m_nodes.m_buffer[x].m_transportLine} => [{TransportManager.instance.m_lines.m_buffer[nmInstance.m_nodes.m_buffer[x].m_transportLine].Info.m_transportType}-{TransportManager.instance.m_lines.m_buffer[nmInstance.m_nodes.m_buffer[x].m_transportLine].m_lineNumber}] {TransportManager.instance.GetLineName(nmInstance.m_nodes.m_buffer[x].m_transportLine)} )]").ToArray())}\n\t] ");
                         }
                         string buildingName = refName;
                         for (int i = 0; i < m_buildingStopsDescriptor[buildingName].Length; i++)
@@ -247,7 +247,7 @@ namespace Klyte.WriteTheSigns.Singleton
                             Matrix4x4 inverseMatrix = refMatrix.inverse;
                             if (inverseMatrix == default)
                             {
-                                m_platformToLine[buildingID] = null;
+                                m_platformToLine[buildingID] = new StopInformation[0][];
                                 LogUtils.DoLog("--------------- end UpdateLinesBuilding - inverseMatrix is zero");
                                 return;
                             }
@@ -263,69 +263,91 @@ namespace Klyte.WriteTheSigns.Singleton
                             }
                             float angleBuilding = data.m_angle * Mathf.Rad2Deg;
                             m_platformToLine[buildingID][i] = nearStops
-                                .Where(x =>
+                                .Where(stopId =>
                                 {
-                                    Vector3 relPos = inverseMatrix.MultiplyPoint(nmInstance.m_nodes.m_buffer[x].m_position);
+                                    Vector3 relPos = inverseMatrix.MultiplyPoint(nmInstance.m_nodes.m_buffer[stopId].m_position);
                                     float dist = m_buildingStopsDescriptor[buildingName][i].platformLine.DistanceSqr(relPos, out _);
                                     float diffY = Mathf.Abs(relPos.y - m_buildingStopsDescriptor[buildingName][i].platformLine.Position(0.5f).y);
                                     if (CommonProperties.DebugMode)
                                     {
-                                        LogUtils.DoLog($"stop {x} => relPos = {relPos}; dist = {dist}; diffY = {diffY}");
+                                        LogUtils.DoLog($"stop {stopId} => relPos = {relPos}; dist = {dist}; diffY = {diffY}");
                                     }
 
                                     return dist < maxDist && diffY < maxHeightDiff;
                                 })
-                                .Select(x =>
+                                .Select(stopId =>
                                 {
                                     var result = new StopInformation
                                     {
-                                        m_lineId = nmInstance.m_nodes.m_buffer[x].m_transportLine,
-                                        m_stopId = x
+                                        m_lineId = nmInstance.m_nodes.m_buffer[stopId].m_transportLine,
+                                        m_stopId = stopId
                                     };
-                                    result.m_destinationId = FindDestinationStop(x, result.m_lineId);
+                                    result.m_destinationId = FindDestinationStop(stopId, result.m_lineId);
                                     float anglePlat = (m_buildingStopsDescriptor[buildingName][i].directionPath.GetAngleXZ() + 360 + angleBuilding) % 360;
 
                                     ref NetSegment[] segBuffer = ref nmInstance.m_segments.m_buffer;
-                                    for (int j = 0; j < 8; j++)
+
+                                    ushort segmentPrev = nmInstance.m_nodes.m_buffer[stopId].GetSegment(0);
+                                    ushort segmentNext = nmInstance.m_nodes.m_buffer[stopId].GetSegment(1);
+                                    if (segmentPrev != 0 && segmentNext != 0)
                                     {
-                                        ushort segment = nmInstance.m_nodes.m_buffer[x].GetSegment(j);
-                                        if (segment == 0)
+                                        ushort nextStop = TransportLine.GetNextStop(stopId);
+                                        if (segBuffer[segmentPrev].GetOtherNode(stopId) == nextStop)
                                         {
-                                            continue;
+                                            ushort next = segmentPrev;
+                                            segmentPrev = segmentNext;
+                                            segmentNext = next;
                                         }
-                                        float angleDir;
-                                        PathUnit.Position path1;
-                                        PathUnit.Position path2;
-                                        if (segBuffer[segment].m_startNode == x)
+                                        float angleDirPrev, angleDirNext;
+                                        PathUnit.Position pathPrev;
+                                        PathUnit.Position pathnext;
+                                        if (segBuffer[segmentPrev].m_startNode == stopId)
                                         {
-                                            path1 = PathManager.instance.m_pathUnits.m_buffer[nmInstance.m_segments.m_buffer[segment].m_path].m_position00;
-                                            path2 = PathManager.instance.m_pathUnits.m_buffer[nmInstance.m_segments.m_buffer[segment].m_path].m_position01;
+                                            pathPrev = PathManager.instance.m_pathUnits.m_buffer[nmInstance.m_segments.m_buffer[segmentPrev].m_path].m_position01;
                                         }
                                         else
                                         {
-                                            PathManager.instance.m_pathUnits.m_buffer[nmInstance.m_segments.m_buffer[segment].m_path].GetLast2Positions(out path2, out path1);
-
+                                            PathManager.instance.m_pathUnits.m_buffer[nmInstance.m_segments.m_buffer[segmentPrev].m_path].GetLast2Positions(out pathPrev, out _);
                                         }
-                                        angleDir = ((segBuffer[path2.m_segment].GetBezier().Position(path2.m_offset / 255f) - segBuffer[path1.m_segment].GetBezier().Position(path1.m_offset / 255f)).GetAngleXZ() + 360) % 360;
-                                        float diff = Mathf.Abs(angleDir - anglePlat);
+                                        if (segBuffer[segmentNext].m_startNode == stopId)
+                                        {
+                                            pathnext = PathManager.instance.m_pathUnits.m_buffer[nmInstance.m_segments.m_buffer[segmentNext].m_path].m_position01;
+                                        }
+                                        else
+                                        {
+                                            PathManager.instance.m_pathUnits.m_buffer[nmInstance.m_segments.m_buffer[segmentPrev].m_path].GetLast2Positions(out pathnext, out _);
+                                        }
+                                        angleDirPrev = ((segBuffer[pathPrev.m_segment].GetBezier().Position(pathPrev.m_offset / 255f) - nmInstance.m_nodes.m_buffer[stopId].m_position).GetAngleXZ() + 360) % 360;
+                                        angleDirNext = ((segBuffer[pathnext.m_segment].GetBezier().Position(pathnext.m_offset / 255f) - nmInstance.m_nodes.m_buffer[stopId].m_position).GetAngleXZ() + 360) % 360;
+                                        float diff = Mathf.Abs(angleDirPrev - angleDirNext);
+                                        float diffPlat = Mathf.Abs(anglePlat - ((angleDirPrev + angleDirNext) / 2)) % 180;
                                         if (CommonProperties.DebugMode)
                                         {
-                                            LogUtils.DoLog($"ANGLE COMPARISON: diff = {diff} | PLAT = {anglePlat} | SEG = {nmInstance.m_segments.m_buffer[segment].m_startDirection} ({angleDir}) ({buildingName}=>  P[{i}] | L = {nmInstance.m_nodes.m_buffer[x].m_transportLine} )");
+                                            LogUtils.DoLog($"ANGLE COMPARISON: diff = {diff} | diffPlat = {diffPlat} | PLAT = {anglePlat} | DIR IN = {angleDirPrev} | DIR OUT = {angleDirNext} | ({buildingName} =>  P[{i}] | L = {nmInstance.m_nodes.m_buffer[stopId].m_transportLine} )");
                                         }
 
-                                        if (diff > 90 && diff < 270)
+                                        switch (GetPathType(angleDirPrev, anglePlat, angleDirNext))
                                         {
-                                            result.m_previousStopId = segBuffer[segment].GetOtherNode(x);
+                                            case PathType.FORWARD:
+                                                result.m_nextStopId = nextStop;
+                                                result.m_previousStopId = TransportLine.GetPrevStop(stopId);
+                                                break;
+                                            case PathType.BACKWARD_FORWARD:
+                                                result.m_nextStopId = nextStop;
+                                                break;
+                                            case PathType.FORWARD_BACKWARD:
+                                                result.m_previousStopId = nextStop;
+                                                break;
+                                            case PathType.BACKWARD:
+                                                result.m_previousStopId = nextStop;
+                                                result.m_nextStopId = TransportLine.GetPrevStop(stopId);
+                                                break;
                                         }
-                                        else
-                                        {
-                                            result.m_nextStopId = segBuffer[segment].GetOtherNode(x);
-                                        }
-                                    }
 
-                                    if (result.m_destinationId == 0)
-                                    {
-                                        result.m_destinationId = result.m_nextStopId;
+                                        if (result.m_destinationId == 0)
+                                        {
+                                            result.m_destinationId = nextStop;
+                                        }
                                     }
                                     return result;
                                 }).ToArray();
@@ -337,8 +359,25 @@ namespace Klyte.WriteTheSigns.Singleton
                     }
                 }
                 m_buildingLastUpdateLines[buildingID] = m_lastUpdateLines;
-                LogUtils.DoLog("--------------- end UpdateLinesBuilding");
+                LogUtils.DoLog($"--------------- end UpdateLinesBuilding {buildingID}");
             }
+        }
+
+        protected PathType GetPathType(float angleIn, float anglePass, float angleOut)
+        {
+            float Δin = (anglePass - angleIn);
+            float Δout = (angleOut - anglePass);
+            bool inFw = (Δin > 0) == (Math.Abs(Δin) < 180);
+            bool outFw = (Δout > 0) == (Math.Abs(Δout) < 180);
+            return (PathType)((inFw ? 0 : 1) + (outFw ? 0 : 2));
+        }
+
+        protected enum PathType
+        {
+            FORWARD,
+            BACKWARD_FORWARD,
+            FORWARD_BACKWARD,
+            BACKWARD,
         }
 
 
@@ -382,7 +421,7 @@ namespace Klyte.WriteTheSigns.Singleton
         {
             if (m_allowedTypesNextPreviousStations.Contains(TransportManager.instance.m_lines.m_buffer[NetManager.instance.m_nodes.m_buffer[stopId].m_transportLine].Info.m_transportType))
             {
-                ushort prevStop = 0;
+                ushort prevStop;
                 ushort curStop = stopId;
                 ushort nextStop = TransportLine.GetNextStop(curStop);
                 int stopCount = 0;
@@ -568,5 +607,6 @@ namespace Klyte.WriteTheSigns.Singleton
                 throw new Exception("The file wasn't recognized as a valid descriptor!");
             }
         }
+        public void MarkLinesDirty() => m_lastUpdateLines = SimulationManager.instance.m_currentTickIndex;
     }
 }

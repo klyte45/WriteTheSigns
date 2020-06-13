@@ -8,7 +8,6 @@ namespace Klyte.WriteTheSigns.Xml
     {
         public class BoardBunchContainerBuilding : IBoardBunchContainer
         {
-            public StopInformation[][] m_platformToLine;
             public uint m_linesUpdateFrame;
             public PropInfo m_cachedProp;
 

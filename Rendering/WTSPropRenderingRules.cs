@@ -240,7 +240,7 @@ namespace Klyte.WriteTheSigns.Rendering
                     case ColoringMode.Fixed:
                         return propLayout.FixedColor;
                     case ColoringMode.ByPlatform:
-                        StopInformation stop = GetTargetStopInfo(buildingDescriptor, ref WTSBuildingsData.Instance.BoardsContainers[refId, 0, 0][boardIdx]);
+                        StopInformation stop = GetTargetStopInfo(buildingDescriptor, refId);
                         if (stop.m_lineId != 0)
                         {
                             return TransportManager.instance.GetLineColor(stop.m_lineId);
@@ -357,9 +357,9 @@ namespace Klyte.WriteTheSigns.Rendering
                 {
                     case TextType.Fixed: return RenderUtils.GetTextData(textDescriptor.m_fixedText ?? "", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont ?? propLayout.FontName);
                     case TextType.OwnName: return RenderUtils.GetFromCacheArray(refID, textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, RenderUtils.CacheArrayTypes.BuildingName, baseFont, textDescriptor.m_overrideFont ?? propLayout.FontName);
-                    case TextType.NextStopLine: return RenderUtils.GetFromCacheArray(GetTargetStopInfo(buildingDescritpor, ref data).NextStopBuildingId, textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, RenderUtils.CacheArrayTypes.BuildingName, baseFont, textDescriptor.m_overrideFont ?? propLayout.FontName);
-                    case TextType.PrevStopLine: return RenderUtils.GetFromCacheArray(GetTargetStopInfo(buildingDescritpor, ref data).PrevStopBuildingId, textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, RenderUtils.CacheArrayTypes.BuildingName, baseFont, textDescriptor.m_overrideFont ?? propLayout.FontName);
-                    case TextType.LastStopLine: return RenderUtils.GetFromCacheArray(GetTargetStopInfo(buildingDescritpor, ref data).DestinationBuildingId, textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, RenderUtils.CacheArrayTypes.BuildingName, baseFont, textDescriptor.m_overrideFont ?? propLayout.FontName);
+                    case TextType.NextStopLine: return RenderUtils.GetFromCacheArray(GetTargetStopInfo(buildingDescritpor, refID).NextStopBuildingId, textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, RenderUtils.CacheArrayTypes.BuildingName, baseFont, textDescriptor.m_overrideFont ?? propLayout.FontName);
+                    case TextType.PrevStopLine: return RenderUtils.GetFromCacheArray(GetTargetStopInfo(buildingDescritpor, refID).PrevStopBuildingId, textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, RenderUtils.CacheArrayTypes.BuildingName, baseFont, textDescriptor.m_overrideFont ?? propLayout.FontName);
+                    case TextType.LastStopLine: return RenderUtils.GetFromCacheArray(GetTargetStopInfo(buildingDescritpor, refID).DestinationBuildingId, textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, RenderUtils.CacheArrayTypes.BuildingName, baseFont, textDescriptor.m_overrideFont ?? propLayout.FontName);
                     case TextType.StreetPrefix: return RenderUtils.GetFromCacheArray(WTSBuildingDataCaches.GetBuildingMainAccessSegment(refID), textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, RenderUtils.CacheArrayTypes.SuffixStreetNameAbbreviation, baseFont, textDescriptor.m_overrideFont ?? propLayout.FontName);
                     case TextType.StreetSuffix: return RenderUtils.GetFromCacheArray(WTSBuildingDataCaches.GetBuildingMainAccessSegment(refID), textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, RenderUtils.CacheArrayTypes.StreetQualifier, baseFont, textDescriptor.m_overrideFont ?? propLayout.FontName);
                     case TextType.StreetNameComplete: return RenderUtils.GetFromCacheArray(WTSBuildingDataCaches.GetBuildingMainAccessSegment(refID), textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, RenderUtils.CacheArrayTypes.FullStreetNameAbbreviation, baseFont, textDescriptor.m_overrideFont ?? propLayout.FontName);
@@ -467,13 +467,13 @@ namespace Klyte.WriteTheSigns.Rendering
         }
 
 
-        private static StopInformation GetTargetStopInfo(BoardInstanceBuildingXml descriptor, ref BoardBunchContainerBuilding cache)
+        private static StopInformation GetTargetStopInfo(BoardInstanceBuildingXml descriptor, ushort buildingId)
         {
             foreach (int platform in descriptor.m_platforms)
             {
-                if (cache.m_platformToLine != null && cache.m_platformToLine.ElementAtOrDefault(platform) != null)
+                if (WTSBuildingPropsSingleton.instance.m_platformToLine[buildingId] != null && WTSBuildingPropsSingleton.instance.m_platformToLine[buildingId].ElementAtOrDefault(platform)?.Length > 0)
                 {
-                    StopInformation line = cache.m_platformToLine[platform].ElementAtOrDefault(0);
+                    StopInformation line = WTSBuildingPropsSingleton.instance.m_platformToLine[buildingId][platform].ElementAtOrDefault(0);
                     if (line.m_lineId != 0)
                     {
                         return line;
