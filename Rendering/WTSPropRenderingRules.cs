@@ -1,4 +1,5 @@
 ﻿using ColossalFramework;
+using ColossalFramework.Math;
 using ColossalFramework.UI;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Data;
@@ -7,6 +8,7 @@ using Klyte.WriteTheSigns.Utils;
 using Klyte.WriteTheSigns.Xml;
 using SpriteFontPlus;
 using SpriteFontPlus.Utility;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -106,7 +108,7 @@ namespace Klyte.WriteTheSigns.Rendering
                     }
                     if (propInfo.m_material.shader == WTSController.DISALLOWED_SHADER_PROP)
                     {
-                        propInfo.m_material.shader = WTSController.DEFAULT_SHADER_TEXT;
+                        propInfo.m_material.shader = WTSController.REPLACEMENT_SHADER_PROP;
                     }
                 }
             }
@@ -118,7 +120,7 @@ namespace Klyte.WriteTheSigns.Rendering
         }
 
 
-        public static void RenderTextMesh(ushort refID, int boardIdx, int secIdx, BoardInstanceXml descriptor, Matrix4x4 propMatrix, BoardDescriptorGeneralXml propLayout, ref BoardTextDescriptorGeneralXml textDescriptor, MaterialPropertyBlock materialPropertyBlock, DynamicSpriteFont baseFont, Camera targetCamera = null)
+        public static void RenderTextMesh(ushort refID, int boardIdx, int secIdx, BoardInstanceXml descriptor, Matrix4x4 propMatrix, BoardDescriptorGeneralXml propLayout, ref BoardTextDescriptorGeneralXml textDescriptor, MaterialPropertyBlock materialPropertyBlock, DynamicSpriteFont baseFont, Camera targetCamera = null, Shader overrideShader = null)
         {
             BasicRenderInformation renderInfo = GetTextMesh(baseFont, textDescriptor, refID, boardIdx, secIdx, descriptor, propLayout);
             if (renderInfo?.m_mesh == null || renderInfo?.m_generatedMaterial == null)
@@ -147,25 +149,32 @@ namespace Klyte.WriteTheSigns.Rendering
                 materialPropertyBlock.SetColor(SHADER_PROP_COLOR2, colorToSet);
                 materialPropertyBlock.SetColor(SHADER_PROP_COLOR3, colorToSet);
 
+                var objectIndex = new Vector4();
+
                 //materialPropertyBlock.SetColor(m_shaderPropEmissive, Color.white * (SimulationManager.instance.m_isNightTime ? textDescriptor.m_nightEmissiveMultiplier : textDescriptor.m_dayEmissiveMultiplier));
-                Material targetMaterial;
+                Material targetMaterial = renderInfo.m_generatedMaterial;
                 switch (textDescriptor.MaterialType)
                 {
                     default:
                     case FontStashSharp.MaterialType.OPAQUE:
-                        targetMaterial = renderInfo.m_generatedMaterial;
+                        objectIndex.z = 0;
                         break;
                     case FontStashSharp.MaterialType.DAYNIGHT:
-                        targetMaterial = renderInfo.m_generatedMaterialDayNight;
+                        var randomizer = new Randomizer((refID << 8) + (boardIdx << 2) + secIdx);
+                        float num = m_daynightOffTime + (randomizer.Int32(100000u) * 1E-05f);
+                        objectIndex.z = MathUtils.SmoothStep(num + 0.01f, num - 0.01f, Singleton<RenderManager>.instance.lightSystem.DayLightIntensity);
                         break;
                     case FontStashSharp.MaterialType.BRIGHT:
-                        targetMaterial = renderInfo.m_generatedMaterialBright;
+                        objectIndex.z = 1;
                         break;
                 }
-                targetMaterial.shader = WTSController.DEFAULT_SHADER_TEXT;
+                materialPropertyBlock.SetVector(PropManager.instance.ID_ObjectIndex, objectIndex);
+                targetMaterial.shader = overrideShader ?? WTSController.DEFAULT_SHADER_TEXT;
                 Graphics.DrawMesh(renderInfo.m_mesh, matrix, targetMaterial, 10, targetCamera, 0, materialPropertyBlock, false);
             }
         }
+
+        private static readonly float m_daynightOffTime = 6 * Convert.ToSingle(Math.Pow(Convert.ToDouble((6 - (12 / 2.5)) / 6), Convert.ToDouble(1 / 1.09)));
 
         internal static List<Matrix4x4> CalculateTextMatrix(BoardInstanceXml instance, BoardTextDescriptorGeneralXml textDescriptor, BasicRenderInformation renderInfo, bool centerReference = false)
         {

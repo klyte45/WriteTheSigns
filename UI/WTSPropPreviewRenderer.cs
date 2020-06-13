@@ -70,11 +70,6 @@ namespace Klyte.WriteTheSigns.UI
                 DayNightProperties.instance.moonLightSource.enabled = false;
             }
 
-            if (info.m_material.shader == WTSController.DISALLOWED_SHADER_PROP)
-            {
-                info.m_material.shader = WTSController.DEFAULT_SHADER_TEXT;
-            }
-
             m_defaultInstance.Descriptor = descriptor;
             m_defaultInstance.m_overrideText = overrideText;
 
@@ -120,12 +115,17 @@ namespace Klyte.WriteTheSigns.UI
             }
             PropManager propManager = instance;
             propManager.m_drawCallData.m_defaultCalls += 1;
+            if (info.m_material.shader == WTSController.DISALLOWED_SHADER_PROP)
+            {
+                info.m_material.shader = WTSController.REPLACEMENT_SHADER_PROP;
+            }
+
             Graphics.DrawMesh(info.m_mesh, propMatrix, info.m_material, info.m_prefabDataLayer, m_camera, 0, materialBlock, false, false, false);
 
             m_defaultInstance.Descriptor = descriptor;
             for (ushort i = 0; i < descriptor.m_textDescriptors.Length; i++)
             {
-                WTSPropRenderingRules.RenderTextMesh(0, 0, i, m_defaultInstance, propMatrix, descriptor, ref descriptor.m_textDescriptors[i], m_block, FontServer.instance[descriptor.FontName ?? WTSController.DEFAULT_FONT_KEY], m_camera);
+                WTSPropRenderingRules.RenderTextMesh(0, 0, i, m_defaultInstance, propMatrix, descriptor, ref descriptor.m_textDescriptors[i], m_block, FontServer.instance[descriptor.FontName ?? WTSController.DEFAULT_FONT_KEY], m_camera, Shader.Find("Custom/Buildings/Building/AnimUV"));
             }
 
 

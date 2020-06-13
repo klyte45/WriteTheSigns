@@ -72,7 +72,13 @@ namespace Klyte.WriteTheSigns.Utils
              switch (TransportManager.instance.m_lines.m_buffer[lineID].Info.m_transportType)
              {
                  case TransportInfo.TransportType.Bus:
+                     lineIcon = LineIconSpriteNames.K45_HexagonIcon;
+                     break;
+                 case TransportInfo.TransportType.Trolleybus:
                      lineIcon = LineIconSpriteNames.K45_OvalIcon;
+                     break;
+                 case TransportInfo.TransportType.Helicopter:
+                     lineIcon = LineIconSpriteNames.K45_S05StarIcon;
                      break;
                  case TransportInfo.TransportType.Metro:
                      lineIcon = LineIconSpriteNames.K45_SquareIcon;
@@ -120,7 +126,7 @@ namespace Klyte.WriteTheSigns.Utils
                      break;
              }
 
-             return Tuple.New(KlyteResourceLoader.GetDefaultSpriteNameFor(lineIcon), lineColor, lineID.ToString());
+             return Tuple.New(KlyteResourceLoader.GetDefaultSpriteNameFor(lineIcon), lineColor, TransportManager.instance.m_lines.m_buffer[lineID].m_lineNumber.ToString());
          };
 
         public static Func<ushort, ushort, string> GetStopName = (ushort stopId, ushort lineId) =>

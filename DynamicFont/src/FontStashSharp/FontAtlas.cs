@@ -31,41 +31,13 @@ namespace FontStashSharp
         {
             get; set;
         }
-        private Material m_material;
-        public Material Material
-        {
-            get {
-                if (m_material == null)
-                {
-                    m_material = new Material(Shader.Find("Custom/Buildings/Building/NoBase"))
-                    {
-                        mainTexture = Texture
-                    };
-                }
-                return m_material;
-            }
-        }
-        private Material m_materialDayNight;
-        public Material MaterialDayNight
-        {
-            get {
-                if (m_materialDayNight == null)
-                {
-                    m_materialDayNight = new Material(Shader.Find("Custom/Buildings/Building/NoBase"))
-                    {
-                        mainTexture = Texture
-                    };
-                }
-                return m_materialDayNight;
-            }
-        }
         private Material m_materialBright;
-        public Material MaterialBright
+        public Material Material
         {
             get {
                 if (m_materialBright == null)
                 {
-                    m_materialBright = new Material(Shader.Find("Custom/Buildings/Building/NoBase"))
+                    m_materialBright = new Material(Shader.Find("Custom/Props/Prop/Default"))
                     {
                         mainTexture = Texture
                     };
@@ -300,23 +272,10 @@ namespace FontStashSharp
             if (IsDirty)
             {
                 Material.mainTexture = Texture;
-                Material.SetTexture("_MainTex", Texture);
                 Texture2D aciTex = Material.GetTexture("_ACIMap") as Texture2D ?? new Texture2D(Texture.width, Texture.height);
-                aciTex.SetPixels(Texture.GetPixels().Select(x => new Color(1 - x.a, 0, 0, 1)).ToArray());
-                aciTex.Apply();
-                Material.SetTexture("_ACIMap", aciTex);
-
-                MaterialDayNight.mainTexture = Texture;
-                aciTex = MaterialDayNight.GetTexture("_ACIMap") as Texture2D ?? new Texture2D(Texture.width, Texture.height);
-                aciTex.SetPixels(Texture.GetPixels().Select(x => new Color(1 - x.a, 0, 0.75f, 1)).ToArray());
-                aciTex.Apply();
-                MaterialDayNight.SetTexture("_ACIMap", aciTex);
-
-                MaterialBright.mainTexture = Texture;
-                aciTex = MaterialBright.GetTexture("_ACIMap") as Texture2D ?? new Texture2D(Texture.width, Texture.height);
                 aciTex.SetPixels(Texture.GetPixels().Select(x => new Color(1 - x.a, 0, 0.49f, 1)).ToArray());
                 aciTex.Apply();
-                MaterialBright.SetTexture("_ACIMap", aciTex);
+                Material.SetTexture("_ACIMap", aciTex);
 
                 IsDirty = false;
             }
