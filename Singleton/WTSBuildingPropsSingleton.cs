@@ -32,9 +32,6 @@ namespace Klyte.WriteTheSigns.Singleton
         private readonly ulong[] m_buildingLastUpdateLines = new ulong[BuildingManager.MAX_BUILDING_COUNT];
         private ulong[] m_lastDrawBuilding = new ulong[BuildingManager.MAX_BUILDING_COUNT];
 
-
-
-
         #region Initialize
         public void Awake()
         {

@@ -29,11 +29,11 @@ namespace Klyte.WriteTheSigns
 
         public static event Action EventOnParkChanged;
 
-        public static event Action<ushort> EventOnBuildingNameChanged;
+        public static event Action EventOnBuildingNameChanged;
 
         public static void OnDistrictChanged() => EventOnDistrictChanged?.Invoke();
         public static void OnParkChanged() => EventOnParkChanged?.Invoke();
-        public static void OnBuildingNameChanged(ushort building) => EventOnBuildingNameChanged?.Invoke(building);
+        public static void OnBuildingNameChanged() => EventOnBuildingNameChanged?.Invoke();
 
         public void Awake()
         {

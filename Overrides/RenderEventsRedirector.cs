@@ -18,6 +18,7 @@ namespace Klyte.WriteTheSigns.Overrides
                 static void RegisterEvent(string eventName, Type adrEventsType, Action action) => adrEventsType.GetEvent(eventName)?.AddEventHandler(null, action);
                 RegisterEvent("EventRoadNamingChange", adrEventsType, new Action(OnNameSeedChanged));
                 RegisterEvent("EventDistrictColorChanged", adrEventsType, new Action(OnDistrictChanged));
+                RegisterEvent("EventBuildingNameStrategyChanged", adrEventsType, new Action(OnBuildingChangeAll));
             }
         }
 
@@ -29,7 +30,7 @@ namespace Klyte.WriteTheSigns.Overrides
             BuildingManager.instance.EventBuildingRelocated += OnBuildingChange;
             BuildingManager.instance.EventBuildingReleased += OnBuildingChange;
             BuildingManager.instance.EventBuildingCreated += OnBuildingChange;
-            WTSController.EventOnBuildingNameChanged += OnBuildingChange;
+            WTSController.EventOnBuildingNameChanged += OnBuildingChangeAll;
         }
         private void OnNameSeedChanged()
         {
@@ -59,6 +60,11 @@ namespace Klyte.WriteTheSigns.Overrides
         {
             LogUtils.DoLog("onBuildingChanged");
             RenderUtils.ClearCacheBuildingName(buildingID);
+        }
+        private void OnBuildingChangeAll()
+        {
+            LogUtils.DoLog("onBuildingChanged");
+            RenderUtils.ClearCacheBuildingName();
         }
         #endregion
 

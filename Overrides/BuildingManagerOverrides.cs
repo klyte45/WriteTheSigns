@@ -16,7 +16,7 @@ namespace Klyte.WriteTheSigns.Overrides
             LogUtils.DoLog("Loading Building Manager Overrides");
             MethodInfo posRename = typeof(WTSController).GetMethod("OnBuildingNameChanged", RedirectorUtils.allFlags);
 
-            RedirectorInstance.AddRedirect(typeof(BuildingManager).GetMethod("SetBuildingName", RedirectorUtils.allFlags), null, posRename);
+            RedirectorInstance.AddRedirect(BuildingManager.instance.SetBuildingName(0, "").GetType().GetMethod("MoveNext", RedirectorUtils.allFlags), null, posRename);
 
 
         }
