@@ -1,5 +1,6 @@
 ﻿using Klyte.Commons.Interfaces;
 using Klyte.Commons.Utils;
+using Klyte.WriteTheSigns.Rendering;
 using Klyte.WriteTheSigns.Singleton;
 using Klyte.WriteTheSigns.Tools;
 using Klyte.WriteTheSigns.Utils;
@@ -19,7 +20,11 @@ namespace Klyte.WriteTheSigns
         public RoadSegmentTool RoadSegmentToolInstance => FindObjectOfType<RoadSegmentTool>();
         public BuildingEditorTool BuildingEditorToolInstance => FindObjectOfType<BuildingEditorTool>();
 
-        public WTSRoadPropsSingleton BgRoadNodes => WTSRoadPropsSingleton.instance;
+        internal WTSTransportLineRenderingRules TransportLineRenderingRules { get; private set; }
+        internal WTSBuildingPropsSingleton BuildingPropsSingleton { get; private set; }
+        internal WTSDestinationSingleton DestinationSingleton { get; private set; }
+
+        public WTSRoadPropsSingleton RoadPropsSingleton { get; private set; }
         public Dictionary<string, Dictionary<string, string>> AbbreviationFiles { get; private set; }
         public FontServer FontServer => FontServer.instance;
 
@@ -33,9 +38,12 @@ namespace Klyte.WriteTheSigns
 
         public static event Action EventOnBuildingNameChanged;
 
+        public static event Action EventOnZeroMarkerChanged;
+
         public static void OnDistrictChanged() => EventOnDistrictChanged?.Invoke();
         public static void OnParkChanged() => EventOnParkChanged?.Invoke();
         public static void OnBuildingNameChanged() => EventOnBuildingNameChanged?.Invoke();
+        public static void OnZeroMarkChanged() => EventOnZeroMarkerChanged?.Invoke();
 
         public void Awake()
         {
@@ -51,7 +59,12 @@ namespace Klyte.WriteTheSigns
             ReloadAbbreviationFiles();
 
             FontServer.Ensure();
+            TransportLineRenderingRules = gameObject.AddComponent<WTSTransportLineRenderingRules>();
+            BuildingPropsSingleton = gameObject.AddComponent<WTSBuildingPropsSingleton>();
+            RoadPropsSingleton = gameObject.AddComponent<WTSRoadPropsSingleton>();
+            DestinationSingleton  = gameObject.AddComponent<WTSDestinationSingleton>();
         }
+
         public void OnDestroy()
         {
             EventFontsReloadedFromFolder = null;

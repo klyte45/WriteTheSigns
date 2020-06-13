@@ -1,6 +1,5 @@
 ﻿using Klyte.Commons.Extensors;
 using Klyte.Commons.Utils;
-using Klyte.WriteTheSigns.Singleton;
 using System.Reflection;
 using static Klyte.Commons.Extensors.RedirectorUtils;
 namespace Klyte.WriteTheSigns.Overrides
@@ -17,7 +16,7 @@ namespace Klyte.WriteTheSigns.Overrides
             #endregion
         }
 
-        public static void DoAutomation() => WTSBuildingPropsSingleton.instance.MarkLinesDirty();
+        public static void DoAutomation() => WriteTheSignsMod.Controller.BuildingPropsSingleton.MarkLinesDirty();
 
     }
 }

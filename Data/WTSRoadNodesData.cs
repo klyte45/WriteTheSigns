@@ -50,7 +50,7 @@ namespace Klyte.WriteTheSigns.Data
         public void ResetCacheDescriptors()
         {
             m_currentDescriptorOrder.ForEach(x => x.ResetCacheDescriptor());
-            WTSRoadPropsSingleton.instance.ResetViews();
+            WriteTheSignsMod.Controller.RoadPropsSingleton.ResetViews();
         }
     }
 

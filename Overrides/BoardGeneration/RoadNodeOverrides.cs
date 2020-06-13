@@ -13,10 +13,10 @@ namespace Klyte.WriteTheSigns.Overrides
             if (adrEventsType != null)
             {
                 static void RegisterEvent(string eventName, Type adrEventsType, Action action) => adrEventsType.GetEvent(eventName)?.AddEventHandler(null, action);
-                RegisterEvent("EventZeroMarkerBuildingChange", adrEventsType, new Action(WTSRoadPropsSingleton.OnZeroMarkChanged));
-                RegisterEvent("EventRoadNamingChange", adrEventsType, new Action(WTSRoadPropsSingleton.OnZeroMarkChanged));
-                RegisterEvent("EventDistrictColorChanged", adrEventsType, new Action(WTSRoadPropsSingleton.OnDistrictChanged));
-                RegisterEvent("EventBuildingNameStrategyChanged", adrEventsType, new Action(WTSRoadPropsSingleton.OnZeroMarkChanged));
+                RegisterEvent("EventZeroMarkerBuildingChange", adrEventsType, new Action(WTSController.OnZeroMarkChanged));
+                RegisterEvent("EventRoadNamingChange", adrEventsType, new Action(WTSController.OnZeroMarkChanged));
+                RegisterEvent("EventDistrictColorChanged", adrEventsType, new Action(WTSController.OnDistrictChanged));
+                RegisterEvent("EventBuildingNameStrategyChanged", adrEventsType, new Action(WTSController.OnBuildingNameChanged));
             }
 
             #region Hooks
@@ -30,8 +30,8 @@ namespace Klyte.WriteTheSigns.Overrides
 
         public static void AfterRenderSegment(RenderManager.CameraInfo cameraInfo, ushort segmentID)
         {
-            WTSRoadPropsSingleton.instance.AfterRenderInstanceImpl(cameraInfo, NetManager.instance.m_segments.m_buffer[segmentID].m_startNode, ref NetManager.instance.m_nodes.m_buffer[NetManager.instance.m_segments.m_buffer[segmentID].m_startNode]);
-            WTSRoadPropsSingleton.instance.AfterRenderInstanceImpl(cameraInfo, NetManager.instance.m_segments.m_buffer[segmentID].m_endNode, ref NetManager.instance.m_nodes.m_buffer[NetManager.instance.m_segments.m_buffer[segmentID].m_endNode]);
+            WriteTheSignsMod.Controller?.RoadPropsSingleton?.AfterRenderInstanceImpl(cameraInfo, NetManager.instance.m_segments.m_buffer[segmentID].m_startNode, ref NetManager.instance.m_nodes.m_buffer[NetManager.instance.m_segments.m_buffer[segmentID].m_startNode]);
+            WriteTheSignsMod.Controller?.RoadPropsSingleton?.AfterRenderInstanceImpl(cameraInfo, NetManager.instance.m_segments.m_buffer[segmentID].m_endNode, ref NetManager.instance.m_nodes.m_buffer[NetManager.instance.m_segments.m_buffer[segmentID].m_endNode]);
         }
     }
 }

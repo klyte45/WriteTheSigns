@@ -16,7 +16,7 @@ using UnityEngine;
 
 namespace Klyte.WriteTheSigns.Singleton
 {
-    public class WTSRoadPropsSingleton : Singleton<WTSRoadPropsSingleton>
+    public class WTSRoadPropsSingleton : MonoBehaviour
     {
         public DynamicSpriteFont DrawFont => FontServer.instance[Data.DefaultFont] ?? FontServer.instance[WTSController.DEFAULT_FONT_KEY];
         public WTSRoadNodesData Data => WTSRoadNodesData.Instance;
@@ -53,9 +53,10 @@ namespace Klyte.WriteTheSigns.Singleton
         public void Start()
         {
             NetManagerOverrides.EventNodeChanged += OnNodeChanged;
-            WTSController.EventOnDistrictChanged += OnDistrictChanged;
             WTSController.EventOnParkChanged += ResetViews;
             NetManagerOverrides.EventSegmentNameChanged += OnNameSeedChanged;
+            WTSController.EventOnDistrictChanged += ResetViews;
+            WTSController.EventOnZeroMarkerChanged += ResetViews;
         }
 
         private void OnNodeChanged(ushort nodeId) => m_updatedStreetPositions[nodeId] = null;
@@ -67,8 +68,6 @@ namespace Klyte.WriteTheSigns.Singleton
             m_updatedStreetPositions[NetManager.instance.m_segments.m_buffer[segmentId].m_startNode] = null;
         }
 
-        public static void OnDistrictChanged() => instance.ResetViews();
-        public static void OnZeroMarkChanged() => instance.ResetViews();
         public void ResetViews() => m_updatedStreetPositions = new bool?[Data.ObjArraySize];
         #endregion
 
@@ -125,7 +124,7 @@ namespace Klyte.WriteTheSigns.Singleton
             }
         }
 
-        private void RenderSign(RenderManager.CameraInfo cameraInfo, ushort nodeID, int boardIdx, int secIdx, Vector3 position, float direction,  ref BoardInstanceRoadNodeXml targetDescriptor, ref PropInfo cachedProp)
+        private void RenderSign(RenderManager.CameraInfo cameraInfo, ushort nodeID, int boardIdx, int secIdx, Vector3 position, float direction, ref BoardInstanceRoadNodeXml targetDescriptor, ref PropInfo cachedProp)
         {
             WTSPropRenderingRules.RenderPropMesh(ref cachedProp, cameraInfo, nodeID, boardIdx, secIdx, 0xFFFFFFF, 0, position, Vector4.zero, ref targetDescriptor.Descriptor.m_propName, new Vector3(0, direction) + targetDescriptor.m_propRotation, targetDescriptor.PropScale, targetDescriptor.Descriptor, targetDescriptor, out Matrix4x4 propMatrix, out bool rendered, new InstanceID { NetNode = nodeID });
             if (rendered)
@@ -137,9 +136,9 @@ namespace Klyte.WriteTheSigns.Singleton
                     {
                         if (targetDescriptor.Descriptor.m_textDescriptors[j].m_destinationRelative != DestinationReference.Self)
                         {
-                            if (WTSDestinationSingleton.instance.m_updatedDestinations[nodeID] == null)
+                            if (WriteTheSignsMod.Controller.DestinationSingleton.m_updatedDestinations[nodeID] == null)
                             {
-                                WriteTheSignsMod.Controller.StartCoroutine(WTSDestinationSingleton.instance.CalculateDestinations(nodeID));
+                                WriteTheSignsMod.Controller.StartCoroutine(WriteTheSignsMod.Controller.DestinationSingleton.CalculateDestinations(nodeID));
                             }
                         }
 
@@ -243,7 +242,7 @@ namespace Klyte.WriteTheSigns.Singleton
                             int nodeIdx = (rotationOrder.Length + t.m_targetNodeRelative) % rotationOrder.Length;
                             return rotationAnglesOrder[nodeIdx] > 40 && rotationAnglesOrder[nodeIdx] < 320;
                         })
-                && (WTSDestinationSingleton.instance.m_updatedDestinations[nodeID] != true
+                && (WriteTheSignsMod.Controller.DestinationSingleton.m_updatedDestinations[nodeID] != true
                     || x.Second.Descriptor.m_textDescriptors.All(
                         t =>
                         {
@@ -257,7 +256,7 @@ namespace Klyte.WriteTheSigns.Singleton
                             }
                             int nodeIdx = (rotationOrder.Length + t.m_targetNodeRelative) % rotationOrder.Length;
                             int segmentIdx = rotationOrder[nodeIdx];
-                            return WTSDestinationSingleton.instance.m_couldReachDestinations[nodeID, segmentIdx, (int)t.m_destinationRelative] == true;
+                            return WriteTheSignsMod.Controller.DestinationSingleton.m_couldReachDestinations[nodeID, segmentIdx, (int)t.m_destinationRelative] == true;
                         }))
 
                 ).OrderByDescending(x => x.First));

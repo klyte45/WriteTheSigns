@@ -20,7 +20,7 @@ using static Klyte.WriteTheSigns.Xml.BoardGeneratorBuildings;
 
 namespace Klyte.WriteTheSigns.Singleton
 {
-    public class WTSBuildingPropsSingleton : Singleton<WTSBuildingPropsSingleton>
+    public class WTSBuildingPropsSingleton : MonoBehaviour
     {
         public DynamicSpriteFont DrawFont => FontServer.instance[Data.DefaultFont] ?? FontServer.instance[WTSController.DEFAULT_FONT_KEY];
         private readonly Dictionary<string, StopPointDescriptorLanes[]> m_buildingStopsDescriptor = new Dictionary<string, StopPointDescriptorLanes[]>();
@@ -35,6 +35,7 @@ namespace Klyte.WriteTheSigns.Singleton
         #region Initialize
         public void Awake()
         {
+            LoadAllBuildingConfigurations();
         }
 
         public void Start()

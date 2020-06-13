@@ -246,7 +246,7 @@ namespace Klyte.WriteTheSigns.Rendering
                     case ColoringMode.Fixed:
                         return propLayout.FixedColor;
                     case ColoringMode.ByPlatform:
-                        StopInformation stop = GetTargetStopInfo(buildingDescriptor, refId);
+                        StopInformation stop = GetTargetStopInfo(buildingDescriptor, refId).FirstOrDefault();
                         if (stop.m_lineId != 0)
                         {
                             return TransportManager.instance.GetLineColor(stop.m_lineId);
@@ -363,14 +363,14 @@ namespace Klyte.WriteTheSigns.Rendering
                 {
                     case TextType.Fixed: return RenderUtils.GetTextData(textDescriptor.m_fixedText ?? "", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont ?? propLayout.FontName);
                     case TextType.OwnName: return RenderUtils.GetFromCacheArray(refID, textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, RenderUtils.CacheArrayTypes.BuildingName, baseFont, textDescriptor.m_overrideFont ?? propLayout.FontName);
-                    case TextType.NextStopLine: return RenderUtils.GetFromCacheArray(GetTargetStopInfo(buildingDescritpor, refID).NextStopBuildingId, textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, RenderUtils.CacheArrayTypes.BuildingName, baseFont, textDescriptor.m_overrideFont ?? propLayout.FontName);
-                    case TextType.PrevStopLine: return RenderUtils.GetFromCacheArray(GetTargetStopInfo(buildingDescritpor, refID).PrevStopBuildingId, textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, RenderUtils.CacheArrayTypes.BuildingName, baseFont, textDescriptor.m_overrideFont ?? propLayout.FontName);
-                    case TextType.LastStopLine: return RenderUtils.GetFromCacheArray(GetTargetStopInfo(buildingDescritpor, refID).DestinationBuildingId, textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, RenderUtils.CacheArrayTypes.BuildingName, baseFont, textDescriptor.m_overrideFont ?? propLayout.FontName);
+                    case TextType.NextStopLine: return RenderUtils.GetFromCacheArray(GetTargetStopInfo(buildingDescritpor, refID).FirstOrDefault().NextStopBuildingId, textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, RenderUtils.CacheArrayTypes.BuildingName, baseFont, textDescriptor.m_overrideFont ?? propLayout.FontName);
+                    case TextType.PrevStopLine: return RenderUtils.GetFromCacheArray(GetTargetStopInfo(buildingDescritpor, refID).FirstOrDefault().PrevStopBuildingId, textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, RenderUtils.CacheArrayTypes.BuildingName, baseFont, textDescriptor.m_overrideFont ?? propLayout.FontName);
+                    case TextType.LastStopLine: return RenderUtils.GetFromCacheArray(GetTargetStopInfo(buildingDescritpor, refID).FirstOrDefault().DestinationBuildingId, textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, RenderUtils.CacheArrayTypes.BuildingName, baseFont, textDescriptor.m_overrideFont ?? propLayout.FontName);
                     case TextType.StreetPrefix: return RenderUtils.GetFromCacheArray(WTSBuildingDataCaches.GetBuildingMainAccessSegment(refID), textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, RenderUtils.CacheArrayTypes.SuffixStreetNameAbbreviation, baseFont, textDescriptor.m_overrideFont ?? propLayout.FontName);
                     case TextType.StreetSuffix: return RenderUtils.GetFromCacheArray(WTSBuildingDataCaches.GetBuildingMainAccessSegment(refID), textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, RenderUtils.CacheArrayTypes.StreetQualifier, baseFont, textDescriptor.m_overrideFont ?? propLayout.FontName);
                     case TextType.StreetNameComplete: return RenderUtils.GetFromCacheArray(WTSBuildingDataCaches.GetBuildingMainAccessSegment(refID), textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, RenderUtils.CacheArrayTypes.FullStreetNameAbbreviation, baseFont, textDescriptor.m_overrideFont ?? propLayout.FontName);
                     case TextType.PlatformNumber: return RenderUtils.GetTextData((buildingDescritpor.m_platforms.FirstOrDefault() + 1).ToString(), textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont ?? propLayout.FontName);
-                    case TextType.LinesSymbols:
+                    case TextType.LinesSymbols: return WriteTheSignsMod.Controller.TransportLineRenderingRules.DrawLineFormats(GetTargetStopInfo(buildingDescritpor, refID).Select(x => x.m_lineId), Vector3.one).FirstOrDefault();
                     default:
                         return null;
                 }
@@ -392,7 +392,7 @@ namespace Klyte.WriteTheSigns.Rendering
                     {
                         case DestinationReference.NextExitMainRoad1:
                         case DestinationReference.NextExitMainRoad2:
-                            destination = WTSDestinationSingleton.instance.GetTargetDestination(refID, segmentIdx, (int)textDescriptor.m_destinationRelative);
+                            destination = WriteTheSignsMod.Controller.DestinationSingleton.GetTargetDestination(refID, segmentIdx, (int)textDescriptor.m_destinationRelative);
                             break;
                         case DestinationReference.Next2ExitMainRoad1:
                         case DestinationReference.Next2ExitMainRoad2:
@@ -404,15 +404,15 @@ namespace Klyte.WriteTheSigns.Rendering
                             break;
                     }
 
-                    if (WTSDestinationSingleton.instance.m_updatedDestinations[refID] == true && WTSDestinationSingleton.instance.m_couldReachDestinations[refID, segmentIdx, (int)textDescriptor.m_destinationRelative] == false)
+                    if (WriteTheSignsMod.Controller.DestinationSingleton.m_updatedDestinations[refID] == true && WriteTheSignsMod.Controller.DestinationSingleton.m_couldReachDestinations[refID, segmentIdx, (int)textDescriptor.m_destinationRelative] == false)
                     {
-                        LogUtils.DoWarnLog($"[n{refID}/{boardIdx}] REMOVING UNAVAILABLE {WTSRoadPropsSingleton.instance.Data.BoardsContainers[refID, boardIdx, secIdx] } (T={refID}, {segmentIdx}, {textDescriptor.m_destinationRelative} - rotationOrder = {string.Join(",", data.m_nodesOrder.Select(x => x.ToString()).ToArray())} - offset ={ textDescriptor.m_targetNodeRelative} )");
+                        LogUtils.DoWarnLog($"[n{refID}/{boardIdx}] REMOVING UNAVAILABLE {WriteTheSignsMod.Controller.RoadPropsSingleton.Data.BoardsContainers[refID, boardIdx, secIdx] } (T={refID}, {segmentIdx}, {textDescriptor.m_destinationRelative} - rotationOrder = {string.Join(",", data.m_nodesOrder.Select(x => x.ToString()).ToArray())} - offset ={ textDescriptor.m_targetNodeRelative} )");
 
-                        WTSRoadPropsSingleton.instance.Data.BoardsContainers[refID, boardIdx, secIdx] = null;
-                        WTSRoadPropsSingleton.instance.m_updatedStreetPositions[refID] = null;
+                        WriteTheSignsMod.Controller.RoadPropsSingleton.Data.BoardsContainers[refID, boardIdx, secIdx] = null;
+                        WriteTheSignsMod.Controller.RoadPropsSingleton.m_updatedStreetPositions[refID] = null;
                         return null;
                     }
-                    if (WTSDestinationSingleton.instance.m_updatedDestinations[refID] == false)
+                    if (WriteTheSignsMod.Controller.DestinationSingleton.m_updatedDestinations[refID] == false)
                     {
                         return RenderUtils.GetTextData("Loading" + new string('.', ((int)(SimulationManager.instance.m_currentTickIndex & 0x3F) >> 4) + 1), textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont ?? roadDescritpor.Descriptor.FontName);
                     }
@@ -473,21 +473,20 @@ namespace Klyte.WriteTheSigns.Rendering
         }
 
 
-        private static StopInformation GetTargetStopInfo(BoardInstanceBuildingXml descriptor, ushort buildingId)
+        private static StopInformation[] GetTargetStopInfo(BoardInstanceBuildingXml descriptor, ushort buildingId)
         {
             foreach (int platform in descriptor.m_platforms)
             {
-                if (WTSBuildingPropsSingleton.instance.m_platformToLine[buildingId] != null && WTSBuildingPropsSingleton.instance.m_platformToLine[buildingId].ElementAtOrDefault(platform)?.Length > 0)
+                if (WriteTheSignsMod.Controller.BuildingPropsSingleton.m_platformToLine[buildingId] != null && WriteTheSignsMod. Controller.BuildingPropsSingleton.m_platformToLine[buildingId].ElementAtOrDefault(platform)?.Length > 0)
                 {
-                    StopInformation line = WTSBuildingPropsSingleton.instance.m_platformToLine[buildingId][platform].ElementAtOrDefault(0);
-                    if (line.m_lineId != 0)
-                    {
-                        return line;
-                    }
+                    StopInformation[] line = WriteTheSignsMod. Controller.BuildingPropsSingleton.m_platformToLine[buildingId][platform];
+                    return line;
                 }
             }
-            return default;
+            return m_emptyInfo;
         }
+
+        private static readonly StopInformation[] m_emptyInfo = new StopInformation[0];
     }
 
 }

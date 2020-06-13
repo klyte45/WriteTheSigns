@@ -1,5 +1,4 @@
-﻿using ColossalFramework;
-using ColossalFramework.UI;
+﻿using ColossalFramework.UI;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Overrides;
 using Klyte.WriteTheSigns.Utils;
@@ -13,7 +12,7 @@ using static Klyte.Commons.Utils.SegmentUtils;
 
 namespace Klyte.WriteTheSigns.Singleton
 {
-    public class WTSDestinationSingleton : Singleton<WTSDestinationSingleton>
+    public class WTSDestinationSingleton : MonoBehaviour
     {
         internal IEnumerator CalculateDestinations(ushort nodeID)
         {
@@ -341,7 +340,7 @@ namespace Klyte.WriteTheSigns.Singleton
         {
             LogUtils.DoLog($"InvalidateNodeDestinationPaths Invalidating node: {nodeId} ({m_passingHashes[nodeId]?.Count} hashes)");
             m_updatedDestinations[nodeId] = null;
-            WTSRoadPropsSingleton.instance.m_updatedStreetPositions[nodeId] = null;
+            WriteTheSignsMod.Controller.RoadPropsSingleton.m_updatedStreetPositions[nodeId] = null;
             if (m_passingHashes[nodeId] != null)
             {
                 FilterValid(ref m_passingHashes[nodeId]);
@@ -350,7 +349,7 @@ namespace Klyte.WriteTheSigns.Singleton
                     ulong targetNodeId = x & NetManager.MAX_NODE_COUNT - 1;
                     LogUtils.DoLog($"InvalidateNodeDestinationPaths Marking null: targetNodeId={targetNodeId} (hash = {x.ToString("X16")})");
                     m_updatedDestinations[targetNodeId] = null;
-                    WTSRoadPropsSingleton.instance.m_updatedStreetPositions[targetNodeId] = null;
+                    WriteTheSignsMod.Controller.RoadPropsSingleton.m_updatedStreetPositions[targetNodeId] = null;
                 });
                 InvalidateHashes(ref m_passingHashes[nodeId]);
             }
@@ -402,9 +401,10 @@ namespace Klyte.WriteTheSigns.Singleton
         public void Start()
         {
             NetManagerOverrides.EventNodeChanged += OnNodeChanged;
-            WTSController.EventOnDistrictChanged += OnDistrictChanged;
+            WTSController.EventOnDistrictChanged += ResetViews;
             WTSController.EventOnParkChanged += ResetViews;
             NetManagerOverrides.EventSegmentNameChanged += OnNameSeedChanged;
+            WTSController.EventOnZeroMarkerChanged += ResetViews;
         }
 
         private void OnNodeChanged(ushort nodeId) => InvalidateNodeDestinationPaths(nodeId);
@@ -416,18 +416,6 @@ namespace Klyte.WriteTheSigns.Singleton
             InvalidateNodeDestinationPaths(NetManager.instance.m_segments.m_buffer[segmentId].m_startNode);
         }
 
-        public static void OnDistrictChanged() => instance.ResetViews();
-        public static void OnZeroMarkChanged() => instance.ResetViews();
-
-        public static ushort AAAAAAA_PARAM = 0;
-
-        public static void AAAAAA_VIEW()
-        {
-            for (int i = 0; i < 8; i++)
-            {
-                LogUtils.DoWarnLog($"[n{AAAAAAA_PARAM}/{i}] |{instance.GetTargetDestination(AAAAAAA_PARAM, i, 0)}||{instance.GetTargetDestination(AAAAAAA_PARAM, i, 1)}||{instance.GetTargetDestination(AAAAAAA_PARAM, i, 2)}| (m_couldReachDestinations|{instance.m_couldReachDestinations[AAAAAAA_PARAM, i, 0]}||{instance.m_couldReachDestinations[AAAAAAA_PARAM, i, 0]}||{instance.m_couldReachDestinations[AAAAAAA_PARAM, i, 2]}|) ");
-            }
-        }
 
     }
 }

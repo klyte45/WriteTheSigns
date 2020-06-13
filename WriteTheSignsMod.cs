@@ -4,7 +4,6 @@ using ColossalFramework.UI;
 using Klyte.Commons.Extensors;
 using Klyte.Commons.Interfaces;
 using Klyte.Commons.Utils;
-using Klyte.WriteTheSigns.Singleton;
 using Klyte.WriteTheSigns.UI;
 using SpriteFontPlus;
 using System.IO;
@@ -25,11 +24,7 @@ namespace Klyte.WriteTheSigns
         public SavedInt FontQuality = new SavedInt("K45_WTS_fontQuality", Settings.gameSettingsFile, 2);
         public override void OnReleased() => base.OnReleased();
 
-        protected override void OnLevelLoadingInternal()
-        {
-            base.OnLevelLoadingInternal();
-            WTSBuildingPropsSingleton.instance.LoadAllBuildingConfigurations();
-        }
+        protected override void OnLevelLoadingInternal() => base.OnLevelLoadingInternal();
 
         public override void TopSettingsUI(UIHelperExtension helper)
         {
@@ -40,7 +35,7 @@ namespace Klyte.WriteTheSigns
             AddFolderButton(WTSController.FontFilesPath, group8, "K45_WTS_FONT_FILES_PATH_TITLE");
             group8.AddLabel(Locale.Get("K45_WTS_GET_FILES_GITHUB"));
             group8.AddButton(Locale.Get("K45_WTS_GO_TO_GITHUB"), () => Application.OpenURL("https://github.com/klyte45/WriteTheSignsFiles"));
-            group8.AddButton("TST LOAD", () => WTSBuildingPropsSingleton.instance.LoadAllBuildingConfigurations());
+            group8.AddButton("TST LOAD", () => Controller?.BuildingPropsSingleton?.LoadAllBuildingConfigurations());
 
             UIHelperExtension group4 = helper.AddGroupExtended(Locale.Get("K45_WTS_GENERATED_TEXT_OPTIONS"));
             group4.AddDropdownLocalized("K45_WTS_INITIAL_TEXTURE_SIZE_FONT", new string[] { "512", "1024", "2048", "4096 (!)", "8192 (!!!)", "16384 (WTF??)" }, StartTextureSizeFont, (x) => StartTextureSizeFont.value = x);

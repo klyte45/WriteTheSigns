@@ -1,6 +1,6 @@
 ﻿using Klyte.Commons.Extensors;
 using Klyte.Commons.Utils;
-using Klyte.WriteTheSigns.Singleton;
+using Klyte.WriteTheSigns;
 
 namespace Klyte.DynamicTextProps.Overrides
 {
@@ -39,6 +39,6 @@ namespace Klyte.DynamicTextProps.Overrides
         //}
 
 
-        public static void AfterRenderMeshes(RenderManager.CameraInfo cameraInfo, ushort buildingID, ref Building data, int layerMask, ref RenderManager.Instance instance) => WTSBuildingPropsSingleton.instance.AfterRenderInstanceImpl(cameraInfo, buildingID, ref data, layerMask, ref instance);
+        public static void AfterRenderMeshes(RenderManager.CameraInfo cameraInfo, ushort buildingID, ref Building data, int layerMask, ref RenderManager.Instance instance) => WriteTheSignsMod.Controller?.BuildingPropsSingleton?.AfterRenderInstanceImpl(cameraInfo, buildingID, ref data, layerMask, ref instance);
     }
 }
