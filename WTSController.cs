@@ -23,6 +23,8 @@ namespace Klyte.WriteTheSigns
         public Dictionary<string, Dictionary<string, string>> AbbreviationFiles { get; private set; }
         public FontServer FontServer => FontServer.instance;
 
+        public static int DefaultTextureSizeFont => 512 << WriteTheSignsMod.Instance.StartTextureSizeFont;
+
         public static event Action EventFontsReloadedFromFolder;
 
         public static event Action EventOnDistrictChanged;
@@ -65,11 +67,11 @@ namespace Klyte.WriteTheSigns
         public static void ReloadFontsFromPath()
         {
             FontServer.instance.ResetCollection();
-            FontServer.instance.RegisterFont(DEFAULT_FONT_KEY, KlyteResourceLoader.LoadResourceData("UI.DefaultFont.SourceSansPro-Regular.ttf"));
+            FontServer.instance.RegisterFont(DEFAULT_FONT_KEY, KlyteResourceLoader.LoadResourceData("UI.DefaultFont.SourceSansPro-Regular.ttf"), WTSController.DefaultTextureSizeFont);
 
             foreach (string fontFile in Directory.GetFiles(FontFilesPath, "*.ttf"))
             {
-                FontServer.instance.RegisterFont(Path.GetFileNameWithoutExtension(fontFile), File.ReadAllBytes(fontFile));
+                FontServer.instance.RegisterFont(Path.GetFileNameWithoutExtension(fontFile), File.ReadAllBytes(fontFile), WTSController.DefaultTextureSizeFont);
             }
             EventFontsReloadedFromFolder?.Invoke();
         }

@@ -1,6 +1,7 @@
 using ColossalFramework;
 using FontStashSharp;
 using Klyte.Commons.Utils;
+using Klyte.WriteTheSigns;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -15,13 +16,15 @@ namespace SpriteFontPlus
 
         private float m_qualityMultiplier = 1f;
 
+        private int DefaultTextureSize => WTSController.DefaultTextureSizeFont;
+
 
         public event Action<string> EventTextureReloaded;
 
         private bool m_currentlyReloadingAll = false;
 
         private int FontSizeEffective => Mathf.RoundToInt(m_targetHeight * m_qualityMultiplier);
-        public Vector2 ScaleEffective => Vector2.one * m_targetHeight / FontSizeEffective;
+        public Vector2 ScaleEffective => Vector2.one / m_qualityMultiplier;
 
 
         public void ResetCollection() => m_fontRegistered = new Dictionary<string, DynamicSpriteFont>();
@@ -46,11 +49,11 @@ namespace SpriteFontPlus
             foreach (DynamicSpriteFont font in m_fontRegistered.Values)
             {
                 font.Height = FontSizeEffective;
-                font.Reset(4, 4);
+                font.Reset(DefaultTextureSize, DefaultTextureSize);
             }
         }
 
-        public bool RegisterFont(string name, byte[] fontData)
+        public bool RegisterFont(string name, byte[] fontData, int textureSize)
         {
             try
             {
@@ -64,7 +67,7 @@ namespace SpriteFontPlus
                 {
                     m_fontRegistered[name].Reset(1, 1);
                 }
-                m_fontRegistered[name] = DynamicSpriteFont.FromTtf(fontData, name, FontSizeEffective);
+                m_fontRegistered[name] = DynamicSpriteFont.FromTtf(fontData, name, FontSizeEffective, textureSize, textureSize);
             }
             catch (FontCreationException)
             {

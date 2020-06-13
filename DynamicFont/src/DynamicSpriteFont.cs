@@ -80,16 +80,11 @@ namespace SpriteFontPlus
             _fontSystem.AddFontMem(ttf);
         }
 
-        public BasicRenderInformation DrawString(MonoBehaviour referenceGO, string text, Vector2 pos, Color color) => DrawString(referenceGO, text, pos, color, Vector2.one);
+        public BasicRenderInformation DrawString(MonoBehaviour referenceGO, string text, Vector2 pos) => DrawString(referenceGO, text, pos, Vector2.one);
 
-        public BasicRenderInformation DrawString(MonoBehaviour referenceGO, string text, Vector2 pos, Color color, Vector2 scale)
+        public BasicRenderInformation DrawString(MonoBehaviour referenceGO, string text, Vector2 pos, Vector2 scale)
         {
-            _fontSystem.Color = color;
-            _fontSystem.Scale = scale;
-
-            BasicRenderInformation result = _fontSystem.DrawText(referenceGO, pos.x, pos.y, text);
-
-            _fontSystem.Scale = Vector2.one;
+            BasicRenderInformation result = _fontSystem.DrawText(referenceGO, pos.x, pos.y, text, scale);
 
             return result;
         }
@@ -119,8 +114,8 @@ namespace SpriteFontPlus
         public void Reset() => _fontSystem.Reset();
 
 
-        public static DynamicSpriteFont FromTtf(byte[] ttf, string name, int defaultTargetHeight, int textureWidth = 4, int textureHeight = 4, int blur = 0) => new DynamicSpriteFont(ttf, name, defaultTargetHeight, textureWidth, textureHeight, blur);
+        public static DynamicSpriteFont FromTtf(byte[] ttf, string name, int defaultTargetHeight, int textureWidth, int textureHeight, int blur = 0) => new DynamicSpriteFont(ttf, name, defaultTargetHeight, textureWidth, textureHeight, blur);
 
-        public static DynamicSpriteFont FromTtf(Stream ttfStream, string name, int defaultTargetHeight, int textureWidth = 4, int textureHeight = 4, int blur = 0) => FromTtf(ttfStream.ToByteArray(), name, defaultTargetHeight, textureWidth, textureHeight, blur);
+        public static DynamicSpriteFont FromTtf(Stream ttfStream, string name, int defaultTargetHeight, int textureWidth, int textureHeight, int blur = 0) => FromTtf(ttfStream.ToByteArray(), name, defaultTargetHeight, textureWidth, textureHeight, blur);
     }
 }

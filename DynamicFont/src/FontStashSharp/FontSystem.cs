@@ -114,7 +114,7 @@ namespace FontStashSharp
             return result;
         }
 
-        public BasicRenderInformation DrawText(MonoBehaviour referenceGO, float x, float y, string str, UIHorizontalAlignment alignment = UIHorizontalAlignment.Center)
+        public BasicRenderInformation DrawText(MonoBehaviour referenceGO, float x, float y, string str, Vector3 scale, UIHorizontalAlignment alignment = UIHorizontalAlignment.Center)
         {
             BasicRenderInformation bri;
             if (string.IsNullOrEmpty(str))
@@ -137,13 +137,13 @@ namespace FontStashSharp
             else
             {
                 m_textCache[str] = null;
-                referenceGO.StartCoroutine(WriteTextureCoroutine(x, y, str, alignment));
+                referenceGO.StartCoroutine(WriteTextureCoroutine(x, y, str, scale, alignment));
                 return null;
             }
 
         }
 
-        private IEnumerator WriteTextureCoroutine(float x, float y, string str, UIHorizontalAlignment alignment)
+        private IEnumerator WriteTextureCoroutine(float x, float y, string str, Vector3 scale, UIHorizontalAlignment alignment)
         {
             yield return 0;
             var bri = new BasicRenderInformation
@@ -188,6 +188,8 @@ namespace FontStashSharp
                 PoolList<Vector2> uvs = uirenderData.uvs;
                 PoolList<int> triangles = uirenderData.triangles;
 
+
+
                 FontGlyph prevGlyph = null;
                 for (int i = 0; i < str.Length; i += char.IsSurrogatePair(str, i) ? 2 : 1)
                 {
@@ -215,10 +217,10 @@ namespace FontStashSharp
                     bri.m_YAxisOverflows.min = Mathf.Min(bri.m_YAxisOverflows.min, glyph.YOffset - glyph.Font.Descent + glyph.Font.Ascent);
                     bri.m_YAxisOverflows.max = Mathf.Max(bri.m_YAxisOverflows.max, glyph.Bounds.height + glyph.YOffset - glyph.Font.Ascent + glyph.Font.Descent);
 
-                    q.X0 = (int)(q.X0 * -Scale.x);
-                    q.X1 = (int)(q.X1 * -Scale.x);
-                    q.Y0 = (int)(q.Y0 * Scale.y);
-                    q.Y1 = (int)(q.Y1 * Scale.y);
+                    q.X0 = (int)(q.X0 * -scale.x);
+                    q.X1 = (int)(q.X1 * -scale.x);
+                    q.Y0 = (int)(q.Y0 * scale.y);
+                    q.Y1 = (int)(q.Y1 * scale.y);
 
                     var destRect = new Rect((int)(x + q.X0),
                                                 (int)(y + q.Y0),
@@ -233,6 +235,8 @@ namespace FontStashSharp
                 {
                     bri.m_mesh = new Mesh();
                 }
+                bri.m_YAxisOverflows.min *= scale.y;
+                bri.m_YAxisOverflows.max *= scale.y;
                 bri.m_mesh.Clear();
                 bri.m_mesh.vertices = AlignVertices(vertices, alignment);
                 bri.m_mesh.normals = normals.ToArray();
