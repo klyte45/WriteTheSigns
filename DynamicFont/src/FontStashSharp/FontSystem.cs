@@ -1,6 +1,5 @@
 using ColossalFramework;
 using ColossalFramework.UI;
-using Klyte.Commons.Utils;
 using SpriteFontPlus.Utility;
 using System;
 using System.Collections;
@@ -653,7 +652,7 @@ namespace FontStashSharp
 
 
 
-        public Texture2D WriteTexture2D(string str, Vector3 scale)
+        public Texture2D WriteTexture2D(string str)
         {
             Dictionary<int, FontGlyph> glyphs = GetGlyphsCollection(FontHeight);
             // Determine ascent and lineHeight from first character
@@ -683,7 +682,7 @@ namespace FontStashSharp
             var bounds = new Bounds();
             TextBounds(0, 0, str, ref bounds);
 
-            var targetTexture = new Texture2D(Mathf.CeilToInt(bounds.X2 - bounds.X), Mathf.CeilToInt(bounds.Y2 - bounds.Y), TextureFormat.ARGB32, false);
+            var targetTexture = new Texture2D(Mathf.CeilToInt((bounds.X2 - bounds.X)), Mathf.CeilToInt((bounds.Y2 - bounds.Y)), TextureFormat.ARGB32, false);
             targetTexture.SetPixels(new Color[targetTexture.width * targetTexture.height]);
 
             FontGlyph prevGlyph = null;
@@ -707,10 +706,10 @@ namespace FontStashSharp
 
                 GetQuad(glyph, prevGlyph, Spacing, ref originX, ref originY, ref q);
 
-                q.X0 = (int)(q.X0 * scale.x);
-                q.X1 = (int)(q.X1 * scale.x);
-                q.Y0 = (int)(q.Y0 * scale.y);
-                q.Y1 = (int)(q.Y1 * scale.y);
+                q.X0 = (int)(q.X0);
+                q.X1 = (int)(q.X1);
+                q.Y0 = (int)(q.Y0);
+                q.Y1 = (int)(q.Y1);
 
 
                 Color[] arr = CurrentAtlas.GetGlyphColors(glyph);

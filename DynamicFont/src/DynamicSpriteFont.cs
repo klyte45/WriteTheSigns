@@ -101,7 +101,7 @@ namespace SpriteFontPlus
             return new Vector2(bounds.X2, bounds.Y2);
         }
 
-        public Texture2D DrawTextToTexture(string str, Vector3 scale) => _fontSystem.WriteTexture2D(str, scale);
+        public Texture2D DrawTextToTexture(string str) => _fontSystem.WriteTexture2D(str);
 
         public Rect GetTextBounds(Vector2 position, string text, float scale)
         {

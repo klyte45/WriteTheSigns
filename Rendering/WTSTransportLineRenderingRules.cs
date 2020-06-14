@@ -1,5 +1,6 @@
 ﻿using ColossalFramework;
 using ColossalFramework.UI;
+using Klyte.Commons.UI.Sprites;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Utils;
 using SpriteFontPlus;
@@ -38,6 +39,13 @@ namespace Klyte.WriteTheSigns.Rendering
         public Material Material => m_referenceAtlas.material;
 
         public bool IsDirty { get; private set; } = false;
+        public LineIconSpriteNames LineIconTest
+        {
+            get => m_lineIconTest; set {
+                m_lineIconTest = value;
+                PurgeLine(0);
+            }
+        }
 
         public void UpdateMaterial()
         {
@@ -54,6 +62,8 @@ namespace Klyte.WriteTheSigns.Rendering
 
         private Dictionary<ushort, BasicRenderInformation> m_textCache = new Dictionary<ushort, BasicRenderInformation>();
 
+
+        private LineIconSpriteNames m_lineIconTest = LineIconSpriteNames.K45_HexagonIcon;
 
         public List<BasicRenderInformation> DrawLineFormats(IEnumerable<ushort> ids, Vector3 scale)
         {
@@ -89,7 +99,15 @@ namespace Klyte.WriteTheSigns.Rendering
 
             if (m_referenceAtlas[id] == null)
             {
-                Tuple<string, Color, string> lineParams = WTSHookable.GetLineLogoParameters(lineId);
+                Tuple<string, Color, string> lineParams;
+                if (lineId == 0)
+                {
+                    lineParams = Tuple.New(KlyteResourceLoader.GetDefaultSpriteNameFor(LineIconTest), (Color)ColorExtensions.FromRGB(0x5e35b1), "K");
+                }
+                else
+                {
+                    lineParams = WTSHookable.GetLineLogoParameters(lineId);
+                }
                 TextureAtlasUtils.RegenerateTextureAtlas(m_referenceAtlas, new List<UITextureAtlas.SpriteInfo>
                 {
                     new UITextureAtlas.SpriteInfo
@@ -211,15 +229,17 @@ namespace Klyte.WriteTheSigns.Rendering
                 TextureRenderUtils.MergeTextures(targetTexture, contrastSpriteArray, 2, 2, spriteInfo.texture.width, spriteInfo.texture.height);
                 TextureRenderUtils.MergeTextures(targetTexture, spriteInfo.texture.GetPixels().Select(x => new Color(bgColor.r, bgColor.g, bgColor.b, x.a)).ToArray(), 1, 1, spriteInfo.texture.width, spriteInfo.texture.height);
 
-
-                RectOffset targetBorder = spriteInfo.border;
+                TextureScaler.scale(targetTexture, width * 2, height * 2);
+                height *= 2;
+                width *= 2;
+                var targetBorder = new RectOffset(spriteInfo.border.left * 2, spriteInfo.border.right * 2, spriteInfo.border.top * 2, spriteInfo.border.bottom * 2);
 
                 float textBoundHeight = Mathf.Min(height * .66f, height * .85f - targetBorder.vertical);
                 float textBoundWidth = (width * .9f - targetBorder.horizontal);
 
-                var textAreaSize = new Vector4((1f - (textBoundWidth / width)) * (targetBorder.horizontal == 0 ? 0.5f : targetBorder.left / targetBorder.horizontal) * width, height * (1f - (textBoundHeight / height)) * (targetBorder.vertical == 0 ? 0.5f : targetBorder.bottom / targetBorder.vertical), textBoundWidth, textBoundHeight);
+                var textAreaSize = new Vector4((1f - (textBoundWidth / width)) * (targetBorder.horizontal == 0 ? 0.5f : 1f * targetBorder.left / targetBorder.horizontal) * width, height * (1f - (textBoundHeight / height)) * (targetBorder.vertical == 0 ? 0.5f : 1f * targetBorder.bottom / targetBorder.vertical), textBoundWidth, textBoundHeight);
 
-                Texture2D texText = font.DrawTextToTexture(text, Vector3.one * textScale);
+                Texture2D texText = font.DrawTextToTexture(text);
 
                 float scaleTextTex = Mathf.Min(textAreaSize.z / texText.width, textAreaSize.w / texText.height);
                 float proportionTexText = texText.width / texText.height;
@@ -231,14 +251,14 @@ namespace Klyte.WriteTheSigns.Rendering
 
 
                 Color[] textOutlineArray = texText.GetPixels().Select(x => new Color(bgColor.r, bgColor.g, bgColor.b, x.a)).ToArray();
-                int topMerge = Mathf.RoundToInt(textAreaSize.y + ((textBoundHeight - texText.height) / 2));
-                int leftMerge = Mathf.RoundToInt(textAreaSize.x + ((textBoundWidth - texText.width) / 2));
+                int topMerge = Mathf.RoundToInt((textAreaSize.y + ((textBoundHeight - texText.height) / 2)));
+                int leftMerge = Mathf.RoundToInt((textAreaSize.x + ((textBoundWidth - texText.width) / 2)));
 
-                TextureRenderUtils.MergeTextures(targetTexture, textOutlineArray, leftMerge + 0, topMerge + 0, texText.width, texText.height);
-                TextureRenderUtils.MergeTextures(targetTexture, textOutlineArray, leftMerge + 0, topMerge + 4, texText.width, texText.height);
-                TextureRenderUtils.MergeTextures(targetTexture, textOutlineArray, leftMerge + 4, topMerge + 0, texText.width, texText.height);
-                TextureRenderUtils.MergeTextures(targetTexture, textOutlineArray, leftMerge + 4, topMerge + 4, texText.width, texText.height);
-                TextureRenderUtils.MergeTextures(targetTexture, texText.GetPixels().Select(x => new Color(contrastColor.r, contrastColor.g, contrastColor.b, x.a)).ToArray(), leftMerge + 2, topMerge + 2, texText.width, texText.height);
+                TextureRenderUtils.MergeTextures(targetTexture, textOutlineArray, leftMerge - 2, topMerge - 2, texText.width, texText.height);
+                TextureRenderUtils.MergeTextures(targetTexture, textOutlineArray, leftMerge - 2, topMerge + 2, texText.width, texText.height);
+                TextureRenderUtils.MergeTextures(targetTexture, textOutlineArray, leftMerge + 2, topMerge - 2, texText.width, texText.height);
+                TextureRenderUtils.MergeTextures(targetTexture, textOutlineArray, leftMerge + 2, topMerge + 2, texText.width, texText.height);
+                TextureRenderUtils.MergeTextures(targetTexture, texText.GetPixels().Select(x => new Color(contrastColor.r, contrastColor.g, contrastColor.b, x.a)).ToArray(), leftMerge, topMerge, texText.width, texText.height);
                 Destroy(texText);
                 targetTexture.Apply();
 

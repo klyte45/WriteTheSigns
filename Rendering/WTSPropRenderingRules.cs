@@ -341,7 +341,7 @@ namespace Klyte.WriteTheSigns.Rendering
                     case TextType.ParkOrDistrict: return RenderUtils.GetTextData($"{otherText}Area or District", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont ?? preview?.Descriptor?.FontName);
                     case TextType.Park: return RenderUtils.GetTextData($"{otherText}Area", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont ?? preview?.Descriptor?.FontName);
                     case TextType.PlatformNumber: return RenderUtils.GetTextData("00", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont ?? preview?.Descriptor?.FontName);
-
+                    case TextType.LinesSymbols: return WriteTheSignsMod.Controller.TransportLineRenderingRules.DrawLineFormats(new ushort[] { 0 }, Vector3.one).FirstOrDefault();
                     default:
                         string text = $"{textDescriptor.m_textType}: {preview.m_currentText}";
                         if (textDescriptor.m_allCaps)
@@ -477,9 +477,9 @@ namespace Klyte.WriteTheSigns.Rendering
         {
             foreach (int platform in descriptor.m_platforms)
             {
-                if (WriteTheSignsMod.Controller.BuildingPropsSingleton.m_platformToLine[buildingId] != null && WriteTheSignsMod. Controller.BuildingPropsSingleton.m_platformToLine[buildingId].ElementAtOrDefault(platform)?.Length > 0)
+                if (WriteTheSignsMod.Controller.BuildingPropsSingleton.m_platformToLine[buildingId] != null && WriteTheSignsMod.Controller.BuildingPropsSingleton.m_platformToLine[buildingId].ElementAtOrDefault(platform)?.Length > 0)
                 {
-                    StopInformation[] line = WriteTheSignsMod. Controller.BuildingPropsSingleton.m_platformToLine[buildingId][platform];
+                    StopInformation[] line = WriteTheSignsMod.Controller.BuildingPropsSingleton.m_platformToLine[buildingId][platform];
                     return line;
                 }
             }
