@@ -84,9 +84,11 @@ namespace Klyte.WriteTheSigns.UI
             }
             else
             {
-                var sourceMatrix = Matrix4x4.Inverse(WTSPropRenderingRules.CalculateTextMatrix(m_defaultInstance, descriptor.m_textDescriptors[referenceIdx], WTSPropRenderingRules.GetTextMesh(FontServer.instance[WTSController.DEFAULT_FONT_KEY], descriptor.m_textDescriptors[referenceIdx], 0, 0, referenceIdx, m_defaultInstance, descriptor), true).FirstOrDefault());
+                SpriteFontPlus.Utility.BasicRenderInformation refer = WTSPropRenderingRules.GetTextMesh(FontServer.instance[descriptor.FontName] ?? FontServer.instance[WTSController.DEFAULT_FONT_KEY], descriptor.m_textDescriptors[referenceIdx], 0, 0, referenceIdx, m_defaultInstance, descriptor, out _);
+
+                var sourceMatrix = Matrix4x4.Inverse(WTSPropRenderingRules.CalculateTextMatrix(m_defaultInstance, descriptor.m_textDescriptors[referenceIdx].PlacingConfig.m_textRelativePosition, descriptor.m_textDescriptors[referenceIdx], refer, true).FirstOrDefault());
                 float regularMagn = info.m_mesh.bounds.extents.magnitude / WTSPropRenderingRules.SCALING_FACTOR;
-                Vector3 textExt = WTSPropRenderingRules.GetTextMesh(FontServer.instance[descriptor.FontName] ?? FontServer.instance[WTSController.DEFAULT_FONT_KEY], descriptor.m_textDescriptors[referenceIdx], 0, 0, referenceIdx, m_defaultInstance, descriptor)?.m_mesh?.bounds.extents ?? default;
+                Vector3 textExt = refer?.m_mesh?.bounds.extents ?? default;
 
                 if (descriptor.m_textDescriptors[referenceIdx].m_maxWidthMeters > 0)
                 {

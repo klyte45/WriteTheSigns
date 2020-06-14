@@ -53,20 +53,31 @@ namespace Klyte.WriteTheSigns.UI
             labelValue.padding = new RectOffset(4, 4, 0, 0);
             KlyteMonoUtils.LimitWidthAndBox(labelValue, (parentHelper.Self.width / 2) - slider.width, true);
         }
-        public static void AddVector2Field(string label, out UITextField[] fieldArray, UIHelperExtension parentHelper, Action<Vector2> onChange, bool addRollEvent = true)
+        public static void AddVector2Field(string label, out UITextField[] fieldArray, UIHelperExtension parentHelper, Action<Vector2> onChange, bool addRollEvent = true, bool integerOnly = false)
         {
-            fieldArray = parentHelper.AddVector2Field(label, Vector3.zero, onChange);
+            fieldArray = parentHelper.AddVector2Field(label, Vector3.zero, onChange, integerOnly);
             KlyteMonoUtils.LimitWidthAndBox(fieldArray[0].parent.GetComponentInChildren<UILabel>(), (parentHelper.Self.width / 2) - 10, true);
             if (addRollEvent)
             {
                 fieldArray.ForEach(x =>
                 {
-                    x.eventMouseWheel += RollFloat;
+                    if (integerOnly)
+                    {
+                        x.eventMouseWheel += RollInteger;
+                    }
+                    else
+                    {
+                        x.eventMouseWheel += RollFloat;
+                    }
                     x.tooltip = Locale.Get("K45_CMNS_FLOAT_EDITOR_TOOLTIP_HELP");
                 });
             }
             fieldArray[0].zOrder = 1;
             fieldArray[1].zOrder = 2;
+            if (integerOnly)
+            {
+                fieldArray.ForEach(x => x.allowFloats = false);
+            }
         }
         public static void AddVector3Field(string label, out UITextField[] fieldArray, UIHelperExtension parentHelper, Action<Vector3> onChange)
         {
@@ -107,6 +118,15 @@ namespace Klyte.WriteTheSigns.UI
                 bool shiftPressed = Event.current.shift;
                 bool altPressed = Event.current.alt;
                 tf.text = Mathf.Max(tf.allowNegative ? float.MinValue : 0, currentValue + 0.0003f + (eventParam.wheelDelta * (altPressed && ctrlPressed ? 0.001f : ctrlPressed ? 0.1f : altPressed ? 0.01f : shiftPressed ? 10 : 1))).ToString("F3");
+                m_submitField.Invoke(tf, new object[0]);
+            }
+        }
+        public static void RollInteger(UIComponent component, UIMouseEventParameter eventParam)
+        {
+            if (component is UITextField tf && tf.numericalOnly && float.TryParse(tf.text, out float currentValue))
+            {
+                bool shiftPressed = Event.current.shift;
+                tf.text = Mathf.Max(tf.allowNegative ? float.MinValue : 0, currentValue + 0.0003f + (eventParam.wheelDelta * (shiftPressed ? 10 : 1))).ToString("F0");
                 m_submitField.Invoke(tf, new object[0]);
             }
         }
