@@ -1,5 +1,6 @@
 using ColossalFramework;
 using ColossalFramework.UI;
+using Klyte.Commons.Utils;
 using SpriteFontPlus.Utility;
 using System;
 using System.Collections;
@@ -390,161 +391,6 @@ namespace FontStashSharp
             uvs.Add(new Vector2(glyph.Bounds.left / _currentAtlas.Width, glyph.Bounds.top / _currentAtlas.Height));
             uvs.Add(new Vector2(glyph.Bounds.right / _currentAtlas.Width, glyph.Bounds.top / _currentAtlas.Height));
         }
-
-        //private static Stack<ColorInfo> m_TextColors = new Stack<ColorInfo>();
-        //protected struct ColorInfo
-        //{
-        //    // Token: 0x06000A20 RID: 2592 RVA: 0x00027D86 File Offset: 0x00025F86
-        //    public ColorInfo(Color32 c)
-        //    {
-        //        color = c;
-        //        overrideColor = false;
-        //    }
-
-        //    // Token: 0x06000A21 RID: 2593 RVA: 0x00027D96 File Offset: 0x00025F96
-        //    public ColorInfo(Color32 c, bool o)
-        //    {
-        //        color = c;
-        //        overrideColor = o;
-        //    }
-
-        //    // Token: 0x040004C4 RID: 1220
-        //    public Color32 color;
-
-        //    // Token: 0x040004C5 RID: 1221
-        //    public bool overrideColor;
-        //}
-
-
-        //private void RenderLine(UIDynamicFont.LineRenderInfo line, Stack<ColorInfo> colors, Vector3 position, UIRenderData destination)
-        //{
-        //    position.x += (float)this.CalculateLineAlignment(line);
-        //    for (int i = line.m_StartOffset; i <= line.m_EndOffset; i++)
-        //    {
-        //        UIMarkupToken uimarkupToken = this.m_Tokens[i];
-        //        UIMarkupTokenType tokenType = uimarkupToken.tokenType;
-        //        if (tokenType == UIMarkupTokenType.Text)
-        //        {
-        //            UIDynamicFont.ColorInfo colorInfo = colors.Peek();
-        //            this.RenderText(uimarkupToken.value, colorInfo.color, colorInfo.overrideColor, position, destination);
-        //        }
-        //        else if (tokenType == UIMarkupTokenType.StartTag)
-        //        {
-        //            if (uimarkupToken.Matches("sprite") && this.spriteAtlas != null && this.spriteBuffer != null)
-        //            {
-        //                UIDynamicFont.ColorInfo colorInfo2 = colors.Peek();
-        //                this.RenderSprite(uimarkupToken, colorInfo2.color, colorInfo2.overrideColor, position, this.spriteBuffer);
-        //            }
-        //            else if (uimarkupToken.Matches("color"))
-        //            {
-        //                colors.Push(this.ParseColor(uimarkupToken));
-        //            }
-        //        }
-        //        else if (tokenType == UIMarkupTokenType.EndTag && uimarkupToken.Matches("color") && colors.Count > 1)
-        //        {
-        //            colors.Pop();
-        //        }
-        //        position.x += (float)uimarkupToken.width;
-        //    }
-        //}
-
-        //private void RenderText(string text, Color32 color, bool overrideColor, Vector3 position, UIRenderData renderData)
-        //{
-        //    UIDynamicFont uidynamicFont = (UIDynamicFont)base.font;
-        //    int num = Mathf.CeilToInt((float)base.font.size * base.textScale);
-        //    FontStyle style = FontStyle.Normal;
-        //    int descent = uidynamicFont.Descent;
-        //    CharacterInfo glyph = default(CharacterInfo);
-        //    PoolList<Vector3> vertices = renderData.vertices;
-        //    PoolList<int> triangles = renderData.triangles;
-        //    PoolList<Vector2> uvs = renderData.uvs;
-        //    PoolList<Color32> colors = renderData.colors;
-        //    float num2 = position.x;
-        //    float y = position.y;
-        //    renderData.material = uidynamicFont.material;
-        //    Color32 color2 = this.ApplyOpacity(overrideColor ? color : this.MultiplyColors(color, base.defaultColor));
-        //    Color32 c = color2;
-        //    if (base.bottomColor != null)
-        //    {
-        //        c = this.ApplyOpacity(overrideColor ? color : this.MultiplyColors(color, base.bottomColor.Value));
-        //    }
-        //    for (int i = 0; i < text.Length; i++)
-        //    {
-        //        if (i > 0)
-        //        {
-        //            num2 += (float)base.characterSpacing * base.textScale;
-        //        }
-        //        if (uidynamicFont.m_BaseFont.GetCharacterInfo(text[i], out glyph, num, style))
-        //        {
-        //            num2 = RenderChar(num, descent, glyph, vertices, triangles, uvs, colors, num2, y, color2, c);
-        //        }
-        //    }
-        //}
-
-        //private float RenderChar(int fontMultiplier, int descent, CharacterInfo glyph, PoolList<Vector3> vertices, PoolList<int> triangles, PoolList<Vector2> uvs, PoolList<Color32> colors, float num2, float y, Color32 color2, Color32 c)
-        //{
-        //    float num3 = (float)(base.font.size + glyph.maxY - base.font.baseFont.ascent - fontMultiplier + descent);
-        //    float num4 = num2 + (float)glyph.minX;
-        //    float num5 = y + num3;
-        //    float x = num4 + (float)glyph.glyphWidth;
-        //    float y2 = num5 - (float)glyph.glyphHeight;
-        //    Vector3 vector = new Vector3(num4, num5) * base.pixelRatio;
-        //    Vector3 vector2 = new Vector3(x, num5) * base.pixelRatio;
-        //    Vector3 vector3 = new Vector3(x, y2) * base.pixelRatio;
-        //    Vector3 vector4 = new Vector3(num4, y2) * base.pixelRatio;
-        //    if (base.shadow)
-        //    {
-        //        UIDynamicFont.DynamicFontRenderer.AddTriangleIndices(vertices, triangles);
-        //        Vector3 b = base.shadowOffset * base.pixelRatio;
-        //        vertices.Add(vector + b);
-        //        vertices.Add(vector2 + b);
-        //        vertices.Add(vector3 + b);
-        //        vertices.Add(vector4 + b);
-        //        Color32 c2 = this.ApplyOpacity(base.shadowColor);
-        //        Color32 item = c2.linear;
-        //        colors.Add(item);
-        //        colors.Add(item);
-        //        colors.Add(item);
-        //        colors.Add(item);
-        //        UIDynamicFont.DynamicFontRenderer.AddUVCoords(uvs, glyph);
-        //    }
-        //    if (base.outline)
-        //    {
-        //        for (int j = 0; j < UIDynamicFont.DynamicFontRenderer.kOutlineOffsets.Length; j++)
-        //        {
-        //            UIDynamicFont.DynamicFontRenderer.AddTriangleIndices(vertices, triangles);
-        //            Vector3 b2 = UIDynamicFont.DynamicFontRenderer.kOutlineOffsets[j] * (float)base.outlineSize * base.pixelRatio;
-        //            vertices.Add(vector + b2);
-        //            vertices.Add(vector2 + b2);
-        //            vertices.Add(vector3 + b2);
-        //            vertices.Add(vector4 + b2);
-        //            Color32 c3 = this.ApplyOpacity(base.outlineColor);
-        //            Color32 item2 = c3.linear;
-        //            colors.Add(item2);
-        //            colors.Add(item2);
-        //            colors.Add(item2);
-        //            colors.Add(item2);
-        //            UIDynamicFont.DynamicFontRenderer.AddUVCoords(uvs, glyph);
-        //        }
-        //    }
-        //    num2 = DrawMeshes(glyph, vertices, triangles, uvs, colors, num2, color2, c, vector, vector2, vector3, vector4);
-        //    return num2;
-        //}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
         public float TextBounds(float x, float y, string str, ref Bounds bounds)
         {
             if (string.IsNullOrEmpty(str))
@@ -805,6 +651,97 @@ namespace FontStashSharp
             x += (int)(glyph.XAdvance / 10.0f + 0.5f);
         }
 
+
+
+        public Texture2D WriteTexture2D(string str, Vector3 scale)
+        {
+            Dictionary<int, FontGlyph> glyphs = GetGlyphsCollection(FontHeight);
+            // Determine ascent and lineHeight from first character
+            float ascent = 0, lineHeight = 0;
+            for (int i = 0; i < str.Length; i += char.IsSurrogatePair(str, i) ? 2 : 1)
+            {
+                int codepoint = char.ConvertToUtf32(str, i);
+
+                FontGlyph glyph = GetGlyph(glyphs, codepoint, out _);
+                if (glyph == null)
+                {
+                    continue;
+                }
+
+                ascent = glyph.Font.Ascent;
+                lineHeight = glyph.Font.LineHeight;
+                break;
+            }
+
+            var q = new FontGlyphSquad();
+
+            float originX = 0.0f;
+            float originY = 0.0f;
+
+            originY += ascent;
+
+            var bounds = new Bounds();
+            TextBounds(0, 0, str, ref bounds);
+
+            var targetTexture = new Texture2D(Mathf.CeilToInt(bounds.X2 - bounds.X), Mathf.CeilToInt(bounds.Y2 - bounds.Y), TextureFormat.ARGB32, false);
+            targetTexture.SetPixels(new Color[targetTexture.width * targetTexture.height]);
+
+            FontGlyph prevGlyph = null;
+            for (int i = 0; i < str.Length; i += char.IsSurrogatePair(str, i) ? 2 : 1)
+            {
+                int codepoint = char.ConvertToUtf32(str, i);
+
+                if (codepoint == '\n')
+                {
+                    originX = 0.0f;
+                    originY += lineHeight;
+                    prevGlyph = null;
+                    continue;
+                }
+
+                FontGlyph glyph = GetGlyphWithoutBitmap(glyphs, codepoint);
+                if (glyph == null)
+                {
+                    continue;
+                }
+
+                GetQuad(glyph, prevGlyph, Spacing, ref originX, ref originY, ref q);
+
+                q.X0 = (int)(q.X0 * scale.x);
+                q.X1 = (int)(q.X1 * scale.x);
+                q.Y0 = (int)(q.Y0 * scale.y);
+                q.Y1 = (int)(q.Y1 * scale.y);
+
+
+                Color[] arr = CurrentAtlas.GetGlyphColors(glyph);
+
+                MergeTextures(targetTexture, arr, Mathf.RoundToInt(q.X0 - bounds.X), Mathf.RoundToInt(q.Y0 - bounds.Y), (int)(q.X1 - q.X0), (int)(q.Y1 - q.Y0), false, true);
+
+                prevGlyph = glyph;
+            }
+
+            targetTexture.Apply();
+
+            return targetTexture;
+        }
+        internal static void MergeTextures(Texture2D tex, Color[] colors, int startX, int startY, int sizeX, int sizeY, bool swapXY = false, bool flipVertical = false, bool flipHorizontal = false, bool plain = false)
+        {
+            for (int i = 0; i < sizeX; i++)
+            {
+                for (int j = 0; j < sizeY; j++)
+                {
+                    Color orPixel = tex.GetPixel(startX + i, startY + j);
+                    Color newPixel = colors[((flipVertical ? sizeY - j - 1 : j) * (swapXY ? 1 : sizeX)) + ((flipHorizontal ? sizeX - i - 1 : i) * (swapXY ? sizeY : 1))];
+
+                    if (plain && newPixel.a != 1)
+                    {
+                        continue;
+                    }
+
+                    tex.SetPixel(startX + i, startY + j, Color.Lerp(orPixel, newPixel, newPixel.a));
+                }
+            }
+        }
 
     }
     public enum MaterialType

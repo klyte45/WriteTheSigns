@@ -1,5 +1,6 @@
 ﻿using StbTrueTypeSharp;
 using System;
+using System.IO;
 using System.Linq;
 using UnityEngine;
 
@@ -227,6 +228,21 @@ namespace FontStashSharp
 
         public void RenderGlyph(FontGlyph glyph)
         {
+            Color[] colorBuffer = GetGlyphColors(glyph);
+
+            // Write to texture
+            if (Texture == null)
+            {
+                Texture = new Texture2D(Width, Height);
+                Texture.SetPixels(new Color[Width * Height].Select(x => Color.clear).ToArray());
+            }
+
+            Texture.SetPixels(Mathf.RoundToInt(glyph.Bounds.x), Mathf.RoundToInt(glyph.Bounds.y), Mathf.RoundToInt(glyph.Bounds.width), Mathf.RoundToInt(glyph.Bounds.height), colorBuffer, 0);
+            IsDirty = true;
+        }
+
+        public Color[] GetGlyphColors(FontGlyph glyph)
+        {
             int pad = glyph.Pad;
 
             // Render glyph to byte buffer
@@ -245,7 +261,6 @@ namespace FontStashSharp
             {
                 Blur(buffer, Mathf.RoundToInt(glyph.Bounds.width), Mathf.RoundToInt(glyph.Bounds.height), Mathf.RoundToInt(glyph.Bounds.width), glyph.Blur);
             }
-
             // Byte buffer to RGBA
             var colorBuffer = new Color[Mathf.RoundToInt(glyph.Bounds.width) * Mathf.RoundToInt(glyph.Bounds.height)];
             for (int i = 0; i < colorBuffer.Length; ++i)
@@ -254,15 +269,7 @@ namespace FontStashSharp
                 colorBuffer[i].r = colorBuffer[i].g = colorBuffer[i].b = colorBuffer[i].a = c;
             }
 
-            // Write to texture
-            if (Texture == null)
-            {
-                Texture = new Texture2D(Width, Height);
-                Texture.SetPixels(new Color[Width * Height].Select(x => Color.clear).ToArray());
-            }
-
-            Texture.SetPixels(Mathf.RoundToInt(glyph.Bounds.x), Mathf.RoundToInt(glyph.Bounds.y), Mathf.RoundToInt(glyph.Bounds.width), Mathf.RoundToInt(glyph.Bounds.height), colorBuffer, 0);
-            IsDirty = true;
+            return colorBuffer;
         }
 
         public bool IsDirty { get; private set; } = false;

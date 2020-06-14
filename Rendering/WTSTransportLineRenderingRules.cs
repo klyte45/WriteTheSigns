@@ -2,6 +2,7 @@
 using ColossalFramework.UI;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Utils;
+using SpriteFontPlus;
 using SpriteFontPlus.Utility;
 using System.Collections;
 using System.Collections.Generic;
@@ -83,9 +84,7 @@ namespace Klyte.WriteTheSigns.Rendering
 
         private IEnumerator WriteTextureCoroutine(ushort lineId, Vector3 scale)
         {
-            LogUtils.DoWarnLog($"WriteTextureCoroutine lineId = {lineId}");
             yield return 0;
-            LogUtils.DoWarnLog($"WriteTextureCoroutine lineId = {lineId} STEP 2");
             string id = $"{lineId}";
 
             if (m_referenceAtlas[id] == null)
@@ -96,7 +95,7 @@ namespace Klyte.WriteTheSigns.Rendering
                     new UITextureAtlas.SpriteInfo
                     {
                         name = id,
-                        texture = TextureRenderUtils.RenderSpriteLine(UIView.GetAView().defaultFont as UIDynamicFont,UIView.GetAView().defaultAtlas,lineParams.First,lineParams.Second,lineParams.Third)
+                        texture = RenderSpriteLine(FontServer.instance[WTSController.DEFAULT_FONT_KEY],UIView.GetAView().defaultAtlas,lineParams.First,lineParams.Second,lineParams.Third)
                     }
                 });
                 IsDirty = true;
@@ -129,8 +128,8 @@ namespace Klyte.WriteTheSigns.Rendering
                 int baseIndex = 0;
                 float x = 0f;
                 float y = 0f;
-                float x2 = Mathf.Ceil(spriteInfo.width);
-                float y2 = Mathf.Ceil(-spriteInfo.height);
+                float x2 = 64;
+                float y2 = -64;
                 vertices.Add(new Vector3(x, y2, 0f));
                 vertices.Add(new Vector3(x2, y2, 0f));
                 vertices.Add(new Vector3(x2, y, 0f));
@@ -185,6 +184,69 @@ namespace Klyte.WriteTheSigns.Rendering
             }
             yield break;
         }
+
+        public static Texture2D RenderSpriteLine(DynamicSpriteFont font, UITextureAtlas atlas, string spriteName, Color bgColor, string text, float textScale = 1)
+        {
+
+            UITextureAtlas.SpriteInfo spriteInfo = atlas[spriteName];
+            if (spriteInfo == null)
+            {
+                CODebugBase<InternalLogChannel>.Warn(InternalLogChannel.UI, "Missing sprite " + spriteName + " in " + atlas.name);
+                return null;
+            }
+            else
+            {
+                int height = spriteInfo.texture.height;
+                int width = spriteInfo.texture.width;
+
+                var targetTexture = new Texture2D(width + 2, height + 2, TextureFormat.ARGB32, false);
+                targetTexture.SetPixels(new Color[targetTexture.width * targetTexture.height]);
+
+                Color contrastColor = KlyteMonoUtils.ContrastColor(bgColor);
+                Color[] contrastSpriteArray = spriteInfo.texture.GetPixels().Select(x => new Color(contrastColor.r, contrastColor.g, contrastColor.b, x.a)).ToArray();
+
+                TextureRenderUtils.MergeTextures(targetTexture, contrastSpriteArray, 0, 0, spriteInfo.texture.width, spriteInfo.texture.height);
+                TextureRenderUtils.MergeTextures(targetTexture, contrastSpriteArray, 0, 2, spriteInfo.texture.width, spriteInfo.texture.height);
+                TextureRenderUtils.MergeTextures(targetTexture, contrastSpriteArray, 2, 0, spriteInfo.texture.width, spriteInfo.texture.height);
+                TextureRenderUtils.MergeTextures(targetTexture, contrastSpriteArray, 2, 2, spriteInfo.texture.width, spriteInfo.texture.height);
+                TextureRenderUtils.MergeTextures(targetTexture, spriteInfo.texture.GetPixels().Select(x => new Color(bgColor.r, bgColor.g, bgColor.b, x.a)).ToArray(), 1, 1, spriteInfo.texture.width, spriteInfo.texture.height);
+
+
+                RectOffset targetBorder = spriteInfo.border;
+
+                float textBoundHeight = Mathf.Min(height * .66f, height * .85f - targetBorder.vertical);
+                float textBoundWidth = (width * .9f - targetBorder.horizontal);
+
+                var textAreaSize = new Vector4((1f - (textBoundWidth / width)) * (targetBorder.horizontal == 0 ? 0.5f : targetBorder.left / targetBorder.horizontal) * width, height * (1f - (textBoundHeight / height)) * (targetBorder.vertical == 0 ? 0.5f : targetBorder.bottom / targetBorder.vertical), textBoundWidth, textBoundHeight);
+
+                Texture2D texText = font.DrawTextToTexture(text, Vector3.one * textScale);
+
+                float scaleTextTex = Mathf.Min(textAreaSize.z / texText.width, textAreaSize.w / texText.height);
+                float proportionTexText = texText.width / texText.height;
+                float proportionTextBound = textBoundWidth / textBoundHeight;
+                float widthReducer = proportionTextBound / proportionTexText;
+
+
+                TextureScaler.scale(texText, Mathf.FloorToInt(texText.width * Mathf.Min(widthReducer, 1) * scaleTextTex), Mathf.FloorToInt(texText.height * scaleTextTex));
+
+
+                Color[] textOutlineArray = texText.GetPixels().Select(x => new Color(bgColor.r, bgColor.g, bgColor.b, x.a)).ToArray();
+                int topMerge = Mathf.RoundToInt(textAreaSize.y + ((textBoundHeight - texText.height) / 2));
+                int leftMerge = Mathf.RoundToInt(textAreaSize.x + ((textBoundWidth - texText.width) / 2));
+
+                TextureRenderUtils.MergeTextures(targetTexture, textOutlineArray, leftMerge + 0, topMerge + 0, texText.width, texText.height);
+                TextureRenderUtils.MergeTextures(targetTexture, textOutlineArray, leftMerge + 0, topMerge + 4, texText.width, texText.height);
+                TextureRenderUtils.MergeTextures(targetTexture, textOutlineArray, leftMerge + 4, topMerge + 0, texText.width, texText.height);
+                TextureRenderUtils.MergeTextures(targetTexture, textOutlineArray, leftMerge + 4, topMerge + 4, texText.width, texText.height);
+                TextureRenderUtils.MergeTextures(targetTexture, texText.GetPixels().Select(x => new Color(contrastColor.r, contrastColor.g, contrastColor.b, x.a)).ToArray(), leftMerge + 2, topMerge + 2, texText.width, texText.height);
+                Destroy(texText);
+                targetTexture.Apply();
+
+                return targetTexture;
+            }
+        }
+
+
 
         internal static readonly int[] kTriangleIndices = new int[]    {
             0,

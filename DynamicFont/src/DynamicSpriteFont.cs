@@ -101,12 +101,14 @@ namespace SpriteFontPlus
             return new Vector2(bounds.X2, bounds.Y2);
         }
 
-        public Rect GetTextBounds(Vector2 position, string text)
+        public Texture2D DrawTextToTexture(string str, Vector3 scale) => _fontSystem.WriteTexture2D(str, scale);
+
+        public Rect GetTextBounds(Vector2 position, string text, float scale)
         {
             var bounds = new FontStashSharp.Bounds();
             _fontSystem.TextBounds(position.x, position.y, text, ref bounds);
 
-            return new Rect((int)bounds.X, (int)bounds.Y, (int)(bounds.X2 - bounds.X), (int)(bounds.Y2 - bounds.Y));
+            return new Rect((int)bounds.X, (int)bounds.Y, (int)(bounds.X2 - bounds.X) * scale, (int)(bounds.Y2 - bounds.Y) * scale);
         }
 
         public void Reset(int width, int height) => _fontSystem.Reset(width, height);
