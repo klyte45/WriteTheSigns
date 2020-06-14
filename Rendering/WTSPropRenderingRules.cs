@@ -153,6 +153,7 @@ namespace Klyte.WriteTheSigns.Rendering
 
                 //materialPropertyBlock.SetColor(m_shaderPropEmissive, Color.white * (SimulationManager.instance.m_isNightTime ? textDescriptor.m_nightEmissiveMultiplier : textDescriptor.m_dayEmissiveMultiplier));
                 Material targetMaterial = renderInfo.m_generatedMaterial;
+                var randomizer = new Randomizer((refID << 8) + (boardIdx << 2) + secIdx);
                 switch (textDescriptor.MaterialType)
                 {
                     default:
@@ -160,25 +161,48 @@ namespace Klyte.WriteTheSigns.Rendering
                         objectIndex.z = 0;
                         break;
                     case FontStashSharp.MaterialType.DAYNIGHT:
-                        var randomizer = new Randomizer((refID << 8) + (boardIdx << 2) + secIdx);
                         float num = m_daynightOffTime + (randomizer.Int32(100000u) * 1E-05f);
-                        objectIndex.z = MathUtils.SmoothStep(num + 0.01f, num - 0.01f, Singleton<RenderManager>.instance.lightSystem.DayLightIntensity);
+                        objectIndex.z = MathUtils.SmoothStep(num + 0.01f, num - 0.01f, Singleton<RenderManager>.instance.lightSystem.DayLightIntensity) * textDescriptor.IlluminationStrength;
                         break;
                     case FontStashSharp.MaterialType.BRIGHT:
-                        objectIndex.z = 1;
+                        objectIndex.z = textDescriptor.IlluminationStrength;
                         break;
                 }
+
+                if (objectIndex.z > 0 && textDescriptor.BlinkType != BlinkType.None)
+                {
+                    float num = m_daynightOffTime + (randomizer.Int32(100000u) * 1E-05f);
+                    Vector4 blinkVector;
+                    if (textDescriptor.BlinkType == BlinkType.Custom)
+                    {
+                        blinkVector = textDescriptor.m_customBlink;
+                    }
+                    else
+                    {
+                        blinkVector = LightEffect.GetBlinkVector((LightEffect.BlinkType)textDescriptor.BlinkType);
+                    }
+                    float num2 = num * 3.71f + Singleton<SimulationManager>.instance.m_simulationTimer / blinkVector.w;
+                    num2 = (num2 - Mathf.Floor(num2)) * blinkVector.w;
+                    float num3 = MathUtils.SmoothStep(blinkVector.x, blinkVector.y, num2);
+                    float num4 = MathUtils.SmoothStep(blinkVector.w, blinkVector.z, num2);
+                    objectIndex.z *= 1f - (num3 * num4);
+                }
+
                 materialPropertyBlock.SetVector(PropManager.instance.ID_ObjectIndex, objectIndex);
                 targetMaterial.shader = overrideShader ?? WTSController.DEFAULT_SHADER_TEXT;
                 Graphics.DrawMesh(renderInfo.m_mesh, matrix, targetMaterial, 10, targetCamera, 0, materialPropertyBlock, false);
             }
         }
 
-        private static readonly float m_daynightOffTime = 6 * Convert.ToSingle(Math.Pow(Convert.ToDouble((6 - (12 / 2.5)) / 6), Convert.ToDouble(1 / 1.09)));
+        private static readonly float m_daynightOffTime = 6 * Convert.ToSingle(Math.Pow(Convert.ToDouble((6 - (15 / 2.5)) / 6), Convert.ToDouble(1 / 1.09)));
 
         internal static List<Matrix4x4> CalculateTextMatrix(BoardInstanceXml instance, BoardTextDescriptorGeneralXml textDescriptor, BasicRenderInformation renderInfo, bool centerReference = false)
         {
             var result = new List<Matrix4x4>();
+            if (renderInfo == null)
+            {
+                return result;
+            }
 
             Matrix4x4 textMatrix = ApplyTextAdjustments(textDescriptor.m_textRelativePosition, textDescriptor.m_textRelativeRotation, renderInfo, instance.PropScale, textDescriptor.m_textScale, textDescriptor.m_textAlign, textDescriptor.m_maxWidthMeters, textDescriptor.m_applyOverflowResizingOnY, centerReference);
 

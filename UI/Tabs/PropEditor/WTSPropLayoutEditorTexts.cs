@@ -14,7 +14,6 @@ using System.Linq;
 using UnityEngine;
 using static Klyte.WriteTheSigns.UI.WTSEditorUILib;
 
-
 namespace Klyte.WriteTheSigns.UI
 {
 
@@ -46,6 +45,9 @@ namespace Klyte.WriteTheSigns.UI
         private UICheckBox m_useContrastColor;
         private UIColorField m_textFixedColor;
         private UIDropDown m_dropdownMaterialType;
+        private UISlider m_sliderIllumination;
+        private UIDropDown m_dropdownBlinkType;
+        private UITextField[] m_arrayCustomBlink;
 
 
         private UIDropDown m_dropdownTextContent;
@@ -61,6 +63,8 @@ namespace Klyte.WriteTheSigns.UI
         private UICheckBox m_allCaps;
 
         private UIButton m_pasteButtonText;
+
+        private string m_clipboard;
 
         public void Awake()
         {
@@ -94,6 +98,9 @@ namespace Klyte.WriteTheSigns.UI
             AddDropdown(Locale.Get("K45_WTS_TEXT_ALIGN_HOR"), out m_dropdownTextAlignHorizontal, helperAppearance, Enum.GetNames(typeof(UIHorizontalAlignment)).Select(x => Locale.Get("K45_ALIGNMENT", x)).ToArray(), OnSetTextAlignmentHorizontal);
             helperAppearance.AddSpace(5);
             AddDropdown(Locale.Get("K45_WTS_TEXT_MATERIALTYPE"), out m_dropdownMaterialType, helperAppearance, Enum.GetNames(typeof(MaterialType)).Select(x => Locale.Get("K45_WTS_TEXTMATERIALTYPE", x.ToString())).ToArray(), OnSetMaterialType);
+            AddSlider(Locale.Get("K45_WTS_TEXT_ILLUMINATIONSTRENGTH"), out m_sliderIllumination, helperAppearance, OnChangeIlluminationStrength, 0, 1, 0.025f, (x) => $"{x.ToString("P1")}");
+            AddDropdown(Locale.Get("K45_WTS_TEXT_BLINKTYPE"), out m_dropdownBlinkType, helperAppearance, Enum.GetNames(typeof(BlinkType)).Select(x => Locale.Get("K45_WTS_BLINKTYPE", x.ToString())).ToArray(), OnSetBlinkType);
+            AddVector4Field(Locale.Get("K45_WTS_TEXT_CUSTOMBLINKPARAMS"), out m_arrayCustomBlink, helperAppearance, OnCustomBlinkChange);
             AddCheckboxLocale("K45_WTS_USE_CONTRAST_COLOR", out m_useContrastColor, helperAppearance, OnContrastColorChange);
             AddColorField(helperAppearance, Locale.Get("K45_WTS_TEXT_COLOR"), out m_textFixedColor, OnFixedColorChanged);
 
@@ -135,8 +142,9 @@ namespace Klyte.WriteTheSigns.UI
 
         }
 
+
         private enum ReferenceNode
-        {            
+        {
             E6,
             E5,
             E4,
@@ -151,7 +159,7 @@ namespace Klyte.WriteTheSigns.UI
             D3,
             D4,
             D5,
-            D6           
+            D6
         }
 
         private void OnReferenceNodeChange(int selIdx) => SafeObtain((ref BoardTextDescriptorGeneralXml x) => x.m_targetNodeRelative = selIdx - 7);
@@ -175,7 +183,6 @@ namespace Klyte.WriteTheSigns.UI
             m_pasteButtonText.isVisible = true;
         });
 
-        private string m_clipboard;
 
         private void OnSetData(ref BoardTextDescriptorGeneralXml x)
         {
@@ -196,6 +203,8 @@ namespace Klyte.WriteTheSigns.UI
             m_dropdownTextAlignHorizontal.selectedIndex = (int)x.m_textAlign;
             m_useContrastColor.isChecked = x.m_useContrastColor;
             m_dropdownMaterialType.selectedIndex = (int)x.MaterialType;
+            m_sliderIllumination.value = x.IlluminationStrength;
+            m_dropdownBlinkType.selectedIndex = (int)x.BlinkType;
             m_textFixedColor.selectedColor = x.m_defaultColor;
 
             m_dropdownTextContent.items = WTSPropRenderingRules.ALLOWED_TYPES_PER_RENDERING_CLASS[WTSPropLayoutEditor.Instance.EditingInstance.m_allowedRenderClass].Select(x => Locale.Get("K45_WTS_BOARD_TEXT_TYPE_DESC", x.ToString())).ToArray();
@@ -207,15 +216,25 @@ namespace Klyte.WriteTheSigns.UI
             m_textPrefix.text = x.m_prefix ?? "";
             m_textSuffix.text = x.m_suffix ?? "";
             m_allCaps.isChecked = x.m_allCaps;
+            m_arrayCustomBlink[0].text = x.m_customBlink.x.ToString("F3");
+            m_arrayCustomBlink[1].text = x.m_customBlink.y.ToString("F3");
+            m_arrayCustomBlink[2].text = x.m_customBlink.z.ToString("F3");
+            m_arrayCustomBlink[3].text = x.m_customBlink.w.ToString("F3");
 
-
-            m_customText.parent.isVisible = x.m_textType == TextType.Fixed;
-            m_destinationRef.isVisible = x.IsTextRelativeToSegment();
-            m_referenceNode.isVisible = x.IsTextRelativeToSegment();
-            m_textFixedColor.parent.isVisible = !x.m_useContrastColor;
-            m_invertTextHorizontalAlignClone.isVisible = x.m_create180degYClone;
+            ApplyShowRules(x);
         }
 
+        private void ApplyShowRules(BoardTextDescriptorGeneralXml x)
+        {
+            m_customText.parent.isVisible = x.m_textType == TextType.Fixed;
+            m_destinationRef.parent.isVisible = x.IsTextRelativeToSegment();
+            m_referenceNode.parent.isVisible = x.IsTextRelativeToSegment();
+            m_textFixedColor.parent.isVisible = !x.m_useContrastColor;
+            m_invertTextHorizontalAlignClone.isVisible = x.m_create180degYClone;
+            m_sliderIllumination.parent.isVisible = x.MaterialType != MaterialType.OPAQUE;
+            m_dropdownBlinkType.parent.isVisible = x.MaterialType != MaterialType.OPAQUE;
+            m_arrayCustomBlink[0].parent.isVisible = x.MaterialType != MaterialType.OPAQUE && m_dropdownBlinkType.selectedIndex == (int)BlinkType.Custom;
+        }
 
 
         private delegate void SafeObtainMethod(ref BoardTextDescriptorGeneralXml x);
@@ -282,8 +301,7 @@ namespace Klyte.WriteTheSigns.UI
                 if (sel >= 0)
                 {
                     desc.m_textType = WTSPropRenderingRules.ALLOWED_TYPES_PER_RENDERING_CLASS[WTSPropLayoutEditor.Instance.EditingInstance.m_allowedRenderClass][sel];
-                    m_customText.parent.isVisible = desc.m_textType == TextType.Fixed;
-                    m_destinationRef.isVisible = desc.IsTextRelativeToSegment();
+                    ApplyShowRules(desc);
                 }
             });
         }
@@ -293,8 +311,12 @@ namespace Klyte.WriteTheSigns.UI
         private void OnChangeInvertCloneTextHorizontalAlignment(bool isChecked) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_invertYCloneHorizontalAlign = isChecked);
         private void OnChangeCreateSimmetricClone(bool isChecked)
         {
-            SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_create180degYClone = isChecked);
-            m_invertTextHorizontalAlignClone.isVisible = isChecked;
+            SafeObtain((ref BoardTextDescriptorGeneralXml desc) =>
+            {
+                desc.m_create180degYClone = isChecked;
+                ApplyShowRules(desc);
+            });
+
         }
 
         private void OnSetTextAlignmentHorizontal(int sel) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_textAlign = (UIHorizontalAlignment)sel);
@@ -303,11 +325,28 @@ namespace Klyte.WriteTheSigns.UI
         private void OnScaleSubmit(float scale) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_textScale = scale);
         private void OnContrastColorChange(bool isChecked)
         {
-            SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_useContrastColor = isChecked);
-            m_textFixedColor.parent.isVisible = !isChecked;
+            SafeObtain((ref BoardTextDescriptorGeneralXml desc) =>
+            {
+                desc.m_useContrastColor = isChecked;
+                ApplyShowRules(desc);
+            });
         }
-        private void OnSetMaterialType(int sel) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.MaterialType = (MaterialType)sel);
+        private void OnSetMaterialType(int sel)
+        {
+            SafeObtain((ref BoardTextDescriptorGeneralXml desc) =>
+            {
+                desc.MaterialType = (MaterialType)sel;
+                ApplyShowRules(desc);
+            });
+        }
 
+        private void OnSetBlinkType(int sel) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) =>
+        {
+            desc.BlinkType = (BlinkType)sel;
+            ApplyShowRules(desc);
+        });
+        private void OnChangeIlluminationStrength(float val) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.IlluminationStrength = val);
+        private void OnCustomBlinkChange(Vector4 obj) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_customBlink = obj);
         private void OnRotationChange(Vector3 obj) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_textRelativeRotation = obj);
         private void OnPositionChange(Vector3 obj) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_textRelativePosition = obj);
         private void OnSetAllCaps(bool isChecked) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_allCaps = isChecked);

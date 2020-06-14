@@ -16,6 +16,8 @@ namespace Klyte.WriteTheSigns.Xml
         public Vector3 m_textRelativePosition;
         [XmlIgnore]
         public Vector3 m_textRelativeRotation;
+        [XmlIgnore]
+        public Vector4 m_customBlink;
 
         [XmlAttribute("textScale")]
         public float m_textScale = 1f;
@@ -79,6 +81,20 @@ namespace Klyte.WriteTheSigns.Xml
 
         [XmlAttribute("appearenceType")]
         public MaterialType MaterialType { get; set; } = MaterialType.OPAQUE;
+        [XmlAttribute("illuminationStrength")]
+        public float IlluminationStrength { get; set; } = 1;
+        [XmlAttribute("blinkType")]
+        public BlinkType BlinkType { get; set; } = BlinkType.None;
+
+
+        [XmlAttribute("customBlinkX")]
+        public float CustomBlinkX { get => m_customBlink.x; set => m_customBlink.x = value; }
+        [XmlAttribute("customBlinkY")]
+        public float CustomBlinkY { get => m_customBlink.y; set => m_customBlink.y = value; }
+        [XmlAttribute("customBlinkZ")]
+        public float CustomBlinkZ { get => m_customBlink.z; set => m_customBlink.z = value; }
+        [XmlAttribute("customBlinkW")]
+        public float CustomBlinkW { get => m_customBlink.w; set => m_customBlink.w = value; }
 
         public bool IsTextRelativeToSegment()
         {
@@ -97,6 +113,18 @@ namespace Klyte.WriteTheSigns.Xml
             }
             return false;
         }
+    }
+
+    public enum BlinkType
+    {
+        None,
+        Blink_050_050,
+        MildFade_0125_0125,
+        MediumFade_500_500,
+        StrongBlaze_0125_0125,
+        StrongFade_250_250,
+        Blink_025_025,
+        Custom
     }
 
 

@@ -53,6 +53,21 @@ namespace Klyte.WriteTheSigns.UI
             labelValue.padding = new RectOffset(4, 4, 0, 0);
             KlyteMonoUtils.LimitWidthAndBox(labelValue, (parentHelper.Self.width / 2) - slider.width, true);
         }
+        public static void AddVector2Field(string label, out UITextField[] fieldArray, UIHelperExtension parentHelper, Action<Vector2> onChange, bool addRollEvent = true)
+        {
+            fieldArray = parentHelper.AddVector2Field(label, Vector3.zero, onChange);
+            KlyteMonoUtils.LimitWidthAndBox(fieldArray[0].parent.GetComponentInChildren<UILabel>(), (parentHelper.Self.width / 2) - 10, true);
+            if (addRollEvent)
+            {
+                fieldArray.ForEach(x =>
+                {
+                    x.eventMouseWheel += RollFloat;
+                    x.tooltip = Locale.Get("K45_CMNS_FLOAT_EDITOR_TOOLTIP_HELP");
+                });
+            }
+            fieldArray[0].zOrder = 1;
+            fieldArray[1].zOrder = 2;
+        }
         public static void AddVector3Field(string label, out UITextField[] fieldArray, UIHelperExtension parentHelper, Action<Vector3> onChange)
         {
             fieldArray = parentHelper.AddVector3Field(label, Vector3.zero, onChange);
@@ -67,21 +82,21 @@ namespace Klyte.WriteTheSigns.UI
             fieldArray[2].zOrder = 3;
         }
 
-        public static void AddVector2Field(string label, out UITextField[] fieldArray, UIHelperExtension parentHelper, Action<Vector2> onChange, bool addRollEvent = true)
+        public static void AddVector4Field(string label, out UITextField[] fieldArray, UIHelperExtension parentHelper, Action<Vector4> onChange)
         {
-            fieldArray = parentHelper.AddVector2Field(label, Vector3.zero, onChange);
+            fieldArray = parentHelper.AddVector4Field(label, Vector4.zero, onChange);
             KlyteMonoUtils.LimitWidthAndBox(fieldArray[0].parent.GetComponentInChildren<UILabel>(), (parentHelper.Self.width / 2) - 10, true);
-            if (addRollEvent)
+            fieldArray.ForEach(x =>
             {
-                fieldArray.ForEach(x =>
-                    {
-                        x.eventMouseWheel += RollFloat;
-                        x.tooltip = Locale.Get("K45_CMNS_FLOAT_EDITOR_TOOLTIP_HELP");
-                    });
-            }
+                x.eventMouseWheel += RollFloat;
+                x.tooltip = Locale.Get("K45_CMNS_FLOAT_EDITOR_TOOLTIP_HELP");
+            });
             fieldArray[0].zOrder = 1;
             fieldArray[1].zOrder = 2;
+            fieldArray[2].zOrder = 3;
+            fieldArray[3].zOrder = 4;
         }
+
 
         private static readonly MethodInfo m_submitField = typeof(UITextField).GetMethod("OnSubmit", RedirectorUtils.allFlags);
         public static void RollFloat(UIComponent component, UIMouseEventParameter eventParam)

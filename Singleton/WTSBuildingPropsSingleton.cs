@@ -167,7 +167,7 @@ namespace Klyte.WriteTheSigns.Singleton
             {
                 for (int j = 0; j < propLayout.m_textDescriptors.Length; j++)
                 {
-                    if (cameraInfo.CheckRenderDistance(position, 200 * propLayout.m_textDescriptors[j].m_textScale))
+                    if (cameraInfo.CheckRenderDistance(position, 200 * propLayout.m_textDescriptors[j].m_textScale * (propLayout.m_textDescriptors[j].MaterialType == FontStashSharp.MaterialType.OPAQUE ? 1 : 2)))
                     {
                         MaterialPropertyBlock properties = PropManager.instance.m_materialBlock;
                         properties.Clear();
