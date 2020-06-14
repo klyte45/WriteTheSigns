@@ -125,9 +125,63 @@ namespace Klyte.WriteTheSigns.Rendering
             BasicRenderInformation renderInfo = GetTextMesh(baseFont, textDescriptor, refID, boardIdx, secIdx, descriptor, propLayout, out IEnumerable<BasicRenderInformation> multipleOutput);
             if (renderInfo == null)
             {
-                if (multipleOutput != null)
+                if (multipleOutput != null && multipleOutput.Count() > 0)
                 {
+                    BasicRenderInformation[] resultArray = multipleOutput.ToArray();
+                    if (resultArray.Length == 1)
+                    {
+                        renderInfo = multipleOutput.First();
+                    }
+                    else
+                    {
+                        BoardTextDescriptorGeneralXml.SubItemSettings settings = textDescriptor.MultiItemSettings;
+                        int targetCount = Math.Min(settings.SubItemsPerRow * settings.SubItemsPerColumn, resultArray.Length);
+                        int maxItemsInARow, maxItemsInAColumn;
 
+                        if (textDescriptor.MultiItemSettings.VerticalFirst)
+                        {
+                            maxItemsInAColumn = Math.Min(targetCount, settings.SubItemsPerColumn);
+                            maxItemsInARow = Mathf.CeilToInt((float)targetCount / settings.SubItemsPerColumn);
+                        }
+                        else
+                        {
+                            maxItemsInARow = Math.Min(targetCount, settings.SubItemsPerRow);
+                            maxItemsInAColumn = Mathf.CeilToInt((float)targetCount / settings.SubItemsPerRow);
+                        }
+                        float unscaledColumnWidth = multipleOutput.Max(x => x.m_sizeMetersUnscaled.x);
+                        float rowHeight = multipleOutput.Max(x => x.m_sizeMetersUnscaled.y) * textDescriptor.m_textScale * SCALING_FACTOR;
+                        float columnWidth = (textDescriptor.m_maxWidthMeters > 0 ? Mathf.Min(textDescriptor.m_maxWidthMeters / maxItemsInARow, unscaledColumnWidth * SCALING_FACTOR) : unscaledColumnWidth * SCALING_FACTOR) * textDescriptor.m_textScale;
+
+
+                        var startPoint = new Vector3(textDescriptor.PlacingConfig.Position.X - columnWidth * maxItemsInAColumn / 2, textDescriptor.PlacingConfig.Position.Y, textDescriptor.PlacingConfig.Position.Z);
+
+                        //LogUtils.DoWarnLog($"sz = {resultArray.Length};targetCount = {targetCount}; origPos = {textDescriptor.PlacingConfig.Position}; maxItemsInAColumn = {maxItemsInAColumn}; maxItemsInARow = {maxItemsInARow};columnWidth={columnWidth};rowHeight={rowHeight}");
+
+                        for (int i = 0; i < targetCount; i++)
+                        {
+                            int x, y;
+                            if (textDescriptor.MultiItemSettings.VerticalFirst)
+                            {
+                                y = i % settings.SubItemsPerColumn;
+                                x = i / settings.SubItemsPerColumn;
+                            }
+                            else
+                            {
+                                x = i % settings.SubItemsPerRow;
+                                y = i / settings.SubItemsPerRow;
+                            }
+
+                            BasicRenderInformation currentItem = resultArray[i];
+                            Vector3 targetPosA = startPoint + new Vector3(columnWidth * x, -rowHeight * y);
+                            DrawTextBri(refID, boardIdx, secIdx, descriptor, propMatrix, propLayout, textDescriptor, materialPropertyBlock, targetCamera, overrideShader, currentItem, targetPosA, textDescriptor.PlacingConfig.Rotation, false);
+                            if (textDescriptor.PlacingConfig.m_create180degYClone)
+                            {
+                                targetPosA = startPoint + new Vector3(columnWidth * (settings.SubItemsPerRow - x), -rowHeight * y);
+                                targetPosA.z *= -1;
+                                DrawTextBri(refID, boardIdx, secIdx, descriptor, propMatrix, propLayout, textDescriptor, materialPropertyBlock, targetCamera, overrideShader, currentItem, targetPosA, textDescriptor.PlacingConfig.Rotation + new Vector3(0, 180), false);
+                            }
+                        }
+                    }
                 }
                 else
                 {
@@ -139,14 +193,16 @@ namespace Klyte.WriteTheSigns.Rendering
                 return;
             }
 
-            Vector3 taregetPos = textDescriptor.PlacingConfig.m_textRelativePosition;
+            Vector3 targetPos = textDescriptor.PlacingConfig.Position;
 
-            DrawTextBri(refID, boardIdx, secIdx, descriptor, propMatrix, propLayout, textDescriptor, materialPropertyBlock, targetCamera, overrideShader, renderInfo, taregetPos);
+            DrawTextBri(refID, boardIdx, secIdx, descriptor, propMatrix, propLayout, textDescriptor, materialPropertyBlock, targetCamera, overrideShader, renderInfo, targetPos, textDescriptor.PlacingConfig.Rotation, textDescriptor.PlacingConfig.m_create180degYClone);
         }
 
-        private static void DrawTextBri(ushort refID, int boardIdx, int secIdx, BoardInstanceXml descriptor, Matrix4x4 propMatrix, BoardDescriptorGeneralXml propLayout, BoardTextDescriptorGeneralXml textDescriptor, MaterialPropertyBlock materialPropertyBlock, Camera targetCamera, Shader overrideShader, BasicRenderInformation renderInfo, Vector3 taregetPos)
+        private static void DrawTextBri(ushort refID, int boardIdx, int secIdx, BoardInstanceXml descriptor, Matrix4x4 propMatrix, BoardDescriptorGeneralXml propLayout,
+            BoardTextDescriptorGeneralXml textDescriptor, MaterialPropertyBlock materialPropertyBlock, Camera targetCamera, Shader overrideShader, BasicRenderInformation renderInfo,
+            Vector3 taregetPos, Vector3 taregetRotation, bool placeClone180Y)
         {
-            List<Matrix4x4> textMatrixes = CalculateTextMatrix(descriptor, taregetPos, textDescriptor, renderInfo);
+            List<Matrix4x4> textMatrixes = CalculateTextMatrix(descriptor, taregetPos, taregetRotation, textDescriptor, renderInfo, placeClone180Y);
             foreach (Matrix4x4 textMatrix in textMatrixes)
             {
                 Matrix4x4 matrix = propMatrix * textMatrix;
@@ -193,7 +249,7 @@ namespace Klyte.WriteTheSigns.Rendering
                     Vector4 blinkVector;
                     if (textDescriptor.ColoringConfig.BlinkType == BlinkType.Custom)
                     {
-                        blinkVector = textDescriptor.ColoringConfig.m_customBlink;
+                        blinkVector = textDescriptor.ColoringConfig.CustomBlink;
                     }
                     else
                     {
@@ -214,7 +270,7 @@ namespace Klyte.WriteTheSigns.Rendering
 
         private static readonly float m_daynightOffTime = 6 * Convert.ToSingle(Math.Pow(Convert.ToDouble((6 - (15 / 2.5)) / 6), Convert.ToDouble(1 / 1.09)));
 
-        internal static List<Matrix4x4> CalculateTextMatrix(BoardInstanceXml instance, Vector3 targetPosition, BoardTextDescriptorGeneralXml textDescriptor, BasicRenderInformation renderInfo, bool centerReference = false)
+        internal static List<Matrix4x4> CalculateTextMatrix(BoardInstanceXml instance, Vector3 targetPosition, Vector3 targetRotation, BoardTextDescriptorGeneralXml textDescriptor, BasicRenderInformation renderInfo, bool placeClone180Y, bool centerReference = false)
         {
             var result = new List<Matrix4x4>();
             if (renderInfo == null)
@@ -222,18 +278,18 @@ namespace Klyte.WriteTheSigns.Rendering
                 return result;
             }
 
-            Matrix4x4 textMatrix = ApplyTextAdjustments(targetPosition, textDescriptor.PlacingConfig.m_textRelativeRotation, renderInfo, instance.PropScale, textDescriptor.m_textScale, textDescriptor.m_textAlign, textDescriptor.m_maxWidthMeters, textDescriptor.m_applyOverflowResizingOnY, centerReference);
+            Matrix4x4 textMatrix = ApplyTextAdjustments(targetPosition, targetRotation, renderInfo, instance.PropScale, textDescriptor.m_textScale, textDescriptor.m_textAlign, textDescriptor.m_maxWidthMeters, textDescriptor.m_applyOverflowResizingOnY, centerReference);
 
             result.Add(textMatrix);
 
-            if (textDescriptor.PlacingConfig.m_create180degYClone)
+            if (placeClone180Y)
             {
                 UIHorizontalAlignment targetTextAlignment = textDescriptor.m_textAlign;
                 if (textDescriptor.PlacingConfig.m_invertYCloneHorizontalAlign)
                 {
                     targetTextAlignment = 2 - targetTextAlignment;
                 }
-                result.Add(ApplyTextAdjustments(new Vector3(targetPosition.x, targetPosition.y, -targetPosition.z), textDescriptor.PlacingConfig.m_textRelativeRotation + new Vector3(0, 180), renderInfo, instance.PropScale, textDescriptor.m_textScale, targetTextAlignment, textDescriptor.m_maxWidthMeters, textDescriptor.m_applyOverflowResizingOnY, centerReference));
+                result.Add(ApplyTextAdjustments(new Vector3(targetPosition.x, targetPosition.y, -targetPosition.z), targetRotation + new Vector3(0, 180), renderInfo, instance.PropScale, textDescriptor.m_textScale, targetTextAlignment, textDescriptor.m_maxWidthMeters, textDescriptor.m_applyOverflowResizingOnY, centerReference));
             }
 
             return result;
@@ -249,6 +305,7 @@ namespace Klyte.WriteTheSigns.Rendering
             float realHeight = defaultMultiplierY * renderInfo.m_sizeMetersUnscaled.y;
             Vector3 targetRelativePosition = textPosition;
             //LogUtils.DoWarnLog($"[{renderInfo},{refID},{boardIdx},{secIdx}] realWidth = {realWidth}; realHeight = {realHeight};");
+            var rotationMatrix = Matrix4x4.TRS(Vector3.zero, Quaternion.AngleAxis(textRotation.x, Vector3.left) * Quaternion.AngleAxis(textRotation.y, Vector3.down) * Quaternion.AngleAxis(textRotation.z, Vector3.back), Vector3.one);
             if (maxWidth > 0 && maxWidth < realWidth)
             {
                 overflowScaleX = maxWidth / realWidth;
@@ -261,16 +318,17 @@ namespace Klyte.WriteTheSigns.Rendering
             {
                 if (maxWidth > 0 && horizontalAlignment != UIHorizontalAlignment.Center)
                 {
-                    float factor = horizontalAlignment == UIHorizontalAlignment.Left == (((textRotation.y % 360) + 810) % 360 > 180) ? 0.5f : -0.5f;
-                    targetRelativePosition += new Vector3((maxWidth - realWidth) * factor / propScale.x, 0, 0);
+                    float factor = horizontalAlignment == UIHorizontalAlignment.Left ? 0.5f : -0.5f;
+                    targetRelativePosition += rotationMatrix.MultiplyPoint(new Vector3((maxWidth - realWidth) * factor, 0, 0));
                 }
             }
             targetRelativePosition.y -= (renderInfo.m_YAxisOverflows.min + renderInfo.m_YAxisOverflows.max) / 2 * defaultMultiplierY * overflowScaleY;
 
-            var textMatrix = Matrix4x4.TRS(
-                targetRelativePosition,
-               Quaternion.AngleAxis(textRotation.x, Vector3.left) * Quaternion.AngleAxis(textRotation.y, Vector3.down) * Quaternion.AngleAxis(textRotation.z, Vector3.back),
-           centerReference ? new Vector3(SCALING_FACTOR, SCALING_FACTOR, SCALING_FACTOR) : new Vector3(defaultMultiplierX * overflowScaleX / propScale.x, defaultMultiplierY * overflowScaleY / propScale.y, 1));
+            Matrix4x4 textMatrix =
+                Matrix4x4.Translate(targetRelativePosition) *
+                rotationMatrix *
+                Matrix4x4.Scale(centerReference ? new Vector3(SCALING_FACTOR, SCALING_FACTOR, SCALING_FACTOR) : new Vector3(defaultMultiplierX * overflowScaleX / propScale.x, defaultMultiplierY * overflowScaleY / propScale.y, 1)) * Matrix4x4.Scale(propScale)
+               ;
             return textMatrix;
         }
 
@@ -417,7 +475,7 @@ namespace Klyte.WriteTheSigns.Rendering
                     case TextType.StreetNameComplete: return RenderUtils.GetFromCacheArray(WTSBuildingDataCaches.GetBuildingMainAccessSegment(refID), textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, RenderUtils.CacheArrayTypes.FullStreetNameAbbreviation, baseFont, textDescriptor.m_overrideFont ?? propLayout.FontName);
                     case TextType.PlatformNumber: return RenderUtils.GetTextData((buildingDescritpor.m_platforms.FirstOrDefault() + 1).ToString(), textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont ?? propLayout.FontName);
                     case TextType.LinesSymbols:
-                        multipleOutput = WriteTheSignsMod.Controller.TransportLineRenderingRules.DrawLineFormats(GetTargetStopInfo(buildingDescritpor, refID).Select(x => x.m_lineId), Vector3.one);
+                        multipleOutput = WriteTheSignsMod.Controller.TransportLineRenderingRules.DrawLineFormats(GetAllTargetStopInfo(buildingDescritpor, refID).GroupBy(x => x.m_lineId).Select(x => x.First()).Select(x => x.m_lineId), Vector3.one);
                         return null;
                     default:
                         return null;
@@ -532,6 +590,18 @@ namespace Klyte.WriteTheSigns.Rendering
                 }
             }
             return m_emptyInfo;
+        }
+        private static StopInformation[] GetAllTargetStopInfo(BoardInstanceBuildingXml descriptor, ushort buildingId)
+        {
+            return descriptor?.m_platforms?.SelectMany(platform =>
+            {
+                if (WriteTheSignsMod.Controller.BuildingPropsSingleton.m_platformToLine[buildingId] != null && WriteTheSignsMod.Controller.BuildingPropsSingleton.m_platformToLine[buildingId]?.ElementAtOrDefault(platform)?.Length > 0)
+                {
+                    StopInformation[] line = WriteTheSignsMod.Controller.BuildingPropsSingleton.m_platformToLine[buildingId][platform];
+                    return line;
+                }
+                return new StopInformation[0];
+            }).ToArray();
         }
 
         private static readonly StopInformation[] m_emptyInfo = new StopInformation[0];

@@ -86,20 +86,15 @@ namespace Klyte.WriteTheSigns.Xml
         {
             [XmlAttribute("subItemsPerRow")]
             public int SubItemsPerRow { get => m_subItemsPerRow; set => m_subItemsPerRow = Math.Max(1, value); }
-
             [XmlAttribute("subItemsPerColumn")]
             public int SubItemsPerColumn { get => m_subItemsPerColumn; set => m_subItemsPerColumn = Math.Max(1, value); }
 
             [XmlAttribute("verticalFirst")]
             public bool VerticalFirst { get; set; }
 
-            [XmlAttribute("subItemSpacingX")]
-            public float SubItemSpacingX { get => m_subItemSpacing.x; set => m_subItemSpacing.x = value; }
-            [XmlAttribute("subItemSpacingY")]
-            public float SubItemSpacingY { get => m_subItemSpacing.y; set => m_subItemSpacing.y = value; }
 
-            [XmlIgnore]
-            public Vector2 m_subItemSpacing;
+            [XmlElement("subItemSpacing")]
+            public Vector2Xml SubItemSpacing { get; set; } = new Vector2Xml();
             [XmlIgnore]
             private int m_subItemsPerColumn;
             [XmlIgnore]
@@ -111,26 +106,10 @@ namespace Klyte.WriteTheSigns.Xml
             public bool m_invertYCloneHorizontalAlign;
             [XmlAttribute("clone180DegY")]
             public bool m_create180degYClone;
-
-            [XmlAttribute("relativePositionX")]
-            public float RelPositionX { get => m_textRelativePosition.x; set => m_textRelativePosition.x = value; }
-            [XmlAttribute("relativePositionY")]
-            public float RelPositionY { get => m_textRelativePosition.y; set => m_textRelativePosition.y = value; }
-            [XmlAttribute("relativePositionZ")]
-            public float RelPositionZ { get => m_textRelativePosition.z; set => m_textRelativePosition.z = value; }
-
-            [XmlAttribute("relativeRotationX")]
-            public float RotationX { get => m_textRelativeRotation.x; set => m_textRelativeRotation.x = value; }
-            [XmlAttribute("relativeRotationY")]
-            public float RotationY { get => m_textRelativeRotation.y; set => m_textRelativeRotation.y = value; }
-            [XmlAttribute("relativeRotationZ")]
-            public float RotationZ { get => m_textRelativeRotation.z; set => m_textRelativeRotation.z = value; }
-
-
-            [XmlIgnore]
-            public Vector3 m_textRelativePosition;
-            [XmlIgnore]
-            public Vector3 m_textRelativeRotation;
+            [XmlElement("position")]
+            public Vector3Xml Position { get; set; } = new Vector3Xml();
+            [XmlElement("rotation")]
+            public Vector3Xml Rotation { get; set; } = new Vector3Xml();
         }
         public class ColoringSettings
         {
@@ -138,8 +117,8 @@ namespace Klyte.WriteTheSigns.Xml
             public bool m_useContrastColor = true;
             [XmlIgnore]
             public Color m_defaultColor = Color.clear;
-            [XmlIgnore]
-            public Vector4 m_customBlink;
+            [XmlElement("customBlinkParams")]
+            public Vector4Xml CustomBlink { get; set; } = new Vector4Xml();
             [XmlAttribute("color")]
             public string ForceColor { get => m_defaultColor == Color.clear ? null : ColorExtensions.ToRGB(m_defaultColor); set => m_defaultColor = value.IsNullOrWhiteSpace() ? Color.clear : (Color)ColorExtensions.FromRGB(value); }
             [XmlAttribute("appearenceType")]
@@ -149,15 +128,6 @@ namespace Klyte.WriteTheSigns.Xml
             [XmlAttribute("blinkType")]
             public BlinkType BlinkType { get; set; } = BlinkType.None;
 
-
-            [XmlAttribute("customBlinkX")]
-            public float CustomBlinkX { get => m_customBlink.x; set => m_customBlink.x = value; }
-            [XmlAttribute("customBlinkY")]
-            public float CustomBlinkY { get => m_customBlink.y; set => m_customBlink.y = value; }
-            [XmlAttribute("customBlinkZ")]
-            public float CustomBlinkZ { get => m_customBlink.z; set => m_customBlink.z = value; }
-            [XmlAttribute("customBlinkW")]
-            public float CustomBlinkW { get => m_customBlink.w; set => m_customBlink.w = value; }
         }
     }
 

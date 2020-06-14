@@ -195,12 +195,12 @@ namespace Klyte.WriteTheSigns.UI
         {
             m_tabName.text = x.SaveName;
 
-            m_arrayCoord[0].text = x.PlacingConfig.m_textRelativePosition.x.ToString("F3");
-            m_arrayCoord[1].text = x.PlacingConfig.m_textRelativePosition.y.ToString("F3");
-            m_arrayCoord[2].text = x.PlacingConfig.m_textRelativePosition.z.ToString("F3");
-            m_arrayRotation[0].text = x.PlacingConfig.m_textRelativeRotation.x.ToString("F3");
-            m_arrayRotation[1].text = x.PlacingConfig.m_textRelativeRotation.y.ToString("F3");
-            m_arrayRotation[2].text = x.PlacingConfig.m_textRelativeRotation.z.ToString("F3");
+            m_arrayCoord[0].text = x.PlacingConfig.Position.X.ToString("F3");
+            m_arrayCoord[1].text = x.PlacingConfig.Position.Y.ToString("F3");
+            m_arrayCoord[2].text = x.PlacingConfig.Position.Z.ToString("F3");
+            m_arrayRotation[0].text = x.PlacingConfig.Rotation.X.ToString("F3");
+            m_arrayRotation[1].text = x.PlacingConfig.Rotation.Y.ToString("F3");
+            m_arrayRotation[2].text = x.PlacingConfig.Rotation.Z.ToString("F3");
             m_textScale.text = x.m_textScale.ToString("F3");
             m_maxWidth.text = x.m_maxWidthMeters.ToString("F3");
             m_applyScaleOnY.isChecked = x.m_applyOverflowResizingOnY;
@@ -223,14 +223,14 @@ namespace Klyte.WriteTheSigns.UI
             m_textPrefix.text = x.m_prefix ?? "";
             m_textSuffix.text = x.m_suffix ?? "";
             m_allCaps.isChecked = x.m_allCaps;
-            m_arrayCustomBlink[0].text = x.ColoringConfig.m_customBlink.x.ToString("F3");
-            m_arrayCustomBlink[1].text = x.ColoringConfig.m_customBlink.y.ToString("F3");
-            m_arrayCustomBlink[2].text = x.ColoringConfig.m_customBlink.z.ToString("F3");
-            m_arrayCustomBlink[3].text = x.ColoringConfig.m_customBlink.w.ToString("F3");
+            m_arrayCustomBlink[0].text = x.ColoringConfig.CustomBlink.X.ToString("F3");
+            m_arrayCustomBlink[1].text = x.ColoringConfig.CustomBlink.Y.ToString("F3");
+            m_arrayCustomBlink[2].text = x.ColoringConfig.CustomBlink.Z.ToString("F3");
+            m_arrayCustomBlink[3].text = x.ColoringConfig.CustomBlink.W.ToString("F3");
             m_arrayRowColumnsCount[0].text = x.MultiItemSettings.SubItemsPerRow.ToString();
             m_arrayRowColumnsCount[1].text = x.MultiItemSettings.SubItemsPerColumn.ToString();
-            m_arrayRowColumnsSpacing[0].text = x.MultiItemSettings.SubItemSpacingX.ToString("F3");
-            m_arrayRowColumnsSpacing[1].text = x.MultiItemSettings.SubItemSpacingX.ToString("F3");
+            m_arrayRowColumnsSpacing[0].text = x.MultiItemSettings.SubItemSpacing.X.ToString("F3");
+            m_arrayRowColumnsSpacing[1].text = x.MultiItemSettings.SubItemSpacing.Y.ToString("F3");
 
             ApplyShowRules(x);
         }
@@ -365,13 +365,13 @@ namespace Klyte.WriteTheSigns.UI
             ApplyShowRules(desc);
         });
         private void OnChangeIlluminationStrength(float val) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.ColoringConfig.IlluminationStrength = val);
-        private void OnCustomBlinkChange(Vector4 obj) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.ColoringConfig.m_customBlink = obj);
-        private void OnRotationChange(Vector3 obj) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.PlacingConfig.m_textRelativeRotation = obj);
-        private void OnPositionChange(Vector3 obj) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.PlacingConfig.m_textRelativePosition = obj);
+        private void OnCustomBlinkChange(Vector4 obj) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.ColoringConfig.CustomBlink = (Vector4Xml)obj);
+        private void OnRotationChange(Vector3 obj) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.PlacingConfig.Rotation = (Vector3Xml) obj);
+        private void OnPositionChange(Vector3 obj) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.PlacingConfig.Position = (Vector3Xml)obj);
         private void OnSetAllCaps(bool isChecked) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_allCaps = isChecked);
 
 
-        private void OnRowColumnSpacingChanged(Vector2 obj) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.MultiItemSettings.m_subItemSpacing = obj);
+        private void OnRowColumnSpacingChanged(Vector2 obj) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.MultiItemSettings.SubItemSpacing = (Vector2Xml)obj);
         private void OnRowColumnCountChanged(Vector2 obj) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) =>
         {
             desc.MultiItemSettings.SubItemsPerRow = Mathf.RoundToInt(obj.x);

@@ -2,6 +2,8 @@
 using Klyte.WriteTheSigns.Rendering;
 using Klyte.WriteTheSigns.Xml;
 using SpriteFontPlus;
+using SpriteFontPlus.Utility;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
@@ -84,9 +86,10 @@ namespace Klyte.WriteTheSigns.UI
             }
             else
             {
-                SpriteFontPlus.Utility.BasicRenderInformation refer = WTSPropRenderingRules.GetTextMesh(FontServer.instance[descriptor.FontName] ?? FontServer.instance[WTSController.DEFAULT_FONT_KEY], descriptor.m_textDescriptors[referenceIdx], 0, 0, referenceIdx, m_defaultInstance, descriptor, out _);
+                BasicRenderInformation refer = WTSPropRenderingRules.GetTextMesh(FontServer.instance[descriptor.FontName] ?? FontServer.instance[WTSController.DEFAULT_FONT_KEY], descriptor.m_textDescriptors[referenceIdx], 0, 0, referenceIdx, m_defaultInstance, descriptor, out IEnumerable<BasicRenderInformation> briArr);
+                refer ??= briArr.FirstOrDefault();
 
-                var sourceMatrix = Matrix4x4.Inverse(WTSPropRenderingRules.CalculateTextMatrix(m_defaultInstance, descriptor.m_textDescriptors[referenceIdx].PlacingConfig.m_textRelativePosition, descriptor.m_textDescriptors[referenceIdx], refer, true).FirstOrDefault());
+                var sourceMatrix = Matrix4x4.Inverse(WTSPropRenderingRules.CalculateTextMatrix(m_defaultInstance, descriptor.m_textDescriptors[referenceIdx].PlacingConfig.Position, descriptor.m_textDescriptors[referenceIdx].PlacingConfig.Rotation, descriptor.m_textDescriptors[referenceIdx], refer, descriptor.m_textDescriptors[referenceIdx].PlacingConfig.m_create180degYClone, true).FirstOrDefault());
                 float regularMagn = info.m_mesh.bounds.extents.magnitude / WTSPropRenderingRules.SCALING_FACTOR;
                 Vector3 textExt = refer?.m_mesh?.bounds.extents ?? default;
 

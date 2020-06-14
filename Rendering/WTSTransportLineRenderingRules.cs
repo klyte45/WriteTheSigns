@@ -21,6 +21,9 @@ namespace Klyte.WriteTheSigns.Rendering
             {
                 material = new Material(Shader.Find("Custom/Props/Prop/Default"))
             };
+
+            TransportManager.instance.eventLineColorChanged += PurgeLine;
+            TransportManager.instance.eventLineNameChanged += PurgeLine;
         }
 
         private UITextureAtlas m_referenceAtlas;
@@ -216,22 +219,24 @@ namespace Klyte.WriteTheSigns.Rendering
             {
                 int height = spriteInfo.texture.height;
                 int width = spriteInfo.texture.width;
+                int borderWidth = 4;
 
-                var targetTexture = new Texture2D(width + 2, height + 2, TextureFormat.ARGB32, false);
-                targetTexture.SetPixels(new Color[targetTexture.width * targetTexture.height]);
-
+                var targetTexture = new Texture2D(width + borderWidth, height + borderWidth, TextureFormat.ARGB32, false);
                 Color contrastColor = KlyteMonoUtils.ContrastColor(bgColor);
+                targetTexture.SetPixels(new Color[targetTexture.width * targetTexture.height].Select(x => new Color(bgColor.r, bgColor.g, bgColor.b, 0)).ToArray());
+
                 Color[] contrastSpriteArray = spriteInfo.texture.GetPixels().Select(x => new Color(contrastColor.r, contrastColor.g, contrastColor.b, x.a)).ToArray();
 
                 TextureRenderUtils.MergeTextures(targetTexture, contrastSpriteArray, 0, 0, spriteInfo.texture.width, spriteInfo.texture.height);
-                TextureRenderUtils.MergeTextures(targetTexture, contrastSpriteArray, 0, 2, spriteInfo.texture.width, spriteInfo.texture.height);
-                TextureRenderUtils.MergeTextures(targetTexture, contrastSpriteArray, 2, 0, spriteInfo.texture.width, spriteInfo.texture.height);
-                TextureRenderUtils.MergeTextures(targetTexture, contrastSpriteArray, 2, 2, spriteInfo.texture.width, spriteInfo.texture.height);
-                TextureRenderUtils.MergeTextures(targetTexture, spriteInfo.texture.GetPixels().Select(x => new Color(bgColor.r, bgColor.g, bgColor.b, x.a)).ToArray(), 1, 1, spriteInfo.texture.width, spriteInfo.texture.height);
+                TextureRenderUtils.MergeTextures(targetTexture, contrastSpriteArray, 0, borderWidth, spriteInfo.texture.width, spriteInfo.texture.height);
+                TextureRenderUtils.MergeTextures(targetTexture, contrastSpriteArray, borderWidth, 0, spriteInfo.texture.width, spriteInfo.texture.height);
+                TextureRenderUtils.MergeTextures(targetTexture, contrastSpriteArray, borderWidth, borderWidth, spriteInfo.texture.width, spriteInfo.texture.height);
+                TextureRenderUtils.MergeTextures(targetTexture, spriteInfo.texture.GetPixels().Select(x => new Color(bgColor.r, bgColor.g, bgColor.b, x.a)).ToArray(), borderWidth / 2, borderWidth / 2, spriteInfo.texture.width, spriteInfo.texture.height);
 
                 TextureScaler.scale(targetTexture, width * 2, height * 2);
                 height *= 2;
                 width *= 2;
+                borderWidth *= 2;
                 var targetBorder = new RectOffset(spriteInfo.border.left * 2, spriteInfo.border.right * 2, spriteInfo.border.top * 2, spriteInfo.border.bottom * 2);
 
                 float textBoundHeight = Mathf.Min(height * .66f, height * .85f - targetBorder.vertical);
@@ -254,10 +259,10 @@ namespace Klyte.WriteTheSigns.Rendering
                 int topMerge = Mathf.RoundToInt((textAreaSize.y + ((textBoundHeight - texText.height) / 2)));
                 int leftMerge = Mathf.RoundToInt((textAreaSize.x + ((textBoundWidth - texText.width) / 2)));
 
-                TextureRenderUtils.MergeTextures(targetTexture, textOutlineArray, leftMerge - 2, topMerge - 2, texText.width, texText.height);
-                TextureRenderUtils.MergeTextures(targetTexture, textOutlineArray, leftMerge - 2, topMerge + 2, texText.width, texText.height);
-                TextureRenderUtils.MergeTextures(targetTexture, textOutlineArray, leftMerge + 2, topMerge - 2, texText.width, texText.height);
-                TextureRenderUtils.MergeTextures(targetTexture, textOutlineArray, leftMerge + 2, topMerge + 2, texText.width, texText.height);
+                TextureRenderUtils.MergeTextures(targetTexture, textOutlineArray, leftMerge - borderWidth / 2, topMerge - borderWidth / 2, texText.width, texText.height);
+                TextureRenderUtils.MergeTextures(targetTexture, textOutlineArray, leftMerge - borderWidth / 2, topMerge + borderWidth / 2, texText.width, texText.height);
+                TextureRenderUtils.MergeTextures(targetTexture, textOutlineArray, leftMerge + borderWidth / 2, topMerge - borderWidth / 2, texText.width, texText.height);
+                TextureRenderUtils.MergeTextures(targetTexture, textOutlineArray, leftMerge + borderWidth / 2, topMerge + borderWidth / 2, texText.width, texText.height);
                 TextureRenderUtils.MergeTextures(targetTexture, texText.GetPixels().Select(x => new Color(contrastColor.r, contrastColor.g, contrastColor.b, x.a)).ToArray(), leftMerge, topMerge, texText.width, texText.height);
                 Destroy(texText);
                 targetTexture.Apply();
