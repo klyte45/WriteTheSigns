@@ -1,4 +1,6 @@
-﻿using StbTrueTypeSharp;
+﻿using ColossalFramework.Threading;
+using Klyte.Commons.Utils;
+using StbTrueTypeSharp;
 using System;
 using System.IO;
 using System.Linq;
@@ -274,15 +276,36 @@ namespace FontStashSharp
 
         public bool IsDirty { get; private set; } = false;
 
+        private Task m_currentTask;
+
         public void UpdateMaterial()
         {
             if (IsDirty)
             {
+                Color[] texturePixels = Texture.GetPixels().ToArray();
+                int width = Texture.width;
+                int height = Texture.height;
+
                 Material.mainTexture = Texture;
-                Texture2D aciTex = Material.GetTexture("_ACIMap") as Texture2D ?? new Texture2D(Texture.width, Texture.height);
-                aciTex.SetPixels(Texture.GetPixels().Select(x => new Color(1 - x.a, 0, 0.49f, 1)).ToArray());
-                aciTex.Apply();
-                Material.SetTexture("_ACIMap", aciTex);
+                var aciTex = new Texture2D(width, height);
+                var normalTex = new Texture2D(width, height);
+
+                if (!m_currentTask?.hasEnded ?? false)
+                {
+                    m_currentTask.Abort();
+                }
+                m_currentTask = ThreadHelper.taskDistributor.Dispatch(delegate ()
+                 {
+
+                     aciTex.SetPixels(texturePixels.Select(x => new Color(1 - x.a, 0, 1f, 1)).ToArray());
+
+                     ThreadHelper.dispatcher.Dispatch(() =>
+                     {
+                         aciTex.Apply();
+                         Material.SetTexture("_ACIMap", aciTex);
+                     });
+
+                 });
 
                 IsDirty = false;
             }
