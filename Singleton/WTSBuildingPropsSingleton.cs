@@ -144,8 +144,8 @@ namespace Klyte.WriteTheSigns.Singleton
             }
             if (item.m_cachedPosition == null || item.m_cachedRotation == null)
             {
-                item.m_cachedPosition = renderInstance.m_dataMatrix1.MultiplyPoint(targetDescriptor.m_propPosition);
-                item.m_cachedRotation = targetDescriptor.m_propRotation;
+                item.m_cachedPosition = renderInstance.m_dataMatrix1.MultiplyPoint(targetDescriptor.PropPosition);
+                item.m_cachedRotation = targetDescriptor.PropRotation;
                 LogUtils.DoLog($"[B{buildingID}/{idx}]Cached position: {item.m_cachedPosition} | Cached rotation: {item.m_cachedRotation}");
             }
             Vector3 targetPostion = item.m_cachedPosition ?? default;
@@ -153,7 +153,7 @@ namespace Klyte.WriteTheSigns.Singleton
             {
                 if (i > 0)
                 {
-                    targetPostion = renderInstance.m_dataMatrix1.MultiplyPoint(targetDescriptor.m_propPosition + (i * targetDescriptor.ArrayRepeat));
+                    targetPostion = renderInstance.m_dataMatrix1.MultiplyPoint(targetDescriptor.PropPosition + (i * (Vector3)targetDescriptor.ArrayRepeat));
                 }
                 RenderSign(ref data, cameraInfo, buildingID, idx, targetPostion, item.m_cachedRotation ?? default, layerMask, propLayout, ref targetDescriptor, ref item.m_cachedProp);
 

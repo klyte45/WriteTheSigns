@@ -126,7 +126,7 @@ namespace Klyte.WriteTheSigns.Singleton
 
         private void RenderSign(RenderManager.CameraInfo cameraInfo, ushort nodeID, int boardIdx, int secIdx, Vector3 position, float direction, ref BoardInstanceRoadNodeXml targetDescriptor, ref PropInfo cachedProp)
         {
-            WTSPropRenderingRules.RenderPropMesh(ref cachedProp, cameraInfo, nodeID, boardIdx, secIdx, 0xFFFFFFF, 0, position, Vector4.zero, ref targetDescriptor.Descriptor.m_propName, new Vector3(0, direction) + targetDescriptor.m_propRotation, targetDescriptor.PropScale, targetDescriptor.Descriptor, targetDescriptor, out Matrix4x4 propMatrix, out bool rendered, new InstanceID { NetNode = nodeID });
+            WTSPropRenderingRules.RenderPropMesh(ref cachedProp, cameraInfo, nodeID, boardIdx, secIdx, 0xFFFFFFF, 0, position, Vector4.zero, ref targetDescriptor.Descriptor.m_propName, new Vector3(0, direction) + targetDescriptor.PropRotation, targetDescriptor.PropScale, targetDescriptor.Descriptor, targetDescriptor, out Matrix4x4 propMatrix, out bool rendered, new InstanceID { NetNode = nodeID });
             if (rendered)
             {
 
@@ -390,11 +390,11 @@ namespace Klyte.WriteTheSigns.Singleton
             Vector3 bezierPos;
             float angle;
             float targetOffsetX;
-            if (descriptor.PropPositionZ < 1)
+            if (descriptor.PropPosition.Z < 1)
             {
-                bezierPos = segmentI.GetBezier().Position(Mathf.Max(0, Mathf.Min(1, (descriptor.m_propPosition.z / (invertedSegment ? 2 : -2)) + 0.5f)));
+                bezierPos = segmentI.GetBezier().Position(Mathf.Max(0, Mathf.Min(1, (descriptor.PropPosition.Z / (invertedSegment ? 2 : -2)) + 0.5f)));
                 angle = default;
-                targetOffsetX = descriptor.m_propPosition.x;
+                targetOffsetX = descriptor.PropPosition.X;
             }
             else
             {
@@ -405,7 +405,7 @@ namespace Klyte.WriteTheSigns.Singleton
                     bezierPos = (bezierPos + bezierPos2) / 2;
                     angleVec = (angleVec + angleVec2) / 2;
                 }
-                targetOffsetX = descriptor.m_propPosition.x * (segmentI.Info.m_pavementWidth + segmentJ.Info.m_pavementWidth) / (roadSide == RoadSide.LEFT ? 2 : -2);
+                targetOffsetX = descriptor.PropPosition.X * (segmentI.Info.m_pavementWidth + segmentJ.Info.m_pavementWidth) / (roadSide == RoadSide.LEFT ? 2 : -2);
                 angle = angleVec.GetAngleXZ();
 
                 invertedSegment ^= angleVec.GetAngleXZ() < 0;
@@ -419,8 +419,8 @@ namespace Klyte.WriteTheSigns.Singleton
             float rotation = dir.GetAngleXZ();
 
             Vector3 rotationVectorSide = VectorUtils.X_Y(KlyteMathUtils.DegreeToVector2(rotation + rotationOffsetSide - angle));
-            platePosI = bezierPos + (descriptor.PropPositionZ < 1 ? roadSide == RoadSide.CENTER ? default : rotationVectorSide * (segmentI.Info.m_halfWidth - segmentI.Info.m_pavementWidth) : default) + (rotationVectorSide * targetOffsetX);
-            platePosI.y += descriptor.m_propPosition.y;
+            platePosI = bezierPos + (descriptor.PropPosition.Z < 1 ? roadSide == RoadSide.CENTER ? default : rotationVectorSide * (segmentI.Info.m_halfWidth - segmentI.Info.m_pavementWidth) : default) + (rotationVectorSide * targetOffsetX);
+            platePosI.y += descriptor.PropPosition.Y;
 
             return platePosI;
         }

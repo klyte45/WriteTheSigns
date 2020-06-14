@@ -286,12 +286,12 @@ namespace Klyte.WriteTheSigns.UI
             {
                 m_name.text = x.SaveName;
                 m_propLayoutSelect.selectedValue = x.PropLayoutName;
-                m_position[0].text = x.PropPositionX.ToString("F3");
-                m_position[1].text = x.PropPositionY.ToString("F3");
-                m_position[2].text = x.PropPositionZ.ToString("F3");
-                m_rotation[0].text = x.PropRotationX.ToString("F3");
-                m_rotation[1].text = x.PropRotationY.ToString("F3");
-                m_rotation[2].text = x.PropRotationZ.ToString("F3");
+                m_position[0].text = x.PropPosition.X.ToString("F3");
+                m_position[1].text = x.PropPosition.Y.ToString("F3");
+                m_position[2].text = x.PropPosition.Z.ToString("F3");
+                m_rotation[0].text = x.PropRotation.X.ToString("F3");
+                m_rotation[1].text = x.PropRotation.Y.ToString("F3");
+                m_rotation[2].text = x.PropRotation.Z.ToString("F3");
                 m_scale[0].text = x.PropScale.x.ToString("F3");
                 m_scale[1].text = x.PropScale.y.ToString("F3");
                 m_scale[2].text = x.PropScale.z.ToString("F3");
@@ -416,9 +416,9 @@ namespace Klyte.WriteTheSigns.UI
                 x.AllowedLevels.Remove(targetLevel);
             }
         });
-        private void OnRotationChanged(Vector3 obj) => SafeObtain((ref BoardInstanceRoadNodeXml x) => x.m_propRotation = obj);
+        private void OnRotationChanged(Vector3 obj) => SafeObtain((ref BoardInstanceRoadNodeXml x) => x.PropRotation = (Vector3Xml)obj);
         private void OnScaleChanged(Vector3 obj) => SafeObtain((ref BoardInstanceRoadNodeXml x) => x.PropScale = obj);
-        private void OnPositionChanged(Vector3 obj) => SafeObtain((ref BoardInstanceRoadNodeXml x) => x.m_propPosition = obj);
+        private void OnPositionChanged(Vector3 obj) => SafeObtain((ref BoardInstanceRoadNodeXml x) => x.PropPosition = (Vector3Xml)obj);
         private void OnPropLayoutChange(int sel) => SafeObtain((ref BoardInstanceRoadNodeXml x) =>
         {
             if (sel >= 0)

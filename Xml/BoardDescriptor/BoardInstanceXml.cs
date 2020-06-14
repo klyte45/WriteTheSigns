@@ -1,4 +1,5 @@
-﻿using System.Xml;
+﻿using Klyte.Commons.Utils;
+using System.Xml;
 using System.Xml.Serialization;
 using UnityEngine;
 
@@ -7,42 +8,20 @@ namespace Klyte.WriteTheSigns.Xml
     public class BoardInstanceXml
     {
         [XmlIgnore]
-        public Vector3 m_propPosition;
-        [XmlIgnore]
         public Vector3 PropScale
         {
-            get => new Vector3(ScaleX, ScaleY ?? ScaleX, ScaleZ ?? ScaleX);
-            set {
-                ScaleX = value.x;
-                ScaleY = value.y;
-                ScaleZ = value.z;
-            }
+            get => Scale;//new Vector3(Scale.X, Scale.Y == 0 ? Scale.X : Scale.Y, Scale.Z == 0 ? Scale.X : Scale.Z);
+            set => Scale = (Vector3Xml)value;
         }
-        [XmlIgnore]
-        public Vector3 m_propRotation;
 
+        [XmlElement("position")]
+        public Vector3Xml PropPosition { get; set; }
 
-        [XmlAttribute("positionX")]
-        public float PropPositionX { get => m_propPosition.x; set => m_propPosition.x = value; }
-        [XmlAttribute("positionY")]
-        public float PropPositionY { get => m_propPosition.y; set => m_propPosition.y = value; }
-        [XmlAttribute("positionZ")]
-        public float PropPositionZ { get => m_propPosition.z; set => m_propPosition.z = value; }
+        [XmlElement("rotation")]
+        public Vector3Xml PropRotation { get; set; }
 
-
-        [XmlAttribute("rotationX")]
-        public float PropRotationX { get => m_propRotation.x; set => m_propRotation.x = value; }
-        [XmlAttribute("rotationY")]
-        public float PropRotationY { get => m_propRotation.y; set => m_propRotation.y = value; }
-        [XmlAttribute("rotationZ")]
-        public float PropRotationZ { get => m_propRotation.z; set => m_propRotation.z = value; }
-
-        [XmlAttribute("scaleX")]
-        public float ScaleX = 1;
-        [XmlAttribute("scaleY")]
-        public float? ScaleY;
-        [XmlAttribute("scaleZ")]
-        public float? ScaleZ;
+        [XmlElement("scale")]
+        public Vector3Xml Scale { get; set; } = (Vector3Xml)Vector3.one;
     }
 
 }
