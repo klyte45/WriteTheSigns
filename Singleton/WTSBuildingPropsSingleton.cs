@@ -33,10 +33,7 @@ namespace Klyte.WriteTheSigns.Singleton
         private ulong[] m_lastDrawBuilding = new ulong[BuildingManager.MAX_BUILDING_COUNT];
 
         #region Initialize
-        public void Awake()
-        {
-            LoadAllBuildingConfigurations();
-        }
+        public void Awake() => LoadAllBuildingConfigurations();
 
         public void Start()
         {
@@ -151,8 +148,16 @@ namespace Klyte.WriteTheSigns.Singleton
                 item.m_cachedRotation = targetDescriptor.m_propRotation;
                 LogUtils.DoLog($"[B{buildingID}/{idx}]Cached position: {item.m_cachedPosition} | Cached rotation: {item.m_cachedRotation}");
             }
+            Vector3 targetPostion = item.m_cachedPosition ?? default;
+            for (int i = 0; i <= targetDescriptor.m_arrayRepeatTimes; i++)
+            {
+                if (i > 0)
+                {
+                    targetPostion = renderInstance.m_dataMatrix1.MultiplyPoint(targetDescriptor.m_propPosition + (i * targetDescriptor.ArrayRepeat));
+                }
+                RenderSign(ref data, cameraInfo, buildingID, idx, targetPostion, item.m_cachedRotation ?? default, layerMask, propLayout, ref targetDescriptor, ref item.m_cachedProp);
 
-            RenderSign(ref data, cameraInfo, buildingID, idx, item.m_cachedPosition ?? default, item.m_cachedRotation ?? default, layerMask, propLayout, ref targetDescriptor, ref item.m_cachedProp);
+            }
         }
 
         private void RenderSign(ref Building data, RenderManager.CameraInfo cameraInfo, ushort buildingId, int boardIdx, Vector3 position, Vector3 rotation, int layerMask, BoardDescriptorGeneralXml propLayout, ref BoardInstanceBuildingXml targetDescriptor, ref PropInfo cachedProp)
