@@ -12,7 +12,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using static Klyte.WriteTheSigns.Xml.BoardGeneratorBuildings;
 
 namespace Klyte.WriteTheSigns.Rendering
 {
@@ -165,6 +164,7 @@ namespace Klyte.WriteTheSigns.Rendering
                         {
                             lastRowOrColumnStartPoint = new Vector3(textDescriptor.PlacingConfig.Position.X + columnWidth * (lastRowOrColumnItemCount - 1) / 2f, startPoint.y, startPoint.z);
                         }
+                        Color colorToSet = GetTargetColor(refID, boardIdx, secIdx, descriptor, propLayout, textDescriptor);
                         //LogUtils.DoWarnLog($"sz = {resultArray.Length};targetCount = {targetCount}; origPos = {textDescriptor.PlacingConfig.Position}; maxItemsInAColumn = {maxItemsInAColumn}; maxItemsInARow = {maxItemsInARow};columnWidth={columnWidth};rowHeight={rowHeight}");
                         int firstItemIdxLastRowOrColumn = targetCount - lastRowOrColumnItemCount;
                         for (int i = 0; i < targetCount; i++)
@@ -183,12 +183,12 @@ namespace Klyte.WriteTheSigns.Rendering
 
                             BasicRenderInformation currentItem = resultArray[i];
                             Vector3 targetPosA = (i >= firstItemIdxLastRowOrColumn ? lastRowOrColumnStartPoint : startPoint) - new Vector3(columnWidth * x, rowHeight * y);
-                            DrawTextBri(refID, boardIdx, secIdx, descriptor, propMatrix, propLayout, textDescriptor, materialPropertyBlock, targetCamera, overrideShader, currentItem, targetPosA, textDescriptor.PlacingConfig.Rotation, false);
+                            DrawTextBri(refID, boardIdx, secIdx, propMatrix, textDescriptor, materialPropertyBlock, currentItem, colorToSet, targetPosA, textDescriptor.PlacingConfig.Rotation, descriptor.PropScale, false, targetCamera, overrideShader);
                             if (textDescriptor.PlacingConfig.m_create180degYClone)
                             {
                                 targetPosA = startPoint - new Vector3(columnWidth * (maxItemsInARow - x), rowHeight * y);
                                 targetPosA.z *= -1;
-                                DrawTextBri(refID, boardIdx, secIdx, descriptor, propMatrix, propLayout, textDescriptor, materialPropertyBlock, targetCamera, overrideShader, currentItem, targetPosA, textDescriptor.PlacingConfig.Rotation + new Vector3(0, 180), false);
+                                DrawTextBri(refID, boardIdx, secIdx, propMatrix, textDescriptor, materialPropertyBlock, currentItem, colorToSet, targetPosA, textDescriptor.PlacingConfig.Rotation + new Vector3(0, 180), descriptor.PropScale, false, targetCamera, overrideShader);
                             }
                         }
                     }
@@ -205,27 +205,33 @@ namespace Klyte.WriteTheSigns.Rendering
 
             Vector3 targetPos = textDescriptor.PlacingConfig.Position;
 
-            DrawTextBri(refID, boardIdx, secIdx, descriptor, propMatrix, propLayout, textDescriptor, materialPropertyBlock, targetCamera, overrideShader, renderInfo, targetPos, textDescriptor.PlacingConfig.Rotation, textDescriptor.PlacingConfig.m_create180degYClone);
+
+            DrawTextBri(refID, boardIdx, secIdx, propMatrix, textDescriptor, materialPropertyBlock, renderInfo, GetTargetColor(refID, boardIdx, secIdx, descriptor, propLayout, textDescriptor), targetPos, textDescriptor.PlacingConfig.Rotation, descriptor.PropScale, textDescriptor.PlacingConfig.m_create180degYClone, targetCamera, overrideShader);
         }
 
-        private static void DrawTextBri(ushort refID, int boardIdx, int secIdx, BoardInstanceXml descriptor, Matrix4x4 propMatrix, BoardDescriptorGeneralXml propLayout,
-            BoardTextDescriptorGeneralXml textDescriptor, MaterialPropertyBlock materialPropertyBlock, Camera targetCamera, Shader overrideShader, BasicRenderInformation renderInfo,
-            Vector3 taregetPos, Vector3 taregetRotation, bool placeClone180Y)
+        private static Color GetTargetColor(ushort refID, int boardIdx, int secIdx, BoardInstanceXml descriptor, BoardDescriptorGeneralXml propLayout, BoardTextDescriptorGeneralXml textDescriptor)
         {
-            List<Matrix4x4> textMatrixes = CalculateTextMatrix(descriptor, taregetPos, taregetRotation, textDescriptor, renderInfo, placeClone180Y);
+            if (textDescriptor.ColoringConfig.m_useContrastColor)
+            {
+                return GetContrastColor(refID, boardIdx, secIdx, descriptor, propLayout);
+            }
+            else if (textDescriptor.ColoringConfig.m_defaultColor != null)
+            {
+                return textDescriptor.ColoringConfig.m_defaultColor;
+            }
+            return Color.white;
+        }
+
+        public static void DrawTextBri(ushort refID, int boardIdx, int secIdx, Matrix4x4 propMatrix, BoardTextDescriptorGeneralXml textDescriptor,
+            MaterialPropertyBlock materialPropertyBlock, BasicRenderInformation renderInfo, Color colorToSet, Vector3 taregetPos, Vector3 taregetRotation,
+            Vector3 baseScale, bool placeClone180Y, Camera targetCamera = null, Shader overrideShader = null)
+        {
+            List<Matrix4x4> textMatrixes = CalculateTextMatrix( taregetPos, taregetRotation, baseScale, textDescriptor, renderInfo, placeClone180Y);
+
             foreach (Matrix4x4 textMatrix in textMatrixes)
             {
                 Matrix4x4 matrix = propMatrix * textMatrix;
 
-                Color colorToSet = Color.white;
-                if (textDescriptor.ColoringConfig.m_useContrastColor)
-                {
-                    colorToSet = GetContrastColor(refID, boardIdx, secIdx, descriptor, propLayout);
-                }
-                else if (textDescriptor.ColoringConfig.m_defaultColor != null)
-                {
-                    colorToSet = textDescriptor.ColoringConfig.m_defaultColor;
-                }
                 materialPropertyBlock.Clear();
                 materialPropertyBlock.SetColor(SHADER_PROP_COLOR, colorToSet);
                 materialPropertyBlock.SetColor(SHADER_PROP_COLOR0, colorToSet);
@@ -234,8 +240,7 @@ namespace Klyte.WriteTheSigns.Rendering
                 materialPropertyBlock.SetColor(SHADER_PROP_COLOR3, colorToSet);
 
                 var objectIndex = new Vector4();
-
-                //materialPropertyBlock.SetColor(m_shaderPropEmissive, Color.white * (SimulationManager.instance.m_isNightTime ? textDescriptor.m_nightEmissiveMultiplier : textDescriptor.m_dayEmissiveMultiplier));
+                
                 Material targetMaterial = renderInfo.m_generatedMaterial;
                 var randomizer = new Randomizer((refID << 8) + (boardIdx << 2) + secIdx);
                 switch (textDescriptor.ColoringConfig.MaterialType)
@@ -275,12 +280,13 @@ namespace Klyte.WriteTheSigns.Rendering
                 materialPropertyBlock.SetVector(PropManager.instance.ID_ObjectIndex, objectIndex);
                 targetMaterial.shader = overrideShader ?? WTSController.DEFAULT_SHADER_TEXT;
                 Graphics.DrawMesh(renderInfo.m_mesh, matrix, targetMaterial, 10, targetCamera, 0, materialPropertyBlock, false);
+                
             }
         }
 
         private static readonly float m_daynightOffTime = 6 * Convert.ToSingle(Math.Pow(Convert.ToDouble((6 - (15 / 2.5)) / 6), Convert.ToDouble(1 / 1.09)));
 
-        internal static List<Matrix4x4> CalculateTextMatrix(BoardInstanceXml instance, Vector3 targetPosition, Vector3 targetRotation, BoardTextDescriptorGeneralXml textDescriptor, BasicRenderInformation renderInfo, bool placeClone180Y, bool centerReference = false)
+        internal static List<Matrix4x4> CalculateTextMatrix(Vector3 targetPosition, Vector3 targetRotation, Vector3 baseScale, BoardTextDescriptorGeneralXml textDescriptor, BasicRenderInformation renderInfo, bool placeClone180Y, bool centerReference = false)
         {
             var result = new List<Matrix4x4>();
             if (renderInfo == null)
@@ -288,7 +294,7 @@ namespace Klyte.WriteTheSigns.Rendering
                 return result;
             }
 
-            Matrix4x4 textMatrix = ApplyTextAdjustments(targetPosition, targetRotation, renderInfo, instance.PropScale, textDescriptor.m_textScale, textDescriptor.m_textAlign, textDescriptor.m_maxWidthMeters, textDescriptor.m_applyOverflowResizingOnY, centerReference);
+            Matrix4x4 textMatrix = ApplyTextAdjustments(targetPosition, targetRotation, renderInfo, baseScale, textDescriptor.m_textScale, textDescriptor.m_textAlign, textDescriptor.m_maxWidthMeters, textDescriptor.m_applyOverflowResizingOnY, centerReference);
 
             result.Add(textMatrix);
 
@@ -299,7 +305,7 @@ namespace Klyte.WriteTheSigns.Rendering
                 {
                     targetTextAlignment = 2 - targetTextAlignment;
                 }
-                result.Add(ApplyTextAdjustments(new Vector3(targetPosition.x, targetPosition.y, -targetPosition.z), targetRotation + new Vector3(0, 180), renderInfo, instance.PropScale, textDescriptor.m_textScale, targetTextAlignment, textDescriptor.m_maxWidthMeters, textDescriptor.m_applyOverflowResizingOnY, centerReference));
+                result.Add(ApplyTextAdjustments(new Vector3(targetPosition.x, targetPosition.y, -targetPosition.z), targetRotation + new Vector3(0, 180), renderInfo, baseScale, textDescriptor.m_textScale, targetTextAlignment, textDescriptor.m_maxWidthMeters, textDescriptor.m_applyOverflowResizingOnY, centerReference));
             }
 
             return result;
@@ -466,7 +472,7 @@ namespace Klyte.WriteTheSigns.Rendering
             }
             else if (instance is BoardInstanceBuildingXml buildingDescritpor)
             {
-                ref BoardGeneratorBuildings.BoardBunchContainerBuilding data = ref WTSBuildingsData.Instance.BoardsContainers[refID, 0, 0][boardIdx];
+                ref BoardBunchContainerBuilding data = ref WTSBuildingsData.Instance.BoardsContainers[refID, 0, 0][boardIdx];
                 if (data == null)
                 {
                     return null;

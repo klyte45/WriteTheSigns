@@ -164,6 +164,7 @@
     <Compile Include="commons\Utils\UtilitiesClasses\Tuple.cs" />
     <Compile Include="commons\Utils\VehicleUtils.cs" />
     <Compile Include="commons\Utils\XmlUtils.cs" />
+    <Compile Include="Data\WTSVehicleData.cs" />
     <Compile Include="Data\WTSLibBaseData.cs" />
     <Compile Include="Data\WTSBaseData.cs" />
     <Compile Include="Data\WTSBuildingsData.cs" />
@@ -190,9 +191,11 @@
     <Compile Include="DynamicFont\src\Utility\BasicRenderInformation.cs" />
     <Compile Include="Libraries\BasicLib.cs" />
     <Compile Include="Libraries\WTSLibContainerRoadCornerRuleList.cs" />
+    <Compile Include="Overrides\BoardGeneration\VehicleAIOverrides.cs" />
     <Compile Include="Overrides\BoardGeneration\BuildingAIOverrides.cs" />
     <Compile Include="Overrides\TransportLineOverrides.cs" />
     <Compile Include="Rendering\WTSTransportLineRenderingRules.cs" />
+    <Compile Include="Singleton\WTSVehicleTextsSingleton.cs" />
     <Compile Include="Singleton\WTSBuildingPropsSingleton.cs" />
     <Compile Include="Utils\WTSRoadNodeCommons.cs" />
     <Compile Include="Singleton\CacheDestinationRoute.cs" />

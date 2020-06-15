@@ -1,7 +1,6 @@
 ﻿using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Xml;
 using System.Xml.Serialization;
-using static Klyte.WriteTheSigns.Xml.BoardGeneratorBuildings;
 
 namespace Klyte.WriteTheSigns.Data
 {

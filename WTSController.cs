@@ -22,6 +22,7 @@ namespace Klyte.WriteTheSigns
 
         internal WTSTransportLineRenderingRules TransportLineRenderingRules { get; private set; }
         internal WTSBuildingPropsSingleton BuildingPropsSingleton { get; private set; }
+        internal WTSVehicleTextsSingleton VehicleTextsSingleton{ get; private set; }
         internal WTSDestinationSingleton DestinationSingleton { get; private set; }
 
         public WTSRoadPropsSingleton RoadPropsSingleton { get; private set; }
@@ -63,6 +64,7 @@ namespace Klyte.WriteTheSigns
             BuildingPropsSingleton = gameObject.AddComponent<WTSBuildingPropsSingleton>();
             RoadPropsSingleton = gameObject.AddComponent<WTSRoadPropsSingleton>();
             DestinationSingleton  = gameObject.AddComponent<WTSDestinationSingleton>();
+            VehicleTextsSingleton  = gameObject.AddComponent<WTSVehicleTextsSingleton>();
         }
 
         public void OnDestroy()

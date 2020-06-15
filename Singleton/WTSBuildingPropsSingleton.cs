@@ -16,8 +16,6 @@ using System.Linq;
 using System.Xml.Serialization;
 using UnityEngine;
 using static Klyte.Commons.Utils.StopSearchUtils;
-using static Klyte.WriteTheSigns.Xml.BoardGeneratorBuildings;
-
 namespace Klyte.WriteTheSigns.Singleton
 {
     public class WTSBuildingPropsSingleton : MonoBehaviour
