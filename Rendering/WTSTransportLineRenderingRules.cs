@@ -3,7 +3,6 @@ using ColossalFramework.Threading;
 using ColossalFramework.UI;
 using Klyte.Commons.UI.Sprites;
 using Klyte.Commons.Utils;
-using Klyte.WriteTheSigns.Utils;
 using SpriteFontPlus;
 using SpriteFontPlus.Utility;
 using System.Collections;
@@ -18,13 +17,16 @@ namespace Klyte.WriteTheSigns.Rendering
     {
         public void Awake()
         {
-            m_referenceAtlas = new UITextureAtlas
-            {
-                material = new Material(Shader.Find("Custom/Props/Prop/Default"))
-            };
+            ResetAtlas();
 
             TransportManager.instance.eventLineColorChanged += PurgeLine;
             TransportManager.instance.eventLineNameChanged += PurgeLine;
+        }
+
+        private void ResetAtlas()
+        {
+            m_referenceAtlas = ScriptableObject.CreateInstance<UITextureAtlas>();
+            m_referenceAtlas.material = new Material(Shader.Find("Custom/Props/Prop/Default"));
         }
 
         private UITextureAtlas m_referenceAtlas;
@@ -37,6 +39,12 @@ namespace Klyte.WriteTheSigns.Rendering
                 m_referenceAtlas.Remove(id);
             }
             m_textCache.Remove(lineId);
+            IsDirty = true;
+        }
+        public void PurgeAllLines()
+        {
+            m_textCache.Clear();
+            ResetAtlas();
             IsDirty = true;
         }
 
@@ -64,7 +72,7 @@ namespace Klyte.WriteTheSigns.Rendering
             }
         }
 
-        private Dictionary<ushort, BasicRenderInformation> m_textCache = new Dictionary<ushort, BasicRenderInformation>();
+        private readonly Dictionary<ushort, TransportLineCacheItem> m_textCache = new Dictionary<ushort, TransportLineCacheItem>();
 
 
         private LineIconSpriteNames m_lineIconTest = LineIconSpriteNames.K45_HexagonIcon;
@@ -77,18 +85,22 @@ namespace Klyte.WriteTheSigns.Rendering
                 return bris;
             }
 
-            foreach (ushort id in ids)
+            foreach (ushort id in ids.OrderBy(x => WriteTheSignsMod.Controller.ConnectorTLM.GetLineSortString(x)))
             {
-                if (m_textCache.TryGetValue(id, out BasicRenderInformation bri))
+                if (m_textCache.TryGetValue(id, out TransportLineCacheItem bri))
                 {
-                    if (bri != null)
+                    if (bri?.m_logoData != null)
                     {
-                        bris.Add(bri);
+                        bris.Add(bri.m_logoData);
                     }
                 }
                 else
                 {
-                    m_textCache[id] = null;
+                    if (!m_textCache.ContainsKey(id))
+                    {
+                        m_textCache[id] = new TransportLineCacheItem();
+                    }
+
                     StartCoroutine(WriteTextureCoroutine(id, scale));
                 }
             }
@@ -110,7 +122,7 @@ namespace Klyte.WriteTheSigns.Rendering
                 }
                 else
                 {
-                    lineParams = WTSHookable.GetLineLogoParameters(lineId);
+                    lineParams = WriteTheSignsMod.Controller.ConnectorTLM.GetLineLogoParameters(lineId);
                 }
                 var drawingCoroutine = CoroutineWithData.From(this, RenderSpriteLine(FontServer.instance[WTSController.DEFAULT_FONT_KEY], UIView.GetAView().defaultAtlas, lineParams.First, lineParams.Second, lineParams.Third));
                 yield return drawingCoroutine.Coroutine;
@@ -199,9 +211,9 @@ namespace Klyte.WriteTheSigns.Rendering
             bri.m_generatedMaterial = Material;
 
             bri.m_sizeMetersUnscaled = bri.m_mesh.bounds.size;
-            if (m_textCache.TryGetValue(lineId, out BasicRenderInformation currentVal) && currentVal == null)
+            if (m_textCache.TryGetValue(lineId, out TransportLineCacheItem currentVal) && currentVal != null && currentVal?.m_logoData == null)
             {
-                m_textCache[lineId] = bri;
+                m_textCache[lineId].m_logoData = bri;
             }
             else
             {
@@ -363,6 +375,15 @@ namespace Klyte.WriteTheSigns.Rendering
             }
             mesh.tangents = tangents;
         }
+        public class TransportLineCacheItem
+        {
+            public BasicRenderInformation m_logoData;
+            public string m_startingDestinationName;
+            public string m_returningDestinationName;
+            public ushort m_halftripStopId;
+        }
     }
+
+
 
 }

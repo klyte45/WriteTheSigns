@@ -1,6 +1,5 @@
 ﻿using Klyte.Commons.Extensors;
 using Klyte.Commons.Utils;
-using Klyte.WriteTheSigns.Singleton;
 using System;
 
 namespace Klyte.WriteTheSigns.Overrides
@@ -9,16 +8,6 @@ namespace Klyte.WriteTheSigns.Overrides
     {
         public void Awake()
         {
-            var adrEventsType = Type.GetType("Klyte.Addresses.ModShared.AdrEvents, KlyteAddresses");
-            if (adrEventsType != null)
-            {
-                static void RegisterEvent(string eventName, Type adrEventsType, Action action) => adrEventsType.GetEvent(eventName)?.AddEventHandler(null, action);
-                RegisterEvent("EventZeroMarkerBuildingChange", adrEventsType, new Action(WTSController.OnZeroMarkChanged));
-                RegisterEvent("EventRoadNamingChange", adrEventsType, new Action(WTSController.OnZeroMarkChanged));
-                RegisterEvent("EventDistrictColorChanged", adrEventsType, new Action(WTSController.OnDistrictChanged));
-                RegisterEvent("EventBuildingNameStrategyChanged", adrEventsType, new Action(WTSController.OnBuildingNameChanged));
-            }
-
             #region Hooks
             System.Reflection.MethodInfo postRenderMeshs = GetType().GetMethod("AfterRenderSegment", RedirectorUtils.allFlags);
             System.Reflection.MethodInfo orig = typeof(NetSegment).GetMethod("RenderInstance", new Type[] { typeof(RenderManager.CameraInfo), typeof(ushort), typeof(int) });

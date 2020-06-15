@@ -80,7 +80,7 @@
     <Compile Include="commons\Interfaces\BasicIUserMod.cs" />
     <Compile Include="commons\Interfaces\BasicIUserModSimplified.cs" />
     <Compile Include="commons\Interfaces\BasicKPanel.cs" />
-    <Compile Include="commons\Interfaces\IController.cs" />
+    <Compile Include="commons\Interfaces\BaseController.cs" />
     <Compile Include="commons\Interfaces\IEnumerableIndex.cs" />
     <Compile Include="commons\Interfaces\IFontConfigContainer.cs" />
     <Compile Include="commons\Interfaces\IIdentifiable.cs" />
@@ -117,6 +117,7 @@
     <Compile Include="commons\Utils\UtilitiesClasses\CoroutineWithData.cs" />
     <Compile Include="commons\Utils\UtilitiesClasses\PriorityQueue.cs" />
     <Compile Include="commons\Utils\UtilitiesClasses\VectorsXml.cs" />
+    <Compile Include="commons\Utils\PluginUtils.cs" />
     <Compile Include="commons\Utils\ZipUtils.cs" />
     <Compile Include="commons\Utils\BuildingUtils.cs" />
     <Compile Include="commons\Utils\DistrictUtils.cs" />
@@ -191,6 +192,12 @@
     <Compile Include="DynamicFont\src\Utility\BasicRenderInformation.cs" />
     <Compile Include="Libraries\BasicLib.cs" />
     <Compile Include="Libraries\WTSLibContainerRoadCornerRuleList.cs" />
+    <Compile Include="ModShared\ConnectorADR.cs" />
+    <Compile Include="ModShared\ConnectorADRFallback.cs" />
+    <Compile Include="ModShared\IConnectorADR.cs" />
+    <Compile Include="ModShared\IConnectorTLM.cs" />
+    <Compile Include="ModShared\ConnectorTLM.cs" />
+    <Compile Include="ModShared\ConnectorTLMFallback.cs" />
     <Compile Include="Overrides\BoardGeneration\VehicleAIOverrides.cs" />
     <Compile Include="Overrides\BoardGeneration\BuildingAIOverrides.cs" />
     <Compile Include="Overrides\TransportLineOverrides.cs" />
@@ -249,7 +256,6 @@
     <Compile Include="Xml\Enums\TextType.cs" />
     <Compile Include="Tools\RoadSegmentTool.cs" />
     <Compile Include="UI\WTSPanel.cs" />
-    <Compile Include="Utils\WTSHookable.cs" />
     <Compile Include="Utils\WTSUtils.cs" />
     <Compile Include="_StbTrueTypeSharp\src\Bmp.cs" />
     <Compile Include="_StbTrueTypeSharp\src\Buf.cs" />
@@ -442,6 +448,19 @@
     <Content Include="commons\UI\Images\lineFormat.png" />
     <Content Include="commons\UI\Images\lineFormat.psd" />
     <Content Include="commons\UI\Images\sprites.psd" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Addresses\Addresses.csproj">
+      <Project>{3518655d-2922-4e78-8875-c38ce7b15adf}</Project>
+      <Name>Addresses</Name>
+      <Aliases>ADR</Aliases>
+    </ProjectReference>
+    <ProjectReference Include="..\TransportLinesManager\TransportLinesManager.csproj">
+      <Project>{3f345c94-6b63-4d8f-8a12-e1ebdae831f3}</Project>
+      <Name>TransportLinesManager</Name>
+      <Aliases>TLM</Aliases>
+      <Private>False</Private>
+    </ProjectReference>
   </ItemGroup>
   <PropertyGroup>
     <PostBuildEvent>xcopy /Y "$(TargetDir)0Harmony.dll" "$(ProjectDir)\_requiredDLLs\"

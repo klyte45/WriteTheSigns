@@ -34,6 +34,7 @@ namespace Klyte.WriteTheSigns.Rendering
                 TextType.StreetSuffix,
                 TextType.StreetNameComplete,
                 TextType.DistanceFromReference,
+                TextType.PostalCode,
                 TextType.District,
                 TextType.Park,
                 TextType.DistrictOrPark,
@@ -149,8 +150,8 @@ namespace Klyte.WriteTheSigns.Rendering
                             maxItemsInAColumn = Mathf.CeilToInt((float)targetCount / settings.SubItemsPerRow);
                             lastRowOrColumnItemCount = targetCount % settings.SubItemsPerRow;
                         }
-                        float unscaledColumnWidth = multipleOutput.Max(x => x.m_sizeMetersUnscaled.x);
-                        float rowHeight = multipleOutput.Max(x => x.m_sizeMetersUnscaled.y) * textDescriptor.m_textScale * SCALING_FACTOR + textDescriptor.MultiItemSettings.SubItemSpacing.Y;
+                        float unscaledColumnWidth = resultArray.Max(x => x.m_sizeMetersUnscaled.x);
+                        float rowHeight = resultArray.Max(x => x.m_sizeMetersUnscaled.y) * textDescriptor.m_textScale * SCALING_FACTOR + textDescriptor.MultiItemSettings.SubItemSpacing.Y;
                         float columnWidth = (textDescriptor.m_maxWidthMeters > 0 ? Mathf.Min(textDescriptor.m_maxWidthMeters / maxItemsInARow, unscaledColumnWidth * SCALING_FACTOR) : unscaledColumnWidth * SCALING_FACTOR) * textDescriptor.m_textScale + textDescriptor.MultiItemSettings.SubItemSpacing.X;
 
 
@@ -373,7 +374,7 @@ namespace Klyte.WriteTheSigns.Rendering
                         return Color.white;
                     case ColoringMode.ByDistrict:
                         byte districtId = DistrictManager.instance.GetDistrict(BuildingManager.instance.m_buildings.m_buffer[refId].m_position);
-                        return WTSHookable.GetDistrictColor(districtId);
+                        return WriteTheSignsMod.Controller.ConnectorADR.GetDistrictColor(districtId);
                     case ColoringMode.FromBuilding:
                         return BuildingManager.instance.m_buildings.m_buffer[refId].Info.m_buildingAI.GetColor(refId, ref BuildingManager.instance.m_buildings.m_buffer[refId], InfoManager.InfoMode.None);
                 }
@@ -449,6 +450,7 @@ namespace Klyte.WriteTheSigns.Rendering
                 {
                     case TextType.Fixed: return RenderUtils.GetTextData(textDescriptor.m_fixedText ?? "", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont ?? preview?.Descriptor?.FontName);
                     case TextType.DistanceFromReference: return RenderUtils.GetTextData("00", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont ?? preview?.Descriptor?.FontName);
+                    case TextType.PostalCode: return RenderUtils.GetTextData("00000", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont ?? preview?.Descriptor?.FontName);
                     case TextType.StreetSuffix: return RenderUtils.GetTextData($"{otherText}Suffix", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont ?? preview?.Descriptor?.FontName);
                     case TextType.StreetPrefix: return RenderUtils.GetTextData($"{otherText}Pre.", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont ?? preview?.Descriptor?.FontName);
                     case TextType.StreetNameComplete: return RenderUtils.GetTextData($"{otherText}Full road name", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont ?? preview?.Descriptor?.FontName);
@@ -555,6 +557,7 @@ namespace Klyte.WriteTheSigns.Rendering
                             TextType.DistanceFromReference => RenderUtils.GetTextData(destination.m_distanceMeanString, textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont ?? roadDescritpor.Descriptor.FontName),
                             TextType.StreetSuffix => RenderUtils.GetFromCacheArray(destination.m_segmentId, textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, roadDescritpor.ApplyAbreviationsOnFullName ? RenderUtils.CacheArrayTypes.SuffixStreetNameAbbreviation : RenderUtils.CacheArrayTypes.SuffixStreetName, baseFont, textDescriptor.m_overrideFont ?? roadDescritpor.Descriptor.FontName),
                             TextType.StreetPrefix => RenderUtils.GetFromCacheArray(destination.m_segmentId, textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, RenderUtils.CacheArrayTypes.StreetQualifier, baseFont, textDescriptor.m_overrideFont ?? roadDescritpor.Descriptor.FontName),
+                            TextType.PostalCode => RenderUtils.GetFromCacheArray(destination.m_segmentId, textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, RenderUtils.CacheArrayTypes.PostalCode, baseFont, textDescriptor.m_overrideFont ?? roadDescritpor.Descriptor.FontName),
                             TextType.StreetNameComplete => RenderUtils.GetFromCacheArray(destination.m_segmentId, textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, roadDescritpor.ApplyAbreviationsOnFullName ? RenderUtils.CacheArrayTypes.FullStreetNameAbbreviation : RenderUtils.CacheArrayTypes.FullStreetName, baseFont, textDescriptor.m_overrideFont ?? roadDescritpor.Descriptor.FontName),
                             TextType.District => RenderUtils.GetFromCacheArray(destination.m_districtId, textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, RenderUtils.CacheArrayTypes.Districts, baseFont, textDescriptor.m_overrideFont ?? roadDescritpor.Descriptor.FontName),
                             TextType.Park => RenderUtils.GetFromCacheArray(destination.m_parkId, textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, RenderUtils.CacheArrayTypes.Parks, baseFont, textDescriptor.m_overrideFont ?? roadDescritpor.Descriptor.FontName),

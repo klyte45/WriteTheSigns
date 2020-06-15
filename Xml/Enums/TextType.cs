@@ -19,7 +19,8 @@
         StreetCode,
         NextStopLine,
         PrevStopLine,
-        PlatformNumber
+        PlatformNumber,
+        PostalCode
     }
 
 

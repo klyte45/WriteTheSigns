@@ -41,7 +41,7 @@ namespace Klyte.WriteTheSigns.Utils
             uint id = (uint)((lineId << 16) | stopId);
             if (!m_stopsBuildingsCache.TryGetValue(id, out ushort buildingId))
             {
-                buildingId = WTSHookable.GetStopBuildingInternal(stopId, lineId);
+                buildingId = WriteTheSignsMod.Controller.ConnectorTLM.GetStopBuildingInternal(stopId, lineId);
                 m_stopsBuildingsCache[id] = buildingId;
             }
             return buildingId;

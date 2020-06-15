@@ -1,5 +1,8 @@
-﻿using Klyte.Commons.Interfaces;
+﻿extern alias TLM;
+
+using Klyte.Commons.Interfaces;
 using Klyte.Commons.Utils;
+using Klyte.WriteTheSigns.Connectors;
 using Klyte.WriteTheSigns.Rendering;
 using Klyte.WriteTheSigns.Singleton;
 using Klyte.WriteTheSigns.Tools;
@@ -22,8 +25,10 @@ namespace Klyte.WriteTheSigns
 
         internal WTSTransportLineRenderingRules TransportLineRenderingRules { get; private set; }
         internal WTSBuildingPropsSingleton BuildingPropsSingleton { get; private set; }
-        internal WTSVehicleTextsSingleton VehicleTextsSingleton{ get; private set; }
+        internal WTSVehicleTextsSingleton VehicleTextsSingleton { get; private set; }
         internal WTSDestinationSingleton DestinationSingleton { get; private set; }
+        internal IConnectorTLM ConnectorTLM { get; private set; }
+        internal IConnectorADR ConnectorADR { get; private set; }
 
         public WTSRoadPropsSingleton RoadPropsSingleton { get; private set; }
         public Dictionary<string, Dictionary<string, string>> AbbreviationFiles { get; private set; }
@@ -63,8 +68,10 @@ namespace Klyte.WriteTheSigns
             TransportLineRenderingRules = gameObject.AddComponent<WTSTransportLineRenderingRules>();
             BuildingPropsSingleton = gameObject.AddComponent<WTSBuildingPropsSingleton>();
             RoadPropsSingleton = gameObject.AddComponent<WTSRoadPropsSingleton>();
-            DestinationSingleton  = gameObject.AddComponent<WTSDestinationSingleton>();
-            VehicleTextsSingleton  = gameObject.AddComponent<WTSVehicleTextsSingleton>();
+            DestinationSingleton = gameObject.AddComponent<WTSDestinationSingleton>();
+            VehicleTextsSingleton = gameObject.AddComponent<WTSVehicleTextsSingleton>();
+            ConnectorTLM = PluginUtils.GetImplementationTypeForMod<ConnectorTLM, ConnectorTLMFallback, IConnectorTLM>(gameObject, "TransportLinesManager", "13.3.6");
+            ConnectorADR = PluginUtils.GetImplementationTypeForMod<ConnectorADR, ConnectorADRFallback, IConnectorADR>(gameObject, "KlyteAddresses", "2.0.3");
         }
 
         public void OnDestroy()
@@ -131,6 +138,12 @@ namespace Klyte.WriteTheSigns
         public static Shader DEFAULT_SHADER_TEXT = Shader.Find("Custom/Props/Prop/Default") ?? DistrictManager.instance.m_properties.m_areaNameShader;
         public static Shader DISALLOWED_SHADER_PROP = Shader.Find("Custom/Buildings/Building/Default");
         public static Shader REPLACEMENT_SHADER_PROP = Shader.Find("Custom/Buildings/Building/NoBase");
+
+
+        internal bool? m_tlmExistsAndActive = null;
+        internal bool? m_addressesExistsAndActive = null;
+
+
     }
 
 }

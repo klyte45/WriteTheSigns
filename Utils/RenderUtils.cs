@@ -97,7 +97,8 @@ namespace Klyte.WriteTheSigns.Utils
             Parks,
             FullStreetNameAbbreviation,
             SuffixStreetNameAbbreviation,
-            BuildingName
+            BuildingName,
+            PostalCode
         }
 
 
@@ -113,6 +114,7 @@ namespace Klyte.WriteTheSigns.Utils
                 CacheArrayTypes.SuffixStreetNameAbbreviation => UpdateMeshStreetSuffix(refId, ref (allCaps ? m_cacheUpper : m_cache)[(int)type][refId], prefix, suffix, allCaps, true, primaryFont, overrideFont),
                 CacheArrayTypes.FullStreetNameAbbreviation => UpdateMeshFullNameStreet(refId, ref (allCaps ? m_cacheUpper : m_cache)[(int)type][refId], prefix, suffix, allCaps, true, primaryFont, overrideFont),
                 CacheArrayTypes.BuildingName => UpdateMeshBuildingName(refId, ref (allCaps ? m_cacheUpper : m_cache)[(int)type][refId], prefix, suffix, allCaps, false, primaryFont, overrideFont),
+                CacheArrayTypes.PostalCode => UpdateMeshPostalCode(refId, ref (allCaps ? m_cacheUpper : m_cache)[(int)type][refId], prefix, suffix, allCaps, false, primaryFont, overrideFont),
                 _ => null
             };
         }
@@ -127,7 +129,7 @@ namespace Klyte.WriteTheSigns.Utils
                 }
                 else
                 {
-                    name = WTSHookable.GetStreetFullName(idx) ?? "";
+                    name = WriteTheSignsMod.Controller.ConnectorADR.GetStreetFullName(idx) ?? "";
                     if (applyAbbreviations)
                     {
                         name = WTSUtils.ApplyAbbreviations(name);
@@ -151,15 +153,31 @@ namespace Klyte.WriteTheSigns.Utils
                 }
                 else
                 {
-                    name = WTSHookable.GetStreetFullName(idx);
-                    if ((NetManager.instance.m_segments.m_buffer[idx].m_flags & NetSegment.Flags.CustomName) == 0)
+                    name = WriteTheSignsMod.Controller.ConnectorADR.GetStreetQualifier(idx);
+                    if (applyAbbreviations)
                     {
-                        name = applyAbbreviations ? WTSUtils.ApplyAbbreviations(name.Replace(WTSHookable.GetStreetSuffix(idx), "")) : name.Replace(WTSHookable.GetStreetSuffix(idx), "");
+                        name = WTSUtils.ApplyAbbreviations(name);
                     }
-                    else
+                    if (allCaps)
                     {
-                        name = applyAbbreviations ? WTSUtils.ApplyAbbreviations(name.Replace(WTSHookable.GetStreetSuffixCustom(idx), "")) : name.Replace(WTSHookable.GetStreetSuffixCustom(idx), "");
+                        name = name.ToUpper();
                     }
+                }
+                LogUtils.DoLog($"!GenName {name} for {idx} (UC={allCaps})");
+            }
+            return GetTextData(name, prefix, suffix, primaryFont, overrideFont);
+        }
+        public static BasicRenderInformation UpdateMeshPostalCode(ushort idx, ref string name, string prefix, string suffix, bool allCaps, bool applyAbbreviations, DynamicSpriteFont primaryFont, string overrideFont)
+        {
+            if (name == null)
+            {
+                if (idx == 0)
+                {
+                    name = "";
+                }
+                else
+                {
+                    name = WriteTheSignsMod.Controller.ConnectorADR.GetStreetPostalCode(NetManager.instance.m_segments.m_buffer[idx].m_middlePosition, idx);
                     if (allCaps)
                     {
                         name = name.ToUpper();
@@ -225,11 +243,11 @@ namespace Klyte.WriteTheSigns.Utils
                     LogUtils.DoLog($"!UpdateMeshStreetSuffix {idx} (UC={allCaps})");
                     if ((NetManager.instance.m_segments.m_buffer[idx].m_flags & NetSegment.Flags.CustomName) == 0)
                     {
-                        name = applyAbbreviations ? WTSUtils.ApplyAbbreviations(WTSHookable.GetStreetSuffix(idx)) : WTSHookable.GetStreetSuffix(idx);
+                        name = applyAbbreviations ? WTSUtils.ApplyAbbreviations(WriteTheSignsMod.Controller.ConnectorADR.GetStreetSuffix(idx)) : WriteTheSignsMod.Controller.ConnectorADR.GetStreetSuffix(idx);
                     }
                     else
                     {
-                        name = applyAbbreviations ? WTSUtils.ApplyAbbreviations(WTSHookable.GetStreetSuffixCustom(idx)) : WTSHookable.GetStreetSuffixCustom(idx);
+                        name = applyAbbreviations ? WTSUtils.ApplyAbbreviations(WriteTheSignsMod.Controller.ConnectorADR.GetStreetSuffixCustom(idx)) : WriteTheSignsMod.Controller.ConnectorADR.GetStreetSuffixCustom(idx);
                     }
                     if (allCaps)
                     {
