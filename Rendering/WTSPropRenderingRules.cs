@@ -136,27 +136,37 @@ namespace Klyte.WriteTheSigns.Rendering
                     {
                         BoardTextDescriptorGeneralXml.SubItemSettings settings = textDescriptor.MultiItemSettings;
                         int targetCount = Math.Min(settings.SubItemsPerRow * settings.SubItemsPerColumn, resultArray.Length);
-                        int maxItemsInARow, maxItemsInAColumn;
+                        int maxItemsInARow, maxItemsInAColumn, lastRowOrColumnItemCount;
 
                         if (textDescriptor.MultiItemSettings.VerticalFirst)
                         {
                             maxItemsInAColumn = Math.Min(targetCount, settings.SubItemsPerColumn);
                             maxItemsInARow = Mathf.CeilToInt((float)targetCount / settings.SubItemsPerColumn);
+                            lastRowOrColumnItemCount = targetCount % settings.SubItemsPerColumn;
                         }
                         else
                         {
                             maxItemsInARow = Math.Min(targetCount, settings.SubItemsPerRow);
                             maxItemsInAColumn = Mathf.CeilToInt((float)targetCount / settings.SubItemsPerRow);
+                            lastRowOrColumnItemCount = targetCount % settings.SubItemsPerRow;
                         }
                         float unscaledColumnWidth = multipleOutput.Max(x => x.m_sizeMetersUnscaled.x);
-                        float rowHeight = multipleOutput.Max(x => x.m_sizeMetersUnscaled.y) * textDescriptor.m_textScale * SCALING_FACTOR;
-                        float columnWidth = (textDescriptor.m_maxWidthMeters > 0 ? Mathf.Min(textDescriptor.m_maxWidthMeters / maxItemsInARow, unscaledColumnWidth * SCALING_FACTOR) : unscaledColumnWidth * SCALING_FACTOR) * textDescriptor.m_textScale;
+                        float rowHeight = multipleOutput.Max(x => x.m_sizeMetersUnscaled.y) * textDescriptor.m_textScale * SCALING_FACTOR + textDescriptor.MultiItemSettings.SubItemSpacing.Y;
+                        float columnWidth = (textDescriptor.m_maxWidthMeters > 0 ? Mathf.Min(textDescriptor.m_maxWidthMeters / maxItemsInARow, unscaledColumnWidth * SCALING_FACTOR) : unscaledColumnWidth * SCALING_FACTOR) * textDescriptor.m_textScale + textDescriptor.MultiItemSettings.SubItemSpacing.X;
 
 
-                        var startPoint = new Vector3(textDescriptor.PlacingConfig.Position.X - columnWidth * maxItemsInAColumn / 2, textDescriptor.PlacingConfig.Position.Y, textDescriptor.PlacingConfig.Position.Z);
-
+                        var startPoint = new Vector3(textDescriptor.PlacingConfig.Position.X + columnWidth * (maxItemsInARow - 1) / 2f, textDescriptor.PlacingConfig.Position.Y, textDescriptor.PlacingConfig.Position.Z);
+                        Vector3 lastRowOrColumnStartPoint;
+                        if (textDescriptor.MultiItemSettings.VerticalFirst)
+                        {
+                            lastRowOrColumnStartPoint = new Vector3(startPoint.x, textDescriptor.PlacingConfig.Position.Y - (settings.SubItemsPerColumn - lastRowOrColumnItemCount) / 2f * rowHeight, startPoint.z);
+                        }
+                        else
+                        {
+                            lastRowOrColumnStartPoint = new Vector3(textDescriptor.PlacingConfig.Position.X + columnWidth * (lastRowOrColumnItemCount - 1) / 2f, startPoint.y, startPoint.z);
+                        }
                         //LogUtils.DoWarnLog($"sz = {resultArray.Length};targetCount = {targetCount}; origPos = {textDescriptor.PlacingConfig.Position}; maxItemsInAColumn = {maxItemsInAColumn}; maxItemsInARow = {maxItemsInARow};columnWidth={columnWidth};rowHeight={rowHeight}");
-
+                        int firstItemIdxLastRowOrColumn = targetCount - lastRowOrColumnItemCount;
                         for (int i = 0; i < targetCount; i++)
                         {
                             int x, y;
@@ -172,11 +182,11 @@ namespace Klyte.WriteTheSigns.Rendering
                             }
 
                             BasicRenderInformation currentItem = resultArray[i];
-                            Vector3 targetPosA = startPoint + new Vector3(columnWidth * x, -rowHeight * y);
+                            Vector3 targetPosA = (i >= firstItemIdxLastRowOrColumn ? lastRowOrColumnStartPoint : startPoint) - new Vector3(columnWidth * x, rowHeight * y);
                             DrawTextBri(refID, boardIdx, secIdx, descriptor, propMatrix, propLayout, textDescriptor, materialPropertyBlock, targetCamera, overrideShader, currentItem, targetPosA, textDescriptor.PlacingConfig.Rotation, false);
                             if (textDescriptor.PlacingConfig.m_create180degYClone)
                             {
-                                targetPosA = startPoint + new Vector3(columnWidth * (settings.SubItemsPerRow - x), -rowHeight * y);
+                                targetPosA = startPoint - new Vector3(columnWidth * (maxItemsInARow - x), rowHeight * y);
                                 targetPosA.z *= -1;
                                 DrawTextBri(refID, boardIdx, secIdx, descriptor, propMatrix, propLayout, textDescriptor, materialPropertyBlock, targetCamera, overrideShader, currentItem, targetPosA, textDescriptor.PlacingConfig.Rotation + new Vector3(0, 180), false);
                             }
@@ -302,7 +312,6 @@ namespace Klyte.WriteTheSigns.Rendering
             float defaultMultiplierX = textScale * SCALING_FACTOR;
             float defaultMultiplierY = textScale * SCALING_FACTOR;
             float realWidth = defaultMultiplierX * renderInfo.m_sizeMetersUnscaled.x;
-            float realHeight = defaultMultiplierY * renderInfo.m_sizeMetersUnscaled.y;
             Vector3 targetRelativePosition = textPosition;
             //LogUtils.DoWarnLog($"[{renderInfo},{refID},{boardIdx},{secIdx}] realWidth = {realWidth}; realHeight = {realHeight};");
             var rotationMatrix = Matrix4x4.TRS(Vector3.zero, Quaternion.AngleAxis(textRotation.x, Vector3.left) * Quaternion.AngleAxis(textRotation.y, Vector3.down) * Quaternion.AngleAxis(textRotation.z, Vector3.back), Vector3.one);
@@ -370,7 +379,7 @@ namespace Klyte.WriteTheSigns.Rendering
             return null;
         }
 
-        private static Color[] m_spectreSteps = new Color[]
+        private static readonly Color[] m_spectreSteps = new Color[]
         {
             new Color32(170,170,170,255),
             Color.white,

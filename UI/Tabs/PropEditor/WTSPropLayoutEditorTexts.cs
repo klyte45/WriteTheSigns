@@ -227,8 +227,8 @@ namespace Klyte.WriteTheSigns.UI
             m_arrayCustomBlink[1].text = x.ColoringConfig.CustomBlink.Y.ToString("F3");
             m_arrayCustomBlink[2].text = x.ColoringConfig.CustomBlink.Z.ToString("F3");
             m_arrayCustomBlink[3].text = x.ColoringConfig.CustomBlink.W.ToString("F3");
-            m_arrayRowColumnsCount[0].text = x.MultiItemSettings.SubItemsPerRow.ToString();
-            m_arrayRowColumnsCount[1].text = x.MultiItemSettings.SubItemsPerColumn.ToString();
+            m_arrayRowColumnsCount[1].text = x.MultiItemSettings.SubItemsPerRow.ToString();
+            m_arrayRowColumnsCount[0].text = x.MultiItemSettings.SubItemsPerColumn.ToString();
             m_arrayRowColumnsSpacing[0].text = x.MultiItemSettings.SubItemSpacing.X.ToString("F3");
             m_arrayRowColumnsSpacing[1].text = x.MultiItemSettings.SubItemSpacing.Y.ToString("F3");
 
@@ -374,8 +374,8 @@ namespace Klyte.WriteTheSigns.UI
         private void OnRowColumnSpacingChanged(Vector2 obj) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.MultiItemSettings.SubItemSpacing = (Vector2Xml)obj);
         private void OnRowColumnCountChanged(Vector2 obj) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) =>
         {
-            desc.MultiItemSettings.SubItemsPerRow = Mathf.RoundToInt(obj.x);
-            desc.MultiItemSettings.SubItemsPerColumn = Mathf.RoundToInt(obj.y);
+            desc.MultiItemSettings.SubItemsPerRow = Mathf.RoundToInt(obj.y);
+            desc.MultiItemSettings.SubItemsPerColumn = Mathf.RoundToInt(obj.x);
         });
 
         private void OnColumnsFirstChanged(bool isChecked) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.MultiItemSettings.VerticalFirst = isChecked);
