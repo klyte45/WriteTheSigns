@@ -14,7 +14,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using UnityEngine;
-using static Klyte.WriteTheSigns.UI.WTSEditorUILib;
+using static Klyte.Commons.UI.DefaultEditorUILib;
 
 namespace Klyte.WriteTheSigns.UI
 {
@@ -165,7 +165,7 @@ namespace Klyte.WriteTheSigns.UI
 
         private UIListBox ConfigurePropSelectionPopup(UIPanel selectorPanel)
         {
-            UIListBox m_popup = CreatePopup(m_fontSelect, selectorPanel);
+            UIListBox m_popup = CreatePopup(selectorPanel);
             m_popup.isVisible = false;
             m_propFilter.eventGotFocus += (x, t) =>
             {

@@ -4,7 +4,6 @@ using ColossalFramework.UI;
 using Klyte.Commons.Interfaces;
 using Klyte.Commons.UI.SpriteNames;
 using Klyte.Commons.Utils;
-using Klyte.WriteTheSigns.Data;
 using Klyte.WriteTheSigns.Libraries;
 using Klyte.WriteTheSigns.Xml;
 using System;
@@ -14,7 +13,7 @@ using static Klyte.Commons.UI.DefaultEditorUILib;
 
 namespace Klyte.WriteTheSigns.UI
 {
-    internal class WTSRoadCornerEditorRuleList : UICustomControl
+    internal class WTSBuildingLayoutEditorPropList : UICustomControl
     {
         private UIPanel MainContainer { get; set; }
 
@@ -57,20 +56,20 @@ namespace Klyte.WriteTheSigns.UI
 
             KlyteMonoUtils.CreateUIElement(out UILabel m_topPanelTitle, m_topPanel.transform, "topListPanelTitle", new UnityEngine.Vector4(0, 0, m_topPanel.width - 16, 15));
             KlyteMonoUtils.LimitWidthAndBox(m_topPanelTitle, m_topPanel.width - 16, true);
-            m_topPanelTitle.text = Locale.Get("K45_WTS_ROADCORNER_LISTORDERTITLE");
+            m_topPanelTitle.text = Locale.Get("K45_WTS_BUILDING_LISTORDERTITLE");
             m_topPanelTitle.textAlignment = UIHorizontalAlignment.Center;
 
             int btnSize = 36;
             KlyteMonoUtils.CreateUIElement<UILabel>(out UILabel spacing, m_topPanel.transform, "_", new Vector4(0, 0, btnSize / 2, btnSize));
             spacing.textScale = 0;
             spacing.width = btnSize / 4;
-            KlyteMonoUtils.InitCircledButton(m_topPanel, out m_import, CommonsSpriteNames.K45_Import, OnImportData, "K45_WTS_ROADCORNER_IMPORTDATA", btnSize);
-            KlyteMonoUtils.InitCircledButton(m_topPanel, out m_export, CommonsSpriteNames.K45_Export, (x, y) => OnExportData(), "K45_WTS_ROADCORNER_EXPORTDATA", btnSize);
+            KlyteMonoUtils.InitCircledButton(m_topPanel, out m_import, CommonsSpriteNames.K45_Import, OnImportData, "K45_WTS_BUILDING_IMPORTDATA", btnSize);
+            KlyteMonoUtils.InitCircledButton(m_topPanel, out m_export, CommonsSpriteNames.K45_Export, (x, y) => OnExportData(), "K45_WTS_BUILDING_EXPORTDATA", btnSize);
             KlyteMonoUtils.InitCircledButton(m_topPanel, out m_help, CommonsSpriteNames.K45_QuestionMark, Help_RulesList, "K45_CMNS_HELP", btnSize);
-            KlyteMonoUtils.InitCircledButton(m_topPanel, out m_new, CommonsSpriteNames.K45_New, OnAddItemOnList, "K45_WTS_ROADCORNER_ADDITEMLIST", btnSize);
-            KlyteMonoUtils.InitCircledButton(m_topPanel, out m_up, CommonsSpriteNames.K45_Up, OnMoveItemUpOnList, "K45_WTS_ROADCORNER_MOVEITEMUP", btnSize);
-            KlyteMonoUtils.InitCircledButton(m_topPanel, out m_down, CommonsSpriteNames.K45_Down, OnMoveItemDownOnList, "K45_WTS_ROADCORNER_MOVEITEMDOWN", btnSize);
-            KlyteMonoUtils.InitCircledButton(m_topPanel, out m_remove, CommonsSpriteNames.K45_X, OnRemoveItem, "K45_WTS_ROADCORNER_REMOVEITEM", btnSize);
+            KlyteMonoUtils.InitCircledButton(m_topPanel, out m_new, CommonsSpriteNames.K45_New, OnAddItemOnList, "K45_WTS_BUILDING_ADDITEMLIST", btnSize);
+            KlyteMonoUtils.InitCircledButton(m_topPanel, out m_up, CommonsSpriteNames.K45_Up, OnMoveItemUpOnList, "K45_WTS_BUILDING_MOVEITEMUP", btnSize);
+            KlyteMonoUtils.InitCircledButton(m_topPanel, out m_down, CommonsSpriteNames.K45_Down, OnMoveItemDownOnList, "K45_WTS_BUILDING_MOVEITEMDOWN", btnSize);
+            KlyteMonoUtils.InitCircledButton(m_topPanel, out m_remove, CommonsSpriteNames.K45_X, OnRemoveItem, "K45_WTS_BUILDING_REMOVEITEM", btnSize);
 
             KlyteMonoUtils.CreateUIElement(out UIPanel m_listContainer, MainContainer.transform, "previewPanel", new Vector4(0, 0, MainContainer.width, MainContainer.height - 126));
             KlyteMonoUtils.CreateScrollPanel(m_listContainer, out m_orderedRulesList, out _, m_listContainer.width - 20, m_listContainer.height);
@@ -85,8 +84,8 @@ namespace Klyte.WriteTheSigns.UI
             K45DialogControl.ShowModalPromptText(new K45DialogControl.BindProperties
             {
                 defaultTextFieldContent = defaultText,
-                title = Locale.Get("K45_WTS_ROADCORNER_EXPORTRULESTITLE"),
-                message = Locale.Get("K45_WTS_ROADCORNER_EXPORTRULESMESSAGE"),
+                title = Locale.Get("K45_WTS_BUILDING_EXPORTRULESTITLE"),
+                message = Locale.Get("K45_WTS_BUILDING_EXPORTRULESMESSAGE"),
                 showButton1 = true,
                 textButton1 = Locale.Get("SAVE"),
                 showButton2 = true,
@@ -97,11 +96,11 @@ namespace Klyte.WriteTheSigns.UI
                  {
                      if (text.IsNullOrWhiteSpace())
                      {
-                         K45DialogControl.UpdateCurrentMessage($"<color #FFFF00>{Locale.Get("K45_WTS_ROADCORNER_EXPORTRULESMESSAGE_INVALIDNAME")}</color>\n\n{Locale.Get("K45_WTS_ROADCORNER_EXPORTRULESMESSAGE")}");
+                         K45DialogControl.UpdateCurrentMessage($"<color #FFFF00>{Locale.Get("K45_WTS_BUILDING_EXPORTRULESMESSAGE_INVALIDNAME")}</color>\n\n{Locale.Get("K45_WTS_BUILDING_EXPORTRULESMESSAGE")}");
                          return false;
                      }
-                     WTSLibRoadCornerRuleList.Reload();
-                     var currentData = WTSLibRoadCornerRuleList.Instance.Get(text);
+                     WTSLibBuildingPropLayoutList.Reload();
+                     var currentData = WTSLibBuildingPropLayoutList.Instance.Get(text);
                      if (currentData == null)
                      {
                          AddCurrentListToLibrary(text);
@@ -110,8 +109,8 @@ namespace Klyte.WriteTheSigns.UI
                      {
                          K45DialogControl.ShowModal(new K45DialogControl.BindProperties
                          {
-                             title = Locale.Get("K45_WTS_ROADCORNER_EXPORTRULESTITLE"),
-                             message = string.Format(Locale.Get("K45_WTS_ROADCORNER_EXPORTRULESMESSAGE_CONFIRMOVERWRITE"), text),
+                             title = Locale.Get("K45_WTS_BUILDING_EXPORTRULESTITLE"),
+                             message = string.Format(Locale.Get("K45_WTS_BUILDING_EXPORTRULESMESSAGE_CONFIRMOVERWRITE"), text),
                              showButton1 = true,
                              textButton1 = Locale.Get("YES"),
                              showButton2 = true,
@@ -135,18 +134,19 @@ namespace Klyte.WriteTheSigns.UI
 
         }
 
-        private static void AddCurrentListToLibrary(string text)
+        private void AddCurrentListToLibrary(string text)
         {
-            WTSLibRoadCornerRuleList.Reload();
-            var newItem = new ILibableAsContainer<BoardInstanceRoadNodeXml>
+            WTSLibBuildingPropLayoutList.Reload();
+            var newItem = new ILibableAsContainer<BoardInstanceBuildingXml>
             {
-                Data = WTSRoadNodesData.Instance.DescriptorRulesOrderXml
+                Data = new XmlUtils.ListWrapper<BoardInstanceBuildingXml>()
             };
-            WTSLibRoadCornerRuleList.Instance.Add(text, ref newItem);
+            newItem.Data.listVal.AddRange(CurrentEdited.PropInstances.ToList());
+            WTSLibBuildingPropLayoutList.Instance.Add(text, ref newItem);
             K45DialogControl.ShowModal(new K45DialogControl.BindProperties
             {
-                title = Locale.Get("K45_WTS_ROADCORNER_EXPORTRULESTITLE"),
-                message = string.Format(Locale.Get("K45_WTS_ROADCORNER_EXPORTRULESMESSAGE_SUCCESSSAVEDATA"), WTSLibRoadCornerRuleList.Instance.DefaultXmlFileBaseFullPath),
+                title = Locale.Get("K45_WTS_BUILDING_EXPORTRULESTITLE"),
+                message = string.Format(Locale.Get("K45_WTS_BUILDING_EXPORTRULESMESSAGE_SUCCESSSAVEDATA"), WTSLibBuildingPropLayoutList.Instance.DefaultXmlFileBaseFullPath),
                 showButton1 = true,
                 textButton1 = Locale.Get("EXCEPTION_OK"),
                 showButton2 = true,
@@ -155,7 +155,7 @@ namespace Klyte.WriteTheSigns.UI
             {
                 if (x == 2)
                 {
-                    ColossalFramework.Utils.OpenInFileBrowser(WTSLibRoadCornerRuleList.Instance.DefaultXmlFileBaseFullPath);
+                    ColossalFramework.Utils.OpenInFileBrowser(WTSLibBuildingPropLayoutList.Instance.DefaultXmlFileBaseFullPath);
                     return false;
                 }
                 return true;
@@ -164,14 +164,14 @@ namespace Klyte.WriteTheSigns.UI
 
         private void OnImportData(UIComponent component, UIMouseEventParameter eventParam)
         {
-            WTSLibRoadCornerRuleList.Reload();
-            string[] optionList = WTSLibRoadCornerRuleList.Instance.List().ToArray();
+            WTSLibBuildingPropLayoutList.Reload();
+            string[] optionList = WTSLibBuildingPropLayoutList.Instance.List().ToArray();
             if (optionList.Length > 0)
             {
                 K45DialogControl.ShowModalPromptDropDown(new K45DialogControl.BindProperties
                 {
-                    title = Locale.Get("K45_WTS_ROADCORNER_IMPORTRULESTITLE"),
-                    message = Locale.Get("K45_WTS_ROADCORNER_IMPORTRULESMESSAGE"),
+                    title = Locale.Get("K45_WTS_BUILDING_IMPORTRULESTITLE"),
+                    message = Locale.Get("K45_WTS_BUILDING_IMPORTRULESMESSAGE"),
                     showButton1 = true,
                     textButton1 = Locale.Get("LOAD"),
                     showButton2 = true,
@@ -180,8 +180,8 @@ namespace Klyte.WriteTheSigns.UI
                 {
                     if (ret == 1)
                     {
-                        var newConfig = WTSLibRoadCornerRuleList.Instance.Get(selText);
-                        WTSRoadNodesData.Instance.DescriptorRulesOrderXml = newConfig.Data;
+                        var newConfig = WTSLibBuildingPropLayoutList.Instance.Get(selText);
+                        CurrentEdited.PropInstances = newConfig.Data.listVal.ToArray();
                         FixTabstrip();
                         SelectedIndex = -1;
                     }
@@ -192,8 +192,8 @@ namespace Klyte.WriteTheSigns.UI
             {
                 K45DialogControl.ShowModal(new K45DialogControl.BindProperties
                 {
-                    title = Locale.Get("K45_WTS_ROADCORNER_IMPORTRULESTITLE"),
-                    message = Locale.Get("K45_WTS_ROADCORNER_IMPORTRULESMESSAGE_NOENTRIESFOUND"),
+                    title = Locale.Get("K45_WTS_BUILDING_IMPORTRULESTITLE"),
+                    message = Locale.Get("K45_WTS_BUILDING_IMPORTRULESMESSAGE_NOENTRIESFOUND"),
                     showButton1 = true,
                     textButton1 = Locale.Get("EXCEPTION_OK"),
                     showButton2 = true,
@@ -202,8 +202,8 @@ namespace Klyte.WriteTheSigns.UI
                 {
                     if (x == 2)
                     {
-                        WTSLibRoadCornerRuleList.Instance.EnsureFileExists();
-                        ColossalFramework.Utils.OpenInFileBrowser(WTSLibRoadCornerRuleList.Instance.DefaultXmlFileBaseFullPath);
+                        WTSLibBuildingPropLayoutList.Instance.EnsureFileExists();
+                        ColossalFramework.Utils.OpenInFileBrowser(WTSLibBuildingPropLayoutList.Instance.DefaultXmlFileBaseFullPath);
                         return false;
                     }
                     return true;
@@ -212,8 +212,12 @@ namespace Klyte.WriteTheSigns.UI
 
         }
 
-        public void Start() => FixTabstrip();
-
+        public void Start() => WTSBuildingLayoutEditor.Instance.EventOnBuildingSelectionChanged += (x, y) =>
+        {
+            Source = x;
+            CurrentEdited = y;
+            m_dirty = true;
+        };
 
         private UIButton AddTabButton(string tabName)
         {
@@ -225,12 +229,12 @@ namespace Klyte.WriteTheSigns.UI
         public void FixTabstrip()
         {
 
-            while (m_orderedRulesList.components.Count > WTSRoadNodesData.Instance.DescriptorRulesOrder.Length)
+            while (m_orderedRulesList.components.Count > CurrentEdited.PropInstances.Length)
             {
-                Destroy(m_orderedRulesList.components[WTSRoadNodesData.Instance.DescriptorRulesOrder.Length]);
+                Destroy(m_orderedRulesList.components[CurrentEdited.PropInstances.Length]);
                 m_orderedRulesList.RemoveUIComponent(m_orderedRulesList.components[m_orderedRulesList.components.Count - 1]);
             }
-            while (m_orderedRulesList.components.Count < WTSRoadNodesData.Instance.DescriptorRulesOrder.Length)
+            while (m_orderedRulesList.components.Count < CurrentEdited.PropInstances.Length)
             {
                 AddTabButton("!!!").eventClicked += (x, y) =>
                 {
@@ -238,12 +242,12 @@ namespace Klyte.WriteTheSigns.UI
                     FixTabstrip();
                 };
             }
-            for (int i = 0; i < WTSRoadNodesData.Instance.DescriptorRulesOrder.Length; i++)
+            for (int i = 0; i < CurrentEdited.PropInstances.Length; i++)
             {
-                (m_orderedRulesList.components[i] as UIButton).text = WTSRoadNodesData.Instance.DescriptorRulesOrder[i].SaveName;
+                (m_orderedRulesList.components[i] as UIButton).text = CurrentEdited.PropInstances[i].SaveName;
             }
-            WTSRoadNodesData.Instance.ResetCacheDescriptors();
-            if (SelectedIndex < 1)
+
+            if (SelectedIndex < 1 || Source != ConfigurationSource.CITY)
             {
                 m_up.Disable();
             }
@@ -251,7 +255,7 @@ namespace Klyte.WriteTheSigns.UI
             {
                 m_up.Enable();
             }
-            if (SelectedIndex <= -1 || SelectedIndex >= WTSRoadNodesData.Instance.DescriptorRulesOrder.Length - 1)
+            if (SelectedIndex <= -1 || SelectedIndex >= CurrentEdited.PropInstances.Length - 1 || Source != ConfigurationSource.CITY)
             {
                 m_down.Disable();
             }
@@ -259,7 +263,7 @@ namespace Klyte.WriteTheSigns.UI
             {
                 m_down.Enable();
             }
-            if (SelectedIndex < 0 || SelectedIndex >= WTSRoadNodesData.Instance.DescriptorRulesOrder.Length)
+            if (SelectedIndex < 0 || SelectedIndex >= CurrentEdited.PropInstances.Length || Source != ConfigurationSource.CITY)
             {
                 m_remove.Disable();
             }
@@ -267,43 +271,54 @@ namespace Klyte.WriteTheSigns.UI
             {
                 m_remove.Enable();
             }
+
+            if(Source != ConfigurationSource.CITY)
+            {
+                m_new.Disable();
+                m_import.Disable();
+            }
+            else
+            {
+                m_new.Enable();
+                m_import.Enable();
+            }
         }
 
         private void OnRemoveItem(UIComponent component, UIMouseEventParameter eventParam)
         {
-            WTSRoadNodesData.Instance.DescriptorRulesOrder = WTSRoadNodesData.Instance.DescriptorRulesOrder.Where((x, y) => y != SelectedIndex).ToArray();
-            SelectedIndex = Math.Min(SelectedIndex, WTSRoadNodesData.Instance.DescriptorRulesOrder.Length - 1);
+            CurrentEdited.PropInstances = CurrentEdited.PropInstances.Where((x, y) => y != SelectedIndex).ToArray();
+            SelectedIndex = Math.Min(SelectedIndex, CurrentEdited.PropInstances.Length - 1);
             FixTabstrip();
         }
         private void OnMoveItemUpOnList(UIComponent component, UIMouseEventParameter eventParam)
         {
-            if (SelectedIndex > 0 && WTSRoadNodesData.Instance.DescriptorRulesOrder.Length > 1)
+            if (SelectedIndex > 0 && CurrentEdited.PropInstances.Length > 1)
             {
-                BoardInstanceRoadNodeXml temp = WTSRoadNodesData.Instance.DescriptorRulesOrder[SelectedIndex];
-                WTSRoadNodesData.Instance.DescriptorRulesOrder[SelectedIndex] = WTSRoadNodesData.Instance.DescriptorRulesOrder[SelectedIndex - 1];
-                WTSRoadNodesData.Instance.DescriptorRulesOrder[SelectedIndex - 1] = temp;
+                BoardInstanceBuildingXml temp = CurrentEdited.PropInstances[SelectedIndex];
+                CurrentEdited.PropInstances[SelectedIndex] = CurrentEdited.PropInstances[SelectedIndex - 1];
+                CurrentEdited.PropInstances[SelectedIndex - 1] = temp;
                 SelectedIndex--;
                 FixTabstrip();
             }
         }
         private void OnMoveItemDownOnList(UIComponent component, UIMouseEventParameter eventParam)
         {
-            if (SelectedIndex < WTSRoadNodesData.Instance.DescriptorRulesOrder.Length && WTSRoadNodesData.Instance.DescriptorRulesOrder.Length > 1)
+            if (SelectedIndex < CurrentEdited.PropInstances.Length && CurrentEdited.PropInstances.Length > 1)
             {
-                BoardInstanceRoadNodeXml temp = WTSRoadNodesData.Instance.DescriptorRulesOrder[SelectedIndex];
-                WTSRoadNodesData.Instance.DescriptorRulesOrder[SelectedIndex] = WTSRoadNodesData.Instance.DescriptorRulesOrder[SelectedIndex + 1];
-                WTSRoadNodesData.Instance.DescriptorRulesOrder[SelectedIndex + 1] = temp;
+                BoardInstanceBuildingXml temp = CurrentEdited.PropInstances[SelectedIndex];
+                CurrentEdited.PropInstances[SelectedIndex] = CurrentEdited.PropInstances[SelectedIndex + 1];
+                CurrentEdited.PropInstances[SelectedIndex + 1] = temp;
                 SelectedIndex++;
                 FixTabstrip();
             }
         }
         private void OnAddItemOnList(UIComponent component, UIMouseEventParameter eventParam)
         {
-            WTSRoadNodesData.Instance.DescriptorRulesOrder = WTSRoadNodesData.Instance.DescriptorRulesOrder.Union(new BoardInstanceRoadNodeXml[] { new BoardInstanceRoadNodeXml
+            CurrentEdited.PropInstances = CurrentEdited.PropInstances.Union(new BoardInstanceBuildingXml[] { new BoardInstanceBuildingXml
             {
-                SaveName = "New rule",
+                SaveName = "New layout",
             } }).ToArray();
-            SelectedIndex = WTSRoadNodesData.Instance.DescriptorRulesOrder.Length - 1;
+            SelectedIndex = CurrentEdited.PropInstances.Length - 1;
             FixTabstrip();
         }
         private void Help_RulesList(UIComponent component, UIMouseEventParameter eventParam) { }
@@ -312,6 +327,11 @@ namespace Klyte.WriteTheSigns.UI
 
             if (MainContainer.isVisible)
             {
+                if (m_dirty)
+                {
+                    FixTabstrip();
+                    m_dirty = false;
+                }
                 foreach (UIButton btn in m_orderedRulesList.GetComponentsInChildren<UIButton>())
                 {
                     if (btn.zOrder == SelectedIndex)
@@ -324,6 +344,17 @@ namespace Klyte.WriteTheSigns.UI
                     }
                 }
             }
+        }
+
+        private bool m_dirty;
+
+        private BuildingGroupDescriptorXml CurrentEdited
+        {
+            get; set;
+        }
+        private ConfigurationSource Source
+        {
+            get; set;
         }
     }
 

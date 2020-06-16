@@ -200,7 +200,6 @@
     <Compile Include="Libraries\BasicFileLib.cs" />
     <Compile Include="DynamicFont\src\Utility\BasicRenderInformation.cs" />
     <Compile Include="Libraries\BasicLib.cs" />
-    <Compile Include="Libraries\WTSLibContainerRoadCornerRuleList.cs" />
     <Compile Include="ModShared\ConnectorADR.cs" />
     <Compile Include="ModShared\ConnectorADRFallback.cs" />
     <Compile Include="ModShared\IConnectorADR.cs" />
@@ -213,7 +212,9 @@
     <Compile Include="Rendering\WTSTransportLineRenderingRules.cs" />
     <Compile Include="Singleton\WTSVehicleTextsSingleton.cs" />
     <Compile Include="Singleton\WTSBuildingPropsSingleton.cs" />
+    <Compile Include="UI\Tabs\BuildingEditor\WTSBuildingLayoutEditorPropList.cs" />
     <Compile Include="UI\Tabs\FontsConfig\WTSRoadCornerEditor.cs" />
+    <Compile Include="UI\Tabs\RoadCornerEditor\WTSRoadCornerEditor.cs" />
     <Compile Include="Utils\WTSRoadNodeCommons.cs" />
     <Compile Include="Singleton\CacheDestinationRoute.cs" />
     <Compile Include="Overrides\BoardGeneration\RoadNodeOverrides.cs" />
@@ -225,11 +226,10 @@
     <Compile Include="Rendering\WTSPropRenderingRules.cs" />
     <Compile Include="Tools\BuildingTool.cs" />
     <Compile Include="UI\Tabs\RoadCornerEditor\WTSRoadCornerEditorDetailTabs.cs" />
-    <Compile Include="UI\Tabs\RoadCornerEditor\WTSRoadCornerEditor.cs" />
+    <Compile Include="UI\Tabs\BuildingEditor\WTSBuildingLayoutEditor.cs" />
     <Compile Include="UI\Tabs\RoadCornerEditor\WTSRoadCornerEditorRuleList.cs" />
     <Compile Include="UI\WTSPropPreviewRenderer.cs" />
     <Compile Include="UI\Tabs\PropEditor\WTSPropLayoutEditorPreview.cs" />
-    <Compile Include="UI\Tabs\WTSEditorUILib.cs" />
     <Compile Include="UI\Tabs\PropEditor\WTSPropLayoutEditorTexts.cs" />
     <Compile Include="UI\Tabs\PropEditor\WTSPropLayoutEditorBasics.cs" />
     <Compile Include="UI\Tabs\PropEditor\WTSPropLayoutEditor.cs" />
@@ -465,6 +465,7 @@
     <Content Include="commons\UI\Images\%25K45_MenuPanel_color.png" />
     <Content Include="commons\UI\Images\%25K45_RelativeMode.png" />
     <Content Include="commons\UI\Images\%25K45_RemoveUnwantedIcon.png" />
+    <EmbeddedResource Include="commons\UI\Images\%25K45_Steam.png" />
     <Content Include="commons\UI\Images\base.psd" />
     <Content Include="commons\UI\Images\lineFormat.png" />
     <Content Include="commons\UI\Images\lineFormat.psd" />

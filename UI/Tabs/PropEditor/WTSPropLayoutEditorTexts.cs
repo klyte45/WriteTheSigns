@@ -12,7 +12,7 @@ using Klyte.WriteTheSigns.Xml;
 using System;
 using System.Linq;
 using UnityEngine;
-using static Klyte.WriteTheSigns.UI.WTSEditorUILib;
+using static Klyte.Commons.UI.DefaultEditorUILib;
 
 namespace Klyte.WriteTheSigns.UI
 {

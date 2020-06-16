@@ -6,7 +6,7 @@ using Klyte.Commons.UI.SpriteNames;
 using Klyte.WriteTheSigns.Data;
 using Klyte.WriteTheSigns.Utils;
 using UnityEngine;
-using static Klyte.WriteTheSigns.UI.WTSEditorUILib;
+using static Klyte.Commons.UI.DefaultEditorUILib;
 
 namespace Klyte.WriteTheSigns.UI
 {
