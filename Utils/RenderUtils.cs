@@ -37,7 +37,7 @@ namespace Klyte.WriteTheSigns.Utils
 
         }
 
-       
+
 
 
         public static void ClearCachePostalCode()
@@ -164,7 +164,14 @@ namespace Klyte.WriteTheSigns.Utils
                 }
                 else
                 {
-                    name = WriteTheSignsMod.Controller.ConnectorADR.GetStreetQualifier(idx);
+                    if ((NetManager.instance.m_segments.m_buffer[idx].m_flags & NetSegment.Flags.CustomName) == 0)
+                    {
+                        name =WriteTheSignsMod.Controller.ConnectorADR.GetStreetQualifier(idx);
+                    }
+                    else
+                    {
+                        name = WriteTheSignsMod.Controller.ConnectorADR.GetStreetQualifierCustom(idx);
+                    }
                     if (applyAbbreviations)
                     {
                         name = WTSUtils.ApplyAbbreviations(name);
@@ -269,7 +276,7 @@ namespace Klyte.WriteTheSigns.Utils
         public static BasicRenderInformation GetTextData(string text, string prefix, string suffix, DynamicSpriteFont primaryFont, string overrideFont = null)
         {
             string str = $"{prefix}{text}{suffix}";
-            return (FontServer.instance[overrideFont] ?? primaryFont)?.DrawString(WriteTheSignsMod.Controller, str, default, FontServer.instance.ScaleEffective);
+            return (FontServer.instance[overrideFont] ?? primaryFont ?? FontServer.instance[WTSController.DEFAULT_FONT_KEY])?.DrawString(WriteTheSignsMod.Controller, str, default, FontServer.instance.ScaleEffective);
         }
 
         public static Matrix4x4 RenderProp(ushort refId, float refAngleRad, RenderManager.CameraInfo cameraInfo,

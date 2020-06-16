@@ -30,7 +30,6 @@ namespace Klyte.WriteTheSigns.UI
         }
         public UIPanel MainContainer { get; protected set; }
 
-        private UIDropDown m_fontSelect;
         private UIDropDown m_abbriviationFile;
         private UIDropDown m_qualifierExtractionDropdown;
         public WTSRoadCornerEditorRuleList RuleList { get; private set; }
@@ -44,10 +43,6 @@ namespace Klyte.WriteTheSigns.UI
             MainContainer.autoLayoutPadding = new RectOffset(5, 5, 5, 5);
 
             var m_uiHelperHS = new UIHelperExtension(MainContainer);
-
-            AddDropdown(Locale.Get("K45_WTS_FONT_ST_CORNERS"), out m_fontSelect, m_uiHelperHS, new string[0], OnSetFont);
-            AddButtonInEditorRow(m_fontSelect, CommonsSpriteNames.K45_Reload, ReloadFonts);
-            ReloadFonts();
 
             AddDropdown(Locale.Get("K45_WTS_ABBREVIATION_FILE"), out m_abbriviationFile, m_uiHelperHS, new string[0], OnSetAbbreviationFile);
             AddButtonInEditorRow(m_abbriviationFile, CommonsSpriteNames.K45_Reload, () => ReloadAbbreviations());
@@ -69,42 +64,37 @@ namespace Klyte.WriteTheSigns.UI
 
         }
 
-        private void ReloadFonts() => WTSUtils.ReloadFontsOf(m_fontSelect, WTSRoadNodesData.Instance.DefaultFont, false, true);
-
         private void ReloadAbbreviations()
         {
             WriteTheSignsMod.Controller.ReloadAbbreviationFiles();
             m_abbriviationFile.items = new string[] { Locale.Get("K45_WTS_NO_ABBREVIATION_FILE_OPTION") }.Union(WriteTheSignsMod.Controller.AbbreviationFiles.Keys.OrderBy(x => x)).ToArray();
             m_abbriviationFile.selectedIndex = WTSRoadNodesData.Instance.AbbreviationFile.IsNullOrWhiteSpace() ? 0 : Array.IndexOf(m_abbriviationFile.items, WTSRoadNodesData.Instance.AbbreviationFile);
         }
-        private void SetRoadQualifierExtractionMode(int sel) => WTSRoadNodesData.Instance.RoadQualifierExtraction = (RoadQualifierExtractionMode)m_qualifierExtractionDropdown.selectedIndex;
+        private void SetRoadQualifierExtractionMode(int sel)
+        {
+            WTSRoadNodesData.Instance.RoadQualifierExtraction = (RoadQualifierExtractionMode)m_qualifierExtractionDropdown.selectedIndex;
+
+            RenderUtils.ClearCacheFullStreetName();
+            RenderUtils.ClearCacheStreetQualifier();
+            RenderUtils.ClearCacheStreetName();
+        }
 
         private void OnSetAbbreviationFile(int sel)
         {
             if (sel > 0)
             {
-                WTSRoadNodesData.Instance.DefaultFont = m_abbriviationFile.selectedValue;
+                WTSRoadNodesData.Instance.AbbreviationFile = m_abbriviationFile.selectedValue;
             }
             else if (sel == 0)
             {
-                WTSRoadNodesData.Instance.DefaultFont = null;
+                WTSRoadNodesData.Instance.AbbreviationFile = null;
             }
             RenderUtils.ClearCacheFullStreetName();
             RenderUtils.ClearCacheStreetName();
         }
 
 
-        private void OnSetFont(int sel)
-        {
-            if (sel > 0)
-            {
-                WTSRoadNodesData.Instance.DefaultFont = m_fontSelect.selectedValue;
-            }
-            else if (sel == 0)
-            {
-                WTSRoadNodesData.Instance.DefaultFont = null;
-            }
-        }
+
     }
 
 }

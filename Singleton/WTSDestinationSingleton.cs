@@ -47,7 +47,7 @@ namespace Klyte.WriteTheSigns.Singleton
                         yield return cd.Coroutine;
                         if (m_updatedDestinations[nodeID] != false)
                         {
-                            LogUtils.DoWarnLog($"[n{nodeID}] STOPPING B");
+                            LogUtils.DoLog($"[n{nodeID}] STOPPING B");
                             yield break;
                         }
                         if (cd.result.First.Count >= 1)
@@ -358,7 +358,7 @@ namespace Klyte.WriteTheSigns.Singleton
         private ulong RegisterHash(ushort nodeId, uint segmentIdx)
         {
             m_nextHash += 0x100000;
-            ulong hash = m_nextHash | nodeId & 0x7FFFFu | (segmentIdx & 7u) << 15;
+            ulong hash = m_nextHash | (nodeId & 0x7FFFFu) | ((segmentIdx & 7u) << 15);
             m_validHashes.Add(hash);
             LogUtils.DoLog($"RegisterHash Registered hash for node: {nodeId}/{segmentIdx}({hash.ToString("X16")})");
             return hash;

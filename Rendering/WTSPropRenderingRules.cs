@@ -227,7 +227,7 @@ namespace Klyte.WriteTheSigns.Rendering
             MaterialPropertyBlock materialPropertyBlock, BasicRenderInformation renderInfo, Color colorToSet, Vector3 taregetPos, Vector3 taregetRotation,
             Vector3 baseScale, bool placeClone180Y, Camera targetCamera = null, Shader overrideShader = null)
         {
-            List<Matrix4x4> textMatrixes = CalculateTextMatrix( taregetPos, taregetRotation, baseScale, textDescriptor, renderInfo, placeClone180Y);
+            List<Matrix4x4> textMatrixes = CalculateTextMatrix(taregetPos, taregetRotation, baseScale, textDescriptor, renderInfo, placeClone180Y);
 
             foreach (Matrix4x4 textMatrix in textMatrixes)
             {
@@ -241,7 +241,7 @@ namespace Klyte.WriteTheSigns.Rendering
                 materialPropertyBlock.SetColor(SHADER_PROP_COLOR3, colorToSet);
 
                 var objectIndex = new Vector4();
-                
+
                 Material targetMaterial = renderInfo.m_generatedMaterial;
                 var randomizer = new Randomizer((refID << 8) + (boardIdx << 2) + secIdx);
                 switch (textDescriptor.ColoringConfig.MaterialType)
@@ -281,7 +281,7 @@ namespace Klyte.WriteTheSigns.Rendering
                 materialPropertyBlock.SetVector(PropManager.instance.ID_ObjectIndex, objectIndex);
                 targetMaterial.shader = overrideShader ?? WTSController.DEFAULT_SHADER_TEXT;
                 Graphics.DrawMesh(renderInfo.m_mesh, matrix, targetMaterial, 10, targetCamera, 0, materialPropertyBlock, false);
-                
+
             }
         }
 
@@ -338,7 +338,7 @@ namespace Klyte.WriteTheSigns.Rendering
                     targetRelativePosition += rotationMatrix.MultiplyPoint(new Vector3((maxWidth - realWidth) * factor, 0, 0));
                 }
             }
-            targetRelativePosition.y -= (renderInfo.m_YAxisOverflows.min + renderInfo.m_YAxisOverflows.max) / 2 * defaultMultiplierY * overflowScaleY;
+            targetRelativePosition += rotationMatrix.MultiplyPoint(new Vector3(0, -(renderInfo.m_YAxisOverflows.min + renderInfo.m_YAxisOverflows.max) / 2 * defaultMultiplierY * overflowScaleY));
 
             Matrix4x4 textMatrix =
                 Matrix4x4.Translate(targetRelativePosition) *

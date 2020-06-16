@@ -1,5 +1,6 @@
 ﻿using ColossalFramework.UI;
 using Klyte.Commons.Interfaces;
+using Klyte.Commons.UI.SpriteNames;
 using Klyte.Commons.Utils;
 using UnityEngine;
 
@@ -28,7 +29,8 @@ namespace Klyte.WriteTheSigns.UI
             //m_stripMain.CreateTabLocalized<WTSMileageMarkerTab3>("LocationMarkerNormal", "K45_WTS_MILEAGE_MARKERS_CONFIG_TAB", "WTSMileageMarkerTab");
             //m_stripMain.CreateTabLocalized<WTSBuildingEditorTab2>("IconAssetBuilding", "K45_WTS_BUILDING_CONFIG_TAB", "WTSBuildingEditorTab");
             m_stripMain.CreateTabLocalized<WTSPropLayoutEditor>("IconAssetProp", "K45_WTS_PROP_LIBRARY_EDITOR_TAB", "WTSBuildingEditorTab", false);
-            m_stripMain.CreateTabLocalized<WTSRoadCornerEditor>("InfoIconTrafficRoutes", "K45_WTS_STREET_SIGN_CONFIG_TAB", "WTSStreetSign",false);
+            m_stripMain.CreateTabLocalized<WTSRoadCornerEditor>("InfoIconTrafficRoutes", "K45_WTS_STREET_SIGN_CONFIG_TAB", "WTSStreetSign", false);
+            m_stripMain.CreateTabLocalized<WTSFontsSettings>(KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_AutoNameIcon), "K45_WTS_FONTSSETTING_TAB", "WTSFontSettings", false);
         }
 
         #endregion

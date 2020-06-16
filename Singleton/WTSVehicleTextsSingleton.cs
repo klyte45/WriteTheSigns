@@ -48,7 +48,7 @@ namespace Klyte.WriteTheSigns.Singleton
             materialBlock.Clear();
 
 
-            BasicRenderInformation renderInfo = RenderUtils.GetTextData($"{vehicleID}", "", "", FontServer.instance[WTSController.DEFAULT_FONT_KEY], null);
+            BasicRenderInformation renderInfo = RenderUtils.GetTextData($"{vehicleID}", "", "", FontServer.instance[Data.DefaultFont ?? WTSController.DEFAULT_FONT_KEY], null);
 
             WTSPropRenderingRules.DrawTextBri(vehicleID, 0, 0, matrix4x, basicDescr, materialBlock, renderInfo, KlyteMonoUtils.ContrastColor(thiz.GetColor(vehicleID, ref vehicleData, InfoManager.InfoMode.None)), new Vector3(thiz.m_info.m_mesh.bounds.max.x, 1, 0), new Vector3(0, -90), Vector3.one, false);
             WTSPropRenderingRules.DrawTextBri(vehicleID, 0, 0, matrix4x, basicDescr, materialBlock, renderInfo, KlyteMonoUtils.ContrastColor(thiz.GetColor(vehicleID, ref vehicleData, InfoManager.InfoMode.None)), new Vector3(thiz.m_info.m_mesh.bounds.min.x, 1, 0), new Vector3(0, 90), Vector3.one, false);

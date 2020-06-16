@@ -6,7 +6,6 @@ namespace Klyte.WriteTheSigns.Connectors
 {
     internal class ConnectorADRFallback : IConnectorADR
     {
-        public override string GetStreetFullName(ushort idx) => NetManager.instance.GetSegmentName(idx);
 
         public override string GetStreetSuffix(ushort idx)
         {

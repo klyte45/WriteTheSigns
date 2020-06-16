@@ -3,6 +3,7 @@ using ColossalFramework.Threading;
 using ColossalFramework.UI;
 using Klyte.Commons.UI.Sprites;
 using Klyte.Commons.Utils;
+using Klyte.WriteTheSigns.Data;
 using SpriteFontPlus;
 using SpriteFontPlus.Utility;
 using System.Collections;
@@ -124,7 +125,7 @@ namespace Klyte.WriteTheSigns.Rendering
                 {
                     lineParams = WriteTheSignsMod.Controller.ConnectorTLM.GetLineLogoParameters(lineId);
                 }
-                var drawingCoroutine = CoroutineWithData.From(this, RenderSpriteLine(FontServer.instance[WTSController.DEFAULT_FONT_KEY], UIView.GetAView().defaultAtlas, lineParams.First, lineParams.Second, lineParams.Third));
+                var drawingCoroutine = CoroutineWithData.From(this, RenderSpriteLine(FontServer.instance[WTSEtcData.Instance.FontSettings.PublicTransportLineSymbolFont ?? WTSController.DEFAULT_FONT_KEY], UIView.GetAView().defaultAtlas, lineParams.First, lineParams.Second, lineParams.Third));
                 yield return drawingCoroutine.Coroutine;
 
                 TextureAtlasUtils.RegenerateTextureAtlas(m_referenceAtlas, new List<UITextureAtlas.SpriteInfo>
@@ -224,7 +225,7 @@ namespace Klyte.WriteTheSigns.Rendering
 
         public static IEnumerator<Texture2D> RenderSpriteLine(DynamicSpriteFont font, UITextureAtlas atlas, string spriteName, Color bgColor, string text, float textScale = 1)
         {
-
+            font ??= FontServer.instance[WTSController.DEFAULT_FONT_KEY];
             UITextureAtlas.SpriteInfo spriteInfo = atlas[spriteName];
             if (spriteInfo == null)
             {
