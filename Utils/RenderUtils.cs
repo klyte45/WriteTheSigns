@@ -113,19 +113,28 @@ namespace Klyte.WriteTheSigns.Utils
         }
 
 
-        public static BasicRenderInformation GetFromCacheArray(ushort refId, string prefix, string suffix, bool allCaps, CacheArrayTypes type, DynamicSpriteFont primaryFont, string overrideFont = null)
+        public static BasicRenderInformation GetFromCacheArray2(ushort refId, string prefix, string suffix, bool allCaps, bool applyAbbreviations, CacheArrayTypes type, DynamicSpriteFont primaryFont, string overrideFont = null)
         {
+            if (applyAbbreviations)
+            {
+                type = type switch
+                {
+                    CacheArrayTypes.SuffixStreetName => CacheArrayTypes.SuffixStreetNameAbbreviation,
+                    CacheArrayTypes.FullStreetName => CacheArrayTypes.FullStreetNameAbbreviation,
+                    _ => type
+                };
+            }
             return type switch
             {
-                CacheArrayTypes.Districts => UpdateMeshDistrict(refId, ref (allCaps ? m_cacheUpper : m_cache)[(int)type][refId], prefix, suffix, allCaps, false, primaryFont, overrideFont),
-                CacheArrayTypes.Parks => UpdateMeshPark(refId, ref (allCaps ? m_cacheUpper : m_cache)[(int)type][refId], prefix, suffix, allCaps, false, primaryFont, overrideFont),
-                CacheArrayTypes.SuffixStreetName => UpdateMeshStreetSuffix(refId, ref (allCaps ? m_cacheUpper : m_cache)[(int)type][refId], prefix, suffix, allCaps, false, primaryFont, overrideFont),
-                CacheArrayTypes.FullStreetName => UpdateMeshFullNameStreet(refId, ref (allCaps ? m_cacheUpper : m_cache)[(int)type][refId], prefix, suffix, allCaps, false, primaryFont, overrideFont),
-                CacheArrayTypes.StreetQualifier => UpdateMeshStreetQualifier(refId, ref (allCaps ? m_cacheUpper : m_cache)[(int)type][refId], prefix, suffix, allCaps, false, primaryFont, overrideFont),
-                CacheArrayTypes.SuffixStreetNameAbbreviation => UpdateMeshStreetSuffix(refId, ref (allCaps ? m_cacheUpper : m_cache)[(int)type][refId], prefix, suffix, allCaps, true, primaryFont, overrideFont),
-                CacheArrayTypes.FullStreetNameAbbreviation => UpdateMeshFullNameStreet(refId, ref (allCaps ? m_cacheUpper : m_cache)[(int)type][refId], prefix, suffix, allCaps, true, primaryFont, overrideFont),
-                CacheArrayTypes.BuildingName => UpdateMeshBuildingName(refId, ref (allCaps ? m_cacheUpper : m_cache)[(int)type][refId], prefix, suffix, allCaps, false, primaryFont, overrideFont),
-                CacheArrayTypes.PostalCode => UpdateMeshPostalCode(refId, ref m_cache[(int)type][refId], prefix, suffix, allCaps, false, primaryFont, overrideFont),
+                CacheArrayTypes.Districts => UpdateMeshDistrict(refId, ref (allCaps ? m_cacheUpper : m_cache)[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont),
+                CacheArrayTypes.Parks => UpdateMeshPark(refId, ref (allCaps ? m_cacheUpper : m_cache)[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont),
+                CacheArrayTypes.SuffixStreetName => UpdateMeshStreetSuffix(refId, ref (allCaps ? m_cacheUpper : m_cache)[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont),
+                CacheArrayTypes.FullStreetName => UpdateMeshFullNameStreet(refId, ref (allCaps ? m_cacheUpper : m_cache)[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont),
+                CacheArrayTypes.StreetQualifier => UpdateMeshStreetQualifier(refId, ref (allCaps ? m_cacheUpper : m_cache)[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont),
+                CacheArrayTypes.SuffixStreetNameAbbreviation => UpdateMeshStreetSuffix(refId, ref (allCaps ? m_cacheUpper : m_cache)[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont),
+                CacheArrayTypes.FullStreetNameAbbreviation => UpdateMeshFullNameStreet(refId, ref (allCaps ? m_cacheUpper : m_cache)[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont),
+                CacheArrayTypes.BuildingName => UpdateMeshBuildingName(refId, ref (allCaps ? m_cacheUpper : m_cache)[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont),
+                CacheArrayTypes.PostalCode => UpdateMeshPostalCode(refId, ref m_cache[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont),
                 _ => null
             };
         }
@@ -166,7 +175,7 @@ namespace Klyte.WriteTheSigns.Utils
                 {
                     if ((NetManager.instance.m_segments.m_buffer[idx].m_flags & NetSegment.Flags.CustomName) == 0)
                     {
-                        name =WriteTheSignsMod.Controller.ConnectorADR.GetStreetQualifier(idx);
+                        name = WriteTheSignsMod.Controller.ConnectorADR.GetStreetQualifier(idx);
                     }
                     else
                     {
@@ -273,7 +282,7 @@ namespace Klyte.WriteTheSigns.Utils
         }
 
 
-        public static BasicRenderInformation GetTextData(string text, string prefix, string suffix, DynamicSpriteFont primaryFont, string overrideFont = null)
+        public static BasicRenderInformation GetTextData(string text, string prefix, string suffix, DynamicSpriteFont primaryFont, string overrideFont)
         {
             string str = $"{prefix}{text}{suffix}";
             return (FontServer.instance[overrideFont] ?? primaryFont ?? FontServer.instance[WTSController.DEFAULT_FONT_KEY])?.DrawString(WriteTheSignsMod.Controller, str, default, FontServer.instance.ScaleEffective);

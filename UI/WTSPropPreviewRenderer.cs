@@ -1,7 +1,6 @@
 ﻿using ColossalFramework;
 using Klyte.WriteTheSigns.Rendering;
 using Klyte.WriteTheSigns.Xml;
-using SpriteFontPlus;
 using SpriteFontPlus.Utility;
 using System.Collections.Generic;
 using System.Linq;
@@ -86,8 +85,8 @@ namespace Klyte.WriteTheSigns.UI
             }
             else
             {
-                BasicRenderInformation refer = WTSPropRenderingRules.GetTextMesh(FontServer.instance[descriptor.FontName] ?? FontServer.instance[WTSController.DEFAULT_FONT_KEY], descriptor.m_textDescriptors[referenceIdx], 0, 0, referenceIdx, m_defaultInstance, descriptor, out IEnumerable<BasicRenderInformation> briArr);
-                refer ??= briArr.FirstOrDefault();
+                BasicRenderInformation refer = WTSPropRenderingRules.GetTextMesh(descriptor.m_textDescriptors[referenceIdx], 0, 0, referenceIdx, m_defaultInstance, descriptor, out IEnumerable<BasicRenderInformation> briArr);
+                refer ??= briArr?.FirstOrDefault();
 
 
                 var sourceMatrix = Matrix4x4.Inverse(WTSPropRenderingRules.CalculateTextMatrix(descriptor.m_textDescriptors[referenceIdx].PlacingConfig.Position, descriptor.m_textDescriptors[referenceIdx].PlacingConfig.Rotation, Vector3.one, descriptor.m_textDescriptors[referenceIdx], refer, descriptor.m_textDescriptors[referenceIdx].PlacingConfig.m_create180degYClone, true).FirstOrDefault());
@@ -135,7 +134,7 @@ namespace Klyte.WriteTheSigns.UI
             m_defaultInstance.Descriptor = descriptor;
             for (ushort i = 0; i < descriptor.m_textDescriptors.Length; i++)
             {
-                WTSPropRenderingRules.RenderTextMesh(0, 0, i, m_defaultInstance, propMatrix, descriptor, ref descriptor.m_textDescriptors[i], m_block, FontServer.instance[descriptor.FontName ?? WTSController.DEFAULT_FONT_KEY], m_camera, Shader.Find("Custom/Buildings/Building/AnimUV"));
+                WTSPropRenderingRules.RenderTextMesh(0, 0, i, m_defaultInstance, propMatrix, descriptor, ref descriptor.m_textDescriptors[i], m_block, m_camera, Shader.Find("Custom/Buildings/Building/AnimUV"));
             }
 
 

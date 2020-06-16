@@ -18,7 +18,6 @@ namespace Klyte.WriteTheSigns.Singleton
 {
     public class WTSRoadPropsSingleton : MonoBehaviour
     {
-        public DynamicSpriteFont DrawFont => FontServer.instance[Data.DefaultFont] ?? FontServer.instance[WTSController.DEFAULT_FONT_KEY];
         public WTSRoadNodesData Data => WTSRoadNodesData.Instance;
         public bool?[] m_updatedStreetPositions;
         public uint[] m_lastFrameUpdate;
@@ -146,7 +145,7 @@ namespace Klyte.WriteTheSigns.Singleton
 
                         MaterialPropertyBlock properties = PropManager.instance.m_materialBlock;
                         properties.Clear();
-                        WTSPropRenderingRules.RenderTextMesh(nodeID, boardIdx, secIdx, targetDescriptor, propMatrix, targetDescriptor.Descriptor, ref targetDescriptor.Descriptor.m_textDescriptors[j], properties, DrawFont);
+                        WTSPropRenderingRules.RenderTextMesh(nodeID, boardIdx, secIdx, targetDescriptor, propMatrix, targetDescriptor.Descriptor, ref targetDescriptor.Descriptor.m_textDescriptors[j], properties);
                     }
                 }
             }

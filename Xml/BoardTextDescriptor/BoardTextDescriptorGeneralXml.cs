@@ -36,6 +36,8 @@ namespace Klyte.WriteTheSigns.Xml
 
         [XmlAttribute("allCaps")]
         public bool m_allCaps = false;
+        [XmlAttribute("applyAbbreviations")]
+        public bool m_applyAbbreviations = true;
         [XmlAttribute("prefix")]
         public string m_prefix = "";
         [XmlAttribute("suffix")]

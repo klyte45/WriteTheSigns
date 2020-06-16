@@ -138,7 +138,7 @@ namespace Klyte.WriteTheSigns.UI
                     if (CurrentTextDescriptor != null)
                     {
                         float regularMagn = CurrentInfo.m_mesh.bounds.extents.magnitude / WTSPropRenderingRules.SCALING_FACTOR;
-                        Vector3 textExt = WTSPropRenderingRules.GetTextMesh(FontServer.instance[EditingInstancePreview.FontName ?? WTSController.DEFAULT_FONT_KEY], CurrentTextDescriptor, 0, 0, 0, m_previewRenderer.GetDefaultInstance(), m_previewRenderer.GetDefaultInstance().Descriptor, out _)?.m_mesh?.bounds.extents ?? default;
+                        Vector3 textExt = WTSPropRenderingRules.GetTextMesh(CurrentTextDescriptor, 0, 0, 0, m_previewRenderer.GetDefaultInstance(), m_previewRenderer.GetDefaultInstance().Descriptor, out _)?.m_mesh?.bounds.extents ?? default;
 
                         if (CurrentTextDescriptor.m_maxWidthMeters > 0)
                         {

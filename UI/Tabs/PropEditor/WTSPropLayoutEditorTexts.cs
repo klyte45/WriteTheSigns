@@ -64,6 +64,7 @@ namespace Klyte.WriteTheSigns.UI
         private int TabToEdit => WTSPropLayoutEditor.Instance.CurrentTab - 1;
         private bool m_isEditing = true;
         private UICheckBox m_allCaps;
+        private UICheckBox m_applyAbbreviations;
 
         private UIButton m_pasteButtonText;
 
@@ -117,6 +118,7 @@ namespace Klyte.WriteTheSigns.UI
             AddTextField(Locale.Get("K45_WTS_PREFIX"), out m_textPrefix, helperConfig, OnSetPrefix);
             AddTextField(Locale.Get("K45_WTS_SUFFIX"), out m_textSuffix, helperConfig, OnSetSuffix);
             AddCheckboxLocale("K45_WTS_TEXT_ALL_CAPS", out m_allCaps, helperConfig, OnSetAllCaps);
+            AddCheckboxLocale("K45_WTS_TEXT_APPLYABBREVIATIONS", out m_applyAbbreviations, helperConfig, OnSetApplyAbbreviations);
             AddVector2Field(Locale.Get("K45_WTS_TEXT_ROW_COLUMNS"), out m_arrayRowColumnsCount, helperConfig, OnRowColumnCountChanged, true, true);
             m_arrayRowColumnsCount.ForEach(x => x.allowNegative = false);
             AddVector2Field(Locale.Get("K45_WTS_TEXT_ROW_COLUMNS_SPACING"), out m_arrayRowColumnsSpacing, helperConfig, OnRowColumnSpacingChanged);
@@ -252,6 +254,7 @@ namespace Klyte.WriteTheSigns.UI
             m_textSuffix.parent.isVisible = !x.IsMultiItemText();
             m_overrideFontSelect.parent.isVisible = !x.IsMultiItemText();
             m_allCaps.isVisible = !x.IsMultiItemText();
+            m_applyAbbreviations.isVisible = x.m_textType == TextType.StreetSuffix || x.m_textType == TextType.StreetNameComplete || x.m_textType == TextType.StreetPrefix;
             m_arrayRowColumnsCount[0].parent.isVisible = x.IsMultiItemText();
             m_arrayRowColumnsSpacing[0].parent.isVisible = x.IsMultiItemText();
             m_checkboxVerticalFirst.isVisible = x.IsMultiItemText();
@@ -371,6 +374,7 @@ namespace Klyte.WriteTheSigns.UI
         private void OnRotationChange(Vector3 obj) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.PlacingConfig.Rotation = (Vector3Xml)obj);
         private void OnPositionChange(Vector3 obj) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.PlacingConfig.Position = (Vector3Xml)obj);
         private void OnSetAllCaps(bool isChecked) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_allCaps = isChecked);
+        private void OnSetApplyAbbreviations(bool isChecked) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_applyAbbreviations = isChecked);
 
 
         private void OnRowColumnSpacingChanged(Vector2 obj) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.MultiItemSettings.SubItemSpacing = (Vector2Xml)obj);

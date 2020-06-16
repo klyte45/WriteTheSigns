@@ -57,8 +57,6 @@ namespace Klyte.WriteTheSigns.UI
         private UITextField[] m_minMaxLaneRequired;
 
         private UICheckBox m_useDistrictColor;
-        private UICheckBox m_applyAbbreviations_full;
-        private UICheckBox m_applyAbbreviations_suffix;
 
         private UICheckBox m_districtWhiteList;
         private UICheckBox m_districtBlackList;
@@ -130,8 +128,6 @@ namespace Klyte.WriteTheSigns.UI
             AddVector2Field(Locale.Get("K45_WTS_ROADCORNER_MINMAXLANESREQUIRED"), out m_minMaxLaneRequired, helperSpawningSegment, OnLanesRequiredChange, false);
 
             AddCheckboxLocale("K45_WTS_ROADCORNER_USEDISTRICTCOLOR", out m_useDistrictColor, helperAppearence, OnChangeUseDistrictColor);
-            AddCheckboxLocale("K45_WTS_ROADCORNER_APPLYABBREVIATIONS_FULLNAME", out m_applyAbbreviations_full, helperAppearence, OnChangeApplyAbbreviationsFullName);
-            AddCheckboxLocale("K45_WTS_ROADCORNER_APPLYABBREVIATIONS_SUFFIX", out m_applyAbbreviations_suffix, helperAppearence, OnChangeApplyAbbreviationsSuffix);
 
             AddCheckboxLocale("K45_WTS_ROADCORNER_DISTRICTSELECTIONASWHITELIST", out m_districtWhiteList, helperDistricts, OnSetDistrictsAsWhitelist);
             AddCheckboxLocale("K45_WTS_ROADCORNER_DISTRICTSELECTIONASBLACKLIST", out m_districtBlackList, helperDistricts, OnSetDistrictsAsBlacklist);
@@ -316,8 +312,6 @@ namespace Klyte.WriteTheSigns.UI
                 m_minMaxLaneRequired[1].text = x.MaxDirectionTrafflcLanes.ToString("D0");
 
                 m_useDistrictColor.isChecked = x.UseDistrictColor;
-                m_applyAbbreviations_full.isChecked = x.ApplyAbreviationsOnFullName;
-                m_applyAbbreviations_suffix.isChecked = x.ApplyAbreviationsOnSuffix;
 
                 m_districtWhiteList.isChecked = !x.SelectedDistrictsIsBlacklist;
                 m_districtBlackList.isChecked = x.SelectedDistrictsIsBlacklist;
@@ -441,8 +435,6 @@ namespace Klyte.WriteTheSigns.UI
             m_minMaxHalfWidth[1].text = x.MaxRoadHalfWidth.ToString("F3");
         });
         private void OnChangeSpawnChance(float val) => SafeObtain((ref BoardInstanceRoadNodeXml x) => x.SpawnChance = (byte)val);
-        private void OnChangeApplyAbbreviationsSuffix(bool isChecked) => SafeObtain((ref BoardInstanceRoadNodeXml x) => x.ApplyAbreviationsOnSuffix = isChecked);
-        private void OnChangeApplyAbbreviationsFullName(bool isChecked) => SafeObtain((ref BoardInstanceRoadNodeXml x) => x.ApplyAbreviationsOnFullName = isChecked);
         private void OnSetName(string text) => SafeObtain((ref BoardInstanceRoadNodeXml x) =>
         {
             if (!text.IsNullOrWhiteSpace())

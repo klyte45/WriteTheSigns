@@ -60,8 +60,6 @@ namespace Klyte.WriteTheSigns.Xml
 
 
         [XmlAttribute("useDistrictColor")] public bool UseDistrictColor = false;
-        [XmlAttribute("applyAbreviationsOnFullName")] public bool ApplyAbreviationsOnFullName { get; set; } = true;
-        [XmlAttribute("applyAbreviationsOnSuffix")] public bool ApplyAbreviationsOnSuffix { get; set; } = true;
 
         [XmlArray("SelectedDistricts")] [XmlArrayItem("District")] public HashSet<ushort> SelectedDistricts { get; set; } = new HashSet<ushort>();
         [XmlAttribute("districtSelectionIsBlacklist")] public bool SelectedDistrictsIsBlacklist { get; set; } = true;

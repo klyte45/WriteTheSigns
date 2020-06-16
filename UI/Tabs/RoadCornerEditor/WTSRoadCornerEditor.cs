@@ -51,7 +51,7 @@ namespace Klyte.WriteTheSigns.UI
             AddDropdown(Locale.Get("K45_WTS_CUSTOM_NAME_EXTRACTION_QUALIFIER"), out m_qualifierExtractionDropdown, m_uiHelperHS, Enum.GetNames(typeof(RoadQualifierExtractionMode)).Select(x => Locale.Get($"K45_WTS_RoadQualifierExtractionMode", x)).ToArray(), SetRoadQualifierExtractionMode);
             m_qualifierExtractionDropdown.selectedIndex = (int)WTSRoadNodesData.Instance.RoadQualifierExtraction;
 
-            KlyteMonoUtils.CreateUIElement(out UIPanel secondaryContainer, MainContainer.transform, "SecContainer", new Vector4(0, 0, MainContainer.width, 605));
+            KlyteMonoUtils.CreateUIElement(out UIPanel secondaryContainer, MainContainer.transform, "SecContainer", new Vector4(0, 0, MainContainer.width, 655));
             secondaryContainer.autoLayout = true;
             secondaryContainer.autoLayoutDirection = LayoutDirection.Horizontal;
             secondaryContainer.autoLayoutPadding = new RectOffset(0, 10, 0, 0);

@@ -112,7 +112,6 @@ namespace Klyte.WriteTheSigns.UI
             AddColorField(helperSettings, Locale.Get("K45_WTS_PROP_COLOR"), out m_fixedColor, OnSetPropColor);
 
             AddDropdown(Locale.Get("K45_WTS_OVERRIDE_FONT"), out m_fontSelect, helperSettings, new string[0], OnSetFont);
-            WTSUtils.ReloadFontsOf(m_fontSelect, null, true);
 
             AddDropdown(Locale.Get("K45_WTS_TEXT_AVAILABILITY"), out m_dropdownTextContent, helperSettings, Enum.GetNames(typeof(TextRenderingClass)).Select(x => Locale.Get("K45_WTS_BOARD_TEXT_AVAILABILITY_DESC", x.ToString())).ToArray(), OnSetTextOwnNameContent);
 
@@ -146,7 +145,11 @@ namespace Klyte.WriteTheSigns.UI
 
         }
 
-        public void Start() => WriteTheSignsMod.Controller.EventFontsReloadedFromFolder += () => WTSUtils.ReloadFontsOf(m_fontSelect, EditingInstance?.FontName, true);
+        public void Start()
+        {
+            WriteTheSignsMod.Controller.EventFontsReloadedFromFolder += () => WTSUtils.ReloadFontsOf(m_fontSelect, EditingInstance?.FontName, true);
+            WTSUtils.ReloadFontsOf(m_fontSelect, null, true);
+        }
 
         private void LoadIntoCurrentConfig(string loadedItem) => WTSPropLayoutEditor.Instance.ReplaceItem(EditingInstance.SaveName, loadedItem);
 
