@@ -63,6 +63,7 @@ namespace Klyte.WriteTheSigns.Xml
                 case TextType.DistrictOrPark:
                 case TextType.Park:
                 case TextType.ParkOrDistrict:
+                case TextType.PostalCode:
                 case TextType.StreetCode:
                 case TextType.StreetNameComplete:
                 case TextType.StreetPrefix:

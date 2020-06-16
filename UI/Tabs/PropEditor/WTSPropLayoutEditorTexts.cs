@@ -145,9 +145,11 @@ namespace Klyte.WriteTheSigns.UI
                 }),
                 () => XmlUtils.DefaultXmlSerialize(WTSPropLayoutEditor.Instance.EditingInstance.m_textDescriptors[Math.Max(0, TabToEdit)]));
 
-            WTSController.EventFontsReloadedFromFolder += () => SafeObtain((ref BoardTextDescriptorGeneralXml x) => WTSUtils.ReloadFontsOf(m_overrideFontSelect, x.m_overrideFont, true));
+
 
         }
+
+        public void Start() => WriteTheSignsMod.Controller.EventFontsReloadedFromFolder += () => SafeObtain((ref BoardTextDescriptorGeneralXml x) => WTSUtils.ReloadFontsOf(m_overrideFontSelect, x.m_overrideFont, true));
 
 
         private enum ReferenceNode
@@ -366,7 +368,7 @@ namespace Klyte.WriteTheSigns.UI
         });
         private void OnChangeIlluminationStrength(float val) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.ColoringConfig.IlluminationStrength = val);
         private void OnCustomBlinkChange(Vector4 obj) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.ColoringConfig.CustomBlink = (Vector4Xml)obj);
-        private void OnRotationChange(Vector3 obj) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.PlacingConfig.Rotation = (Vector3Xml) obj);
+        private void OnRotationChange(Vector3 obj) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.PlacingConfig.Rotation = (Vector3Xml)obj);
         private void OnPositionChange(Vector3 obj) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.PlacingConfig.Position = (Vector3Xml)obj);
         private void OnSetAllCaps(bool isChecked) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_allCaps = isChecked);
 

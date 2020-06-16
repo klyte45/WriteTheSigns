@@ -401,10 +401,10 @@ namespace Klyte.WriteTheSigns.Singleton
         public void Start()
         {
             NetManagerOverrides.EventNodeChanged += OnNodeChanged;
-            WTSController.EventOnDistrictChanged += ResetViews;
-            WTSController.EventOnParkChanged += ResetViews;
+            WriteTheSignsMod.Controller.EventOnDistrictChanged += ResetViews;
+            WriteTheSignsMod.Controller.EventOnParkChanged += ResetViews;
             NetManagerOverrides.EventSegmentNameChanged += OnNameSeedChanged;
-            WTSController.EventOnZeroMarkerChanged += ResetViews;
+            WriteTheSignsMod.Controller.EventOnZeroMarkerChanged += ResetViews;
         }
 
         private void OnNodeChanged(ushort nodeId) => InvalidateNodeDestinationPaths(nodeId);

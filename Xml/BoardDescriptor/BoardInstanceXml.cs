@@ -15,10 +15,10 @@ namespace Klyte.WriteTheSigns.Xml
         }
 
         [XmlElement("position")]
-        public Vector3Xml PropPosition { get; set; }
+        public Vector3Xml PropPosition { get; set; } = new Vector3Xml();
 
         [XmlElement("rotation")]
-        public Vector3Xml PropRotation { get; set; }
+        public Vector3Xml PropRotation { get; set; } = new Vector3Xml();
 
         [XmlElement("scale")]
         public Vector3Xml Scale { get; set; } = (Vector3Xml)Vector3.one;

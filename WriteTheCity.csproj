@@ -246,7 +246,6 @@
     <Compile Include="Xml\Containers\BoardBunchContainerOnNetXml.cs" />
     <Compile Include="Xml\BoardDescriptor\BoardDescriptorOnNetXml.cs" />
     <Compile Include="Overrides\TransportManagerOverrides.cs" />
-    <Compile Include="Overrides\RenderEventsRedirector.cs" />
     <Compile Include="WriteTheSignsMod.cs" />
     <Compile Include="WTSController.cs" />
     <Compile Include="Xml\Cache\CacheControlOnNet.cs" />

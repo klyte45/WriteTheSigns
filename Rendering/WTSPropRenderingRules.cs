@@ -588,7 +588,7 @@ namespace Klyte.WriteTheSigns.Rendering
                     TextType.StreetNameComplete => RenderUtils.GetFromCacheArray(data.m_segmentId, textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, roadDescritpor.ApplyAbreviationsOnFullName ? RenderUtils.CacheArrayTypes.FullStreetNameAbbreviation : RenderUtils.CacheArrayTypes.FullStreetName, baseFont, textDescriptor.m_overrideFont ?? roadDescritpor.Descriptor.FontName),
                     TextType.District => RenderUtils.GetFromCacheArray(data.m_districtId, textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, RenderUtils.CacheArrayTypes.Districts, baseFont, textDescriptor.m_overrideFont ?? roadDescritpor.Descriptor.FontName),
                     TextType.Park => RenderUtils.GetFromCacheArray(data.m_districtParkId, textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, RenderUtils.CacheArrayTypes.Parks, baseFont, textDescriptor.m_overrideFont ?? roadDescritpor.Descriptor.FontName),
-
+                    TextType.PostalCode => RenderUtils.GetFromCacheArray(data.m_segmentId, textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, RenderUtils.CacheArrayTypes.PostalCode, baseFont, textDescriptor.m_overrideFont ?? roadDescritpor.Descriptor.FontName),
 
                     _ => null,
                 };

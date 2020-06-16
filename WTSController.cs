@@ -3,6 +3,7 @@
 using Klyte.Commons.Interfaces;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Connectors;
+using Klyte.WriteTheSigns.Overrides;
 using Klyte.WriteTheSigns.Rendering;
 using Klyte.WriteTheSigns.Singleton;
 using Klyte.WriteTheSigns.Tools;
@@ -36,20 +37,19 @@ namespace Klyte.WriteTheSigns
 
         public static int DefaultTextureSizeFont => 512 << WriteTheSignsMod.Instance.StartTextureSizeFont;
 
-        public static event Action EventFontsReloadedFromFolder;
+        public event Action EventFontsReloadedFromFolder;
+        public event Action EventOnDistrictChanged;
+        public event Action EventOnParkChanged;
+        public event Action EventOnBuildingNameChanged;
+        public event Action EventOnZeroMarkerChanged;
+        public event Action EventOnPostalCodeChanged;
 
-        public static event Action EventOnDistrictChanged;
+        public static void OnDistrictChanged() => WriteTheSignsMod.Controller?.EventOnDistrictChanged?.Invoke();
+        public static void OnParkChanged() => WriteTheSignsMod.Controller?.EventOnParkChanged?.Invoke();
+        public static void OnBuildingNameChanged() => WriteTheSignsMod.Controller?.EventOnBuildingNameChanged?.Invoke();
+        public static void OnZeroMarkChanged() => WriteTheSignsMod.Controller?.EventOnZeroMarkerChanged?.Invoke();
 
-        public static event Action EventOnParkChanged;
-
-        public static event Action EventOnBuildingNameChanged;
-
-        public static event Action EventOnZeroMarkerChanged;
-
-        public static void OnDistrictChanged() => EventOnDistrictChanged?.Invoke();
-        public static void OnParkChanged() => EventOnParkChanged?.Invoke();
-        public static void OnBuildingNameChanged() => EventOnBuildingNameChanged?.Invoke();
-        public static void OnZeroMarkChanged() => EventOnZeroMarkerChanged?.Invoke();
+        public static void OnPostalCodeChanged() => WriteTheSignsMod.Controller?.EventOnPostalCodeChanged?.Invoke();
 
         public void Awake()
         {
@@ -71,19 +71,33 @@ namespace Klyte.WriteTheSigns
             DestinationSingleton = gameObject.AddComponent<WTSDestinationSingleton>();
             VehicleTextsSingleton = gameObject.AddComponent<WTSVehicleTextsSingleton>();
             ConnectorTLM = PluginUtils.GetImplementationTypeForMod<ConnectorTLM, ConnectorTLMFallback, IConnectorTLM>(gameObject, "TransportLinesManager", "13.3.6");
-            ConnectorADR = PluginUtils.GetImplementationTypeForMod<ConnectorADR, ConnectorADRFallback, IConnectorADR>(gameObject, "KlyteAddresses", "2.0.3");
-        }
-
-        public void OnDestroy()
-        {
-            EventFontsReloadedFromFolder = null;
-            EventOnDistrictChanged = null;
+            ConnectorADR = PluginUtils.GetImplementationTypeForMod<ConnectorADR, ConnectorADRFallback, IConnectorADR>(gameObject, "KlyteAddresses", "2.0.4");
         }
         protected override void StartActions()
         {
             ReloadFontsFromPath();
             BuildingManager.instance.EventBuildingReleased += WTSBuildingDataCaches.PurgeBuildingCache;
             BuildingManager.instance.EventBuildingRelocated += WTSBuildingDataCaches.PurgeBuildingCache;
+
+            NetManagerOverrides.EventSegmentNameChanged += OnNameSeedChanged;
+            BuildingManager.instance.EventBuildingRelocated += RenderUtils.ClearCacheBuildingName;
+            BuildingManager.instance.EventBuildingReleased += RenderUtils.ClearCacheBuildingName;
+            BuildingManager.instance.EventBuildingCreated += RenderUtils.ClearCacheBuildingName;
+            EventOnDistrictChanged += RenderUtils.ClearCacheDistrictName;
+            EventOnParkChanged += RenderUtils.ClearCacheParkName;
+            EventOnBuildingNameChanged += RenderUtils.ClearCacheBuildingName;
+            EventOnPostalCodeChanged += RenderUtils.ClearCachePostalCode;
+            EventOnZeroMarkerChanged += OnNameSeedChanged;
+        }
+
+        private void OnNameSeedChanged(ushort segmentId) => OnNameSeedChanged();
+        private void OnNameSeedChanged()
+        {
+            RenderUtils.ClearCacheFullStreetName();
+            RenderUtils.ClearCacheStreetName();
+            RenderUtils.ClearCacheStreetQualifier();
+            RenderUtils.ClearCachePostalCode();
+            RenderUtils.ClearCacheBuildingName();
         }
 
         public static void ReloadFontsFromPath()
@@ -95,7 +109,7 @@ namespace Klyte.WriteTheSigns
             {
                 FontServer.instance.RegisterFont(Path.GetFileNameWithoutExtension(fontFile), File.ReadAllBytes(fontFile), WTSController.DefaultTextureSizeFont);
             }
-            EventFontsReloadedFromFolder?.Invoke();
+            WriteTheSignsMod.Controller?.EventFontsReloadedFromFolder?.Invoke();
         }
 
         public void ReloadAbbreviationFiles()

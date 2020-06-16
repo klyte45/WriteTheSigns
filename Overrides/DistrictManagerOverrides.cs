@@ -20,7 +20,7 @@ namespace Klyte.WriteTheSigns.Overrides
 
         #region Hooking 
 
-        public void Awake()
+        public void Start()
         {
             RedirectorInstance = KlyteMonoUtils.CreateElement<Redirector>(transform);
             LogUtils.DoLog("Loading District Manager Overrides");

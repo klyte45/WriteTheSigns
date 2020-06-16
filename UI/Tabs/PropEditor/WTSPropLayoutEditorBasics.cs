@@ -133,7 +133,6 @@ namespace Klyte.WriteTheSigns.UI
                 }
             };
 
-            WTSController.EventFontsReloadedFromFolder += () => WTSUtils.ReloadFontsOf(m_fontSelect, EditingInstance?.FontName, true);
 
             m_popup = ConfigurePropSelectionPopup(selectorPanel);
 
@@ -146,6 +145,8 @@ namespace Klyte.WriteTheSigns.UI
             m_pasteButton.isVisible = m_clipboard != null;
 
         }
+
+        public void Start() => WriteTheSignsMod.Controller.EventFontsReloadedFromFolder += () => WTSUtils.ReloadFontsOf(m_fontSelect, EditingInstance?.FontName, true);
 
         private void LoadIntoCurrentConfig(string loadedItem) => WTSPropLayoutEditor.Instance.ReplaceItem(EditingInstance.SaveName, loadedItem);
 

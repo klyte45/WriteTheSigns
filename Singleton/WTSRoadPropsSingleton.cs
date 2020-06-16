@@ -53,10 +53,11 @@ namespace Klyte.WriteTheSigns.Singleton
         public void Start()
         {
             NetManagerOverrides.EventNodeChanged += OnNodeChanged;
-            WTSController.EventOnParkChanged += ResetViews;
+            WriteTheSignsMod.Controller.EventOnParkChanged += ResetViews;
             NetManagerOverrides.EventSegmentNameChanged += OnNameSeedChanged;
-            WTSController.EventOnDistrictChanged += ResetViews;
-            WTSController.EventOnZeroMarkerChanged += ResetViews;
+            WriteTheSignsMod.Controller.EventOnDistrictChanged += ResetViews;
+            WriteTheSignsMod.Controller.EventOnZeroMarkerChanged += ResetViews;
+            WriteTheSignsMod.Controller.EventOnPostalCodeChanged += ResetViews;
         }
 
         private void OnNodeChanged(ushort nodeId) => m_updatedStreetPositions[nodeId] = null;

@@ -19,6 +19,7 @@ namespace Klyte.WriteTheSigns.Utils
             m_cache[(int)FullStreetName] = new string[NetManager.MAX_SEGMENT_COUNT];
             m_cache[(int)StreetQualifier] = new string[NetManager.MAX_SEGMENT_COUNT];
             m_cache[(int)SuffixStreetName] = new string[NetManager.MAX_SEGMENT_COUNT];
+            m_cache[(int)PostalCode] = new string[NetManager.MAX_SEGMENT_COUNT];
             m_cache[(int)Districts] = new string[DistrictManager.MAX_DISTRICT_COUNT];
             m_cache[(int)Parks] = new string[DistrictManager.MAX_DISTRICT_COUNT];
             m_cache[(int)FullStreetNameAbbreviation] = new string[NetManager.MAX_SEGMENT_COUNT];
@@ -34,6 +35,16 @@ namespace Klyte.WriteTheSigns.Utils
             m_cacheUpper[(int)SuffixStreetNameAbbreviation] = new string[NetManager.MAX_SEGMENT_COUNT];
             m_cacheUpper[(int)BuildingName] = new string[BuildingManager.MAX_BUILDING_COUNT];
 
+        }
+
+       
+
+
+        public static void ClearCachePostalCode()
+        {
+            m_cache[(int)PostalCode] = new string[NetManager.MAX_SEGMENT_COUNT];
+
+            m_cacheUpper[(int)PostalCode] = new string[NetManager.MAX_SEGMENT_COUNT];
         }
 
         public static void ClearCacheStreetName()
@@ -114,7 +125,7 @@ namespace Klyte.WriteTheSigns.Utils
                 CacheArrayTypes.SuffixStreetNameAbbreviation => UpdateMeshStreetSuffix(refId, ref (allCaps ? m_cacheUpper : m_cache)[(int)type][refId], prefix, suffix, allCaps, true, primaryFont, overrideFont),
                 CacheArrayTypes.FullStreetNameAbbreviation => UpdateMeshFullNameStreet(refId, ref (allCaps ? m_cacheUpper : m_cache)[(int)type][refId], prefix, suffix, allCaps, true, primaryFont, overrideFont),
                 CacheArrayTypes.BuildingName => UpdateMeshBuildingName(refId, ref (allCaps ? m_cacheUpper : m_cache)[(int)type][refId], prefix, suffix, allCaps, false, primaryFont, overrideFont),
-                CacheArrayTypes.PostalCode => UpdateMeshPostalCode(refId, ref (allCaps ? m_cacheUpper : m_cache)[(int)type][refId], prefix, suffix, allCaps, false, primaryFont, overrideFont),
+                CacheArrayTypes.PostalCode => UpdateMeshPostalCode(refId, ref m_cache[(int)type][refId], prefix, suffix, allCaps, false, primaryFont, overrideFont),
                 _ => null
             };
         }
@@ -178,12 +189,8 @@ namespace Klyte.WriteTheSigns.Utils
                 else
                 {
                     name = WriteTheSignsMod.Controller.ConnectorADR.GetStreetPostalCode(NetManager.instance.m_segments.m_buffer[idx].m_middlePosition, idx);
-                    if (allCaps)
-                    {
-                        name = name.ToUpper();
-                    }
                 }
-                LogUtils.DoLog($"!GenName {name} for {idx} (UC={allCaps})");
+                LogUtils.DoLog($"!Gen Postal Code {name} for {idx} (UC={allCaps})");
             }
             return GetTextData(name, prefix, suffix, primaryFont, overrideFont);
         }

@@ -217,12 +217,15 @@ namespace Klyte.WriteTheSigns.UI
             Func<string> getContentToSave, Action<UIHelperExtension> doWithLibGroup = null) where LIB : BasicFileLib<LIB, DESC>, new() where DESC : ILibable
         {
             UILabel label = parentHelper.AddLabel(Locale.Get("K45_WTS_CLIPBOARD_TITLE"));
-            var cbPanel = label.parent as UIPanel;
+
+            KlyteMonoUtils.CreateUIElement(out UIPanel cbPanel, parentHelper.Self.transform);
             cbPanel.autoLayoutDirection = LayoutDirection.Horizontal;
             cbPanel.wrapLayout = false;
             cbPanel.autoLayout = true;
             cbPanel.autoFitChildrenHorizontally = true;
             cbPanel.autoFitChildrenVertically = true;
+
+            cbPanel.AttachUIComponent(label.gameObject);
             label.verticalAlignment = UIVerticalAlignment.Middle;
             label.minimumSize = new Vector2(parentHelper.Self.width / 2, 40);
             KlyteMonoUtils.LimitWidthAndBox(label);
