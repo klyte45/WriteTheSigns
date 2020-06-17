@@ -88,13 +88,14 @@ namespace Klyte.WriteTheSigns.Rendering
 
         public static void RenderPropMesh(ref PropInfo propInfo, RenderManager.CameraInfo cameraInfo, ushort refId, int boardIdx, int secIdx, int layerMask, float refAngleRad, Vector3 position, Vector4 dataVector, ref string propName, Vector3 propAngle, Vector3 propScale, BoardDescriptorGeneralXml propLayout, BoardInstanceXml descriptor, out Matrix4x4 propMatrix, out bool rendered, InstanceID propRenderID)
         {
-            Color? propColor = WTSPropRenderingRules.GetColor(refId, boardIdx, secIdx, descriptor, propLayout);
-            if (propColor == null)
+            Color propColor = WTSPropRenderingRules.GetColor(refId, boardIdx, secIdx, descriptor, propLayout, out bool colorFound);
+            if (!colorFound)
             {
                 rendered = false;
                 propMatrix = new Matrix4x4();
                 return;
             }
+            propColor.a = 1;
 
             if (!string.IsNullOrEmpty(propName))
             {
@@ -116,7 +117,7 @@ namespace Klyte.WriteTheSigns.Rendering
             {
                 propInfo = null;
             }
-            propMatrix = RenderUtils.RenderProp(refId, refAngleRad, cameraInfo, propInfo, propColor ?? Color.white, position, dataVector, boardIdx, propAngle, propScale, layerMask, out rendered, propRenderID);
+            propMatrix = RenderUtils.RenderProp(refId, refAngleRad, cameraInfo, propInfo, propColor, position, dataVector, boardIdx, propAngle, propScale, layerMask, out rendered, propRenderID);
         }
 
 
@@ -348,19 +349,21 @@ namespace Klyte.WriteTheSigns.Rendering
             return textMatrix;
         }
 
-        public static Color? GetColor(ushort refId, int boardIdx, int secIdx, BoardInstanceXml instance, BoardDescriptorGeneralXml propLayout)
+        public static Color GetColor(ushort refId, int boardIdx, int secIdx, BoardInstanceXml instance, BoardDescriptorGeneralXml propLayout, out bool found)
         {
 
             if (instance is BoardInstanceRoadNodeXml)
             {
-                return WTSRoadNodesData.Instance.BoardsContainers[refId, boardIdx, secIdx]?.m_cachedColor;
+                found = WTSRoadNodesData.Instance.BoardsContainers[refId, boardIdx, secIdx] != null;
+                return WTSRoadNodesData.Instance.BoardsContainers[refId, boardIdx, secIdx]?.m_cachedColor ?? default;
             }
             else if (instance is BoardInstanceBuildingXml buildingDescriptor)
             {
+                found = true;
                 switch (buildingDescriptor.ColorModeProp)
                 {
                     case ColoringMode.Fixed:
-                        return propLayout.FixedColor;
+                        return propLayout.FixedColor ?? default;
                     case ColoringMode.ByPlatform:
                         StopInformation stop = GetTargetStopInfo(buildingDescriptor, refId).FirstOrDefault();
                         if (stop.m_lineId != 0)
@@ -369,7 +372,8 @@ namespace Klyte.WriteTheSigns.Rendering
                         }
                         if (!buildingDescriptor.m_showIfNoLine)
                         {
-                            return null;
+                            found = false;
+                            return default;
                         }
                         return Color.white;
                     case ColoringMode.ByDistrict:
@@ -381,9 +385,11 @@ namespace Klyte.WriteTheSigns.Rendering
             }
             else if (instance is BoardPreviewInstanceXml preview)
             {
+                found = true;
                 return preview?.Descriptor?.FixedColor ?? GetCurrentSimulationColor();
             }
-            return null;
+            found = false;
+            return default;
         }
 
         private static readonly Color[] m_spectreSteps = new Color[]
@@ -429,7 +435,8 @@ namespace Klyte.WriteTheSigns.Rendering
             {
                 return KlyteMonoUtils.ContrastColor(preview?.Descriptor?.FixedColor ?? GetCurrentSimulationColor());
             }
-            return KlyteMonoUtils.ContrastColor(GetColor(refID, boardIdx, secIdx, instance, propLayout) ?? Color.white);
+            var targetColor = GetColor(refID, boardIdx, secIdx, instance, propLayout, out bool colorFound);
+            return KlyteMonoUtils.ContrastColor(colorFound ? targetColor : Color.white);
         }
 
         internal static BasicRenderInformation GetTextMesh(BoardTextDescriptorGeneralXml textDescriptor, ushort refID, int boardIdx, int secIdx, BoardInstanceXml instance, BoardDescriptorGeneralXml propLayout, out IEnumerable<BasicRenderInformation> multipleOutput)
@@ -463,7 +470,7 @@ namespace Klyte.WriteTheSigns.Rendering
 
                 switch (textDescriptor.m_textType)
                 {
-                    case TextType.Fixed: return RenderUtils.GetTextData(textDescriptor.m_fixedText ?? "", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont,textDescriptor.m_overrideFont);
+                    case TextType.Fixed: return RenderUtils.GetTextData(textDescriptor.m_fixedText ?? "", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                     case TextType.DistanceFromReference: return RenderUtils.GetTextData("00", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                     case TextType.PostalCode: return RenderUtils.GetTextData("00000", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                     case TextType.StreetSuffix: return RenderUtils.GetTextData($"{otherText}Suffix", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
@@ -643,7 +650,7 @@ namespace Klyte.WriteTheSigns.Rendering
         private static readonly StopInformation[] m_emptyInfo = new StopInformation[0];
 
 
-        private static BasicRenderInformation GetFromCacheArray(ushort reference, BoardTextDescriptorGeneralXml textDescriptor, RenderUtils.CacheArrayTypes cacheType, DynamicSpriteFont baseFont) 
+        private static BasicRenderInformation GetFromCacheArray(ushort reference, BoardTextDescriptorGeneralXml textDescriptor, RenderUtils.CacheArrayTypes cacheType, DynamicSpriteFont baseFont)
             => RenderUtils.GetFromCacheArray2(reference, textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, textDescriptor.m_applyAbbreviations, cacheType, baseFont, textDescriptor.m_overrideFont);
 
 

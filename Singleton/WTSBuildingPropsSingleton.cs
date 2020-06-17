@@ -94,11 +94,11 @@ namespace Klyte.WriteTheSigns.Singleton
             m_lastDrawBuilding[buildingID] = SimulationManager.instance.m_currentTickIndex;
 
             string refName = GetReferenceModelName(ref data);
-            if (WTSBuildingLayoutEditor.Instance.MainContainer.isVisible && WTSBuildingLayoutEditor.Instance.CurrentEditingInstance?.BuildingName == refName)
+            if ((WTSBuildingLayoutEditor.Instance?.MainContainer?.isVisible ?? false) && (WTSBuildingLayoutEditor.Instance?.IsEditing(refName) ?? false))
             {
                 if (!m_buildingStopsDescriptor.ContainsKey(refName))
                 {
-                    m_buildingStopsDescriptor[refName] = MapStopPoints(data.Info, WTSBuildingLayoutEditor.Instance.CurrentEditingInstance?.StopMappingThresold ?? 1f);
+                    m_buildingStopsDescriptor[refName] = MapStopPoints(data.Info, WTSBuildingLayoutEditor.Instance.GetCurrentMappingThresold());
                 }
                 for (int i = 0; i < m_buildingStopsDescriptor[refName].Length; i++)
                 {
@@ -106,7 +106,7 @@ namespace Klyte.WriteTheSigns.Singleton
                            m_buildingStopsDescriptor[refName][i].width / 2, m_colorOrder[i % m_colorOrder.Length]));
                 }
             }
-            BuildingGroupDescriptorXml targetDescriptor = GetResultDescriptor(refName);
+            GetTargetDescriptor(refName, out _, out BuildingGroupDescriptorXml targetDescriptor);
             if ((targetDescriptor?.PropInstances?.Length ?? 0) == 0)
             {
                 return;
@@ -119,18 +119,39 @@ namespace Klyte.WriteTheSigns.Singleton
             }
         }
 
-        internal BuildingGroupDescriptorXml GetResultDescriptor(string refName)
+        internal static void GetTargetDescriptor(string building, out ConfigurationSource source, out BuildingGroupDescriptorXml target)
         {
-            ExportableBuildingGroupDescriptorXml expTargetDescriptor = null;
-            if (!Data.CityDescriptors.TryGetValue(refName, out BuildingGroupDescriptorXml targetDescriptor))
+            if (building == null)
             {
-                if (!Data.GlobalDescriptors.TryGetValue(refName, out expTargetDescriptor))
-                {
-                    Data.AssetsDescriptors.TryGetValue(refName, out expTargetDescriptor);
-                }
+                source = ConfigurationSource.NONE;
+                target = null;
+                return;
             }
 
-            return targetDescriptor ?? expTargetDescriptor;
+            if (WTSBuildingsData.Instance.CityDescriptors.ContainsKey(building))
+            {
+                source = ConfigurationSource.CITY;
+                target = WTSBuildingsData.Instance.CityDescriptors[building];
+                return;
+            }
+
+            if (WTSBuildingsData.Instance.GlobalDescriptors.ContainsKey(building))
+            {
+                source = ConfigurationSource.GLOBAL;
+                target = WTSBuildingsData.Instance.GlobalDescriptors[building];
+                return;
+            }
+
+            if (WTSBuildingsData.Instance.AssetsDescriptors.ContainsKey(building))
+            {
+                source = ConfigurationSource.ASSET;
+                target = WTSBuildingsData.Instance.AssetsDescriptors[building];
+                return;
+            }
+
+            source = ConfigurationSource.NONE;
+            target = null;
+
         }
 
         public static void AfterEndOverlayImpl(RenderManager.CameraInfo cameraInfo)
@@ -201,7 +222,6 @@ namespace Klyte.WriteTheSigns.Singleton
             {
                 item.m_cachedPosition = renderInstance.m_dataMatrix1.MultiplyPoint(targetDescriptor.PropPosition);
                 item.m_cachedRotation = targetDescriptor.PropRotation;
-                LogUtils.DoLog($"[B{buildingID}/{idx}]Cached position: {item.m_cachedPosition} | Cached rotation: {item.m_cachedRotation}");
             }
             Vector3 targetPostion = item.m_cachedPosition ?? default;
             for (int i = 0; i <= targetDescriptor.m_arrayRepeatTimes; i++)
@@ -222,7 +242,7 @@ namespace Klyte.WriteTheSigns.Singleton
             {
                 for (int j = 0; j < propLayout.m_textDescriptors.Length; j++)
                 {
-                    if (cameraInfo.CheckRenderDistance(position, 200 * propLayout.m_textDescriptors[j].m_textScale * (propLayout.m_textDescriptors[j].ColoringConfig.MaterialType == FontStashSharp.MaterialType.OPAQUE ? 1 : 2)))
+                    if (cameraInfo.CheckRenderDistance(position, 200 * propLayout.m_textDescriptors[j].m_textScale * targetDescriptor.PropScale.magnitude * (propLayout.m_textDescriptors[j].ColoringConfig.MaterialType == FontStashSharp.MaterialType.OPAQUE ? 1 : 2)))
                     {
                         MaterialPropertyBlock properties = PropManager.instance.m_materialBlock;
                         properties.Clear();
@@ -671,7 +691,8 @@ namespace Klyte.WriteTheSigns.Singleton
             var instance = WriteTheSignsMod.Controller.BuildingPropsSingleton;
             if (!instance.m_buildingStopsDescriptor.ContainsKey(building))
             {
-                instance.m_buildingStopsDescriptor[building] = MapStopPoints(PrefabCollection<BuildingInfo>.FindLoaded(building), instance.GetResultDescriptor(building)?.StopMappingThresold ?? 1f);
+                GetTargetDescriptor(building, out _, out BuildingGroupDescriptorXml target);
+                instance.m_buildingStopsDescriptor[building] = MapStopPoints(PrefabCollection<BuildingInfo>.FindLoaded(building), target?.StopMappingThresold ?? 1f);
             }
             return instance.m_buildingStopsDescriptor[building];
         }

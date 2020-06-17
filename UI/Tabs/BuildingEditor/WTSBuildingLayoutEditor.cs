@@ -42,48 +42,15 @@ namespace Klyte.WriteTheSigns.UI
             }
         }
 
-        public BuildingGroupDescriptorXml CurrentEditingInstance { get; private set; }
-        public ConfigurationSource CurrentConfigurationSource { get; private set; }
+        private BuildingGroupDescriptorXml CurrentEditingInstance { get; set; }
+        private ConfigurationSource CurrentConfigurationSource { get; set; }
 
 
 
-        internal event Action EventOnBuildingSelectionChanged;
+        internal event Action<BuildingGroupDescriptorXml, ConfigurationSource> EventOnBuildingSelectionChanged;
 
 
-        private void GetConfigurationSoruce(string building, out ConfigurationSource source, out BuildingGroupDescriptorXml target)
-        {
-            if (building == null)
-            {
-                source = ConfigurationSource.NONE;
-                target = null;
-                return;
-            }
 
-            if (WTSBuildingsData.Instance.CityDescriptors.ContainsKey(building))
-            {
-                source = ConfigurationSource.CITY;
-                target = WTSBuildingsData.Instance.CityDescriptors[building];
-                return;
-            }
-
-            if (WTSBuildingsData.Instance.GlobalDescriptors.ContainsKey(building))
-            {
-                source = ConfigurationSource.GLOBAL;
-                target = WTSBuildingsData.Instance.GlobalDescriptors[building];
-                return;
-            }
-
-            if (WTSBuildingsData.Instance.AssetsDescriptors.ContainsKey(building))
-            {
-                source = ConfigurationSource.ASSET;
-                target = WTSBuildingsData.Instance.AssetsDescriptors[building];
-                return;
-            }
-
-            source = ConfigurationSource.NONE;
-            target = null;
-
-        }
 
         public UIPanel MainContainer { get; protected set; }
 
@@ -140,6 +107,8 @@ namespace Klyte.WriteTheSigns.UI
             OnBuildingSet(null);
         }
 
+        internal float GetCurrentMappingThresold() => CurrentEditingInstance?.StopMappingThresold ?? 1f;
+        internal bool IsEditing(string refName) => CurrentBuildingName == refName;
 
         private void OnReloadDescriptors() { }
         private void OnExportAsAsset() { }
@@ -152,16 +121,14 @@ namespace Klyte.WriteTheSigns.UI
             WTSBuildingsData.Instance.CityDescriptors[m_currentBuildingName] = new BuildingGroupDescriptorXml
             {
                 BuildingName = m_currentBuildingName,
-
             };
-            //WriteTheSignsMod.Instance.Controller.BuildingPropsSingleton.LoadAllBuildingConfigurations
             ReloadBuilding();
-            OnChangeTab(-1);
         }
 
         private void EnablePickTool()
         {
-            OnBuildingSet(null); WriteTheSignsMod.Controller.BuildingEditorToolInstance.OnBuildingSelect += OnBuildingSet;
+            OnBuildingSet(null);
+            WriteTheSignsMod.Controller.BuildingEditorToolInstance.OnBuildingSelect += OnBuildingSet;
             WriteTheSignsMod.Controller.BuildingEditorToolInstance.enabled = true;
         }
 
@@ -170,7 +137,6 @@ namespace Klyte.WriteTheSigns.UI
         {
             CurrentBuildingName = buildingId;
             ReloadBuilding();
-            OnChangeTab(-1);
         }
 
 
@@ -178,17 +144,16 @@ namespace Klyte.WriteTheSigns.UI
         {
             m_secondaryContainer.isVisible = m_currentBuildingName != null;
             m_containerSelectionDescription.isVisible = m_currentBuildingName != null;
-            GetConfigurationSoruce(m_currentBuildingName, out ConfigurationSource source, out BuildingGroupDescriptorXml target);
+            WTSBuildingPropsSingleton.GetTargetDescriptor(m_currentBuildingName, out ConfigurationSource source, out BuildingGroupDescriptorXml target);
             m_labelSelectionDescription.text = Locale.Get("BUILDING_TITLE", m_currentBuildingName) + "\n";
             m_labelSelectionDescription.suffix = $"{Locale.Get("K45_WTS_CURRENTLY_USING")}: {Locale.Get("K45_WTS_CONFIGURATIONSOURCE", source.ToString())}";
-            EventOnBuildingSelectionChanged?.Invoke();
             CurrentEditingInstance = target;
             CurrentConfigurationSource = source;
+            EventOnBuildingSelectionChanged?.Invoke(CurrentEditingInstance, CurrentConfigurationSource);
 
             m_btnNew.isVisible = CurrentConfigurationSource != ConfigurationSource.CITY;
         }
 
-        private void OnChangeTab(int v) { }
     }
 
 }

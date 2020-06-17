@@ -116,7 +116,8 @@ namespace Klyte.WriteTheSigns.UI
             PropManager instance = Singleton<PropManager>.instance;
             MaterialPropertyBlock materialBlock = instance.m_materialBlock;
             materialBlock.Clear();
-            materialBlock.SetColor(instance.ID_Color, WTSPropRenderingRules.GetColor(0, 0, 0, m_defaultInstance, descriptor) ?? Color.white);
+            var targetColor = WTSPropRenderingRules.GetColor(0, 0, 0, m_defaultInstance, descriptor, out bool colorFound);
+            materialBlock.SetColor(instance.ID_Color, colorFound ? targetColor : Color.white);
             if (info.m_rollLocation != null)
             {
                 info.m_material.SetVectorArray(instance.ID_RollLocation, info.m_rollLocation);

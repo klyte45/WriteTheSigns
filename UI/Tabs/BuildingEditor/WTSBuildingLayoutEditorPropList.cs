@@ -26,18 +26,22 @@ namespace Klyte.WriteTheSigns.UI
         private UIButton m_help;
 
         private UIScrollablePanel m_orderedRulesList;
+        private UITemplateList<UIButton> m_tabs;
         private int m_selectedIndex;
 
         public int SelectedIndex
         {
             get => m_selectedIndex; private set {
                 m_selectedIndex = value;
-                EventSelectionChanged?.Invoke(value);
+                var targetVal = value >= 0 && value < PropInstances.Length ? PropInstances[value] : null;
+                EventSelectionChanged?.Invoke(CurrentEdited?.BuildingName, targetVal, Source);
             }
         }
 
-        public event Action<int> EventSelectionChanged;
+        public event Action<string, BoardInstanceBuildingXml, ConfigurationSource> EventSelectionChanged;
 
+        private BoardInstanceBuildingXml[] PropInstances => CurrentEdited?.PropInstances ?? m_zeroedInstances;
+        private readonly BoardInstanceBuildingXml[] m_zeroedInstances = new BoardInstanceBuildingXml[0];
 
         public void Awake()
         {
@@ -77,6 +81,9 @@ namespace Klyte.WriteTheSigns.UI
             m_orderedRulesList.autoLayout = true;
             m_orderedRulesList.autoLayoutDirection = LayoutDirection.Vertical;
 
+            m_tabs = new UITemplateList<UIButton>(m_orderedRulesList, TAB_TEMPLATE_NAME);
+
+            CreateTabTemplate();
         }
 
         private void OnExportData(string defaultText = null)
@@ -212,7 +219,24 @@ namespace Klyte.WriteTheSigns.UI
 
         }
 
-        public void Start() => WTSBuildingLayoutEditor.Instance.EventOnBuildingSelectionChanged += () => m_dirty = true;
+        public void Start() => WTSBuildingLayoutEditor.Instance.EventOnBuildingSelectionChanged += (x, y) =>
+        {
+            CurrentEdited = x;
+            Source = y;
+
+            SelectedIndex = -1;
+            Dirty = true;
+        };
+
+        private const string TAB_TEMPLATE_NAME = "K45_WTS_TabTemplate";
+
+        private void CreateTabTemplate()
+        {
+            var go = new GameObject();
+
+            InitTabButton(go, out UIButton button, "AAA", new Vector2(m_orderedRulesList.size.x, 30), null);
+            UITemplateUtils.GetTemplateDict()[TAB_TEMPLATE_NAME] = button;
+        }
 
         private UIButton AddTabButton(string tabName)
         {
@@ -223,23 +247,20 @@ namespace Klyte.WriteTheSigns.UI
 
         public void FixTabstrip()
         {
-
-            while (m_orderedRulesList.components.Count > (CurrentEdited?.PropInstances?.Length ?? 0))
+            m_tabs.SetItemCount(PropInstances.Length);
+            for (int i = 0; i < PropInstances.Length; i++)
             {
-                Destroy(m_orderedRulesList.components[CurrentEdited?.PropInstances?.Length ?? 0]);
-                m_orderedRulesList.RemoveUIComponent(m_orderedRulesList.components[m_orderedRulesList.components.Count - 1]);
-            }
-            while (m_orderedRulesList.components.Count < (CurrentEdited?.PropInstances?.Length ?? 0))
-            {
-                AddTabButton("!!!").eventClicked += (x, y) =>
+                var but = m_tabs.items[i];
+                if (but.stringUserData.IsNullOrWhiteSpace())
                 {
-                    SelectedIndex = x.zOrder;
-                    FixTabstrip();
-                };
-            }
-            for (int i = 0; i < CurrentEdited?.PropInstances?.Length; i++)
-            {
-                (m_orderedRulesList.components[i] as UIButton).text = CurrentEdited.PropInstances[i].SaveName ?? "";
+                    but.eventClicked += (x, y) =>
+                    {
+                        SelectedIndex = x.zOrder;
+                        FixTabstrip();
+                    };
+                    but.stringUserData = "A";
+                }
+                but.text = PropInstances[i]?.SaveName;
             }
 
             if (SelectedIndex < 1 || Source != ConfigurationSource.CITY)
@@ -250,7 +271,7 @@ namespace Klyte.WriteTheSigns.UI
             {
                 m_up.Enable();
             }
-            if (SelectedIndex <= -1 || SelectedIndex >= (CurrentEdited?.PropInstances?.Length ?? 0) - 1 || Source != ConfigurationSource.CITY)
+            if (SelectedIndex <= -1 || SelectedIndex >= PropInstances.Length - 1 || Source != ConfigurationSource.CITY)
             {
                 m_down.Disable();
             }
@@ -258,7 +279,7 @@ namespace Klyte.WriteTheSigns.UI
             {
                 m_down.Enable();
             }
-            if (SelectedIndex < 0 || SelectedIndex >= (CurrentEdited?.PropInstances?.Length ?? 0) || Source != ConfigurationSource.CITY)
+            if (SelectedIndex < 0 || SelectedIndex >= PropInstances.Length || Source != ConfigurationSource.CITY)
             {
                 m_remove.Disable();
             }
@@ -282,12 +303,12 @@ namespace Klyte.WriteTheSigns.UI
         private void OnRemoveItem(UIComponent component, UIMouseEventParameter eventParam)
         {
             CurrentEdited.PropInstances = CurrentEdited.PropInstances.Where((x, y) => y != SelectedIndex).ToArray();
-            SelectedIndex = Math.Min(SelectedIndex, (CurrentEdited?.PropInstances?.Length ?? 0) - 1);
+            SelectedIndex = Math.Min(SelectedIndex, (PropInstances.Length) - 1);
             FixTabstrip();
         }
         private void OnMoveItemUpOnList(UIComponent component, UIMouseEventParameter eventParam)
         {
-            if (SelectedIndex > 0 && CurrentEdited?.PropInstances?.Length > 1)
+            if (SelectedIndex > 0 && PropInstances.Length > 1)
             {
                 BoardInstanceBuildingXml temp = CurrentEdited.PropInstances[SelectedIndex];
                 CurrentEdited.PropInstances[SelectedIndex] = CurrentEdited.PropInstances[SelectedIndex - 1];
@@ -298,7 +319,7 @@ namespace Klyte.WriteTheSigns.UI
         }
         private void OnMoveItemDownOnList(UIComponent component, UIMouseEventParameter eventParam)
         {
-            if (SelectedIndex < CurrentEdited?.PropInstances?.Length && CurrentEdited?.PropInstances?.Length > 1)
+            if (SelectedIndex < PropInstances.Length && PropInstances.Length > 1)
             {
                 BoardInstanceBuildingXml temp = CurrentEdited.PropInstances[SelectedIndex];
                 CurrentEdited.PropInstances[SelectedIndex] = CurrentEdited.PropInstances[SelectedIndex + 1];
@@ -313,7 +334,7 @@ namespace Klyte.WriteTheSigns.UI
             {
                 SaveName = "New layout",
             } }).ToArray();
-            SelectedIndex = (CurrentEdited?.PropInstances?.Length ?? 0) - 1;
+            SelectedIndex = PropInstances.Length - 1;
             FixTabstrip();
         }
         private void Help_RulesList(UIComponent component, UIMouseEventParameter eventParam) { }
@@ -322,10 +343,10 @@ namespace Klyte.WriteTheSigns.UI
 
             if (MainContainer.isVisible)
             {
-                if (m_dirty)
+                if (Dirty)
                 {
                     FixTabstrip();
-                    m_dirty = false;
+                    Dirty = false;
                 }
                 foreach (UIButton btn in m_orderedRulesList.GetComponentsInChildren<UIButton>())
                 {
@@ -343,8 +364,22 @@ namespace Klyte.WriteTheSigns.UI
 
         private bool m_dirty;
 
-        private BuildingGroupDescriptorXml CurrentEdited => WTSBuildingLayoutEditor.Instance.CurrentEditingInstance;
-        private ConfigurationSource Source => WTSBuildingLayoutEditor.Instance.CurrentConfigurationSource;
+        private BuildingGroupDescriptorXml CurrentEdited { get; set; }
+        private ConfigurationSource Source { get; set; }
+
+        public bool Dirty
+        {
+            get => m_dirty; set {
+                if (value && MainContainer.isVisible)
+                {
+                    FixTabstrip();
+                }
+                else
+                {
+                    m_dirty = value;
+                }
+            }
+        }
     }
 
 }

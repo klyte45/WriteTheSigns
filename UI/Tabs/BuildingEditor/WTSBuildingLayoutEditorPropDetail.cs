@@ -21,14 +21,27 @@ namespace Klyte.WriteTheSigns.UI
 
     internal class WTSBuildingLayoutEditorPropDetail : UICustomControl
     {
-        private BuildingGroupDescriptorXml CurrentEdited => WTSBuildingLayoutEditor.Instance.CurrentEditingInstance;
-        private ConfigurationSource Source => WTSBuildingLayoutEditor.Instance.CurrentConfigurationSource;
+        private string CurrentBuildingName { get; set; }
+        private BoardInstanceBuildingXml CurrentEdited { get; set; }
+        private ConfigurationSource Source { get; set; }
         public UIPanel MainContainer { get; protected set; }
 
         private const string PLATFORM_SELECTION_TEMPLATE_NAME = "K45_WTS_PlataformSelectionTemplate";
 
-        private int m_currentIdx = -1;
         private bool m_dirty;
+        public bool Dirty
+        {
+            get => m_dirty; set {
+                if (value && MainContainer.isVisible)
+                {
+                    ReloadData();
+                }
+                else
+                {
+                    m_dirty = value;
+                }
+            }
+        }
 
         private UITabstrip m_tabstrip;
 
@@ -78,7 +91,6 @@ namespace Klyte.WriteTheSigns.UI
                 return m_allFields.Union(m_checkboxTemplateList.items.Select(x => x as UIComponent));
             }
         }
-
 
 
         public void Awake()
@@ -162,14 +174,14 @@ namespace Klyte.WriteTheSigns.UI
         private void LoadAvailableLayouts()
         {
             m_propLayoutSelect.items = WTSPropLayoutData.Instance.ListWhere(x => x.m_allowedRenderClass == TextRenderingClass.Buildings).ToArray();
-            SafeObtain((ref BoardInstanceBuildingXml x) => m_propLayoutSelect.selectedIndex = Math.Max(0, Array.IndexOf(m_propLayoutSelect.items, x.PropLayoutName)));
+            SafeObtain((x) => m_propLayoutSelect.selectedIndex = Math.Max(0, Array.IndexOf(m_propLayoutSelect.items, x.PropLayoutName)));
         }
 
 
         private void UpdatePlatformList(ref BoardInstanceBuildingXml reference)
         {
             var platforms = reference?.m_platforms ?? new int[0];
-            var descriptorStops = WTSBuildingPropsSingleton.GetStopPointsDescriptorFor(CurrentEdited.BuildingName);
+            var descriptorStops = WTSBuildingPropsSingleton.GetStopPointsDescriptorFor(CurrentBuildingName);
             UIPanel[] checks = m_checkboxTemplateList.SetItemCount(descriptorStops.Length);
 
             for (int i = 0; i < descriptorStops.Length; i++)
@@ -181,7 +193,7 @@ namespace Klyte.WriteTheSigns.UI
                 {
                     checkbox.eventCheckChanged += (x, y) =>
                     {
-                        SafeObtain((ref BoardInstanceBuildingXml z) =>
+                        SafeObtain((BoardInstanceBuildingXml z) =>
                         {
                             if (x.objectUserData is PlatformItem pi)
                             {
@@ -217,24 +229,22 @@ namespace Klyte.WriteTheSigns.UI
         }
 
 
-        private delegate void SafeObtainMethod(ref BoardInstanceBuildingXml x);
+        private delegate void SafeObtainMethod(BoardInstanceBuildingXml x);
         private void SafeObtain(SafeObtainMethod action, int? targetTab = null)
         {
-            int effTargetTab = Math.Max(-1, targetTab ?? m_currentIdx);
-            if (effTargetTab < 0)
+            if (CurrentEdited != null)
             {
-                return;
-            }
-
-            if (effTargetTab < CurrentEdited.PropInstances.Length)
-            {
-                action(ref CurrentEdited.PropInstances[effTargetTab]);
+                action(CurrentEdited);
+                WTSBuildingsData.Instance.CleanCache();
             }
         }
-        private void OnChangeTab(int obj)
+        private void OnChangeTab(string buildingName, BoardInstanceBuildingXml current, ConfigurationSource source)
         {
-            m_currentIdx = obj;
-            m_dirty = true;
+            CurrentBuildingName = buildingName;
+            CurrentEdited = current;
+            Source = source;
+            MainContainer.isVisible = current != null;
+            Dirty = true;
         }
 
         //    [XmlArray("platformOrder")]
@@ -255,9 +265,9 @@ namespace Klyte.WriteTheSigns.UI
 
         private void ReloadData()
         {
-            SafeObtain((ref BoardInstanceBuildingXml x) =>
+            SafeObtain((x) =>
             {
-                var isPublicTransportStation = PrefabCollection<BuildingInfo>.FindLoaded(CurrentEdited.BuildingName)?.m_buildingAI is TransportStationAI;
+                var isPublicTransportStation = PrefabCollection<BuildingInfo>.FindLoaded(CurrentBuildingName)?.m_buildingAI is TransportStationAI;
 
                 m_name.text = x.SaveName ?? "";
                 m_propLayoutSelect.selectedValue = x.PropLayoutName;
@@ -306,17 +316,22 @@ namespace Klyte.WriteTheSigns.UI
                     m_tabstrip.HideTab("PublicTransport");
                 }
             });
+            Dirty = false;
         }
 
         public void Update()
         {
             if (WTSBuildingLayoutEditor.Instance.LayoutList.MainContainer.isVisible)
             {
-                if (m_dirty)
+                if (Dirty)
                 {
-                    MainContainer.isVisible = m_currentIdx >= 0;
-                    ReloadData();
-                    m_dirty = false;
+                    MainContainer.isVisible = CurrentEdited != null;
+                    if (CurrentEdited != null)
+                    {
+                        ReloadData();
+                    }
+
+                    Dirty = false;
                 }
             }
         }
@@ -326,10 +341,9 @@ namespace Klyte.WriteTheSigns.UI
 
         private string GetRuleSerialized()
         {
-            int effTargetTab = Math.Max(-1, m_currentIdx);
-            if (effTargetTab >= 0 && effTargetTab < CurrentEdited.PropInstances.Length)
+            if (CurrentEdited != null)
             {
-                return XmlUtils.DefaultXmlSerialize(CurrentEdited.PropInstances[effTargetTab]);
+                return XmlUtils.DefaultXmlSerialize(CurrentEdited);
             }
             else
             {
@@ -337,30 +351,30 @@ namespace Klyte.WriteTheSigns.UI
             }
         }
 
-        private void OnLoadRule(string obj) => SafeObtain((ref BoardInstanceBuildingXml x) =>
+        private void OnLoadRule(string obj) => SafeObtain((x) =>
         {
             x = XmlUtils.DefaultXmlDeserialize<BoardInstanceBuildingXml>(obj);
             WTSBuildingLayoutEditor.Instance.LayoutList.FixTabstrip();
             ReloadData();
         });
         private void OnPasteRule() => OnLoadRule(m_clipboard);
-        private void OnCopyRule() => SafeObtain((ref BoardInstanceBuildingXml x) =>
+        private void OnCopyRule() => SafeObtain((x) =>
         {
             m_clipboard = XmlUtils.DefaultXmlSerialize(x);
             m_pasteSettings.isVisible = true;
         });
 
 
-        private void OnRotationChanged(Vector3 obj) => SafeObtain((ref BoardInstanceBuildingXml x) => x.PropRotation = (Vector3Xml)obj);
-        private void OnScaleChanged(Vector3 obj) => SafeObtain((ref BoardInstanceBuildingXml x) => x.PropScale = obj);
-        private void OnPositionChanged(Vector3 obj) => SafeObtain((ref BoardInstanceBuildingXml x) => x.PropPosition = (Vector3Xml)obj);
-        private void OnShowIfNoLineChanged(bool isChecked) => SafeObtain((ref BoardInstanceBuildingXml x) => x.m_showIfNoLine = isChecked);
+        private void OnRotationChanged(Vector3 obj) => SafeObtain((x) => x.PropRotation = (Vector3Xml)obj);
+        private void OnScaleChanged(Vector3 obj) => SafeObtain((x) => x.PropScale = obj);
+        private void OnPositionChanged(Vector3 obj) => SafeObtain((x) => x.PropPosition = (Vector3Xml)obj);
+        private void OnShowIfNoLineChanged(bool isChecked) => SafeObtain((x) => x.m_showIfNoLine = isChecked);
 
-        private void OnRepeatArrayDistanceChanged(Vector3 obj) => SafeObtain((ref BoardInstanceBuildingXml x) => x.ArrayRepeat = (Vector3Xml)obj);
-        private void OnRepeatTimesChanged(int obj) => SafeObtain((ref BoardInstanceBuildingXml x) => x.m_arrayRepeatTimes = obj);
+        private void OnRepeatArrayDistanceChanged(Vector3 obj) => SafeObtain((x) => x.ArrayRepeat = (Vector3Xml)obj);
+        private void OnRepeatTimesChanged(int obj) => SafeObtain((x) => x.m_arrayRepeatTimes = obj);
 
-        private void OnColoringModeChanged(int sel) => SafeObtain((ref BoardInstanceBuildingXml x) => x.ColorModeProp = (ColoringMode)sel);
-        private void OnPropLayoutChange(int sel) => SafeObtain((ref BoardInstanceBuildingXml x) =>
+        private void OnColoringModeChanged(int sel) => SafeObtain((x) => x.ColorModeProp = (ColoringMode)sel);
+        private void OnPropLayoutChange(int sel) => SafeObtain((x) =>
         {
             if (sel >= 0)
             {
@@ -372,13 +386,13 @@ namespace Klyte.WriteTheSigns.UI
             }
         });
 
-        private void OnSetName(string text) => SafeObtain((ref BoardInstanceBuildingXml x) =>
+        private void OnSetName(string text) => SafeObtain((x) =>
         {
             if (!text.IsNullOrWhiteSpace())
             {
                 x.SaveName = text;
                 WTSBuildingLayoutEditor.Instance.LayoutList.FixTabstrip();
-                OnChangeTab(m_currentIdx);
+                Dirty = true;
             }
             else
             {

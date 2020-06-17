@@ -52,7 +52,7 @@ namespace Klyte.WriteTheSigns.Xml
                 return null;
             }
             ref BoardDescriptorGeneralXml descriptor = ref m_descriptors[id];
-            if (descriptor == null && m_propInstances[id].PropLayoutName != null)
+            if (descriptor?.SaveName != m_propInstances[id].PropLayoutName && m_propInstances[id].PropLayoutName != null)
             {
                 descriptor = WTSPropLayoutData.Instance.Get(m_propInstances[id].PropLayoutName);
                 if (descriptor == null)
