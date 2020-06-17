@@ -22,8 +22,10 @@ namespace Klyte.WriteTheSigns.UI
     internal class WTSBuildingLayoutEditorPropDetail : UICustomControl
     {
         private string CurrentBuildingName { get; set; }
-        private BoardInstanceBuildingXml CurrentEdited { get; set; }
+
+        private ref BoardInstanceBuildingXml CurrentEdited => ref WTSBuildingLayoutEditor.Instance.LayoutList.CurrentPropLayout;
         private ConfigurationSource Source { get; set; }
+
         public UIPanel MainContainer { get; protected set; }
 
         private const string PLATFORM_SELECTION_TEMPLATE_NAME = "K45_WTS_PlataformSelectionTemplate";
@@ -70,6 +72,7 @@ namespace Klyte.WriteTheSigns.UI
         private UITextField m_libSaveNameField;
         private UIButton m_libSave;
         private UIButton m_gotoFileLib;
+        private UIDropDown m_subBuildingSelect;
 
         private IEnumerable<UIComponent> AllFields
         {
@@ -86,6 +89,7 @@ namespace Klyte.WriteTheSigns.UI
                             m_colorModeDD,
                             m_pasteSettings,
                             m_libLoad,
+                            m_subBuildingSelect
                 }.Union(m_position).Union(m_rotation).Union(m_repeatArrayDistance).Union(m_scale).ToArray();
                 }
                 return m_allFields.Union(m_checkboxTemplateList.items.Select(x => x as UIComponent));
@@ -123,6 +127,7 @@ namespace Klyte.WriteTheSigns.UI
             AddVector3Field(Locale.Get("K45_WTS_BUILDINGEDITOR_POSITION"), out m_position, helperSettings, OnPositionChanged);
             AddVector3Field(Locale.Get("K45_WTS_BUILDINGEDITOR_ROTATION"), out m_rotation, helperSettings, OnRotationChanged);
             AddVector3Field(Locale.Get("K45_WTS_BUILDINGEDITOR_SCALE"), out m_scale, helperSettings, OnScaleChanged);
+            AddDropdown(Locale.Get("K45_WTS_SUBBUILDINGPIVOTREFERENCE"), out m_subBuildingSelect, helperSettings, new string[0], OnSubBuildingRefChanged);
 
 
             AddLibBox<WTSLibBuildingPropLayout, BoardInstanceBuildingXml>(helperSettings, out m_copySettings, OnCopyRule, out m_pasteSettings, OnPasteRule, out _, null, out m_loadDD, out m_libLoad, out m_libDelete, out m_libSaveNameField, out m_libSave, out m_gotoFileLib, OnLoadRule, GetRuleSerialized);
@@ -152,6 +157,7 @@ namespace Klyte.WriteTheSigns.UI
             m_checkboxTemplateList = new UITemplateList<UIPanel>(m_platformList, PLATFORM_SELECTION_TEMPLATE_NAME);
         }
 
+
         private void CreateTemplatePlatform()
         {
             var go = new GameObject();
@@ -174,7 +180,7 @@ namespace Klyte.WriteTheSigns.UI
         private void LoadAvailableLayouts()
         {
             m_propLayoutSelect.items = WTSPropLayoutData.Instance.ListWhere(x => x.m_allowedRenderClass == TextRenderingClass.Buildings).ToArray();
-            SafeObtain((x) => m_propLayoutSelect.selectedIndex = Math.Max(0, Array.IndexOf(m_propLayoutSelect.items, x.PropLayoutName)));
+            SafeObtain((ref BoardInstanceBuildingXml x) => m_propLayoutSelect.selectedIndex = Math.Max(0, Array.IndexOf(m_propLayoutSelect.items, x.PropLayoutName)));
         }
 
 
@@ -193,7 +199,7 @@ namespace Klyte.WriteTheSigns.UI
                 {
                     checkbox.eventCheckChanged += (x, y) =>
                     {
-                        SafeObtain((BoardInstanceBuildingXml z) =>
+                        SafeObtain((ref BoardInstanceBuildingXml z) =>
                         {
                             if (x.objectUserData is PlatformItem pi)
                             {
@@ -229,19 +235,18 @@ namespace Klyte.WriteTheSigns.UI
         }
 
 
-        private delegate void SafeObtainMethod(BoardInstanceBuildingXml x);
-        private void SafeObtain(SafeObtainMethod action, int? targetTab = null)
+        private delegate void SafeObtainMethod(ref BoardInstanceBuildingXml x);
+        private void SafeObtain(SafeObtainMethod action)
         {
             if (CurrentEdited != null)
             {
-                action(CurrentEdited);
+                action(ref CurrentEdited);
                 WTSBuildingsData.Instance.CleanCache();
             }
         }
-        private void OnChangeTab(string buildingName, BoardInstanceBuildingXml current, ConfigurationSource source)
+        private void OnChangeTab(string buildingName, ref BoardInstanceBuildingXml current, ConfigurationSource source)
         {
             CurrentBuildingName = buildingName;
-            CurrentEdited = current;
             Source = source;
             MainContainer.isVisible = current != null;
             Dirty = true;
@@ -265,7 +270,7 @@ namespace Klyte.WriteTheSigns.UI
 
         private void ReloadData()
         {
-            SafeObtain((x) =>
+            SafeObtain((ref BoardInstanceBuildingXml x) =>
             {
                 var isPublicTransportStation = PrefabCollection<BuildingInfo>.FindLoaded(CurrentBuildingName)?.m_buildingAI is TransportStationAI;
 
@@ -280,6 +285,17 @@ namespace Klyte.WriteTheSigns.UI
                 m_scale[0].text = x.PropScale.x.ToString("F3");
                 m_scale[1].text = x.PropScale.y.ToString("F3");
                 m_scale[2].text = x.PropScale.z.ToString("F3");
+
+                var buildingInfo = PrefabCollection<BuildingInfo>.FindLoaded(CurrentBuildingName);
+                if ((buildingInfo.m_subBuildings?.Length ?? 0) > 0)
+                {
+                    m_subBuildingSelect.items = new string[] { Locale.Get("K45_WTS_MAINBUILIDING") }.Union(buildingInfo.m_subBuildings?.Select((x, y) => $"{y}: {x.m_buildingInfo.name.Split(new char[] { '.' }, 2).LastOrDefault()}")).ToArray();
+                    m_subBuildingSelect.selectedIndex = x.SubBuildingPivotReference + 1;
+                }
+                else
+                {
+                    m_subBuildingSelect.parent.isVisible = false;
+                }
 
                 m_chkShowIfNoLine.isChecked = x.m_showIfNoLine;
 
@@ -351,30 +367,37 @@ namespace Klyte.WriteTheSigns.UI
             }
         }
 
-        private void OnLoadRule(string obj) => SafeObtain((x) =>
+        private void OnLoadRule(string obj) => SafeObtain((ref BoardInstanceBuildingXml x) =>
         {
             x = XmlUtils.DefaultXmlDeserialize<BoardInstanceBuildingXml>(obj);
             WTSBuildingLayoutEditor.Instance.LayoutList.FixTabstrip();
             ReloadData();
         });
         private void OnPasteRule() => OnLoadRule(m_clipboard);
-        private void OnCopyRule() => SafeObtain((x) =>
+        private void OnCopyRule() => SafeObtain((ref BoardInstanceBuildingXml x) =>
         {
             m_clipboard = XmlUtils.DefaultXmlSerialize(x);
             m_pasteSettings.isVisible = true;
         });
 
 
-        private void OnRotationChanged(Vector3 obj) => SafeObtain((x) => x.PropRotation = (Vector3Xml)obj);
-        private void OnScaleChanged(Vector3 obj) => SafeObtain((x) => x.PropScale = obj);
-        private void OnPositionChanged(Vector3 obj) => SafeObtain((x) => x.PropPosition = (Vector3Xml)obj);
-        private void OnShowIfNoLineChanged(bool isChecked) => SafeObtain((x) => x.m_showIfNoLine = isChecked);
+        private void OnRotationChanged(Vector3 obj) => SafeObtain((ref BoardInstanceBuildingXml x) => x.PropRotation = (Vector3Xml)obj);
+        private void OnScaleChanged(Vector3 obj) => SafeObtain((ref BoardInstanceBuildingXml x) => x.PropScale = obj);
+        private void OnPositionChanged(Vector3 obj) => SafeObtain((ref BoardInstanceBuildingXml x) => x.PropPosition = (Vector3Xml)obj);
+        private void OnShowIfNoLineChanged(bool isChecked) => SafeObtain((ref BoardInstanceBuildingXml x) => x.m_showIfNoLine = isChecked);
+        private void OnSubBuildingRefChanged(int sel) => SafeObtain((ref BoardInstanceBuildingXml x) =>
+        {
+            if (sel >= 0)
+            {
+                x.SubBuildingPivotReference = sel - 1;
+            }
+        });
 
-        private void OnRepeatArrayDistanceChanged(Vector3 obj) => SafeObtain((x) => x.ArrayRepeat = (Vector3Xml)obj);
-        private void OnRepeatTimesChanged(int obj) => SafeObtain((x) => x.m_arrayRepeatTimes = obj);
+        private void OnRepeatArrayDistanceChanged(Vector3 obj) => SafeObtain((ref BoardInstanceBuildingXml x) => x.ArrayRepeat = (Vector3Xml)obj);
+        private void OnRepeatTimesChanged(int obj) => SafeObtain((ref BoardInstanceBuildingXml x) => x.m_arrayRepeatTimes = obj);
 
-        private void OnColoringModeChanged(int sel) => SafeObtain((x) => x.ColorModeProp = (ColoringMode)sel);
-        private void OnPropLayoutChange(int sel) => SafeObtain((x) =>
+        private void OnColoringModeChanged(int sel) => SafeObtain((ref BoardInstanceBuildingXml x) => x.ColorModeProp = (ColoringMode)sel);
+        private void OnPropLayoutChange(int sel) => SafeObtain((ref BoardInstanceBuildingXml x) =>
         {
             if (sel >= 0)
             {
@@ -386,7 +409,7 @@ namespace Klyte.WriteTheSigns.UI
             }
         });
 
-        private void OnSetName(string text) => SafeObtain((x) =>
+        private void OnSetName(string text) => SafeObtain((ref BoardInstanceBuildingXml x) =>
         {
             if (!text.IsNullOrWhiteSpace())
             {

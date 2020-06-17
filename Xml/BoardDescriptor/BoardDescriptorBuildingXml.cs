@@ -31,6 +31,9 @@ namespace Klyte.WriteTheSigns.Xml
         [XmlAttribute("propLayoutName")]
         public string PropLayoutName { get; set; }
 
+        [XmlAttribute("subBuildingIdxPivotReference")]
+        public int SubBuildingPivotReference { get; set; } = -1;
+
     }
 
     public enum ColoringMode

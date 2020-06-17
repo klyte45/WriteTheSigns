@@ -1,6 +1,5 @@
 ﻿using ColossalFramework;
 using ColossalFramework.Math;
-using ColossalFramework.Packaging;
 using Klyte.Commons;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Data;
@@ -220,7 +219,28 @@ namespace Klyte.WriteTheSigns.Singleton
             }
             if (item.m_cachedPosition == null || item.m_cachedRotation == null)
             {
-                item.m_cachedPosition = renderInstance.m_dataMatrix1.MultiplyPoint(targetDescriptor.PropPosition);
+                if (targetDescriptor.SubBuildingPivotReference >= 0 && targetDescriptor.SubBuildingPivotReference < data.Info.m_subBuildings.Length)
+                {
+                    BuildingManager inst = BuildingManager.instance;
+                    uint targetBuildingId = buildingID;
+                    for (int i = 0; i <= targetDescriptor.SubBuildingPivotReference; i++)
+                    {
+                        targetBuildingId = inst.m_buildings.m_buffer[targetBuildingId].m_subBuilding;
+                    }
+                    if (RenderManager.instance.RequireInstance(targetBuildingId, 1u, out uint num))
+                    {
+                        item.m_cachedMatrix = RenderManager.instance.m_instances[num].m_dataMatrix1;
+                    }
+                    else
+                    {
+                        item.m_cachedMatrix = renderInstance.m_dataMatrix1;
+                    }
+                }
+                else
+                {
+                    item.m_cachedMatrix = renderInstance.m_dataMatrix1;
+                }
+                item.m_cachedPosition = item.m_cachedMatrix.MultiplyPoint(targetDescriptor.PropPosition);
                 item.m_cachedRotation = targetDescriptor.PropRotation;
             }
             Vector3 targetPostion = item.m_cachedPosition ?? default;
@@ -228,7 +248,7 @@ namespace Klyte.WriteTheSigns.Singleton
             {
                 if (i > 0)
                 {
-                    targetPostion = renderInstance.m_dataMatrix1.MultiplyPoint(targetDescriptor.PropPosition + (i * (Vector3)targetDescriptor.ArrayRepeat));
+                    targetPostion = item.m_cachedMatrix.MultiplyPoint(targetDescriptor.PropPosition + (i * (Vector3)targetDescriptor.ArrayRepeat));
                 }
                 RenderSign(ref data, cameraInfo, buildingID, idx, targetPostion, item.m_cachedRotation ?? default, layerMask, propLayout, ref targetDescriptor, ref item.m_cachedProp);
 
@@ -331,14 +351,14 @@ namespace Klyte.WriteTheSigns.Singleton
                             }
                             float maxDist = m_buildingStopsDescriptor[buildingName][i].width;
                             float maxHeightDiff = m_buildingStopsDescriptor[buildingName][i].width;
-                            if (CommonProperties.DebugMode)
-                            {
-                                LogUtils.DoLog($"platLine ({i}) = {m_buildingStopsDescriptor[buildingName][i].platformLine.a} {m_buildingStopsDescriptor[buildingName][i].platformLine.b} {m_buildingStopsDescriptor[buildingName][i].platformLine.c} {m_buildingStopsDescriptor[buildingName][i].platformLine.d}");
-                                LogUtils.DoLog($"maxDist ({i}) = {maxDist}");
-                                LogUtils.DoLog($"maxHeightDiff ({i}) = {maxHeightDiff}");
-                                LogUtils.DoLog($"refMatrix ({i}) = {refMatrix}");
-                                LogUtils.DoLog($"inverseMatrix ({i}) = {inverseMatrix}");
-                            }
+                            //if (CommonProperties.DebugMode)
+                            //{
+                            //    LogUtils.DoLog($"platLine ({i}) = {m_buildingStopsDescriptor[buildingName][i].platformLine.a} {m_buildingStopsDescriptor[buildingName][i].platformLine.b} {m_buildingStopsDescriptor[buildingName][i].platformLine.c} {m_buildingStopsDescriptor[buildingName][i].platformLine.d}");
+                            //    LogUtils.DoLog($"maxDist ({i}) = {maxDist}");
+                            //    LogUtils.DoLog($"maxHeightDiff ({i}) = {maxHeightDiff}");
+                            //    LogUtils.DoLog($"refMatrix ({i}) = {refMatrix}");
+                            //    LogUtils.DoLog($"inverseMatrix ({i}) = {inverseMatrix}");
+                            //}
                             float angleBuilding = data.m_angle * Mathf.Rad2Deg;
                             m_platformToLine[buildingID][i] = nearStops
                                 .Where(stopId =>
@@ -547,65 +567,6 @@ namespace Klyte.WriteTheSigns.Singleton
             return refName;
         }
 
-
-        public static bool SaveInCommonFolder(string buildingName)
-        {
-            if (WTSBuildingsData.Instance.CityDescriptors.ContainsKey(buildingName))
-            {
-                BuildingGroupDescriptorXml item = WTSBuildingsData.Instance.CityDescriptors[buildingName];
-                item.BuildingName = buildingName;
-                SaveInCommonFolder(new XmlSerializer(typeof(BuildingGroupDescriptorXml)), item, true);
-                return true;
-            }
-            return false;
-        }
-
-        private static void SaveInCommonFolder(XmlSerializer serializer, BuildingGroupDescriptorXml item, bool force = false)
-        {
-            string filePath = WTSController.DefaultBuildingsConfigurationFolder + Path.DirectorySeparatorChar + $"{WTSController.m_defaultFileNameXml}_{item.BuildingName}.xml";
-            SaveInPath(serializer, item, force, filePath);
-        }
-        public static bool SaveInAssetFolder(string buildingName)
-        {
-            if (WTSBuildingsData.Instance.CityDescriptors.ContainsKey(buildingName))
-            {
-                BuildingGroupDescriptorXml item = WTSBuildingsData.Instance.CityDescriptors[buildingName];
-                Package.Asset asset = PackageManager.FindAssetByName(buildingName);
-                if (!(asset == null) && !(asset.package == null))
-                {
-                    string packagePath = asset.package.packagePath;
-                    if (packagePath != null)
-                    {
-                        string filePath = Path.Combine(Path.GetDirectoryName(packagePath), $"{WTSController.m_defaultFileNameXml}.xml");
-                        item.BuildingName = buildingName;
-                        SaveInPath(new XmlSerializer(typeof(BuildingGroupDescriptorXml)), item, true, filePath);
-
-                    }
-                    return true;
-                }
-            }
-            return false;
-        }
-
-
-        private static void SaveInPath(XmlSerializer serializer, BuildingGroupDescriptorXml item, bool force, string filePath)
-        {
-            if (force || !File.Exists(filePath))
-            {
-                FileStream stream = File.OpenWrite(filePath);
-                try
-                {
-                    var ns = new XmlSerializerNamespaces();
-                    ns.Add("", "");
-                    stream.SetLength(0);
-                    serializer.Serialize(stream, item, ns);
-                }
-                finally
-                {
-                    stream.Close();
-                }
-            }
-        }
 
         private static string DefaultFilename { get; } = $"{WTSController.m_defaultFileNameXml}.xml";
 

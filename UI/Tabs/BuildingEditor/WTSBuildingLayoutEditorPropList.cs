@@ -29,16 +29,41 @@ namespace Klyte.WriteTheSigns.UI
         private UITemplateList<UIButton> m_tabs;
         private int m_selectedIndex;
 
+        public ref BoardInstanceBuildingXml CurrentPropLayout
+        {
+            get {
+                if (m_selectedIndex >= 0 && m_selectedIndex < (CurrentEdited?.PropInstances?.Length ?? 0))
+                {
+                    return ref CurrentEdited.PropInstances[m_selectedIndex];
+                }
+                else
+                {
+                    nullref = null;
+                    return ref nullref;
+                }
+            }
+        }
+
         public int SelectedIndex
         {
             get => m_selectedIndex; private set {
                 m_selectedIndex = value;
-                var targetVal = value >= 0 && value < PropInstances.Length ? PropInstances[value] : null;
-                EventSelectionChanged?.Invoke(CurrentEdited?.BuildingName, targetVal, Source);
+                if (value >= 0 && value < PropInstances.Length)
+                {
+                    EventSelectionChanged?.Invoke(CurrentEdited?.BuildingName, ref PropInstances[value], Source);
+                }
+                else
+                {
+                    EventSelectionChanged?.Invoke(CurrentEdited?.BuildingName, ref nullref, Source);
+                }
             }
         }
 
-        public event Action<string, BoardInstanceBuildingXml, ConfigurationSource> EventSelectionChanged;
+        private BoardInstanceBuildingXml nullref = null;
+
+        public delegate void OnChangeTab(string building, ref BoardInstanceBuildingXml descriptor, ConfigurationSource source);
+
+        public event OnChangeTab EventSelectionChanged;
 
         private BoardInstanceBuildingXml[] PropInstances => CurrentEdited?.PropInstances ?? m_zeroedInstances;
         private readonly BoardInstanceBuildingXml[] m_zeroedInstances = new BoardInstanceBuildingXml[0];
