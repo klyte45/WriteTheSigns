@@ -614,6 +614,8 @@ namespace Klyte.WriteTheSigns.Singleton
             LogUtils.DoLog("LOADING BUILDING CONFIG START -----------------------------");
             FileUtils.ScanPrefabsFolders<BuildingInfo>(DefaultFilename, LoadDescriptorsFromXmlAsset);
             var errorList = new List<string>();
+            Data.GlobalDescriptors.Clear();
+            Data.AssetsDescriptors.Clear();
             LogUtils.DoLog($"DefaultBuildingsConfigurationFolder = {WTSController.DefaultBuildingsConfigurationFolder}");
             foreach (string filename in Directory.GetFiles(WTSController.DefaultBuildingsConfigurationFolder, "*.xml"))
             {

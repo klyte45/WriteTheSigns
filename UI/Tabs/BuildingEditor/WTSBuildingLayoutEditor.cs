@@ -1,4 +1,5 @@
 ﻿using ColossalFramework.Globalization;
+using ColossalFramework.Packaging;
 using ColossalFramework.UI;
 using Klyte.Commons.Extensors;
 using Klyte.Commons.Utils;
@@ -6,6 +7,7 @@ using Klyte.WriteTheSigns.Data;
 using Klyte.WriteTheSigns.Singleton;
 using Klyte.WriteTheSigns.Xml;
 using System;
+using System.IO;
 using UnityEngine;
 using static Klyte.Commons.UI.DefaultEditorUILib;
 
@@ -110,12 +112,35 @@ namespace Klyte.WriteTheSigns.UI
         internal float GetCurrentMappingThresold() => CurrentEditingInstance?.StopMappingThresold ?? 1f;
         internal bool IsEditing(string refName) => CurrentBuildingName == refName;
 
-        private void OnReloadDescriptors() { }
-        private void OnExportAsAsset() { }
-        private void OnExportAsGlobal() { }
-        private void OnOpenGlobalFolder() { }
-        private void OnDeleteFromCity() { }
-        private void OnCopyToCity() { }
+        private void OnReloadDescriptors()
+        {
+            WriteTheSignsMod.Controller?.BuildingPropsSingleton?.LoadAllBuildingConfigurations();
+            ReloadBuilding();
+        }
+
+        private void OnExportAsAsset()
+        {
+            File.WriteAllText(Path.Combine(PackageManager.FindAssetByName(CurrentBuildingName)?.package?.packagePath, $"{WTSController.m_defaultFileNameXml}_{CurrentBuildingName}.xml"), XmlUtils.DefaultXmlSerialize(CurrentEditingInstance));
+            WriteTheSignsMod.Controller?.BuildingPropsSingleton?.LoadAllBuildingConfigurations();
+        }
+
+        private void OnExportAsGlobal()
+        {
+            File.WriteAllText(Path.Combine(WTSController.DefaultBuildingsConfigurationFolder, $"{WTSController.m_defaultFileNameXml}_{CurrentBuildingName}.xml"), XmlUtils.DefaultXmlSerialize(CurrentEditingInstance));
+            WriteTheSignsMod.Controller?.BuildingPropsSingleton?.LoadAllBuildingConfigurations();
+        }
+
+        private void OnOpenGlobalFolder() => ColossalFramework.Utils.OpenInFileBrowser(WTSController.DefaultBuildingsConfigurationFolder);
+        private void OnDeleteFromCity()
+        {
+            WTSBuildingsData.Instance.CityDescriptors.Remove(m_currentBuildingName);
+            ReloadBuilding();
+        }
+        private void OnCopyToCity()
+        {
+            WTSBuildingsData.Instance.CityDescriptors[m_currentBuildingName] = XmlUtils.DefaultXmlDeserialize<BuildingGroupDescriptorXml>(XmlUtils.DefaultXmlSerialize(CurrentEditingInstance));
+            ReloadBuilding();
+        }
         private void OnCreateNewCity()
         {
             WTSBuildingsData.Instance.CityDescriptors[m_currentBuildingName] = new BuildingGroupDescriptorXml
@@ -152,6 +177,10 @@ namespace Klyte.WriteTheSigns.UI
             EventOnBuildingSelectionChanged?.Invoke(CurrentEditingInstance, CurrentConfigurationSource);
 
             m_btnNew.isVisible = CurrentConfigurationSource != ConfigurationSource.CITY;
+            m_btnCopy.isVisible = CurrentConfigurationSource != ConfigurationSource.CITY && CurrentConfigurationSource != ConfigurationSource.NONE;
+            m_btnDelete.isVisible = CurrentConfigurationSource == ConfigurationSource.CITY;
+            m_btnExport.isVisible = CurrentConfigurationSource == ConfigurationSource.CITY;
+            m_btnSteam.isVisible = CurrentConfigurationSource == ConfigurationSource.CITY && CurrentBuildingName.EndsWith("_Data");
         }
 
     }
