@@ -263,13 +263,6 @@ namespace Klyte.WriteTheSigns.UI
             UITemplateUtils.GetTemplateDict()[TAB_TEMPLATE_NAME] = button;
         }
 
-        private UIButton AddTabButton(string tabName)
-        {
-            InitTabButton(m_orderedRulesList, out UIButton button, tabName, new Vector2(m_orderedRulesList.size.x, 30), null);
-            button.text = tabName;
-            return button;
-        }
-
         public void FixTabstrip()
         {
             m_tabs.SetItemCount(PropInstances.Length);

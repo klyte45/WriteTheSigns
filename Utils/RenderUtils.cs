@@ -304,7 +304,7 @@ namespace Klyte.WriteTheSigns.Utils
                     int oldLayerMask = cameraInfo.m_layerMask;
                     float oldRenderDist = propInfo.m_lodRenderDistance;
                     propInfo.m_lodRenderDistance *= scale.sqrMagnitude;
-                    cameraInfo.m_layerMask = layerMask;
+                    cameraInfo.m_layerMask = 0x7FFFFFFF;
                     try
                     {
                         PropInstance.RenderInstance(cameraInfo, propInfo, propRenderID2, matrix, position, scale.y, refAngleRad + (rotation.y * Mathf.Deg2Rad), propColor, dataVector, true);
