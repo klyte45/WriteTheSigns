@@ -124,7 +124,7 @@ namespace Klyte.WriteTheSigns.UI
             helperSpawningSegment.Self.width = 620;
             LogUtils.DoWarnLog($"WIDTH={helperSpawningSegment.Self.width}");
             AddDropdown(Locale.Get("K45_WTS_ROADCORNER_FLOWREQUIREMENT"), out m_flowRequirement, helperSpawningSegment, Enum.GetNames(typeof(TrafficDirectionRequired)).Select(x => Locale.Get("K45_WTS_TRAFFICDIRECTIONREQUIRED", x)).ToArray(), OnChangeFlowRequirement);
-            AddDropdown(Locale.Get("K45_WTS_ROADCORNER_PLOPPLACINGLOCATION"), out m_roadSide, helperSpawningSegment, Enum.GetNames(typeof(RoadSide)).Select(x => Locale.Get("K45_WTS_ROADSIDE", x)).ToArray(), OnChangRoadSide);
+            AddDropdown(Locale.Get("K45_WTS_ROADCORNER_PROPPLACINGSIDE"), out m_roadSide, helperSpawningSegment, Enum.GetNames(typeof(RoadSide)).Select(x => Locale.Get("K45_WTS_ROADSIDE", x)).ToArray(), OnChangRoadSide);
             AddVector2Field(Locale.Get("K45_WTS_ROADCORNER_MINMAXLANESREQUIRED"), out m_minMaxLaneRequired, helperSpawningSegment, OnLanesRequiredChange, false);
 
             AddCheckboxLocale("K45_WTS_ROADCORNER_USEDISTRICTCOLOR", out m_useDistrictColor, helperAppearence, OnChangeUseDistrictColor);

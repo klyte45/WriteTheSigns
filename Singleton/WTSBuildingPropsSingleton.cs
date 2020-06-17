@@ -24,7 +24,9 @@ namespace Klyte.WriteTheSigns.Singleton
         public DynamicSpriteFont DrawFont => FontServer.instance[Data.DefaultFont] ?? FontServer.instance[WTSController.DEFAULT_FONT_KEY];
         private readonly Dictionary<string, StopPointDescriptorLanes[]> m_buildingStopsDescriptor = new Dictionary<string, StopPointDescriptorLanes[]>();
         public WTSBuildingsData Data => WTSBuildingsData.Instance;
-        public SimpleXmlDictionary<string, ExportableBuildingGroupDescriptorXml> GlobalDescriptors => WTSBuildingsData.Instance.GlobalDescriptors;
+        public SimpleXmlDictionary<string, BuildingGroupDescriptorXml> CityDescriptors => Data.CityDescriptors;
+        public SimpleXmlDictionary<string, ExportableBuildingGroupDescriptorXml> GlobalDescriptors => Data.GlobalDescriptors;
+        public SimpleXmlDictionary<string, ExportableBuildingGroupDescriptorXml> AssetsDescriptors => Data.AssetsDescriptors;
 
         internal readonly StopInformation[][][] m_platformToLine = new StopInformation[BuildingManager.MAX_BUILDING_COUNT][][];
         private ulong m_lastUpdateLines = SimulationManager.instance.m_currentTickIndex;

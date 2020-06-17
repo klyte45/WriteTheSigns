@@ -226,7 +226,7 @@ namespace Klyte.WriteTheSigns.UI
 
             while (m_orderedRulesList.components.Count > (CurrentEdited?.PropInstances?.Length ?? 0))
             {
-                Destroy(m_orderedRulesList.components[CurrentEdited.PropInstances.Length]);
+                Destroy(m_orderedRulesList.components[CurrentEdited?.PropInstances?.Length ?? 0]);
                 m_orderedRulesList.RemoveUIComponent(m_orderedRulesList.components[m_orderedRulesList.components.Count - 1]);
             }
             while (m_orderedRulesList.components.Count < (CurrentEdited?.PropInstances?.Length ?? 0))
@@ -237,7 +237,7 @@ namespace Klyte.WriteTheSigns.UI
                     FixTabstrip();
                 };
             }
-            for (int i = 0; i < CurrentEdited.PropInstances.Length; i++)
+            for (int i = 0; i < CurrentEdited?.PropInstances?.Length; i++)
             {
                 (m_orderedRulesList.components[i] as UIButton).text = CurrentEdited.PropInstances[i].SaveName ?? "";
             }
@@ -282,12 +282,12 @@ namespace Klyte.WriteTheSigns.UI
         private void OnRemoveItem(UIComponent component, UIMouseEventParameter eventParam)
         {
             CurrentEdited.PropInstances = CurrentEdited.PropInstances.Where((x, y) => y != SelectedIndex).ToArray();
-            SelectedIndex = Math.Min(SelectedIndex, CurrentEdited.PropInstances.Length - 1);
+            SelectedIndex = Math.Min(SelectedIndex, (CurrentEdited?.PropInstances?.Length ?? 0) - 1);
             FixTabstrip();
         }
         private void OnMoveItemUpOnList(UIComponent component, UIMouseEventParameter eventParam)
         {
-            if (SelectedIndex > 0 && CurrentEdited.PropInstances.Length > 1)
+            if (SelectedIndex > 0 && CurrentEdited?.PropInstances?.Length > 1)
             {
                 BoardInstanceBuildingXml temp = CurrentEdited.PropInstances[SelectedIndex];
                 CurrentEdited.PropInstances[SelectedIndex] = CurrentEdited.PropInstances[SelectedIndex - 1];
@@ -298,7 +298,7 @@ namespace Klyte.WriteTheSigns.UI
         }
         private void OnMoveItemDownOnList(UIComponent component, UIMouseEventParameter eventParam)
         {
-            if (SelectedIndex < CurrentEdited.PropInstances.Length && CurrentEdited.PropInstances.Length > 1)
+            if (SelectedIndex < CurrentEdited?.PropInstances?.Length && CurrentEdited?.PropInstances?.Length > 1)
             {
                 BoardInstanceBuildingXml temp = CurrentEdited.PropInstances[SelectedIndex];
                 CurrentEdited.PropInstances[SelectedIndex] = CurrentEdited.PropInstances[SelectedIndex + 1];
@@ -313,7 +313,7 @@ namespace Klyte.WriteTheSigns.UI
             {
                 SaveName = "New layout",
             } }).ToArray();
-            SelectedIndex = CurrentEdited.PropInstances.Length - 1;
+            SelectedIndex = (CurrentEdited?.PropInstances?.Length ?? 0) - 1;
             FixTabstrip();
         }
         private void Help_RulesList(UIComponent component, UIMouseEventParameter eventParam) { }

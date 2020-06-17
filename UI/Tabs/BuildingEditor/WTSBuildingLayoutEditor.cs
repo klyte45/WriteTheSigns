@@ -38,14 +38,7 @@ namespace Klyte.WriteTheSigns.UI
         {
             get => m_currentBuildingName; private set {
                 m_currentBuildingName = value;
-                m_secondaryContainer.isVisible = m_currentBuildingName != null;
-                m_containerSelectionDescription.isVisible = m_currentBuildingName != null;
-                GetConfigurationSoruce(value, out ConfigurationSource source, out BuildingGroupDescriptorXml target);
-                m_labelSelectionDescription.text = Locale.Get("BUILDING_TITLE", value) + "\n";
-                m_labelSelectionDescription.suffix = $"{Locale.Get("K45_WTS_CURRENTLY_USING")}: {Locale.Get("K45_WTS_CONFIGURATIONSOURCE", source.ToString())}";
-                EventOnBuildingSelectionChanged?.Invoke();
-                CurrentEditingInstance = target;
-                CurrentConfigurationSource = source;
+                ReloadBuilding();
             }
         }
 
@@ -147,18 +140,28 @@ namespace Klyte.WriteTheSigns.UI
             OnBuildingSet(null);
         }
 
+
         private void OnReloadDescriptors() { }
         private void OnExportAsAsset() { }
         private void OnExportAsGlobal() { }
         private void OnOpenGlobalFolder() { }
         private void OnDeleteFromCity() { }
         private void OnCopyToCity() { }
-        private void OnCreateNewCity() { }
+        private void OnCreateNewCity()
+        {
+            WTSBuildingsData.Instance.CityDescriptors[m_currentBuildingName] = new BuildingGroupDescriptorXml
+            {
+                BuildingName = m_currentBuildingName,
+
+            };
+            //WriteTheSignsMod.Instance.Controller.BuildingPropsSingleton.LoadAllBuildingConfigurations
+            ReloadBuilding();
+            OnChangeTab(-1);
+        }
 
         private void EnablePickTool()
         {
-            OnBuildingSet(null);
-            WriteTheSignsMod.Controller.BuildingEditorToolInstance.OnBuildingSelect += OnBuildingSet;
+            OnBuildingSet(null); WriteTheSignsMod.Controller.BuildingEditorToolInstance.OnBuildingSelect += OnBuildingSet;
             WriteTheSignsMod.Controller.BuildingEditorToolInstance.enabled = true;
         }
 
@@ -171,7 +174,20 @@ namespace Klyte.WriteTheSigns.UI
         }
 
 
-        private void ReloadBuilding() { }
+        private void ReloadBuilding()
+        {
+            m_secondaryContainer.isVisible = m_currentBuildingName != null;
+            m_containerSelectionDescription.isVisible = m_currentBuildingName != null;
+            GetConfigurationSoruce(m_currentBuildingName, out ConfigurationSource source, out BuildingGroupDescriptorXml target);
+            m_labelSelectionDescription.text = Locale.Get("BUILDING_TITLE", m_currentBuildingName) + "\n";
+            m_labelSelectionDescription.suffix = $"{Locale.Get("K45_WTS_CURRENTLY_USING")}: {Locale.Get("K45_WTS_CONFIGURATIONSOURCE", source.ToString())}";
+            EventOnBuildingSelectionChanged?.Invoke();
+            CurrentEditingInstance = target;
+            CurrentConfigurationSource = source;
+
+            m_btnNew.isVisible = CurrentConfigurationSource != ConfigurationSource.CITY;
+        }
+
         private void OnChangeTab(int v) { }
     }
 

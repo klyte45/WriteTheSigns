@@ -47,11 +47,16 @@ namespace Klyte.WriteTheSigns.UI
 
         private UIDropDown m_colorModeDD;
 
-        private UIPanel m_clipboardArea;
+        private UIDropDown m_loadDD;
         private UIButton m_copySettings;
         private UIButton m_pasteSettings;
         private string m_clipboard;
         private UIComponent[] m_allFields = null;
+        private UIButton m_libLoad;
+        private UIButton m_libDelete;
+        private UITextField m_libSaveNameField;
+        private UIButton m_libSave;
+        private UIButton m_gotoFileLib;
 
         private IEnumerable<UIComponent> AllFields
         {
@@ -65,8 +70,10 @@ namespace Klyte.WriteTheSigns.UI
                             m_propLayoutSelect,
                             m_chkShowIfNoLine,
                             m_repeatTimes,
-                            m_colorModeDD
-                     }.Union(m_position).Union(m_rotation).Union(m_repeatArrayDistance).Union(m_scale).ToArray();
+                            m_colorModeDD,
+                            m_pasteSettings,
+                            m_libLoad,
+                }.Union(m_position).Union(m_rotation).Union(m_repeatArrayDistance).Union(m_scale).ToArray();
                 }
                 return m_allFields.Union(m_checkboxTemplateList.items.Select(x => x as UIComponent));
             }
@@ -105,10 +112,8 @@ namespace Klyte.WriteTheSigns.UI
             AddVector3Field(Locale.Get("K45_WTS_BUILDINGEDITOR_ROTATION"), out m_rotation, helperSettings, OnRotationChanged);
             AddVector3Field(Locale.Get("K45_WTS_BUILDINGEDITOR_SCALE"), out m_scale, helperSettings, OnScaleChanged);
 
-            var clipboardSettings = helperSettings.AddGroupExtended("!!!", out UILabel dummy, out m_clipboardArea);
-            Destroy(dummy);
 
-            AddLibBox<WTSLibBuildingPropLayout, BoardInstanceBuildingXml>(clipboardSettings, out m_copySettings, OnCopyRule, out m_pasteSettings, OnPasteRule, out _, null, OnLoadRule, GetRuleSerialized);
+            AddLibBox<WTSLibBuildingPropLayout, BoardInstanceBuildingXml>(helperSettings, out m_copySettings, OnCopyRule, out m_pasteSettings, OnPasteRule, out _, null, out m_loadDD, out m_libLoad, out m_libDelete, out m_libSaveNameField, out m_libSave, out m_gotoFileLib, OnLoadRule, GetRuleSerialized);
 
             AddCheckboxLocale("K45_WTS_SHOW_IF_NO_LINE", out m_chkShowIfNoLine, helperPublicTransport, OnShowIfNoLineChanged);
 
@@ -228,7 +233,6 @@ namespace Klyte.WriteTheSigns.UI
         }
         private void OnChangeTab(int obj)
         {
-            MainContainer.isVisible = obj >= 0;
             m_currentIdx = obj;
             m_dirty = true;
         }
@@ -288,12 +292,10 @@ namespace Klyte.WriteTheSigns.UI
                 if (Source != ConfigurationSource.CITY)
                 {
                     AllFields.ForEach(x => x.Disable());
-                    m_clipboardArea.isVisible = false;
                 }
                 else
                 {
                     AllFields.ForEach(x => x.Enable());
-                    m_clipboardArea.isVisible = true;
                 }
                 if (isPublicTransportStation)
                 {
@@ -312,6 +314,7 @@ namespace Klyte.WriteTheSigns.UI
             {
                 if (m_dirty)
                 {
+                    MainContainer.isVisible = m_currentIdx >= 0;
                     ReloadData();
                     m_dirty = false;
                 }
