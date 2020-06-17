@@ -43,13 +43,18 @@ namespace Klyte.WriteTheSigns.UI
                 GetConfigurationSoruce(value, out ConfigurationSource source, out BuildingGroupDescriptorXml target);
                 m_labelSelectionDescription.text = Locale.Get("BUILDING_TITLE", value) + "\n";
                 m_labelSelectionDescription.suffix = $"{Locale.Get("K45_WTS_CURRENTLY_USING")}: {Locale.Get("K45_WTS_CONFIGURATIONSOURCE", source.ToString())}";
-                EventOnBuildingSelectionChanged?.Invoke(source, target);
+                EventOnBuildingSelectionChanged?.Invoke();
+                CurrentEditingInstance = target;
+                CurrentConfigurationSource = source;
             }
         }
 
+        public BuildingGroupDescriptorXml CurrentEditingInstance { get; private set; }
+        public ConfigurationSource CurrentConfigurationSource { get; private set; }
 
 
-        internal event Action<ConfigurationSource, BuildingGroupDescriptorXml> EventOnBuildingSelectionChanged;
+
+        internal event Action EventOnBuildingSelectionChanged;
 
 
         private void GetConfigurationSoruce(string building, out ConfigurationSource source, out BuildingGroupDescriptorXml target)
@@ -101,7 +106,7 @@ namespace Klyte.WriteTheSigns.UI
         private UIButton m_btnSteam;
         private UIButton m_btnReload;
 
-        public WTSBuildingLayoutEditorPropList RuleList { get; private set; }
+        public WTSBuildingLayoutEditorPropList LayoutList { get; private set; }
 
         public void Awake()
         {
@@ -134,10 +139,10 @@ namespace Klyte.WriteTheSigns.UI
             m_secondaryContainer.autoLayoutPadding = new RectOffset(0, 10, 0, 0);
 
             KlyteMonoUtils.CreateUIElement(out UIPanel tertiaryContainer, m_secondaryContainer.transform, "TrcContainer", new Vector4(0, 0, m_secondaryContainer.width * 0.25f, m_secondaryContainer.height));
-            RuleList = tertiaryContainer.gameObject.AddComponent<WTSBuildingLayoutEditorPropList>();
+            LayoutList = tertiaryContainer.gameObject.AddComponent<WTSBuildingLayoutEditorPropList>();
 
-            //KlyteMonoUtils.CreateUIElement(out UIPanel editorPanel, secondaryContainer.transform, "EditPanel", new Vector4(0, 0, secondaryContainer.width * 0.75f - 35, secondaryContainer.height));
-            //editorPanel.gameObject.AddComponent<WTSRoadCornerEditorDetailTabs>();
+            KlyteMonoUtils.CreateUIElement(out UIPanel editorPanel, m_secondaryContainer.transform, "EditPanel", new Vector4(0, 0, m_secondaryContainer.width * 0.75f - 35, m_secondaryContainer.height));
+            editorPanel.gameObject.AddComponent<WTSBuildingLayoutEditorPropDetail>();
 
             OnBuildingSet(null);
         }

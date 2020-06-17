@@ -15,7 +15,7 @@ namespace Klyte.WriteTheSigns.UI
 {
     internal class WTSBuildingLayoutEditorPropList : UICustomControl
     {
-        private UIPanel MainContainer { get; set; }
+        public UIPanel MainContainer { get; private set; }
 
         private UIButton m_new;
         private UIButton m_up;
@@ -212,12 +212,7 @@ namespace Klyte.WriteTheSigns.UI
 
         }
 
-        public void Start() => WTSBuildingLayoutEditor.Instance.EventOnBuildingSelectionChanged += (x, y) =>
-        {
-            Source = x;
-            CurrentEdited = y;
-            m_dirty = true;
-        };
+        public void Start() => WTSBuildingLayoutEditor.Instance.EventOnBuildingSelectionChanged += () => m_dirty = true;
 
         private UIButton AddTabButton(string tabName)
         {
@@ -229,12 +224,12 @@ namespace Klyte.WriteTheSigns.UI
         public void FixTabstrip()
         {
 
-            while (m_orderedRulesList.components.Count > CurrentEdited.PropInstances.Length)
+            while (m_orderedRulesList.components.Count > (CurrentEdited?.PropInstances?.Length ?? 0))
             {
                 Destroy(m_orderedRulesList.components[CurrentEdited.PropInstances.Length]);
                 m_orderedRulesList.RemoveUIComponent(m_orderedRulesList.components[m_orderedRulesList.components.Count - 1]);
             }
-            while (m_orderedRulesList.components.Count < CurrentEdited.PropInstances.Length)
+            while (m_orderedRulesList.components.Count < (CurrentEdited?.PropInstances?.Length ?? 0))
             {
                 AddTabButton("!!!").eventClicked += (x, y) =>
                 {
@@ -244,7 +239,7 @@ namespace Klyte.WriteTheSigns.UI
             }
             for (int i = 0; i < CurrentEdited.PropInstances.Length; i++)
             {
-                (m_orderedRulesList.components[i] as UIButton).text = CurrentEdited.PropInstances[i].SaveName;
+                (m_orderedRulesList.components[i] as UIButton).text = CurrentEdited.PropInstances[i].SaveName ?? "";
             }
 
             if (SelectedIndex < 1 || Source != ConfigurationSource.CITY)
@@ -255,7 +250,7 @@ namespace Klyte.WriteTheSigns.UI
             {
                 m_up.Enable();
             }
-            if (SelectedIndex <= -1 || SelectedIndex >= CurrentEdited.PropInstances.Length - 1 || Source != ConfigurationSource.CITY)
+            if (SelectedIndex <= -1 || SelectedIndex >= (CurrentEdited?.PropInstances?.Length ?? 0) - 1 || Source != ConfigurationSource.CITY)
             {
                 m_down.Disable();
             }
@@ -263,7 +258,7 @@ namespace Klyte.WriteTheSigns.UI
             {
                 m_down.Enable();
             }
-            if (SelectedIndex < 0 || SelectedIndex >= CurrentEdited.PropInstances.Length || Source != ConfigurationSource.CITY)
+            if (SelectedIndex < 0 || SelectedIndex >= (CurrentEdited?.PropInstances?.Length ?? 0) || Source != ConfigurationSource.CITY)
             {
                 m_remove.Disable();
             }
@@ -272,7 +267,7 @@ namespace Klyte.WriteTheSigns.UI
                 m_remove.Enable();
             }
 
-            if(Source != ConfigurationSource.CITY)
+            if (Source != ConfigurationSource.CITY)
             {
                 m_new.Disable();
                 m_import.Disable();
@@ -348,14 +343,8 @@ namespace Klyte.WriteTheSigns.UI
 
         private bool m_dirty;
 
-        private BuildingGroupDescriptorXml CurrentEdited
-        {
-            get; set;
-        }
-        private ConfigurationSource Source
-        {
-            get; set;
-        }
+        private BuildingGroupDescriptorXml CurrentEdited => WTSBuildingLayoutEditor.Instance.CurrentEditingInstance;
+        private ConfigurationSource Source => WTSBuildingLayoutEditor.Instance.CurrentConfigurationSource;
     }
 
 }

@@ -6,6 +6,7 @@ using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Data;
 using Klyte.WriteTheSigns.Overrides;
 using Klyte.WriteTheSigns.Rendering;
+using Klyte.WriteTheSigns.UI;
 using Klyte.WriteTheSigns.Utils;
 using Klyte.WriteTheSigns.Xml;
 using SpriteFontPlus;
@@ -91,22 +92,20 @@ namespace Klyte.WriteTheSigns.Singleton
             m_lastDrawBuilding[buildingID] = SimulationManager.instance.m_currentTickIndex;
 
             string refName = GetReferenceModelName(ref data);
-            //if (EditorInstance.component.isVisible && EditorInstance.m_currentBuildingName == refName)
-            //{
-            //    if (!m_buildingStopsDescriptor.ContainsKey(refName))
-            //    {
-            //        m_buildingStopsDescriptor[refName] = MapStopPoints(data.Info, Data.Descriptors.ContainsKey(refName) ? Data.Descriptors[refName].StopMappingThresold : 1f);
-            //    }
-            //    for (int i = 0; i < m_buildingStopsDescriptor[refName].Length; i++)
-            //    {
-            //        m_onOverlayRenderQueue.Add(Tuple.New(renderInstance.m_dataMatrix1.MultiplyPoint(m_buildingStopsDescriptor[refName][i].platformLine.Position(0.5f)),
-            //               m_buildingStopsDescriptor[refName][i].width / 2, m_colorOrder[i % m_colorOrder.Length]));
-            //    }
-            //}
-            ExportableBuildingGroupDescriptorXml expTargetDescriptor = null;
-            bool couldGetDescriptor = Data.CityDescriptors.TryGetValue(refName, out BuildingGroupDescriptorXml targetDescriptor) || Data.GlobalDescriptors.TryGetValue(refName, out expTargetDescriptor) || Data.AssetsDescriptors.TryGetValue(refName, out expTargetDescriptor);
-            targetDescriptor ??= expTargetDescriptor;
-            if (!couldGetDescriptor || targetDescriptor.PropInstances.Length == 0)
+            if (WTSBuildingLayoutEditor.Instance.MainContainer.isVisible && WTSBuildingLayoutEditor.Instance.CurrentEditingInstance?.BuildingName == refName)
+            {
+                if (!m_buildingStopsDescriptor.ContainsKey(refName))
+                {
+                    m_buildingStopsDescriptor[refName] = MapStopPoints(data.Info, WTSBuildingLayoutEditor.Instance.CurrentEditingInstance?.StopMappingThresold ?? 1f);
+                }
+                for (int i = 0; i < m_buildingStopsDescriptor[refName].Length; i++)
+                {
+                    m_onOverlayRenderQueue.Add(Tuple.New(renderInstance.m_dataMatrix1.MultiplyPoint(m_buildingStopsDescriptor[refName][i].platformLine.Position(0.5f)),
+                           m_buildingStopsDescriptor[refName][i].width / 2, m_colorOrder[i % m_colorOrder.Length]));
+                }
+            }
+            BuildingGroupDescriptorXml targetDescriptor = GetResultDescriptor(refName);
+            if ((targetDescriptor?.PropInstances?.Length ?? 0) == 0)
             {
                 return;
             }
@@ -117,6 +116,62 @@ namespace Klyte.WriteTheSigns.Singleton
                 RenderDescriptor(cameraInfo, buildingID, ref data, layerMask, ref renderInstance, ref targetDescriptor, i);
             }
         }
+
+        internal BuildingGroupDescriptorXml GetResultDescriptor(string refName)
+        {
+            ExportableBuildingGroupDescriptorXml expTargetDescriptor = null;
+            if (!Data.CityDescriptors.TryGetValue(refName, out BuildingGroupDescriptorXml targetDescriptor))
+            {
+                if (!Data.GlobalDescriptors.TryGetValue(refName, out expTargetDescriptor))
+                {
+                    Data.AssetsDescriptors.TryGetValue(refName, out expTargetDescriptor);
+                }
+            }
+
+            return targetDescriptor ?? expTargetDescriptor;
+        }
+
+        public static void AfterEndOverlayImpl(RenderManager.CameraInfo cameraInfo)
+        {
+            if (WTSBuildingLayoutEditor.Instance.MainContainer.isVisible)
+            {
+                foreach (Tuple<Vector3, float, Color> tuple in WriteTheSignsMod.Controller.BuildingPropsSingleton.m_onOverlayRenderQueue)
+                {
+                    Singleton<RenderManager>.instance.OverlayEffect.DrawCircle(cameraInfo,
+                       tuple.Third,
+                       tuple.First,
+                       tuple.Second * 2,
+                       -1, 1280f, false, true);
+                }
+                WriteTheSignsMod.Controller.BuildingPropsSingleton.m_onOverlayRenderQueue.Clear();
+            }
+        }
+
+        private readonly List<Tuple<Vector3, float, Color>> m_onOverlayRenderQueue = new List<Tuple<Vector3, float, Color>>();
+
+        internal static readonly Color[] m_colorOrder = new Color[]
+        {
+            Color.red,
+            Color.Lerp(Color.red, Color.yellow,0.5f),
+            Color.yellow,
+            Color.green,
+            Color.cyan,
+            Color.blue,
+            Color.Lerp(Color.blue, Color.magenta,0.5f),
+            Color.magenta,
+            Color.white,
+            Color.black,
+            Color.Lerp( Color.red,                                    Color.black,0.5f),
+            Color.Lerp( Color.Lerp(Color.red, Color.yellow,0.5f),     Color.black,0.5f),
+            Color.Lerp( Color.yellow,                                 Color.black,0.5f),
+            Color.Lerp( Color.green,                                  Color.black,0.5f),
+            Color.Lerp( Color.cyan,                                   Color.black,0.5f),
+            Color.Lerp( Color.blue,                                   Color.black,0.5f),
+            Color.Lerp( Color.Lerp(Color.blue, Color.magenta,0.5f),   Color.black,0.5f),
+            Color.Lerp( Color.magenta,                                Color.black,0.5f),
+            Color.Lerp( Color.white,                                  Color.black,0.25f),
+            Color.Lerp( Color.white,                                  Color.black,0.75f)
+        };
 
         private void RenderDescriptor(RenderManager.CameraInfo cameraInfo, ushort buildingID, ref Building data, int layerMask, ref RenderManager.Instance renderInstance, ref BuildingGroupDescriptorXml parentDescriptor, int idx)
         {
@@ -609,5 +664,14 @@ namespace Klyte.WriteTheSigns.Singleton
             }
         }
         public void MarkLinesDirty() => m_lastUpdateLines = SimulationManager.instance.m_currentTickIndex;
+        public static StopPointDescriptorLanes[] GetStopPointsDescriptorFor(string building)
+        {
+            var instance = WriteTheSignsMod.Controller.BuildingPropsSingleton;
+            if (!instance.m_buildingStopsDescriptor.ContainsKey(building))
+            {
+                instance.m_buildingStopsDescriptor[building] = MapStopPoints(PrefabCollection<BuildingInfo>.FindLoaded(building), instance.GetResultDescriptor(building)?.StopMappingThresold ?? 1f);
+            }
+            return instance.m_buildingStopsDescriptor[building];
+        }
     }
 }

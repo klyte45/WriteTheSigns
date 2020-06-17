@@ -16,7 +16,7 @@ namespace Klyte.WriteTheSigns.Xml
         public bool m_showIfNoLine = true;
 
         [XmlElement("arrayRepeatOffset")]
-        public Vector3Xml ArrayRepeat { get; set; }
+        public Vector3Xml ArrayRepeat { get; set; } = new Vector3Xml();
 
 
         [XmlAttribute("arrayRepeatTimes")]
