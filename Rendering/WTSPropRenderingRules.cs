@@ -365,7 +365,12 @@ namespace Klyte.WriteTheSigns.Rendering
                     case ColoringMode.Fixed:
                         return propLayout.FixedColor ?? default;
                     case ColoringMode.ByPlatform:
-                        StopInformation stop = GetTargetStopInfo(buildingDescriptor, refId).FirstOrDefault();
+                        var stops = GetAllTargetStopInfo(buildingDescriptor, refId).Where(x => x.m_lineId != 0);
+                        if (buildingDescriptor.UseFixedIfMultiline && stops.Count() > 1)
+                        {
+                            return propLayout.FixedColor ?? Color.white;
+                        }
+                        StopInformation stop = stops.FirstOrDefault();
                         if (stop.m_lineId != 0)
                         {
                             return TransportManager.instance.GetLineColor(stop.m_lineId);

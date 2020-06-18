@@ -73,6 +73,7 @@ namespace Klyte.WriteTheSigns.UI
         private UIButton m_libSave;
         private UIButton m_gotoFileLib;
         private UIDropDown m_subBuildingSelect;
+        private UICheckBox m_chkUseFixedIfMulti;
 
         private IEnumerable<UIComponent> AllFields
         {
@@ -89,7 +90,8 @@ namespace Klyte.WriteTheSigns.UI
                             m_colorModeDD,
                             m_pasteSettings,
                             m_libLoad,
-                            m_subBuildingSelect
+                            m_subBuildingSelect,
+                            m_chkUseFixedIfMulti
                 }.Union(m_position).Union(m_rotation).Union(m_repeatArrayDistance).Union(m_scale).ToArray();
                 }
                 return m_allFields.Union(m_checkboxTemplateList.items.Select(x => x as UIComponent));
@@ -138,6 +140,7 @@ namespace Klyte.WriteTheSigns.UI
             AddVector3Field(Locale.Get("K45_WTS_ARRAY_REPEAT_DISTANCE"), out m_repeatArrayDistance, helperSpawning, OnRepeatArrayDistanceChanged);
 
             AddDropdown(Locale.Get("K45_WTS_COLOR_MODE_SELECT"), out m_colorModeDD, helperAppearence, Enum.GetNames(typeof(ColoringMode)).Select(x => Locale.Get("K45_WTS_PROP_COLOR_MODE", x)).ToArray(), OnColoringModeChanged);
+            AddCheckboxLocale("K45_WTS_USEFIXEDIFMULTILINES", out m_chkUseFixedIfMulti, helperAppearence, OnUseFixedIfMultiChanged);
 
             WTSBuildingLayoutEditor.Instance.LayoutList.EventSelectionChanged += OnChangeTab;
             LoadAvailableLayouts();
@@ -235,9 +238,12 @@ namespace Klyte.WriteTheSigns.UI
             }
             for (int i = 0; i < platforms.Length; i++)
             {
-                UICheckBox checkbox = m_checkboxTemplateList.items[platforms[i]].GetComponentInChildren<UICheckBox>();
-                checkbox.isChecked = true;
-                checkbox.parent.zOrder = i;
+                if (platforms[i] < m_checkboxTemplateList.items.Count)
+                {
+                    UICheckBox checkbox = m_checkboxTemplateList.items[platforms[i]].GetComponentInChildren<UICheckBox>();
+                    checkbox.isChecked = true;
+                    checkbox.parent.zOrder = i;
+                }
             }
         }
 
@@ -317,8 +323,9 @@ namespace Klyte.WriteTheSigns.UI
 
                 UpdatePlatformList(ref x);
 
+                m_chkUseFixedIfMulti.isChecked = x.UseFixedIfMultiline;
 
-
+                m_chkUseFixedIfMulti.isVisible = x.ColorModeProp == ColoringMode.ByPlatform;
 
 
 
@@ -404,7 +411,12 @@ namespace Klyte.WriteTheSigns.UI
         private void OnRepeatArrayDistanceChanged(Vector3 obj) => SafeObtain((ref BoardInstanceBuildingXml x) => x.ArrayRepeat = (Vector3Xml)obj);
         private void OnRepeatTimesChanged(int obj) => SafeObtain((ref BoardInstanceBuildingXml x) => x.m_arrayRepeatTimes = obj);
 
-        private void OnColoringModeChanged(int sel) => SafeObtain((ref BoardInstanceBuildingXml x) => x.ColorModeProp = (ColoringMode)sel);
+        private void OnColoringModeChanged(int sel) => SafeObtain((ref BoardInstanceBuildingXml x) =>
+        {
+            x.ColorModeProp = (ColoringMode)sel;
+            m_chkUseFixedIfMulti.isVisible = x.ColorModeProp == ColoringMode.ByPlatform;
+        });
+        private void OnUseFixedIfMultiChanged(bool isChecked) => SafeObtain((ref BoardInstanceBuildingXml x) => x.UseFixedIfMultiline = isChecked);
         private void OnPropLayoutChange(int sel) => SafeObtain((ref BoardInstanceBuildingXml x) =>
         {
             if (sel >= 0)

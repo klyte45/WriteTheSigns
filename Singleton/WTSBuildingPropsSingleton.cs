@@ -354,14 +354,14 @@ namespace Klyte.WriteTheSigns.Singleton
                             }
                             float maxDist = m_buildingStopsDescriptor[buildingName][i].width;
                             float maxHeightDiff = m_buildingStopsDescriptor[buildingName][i].width;
-                            //if (CommonProperties.DebugMode)
-                            //{
-                            //    LogUtils.DoLog($"platLine ({i}) = {m_buildingStopsDescriptor[buildingName][i].platformLine.a} {m_buildingStopsDescriptor[buildingName][i].platformLine.b} {m_buildingStopsDescriptor[buildingName][i].platformLine.c} {m_buildingStopsDescriptor[buildingName][i].platformLine.d}");
-                            //    LogUtils.DoLog($"maxDist ({i}) = {maxDist}");
-                            //    LogUtils.DoLog($"maxHeightDiff ({i}) = {maxHeightDiff}");
-                            //    LogUtils.DoLog($"refMatrix ({i}) = {refMatrix}");
-                            //    LogUtils.DoLog($"inverseMatrix ({i}) = {inverseMatrix}");
-                            //}
+                            if (CommonProperties.DebugMode)
+                            {
+                                LogUtils.DoLog($"platLine ({i}) = {m_buildingStopsDescriptor[buildingName][i].platformLine.a} {m_buildingStopsDescriptor[buildingName][i].platformLine.b} {m_buildingStopsDescriptor[buildingName][i].platformLine.c} {m_buildingStopsDescriptor[buildingName][i].platformLine.d}");
+                                LogUtils.DoLog($"maxDist ({i}) = {maxDist}");
+                                LogUtils.DoLog($"maxHeightDiff ({i}) = {maxHeightDiff}");
+                                LogUtils.DoLog($"refMatrix ({i}) = {refMatrix}");
+                                LogUtils.DoLog($"inverseMatrix ({i}) = {inverseMatrix}");
+                            }
                             float angleBuilding = data.m_angle * Mathf.Rad2Deg;
                             m_platformToLine[buildingID][i] = nearStops
                                 .Where(stopId =>
@@ -466,10 +466,11 @@ namespace Klyte.WriteTheSigns.Singleton
 
         protected PathType GetPathType(float angleIn, float anglePass, float angleOut)
         {
-            float Δin = (anglePass - angleIn);
-            float Δout = (angleOut - anglePass);
-            bool inFw = (Δin > 0) == (Math.Abs(Δin) < 180);
-            bool outFw = (Δout > 0) == (Math.Abs(Δout) < 180);
+            float Δin = (anglePass - angleIn + 720) % 360;
+            float Δout = (angleOut - anglePass + 720) % 360;
+            bool inFw = (Δin < 180);
+            bool outFw = (Δout < 180);
+            LogUtils.DoLog($"GetPathType [{angleIn}|{anglePass}|{angleOut}]  Δin = {Δin}, Δout ={Δout}, infw = {inFw}, outFw = {outFw}");
             return (PathType)((inFw ? 0 : 1) + (outFw ? 0 : 2));
         }
 

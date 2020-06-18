@@ -24,6 +24,8 @@ namespace Klyte.WriteTheSigns.Xml
 
         [XmlAttribute("coloringMode")]
         public ColoringMode ColorModeProp { get; set; } = ColoringMode.Fixed;
+        [XmlAttribute("useFixedIfMultiline")]
+        public bool UseFixedIfMultiline { get; set; } = true;
 
         [XmlAttribute("saveName")]
         public string SaveName { get; set; }

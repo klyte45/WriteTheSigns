@@ -14,5 +14,10 @@ namespace Klyte.WriteTheSigns.Xml
         public ushort NextStopBuildingId => WTSBuildingDataCaches.GetStopBuilding(m_nextStopId, m_lineId);
         public ushort PrevStopBuildingId => WTSBuildingDataCaches.GetStopBuilding(m_previousStopId, m_lineId);
         public ushort DestinationBuildingId => WTSBuildingDataCaches.GetStopBuilding(m_destinationId, m_lineId);
+
+        public override string ToString()
+        {
+            return $"StopInformation(S={m_stopId},L={m_lineId},N={m_nextStopId},P={m_previousStopId},D={m_destinationId})";
+        }
     }
 }
