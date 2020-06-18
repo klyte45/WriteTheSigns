@@ -1,9 +1,9 @@
 ﻿using ColossalFramework;
 using ColossalFramework.Globalization;
 using ColossalFramework.UI;
-using Klyte.Commons.Interfaces;
 using Klyte.Commons.UI.SpriteNames;
 using Klyte.Commons.Utils;
+using Klyte.WriteTheSigns.Data;
 using Klyte.WriteTheSigns.Libraries;
 using Klyte.WriteTheSigns.Xml;
 using System;
@@ -169,11 +169,7 @@ namespace Klyte.WriteTheSigns.UI
         private void AddCurrentListToLibrary(string text)
         {
             WTSLibBuildingPropLayoutList.Reload();
-            var newItem = new ILibableAsContainer<BoardInstanceBuildingXml>
-            {
-                Data = new XmlUtils.ListWrapper<BoardInstanceBuildingXml>()
-            };
-            newItem.Data.listVal.AddRange(CurrentEdited.PropInstances.ToList());
+            var newItem = new ExportableBoardInstanceBuildingListXml { Instances = CurrentEdited.PropInstances, Layouts = CurrentEdited.LocalLayouts };
             WTSLibBuildingPropLayoutList.Instance.Add(text, ref newItem);
             K45DialogControl.ShowModal(new K45DialogControl.BindProperties
             {
@@ -213,7 +209,15 @@ namespace Klyte.WriteTheSigns.UI
                     if (ret == 1)
                     {
                         var newConfig = WTSLibBuildingPropLayoutList.Instance.Get(selText);
-                        CurrentEdited.PropInstances = newConfig.Data.listVal.ToArray();
+                        CurrentEdited.PropInstances = newConfig.Instances;
+                        newConfig.Layouts.ForEach(x =>
+                        {
+                            if (WTSPropLayoutData.Instance.Get(x.Key) == null)
+                            {
+                                var value = x.Value;
+                                WTSPropLayoutData.Instance.Add(x.Key, ref value);
+                            }
+                        });
                         FixTabstrip();
                         SelectedIndex = -1;
                     }

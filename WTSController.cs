@@ -137,7 +137,7 @@ namespace Klyte.WriteTheSigns
 
 
         public static readonly string FOLDER_NAME = FileUtils.BASE_FOLDER_PATH + "WriteTheSigns";
-        public const string m_defaultFileNameXml = "DefaultBuildingsConfig";
+        public const string m_defaultFileNameXml = "WTS_DefaultBuildingsConfig";
         public const string DEFAULT_GAME_BUILDINGS_CONFIG_FOLDER = "BuildingsDefaultPlacing";
         public const string DEFAULT_GAME_VEHICLES_CONFIG_FOLDER = "VehiclesDefaultPlacing";
         public const string ABBREVIATION_FILES_FOLDER = "AbbreviationFiles";

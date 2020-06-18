@@ -161,11 +161,11 @@ namespace Klyte.WriteTheSigns.UI
                 if (x == 1)
                 {
                     WTSBuildingsData.Instance.CityDescriptors.Remove(m_currentBuildingName);
+                    ReloadBuilding();
                 }
 
                 return true;
             });
-            ReloadBuilding();
         }
         private void OnCopyToCity()
         {

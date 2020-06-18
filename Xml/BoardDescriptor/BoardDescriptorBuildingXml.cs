@@ -36,6 +36,14 @@ namespace Klyte.WriteTheSigns.Xml
 
     }
 
+    public class ExportableBoardInstanceBuildingListXml : ILibable
+    {
+        public BoardInstanceBuildingXml[] Instances { get; set; }
+        public SimpleXmlDictionary<string, BoardDescriptorGeneralXml> Layouts { get; set; }
+        [XmlAttribute("saveName")]
+        public string SaveName { get; set; }
+    }
+
     public enum ColoringMode
     {
         ByPlatform,
