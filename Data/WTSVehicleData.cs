@@ -11,9 +11,9 @@ namespace Klyte.WriteTheSigns.Data
 
         public override string SaveId => "K45_WTS_WTSVehicleData";
 
-        public override int BoardCount => 1;
+        public override int BoardCount => 0;
 
-        public override int SubBoardCount => 1;
+        public override int SubBoardCount => 0;
 
         public void CleanCache() => ResetBoards();
     }

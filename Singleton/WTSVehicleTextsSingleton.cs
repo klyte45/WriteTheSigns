@@ -1,19 +1,13 @@
 ﻿using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Data;
 using Klyte.WriteTheSigns.Rendering;
-using Klyte.WriteTheSigns.Utils;
 using Klyte.WriteTheSigns.Xml;
-using SpriteFontPlus;
-using SpriteFontPlus.Utility;
-using System.Collections.Generic;
 using UnityEngine;
-using static Klyte.Commons.Utils.StopSearchUtils;
 
 namespace Klyte.WriteTheSigns.Singleton
 {
     public class WTSVehicleTextsSingleton : MonoBehaviour
     {
-        private readonly Dictionary<string, StopPointDescriptorLanes[]> m_buildingStopsDescriptor = new Dictionary<string, StopPointDescriptorLanes[]>();
         public WTSVehicleData Data => WTSVehicleData.Instance;
 
 
@@ -42,76 +36,69 @@ namespace Klyte.WriteTheSigns.Singleton
             }
 
             Vehicle.Flags flags = VehicleManager.instance.m_vehicles.m_buffer[vehicleID].m_flags;
-            Matrix4x4 matrix4x = thiz.m_info.m_vehicleAI.CalculateBodyMatrix(flags, ref position, ref rotation, ref scale, ref swayPosition);
+            Matrix4x4 vehicleMatrix = thiz.m_info.m_vehicleAI.CalculateBodyMatrix(flags, ref position, ref rotation, ref scale, ref swayPosition);
             MaterialPropertyBlock materialBlock = VehicleManager.instance.m_materialBlock;
             materialBlock.Clear();
 
 
-            BasicRenderInformation renderInfo = RenderUtils.GetTextData($"{vehicleID}", "", "", FontServer.instance[Data.DefaultFont ?? WTSController.DEFAULT_FONT_KEY], null);
+            //BasicRenderInformation renderInfo = RenderUtils.GetTextData($"{vehicleID}", "", "", FontServer.instance[Data.DefaultFont ?? WTSController.DEFAULT_FONT_KEY], null);
 
-            WTSPropRenderingRules.DrawTextBri(vehicleID, 0, 0, matrix4x, basicDescr, materialBlock, renderInfo, KlyteMonoUtils.ContrastColor(thiz.GetColor(vehicleID, ref vehicleData, InfoManager.InfoMode.None)), new Vector3(thiz.m_info.m_mesh.bounds.max.x, 1, 0), new Vector3(0, -90), Vector3.one, false);
-            WTSPropRenderingRules.DrawTextBri(vehicleID, 0, 0, matrix4x, basicDescr, materialBlock, renderInfo, KlyteMonoUtils.ContrastColor(thiz.GetColor(vehicleID, ref vehicleData, InfoManager.InfoMode.None)), new Vector3(thiz.m_info.m_mesh.bounds.min.x, 1, 0), new Vector3(0, 90), Vector3.one, false);
-            ;
+            //WTSPropRenderingRules.DrawTextBri(vehicleID, 0, 0, vehicleMatrix, basicDescr, materialBlock, renderInfo, KlyteMonoUtils.ContrastColor(thiz.GetColor(vehicleID, ref vehicleData, InfoManager.InfoMode.None)), new Vector3(thiz.m_info.m_mesh.bounds.max.x, 1, 0), new Vector3(0, -90), Vector3.one, false);
+            //WTSPropRenderingRules.DrawTextBri(vehicleID, 0, 0, vehicleMatrix, basicDescr, materialBlock, renderInfo, KlyteMonoUtils.ContrastColor(thiz.GetColor(vehicleID, ref vehicleData, InfoManager.InfoMode.None)), new Vector3(thiz.m_info.m_mesh.bounds.min.x, 1, 0), new Vector3(0, 90), Vector3.one, false);
+
+            RenderSign(cameraInfo, vehicleID, position, vehicleMatrix, ref basicDescr);
         }
-        private BoardTextDescriptorGeneralXml basicDescr = new BoardTextDescriptorGeneralXml
+        private LayoutDescriptorVehicleXml basicDescr = new LayoutDescriptorVehicleXml
         {
-            m_textScale = 2.5f
-        };
-        private void RenderDescriptor(RenderManager.CameraInfo cameraInfo, ushort buildingID, ref Building data, int layerMask, ref RenderManager.Instance renderInstance, ref BuildingGroupDescriptorXml parentDescriptor, int idx)
-        {
-            BoardDescriptorGeneralXml propLayout = parentDescriptor.GetDescriptorOf(idx);
-            if (propLayout?.m_propName == null)
-            {
-                return;
-            }
-            ref BoardInstanceBuildingXml targetDescriptor = ref parentDescriptor.PropInstances[idx];
-            if (Data.BoardsContainers[buildingID, 0, 0] == null || Data.BoardsContainers[buildingID, 0, 0].Length != parentDescriptor.PropInstances.Length)
-            {
-                Data.BoardsContainers[buildingID, 0, 0] = new BoardBunchContainerBuilding[parentDescriptor.PropInstances.Length];
-            }
-            ref BoardBunchContainerBuilding item = ref Data.BoardsContainers[buildingID, 0, 0][idx];
-
-            if (item == null)
-            {
-                item = new BoardBunchContainerBuilding();
-            }
-            if (item.m_cachedProp?.name != propLayout.m_propName)
-            {
-                item.m_cachedProp = null;
-            }
-            if (item.m_cachedPosition == null || item.m_cachedRotation == null)
-            {
-                item.m_cachedPosition = renderInstance.m_dataMatrix1.MultiplyPoint(targetDescriptor.PropPosition);
-                item.m_cachedRotation = targetDescriptor.PropRotation;
-                LogUtils.DoLog($"[B{buildingID}/{idx}]Cached position: {item.m_cachedPosition} | Cached rotation: {item.m_cachedRotation}");
-            }
-            Vector3 targetPostion = item.m_cachedPosition ?? default;
-            for (int i = 0; i <= targetDescriptor.m_arrayRepeatTimes; i++)
-            {
-                if (i > 0)
+            TextDescriptors = new BoardTextDescriptorGeneralXml[]{  new BoardTextDescriptorGeneralXml
                 {
-                    targetPostion = renderInstance.m_dataMatrix1.MultiplyPoint(targetDescriptor.PropPosition + (i * (Vector3)targetDescriptor.ArrayRepeat));
-                }
-                RenderSign(ref data, cameraInfo, buildingID, idx, targetPostion, item.m_cachedRotation ?? default, layerMask, propLayout, ref targetDescriptor, ref item.m_cachedProp);
-
-            }
-        }
-
-        private void RenderSign(ref Building data, RenderManager.CameraInfo cameraInfo, ushort buildingId, int boardIdx, Vector3 position, Vector3 rotation, int layerMask, BoardDescriptorGeneralXml propLayout, ref BoardInstanceBuildingXml targetDescriptor, ref PropInfo cachedProp)
-        {
-            WTSPropRenderingRules.RenderPropMesh(ref cachedProp, cameraInfo, buildingId, boardIdx, 0, layerMask, data.m_angle, position, Vector4.zero, ref propLayout.m_propName, rotation, targetDescriptor.PropScale, propLayout, targetDescriptor, out Matrix4x4 propMatrix, out bool rendered, new InstanceID { Building = buildingId });
-            if (rendered)
-            {
-                for (int j = 0; j < propLayout.m_textDescriptors.Length; j++)
-                {
-                    if (cameraInfo.CheckRenderDistance(position, 200 * propLayout.m_textDescriptors[j].m_textScale * (propLayout.m_textDescriptors[j].ColoringConfig.MaterialType == FontStashSharp.MaterialType.OPAQUE ? 1 : 2)))
+                    m_textType = TextType.LinesSymbols,
+                    m_textScale = 2.5f,
+                    PlacingConfig = new BoardTextDescriptorGeneralXml.PlacingSettings
                     {
-                        MaterialPropertyBlock properties = PropManager.instance.m_materialBlock;
-                        properties.Clear();
-                        WTSPropRenderingRules.RenderTextMesh(buildingId, boardIdx, 0, targetDescriptor, propMatrix, propLayout, ref propLayout.m_textDescriptors[j], properties);
+                        Position = (Vector3Xml)new Vector3(0,4,0),
+                        m_create180degYClone = true
+                    },
+                    ColoringConfig = new BoardTextDescriptorGeneralXml.ColoringSettings
+                    {
+                        m_defaultColor =Color.white,
+                        MaterialType = FontStashSharp.MaterialType.BRIGHT,
+                        m_useContrastColor = false
                     }
+
+                }, new BoardTextDescriptorGeneralXml
+                {
+                    m_textType = TextType.LastStopLine,
+                    m_textScale = 2.5f,
+                    PlacingConfig = new BoardTextDescriptorGeneralXml.PlacingSettings
+                    {
+                        Position = (Vector3Xml)new Vector3(0,6,0),
+                        m_create180degYClone = true
+                    },
+                    ColoringConfig = new BoardTextDescriptorGeneralXml.ColoringSettings
+                    {
+                        m_defaultColor = new Color32(255,192,0,255),
+                        MaterialType = FontStashSharp.MaterialType.BRIGHT,
+                        m_useContrastColor = false
+                    }
+
                 }
             }
+        };
+
+
+        private void RenderSign(RenderManager.CameraInfo cameraInfo, ushort vehicleId, Vector3 position, Matrix4x4 vehicleMatrix, ref LayoutDescriptorVehicleXml targetDescriptor)
+        {
+            for (int j = 0; j < targetDescriptor.TextDescriptors.Length; j++)
+            {
+                if (cameraInfo.CheckRenderDistance(position, 200 * targetDescriptor.TextDescriptors[j].m_textScale * (targetDescriptor.TextDescriptors[j].ColoringConfig.MaterialType == FontStashSharp.MaterialType.OPAQUE ? 1 : 2)))
+                {
+                    MaterialPropertyBlock properties = VehicleManager.instance.m_materialBlock;
+                    properties.Clear();
+                    WTSPropRenderingRules.RenderTextMesh(vehicleId, 0, 0, targetDescriptor, vehicleMatrix, null, ref targetDescriptor.TextDescriptors[j], properties);
+                }
+            }
+
         }
 
 

@@ -48,11 +48,13 @@ namespace Klyte.WriteTheSigns.Xml
                 m_saveName = value;
             }
         }
+
+        [XmlElement("textDescriptor")]
+        public BoardTextDescriptorGeneralXml[] TextDescriptors { get; set; } = new BoardTextDescriptorGeneralXml[0];
+
         [XmlIgnore]
         private string m_saveName;
 
-        [XmlElement("textDescriptor")]
-        public BoardTextDescriptorGeneralXml[] m_textDescriptors = new BoardTextDescriptorGeneralXml[0];
         private string m_originalSaveName;
 
         public string GetKeyString() => m_saveName;

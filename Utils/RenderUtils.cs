@@ -98,6 +98,11 @@ namespace Klyte.WriteTheSigns.Utils
             m_cache[(int)BuildingName][buildingID] = null;
             m_cacheUpper[(int)BuildingName][buildingID] = null;
         }
+        public static void ClearCacheVehicleNumber(ushort vehicleID)
+        {
+            m_cache[(int)VehicleNumber][vehicleID] = null;
+            m_cacheUpper[(int)VehicleNumber][vehicleID] = null;
+        }
 
         public enum CacheArrayTypes
         {
@@ -109,6 +114,7 @@ namespace Klyte.WriteTheSigns.Utils
             FullStreetNameAbbreviation,
             SuffixStreetNameAbbreviation,
             BuildingName,
+            VehicleNumber,
             PostalCode
         }
 
@@ -135,6 +141,7 @@ namespace Klyte.WriteTheSigns.Utils
                 CacheArrayTypes.FullStreetNameAbbreviation => UpdateMeshFullNameStreet(refId, ref (allCaps ? m_cacheUpper : m_cache)[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont),
                 CacheArrayTypes.BuildingName => UpdateMeshBuildingName(refId, ref (allCaps ? m_cacheUpper : m_cache)[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont),
                 CacheArrayTypes.PostalCode => UpdateMeshPostalCode(refId, ref m_cache[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont),
+                CacheArrayTypes.VehicleNumber => UpdateMeshVehicleNumber(refId, ref m_cache[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont),
                 _ => null
             };
         }
@@ -238,6 +245,14 @@ namespace Klyte.WriteTheSigns.Utils
                 {
                     name = name?.ToUpper();
                 }
+            }
+            return GetTextData(name, prefix, suffix, primaryFont, overrideFont);
+        }
+        public static BasicRenderInformation UpdateMeshVehicleNumber(ushort vehicleId, ref string name, string prefix, string suffix, bool allCaps, bool applyAbbreviations, DynamicSpriteFont primaryFont, string overrideFont)
+        {
+            if (name == null)
+            {
+                name = vehicleId.ToString("D5");
             }
             return GetTextData(name, prefix, suffix, primaryFont, overrideFont);
         }

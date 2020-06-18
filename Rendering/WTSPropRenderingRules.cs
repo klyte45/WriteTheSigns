@@ -357,6 +357,11 @@ namespace Klyte.WriteTheSigns.Rendering
                 found = WTSRoadNodesData.Instance.BoardsContainers[refId, boardIdx, secIdx] != null;
                 return WTSRoadNodesData.Instance.BoardsContainers[refId, boardIdx, secIdx]?.m_cachedColor ?? default;
             }
+            else if (instance is LayoutDescriptorVehicleXml vehicleDescriptor)
+            {
+                found = true;
+                return Color.white;
+            }
             else if (instance is BoardInstanceBuildingXml buildingDescriptor)
             {
                 found = true;
@@ -447,7 +452,7 @@ namespace Klyte.WriteTheSigns.Rendering
         internal static BasicRenderInformation GetTextMesh(BoardTextDescriptorGeneralXml textDescriptor, ushort refID, int boardIdx, int secIdx, BoardInstanceXml instance, BoardDescriptorGeneralXml propLayout, out IEnumerable<BasicRenderInformation> multipleOutput)
         {
             multipleOutput = null;
-            DynamicSpriteFont baseFont = FontServer.instance[propLayout.FontName];
+            DynamicSpriteFont baseFont = FontServer.instance[propLayout?.FontName ?? ""];
             if (instance is BoardPreviewInstanceXml preview)
             {
                 if (!preview.m_overrideText.IsNullOrWhiteSpace())
@@ -498,6 +503,24 @@ namespace Klyte.WriteTheSigns.Rendering
                         }
                         return RenderUtils.GetTextData(text, textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                 };
+            }
+            else if (instance is LayoutDescriptorVehicleXml vehicleDescriptor)
+            {
+                baseFont ??= FontServer.instance[WTSVehicleData.Instance.DefaultFont];
+                TextType targetType = textDescriptor.m_textType;
+                switch (targetType)
+                {
+                    case TextType.Fixed: return RenderUtils.GetTextData(textDescriptor.m_fixedText ?? "", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
+                    case TextType.OwnName: return GetFromCacheArray(refID, textDescriptor, RenderUtils.CacheArrayTypes.VehicleNumber, baseFont);
+                    case TextType.LinesSymbols:
+                        ref Vehicle[] buffer = ref VehicleManager.instance.m_vehicles.m_buffer;
+                        return WriteTheSignsMod.Controller.TransportLineRenderingRules.DrawLineFormats(new ushort[] { buffer[buffer[refID].GetFirstVehicle(refID)].m_transportLine }, Vector3.one).FirstOrDefault();
+                    case TextType.LastStopLine:
+                        ref Vehicle[] buffer2 = ref VehicleManager.instance.m_vehicles.m_buffer;
+                        return GetFromCacheArray(GetTargetStopInfo(TransportLine.GetPrevStop(buffer2[buffer2[refID].GetFirstVehicle(refID)].m_targetBuilding)).DestinationBuildingId, textDescriptor, RenderUtils.CacheArrayTypes.BuildingName, baseFont);
+                    default:
+                        return null;
+                }
             }
             else if (instance is BoardInstanceBuildingXml buildingDescritpor)
             {
@@ -639,6 +662,7 @@ namespace Klyte.WriteTheSigns.Rendering
             }
             return m_emptyInfo;
         }
+        private static StopInformation GetTargetStopInfo(ushort targetStopId) => WriteTheSignsMod.Controller.BuildingPropsSingleton.m_stopInformation[targetStopId];
         private static StopInformation[] GetAllTargetStopInfo(BoardInstanceBuildingXml descriptor, ushort buildingId)
         {
             return descriptor?.m_platforms?.SelectMany(platform =>

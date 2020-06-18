@@ -78,30 +78,30 @@ namespace Klyte.WriteTheSigns.UI
             float magnitude;
             float dist;
             float zoom = 1;
-            if (referenceIdx < 0 || referenceIdx >= descriptor.m_textDescriptors.Length)
+            if (referenceIdx < 0 || referenceIdx >= descriptor.TextDescriptors.Length)
             {
                 magnitude = info.m_mesh.bounds.extents.magnitude;
                 propMatrix = Matrix4x4.TRS(offsetPosition, Quaternion.Euler(offsetRotation.x, offsetRotation.y, offsetRotation.z), Vector3.one);
             }
             else
             {
-                BasicRenderInformation refer = WTSPropRenderingRules.GetTextMesh(descriptor.m_textDescriptors[referenceIdx], 0, 0, referenceIdx, m_defaultInstance, descriptor, out IEnumerable<BasicRenderInformation> briArr);
+                BasicRenderInformation refer = WTSPropRenderingRules.GetTextMesh(descriptor.TextDescriptors[referenceIdx], 0, 0, referenceIdx, m_defaultInstance, descriptor, out IEnumerable<BasicRenderInformation> briArr);
                 refer ??= briArr?.FirstOrDefault();
 
 
-                var sourceMatrix = Matrix4x4.Inverse(WTSPropRenderingRules.CalculateTextMatrix(descriptor.m_textDescriptors[referenceIdx].PlacingConfig.Position, descriptor.m_textDescriptors[referenceIdx].PlacingConfig.Rotation, Vector3.one, descriptor.m_textDescriptors[referenceIdx], refer, descriptor.m_textDescriptors[referenceIdx].PlacingConfig.m_create180degYClone, true).FirstOrDefault());
+                var sourceMatrix = Matrix4x4.Inverse(WTSPropRenderingRules.CalculateTextMatrix(descriptor.TextDescriptors[referenceIdx].PlacingConfig.Position, descriptor.TextDescriptors[referenceIdx].PlacingConfig.Rotation, Vector3.one, descriptor.TextDescriptors[referenceIdx], refer, descriptor.TextDescriptors[referenceIdx].PlacingConfig.m_create180degYClone, true).FirstOrDefault());
                 float regularMagn = info.m_mesh.bounds.extents.magnitude / WTSPropRenderingRules.SCALING_FACTOR;
                 Vector3 textExt = refer?.m_mesh?.bounds.extents ?? default;
-                if (descriptor.m_textDescriptors[referenceIdx].IsMultiItemText())
+                if (descriptor.TextDescriptors[referenceIdx].IsMultiItemText())
                 {
-                    textExt *= Mathf.Max(descriptor.m_textDescriptors[referenceIdx].MultiItemSettings.SubItemsPerColumn, descriptor.m_textDescriptors[referenceIdx].MultiItemSettings.SubItemsPerRow);
+                    textExt *= Mathf.Max(descriptor.TextDescriptors[referenceIdx].MultiItemSettings.SubItemsPerColumn, descriptor.TextDescriptors[referenceIdx].MultiItemSettings.SubItemsPerRow);
                 }
 
-                if (descriptor.m_textDescriptors[referenceIdx].m_maxWidthMeters > 0)
+                if (descriptor.TextDescriptors[referenceIdx].m_maxWidthMeters > 0)
                 {
-                    textExt.x = Mathf.Min(textExt.x * descriptor.m_textDescriptors[referenceIdx].m_textScale, descriptor.m_textDescriptors[referenceIdx].m_maxWidthMeters / WTSPropRenderingRules.SCALING_FACTOR) / descriptor.m_textDescriptors[referenceIdx].m_textScale;
+                    textExt.x = Mathf.Min(textExt.x * descriptor.TextDescriptors[referenceIdx].m_textScale, descriptor.TextDescriptors[referenceIdx].m_maxWidthMeters / WTSPropRenderingRules.SCALING_FACTOR) / descriptor.TextDescriptors[referenceIdx].m_textScale;
                 }
-                magnitude = Mathf.Min(regularMagn * 3, Mathf.Max(0.1f / WTSPropRenderingRules.SCALING_FACTOR, (textExt * descriptor.m_textDescriptors[referenceIdx].m_textScale).magnitude));
+                magnitude = Mathf.Min(regularMagn * 3, Mathf.Max(0.1f / WTSPropRenderingRules.SCALING_FACTOR, (textExt * descriptor.TextDescriptors[referenceIdx].m_textScale).magnitude));
                 propMatrix = Matrix4x4.TRS(offsetPosition, Quaternion.Euler(offsetRotation.x, offsetRotation.y, offsetRotation.z), Vector3.one) * sourceMatrix;
             }
             dist = magnitude + 16f;
@@ -133,9 +133,9 @@ namespace Klyte.WriteTheSigns.UI
             Graphics.DrawMesh(info.m_mesh, propMatrix, info.m_material, info.m_prefabDataLayer, m_camera, 0, materialBlock, false, false, false);
 
             m_defaultInstance.Descriptor = descriptor;
-            for (ushort i = 0; i < descriptor.m_textDescriptors.Length; i++)
+            for (ushort i = 0; i < descriptor.TextDescriptors.Length; i++)
             {
-                WTSPropRenderingRules.RenderTextMesh(0, 0, i, m_defaultInstance, propMatrix, descriptor, ref descriptor.m_textDescriptors[i], m_block, m_camera, Shader.Find("Custom/Buildings/Building/AnimUV"));
+                WTSPropRenderingRules.RenderTextMesh(0, 0, i, m_defaultInstance, propMatrix, descriptor, ref descriptor.TextDescriptors[i], m_block, m_camera, Shader.Find("Custom/Buildings/Building/AnimUV"));
             }
 
 

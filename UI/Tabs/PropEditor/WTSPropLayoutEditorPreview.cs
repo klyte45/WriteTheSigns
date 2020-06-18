@@ -32,7 +32,7 @@ namespace Klyte.WriteTheSigns.UI
         private int TabToPreview => WTSPropLayoutEditor.Instance.CurrentTab - 1;
         private BoardDescriptorGeneralXml EditingInstancePreview => WTSPropLayoutEditor.Instance.EditingInstance;
 
-        private BoardTextDescriptorGeneralXml CurrentTextDescriptor => TabToPreview >= 0 && TabToPreview < EditingInstancePreview.m_textDescriptors.Length ? EditingInstancePreview.m_textDescriptors[TabToPreview] : default;
+        private BoardTextDescriptorGeneralXml CurrentTextDescriptor => TabToPreview >= 0 && TabToPreview < EditingInstancePreview.TextDescriptors.Length ? EditingInstancePreview.TextDescriptors[TabToPreview] : default;
 
         public float TargetZoom { get; set; } = 3;
         public float CameraRotation { get; private set; }

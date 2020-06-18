@@ -1,5 +1,6 @@
 ﻿using ColossalFramework;
 using ColossalFramework.Math;
+using ColossalFramework.UI;
 using Klyte.Commons;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Data;
@@ -28,6 +29,7 @@ namespace Klyte.WriteTheSigns.Singleton
         public SimpleXmlDictionary<string, ExportableBuildingGroupDescriptorXml> AssetsDescriptors => Data.AssetsDescriptors;
 
         internal readonly StopInformation[][][] m_platformToLine = new StopInformation[BuildingManager.MAX_BUILDING_COUNT][][];
+        internal readonly StopInformation[] m_stopInformation = new StopInformation[NetManager.MAX_NODE_COUNT];
         private ulong m_lastUpdateLines = SimulationManager.instance.m_currentTickIndex;
         private readonly ulong[] m_buildingLastUpdateLines = new ulong[BuildingManager.MAX_BUILDING_COUNT];
         private ulong[] m_lastDrawBuilding = new ulong[BuildingManager.MAX_BUILDING_COUNT];
@@ -263,13 +265,13 @@ namespace Klyte.WriteTheSigns.Singleton
             WTSPropRenderingRules.RenderPropMesh(ref cachedProp, cameraInfo, buildingId, boardIdx, 0, layerMask, data.m_angle, position, Vector4.zero, ref propLayout.m_propName, rotation, targetDescriptor.PropScale, propLayout, targetDescriptor, out Matrix4x4 propMatrix, out bool rendered, new InstanceID { Building = buildingId });
             if (rendered)
             {
-                for (int j = 0; j < propLayout.m_textDescriptors.Length; j++)
+                for (int j = 0; j < propLayout.TextDescriptors.Length; j++)
                 {
-                    if (cameraInfo.CheckRenderDistance(position, 200 * propLayout.m_textDescriptors[j].m_textScale * targetDescriptor.PropScale.magnitude * (propLayout.m_textDescriptors[j].ColoringConfig.MaterialType == FontStashSharp.MaterialType.OPAQUE ? 1 : 2)))
+                    if (cameraInfo.CheckRenderDistance(position, 200 * propLayout.TextDescriptors[j].m_textScale * targetDescriptor.PropScale.magnitude * (propLayout.TextDescriptors[j].ColoringConfig.MaterialType == FontStashSharp.MaterialType.OPAQUE ? 1 : 2)))
                     {
                         MaterialPropertyBlock properties = PropManager.instance.m_materialBlock;
                         properties.Clear();
-                        WTSPropRenderingRules.RenderTextMesh(buildingId, boardIdx, 0, targetDescriptor, propMatrix, propLayout, ref propLayout.m_textDescriptors[j], properties);
+                        WTSPropRenderingRules.RenderTextMesh(buildingId, boardIdx, 0, targetDescriptor, propMatrix, propLayout, ref propLayout.TextDescriptors[j], properties);
                     }
                 }
             }
@@ -282,6 +284,8 @@ namespace Klyte.WriteTheSigns.Singleton
             {
                 NetManager nmInstance = NetManager.instance;
                 LogUtils.DoLog($"--------------- UpdateLinesBuilding {buildingID}");
+
+                m_platformToLine[buildingID]?.SelectMany(x => x)?.ForEach(x => m_stopInformation[x.m_stopId] = default);
                 m_platformToLine[buildingID] = null;
                 if (!m_buildingStopsDescriptor.ContainsKey(refName))
                 {
@@ -460,6 +464,7 @@ namespace Klyte.WriteTheSigns.Singleton
                     }
                 }
                 m_buildingLastUpdateLines[buildingID] = m_lastUpdateLines;
+                m_platformToLine[buildingID].SelectMany(x => x).ForEach(x => m_stopInformation[x.m_stopId] = x);
                 LogUtils.DoLog($"--------------- end UpdateLinesBuilding {buildingID}");
             }
         }

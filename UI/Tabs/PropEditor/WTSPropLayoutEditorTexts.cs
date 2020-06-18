@@ -145,7 +145,7 @@ namespace Klyte.WriteTheSigns.UI
                     OnSetData(ref x);
                     x.SaveName = name;
                 }),
-                () => XmlUtils.DefaultXmlSerialize(WTSPropLayoutEditor.Instance.EditingInstance.m_textDescriptors[Math.Max(0, TabToEdit)]));
+                () => XmlUtils.DefaultXmlSerialize(WTSPropLayoutEditor.Instance.EditingInstance.TextDescriptors[Math.Max(0, TabToEdit)]));
 
 
 
@@ -276,9 +276,9 @@ namespace Klyte.WriteTheSigns.UI
                 try
                 {
                     int effTargetTab = Math.Max(0, targetTab ?? TabToEdit);
-                    if (effTargetTab < WTSPropLayoutEditor.Instance.EditingInstance.m_textDescriptors.Length)
+                    if (effTargetTab < WTSPropLayoutEditor.Instance.EditingInstance.TextDescriptors.Length)
                     {
-                        action(ref WTSPropLayoutEditor.Instance.EditingInstance.m_textDescriptors[effTargetTab]);
+                        action(ref WTSPropLayoutEditor.Instance.EditingInstance.TextDescriptors[effTargetTab]);
                     }
                 }
                 finally

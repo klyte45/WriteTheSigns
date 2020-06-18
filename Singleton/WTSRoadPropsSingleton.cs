@@ -130,11 +130,11 @@ namespace Klyte.WriteTheSigns.Singleton
             if (rendered)
             {
 
-                for (int j = 0; j < targetDescriptor.Descriptor.m_textDescriptors.Length; j++)
+                for (int j = 0; j < targetDescriptor.Descriptor.TextDescriptors.Length; j++)
                 {
-                    if (cameraInfo.CheckRenderDistance(position, 200 * targetDescriptor.Descriptor.m_textDescriptors[j].m_textScale * (targetDescriptor.Descriptor.m_textDescriptors[j].ColoringConfig.MaterialType == FontStashSharp.MaterialType.OPAQUE ? 1 : 3)))
+                    if (cameraInfo.CheckRenderDistance(position, 200 * targetDescriptor.Descriptor.TextDescriptors[j].m_textScale * (targetDescriptor.Descriptor.TextDescriptors[j].ColoringConfig.MaterialType == FontStashSharp.MaterialType.OPAQUE ? 1 : 3)))
                     {
-                        if (targetDescriptor.Descriptor.m_textDescriptors[j].m_destinationRelative != DestinationReference.Self)
+                        if (targetDescriptor.Descriptor.TextDescriptors[j].m_destinationRelative != DestinationReference.Self)
                         {
                             if (WriteTheSignsMod.Controller.DestinationSingleton.m_updatedDestinations[nodeID] == null)
                             {
@@ -145,7 +145,7 @@ namespace Klyte.WriteTheSigns.Singleton
 
                         MaterialPropertyBlock properties = PropManager.instance.m_materialBlock;
                         properties.Clear();
-                        WTSPropRenderingRules.RenderTextMesh(nodeID, boardIdx, secIdx, targetDescriptor, propMatrix, targetDescriptor.Descriptor, ref targetDescriptor.Descriptor.m_textDescriptors[j], properties);
+                        WTSPropRenderingRules.RenderTextMesh(nodeID, boardIdx, secIdx, targetDescriptor, propMatrix, targetDescriptor.Descriptor, ref targetDescriptor.Descriptor.TextDescriptors[j], properties);
                     }
                 }
             }
@@ -232,7 +232,7 @@ namespace Klyte.WriteTheSigns.Singleton
             var matchingDescriptors = new Stack<Tuple<int, BoardInstanceRoadNodeXml>>(Data.DescriptorRulesOrder.Select((x, y) => Tuple.New(y, x))
                 .Where(x => x.Second.PlaceOnSegmentInsteadOfCorner
                 && x.Second.AllowsClass(classI)
-                && x.Second.Descriptor.m_textDescriptors.All(
+                && x.Second.Descriptor.TextDescriptors.All(
                         t =>
                         {
                             if (!t.IsTextRelativeToSegment() || t.m_targetNodeRelative == 0)
@@ -243,7 +243,7 @@ namespace Klyte.WriteTheSigns.Singleton
                             return rotationAnglesOrder[nodeIdx] > 40 && rotationAnglesOrder[nodeIdx] < 320;
                         })
                 && (WriteTheSignsMod.Controller.DestinationSingleton.m_updatedDestinations[nodeID] != true
-                    || x.Second.Descriptor.m_textDescriptors.All(
+                    || x.Second.Descriptor.TextDescriptors.All(
                         t =>
                         {
                             if (!t.IsTextRelativeToSegment())

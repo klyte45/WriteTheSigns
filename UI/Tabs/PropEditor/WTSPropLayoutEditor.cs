@@ -140,7 +140,7 @@ namespace Klyte.WriteTheSigns.UI
             {
                 SaveName = $"Tab {button.zOrder}"
             };
-            EditingInstance.m_textDescriptors = EditingInstance.m_textDescriptors.Union(new BoardTextDescriptorGeneralXml[] { newItem
+            EditingInstance.TextDescriptors = EditingInstance.TextDescriptors.Union(new BoardTextDescriptorGeneralXml[] { newItem
             }).ToArray();
             button.text = newItem.SaveName;
         }
@@ -156,8 +156,8 @@ namespace Klyte.WriteTheSigns.UI
         internal void RemoveTabFromItem(int tabToEdit)
         {
             Destroy(m_editTabstrip.components[tabToEdit + 1]);
-            EditingInstance.m_textDescriptors = EditingInstance.m_textDescriptors.Where((x, y) => y != tabToEdit).ToArray();
-            OnTabChange(Mathf.Min(CurrentTab, EditingInstance.m_textDescriptors.Length));
+            EditingInstance.TextDescriptors = EditingInstance.TextDescriptors.Where((x, y) => y != tabToEdit).ToArray();
+            OnTabChange(Mathf.Min(CurrentTab, EditingInstance.TextDescriptors.Length));
         }
 
         public void SetCurrentTabName(string name)
@@ -269,18 +269,18 @@ namespace Klyte.WriteTheSigns.UI
             {
                 EditingInstance = WTSPropLayoutData.Instance.Get(targetValue);
                 OnTabChange(0);
-                while (m_editTabstrip.components.Count > EditingInstance.m_textDescriptors.Length + 2)
+                while (m_editTabstrip.components.Count > EditingInstance.TextDescriptors.Length + 2)
                 {
                     Destroy(m_editTabstrip.components[m_editTabstrip.components.Count - 2]);
                     m_editTabstrip.RemoveUIComponent(m_editTabstrip.components[m_editTabstrip.components.Count - 2]);
                 }
-                while (m_editTabstrip.components.Count < EditingInstance.m_textDescriptors.Length + 2)
+                while (m_editTabstrip.components.Count < EditingInstance.TextDescriptors.Length + 2)
                 {
                     AddTabButton("!!!");
                 }
-                for (int i = 1; i <= EditingInstance.m_textDescriptors.Length; i++)
+                for (int i = 1; i <= EditingInstance.TextDescriptors.Length; i++)
                 {
-                    (m_editTabstrip.components[i] as UIButton).text = EditingInstance.m_textDescriptors[i - 1].SaveName;
+                    (m_editTabstrip.components[i] as UIButton).text = EditingInstance.TextDescriptors[i - 1].SaveName;
                 }
 
             }
