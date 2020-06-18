@@ -61,8 +61,8 @@ namespace Klyte.WriteTheSigns.Libraries
             }
         }
 
-        public IEnumerable<string> List() => m_indexes.Keys;
-        public IEnumerable<string> ListWhere(Func<DESC, bool> filter) => m_savedDescriptorsSerialized.Where(x => filter(x)).Select(x => x.SaveName);
+        public IEnumerable<string> List() => m_indexes.Keys.OrderBy(y => y);
+        public IEnumerable<string> ListWhere(Func<DESC, bool> filter) => m_savedDescriptorsSerialized.Where(x => filter(x)).Select(x => x.SaveName).OrderBy(y => y);
 
         public void Remove(string indexName)
         {

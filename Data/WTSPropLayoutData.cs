@@ -11,8 +11,8 @@ namespace Klyte.WriteTheSigns.Data
 
         protected override void Save()
         {
-            base.Save();
             WTSRoadNodesData.Instance.ResetCacheDescriptors();
+            base.Save();
         }
     }
 }

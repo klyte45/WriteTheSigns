@@ -2,6 +2,7 @@
 using ColossalFramework.Packaging;
 using ColossalFramework.UI;
 using Klyte.Commons.Extensors;
+using Klyte.Commons.UI.SpriteNames;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Data;
 using Klyte.WriteTheSigns.Singleton;
@@ -67,8 +68,11 @@ namespace Klyte.WriteTheSigns.UI
         private UIButton m_btnExport;
         private UIButton m_btnSteam;
         private UIButton m_btnReload;
+        private UIButton m_btnLock;
 
         public WTSBuildingLayoutEditorPropList LayoutList { get; private set; }
+        public ushort CurrentBuildingId { get; private set; }
+        public bool LockSelection { get; internal set; } = true;
 
         public void Awake()
         {
@@ -94,6 +98,10 @@ namespace Klyte.WriteTheSigns.UI
             m_btnExport = AddButtonInEditorRow(m_containerSelectionDescription, Commons.UI.SpriteNames.CommonsSpriteNames.K45_Export, OnExportAsGlobal, "K45_WTS_BUILDINGEDITOR_BUTTONROWACTION_EXPORTASGLOBAL", false);
             m_btnSteam = AddButtonInEditorRow(m_containerSelectionDescription, Commons.UI.SpriteNames.CommonsSpriteNames.K45_Steam, OnExportAsAsset, "K45_WTS_BUILDINGEDITOR_BUTTONROWACTION_EXPORTTOASSETFOLDER", false);
             m_btnReload = AddButtonInEditorRow(m_containerSelectionDescription, Commons.UI.SpriteNames.CommonsSpriteNames.K45_Reload, OnReloadDescriptors, "K45_WTS_BUILDINGEDITOR_BUTTONROWACTION_RELOADDESCRIPTORS", false);
+            m_btnLock = AddButtonInEditorRow(m_containerSelectionDescription, CommonsSpriteNames.K45_Lock, OnLockSelection, "K45_WTS_BUILDINGEDITOR_BUTTONROWACTION_LOCKCAMERASELECTION", false);
+            m_btnLock.color = LockSelection ? Color.red : Color.white;
+            m_btnLock.focusedColor = LockSelection ? Color.red : Color.white;
+            m_btnLock.pressedColor = LockSelection ? Color.red : Color.white;
 
             KlyteMonoUtils.CreateUIElement(out m_secondaryContainer, MainContainer.transform, "SecContainer", new Vector4(0, 0, MainContainer.width, 655));
             m_secondaryContainer.autoLayout = true;
@@ -112,6 +120,14 @@ namespace Klyte.WriteTheSigns.UI
         internal float GetCurrentMappingThresold() => CurrentEditingInstance?.StopMappingThresold ?? 1f;
         internal bool IsEditing(string refName) => CurrentBuildingName == refName;
 
+        private void OnLockSelection()
+        {
+            LockSelection = !LockSelection;
+            m_btnLock.normalFgSprite = KlyteResourceLoader.GetDefaultSpriteNameFor(LockSelection ? CommonsSpriteNames.K45_Lock : CommonsSpriteNames.K45_Unlock);
+            m_btnLock.color = LockSelection ? Color.red : Color.white;
+            m_btnLock.focusedColor = LockSelection ? Color.red : Color.white;
+            m_btnLock.pressedColor = LockSelection ? Color.red : Color.white;
+        }
         private void OnReloadDescriptors()
         {
             WriteTheSignsMod.Controller?.BuildingPropsSingleton?.LoadAllBuildingConfigurations();
@@ -120,7 +136,7 @@ namespace Klyte.WriteTheSigns.UI
 
         private void OnExportAsAsset()
         {
-            File.WriteAllText(Path.Combine(PackageManager.FindAssetByName(CurrentBuildingName)?.package?.packagePath, $"{WTSController.m_defaultFileNameXml}_{CurrentBuildingName}.xml"), XmlUtils.DefaultXmlSerialize(CurrentEditingInstance));
+            File.WriteAllText(Path.Combine(Path.GetDirectoryName(PackageManager.FindAssetByName(CurrentBuildingName)?.package?.packagePath), $"{WTSController.m_defaultFileNameXml}.xml"), XmlUtils.DefaultXmlSerialize(CurrentEditingInstance));
             WriteTheSignsMod.Controller?.BuildingPropsSingleton?.LoadAllBuildingConfigurations();
         }
 
@@ -133,12 +149,35 @@ namespace Klyte.WriteTheSigns.UI
         private void OnOpenGlobalFolder() => ColossalFramework.Utils.OpenInFileBrowser(WTSController.DefaultBuildingsConfigurationFolder);
         private void OnDeleteFromCity()
         {
-            WTSBuildingsData.Instance.CityDescriptors.Remove(m_currentBuildingName);
+            K45DialogControl.ShowModal(new K45DialogControl.BindProperties
+            {
+                message = Locale.Get("K45_WTS_PROMPTDELETEBUILDINGLAYOUT"),
+                showButton1 = true,
+                showButton2 = true,
+                textButton1 = Locale.Get("YES"),
+                textButton2 = Locale.Get("NO"),
+            }, (x) =>
+            {
+                if (x == 1)
+                {
+                    WTSBuildingsData.Instance.CityDescriptors.Remove(m_currentBuildingName);
+                }
+
+                return true;
+            });
             ReloadBuilding();
         }
         private void OnCopyToCity()
         {
             WTSBuildingsData.Instance.CityDescriptors[m_currentBuildingName] = XmlUtils.DefaultXmlDeserialize<BuildingGroupDescriptorXml>(XmlUtils.DefaultXmlSerialize(CurrentEditingInstance));
+            CurrentEditingInstance.LocalLayouts.ForEach(x =>
+            {
+                if (WTSPropLayoutData.Instance.Get(x.Key) == null)
+                {
+                    var value = x.Value;
+                    WTSPropLayoutData.Instance.Add(x.Key, ref value);
+                }
+            });
             ReloadBuilding();
         }
         private void OnCreateNewCity()
@@ -157,7 +196,12 @@ namespace Klyte.WriteTheSigns.UI
             WriteTheSignsMod.Controller.BuildingEditorToolInstance.enabled = true;
         }
 
-        private void OnBuildingSet(ushort id) => OnBuildingSet(WTSBuildingPropsSingleton.GetReferenceModelName(ref BuildingManager.instance.m_buildings.m_buffer[id]));
+        private void OnBuildingSet(ushort id)
+        {
+            CurrentBuildingId = id;
+            OnBuildingSet(WTSBuildingPropsSingleton.GetReferenceModelName(ref BuildingManager.instance.m_buildings.m_buffer[id]));
+        }
+
         private void OnBuildingSet(string buildingId)
         {
             CurrentBuildingName = buildingId;
@@ -177,6 +221,7 @@ namespace Klyte.WriteTheSigns.UI
             EventOnBuildingSelectionChanged?.Invoke(CurrentEditingInstance, CurrentConfigurationSource);
 
             m_btnNew.isVisible = CurrentConfigurationSource != ConfigurationSource.CITY;
+            m_btnLock.isVisible = CurrentConfigurationSource != ConfigurationSource.NONE;
             m_btnCopy.isVisible = CurrentConfigurationSource != ConfigurationSource.CITY && CurrentConfigurationSource != ConfigurationSource.NONE;
             m_btnDelete.isVisible = CurrentConfigurationSource == ConfigurationSource.CITY;
             m_btnExport.isVisible = CurrentConfigurationSource == ConfigurationSource.CITY;

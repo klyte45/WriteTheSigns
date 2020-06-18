@@ -109,6 +109,8 @@ namespace Klyte.WriteTheSigns.UI
             KlyteMonoUtils.CreateUIElement(out m_textInfoEditor, m_editArea.transform, "textTab", new UnityEngine.Vector4(0, 0, m_editArea.width - m_editArea.padding.horizontal, m_editArea.height - m_editArea.padding.vertical));
             m_textInfoEditor.gameObject.AddComponent<WTSPropLayoutEditorTexts>();
 
+
+            WTSPropLayoutData.Instance.EventDataChanged += RefreshConfigList;
             RefreshConfigList();
             OnTabChange(0);
 

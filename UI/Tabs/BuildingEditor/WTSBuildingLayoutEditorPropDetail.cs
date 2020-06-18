@@ -180,7 +180,14 @@ namespace Klyte.WriteTheSigns.UI
         private void LoadAvailableLayouts()
         {
             m_propLayoutSelect.items = WTSPropLayoutData.Instance.ListWhere(x => x.m_allowedRenderClass == TextRenderingClass.Buildings).ToArray();
-            SafeObtain((ref BoardInstanceBuildingXml x) => m_propLayoutSelect.selectedIndex = Math.Max(0, Array.IndexOf(m_propLayoutSelect.items, x.PropLayoutName)));
+            SafeObtain((ref BoardInstanceBuildingXml x) =>
+            {
+                if (x.PropLayoutName != null && !m_propLayoutSelect.items.Contains(x.PropLayoutName))
+                {
+                    m_propLayoutSelect.items = m_propLayoutSelect.items.Union(new string[] { x.PropLayoutName }).OrderBy(x => x).ToArray();
+                }
+                m_propLayoutSelect.selectedValue = x.PropLayoutName;
+            });
         }
 
 
@@ -249,6 +256,7 @@ namespace Klyte.WriteTheSigns.UI
             CurrentBuildingName = buildingName;
             Source = source;
             MainContainer.isVisible = current != null;
+            LoadAvailableLayouts();
             Dirty = true;
         }
 

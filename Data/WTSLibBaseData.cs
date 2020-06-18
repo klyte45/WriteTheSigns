@@ -43,6 +43,8 @@ namespace Klyte.WriteTheSigns.Data
 
         public virtual void LoadDefaults() { }
 
-        protected override void Save() { }
+        public event Action EventDataChanged;
+
+        protected override void Save() => EventDataChanged?.Invoke();
     }
 }
