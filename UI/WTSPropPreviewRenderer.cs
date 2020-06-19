@@ -135,7 +135,7 @@ namespace Klyte.WriteTheSigns.UI
             m_defaultInstance.Descriptor = descriptor;
             for (ushort i = 0; i < descriptor.TextDescriptors.Length; i++)
             {
-                WTSPropRenderingRules.RenderTextMesh(0, 0, i, m_defaultInstance, propMatrix, descriptor, ref descriptor.TextDescriptors[i], m_block, m_camera, Shader.Find("Custom/Buildings/Building/AnimUV"));
+                WTSPropRenderingRules.RenderTextMesh(0, 0, i, m_defaultInstance, propMatrix, descriptor, ref descriptor.TextDescriptors[i], m_block, -1, m_camera, Shader.Find("Custom/Buildings/Building/AnimUV"));
             }
 
 

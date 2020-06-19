@@ -13,5 +13,4 @@ namespace Klyte.WriteTheSigns.Xml
         public BoardTextDescriptorGeneralXml[] TextDescriptors { get; set; } = new BoardTextDescriptorGeneralXml[0];
     }
 
-
 }

@@ -42,6 +42,10 @@ namespace Klyte.WriteTheSigns.Xml
         public string m_prefix = "";
         [XmlAttribute("suffix")]
         public string m_suffix = "";
+        [XmlAttribute("requiredFlags")]
+        public int m_requiredFlags;
+        [XmlAttribute("forbiddenFlags")]
+        public int m_forbiddenFlags;
 
 
         [XmlAttribute("saveName")]
@@ -56,6 +60,7 @@ namespace Klyte.WriteTheSigns.Xml
 
         [XmlElement("MultiItemSettings")]
         public SubItemSettings MultiItemSettings { get; set; } = new SubItemSettings();
+
 
         public bool IsTextRelativeToSegment()
         {

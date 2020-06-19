@@ -747,6 +747,7 @@ namespace FontStashSharp
     {
         OPAQUE,
         DAYNIGHT,
+        FLAGS,
         BRIGHT
     }
 }

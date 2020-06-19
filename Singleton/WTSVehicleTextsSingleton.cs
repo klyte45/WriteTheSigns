@@ -1,7 +1,13 @@
-﻿using Klyte.Commons.Utils;
+﻿using Klyte.Commons;
+using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Data;
 using Klyte.WriteTheSigns.Rendering;
+using Klyte.WriteTheSigns.UI;
 using Klyte.WriteTheSigns.Xml;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Xml.Serialization;
 using UnityEngine;
 
 namespace Klyte.WriteTheSigns.Singleton
@@ -10,16 +16,16 @@ namespace Klyte.WriteTheSigns.Singleton
     {
         public WTSVehicleData Data => WTSVehicleData.Instance;
 
+        public SimpleXmlDictionary<string, LayoutDescriptorVehicleXml> CityDescriptors => Data.CityDescriptors;
+        public SimpleXmlDictionary<string, LayoutDescriptorVehicleXml> GlobalDescriptors => Data.GlobalDescriptors;
+        public SimpleXmlDictionary<string, LayoutDescriptorVehicleXml> AssetsDescriptors => Data.AssetsDescriptors;
 
         #region Initialize
         public void Awake()
         {
-
         }
 
-        public void Start()
-        {
-        }
+        public void Start() => LoadAllVehiclesConfigurations();
 
 
         #endregion
@@ -35,18 +41,53 @@ namespace Klyte.WriteTheSigns.Singleton
                 return;
             }
 
-            Vehicle.Flags flags = VehicleManager.instance.m_vehicles.m_buffer[vehicleID].m_flags;
-            Matrix4x4 vehicleMatrix = thiz.m_info.m_vehicleAI.CalculateBodyMatrix(flags, ref position, ref rotation, ref scale, ref swayPosition);
-            MaterialPropertyBlock materialBlock = VehicleManager.instance.m_materialBlock;
-            materialBlock.Clear();
+            GetTargetDescriptor(thiz.m_info.name, out _, out LayoutDescriptorVehicleXml targetDescriptor);
 
+            if (targetDescriptor != null)
+            {
 
-            //BasicRenderInformation renderInfo = RenderUtils.GetTextData($"{vehicleID}", "", "", FontServer.instance[Data.DefaultFont ?? WTSController.DEFAULT_FONT_KEY], null);
+                Vehicle.Flags flags = VehicleManager.instance.m_vehicles.m_buffer[vehicleID].m_flags;
+                Matrix4x4 vehicleMatrix = thiz.m_info.m_vehicleAI.CalculateBodyMatrix(flags, ref position, ref rotation, ref scale, ref swayPosition);
+                MaterialPropertyBlock materialBlock = VehicleManager.instance.m_materialBlock;
+                materialBlock.Clear();
 
-            //WTSPropRenderingRules.DrawTextBri(vehicleID, 0, 0, vehicleMatrix, basicDescr, materialBlock, renderInfo, KlyteMonoUtils.ContrastColor(thiz.GetColor(vehicleID, ref vehicleData, InfoManager.InfoMode.None)), new Vector3(thiz.m_info.m_mesh.bounds.max.x, 1, 0), new Vector3(0, -90), Vector3.one, false);
-            //WTSPropRenderingRules.DrawTextBri(vehicleID, 0, 0, vehicleMatrix, basicDescr, materialBlock, renderInfo, KlyteMonoUtils.ContrastColor(thiz.GetColor(vehicleID, ref vehicleData, InfoManager.InfoMode.None)), new Vector3(thiz.m_info.m_mesh.bounds.min.x, 1, 0), new Vector3(0, 90), Vector3.one, false);
+                RenderDescriptor(ref vehicleData, cameraInfo, vehicleID, position, vehicleMatrix, ref targetDescriptor);
+            }
+        }
 
-            RenderSign(cameraInfo, vehicleID, position, vehicleMatrix, ref basicDescr);
+        internal static void GetTargetDescriptor(string vehicle, out ConfigurationSource source, out LayoutDescriptorVehicleXml target)
+        {
+            if (vehicle == null)
+            {
+                source = ConfigurationSource.NONE;
+                target = null;
+                return;
+            }
+
+            if (WTSVehicleData.Instance.CityDescriptors.ContainsKey(vehicle))
+            {
+                source = ConfigurationSource.CITY;
+                target = WTSVehicleData.Instance.CityDescriptors[vehicle];
+                return;
+            }
+
+            if (WTSVehicleData.Instance.GlobalDescriptors.ContainsKey(vehicle))
+            {
+                source = ConfigurationSource.GLOBAL;
+                target = WTSVehicleData.Instance.GlobalDescriptors[vehicle];
+                return;
+            }
+
+            if (WTSVehicleData.Instance.AssetsDescriptors.ContainsKey(vehicle))
+            {
+                source = ConfigurationSource.ASSET;
+                target = WTSVehicleData.Instance.AssetsDescriptors[vehicle];
+                return;
+            }
+
+            source = ConfigurationSource.NONE;
+            target = null;
+
         }
         private LayoutDescriptorVehicleXml basicDescr = new LayoutDescriptorVehicleXml
         {
@@ -87,21 +128,105 @@ namespace Klyte.WriteTheSigns.Singleton
         };
 
 
-        private void RenderSign(RenderManager.CameraInfo cameraInfo, ushort vehicleId, Vector3 position, Matrix4x4 vehicleMatrix, ref LayoutDescriptorVehicleXml targetDescriptor)
+        private void RenderDescriptor(ref Vehicle v, RenderManager.CameraInfo cameraInfo, ushort vehicleId, Vector3 position, Matrix4x4 vehicleMatrix, ref LayoutDescriptorVehicleXml targetDescriptor)
         {
+            var instance = VehicleManager.instance;
             for (int j = 0; j < targetDescriptor.TextDescriptors.Length; j++)
             {
                 if (cameraInfo.CheckRenderDistance(position, 200 * targetDescriptor.TextDescriptors[j].m_textScale * (targetDescriptor.TextDescriptors[j].ColoringConfig.MaterialType == FontStashSharp.MaterialType.OPAQUE ? 1 : 2)))
                 {
-                    MaterialPropertyBlock properties = VehicleManager.instance.m_materialBlock;
+                    MaterialPropertyBlock properties = instance.m_materialBlock;
                     properties.Clear();
-                    WTSPropRenderingRules.RenderTextMesh(vehicleId, 0, 0, targetDescriptor, vehicleMatrix, null, ref targetDescriptor.TextDescriptors[j], properties);
+                    WTSPropRenderingRules.RenderTextMesh(vehicleId, 0, 0, targetDescriptor, vehicleMatrix, null, ref targetDescriptor.TextDescriptors[j], properties, (int)instance.m_vehicles.m_buffer[v.GetFirstVehicle(vehicleId)].m_flags);
                 }
             }
 
         }
 
+        #region IO 
 
+        private static string DefaultFilename { get; } = $"{WTSController.m_defaultFileNameXml}.xml";
+
+        public void LoadAllVehiclesConfigurations()
+        {
+            LogUtils.DoLog("LOADING VEHICLE CONFIG START -----------------------------");
+            FileUtils.ScanPrefabsFolders<VehicleInfo>(DefaultFilename, LoadDescriptorsFromXmlAsset);
+            var errorList = new List<string>();
+            Data.GlobalDescriptors.Clear();
+            Data.AssetsDescriptors.Clear();
+            LogUtils.DoLog($"DefaultVehiclesConfigurationFolder = {WTSController.DefaultVehiclesConfigurationFolder}");
+            foreach (string filename in Directory.GetFiles(WTSController.DefaultVehiclesConfigurationFolder, "*.xml"))
+            {
+                try
+                {
+                    if (CommonProperties.DebugMode)
+                    {
+                        LogUtils.DoLog($"Trying deserialize {filename}:\n{File.ReadAllText(filename)}");
+                    }
+                    using FileStream stream = File.OpenRead(filename);
+                    LoadDescriptorsFromXmlCommon(stream, null);
+                }
+                catch (Exception e)
+                {
+                    LogUtils.DoWarnLog($"Error Loading file \"{filename}\" ({e.GetType()}): {e.Message}\n{e}");
+                    errorList.Add($"Error Loading file \"{filename}\" ({e.GetType()}): {e.Message}");
+                }
+            }
+
+            if (errorList.Count > 0)
+            {
+                K45DialogControl.ShowModal(new K45DialogControl.BindProperties
+                {
+                    title = "WTS - Errors loading vehicle Files",
+                    message = string.Join("\r\n", errorList.ToArray()),
+                    useFullWindowWidth = true,
+                    showButton1 = true,
+                    textButton1 = "Okay...",
+                    showClose = true
+
+                }, (x) => true);
+
+            }
+
+            Data.CleanCache();
+
+            LogUtils.DoLog("LOADING VEHICLE CONFIG END -----------------------------");
+        }
+
+        private void LoadDescriptorsFromXmlCommon(FileStream stream, VehicleInfo info) => LoadDescriptorsFromXml(stream, info, ref Data.GlobalDescriptors);
+        private void LoadDescriptorsFromXmlAsset(FileStream stream, VehicleInfo info) => LoadDescriptorsFromXml(stream, info, ref Data.AssetsDescriptors);
+        private void LoadDescriptorsFromXml(FileStream stream, VehicleInfo info, ref SimpleXmlDictionary<string, LayoutDescriptorVehicleXml> referenceDic)
+        {
+            var serializer = new XmlSerializer(typeof(ExportableLayoutDescriptorVehicleXml));
+
+            LogUtils.DoLog($"trying deserialize: {info}");
+
+            if (serializer.Deserialize(stream) is ExportableLayoutDescriptorVehicleXml configs)
+            {
+                foreach (var config in configs.Descriptors)
+                {
+                    if (info != null)
+                    {
+                        string[] propEffName = info.name.Split(".".ToCharArray(), 2);
+                        string[] xmlEffName = config.VehicleAssetName.Split(".".ToCharArray(), 2);
+                        if (propEffName.Length == 2 && xmlEffName.Length == 2 && xmlEffName[1] == propEffName[1])
+                        {
+                            config.VehicleAssetName = info.name;
+                        }
+                    }
+                    else if (config.VehicleAssetName == null)
+                    {
+                        throw new Exception("Vehicle name not set at file!!!!");
+                    }
+                    referenceDic[config.VehicleAssetName] = config;
+                }
+            }
+            else
+            {
+                throw new Exception("The file wasn't recognized as a valid descriptor!");
+            }
+        }
+        #endregion
 
 
     }

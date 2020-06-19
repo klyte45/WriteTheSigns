@@ -121,7 +121,7 @@ namespace Klyte.WriteTheSigns.Rendering
         }
 
 
-        public static void RenderTextMesh(ushort refID, int boardIdx, int secIdx, BoardInstanceXml descriptor, Matrix4x4 propMatrix, BoardDescriptorGeneralXml propLayout, ref BoardTextDescriptorGeneralXml textDescriptor, MaterialPropertyBlock materialPropertyBlock, Camera targetCamera = null, Shader overrideShader = null)
+        public static void RenderTextMesh(ushort refID, int boardIdx, int secIdx, BoardInstanceXml descriptor, Matrix4x4 propMatrix, BoardDescriptorGeneralXml propLayout, ref BoardTextDescriptorGeneralXml textDescriptor, MaterialPropertyBlock materialPropertyBlock, int instanceFlags, Camera targetCamera = null, Shader overrideShader = null)
         {
             BasicRenderInformation renderInfo = GetTextMesh(textDescriptor, refID, boardIdx, secIdx, descriptor, propLayout, out IEnumerable<BasicRenderInformation> multipleOutput);
             if (renderInfo == null)
@@ -185,12 +185,12 @@ namespace Klyte.WriteTheSigns.Rendering
 
                             BasicRenderInformation currentItem = resultArray[i];
                             Vector3 targetPosA = (i >= firstItemIdxLastRowOrColumn ? lastRowOrColumnStartPoint : startPoint) - new Vector3(columnWidth * x, rowHeight * y);
-                            DrawTextBri(refID, boardIdx, secIdx, propMatrix, textDescriptor, materialPropertyBlock, currentItem, colorToSet, targetPosA, textDescriptor.PlacingConfig.Rotation, descriptor.PropScale, false, targetCamera, overrideShader);
+                            DrawTextBri(refID, boardIdx, secIdx, propMatrix, textDescriptor, materialPropertyBlock, currentItem, colorToSet, targetPosA, textDescriptor.PlacingConfig.Rotation, descriptor.PropScale, false, instanceFlags, targetCamera, overrideShader);
                             if (textDescriptor.PlacingConfig.m_create180degYClone)
                             {
                                 targetPosA = startPoint - new Vector3(columnWidth * (maxItemsInARow - x), rowHeight * y);
                                 targetPosA.z *= -1;
-                                DrawTextBri(refID, boardIdx, secIdx, propMatrix, textDescriptor, materialPropertyBlock, currentItem, colorToSet, targetPosA, textDescriptor.PlacingConfig.Rotation + new Vector3(0, 180), descriptor.PropScale, false, targetCamera, overrideShader);
+                                DrawTextBri(refID, boardIdx, secIdx, propMatrix, textDescriptor, materialPropertyBlock, currentItem, colorToSet, targetPosA, textDescriptor.PlacingConfig.Rotation + new Vector3(0, 180), descriptor.PropScale, false, instanceFlags, targetCamera, overrideShader);
                             }
                         }
                     }
@@ -208,7 +208,7 @@ namespace Klyte.WriteTheSigns.Rendering
             Vector3 targetPos = textDescriptor.PlacingConfig.Position;
 
 
-            DrawTextBri(refID, boardIdx, secIdx, propMatrix, textDescriptor, materialPropertyBlock, renderInfo, GetTargetColor(refID, boardIdx, secIdx, descriptor, propLayout, textDescriptor), targetPos, textDescriptor.PlacingConfig.Rotation, descriptor.PropScale, textDescriptor.PlacingConfig.m_create180degYClone, targetCamera, overrideShader);
+            DrawTextBri(refID, boardIdx, secIdx, propMatrix, textDescriptor, materialPropertyBlock, renderInfo, GetTargetColor(refID, boardIdx, secIdx, descriptor, propLayout, textDescriptor), targetPos, textDescriptor.PlacingConfig.Rotation, descriptor.PropScale, textDescriptor.PlacingConfig.m_create180degYClone, instanceFlags, targetCamera, overrideShader);
         }
 
         private static Color GetTargetColor(ushort refID, int boardIdx, int secIdx, BoardInstanceXml descriptor, BoardDescriptorGeneralXml propLayout, BoardTextDescriptorGeneralXml textDescriptor)
@@ -226,7 +226,7 @@ namespace Klyte.WriteTheSigns.Rendering
 
         public static void DrawTextBri(ushort refID, int boardIdx, int secIdx, Matrix4x4 propMatrix, BoardTextDescriptorGeneralXml textDescriptor,
             MaterialPropertyBlock materialPropertyBlock, BasicRenderInformation renderInfo, Color colorToSet, Vector3 taregetPos, Vector3 taregetRotation,
-            Vector3 baseScale, bool placeClone180Y, Camera targetCamera = null, Shader overrideShader = null)
+            Vector3 baseScale, bool placeClone180Y, int instanceFlags, Camera targetCamera = null, Shader overrideShader = null)
         {
             List<Matrix4x4> textMatrixes = CalculateTextMatrix(taregetPos, taregetRotation, baseScale, textDescriptor, renderInfo, placeClone180Y);
 
@@ -254,6 +254,9 @@ namespace Klyte.WriteTheSigns.Rendering
                     case FontStashSharp.MaterialType.DAYNIGHT:
                         float num = m_daynightOffTime + (randomizer.Int32(100000u) * 1E-05f);
                         objectIndex.z = MathUtils.SmoothStep(num + 0.01f, num - 0.01f, Singleton<RenderManager>.instance.lightSystem.DayLightIntensity) * textDescriptor.ColoringConfig.IlluminationStrength;
+                        break;
+                    case FontStashSharp.MaterialType.FLAGS:
+                        objectIndex.z = ((instanceFlags & textDescriptor.m_requiredFlags) == textDescriptor.m_requiredFlags) && ((instanceFlags & textDescriptor.m_forbiddenFlags) == 0) ? textDescriptor.ColoringConfig.IlluminationStrength : 0;
                         break;
                     case FontStashSharp.MaterialType.BRIGHT:
                         objectIndex.z = textDescriptor.ColoringConfig.IlluminationStrength;
@@ -517,7 +520,10 @@ namespace Klyte.WriteTheSigns.Rendering
                         return WriteTheSignsMod.Controller.TransportLineRenderingRules.DrawLineFormats(new ushort[] { buffer[buffer[refID].GetFirstVehicle(refID)].m_transportLine }, Vector3.one).FirstOrDefault();
                     case TextType.LastStopLine:
                         ref Vehicle[] buffer2 = ref VehicleManager.instance.m_vehicles.m_buffer;
-                        return GetFromCacheArray(GetTargetStopInfo(TransportLine.GetPrevStop(buffer2[buffer2[refID].GetFirstVehicle(refID)].m_targetBuilding)).DestinationBuildingId, textDescriptor, RenderUtils.CacheArrayTypes.BuildingName, baseFont);
+                        ref Vehicle targetVehicle = ref buffer2[buffer2[refID].GetFirstVehicle(refID)];
+                        var target = targetVehicle.m_targetBuilding;
+                        ref StopInformation stopInfo = ref GetTargetStopInfo(TransportLine.GetPrevStop(target));
+                         return GetFromCacheArray(stopInfo.DestinationBuildingId, textDescriptor, RenderUtils.CacheArrayTypes.BuildingName, baseFont);
                     default:
                         return null;
                 }
@@ -662,7 +668,7 @@ namespace Klyte.WriteTheSigns.Rendering
             }
             return m_emptyInfo;
         }
-        private static StopInformation GetTargetStopInfo(ushort targetStopId) => WriteTheSignsMod.Controller.BuildingPropsSingleton.m_stopInformation[targetStopId];
+        private static ref StopInformation GetTargetStopInfo(ushort targetStopId) => ref WriteTheSignsMod.Controller.BuildingPropsSingleton.m_stopInformation[targetStopId];
         private static StopInformation[] GetAllTargetStopInfo(BoardInstanceBuildingXml descriptor, ushort buildingId)
         {
             return descriptor?.m_platforms?.SelectMany(platform =>

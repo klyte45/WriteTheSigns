@@ -1,4 +1,5 @@
-﻿using Klyte.WriteTheSigns.Xml;
+﻿using Klyte.Commons.Utils;
+using Klyte.WriteTheSigns.Xml;
 using System.Xml.Serialization;
 
 namespace Klyte.WriteTheSigns.Data
@@ -14,6 +15,13 @@ namespace Klyte.WriteTheSigns.Data
         public override int BoardCount => 0;
 
         public override int SubBoardCount => 0;
+
+        [XmlElement]
+        public SimpleXmlDictionary<string, LayoutDescriptorVehicleXml> CityDescriptors = new SimpleXmlDictionary<string, LayoutDescriptorVehicleXml>();
+        [XmlIgnore]
+        public SimpleXmlDictionary<string, LayoutDescriptorVehicleXml> GlobalDescriptors = new SimpleXmlDictionary<string, LayoutDescriptorVehicleXml>();
+        [XmlIgnore]
+        public SimpleXmlDictionary<string, LayoutDescriptorVehicleXml> AssetsDescriptors = new SimpleXmlDictionary<string, LayoutDescriptorVehicleXml>();
 
         public void CleanCache() => ResetBoards();
     }

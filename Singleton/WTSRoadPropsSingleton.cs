@@ -7,7 +7,6 @@ using Klyte.WriteTheSigns.Overrides;
 using Klyte.WriteTheSigns.Rendering;
 using Klyte.WriteTheSigns.Utils;
 using Klyte.WriteTheSigns.Xml;
-using SpriteFontPlus;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -145,7 +144,7 @@ namespace Klyte.WriteTheSigns.Singleton
 
                         MaterialPropertyBlock properties = PropManager.instance.m_materialBlock;
                         properties.Clear();
-                        WTSPropRenderingRules.RenderTextMesh(nodeID, boardIdx, secIdx, targetDescriptor, propMatrix, targetDescriptor.Descriptor, ref targetDescriptor.Descriptor.TextDescriptors[j], properties);
+                        WTSPropRenderingRules.RenderTextMesh(nodeID, boardIdx, secIdx, targetDescriptor, propMatrix, targetDescriptor.Descriptor, ref targetDescriptor.Descriptor.TextDescriptors[j], properties, 0);
                     }
                 }
             }
