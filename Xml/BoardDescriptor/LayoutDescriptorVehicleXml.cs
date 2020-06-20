@@ -11,6 +11,10 @@ namespace Klyte.WriteTheSigns.Xml
 
         [XmlElement("textDescriptor")]
         public BoardTextDescriptorGeneralXml[] TextDescriptors { get; set; } = new BoardTextDescriptorGeneralXml[0];
+        [XmlElement("blackSubmesh")]
+        public int[] BlackSubmeshes { get; set; }
+        [XmlIgnore]
+        internal bool SubmeshesUpdated { get; set; }
     }
 
 }

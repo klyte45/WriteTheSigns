@@ -7,6 +7,7 @@ using Klyte.WriteTheSigns.Xml;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Xml.Serialization;
 using UnityEngine;
 
@@ -30,7 +31,9 @@ namespace Klyte.WriteTheSigns.Singleton
 
         #endregion
 
+        private static readonly Texture2D m_aciReplacement = new Texture2D(Texture2D.blackTexture.width, Texture2D.blackTexture.height, TextureFormat.RGBA32, false);
 
+        static WTSVehicleTextsSingleton() => m_aciReplacement.SetPixels(new Color[Texture2D.blackTexture.width * Texture2D.blackTexture.height].Select(x => Color.blue).ToArray());
 
         public void AfterRenderExtraStuff(VehicleAI thiz, ushort vehicleID, ref Vehicle vehicleData, RenderManager.CameraInfo cameraInfo, InstanceID id, Vector3 position, Quaternion rotation, Vector4 tyrePosition, Vector4 lightState, Vector3 scale, Vector3 swayPosition, bool underground, bool overground)
         {
@@ -45,11 +48,28 @@ namespace Klyte.WriteTheSigns.Singleton
 
             if (targetDescriptor != null)
             {
-
                 Vehicle.Flags flags = VehicleManager.instance.m_vehicles.m_buffer[vehicleID].m_flags;
                 Matrix4x4 vehicleMatrix = thiz.m_info.m_vehicleAI.CalculateBodyMatrix(flags, ref position, ref rotation, ref scale, ref swayPosition);
                 MaterialPropertyBlock materialBlock = VehicleManager.instance.m_materialBlock;
                 materialBlock.Clear();
+
+                if (!targetDescriptor.SubmeshesUpdated)
+                {
+                    if (thiz.m_info?.m_subMeshes != null && targetDescriptor.BlackSubmeshes != null)
+                    {
+                        foreach (int idx in targetDescriptor.BlackSubmeshes)
+                        {
+                            if (idx < thiz.m_info.m_subMeshes.Length && thiz.m_info.m_subMeshes[idx].m_subInfo?.m_material != null)
+                            {
+                                thiz.m_info.m_subMeshes[idx].m_vehicleFlagsRequired = 0;
+                                thiz.m_info.m_subMeshes[idx].m_vehicleFlagsForbidden = 0;
+                                thiz.m_info.m_subMeshes[idx].m_subInfo.m_material.SetTexture("_ACIMap", m_aciReplacement);
+                                thiz.m_info.m_subMeshes[idx].m_subInfo.m_material.mainTexture = Texture2D.blackTexture;
+                            }
+                        }
+                    }
+                    targetDescriptor.SubmeshesUpdated = true;
+                }
 
                 RenderDescriptor(ref vehicleData, cameraInfo, vehicleID, position, vehicleMatrix, ref targetDescriptor);
             }
@@ -89,7 +109,7 @@ namespace Klyte.WriteTheSigns.Singleton
             target = null;
 
         }
-        
+
 
 
         private void RenderDescriptor(ref Vehicle v, RenderManager.CameraInfo cameraInfo, ushort vehicleId, Vector3 position, Matrix4x4 vehicleMatrix, ref LayoutDescriptorVehicleXml targetDescriptor)
