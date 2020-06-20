@@ -89,43 +89,7 @@ namespace Klyte.WriteTheSigns.Singleton
             target = null;
 
         }
-        private LayoutDescriptorVehicleXml basicDescr = new LayoutDescriptorVehicleXml
-        {
-            TextDescriptors = new BoardTextDescriptorGeneralXml[]{  new BoardTextDescriptorGeneralXml
-                {
-                    m_textType = TextType.LinesSymbols,
-                    m_textScale = 2.5f,
-                    PlacingConfig = new BoardTextDescriptorGeneralXml.PlacingSettings
-                    {
-                        Position = (Vector3Xml)new Vector3(0,4,0),
-                        m_create180degYClone = true
-                    },
-                    ColoringConfig = new BoardTextDescriptorGeneralXml.ColoringSettings
-                    {
-                        m_defaultColor =Color.white,
-                        MaterialType = FontStashSharp.MaterialType.BRIGHT,
-                        m_useContrastColor = false
-                    }
-
-                }, new BoardTextDescriptorGeneralXml
-                {
-                    m_textType = TextType.LastStopLine,
-                    m_textScale = 2.5f,
-                    PlacingConfig = new BoardTextDescriptorGeneralXml.PlacingSettings
-                    {
-                        Position = (Vector3Xml)new Vector3(0,6,0),
-                        m_create180degYClone = true
-                    },
-                    ColoringConfig = new BoardTextDescriptorGeneralXml.ColoringSettings
-                    {
-                        m_defaultColor = new Color32(255,192,0,255),
-                        MaterialType = FontStashSharp.MaterialType.BRIGHT,
-                        m_useContrastColor = false
-                    }
-
-                }
-            }
-        };
+        
 
 
         private void RenderDescriptor(ref Vehicle v, RenderManager.CameraInfo cameraInfo, ushort vehicleId, Vector3 position, Matrix4x4 vehicleMatrix, ref LayoutDescriptorVehicleXml targetDescriptor)
@@ -137,7 +101,12 @@ namespace Klyte.WriteTheSigns.Singleton
                 {
                     MaterialPropertyBlock properties = instance.m_materialBlock;
                     properties.Clear();
-                    WTSPropRenderingRules.RenderTextMesh(vehicleId, 0, 0, targetDescriptor, vehicleMatrix, null, ref targetDescriptor.TextDescriptors[j], properties, (int)instance.m_vehicles.m_buffer[v.GetFirstVehicle(vehicleId)].m_flags);
+                    var flags = v.m_flags;
+                    if ((flags & Vehicle.Flags.Inverted) != 0)
+                    {
+                        flags ^= Vehicle.Flags.Reversed;
+                    }
+                    WTSPropRenderingRules.RenderTextMesh(vehicleId, 0, 0, targetDescriptor, vehicleMatrix, null, ref targetDescriptor.TextDescriptors[j], properties, (int)flags);
                 }
             }
 

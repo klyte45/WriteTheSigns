@@ -23,7 +23,6 @@ namespace Klyte.WriteTheSigns.Rendering
         public static readonly int SHADER_PROP_COLOR1 = Shader.PropertyToID("_ColorV1");
         public static readonly int SHADER_PROP_COLOR2 = Shader.PropertyToID("_ColorV2");
         public static readonly int SHADER_PROP_COLOR3 = Shader.PropertyToID("_ColorV3");
-        public static readonly int SHADER_PROP_SPECULAR = Shader.PropertyToID("_SpecColor");
 
         public static readonly Dictionary<TextRenderingClass, TextType[]> ALLOWED_TYPES_PER_RENDERING_CLASS = new Dictionary<TextRenderingClass, TextType[]>
         {
@@ -106,10 +105,6 @@ namespace Klyte.WriteTheSigns.Rendering
                     {
                         LogUtils.DoErrorLog($"PREFAB NOT FOUND: {propName}");
                         propName = null;
-                    }
-                    if (propInfo.m_material.shader == WTSController.DISALLOWED_SHADER_PROP)
-                    {
-                        propInfo.m_material.shader = WTSController.REPLACEMENT_SHADER_PROP;
                     }
                 }
             }
@@ -282,7 +277,12 @@ namespace Klyte.WriteTheSigns.Rendering
                     objectIndex.z *= 1f - (num3 * num4);
                 }
 
-                materialPropertyBlock.SetVector(PropManager.instance.ID_ObjectIndex, objectIndex);
+                PropManager instance = Singleton<PropManager>.instance;
+                materialPropertyBlock.SetVector(instance.ID_ObjectIndex, objectIndex);
+
+               
+
+
                 targetMaterial.shader = overrideShader ?? WTSController.DEFAULT_SHADER_TEXT;
                 Graphics.DrawMesh(renderInfo.m_mesh, matrix, targetMaterial, 10, targetCamera, 0, materialPropertyBlock, false);
 
@@ -363,7 +363,7 @@ namespace Klyte.WriteTheSigns.Rendering
             else if (instance is LayoutDescriptorVehicleXml vehicleDescriptor)
             {
                 found = true;
-                return Color.white;
+                return Color.gray;
             }
             else if (instance is BoardInstanceBuildingXml buildingDescriptor)
             {
@@ -446,10 +446,10 @@ namespace Klyte.WriteTheSigns.Rendering
             }
             else if (instance is BoardPreviewInstanceXml preview)
             {
-                return KlyteMonoUtils.ContrastColor(preview?.Descriptor?.FixedColor ?? GetCurrentSimulationColor());
+                return KlyteMonoUtils.ContrastColor(preview?.Descriptor?.FixedColor ?? GetCurrentSimulationColor(),true);
             }
             var targetColor = GetColor(refID, boardIdx, secIdx, instance, propLayout, out bool colorFound);
-            return KlyteMonoUtils.ContrastColor(colorFound ? targetColor : Color.white);
+            return KlyteMonoUtils.ContrastColor(colorFound ? targetColor : Color.white, true);
         }
 
         internal static BasicRenderInformation GetTextMesh(BoardTextDescriptorGeneralXml textDescriptor, ushort refID, int boardIdx, int secIdx, BoardInstanceXml instance, BoardDescriptorGeneralXml propLayout, out IEnumerable<BasicRenderInformation> multipleOutput)
@@ -523,7 +523,7 @@ namespace Klyte.WriteTheSigns.Rendering
                         ref Vehicle targetVehicle = ref buffer2[buffer2[refID].GetFirstVehicle(refID)];
                         var target = targetVehicle.m_targetBuilding;
                         ref StopInformation stopInfo = ref GetTargetStopInfo(TransportLine.GetPrevStop(target));
-                         return GetFromCacheArray(stopInfo.DestinationBuildingId, textDescriptor, RenderUtils.CacheArrayTypes.BuildingName, baseFont);
+                        return GetFromCacheArray(stopInfo.DestinationBuildingId, textDescriptor, RenderUtils.CacheArrayTypes.BuildingName, baseFont);
                     default:
                         return null;
                 }

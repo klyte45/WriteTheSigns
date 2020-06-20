@@ -78,7 +78,22 @@ namespace SpriteFontPlus
         }
         public void ClearFonts() => m_fontRegistered.Clear();
 
-        public DynamicSpriteFont this[string idx] => idx != null && m_fontRegistered.TryGetValue(idx, out DynamicSpriteFont value) ? value : null;
+        public DynamicSpriteFont this[string idx]
+        {
+            get {
+                if (idx != null)
+                {
+                    if (Aliases.ContainsKey(idx))
+                    {
+                        idx = Aliases[idx];
+                    }
+                    return m_fontRegistered.TryGetValue(idx, out DynamicSpriteFont value) ? value : null;
+                }
+                return null;
+            }
+        }
+
+        public Dictionary<string, string> Aliases { get; } = new Dictionary<string, string>();
 
         public IEnumerable<string> GetAllFonts() => m_fontRegistered.Keys;
     }

@@ -1,4 +1,9 @@
-﻿using Klyte.Commons.Interfaces;
+﻿using ColossalFramework.UI;
+using Klyte.Commons.Interfaces;
+using SpriteFontPlus;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Xml.Serialization;
 
 namespace Klyte.WriteTheSigns.Data
@@ -28,6 +33,42 @@ namespace Klyte.WriteTheSigns.Data
                     WriteTheSignsMod.Controller?.TransportLineRenderingRules?.PurgeAllLines();
                 }
             }
+        }
+
+        [XmlElement("alias")]
+        [Obsolete]
+        public AliasEntry[] FontAliases
+        {
+            get => Aliases.Select(x => new AliasEntry
+            {
+                Original = x.Key,
+                Target = x.Value
+            }).ToArray();
+            set {
+                if (value != null)
+                {
+                    Aliases.Clear();
+                    value.ForEach(x =>
+                    {
+                        if (x.Original != null && x.Target != null)
+                        {
+                            Aliases[x.Original] = x.Target;
+                        }
+                    });
+                }
+            }
+        }
+
+
+        internal Dictionary<string, string> Aliases => FontServer.instance.Aliases;
+
+
+        public class AliasEntry
+        {
+            [XmlAttribute("original")]
+            public string Original { get; set; }
+            [XmlAttribute("target")]
+            public string Target { get; set; }
         }
     }
 

@@ -288,7 +288,6 @@ namespace FontStashSharp
 
                 Material.mainTexture = Texture;
                 var aciTex = new Texture2D(width, height);
-                var normalTex = new Texture2D(width, height);
 
                 if (!m_currentTask?.hasEnded ?? false)
                 {

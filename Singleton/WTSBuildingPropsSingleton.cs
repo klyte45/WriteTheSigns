@@ -281,10 +281,12 @@ namespace Klyte.WriteTheSigns.Singleton
         {
             if (data.Info.m_buildingAI is TransportStationAI && (m_platformToLine[buildingID] == null || (m_buildingLastUpdateLines[buildingID] != m_lastUpdateLines && m_platformToLine[buildingID].Length > 0)))
             {
+                m_buildingLastUpdateLines[buildingID] = m_lastUpdateLines;
+
                 NetManager nmInstance = NetManager.instance;
                 LogUtils.DoLog($"--------------- UpdateLinesBuilding {buildingID}");
 
-                m_platformToLine[buildingID]?.SelectMany(x => x)?.ForEach(x => m_stopInformation[x.m_stopId] = default);
+                m_platformToLine[buildingID]?.ForEach(x => x?.ForEach(x => m_stopInformation[x.m_stopId] = default));
                 m_platformToLine[buildingID] = null;
                 if (!m_buildingStopsDescriptor.ContainsKey(refName))
                 {
@@ -391,10 +393,9 @@ namespace Klyte.WriteTheSigns.Singleton
                         }
                     }
                 }
-                m_buildingLastUpdateLines[buildingID] = m_lastUpdateLines;
                 if (m_platformToLine[buildingID]?.Length > 0)
                 {
-                    m_platformToLine[buildingID]?.SelectMany(x => x ?? new StopInformation[0])?.ForEach(x => m_stopInformation[x.m_stopId] = x);
+                    m_platformToLine[buildingID]?.ForEach(x => x?.ForEach(x => m_stopInformation[x.m_stopId] = x));
                 }
 
                 LogUtils.DoLog($"--------------- end UpdateLinesBuilding {buildingID}");

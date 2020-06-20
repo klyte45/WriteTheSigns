@@ -125,6 +125,10 @@ namespace Klyte.WriteTheSigns.Rendering
                 {
                     lineParams = WriteTheSignsMod.Controller.ConnectorTLM.GetLineLogoParameters(lineId);
                 }
+                if (lineParams == null)
+                {
+                    yield break;
+                }
                 var drawingCoroutine = CoroutineWithData.From(this, RenderSpriteLine(FontServer.instance[WTSEtcData.Instance.FontSettings.PublicTransportLineSymbolFont ?? WTSController.DEFAULT_FONT_KEY], UIView.GetAView().defaultAtlas, lineParams.First, lineParams.Second, lineParams.Third));
                 yield return drawingCoroutine.Coroutine;
 
@@ -148,6 +152,33 @@ namespace Klyte.WriteTheSigns.Rendering
             };
 
             yield return 0;
+            BuildMesh(scale, id, bri);
+            yield return 0;
+            RegisterMesh(lineId, bri);
+            yield break;
+        }
+
+        private void RegisterMesh(ushort lineId, BasicRenderInformation bri)
+        {
+            bri.m_mesh.RecalculateNormals();
+            SolveTangents(bri.m_mesh);
+            UpdateMaterial();
+
+            bri.m_generatedMaterial = Material;
+
+            bri.m_sizeMetersUnscaled = bri.m_mesh.bounds.size;
+            if (m_textCache.TryGetValue(lineId, out TransportLineCacheItem currentVal) && currentVal != null && currentVal?.m_logoData == null)
+            {
+                m_textCache[lineId].m_logoData = bri;
+            }
+            else
+            {
+                m_textCache.Remove(lineId);
+            }
+        }
+
+        private void BuildMesh(Vector3 scale, string id, BasicRenderInformation bri)
+        {
             var uirenderData = UIRenderData.Obtain();
             try
             {
@@ -203,24 +234,6 @@ namespace Klyte.WriteTheSigns.Rendering
             {
                 uirenderData.Release();
             }
-            yield return 0;
-
-            bri.m_mesh.RecalculateNormals();
-            SolveTangents(bri.m_mesh);
-            UpdateMaterial();
-
-            bri.m_generatedMaterial = Material;
-
-            bri.m_sizeMetersUnscaled = bri.m_mesh.bounds.size;
-            if (m_textCache.TryGetValue(lineId, out TransportLineCacheItem currentVal) && currentVal != null && currentVal?.m_logoData == null)
-            {
-                m_textCache[lineId].m_logoData = bri;
-            }
-            else
-            {
-                m_textCache.Remove(lineId);
-            }
-            yield break;
         }
 
         public static IEnumerator<Texture2D> RenderSpriteLine(DynamicSpriteFont font, UITextureAtlas atlas, string spriteName, Color bgColor, string text, float textScale = 1)
