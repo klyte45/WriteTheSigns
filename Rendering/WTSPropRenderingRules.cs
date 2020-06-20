@@ -280,7 +280,7 @@ namespace Klyte.WriteTheSigns.Rendering
                 PropManager instance = Singleton<PropManager>.instance;
                 materialPropertyBlock.SetVector(instance.ID_ObjectIndex, objectIndex);
 
-               
+
 
 
                 targetMaterial.shader = overrideShader ?? WTSController.DEFAULT_SHADER_TEXT;
@@ -446,7 +446,7 @@ namespace Klyte.WriteTheSigns.Rendering
             }
             else if (instance is BoardPreviewInstanceXml preview)
             {
-                return KlyteMonoUtils.ContrastColor(preview?.Descriptor?.FixedColor ?? GetCurrentSimulationColor(),true);
+                return KlyteMonoUtils.ContrastColor(preview?.Descriptor?.FixedColor ?? GetCurrentSimulationColor(), true);
             }
             var targetColor = GetColor(refID, boardIdx, secIdx, instance, propLayout, out bool colorFound);
             return KlyteMonoUtils.ContrastColor(colorFound ? targetColor : Color.white, true);
@@ -521,9 +521,17 @@ namespace Klyte.WriteTheSigns.Rendering
                     case TextType.LastStopLine:
                         ref Vehicle[] buffer2 = ref VehicleManager.instance.m_vehicles.m_buffer;
                         ref Vehicle targetVehicle = ref buffer2[buffer2[refID].GetFirstVehicle(refID)];
-                        var target = targetVehicle.m_targetBuilding;
-                        ref StopInformation stopInfo = ref GetTargetStopInfo(TransportLine.GetPrevStop(target));
-                        return GetFromCacheArray(stopInfo.DestinationBuildingId, textDescriptor, RenderUtils.CacheArrayTypes.BuildingName, baseFont);
+                        if (targetVehicle.m_transportLine == 0)
+                        {
+                            return GetFromCacheArray(WTSBuildingDataCaches.GetStopBuilding(targetVehicle.m_targetBuilding, targetVehicle.m_transportLine), textDescriptor, RenderUtils.CacheArrayTypes.BuildingName, baseFont);
+                        }
+                        else
+                        {
+                            var target = targetVehicle.m_targetBuilding;
+                            ref StopInformation stopInfo = ref GetTargetStopInfo(TransportLine.GetPrevStop(target));
+                            return GetFromCacheArray(stopInfo.DestinationBuildingId, textDescriptor, RenderUtils.CacheArrayTypes.BuildingName, baseFont);
+                        }
+
                     default:
                         return null;
                 }

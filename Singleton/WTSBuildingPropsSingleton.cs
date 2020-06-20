@@ -276,12 +276,18 @@ namespace Klyte.WriteTheSigns.Singleton
                 }
             }
         }
-
+        internal void UpdateLinesBuilding(ushort buildingID, ref Building data, ref Matrix4x4 refMatrix)
+        {
+            if (m_platformToLine[buildingID] == null || (m_buildingLastUpdateLines[buildingID] != m_lastUpdateLines && m_platformToLine[buildingID].Length > 0))
+            {
+                var refName = GetReferenceModelName(ref data);
+                UpdateLinesBuilding(buildingID, refName, null, ref data, ref refMatrix);
+            }
+        }
         private void UpdateLinesBuilding(ushort buildingID, string refName, BuildingGroupDescriptorXml propDescriptor, ref Building data, ref Matrix4x4 refMatrix)
         {
-            if (data.Info.m_buildingAI is TransportStationAI && (m_platformToLine[buildingID] == null || (m_buildingLastUpdateLines[buildingID] != m_lastUpdateLines && m_platformToLine[buildingID].Length > 0)))
+            if ((data.Info.m_buildingAI is TransportStationAI || data.Info.m_buildingAI is OutsideConnectionAI) && (m_platformToLine[buildingID] == null || (m_buildingLastUpdateLines[buildingID] != m_lastUpdateLines && m_platformToLine[buildingID].Length > 0)))
             {
-                m_buildingLastUpdateLines[buildingID] = m_lastUpdateLines;
 
                 NetManager nmInstance = NetManager.instance;
                 LogUtils.DoLog($"--------------- UpdateLinesBuilding {buildingID}");
@@ -351,12 +357,6 @@ namespace Klyte.WriteTheSigns.Singleton
                         for (int i = 0; i < m_buildingStopsDescriptor[buildingName].Length; i++)
                         {
                             Matrix4x4 inverseMatrix = refMatrix.inverse;
-                            if (inverseMatrix == default)
-                            {
-                                m_platformToLine[buildingID] = new StopInformation[0][];
-                                LogUtils.DoLog("--------------- end UpdateLinesBuilding - inverseMatrix is zero");
-                                return;
-                            }
                             float maxDist = m_buildingStopsDescriptor[buildingName][i].width;
                             float maxHeightDiff = m_buildingStopsDescriptor[buildingName][i].width;
                             if (CommonProperties.DebugMode)
@@ -366,6 +366,11 @@ namespace Klyte.WriteTheSigns.Singleton
                                 LogUtils.DoLog($"maxHeightDiff ({i}) = {maxHeightDiff}");
                                 LogUtils.DoLog($"refMatrix ({i}) = {refMatrix}");
                                 LogUtils.DoLog($"inverseMatrix ({i}) = {inverseMatrix}");
+                            }
+                            if (inverseMatrix == default)
+                            {
+                                LogUtils.DoWarnLog("--------------- end UpdateLinesBuilding - inverseMatrix is zero");
+                                return;
                             }
                             float angleBuilding = data.m_angle * Mathf.Rad2Deg;
                             m_platformToLine[buildingID][i] = nearStops
@@ -398,6 +403,7 @@ namespace Klyte.WriteTheSigns.Singleton
                     m_platformToLine[buildingID]?.ForEach(x => x?.ForEach(x => m_stopInformation[x.m_stopId] = x));
                 }
 
+                m_buildingLastUpdateLines[buildingID] = m_lastUpdateLines;
                 LogUtils.DoLog($"--------------- end UpdateLinesBuilding {buildingID}");
             }
         }
