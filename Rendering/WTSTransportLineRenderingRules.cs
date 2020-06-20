@@ -50,9 +50,9 @@ namespace Klyte.WriteTheSigns.Rendering
             IsDirty = true;
         }
 
-        public Material Material => m_referenceAtlas.material;
+        public Material LinesMaterial => m_referenceAtlas.material;
 
-        public bool IsDirty { get; private set; } = false;
+        public bool IsDirty { get => m_isDirty; private set => m_isDirty = value; }
         public LineIconSpriteNames LineIconTest
         {
             get => m_lineIconTest; set {
@@ -61,23 +61,24 @@ namespace Klyte.WriteTheSigns.Rendering
             }
         }
 
-        public void UpdateMaterial()
+        public static void UpdateMaterial(ref bool IsDirty, UITextureAtlas referenceAtlas, Material material)
         {
             if (IsDirty)
             {
-                var aciTex = new Texture2D(m_referenceAtlas.texture.width, m_referenceAtlas.texture.height);
-                aciTex.SetPixels(m_referenceAtlas.texture.GetPixels().Select(x => new Color(1 - x.a, 0, 1f, 1)).ToArray());
+                var aciTex = new Texture2D(referenceAtlas.texture.width, referenceAtlas.texture.height);
+                aciTex.SetPixels(referenceAtlas.texture.GetPixels().Select(x => new Color(1 - x.a, 0, 1f, 1)).ToArray());
                 aciTex.Apply();
-                Material.SetTexture("_ACIMap", aciTex);
+                material.SetTexture("_ACIMap", aciTex);
 
                 IsDirty = false;
             }
         }
 
-        private readonly Dictionary<int, TransportLineCacheItem> m_textCache = new Dictionary<int, TransportLineCacheItem>();
+        private readonly Dictionary<int, BasicRenderInformation> m_textCache = new Dictionary<int, BasicRenderInformation>();
 
 
         private LineIconSpriteNames m_lineIconTest = LineIconSpriteNames.K45_HexagonIcon;
+        private bool m_isDirty = false;
 
         public List<BasicRenderInformation> DrawLineFormats(IEnumerable<int> ids, Vector3 scale)
         {
@@ -89,18 +90,18 @@ namespace Klyte.WriteTheSigns.Rendering
 
             foreach (int id in ids.OrderBy(x => x < 0 ? x.ToString("D6") : WriteTheSignsMod.Controller.ConnectorTLM.GetLineSortString((ushort)x)))
             {
-                if (m_textCache.TryGetValue(id, out TransportLineCacheItem bri))
+                if (m_textCache.TryGetValue(id, out BasicRenderInformation bri))
                 {
-                    if (bri?.m_logoData != null)
+                    if (bri != null)
                     {
-                        bris.Add(bri.m_logoData);
+                        bris.Add(bri);
                     }
                 }
                 else
                 {
                     if (!m_textCache.ContainsKey(id))
                     {
-                        m_textCache[id] = new TransportLineCacheItem();
+                        m_textCache[id] = null;
                     }
 
                     StartCoroutine(WriteTextureCoroutine(id, scale));
@@ -157,32 +158,32 @@ namespace Klyte.WriteTheSigns.Rendering
             };
 
             yield return 0;
-            BuildMesh(scale, id, bri);
+            BuildMeshFromAtlas(scale, id, bri, m_referenceAtlas);
             yield return 0;
-            RegisterMesh(lineId, bri);
+            RegisterMesh(lineId, bri, m_textCache, LinesMaterial, ref m_isDirty, m_referenceAtlas);
             yield break;
         }
 
-        private void RegisterMesh(int lineId, BasicRenderInformation bri)
+        private static void RegisterMesh<T>(T lineId, BasicRenderInformation bri, Dictionary<T, BasicRenderInformation> cache, Material material, ref bool IsDirty, UITextureAtlas referenceAtlas)
         {
             bri.m_mesh.RecalculateNormals();
             SolveTangents(bri.m_mesh);
-            UpdateMaterial();
+            UpdateMaterial(ref IsDirty, referenceAtlas, material);
 
-            bri.m_generatedMaterial = Material;
+            bri.m_generatedMaterial = material;
 
             bri.m_sizeMetersUnscaled = bri.m_mesh.bounds.size;
-            if (m_textCache.TryGetValue(lineId, out TransportLineCacheItem currentVal) && currentVal != null && currentVal?.m_logoData == null)
+            if (cache.TryGetValue(lineId, out BasicRenderInformation currentVal) && currentVal == null)
             {
-                m_textCache[lineId].m_logoData = bri;
+                cache[lineId] = bri;
             }
             else
             {
-                m_textCache.Remove(lineId);
+                cache.Remove(lineId);
             }
         }
 
-        private void BuildMesh(Vector3 scale, string id, BasicRenderInformation bri)
+        private static void BuildMeshFromAtlas(Vector3 scale, string id, BasicRenderInformation bri, UITextureAtlas referenceAtlas)
         {
             var uirenderData = UIRenderData.Obtain();
             try
@@ -194,7 +195,7 @@ namespace Klyte.WriteTheSigns.Rendering
                 PoolList<Vector2> uvs = uirenderData.uvs;
                 PoolList<int> triangles = uirenderData.triangles;
 
-                SpriteInfo spriteInfo = m_referenceAtlas[id];
+                SpriteInfo spriteInfo = referenceAtlas[id];
 
                 triangles.EnsureCapacity(triangles.Count + kTriangleIndices.Length);
                 triangles.AddRange(kTriangleIndices);
@@ -233,7 +234,7 @@ namespace Klyte.WriteTheSigns.Rendering
                 bri.m_mesh.colors32 = colors.Select(x => new Color32(x.a, x.a, x.a, x.a)).ToArray();
                 bri.m_mesh.uv = uvs.ToArray();
                 bri.m_mesh.triangles = triangles.ToArray();
-                bri.m_fontBaseLimits = new RangeVector { min = 0, max = m_referenceAtlas[id].texture.height };
+                bri.m_fontBaseLimits = new RangeVector { min = 0, max = referenceAtlas[id].texture.height };
             }
             finally
             {
@@ -330,7 +331,7 @@ namespace Klyte.WriteTheSigns.Rendering
             1,
             2
         };
-        private Vector3[] AlignVertices(PoolList<Vector3> points)
+        private static Vector3[] AlignVertices(PoolList<Vector3> points)
         {
             if (points.Count == 0)
             {
@@ -393,13 +394,6 @@ namespace Klyte.WriteTheSigns.Rendering
                 };
             }
             mesh.tangents = tangents;
-        }
-        public class TransportLineCacheItem
-        {
-            public BasicRenderInformation m_logoData;
-            public string m_startingDestinationName;
-            public string m_returningDestinationName;
-            public ushort m_halftripStopId;
         }
     }
 

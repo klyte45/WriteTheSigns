@@ -223,6 +223,7 @@ namespace Klyte.WriteTheSigns.Rendering
             MaterialPropertyBlock materialPropertyBlock, BasicRenderInformation renderInfo, Color colorToSet, Vector3 taregetPos, Vector3 taregetRotation,
             Vector3 baseScale, bool placeClone180Y, int instanceFlags, Camera targetCamera = null, Shader overrideShader = null)
         {
+
             List<Matrix4x4> textMatrixes = CalculateTextMatrix(taregetPos, taregetRotation, baseScale, textDescriptor, renderInfo, placeClone180Y);
 
             foreach (Matrix4x4 textMatrix in textMatrixes)
@@ -278,11 +279,8 @@ namespace Klyte.WriteTheSigns.Rendering
                     float num4 = MathUtils.SmoothStep(blinkVector.w, blinkVector.z, num2);
                     objectIndex.z *= 1f - (num3 * num4);
                 }
-
                 PropManager instance = Singleton<PropManager>.instance;
                 materialPropertyBlock.SetVector(instance.ID_ObjectIndex, objectIndex);
-
-
 
 
                 targetMaterial.shader = overrideShader ?? WTSController.DEFAULT_SHADER_TEXT;
