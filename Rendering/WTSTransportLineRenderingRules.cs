@@ -6,6 +6,7 @@ using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Data;
 using SpriteFontPlus;
 using SpriteFontPlus.Utility;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -73,12 +74,12 @@ namespace Klyte.WriteTheSigns.Rendering
             }
         }
 
-        private readonly Dictionary<ushort, TransportLineCacheItem> m_textCache = new Dictionary<ushort, TransportLineCacheItem>();
+        private readonly Dictionary<int, TransportLineCacheItem> m_textCache = new Dictionary<int, TransportLineCacheItem>();
 
 
         private LineIconSpriteNames m_lineIconTest = LineIconSpriteNames.K45_HexagonIcon;
 
-        public List<BasicRenderInformation> DrawLineFormats(IEnumerable<ushort> ids, Vector3 scale)
+        public List<BasicRenderInformation> DrawLineFormats(IEnumerable<int> ids, Vector3 scale)
         {
             var bris = new List<BasicRenderInformation>();
             if (ids.Count() == 0)
@@ -86,7 +87,7 @@ namespace Klyte.WriteTheSigns.Rendering
                 return bris;
             }
 
-            foreach (ushort id in ids.OrderBy(x => WriteTheSignsMod.Controller.ConnectorTLM.GetLineSortString(x)))
+            foreach (int id in ids.OrderBy(x => x < 0 ? x.ToString("D6") : WriteTheSignsMod.Controller.ConnectorTLM.GetLineSortString((ushort)x)))
             {
                 if (m_textCache.TryGetValue(id, out TransportLineCacheItem bri))
                 {
@@ -109,7 +110,7 @@ namespace Klyte.WriteTheSigns.Rendering
 
         }
 
-        private IEnumerator WriteTextureCoroutine(ushort lineId, Vector3 scale)
+        private IEnumerator WriteTextureCoroutine(int lineId, Vector3 scale)
         {
             yield return 0;
             string id = $"{lineId}";
@@ -121,9 +122,13 @@ namespace Klyte.WriteTheSigns.Rendering
                 {
                     lineParams = Tuple.New(KlyteResourceLoader.GetDefaultSpriteNameFor(LineIconTest), (Color)ColorExtensions.FromRGB(0x5e35b1), "K");
                 }
+                else if (lineId < 0)
+                {
+                    lineParams = Tuple.New(KlyteResourceLoader.GetDefaultSpriteNameFor((LineIconSpriteNames)(-lineId % (Enum.GetValues(typeof(LineIconSpriteNames)).Length - 1) + 1)), WTSPropRenderingRules.m_spectreSteps[(-lineId) % WTSPropRenderingRules.m_spectreSteps.Length], $"{-lineId}");
+                }
                 else
                 {
-                    lineParams = WriteTheSignsMod.Controller.ConnectorTLM.GetLineLogoParameters(lineId);
+                    lineParams = WriteTheSignsMod.Controller.ConnectorTLM.GetLineLogoParameters((ushort)lineId);
                 }
                 if (lineParams == null)
                 {
@@ -158,7 +163,7 @@ namespace Klyte.WriteTheSigns.Rendering
             yield break;
         }
 
-        private void RegisterMesh(ushort lineId, BasicRenderInformation bri)
+        private void RegisterMesh(int lineId, BasicRenderInformation bri)
         {
             bri.m_mesh.RecalculateNormals();
             SolveTangents(bri.m_mesh);

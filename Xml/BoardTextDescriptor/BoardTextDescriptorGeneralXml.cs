@@ -93,9 +93,9 @@ namespace Klyte.WriteTheSigns.Xml
         public class SubItemSettings
         {
             [XmlAttribute("subItemsPerRow")]
-            public int SubItemsPerRow { get => m_subItemsPerRow; set => m_subItemsPerRow = Math.Max(1, value); }
+            public int SubItemsPerRow { get => m_subItemsPerRow; set => m_subItemsPerRow = Math.Max(1, Math.Min(value,10)); }
             [XmlAttribute("subItemsPerColumn")]
-            public int SubItemsPerColumn { get => m_subItemsPerColumn; set => m_subItemsPerColumn = Math.Max(1, value); }
+            public int SubItemsPerColumn { get => m_subItemsPerColumn; set => m_subItemsPerColumn = Math.Max(1, Math.Min(value, 10)); }
 
             [XmlAttribute("verticalFirst")]
             public bool VerticalFirst { get; set; }

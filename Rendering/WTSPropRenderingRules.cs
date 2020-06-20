@@ -230,11 +230,6 @@ namespace Klyte.WriteTheSigns.Rendering
                 Matrix4x4 matrix = propMatrix * textMatrix;
 
                 materialPropertyBlock.Clear();
-                materialPropertyBlock.SetColor(SHADER_PROP_COLOR, colorToSet);
-                materialPropertyBlock.SetColor(SHADER_PROP_COLOR0, colorToSet);
-                materialPropertyBlock.SetColor(SHADER_PROP_COLOR1, colorToSet);
-                materialPropertyBlock.SetColor(SHADER_PROP_COLOR2, colorToSet);
-                materialPropertyBlock.SetColor(SHADER_PROP_COLOR3, colorToSet);
 
                 var objectIndex = new Vector4();
 
@@ -257,6 +252,13 @@ namespace Klyte.WriteTheSigns.Rendering
                         objectIndex.z = textDescriptor.ColoringConfig.IlluminationStrength;
                         break;
                 }
+                colorToSet *= Color.Lerp(new Color(0.6f, 0.6f, 0.6f, 1), Color.white, objectIndex.z);
+                materialPropertyBlock.SetColor(SHADER_PROP_COLOR, colorToSet);
+                materialPropertyBlock.SetColor(SHADER_PROP_COLOR0, colorToSet);
+                materialPropertyBlock.SetColor(SHADER_PROP_COLOR1, colorToSet);
+                materialPropertyBlock.SetColor(SHADER_PROP_COLOR2, colorToSet);
+                materialPropertyBlock.SetColor(SHADER_PROP_COLOR3, colorToSet);
+
 
                 if (objectIndex.z > 0 && textDescriptor.ColoringConfig.BlinkType != BlinkType.None)
                 {
@@ -405,7 +407,7 @@ namespace Klyte.WriteTheSigns.Rendering
             return default;
         }
 
-        private static readonly Color[] m_spectreSteps = new Color[]
+        internal static readonly Color[] m_spectreSteps = new Color[]
         {
             new Color32(170,170,170,255),
             Color.white,
@@ -449,7 +451,7 @@ namespace Klyte.WriteTheSigns.Rendering
                 return KlyteMonoUtils.ContrastColor(preview?.Descriptor?.FixedColor ?? GetCurrentSimulationColor(), true);
             }
             var targetColor = GetColor(refID, boardIdx, secIdx, instance, propLayout, out bool colorFound);
-            return KlyteMonoUtils.ContrastColor(colorFound ? targetColor : Color.white, true);
+            return KlyteMonoUtils.ContrastColor(colorFound ? targetColor : Color.white);
         }
 
         internal static BasicRenderInformation GetTextMesh(BoardTextDescriptorGeneralXml textDescriptor, ushort refID, int boardIdx, int secIdx, BoardInstanceXml instance, BoardDescriptorGeneralXml propLayout, out IEnumerable<BasicRenderInformation> multipleOutput)
@@ -495,7 +497,7 @@ namespace Klyte.WriteTheSigns.Rendering
                     case TextType.Park: return RenderUtils.GetTextData($"{otherText}Area", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                     case TextType.PlatformNumber: return RenderUtils.GetTextData("00", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                     case TextType.LinesSymbols:
-                        multipleOutput = WriteTheSignsMod.Controller.TransportLineRenderingRules.DrawLineFormats(new ushort[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, Vector3.one);
+                        multipleOutput = WriteTheSignsMod.Controller.TransportLineRenderingRules.DrawLineFormats(new int[textDescriptor.MultiItemSettings.SubItemsPerColumn * textDescriptor.MultiItemSettings.SubItemsPerRow].Select((x, y) => -y - 1), Vector3.one);
 
                         return null;
                     default:
@@ -517,7 +519,7 @@ namespace Klyte.WriteTheSigns.Rendering
                     case TextType.OwnName: return GetFromCacheArray(refID, textDescriptor, RenderUtils.CacheArrayTypes.VehicleNumber, baseFont);
                     case TextType.LinesSymbols:
                         ref Vehicle[] buffer = ref VehicleManager.instance.m_vehicles.m_buffer;
-                        return WriteTheSignsMod.Controller.TransportLineRenderingRules.DrawLineFormats(new ushort[] { buffer[buffer[refID].GetFirstVehicle(refID)].m_transportLine }, Vector3.one).FirstOrDefault();
+                        return WriteTheSignsMod.Controller.TransportLineRenderingRules.DrawLineFormats(new int[] { buffer[buffer[refID].GetFirstVehicle(refID)].m_transportLine }, Vector3.one).FirstOrDefault();
                     case TextType.LastStopLine:
                         ref Vehicle[] buffer2 = ref VehicleManager.instance.m_vehicles.m_buffer;
                         ref Vehicle targetVehicle = ref buffer2[buffer2[refID].GetFirstVehicle(refID)];
@@ -557,7 +559,7 @@ namespace Klyte.WriteTheSigns.Rendering
                     case TextType.StreetNameComplete: return GetFromCacheArray(WTSBuildingDataCaches.GetBuildingMainAccessSegment(refID), textDescriptor, RenderUtils.CacheArrayTypes.FullStreetName, baseFont);
                     case TextType.PlatformNumber: return RenderUtils.GetTextData((buildingDescritpor.m_platforms.FirstOrDefault() + 1).ToString(), textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                     case TextType.LinesSymbols:
-                        multipleOutput = WriteTheSignsMod.Controller.TransportLineRenderingRules.DrawLineFormats(GetAllTargetStopInfo(buildingDescritpor, refID).GroupBy(x => x.m_lineId).Select(x => x.First()).Select(x => x.m_lineId), Vector3.one);
+                        multipleOutput = WriteTheSignsMod.Controller.TransportLineRenderingRules.DrawLineFormats(GetAllTargetStopInfo(buildingDescritpor, refID).GroupBy(x => x.m_lineId).Select(x => x.First()).Select(x => (int)x.m_lineId), Vector3.one);
                         return null;
                     default:
                         return null;

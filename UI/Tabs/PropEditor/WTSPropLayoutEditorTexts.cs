@@ -382,6 +382,9 @@ namespace Klyte.WriteTheSigns.UI
         {
             desc.MultiItemSettings.SubItemsPerRow = Mathf.RoundToInt(obj.y);
             desc.MultiItemSettings.SubItemsPerColumn = Mathf.RoundToInt(obj.x);
+
+            m_arrayRowColumnsCount[1].text = desc.MultiItemSettings.SubItemsPerRow.ToString();
+            m_arrayRowColumnsCount[0].text = desc.MultiItemSettings.SubItemsPerColumn.ToString();
         });
 
         private void OnColumnsFirstChanged(bool isChecked) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.MultiItemSettings.VerticalFirst = isChecked);
