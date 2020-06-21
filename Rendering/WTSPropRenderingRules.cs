@@ -186,7 +186,7 @@ namespace Klyte.WriteTheSigns.Rendering
                             DrawTextBri(refID, boardIdx, secIdx, propMatrix, textDescriptor, materialPropertyBlock, currentItem, colorToSet, targetPosA, textDescriptor.PlacingConfig.Rotation, descriptor.PropScale, false, instanceFlags, targetCamera, overrideShader);
                             if (textDescriptor.PlacingConfig.m_create180degYClone)
                             {
-                                targetPosA = startPoint - new Vector3(columnWidth * (maxItemsInARow - x), rowHeight * y);
+                                targetPosA = startPoint - new Vector3(columnWidth * (maxItemsInARow - x - 1), rowHeight * y);
                                 targetPosA.z *= -1;
                                 DrawTextBri(refID, boardIdx, secIdx, propMatrix, textDescriptor, materialPropertyBlock, currentItem, colorToSet, targetPosA, textDescriptor.PlacingConfig.Rotation + new Vector3(0, 180), descriptor.PropScale, false, instanceFlags, targetCamera, overrideShader);
                             }
