@@ -145,6 +145,8 @@ namespace Klyte.WriteTheSigns.Connectors
             return (((int)tl.Info.m_class.m_subService << 16) + tl.m_lineNumber).ToString("D8");
         }
 
+        public string GetVehicleIdentifier(ushort vehicleId) => vehicleId.ToString("D5");
+
         private readonly TransferManager.TransferReason[] m_defaultAllowedVehicleTypes = {
             TransferManager.TransferReason.Blimp ,
             TransferManager.TransferReason.CableCar ,

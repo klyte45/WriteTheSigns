@@ -25,6 +25,7 @@ namespace Klyte.WriteTheSigns.Utils
             m_cache[(int)FullStreetNameAbbreviation] = new string[NetManager.MAX_SEGMENT_COUNT];
             m_cache[(int)SuffixStreetNameAbbreviation] = new string[NetManager.MAX_SEGMENT_COUNT];
             m_cache[(int)BuildingName] = new string[BuildingManager.MAX_BUILDING_COUNT];
+            m_cache[(int)VehicleNumber] = new string[ushort.MaxValue];
 
             m_cacheUpper[(int)FullStreetName] = new string[NetManager.MAX_SEGMENT_COUNT];
             m_cacheUpper[(int)StreetQualifier] = new string[NetManager.MAX_SEGMENT_COUNT];
@@ -98,11 +99,8 @@ namespace Klyte.WriteTheSigns.Utils
             m_cache[(int)BuildingName][buildingID] = null;
             m_cacheUpper[(int)BuildingName][buildingID] = null;
         }
-        public static void ClearCacheVehicleNumber(ushort vehicleID)
-        {
-            m_cache[(int)VehicleNumber][vehicleID] = null;
-            m_cacheUpper[(int)VehicleNumber][vehicleID] = null;
-        }
+        public static void ClearCacheVehicleNumber(ushort vehicleID) => m_cache[(int)VehicleNumber][vehicleID] = null;
+        public static void ClearCacheVehicleNumber() => m_cache[(int)VehicleNumber] = new string[ushort.MaxValue];
 
         public enum CacheArrayTypes
         {
@@ -252,7 +250,7 @@ namespace Klyte.WriteTheSigns.Utils
         {
             if (name == null)
             {
-                name = vehicleId.ToString("D5");
+                name = WriteTheSignsMod.Controller.ConnectorTLM.GetVehicleIdentifier(vehicleId);
             }
             return GetTextData(name, prefix, suffix, primaryFont, overrideFont);
         }

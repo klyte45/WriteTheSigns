@@ -9,5 +9,6 @@ namespace Klyte.WriteTheSigns.Connectors
         ushort GetStopBuildingInternal(ushort stopId, ushort lineId);
         string GetStopName(ushort stopId, ushort lineId);
         string GetLineSortString(ushort lineId);
+        string GetVehicleIdentifier(ushort vehicleId);
     }
 }
