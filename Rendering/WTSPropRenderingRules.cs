@@ -283,7 +283,7 @@ namespace Klyte.WriteTheSigns.Rendering
 
                 Material targetMaterial = renderInfo.m_generatedMaterial;
                 var randomizer = new Randomizer((refID << 8) + (boardIdx << 2) + secIdx);
-                switch (textDescriptor.ColoringConfig.MaterialType)
+                switch (textDescriptor.IlluminationConfig.IlluminationType)
                 {
                     default:
                     case FontStashSharp.MaterialType.OPAQUE:
@@ -291,13 +291,13 @@ namespace Klyte.WriteTheSigns.Rendering
                         break;
                     case FontStashSharp.MaterialType.DAYNIGHT:
                         float num = m_daynightOffTime + (randomizer.Int32(100000u) * 1E-05f);
-                        objectIndex.z = MathUtils.SmoothStep(num + 0.01f, num - 0.01f, Singleton<RenderManager>.instance.lightSystem.DayLightIntensity) * textDescriptor.ColoringConfig.IlluminationStrength;
+                        objectIndex.z = MathUtils.SmoothStep(num + 0.01f, num - 0.01f, Singleton<RenderManager>.instance.lightSystem.DayLightIntensity) * textDescriptor.IlluminationConfig.IlluminationStrength;
                         break;
                     case FontStashSharp.MaterialType.FLAGS:
-                        objectIndex.z = ((instanceFlags & textDescriptor.m_requiredFlags) == textDescriptor.m_requiredFlags) && ((instanceFlags & textDescriptor.m_forbiddenFlags) == 0) ? textDescriptor.ColoringConfig.IlluminationStrength : 0;
+                        objectIndex.z = ((instanceFlags & textDescriptor.IlluminationConfig.m_requiredFlags) == textDescriptor.IlluminationConfig.m_requiredFlags) && ((instanceFlags & textDescriptor.IlluminationConfig.m_forbiddenFlags) == 0) ? textDescriptor.IlluminationConfig.IlluminationStrength : 0;
                         break;
                     case FontStashSharp.MaterialType.BRIGHT:
-                        objectIndex.z = textDescriptor.ColoringConfig.IlluminationStrength;
+                        objectIndex.z = textDescriptor.IlluminationConfig.IlluminationStrength;
                         break;
                 }
                 colorToSet *= Color.Lerp(new Color(0.6f, 0.6f, 0.6f, 1), Color.white, objectIndex.z);
@@ -308,17 +308,17 @@ namespace Klyte.WriteTheSigns.Rendering
                 materialPropertyBlock.SetColor(SHADER_PROP_COLOR3, colorToSet);
 
 
-                if (objectIndex.z > 0 && textDescriptor.ColoringConfig.BlinkType != BlinkType.None)
+                if (objectIndex.z > 0 && textDescriptor.IlluminationConfig.BlinkType != BlinkType.None)
                 {
                     float num = m_daynightOffTime + (randomizer.Int32(100000u) * 1E-05f);
                     Vector4 blinkVector;
-                    if (textDescriptor.ColoringConfig.BlinkType == BlinkType.Custom)
+                    if (textDescriptor.IlluminationConfig.BlinkType == BlinkType.Custom)
                     {
-                        blinkVector = textDescriptor.ColoringConfig.CustomBlink;
+                        blinkVector = textDescriptor.IlluminationConfig.CustomBlink;
                     }
                     else
                     {
-                        blinkVector = LightEffect.GetBlinkVector((LightEffect.BlinkType)textDescriptor.ColoringConfig.BlinkType);
+                        blinkVector = LightEffect.GetBlinkVector((LightEffect.BlinkType)textDescriptor.IlluminationConfig.BlinkType);
                     }
                     float num2 = num * 3.71f + Singleton<SimulationManager>.instance.m_simulationTimer / blinkVector.w;
                     num2 = (num2 - Mathf.Floor(num2)) * blinkVector.w;

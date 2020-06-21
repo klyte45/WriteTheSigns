@@ -44,10 +44,6 @@ namespace Klyte.WriteTheSigns.Xml
         public string m_prefix = "";
         [XmlAttribute("suffix")]
         public string m_suffix = "";
-        [XmlAttribute("requiredFlags")]
-        public int m_requiredFlags;
-        [XmlAttribute("forbiddenFlags")]
-        public int m_forbiddenFlags;
 
 
         [XmlAttribute("saveName")]
@@ -60,8 +56,13 @@ namespace Klyte.WriteTheSigns.Xml
         [XmlElement("ColoringSettings")]
         public ColoringSettings ColoringConfig { get; set; } = new ColoringSettings();
 
+        [XmlElement("IlluminationSettings")]
+        public IlluminationSettings IlluminationConfig { get; set; } = new IlluminationSettings();
+
         [XmlElement("MultiItemSettings")]
         public SubItemSettings MultiItemSettings { get; set; } = new SubItemSettings();
+        [XmlElement("BackgroundMeshSettings")]
+        public BackgroundMesh BackgroundMeshSettings { get; set; } = new BackgroundMesh();
 
 
         public bool IsTextRelativeToSegment()
@@ -139,17 +140,39 @@ namespace Klyte.WriteTheSigns.Xml
             public bool m_useContrastColor = true;
             [XmlIgnore]
             public Color m_defaultColor = Color.clear;
-            [XmlElement("customBlinkParams")]
-            public Vector4Xml CustomBlink { get; set; } = new Vector4Xml();
             [XmlAttribute("color")]
             public string ForceColor { get => m_defaultColor == Color.clear ? null : ColorExtensions.ToRGB(m_defaultColor); set => m_defaultColor = value.IsNullOrWhiteSpace() ? Color.clear : (Color)ColorExtensions.FromRGB(value); }
-            [XmlAttribute("appearenceType")]
-            public MaterialType MaterialType { get; set; } = MaterialType.OPAQUE;
-            [XmlAttribute("illuminationStrength")]
+
+        }
+
+        public class IlluminationSettings
+        {
+            [XmlAttribute("type")]
+            public MaterialType IlluminationType { get; set; } = MaterialType.OPAQUE;
+            [XmlAttribute("strength")]
             public float IlluminationStrength { get; set; } = 1;
             [XmlAttribute("blinkType")]
             public BlinkType BlinkType { get; set; } = BlinkType.None;
+            [XmlElement("customBlinkParams")]
+            public Vector4Xml CustomBlink { get; set; } = new Vector4Xml();
+            [XmlAttribute("requiredFlags")]
+            public int m_requiredFlags;
+            [XmlAttribute("forbiddenFlags")]
+            public int m_forbiddenFlags;
 
+        }
+
+        public class BackgroundMesh
+        {
+            [XmlElement("size")]
+            public Vector2Xml Size { get; set; }
+
+            [XmlIgnore]
+            public Color BackgroundColor { get => m_cachedColor; set => m_cachedColor = value; }
+            [XmlIgnore]
+            private Color m_cachedColor;
+            [XmlAttribute("color")]
+            public string BgColorStr { get => m_cachedColor == null ? null : ColorExtensions.ToRGB(BackgroundColor); set => BackgroundColor = value.IsNullOrWhiteSpace() ? default : ColorExtensions.FromRGB(value); }
         }
     }
 

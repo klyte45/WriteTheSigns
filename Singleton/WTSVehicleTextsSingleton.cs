@@ -116,7 +116,7 @@ namespace Klyte.WriteTheSigns.Singleton
             var instance = VehicleManager.instance;
             for (int j = 0; j < targetDescriptor.TextDescriptors.Length; j++)
             {
-                if (cameraInfo.CheckRenderDistance(position, 200 * targetDescriptor.TextDescriptors[j].m_textScale * (targetDescriptor.TextDescriptors[j].ColoringConfig.MaterialType == FontStashSharp.MaterialType.OPAQUE ? 1 : 2)))
+                if (cameraInfo.CheckRenderDistance(position, 200 * targetDescriptor.TextDescriptors[j].m_textScale * (targetDescriptor.TextDescriptors[j].IlluminationConfig.IlluminationType == FontStashSharp.MaterialType.OPAQUE ? 1 : 2)))
                 {
                     MaterialPropertyBlock properties = instance.m_materialBlock;
                     properties.Clear();

@@ -131,7 +131,7 @@ namespace Klyte.WriteTheSigns.Singleton
 
                 for (int j = 0; j < targetDescriptor.Descriptor.TextDescriptors.Length; j++)
                 {
-                    if (cameraInfo.CheckRenderDistance(position, 200 * targetDescriptor.Descriptor.TextDescriptors[j].m_textScale * (targetDescriptor.Descriptor.TextDescriptors[j].ColoringConfig.MaterialType == FontStashSharp.MaterialType.OPAQUE ? 1 : 3)))
+                    if (cameraInfo.CheckRenderDistance(position, 200 * targetDescriptor.Descriptor.TextDescriptors[j].m_textScale * (targetDescriptor.Descriptor.TextDescriptors[j].IlluminationConfig.IlluminationType == FontStashSharp.MaterialType.OPAQUE ? 1 : 3)))
                     {
                         if (targetDescriptor.Descriptor.TextDescriptors[j].m_destinationRelative != DestinationReference.Self)
                         {

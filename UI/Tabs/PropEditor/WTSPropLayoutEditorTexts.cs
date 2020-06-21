@@ -220,9 +220,9 @@ namespace Klyte.WriteTheSigns.UI
 
             m_dropdownTextAlignHorizontal.selectedIndex = (int)x.m_textAlign;
             m_useContrastColor.isChecked = x.ColoringConfig.m_useContrastColor;
-            m_dropdownMaterialType.selectedIndex = (int)x.ColoringConfig.MaterialType;
-            m_sliderIllumination.value = x.ColoringConfig.IlluminationStrength;
-            m_dropdownBlinkType.selectedIndex = (int)x.ColoringConfig.BlinkType;
+            m_dropdownMaterialType.selectedIndex = (int)x.IlluminationConfig.IlluminationType;
+            m_sliderIllumination.value = x.IlluminationConfig.IlluminationStrength;
+            m_dropdownBlinkType.selectedIndex = (int)x.IlluminationConfig.BlinkType;
             m_textFixedColor.selectedColor = x.ColoringConfig.m_defaultColor;
 
             m_dropdownTextContent.items = WTSPropRenderingRules.ALLOWED_TYPES_PER_RENDERING_CLASS[WTSPropLayoutEditor.Instance.EditingInstance.m_allowedRenderClass].Select(x => Locale.Get("K45_WTS_BOARD_TEXT_TYPE_DESC", x.ToString())).ToArray();
@@ -236,10 +236,10 @@ namespace Klyte.WriteTheSigns.UI
             m_allCaps.isChecked = x.m_allCaps;
             m_spriteFilter.text = x.m_spriteName ?? "";
 
-            m_arrayCustomBlink[0].text = x.ColoringConfig.CustomBlink.X.ToString("F3");
-            m_arrayCustomBlink[1].text = x.ColoringConfig.CustomBlink.Y.ToString("F3");
-            m_arrayCustomBlink[2].text = x.ColoringConfig.CustomBlink.Z.ToString("F3");
-            m_arrayCustomBlink[3].text = x.ColoringConfig.CustomBlink.W.ToString("F3");
+            m_arrayCustomBlink[0].text = x.IlluminationConfig.CustomBlink.X.ToString("F3");
+            m_arrayCustomBlink[1].text = x.IlluminationConfig.CustomBlink.Y.ToString("F3");
+            m_arrayCustomBlink[2].text = x.IlluminationConfig.CustomBlink.Z.ToString("F3");
+            m_arrayCustomBlink[3].text = x.IlluminationConfig.CustomBlink.W.ToString("F3");
             m_arrayRowColumnsCount[1].text = x.MultiItemSettings.SubItemsPerRow.ToString();
             m_arrayRowColumnsCount[0].text = x.MultiItemSettings.SubItemsPerColumn.ToString();
             m_arrayRowColumnsSpacing[0].text = x.MultiItemSettings.SubItemSpacing.X.ToString("F3");
@@ -255,9 +255,9 @@ namespace Klyte.WriteTheSigns.UI
             m_referenceNode.parent.isVisible = WTSPropLayoutEditor.Instance.EditingInstance.m_allowedRenderClass == TextRenderingClass.RoadNodes && x.IsTextRelativeToSegment();
             m_textFixedColor.parent.isVisible = !x.ColoringConfig.m_useContrastColor;
             m_invertTextHorizontalAlignClone.isVisible = x.PlacingConfig.m_create180degYClone;
-            m_sliderIllumination.parent.isVisible = x.ColoringConfig.MaterialType != MaterialType.OPAQUE;
-            m_dropdownBlinkType.parent.isVisible = x.ColoringConfig.MaterialType != MaterialType.OPAQUE;
-            m_arrayCustomBlink[0].parent.isVisible = x.ColoringConfig.MaterialType != MaterialType.OPAQUE && m_dropdownBlinkType.selectedIndex == (int)BlinkType.Custom;
+            m_sliderIllumination.parent.isVisible = x.IlluminationConfig.IlluminationType != MaterialType.OPAQUE;
+            m_dropdownBlinkType.parent.isVisible = x.IlluminationConfig.IlluminationType != MaterialType.OPAQUE;
+            m_arrayCustomBlink[0].parent.isVisible = x.IlluminationConfig.IlluminationType != MaterialType.OPAQUE && m_dropdownBlinkType.selectedIndex == (int)BlinkType.Custom;
 
             m_textPrefix.parent.isVisible = !x.IsSpriteText();
             m_textSuffix.parent.isVisible = !x.IsSpriteText();
@@ -389,18 +389,18 @@ namespace Klyte.WriteTheSigns.UI
         {
             SafeObtain((ref BoardTextDescriptorGeneralXml desc) =>
             {
-                desc.ColoringConfig.MaterialType = (MaterialType)sel;
+                desc.IlluminationConfig.IlluminationType = (MaterialType)sel;
                 ApplyShowRules(desc);
             });
         }
 
         private void OnSetBlinkType(int sel) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) =>
         {
-            desc.ColoringConfig.BlinkType = (BlinkType)sel;
+            desc.IlluminationConfig.BlinkType = (BlinkType)sel;
             ApplyShowRules(desc);
         });
-        private void OnChangeIlluminationStrength(float val) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.ColoringConfig.IlluminationStrength = val);
-        private void OnCustomBlinkChange(Vector4 obj) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.ColoringConfig.CustomBlink = (Vector4Xml)obj);
+        private void OnChangeIlluminationStrength(float val) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.IlluminationConfig.IlluminationStrength = val);
+        private void OnCustomBlinkChange(Vector4 obj) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.IlluminationConfig.CustomBlink= (Vector4Xml)obj);
         private void OnRotationChange(Vector3 obj) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.PlacingConfig.Rotation = (Vector3Xml)obj);
         private void OnPositionChange(Vector3 obj) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.PlacingConfig.Position = (Vector3Xml)obj);
         private void OnSetAllCaps(bool isChecked) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_allCaps = isChecked);
