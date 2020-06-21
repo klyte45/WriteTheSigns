@@ -11,8 +11,8 @@ namespace Klyte.WriteTheSigns.Connectors
     {
         public void Start()
         {
-            TLMShared.Instance.EventLineSymbolParameterChanged += WriteTheSignsMod.Controller.TransportLineRenderingRules.PurgeAllLines;
-            TLMShared.Instance.EventLineSymbolParameterChanged += WriteTheSignsMod.Controller.TransportLineRenderingRules.PurgeAllLines;
+            TLMShared.Instance.EventLineSymbolParameterChanged += WriteTheSignsMod.Controller.SpriteRenderingRules.PurgeAllLines;
+            TLMShared.Instance.EventLineSymbolParameterChanged += WriteTheSignsMod.Controller.SpriteRenderingRules.PurgeAllLines;
         }
 
         public Tuple<string, Color, string> GetLineLogoParameters(ushort lineID)

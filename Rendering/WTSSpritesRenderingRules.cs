@@ -15,7 +15,7 @@ using static ColossalFramework.UI.UITextureAtlas;
 
 namespace Klyte.WriteTheSigns.Rendering
 {
-    public class WTSTransportLineRenderingRules : MonoBehaviour
+    public class WTSSpritesRenderingRules : MonoBehaviour
     {
         public void Awake()
         {

@@ -89,7 +89,7 @@ namespace Klyte.WriteTheSigns.UI
                 refer ??= briArr?.FirstOrDefault();
 
 
-                var sourceMatrix = Matrix4x4.Inverse(WTSPropRenderingRules.CalculateTextMatrix(descriptor.TextDescriptors[referenceIdx].PlacingConfig.Position, descriptor.TextDescriptors[referenceIdx].PlacingConfig.Rotation, Vector3.one, descriptor.TextDescriptors[referenceIdx].m_textAlign, descriptor.TextDescriptors[referenceIdx].m_maxWidthMeters, descriptor.TextDescriptors[referenceIdx], refer, descriptor.TextDescriptors[referenceIdx].PlacingConfig.m_create180degYClone, true).FirstOrDefault());
+                var sourceMatrix = Matrix4x4.Inverse(WTSPropRenderingRules.CalculateTextMatrix(descriptor.TextDescriptors[referenceIdx].PlacingConfig.Position, descriptor.TextDescriptors[referenceIdx].PlacingConfig.Rotation, Vector3.one, descriptor.TextDescriptors[referenceIdx].m_textAlign, descriptor.TextDescriptors[referenceIdx].m_maxWidthMeters, descriptor.TextDescriptors[referenceIdx], refer, descriptor.TextDescriptors[referenceIdx].PlacingConfig.m_create180degYClone, true).FirstOrDefault().First);
                 float regularMagn = info.m_mesh.bounds.extents.magnitude / WTSPropRenderingRules.SCALING_FACTOR;
                 Vector3 textExt = refer?.m_mesh?.bounds.extents ?? default;
                 if (descriptor.TextDescriptors[referenceIdx].IsMultiItemText())

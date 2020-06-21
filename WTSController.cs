@@ -24,7 +24,7 @@ namespace Klyte.WriteTheSigns
         public RoadSegmentTool RoadSegmentToolInstance => FindObjectOfType<RoadSegmentTool>();
         public BuildingEditorTool BuildingEditorToolInstance => FindObjectOfType<BuildingEditorTool>();
 
-        internal WTSTransportLineRenderingRules TransportLineRenderingRules { get; private set; }
+        internal WTSSpritesRenderingRules SpriteRenderingRules { get; private set; }
         internal WTSBuildingPropsSingleton BuildingPropsSingleton { get; private set; }
         internal WTSVehicleTextsSingleton VehicleTextsSingleton { get; private set; }
         internal WTSDestinationSingleton DestinationSingleton { get; private set; }
@@ -65,7 +65,7 @@ namespace Klyte.WriteTheSigns
             ReloadAbbreviationFiles();
 
             FontServer.Ensure();
-            TransportLineRenderingRules = gameObject.AddComponent<WTSTransportLineRenderingRules>();
+            SpriteRenderingRules = gameObject.AddComponent<WTSSpritesRenderingRules>();
             BuildingPropsSingleton = gameObject.AddComponent<WTSBuildingPropsSingleton>();
             RoadPropsSingleton = gameObject.AddComponent<WTSRoadPropsSingleton>();
             DestinationSingleton = gameObject.AddComponent<WTSDestinationSingleton>();

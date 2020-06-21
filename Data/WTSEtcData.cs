@@ -30,7 +30,7 @@ namespace Klyte.WriteTheSigns.Data
                 if (m_publicTransportLineSymbolFont != value)
                 {
                     m_publicTransportLineSymbolFont = value;
-                    WriteTheSignsMod.Controller?.TransportLineRenderingRules?.PurgeAllLines();
+                    WriteTheSignsMod.Controller?.SpriteRenderingRules?.PurgeAllLines();
                 }
             }
         }

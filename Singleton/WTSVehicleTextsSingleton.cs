@@ -1,9 +1,12 @@
-﻿using Klyte.Commons;
+﻿using ColossalFramework.UI;
+using Klyte.Commons;
+using Klyte.Commons.UI.Sprites;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Data;
 using Klyte.WriteTheSigns.Rendering;
 using Klyte.WriteTheSigns.UI;
 using Klyte.WriteTheSigns.Xml;
+using SpriteFontPlus.Utility;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -116,7 +119,8 @@ namespace Klyte.WriteTheSigns.Singleton
             var instance = VehicleManager.instance;
             for (int j = 0; j < targetDescriptor.TextDescriptors.Length; j++)
             {
-                if (cameraInfo.CheckRenderDistance(position, 200 * targetDescriptor.TextDescriptors[j].m_textScale * (targetDescriptor.TextDescriptors[j].IlluminationConfig.IlluminationType == FontStashSharp.MaterialType.OPAQUE ? 1 : 2)))
+                ref BoardTextDescriptorGeneralXml descriptor = ref targetDescriptor.TextDescriptors[j];
+                if (cameraInfo.CheckRenderDistance(position, 200 * descriptor.m_textScale * (descriptor.IlluminationConfig.IlluminationType == FontStashSharp.MaterialType.OPAQUE ? 1 : 2)))
                 {
                     MaterialPropertyBlock properties = instance.m_materialBlock;
                     properties.Clear();

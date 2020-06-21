@@ -209,7 +209,7 @@
     <Compile Include="Overrides\BoardGeneration\VehicleAIOverrides.cs" />
     <Compile Include="Overrides\BoardGeneration\BuildingAIOverrides.cs" />
     <Compile Include="Overrides\TransportLineOverrides.cs" />
-    <Compile Include="Rendering\WTSTransportLineRenderingRules.cs" />
+    <Compile Include="Rendering\WTSSpritesRenderingRules.cs" />
     <Compile Include="Singleton\WTSVehicleTextsSingleton.cs" />
     <Compile Include="Singleton\WTSBuildingPropsSingleton.cs" />
     <Compile Include="UI\Tabs\BuildingEditor\WTSBuildingLayoutEditorPropList.cs" />

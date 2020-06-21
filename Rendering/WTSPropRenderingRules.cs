@@ -1,6 +1,7 @@
 ﻿using ColossalFramework;
 using ColossalFramework.Math;
 using ColossalFramework.UI;
+using Klyte.Commons.UI.Sprites;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Data;
 using Klyte.WriteTheSigns.Singleton;
@@ -267,15 +268,15 @@ namespace Klyte.WriteTheSigns.Rendering
         }
 
         public static void DrawTextBri(ushort refID, int boardIdx, int secIdx, Matrix4x4 propMatrix, BoardTextDescriptorGeneralXml textDescriptor,
-            MaterialPropertyBlock materialPropertyBlock, BasicRenderInformation renderInfo, Color colorToSet, Vector3 taregetPos, Vector3 taregetRotation,
+            MaterialPropertyBlock materialPropertyBlock, BasicRenderInformation renderInfo, Color colorToSet, Vector3 taregetPos, Vector3 targetRotation,
             Vector3 baseScale, bool placeClone180Y, UIHorizontalAlignment targetTextAlignment, float maxWidth, int instanceFlags, Camera targetCamera = null, Shader overrideShader = null)
         {
 
-            List<Matrix4x4> textMatrixes = CalculateTextMatrix(taregetPos, taregetRotation, baseScale, targetTextAlignment, maxWidth, textDescriptor, renderInfo, placeClone180Y);
+            var textMatrixes = CalculateTextMatrix(taregetPos, targetRotation, baseScale, targetTextAlignment, maxWidth, textDescriptor, renderInfo, placeClone180Y);
 
-            foreach (Matrix4x4 textMatrix in textMatrixes)
+            foreach (var textMatrixTuple in textMatrixes)
             {
-                Matrix4x4 matrix = propMatrix * textMatrix;
+                Matrix4x4 matrix = propMatrix * textMatrixTuple.First;
 
                 materialPropertyBlock.Clear();
 
@@ -329,6 +330,7 @@ namespace Klyte.WriteTheSigns.Rendering
                 PropManager instance = Singleton<PropManager>.instance;
                 materialPropertyBlock.SetVector(instance.ID_ObjectIndex, objectIndex);
 
+
                 var oldShader = targetMaterial.shader;
                 try
                 {
@@ -339,20 +341,37 @@ namespace Klyte.WriteTheSigns.Rendering
                 {
                     targetMaterial.shader = oldShader;
                 }
+                if (((Vector2)textDescriptor.BackgroundMeshSettings.Size).sqrMagnitude != 0)
+                {
+                    BasicRenderInformation bgBri = WriteTheSignsMod.Controller.SpriteRenderingRules.GetSpriteFromDefaultAtlas(KlyteResourceLoader.GetDefaultSpriteNameFor(LineIconSpriteNames.K45_SquareIcon));
+                    if (bgBri != null)
+                    {
+                        materialPropertyBlock.SetColor(WTSPropRenderingRules.SHADER_PROP_COLOR, textDescriptor.BackgroundMeshSettings.BackgroundColor);
+                        materialPropertyBlock.SetColor(WTSPropRenderingRules.SHADER_PROP_COLOR0, textDescriptor.BackgroundMeshSettings.BackgroundColor);
+                        materialPropertyBlock.SetColor(WTSPropRenderingRules.SHADER_PROP_COLOR1, textDescriptor.BackgroundMeshSettings.BackgroundColor);
+                        materialPropertyBlock.SetColor(WTSPropRenderingRules.SHADER_PROP_COLOR2, textDescriptor.BackgroundMeshSettings.BackgroundColor);
+                        materialPropertyBlock.SetColor(WTSPropRenderingRules.SHADER_PROP_COLOR3, textDescriptor.BackgroundMeshSettings.BackgroundColor);
+                        var bgBriMatrix = ApplyTextAdjustments(taregetPos, targetRotation, bgBri, baseScale, textDescriptor.BackgroundMeshSettings.Size.Y, targetTextAlignment, textDescriptor.BackgroundMeshSettings.Size.X, false, false);
+
+                        //Size (64.0, 64.0); mesh bounds Center: (0.0, 32.0, 0.0), Extents: (32.0, 32.0, 0.0)
+                        //LogUtils.DoWarnLog($"Size {bgBri.m_sizeMetersUnscaled}; mesh bounds {bgBri.m_mesh.bounds}");
+                        Graphics.DrawMesh(bgBri.m_mesh, matrix * Matrix4x4.Translate(new Vector3(0, -bgBri.m_mesh.bounds.center.y, -0.0005f)) * Matrix4x4.Scale(new Vector3(textDescriptor.BackgroundMeshSettings.Size.X / bgBri.m_mesh.bounds.size.x / textMatrixTuple.Second.x, textDescriptor.BackgroundMeshSettings.Size.Y / bgBri.m_mesh.bounds.size.y / textMatrixTuple.Second.y, 1)), bgBri.m_generatedMaterial, 10, targetCamera, 0, materialPropertyBlock, false);
+                    }
+                }
             }
         }
 
         private static readonly float m_daynightOffTime = 6 * Convert.ToSingle(Math.Pow(Convert.ToDouble((6 - (15 / 2.5)) / 6), Convert.ToDouble(1 / 1.09)));
 
-        internal static List<Matrix4x4> CalculateTextMatrix(Vector3 targetPosition, Vector3 targetRotation, Vector3 baseScale, UIHorizontalAlignment targetTextAlignment, float maxWidth, BoardTextDescriptorGeneralXml textDescriptor, BasicRenderInformation renderInfo, bool placeClone180Y, bool centerReference = false)
+        internal static List<Tuple<Matrix4x4, Vector3>> CalculateTextMatrix(Vector3 targetPosition, Vector3 targetRotation, Vector3 baseScale, UIHorizontalAlignment targetTextAlignment, float maxWidth, BoardTextDescriptorGeneralXml textDescriptor, BasicRenderInformation renderInfo, bool placeClone180Y, bool centerReference = false)
         {
-            var result = new List<Matrix4x4>();
+            var result = new List<Tuple<Matrix4x4, Vector3>>();
             if (renderInfo == null)
             {
                 return result;
             }
 
-            Matrix4x4 textMatrix = ApplyTextAdjustments(targetPosition, targetRotation, renderInfo, baseScale, textDescriptor.m_textScale, targetTextAlignment, maxWidth, textDescriptor.m_applyOverflowResizingOnY, centerReference);
+            var textMatrix = ApplyTextAdjustments(targetPosition, targetRotation, renderInfo, baseScale, textDescriptor.m_textScale, targetTextAlignment, maxWidth, textDescriptor.m_applyOverflowResizingOnY, centerReference);
 
             result.Add(textMatrix);
 
@@ -368,7 +387,7 @@ namespace Klyte.WriteTheSigns.Rendering
             return result;
         }
 
-        private static Matrix4x4 ApplyTextAdjustments(Vector3 textPosition, Vector3 textRotation, BasicRenderInformation renderInfo, Vector3 propScale, float textScale, UIHorizontalAlignment horizontalAlignment, float maxWidth, bool applyResizeOverflowOnY, bool centerReference)
+        internal static Tuple<Matrix4x4, Vector3> ApplyTextAdjustments(Vector3 textPosition, Vector3 textRotation, BasicRenderInformation renderInfo, Vector3 propScale, float textScale, UIHorizontalAlignment horizontalAlignment, float maxWidth, bool applyResizeOverflowOnY, bool centerReference)
         {
             float overflowScaleX = 1f;
             float overflowScaleY = 1f;
@@ -396,12 +415,13 @@ namespace Klyte.WriteTheSigns.Rendering
             }
             targetRelativePosition += rotationMatrix.MultiplyPoint(new Vector3(0, -(renderInfo.m_YAxisOverflows.min + renderInfo.m_YAxisOverflows.max) / 2 * defaultMultiplierY * overflowScaleY));
 
+            var scaleVector = centerReference ? new Vector3(SCALING_FACTOR, SCALING_FACTOR, SCALING_FACTOR) : new Vector3(defaultMultiplierX * overflowScaleX / propScale.x, defaultMultiplierY * overflowScaleY / propScale.y, 1);
             Matrix4x4 textMatrix =
                 Matrix4x4.Translate(targetRelativePosition) *
                 rotationMatrix *
-                Matrix4x4.Scale(centerReference ? new Vector3(SCALING_FACTOR, SCALING_FACTOR, SCALING_FACTOR) : new Vector3(defaultMultiplierX * overflowScaleX / propScale.x, defaultMultiplierY * overflowScaleY / propScale.y, 1)) * Matrix4x4.Scale(propScale)
+                Matrix4x4.Scale(scaleVector) * Matrix4x4.Scale(propScale)
                ;
-            return textMatrix;
+            return Tuple.New(textMatrix, scaleVector);
         }
 
         public static Color GetColor(ushort refId, int boardIdx, int secIdx, BoardInstanceXml instance, BoardDescriptorGeneralXml propLayout, out bool found)
@@ -547,11 +567,11 @@ namespace Klyte.WriteTheSigns.Rendering
                     case TextType.Park: return RenderUtils.GetTextData($"{otherText}Area", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                     case TextType.PlatformNumber: return RenderUtils.GetTextData("00", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                     case TextType.LinesSymbols:
-                        multipleOutput = WriteTheSignsMod.Controller.TransportLineRenderingRules.DrawLineFormats(new int[textDescriptor.MultiItemSettings.SubItemsPerColumn * textDescriptor.MultiItemSettings.SubItemsPerRow].Select((x, y) => -y - 1));
+                        multipleOutput = WriteTheSignsMod.Controller.SpriteRenderingRules.DrawLineFormats(new int[textDescriptor.MultiItemSettings.SubItemsPerColumn * textDescriptor.MultiItemSettings.SubItemsPerRow].Select((x, y) => -y - 1));
 
                         return null;
                     case TextType.GameSprite:
-                        return WriteTheSignsMod.Controller.TransportLineRenderingRules.GetSpriteFromDefaultAtlas(textDescriptor.m_spriteName);
+                        return WriteTheSignsMod.Controller.SpriteRenderingRules.GetSpriteFromDefaultAtlas(textDescriptor.m_spriteName);
                     default:
                         string text = $"{textDescriptor.m_textType}: {preview.m_currentText}";
                         if (textDescriptor.m_allCaps)
@@ -567,12 +587,12 @@ namespace Klyte.WriteTheSigns.Rendering
                 TextType targetType = textDescriptor.m_textType;
                 switch (targetType)
                 {
-                    case TextType.GameSprite: return WriteTheSignsMod.Controller.TransportLineRenderingRules.GetSpriteFromDefaultAtlas(textDescriptor.m_spriteName);
+                    case TextType.GameSprite: return WriteTheSignsMod.Controller.SpriteRenderingRules.GetSpriteFromDefaultAtlas(textDescriptor.m_spriteName);
                     case TextType.Fixed: return RenderUtils.GetTextData(textDescriptor.m_fixedText ?? "", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                     case TextType.OwnName: return GetFromCacheArray(refID, textDescriptor, RenderUtils.CacheArrayTypes.VehicleNumber, baseFont);
                     case TextType.LinesSymbols:
                         ref Vehicle[] buffer = ref VehicleManager.instance.m_vehicles.m_buffer;
-                        return WriteTheSignsMod.Controller.TransportLineRenderingRules.DrawLineFormats(new int[] { buffer[buffer[refID].GetFirstVehicle(refID)].m_transportLine }).FirstOrDefault();
+                        return WriteTheSignsMod.Controller.SpriteRenderingRules.DrawLineFormats(new int[] { buffer[buffer[refID].GetFirstVehicle(refID)].m_transportLine }).FirstOrDefault();
                     case TextType.LastStopLine:
                         ref Vehicle[] buffer2 = ref VehicleManager.instance.m_vehicles.m_buffer;
                         ref Vehicle targetVehicle = ref buffer2[buffer2[refID].GetFirstVehicle(refID)];
@@ -602,7 +622,7 @@ namespace Klyte.WriteTheSigns.Rendering
                 TextType targetType = textDescriptor.m_textType;
                 switch (targetType)
                 {
-                    case TextType.GameSprite: return WriteTheSignsMod.Controller.TransportLineRenderingRules.GetSpriteFromDefaultAtlas(textDescriptor.m_spriteName);
+                    case TextType.GameSprite: return WriteTheSignsMod.Controller.SpriteRenderingRules.GetSpriteFromDefaultAtlas(textDescriptor.m_spriteName);
                     case TextType.Fixed: return RenderUtils.GetTextData(textDescriptor.m_fixedText ?? "", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                     case TextType.OwnName: return GetFromCacheArray(refID, textDescriptor, RenderUtils.CacheArrayTypes.BuildingName, baseFont);
                     case TextType.NextStopLine: return GetFromCacheArray(GetTargetStopInfo(buildingDescritpor, refID).FirstOrDefault().NextStopBuildingId, textDescriptor, RenderUtils.CacheArrayTypes.BuildingName, baseFont);
@@ -613,7 +633,7 @@ namespace Klyte.WriteTheSigns.Rendering
                     case TextType.StreetNameComplete: return GetFromCacheArray(WTSBuildingDataCaches.GetBuildingMainAccessSegment(refID), textDescriptor, RenderUtils.CacheArrayTypes.FullStreetName, baseFont);
                     case TextType.PlatformNumber: return RenderUtils.GetTextData((buildingDescritpor.m_platforms.FirstOrDefault() + 1).ToString(), textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                     case TextType.LinesSymbols:
-                        multipleOutput = WriteTheSignsMod.Controller.TransportLineRenderingRules.DrawLineFormats(GetAllTargetStopInfo(buildingDescritpor, refID).GroupBy(x => x.m_lineId).Select(x => x.First()).Select(x => (int)x.m_lineId));
+                        multipleOutput = WriteTheSignsMod.Controller.SpriteRenderingRules.DrawLineFormats(GetAllTargetStopInfo(buildingDescritpor, refID).GroupBy(x => x.m_lineId).Select(x => x.First()).Select(x => (int)x.m_lineId));
                         return null;
                     default:
                         return null;
@@ -704,7 +724,7 @@ namespace Klyte.WriteTheSigns.Rendering
                 }
                 return targetType switch
                 {
-                    TextType.GameSprite => WriteTheSignsMod.Controller.TransportLineRenderingRules.GetSpriteFromDefaultAtlas(textDescriptor.m_spriteName),
+                    TextType.GameSprite => WriteTheSignsMod.Controller.SpriteRenderingRules.GetSpriteFromDefaultAtlas(textDescriptor.m_spriteName),
                     TextType.DistanceFromReference => RenderUtils.GetTextData($"{data.m_distanceRefKm}", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont),
                     TextType.Fixed => RenderUtils.GetTextData(textDescriptor.m_fixedText ?? "", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont),
                     TextType.StreetSuffix => GetFromCacheArray(data.m_segmentId, textDescriptor, RenderUtils.CacheArrayTypes.SuffixStreetName, baseFont),
