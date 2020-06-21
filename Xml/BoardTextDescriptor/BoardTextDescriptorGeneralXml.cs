@@ -111,6 +111,8 @@ namespace Klyte.WriteTheSigns.Xml
 
             [XmlAttribute("verticalFirst")]
             public bool VerticalFirst { get; set; }
+            [XmlAttribute("verticalAlign")]
+            public UIVerticalAlignment VerticalAlign { get; set; } = UIVerticalAlignment.Top;
 
 
             [XmlElement("subItemSpacing")]

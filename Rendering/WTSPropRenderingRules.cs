@@ -156,18 +156,20 @@ namespace Klyte.WriteTheSigns.Rendering
 
 
                         float regularOffsetX = CalculateOffsetXMultiItem(textDescriptor.m_textAlign, maxItemsInARow, columnWidth, maxWidth);
+                        float cloneOffsetX = textDescriptor.PlacingConfig.m_invertYCloneHorizontalAlign ? CalculateOffsetXMultiItem(2 - textDescriptor.m_textAlign, maxItemsInARow, columnWidth, maxWidth) : regularOffsetX;
+                        float regularOffsetY = CalculateOffsetYMultiItem(textDescriptor.MultiItemSettings.VerticalAlign, maxItemsInAColumn, rowHeight);
 
-                        var startPoint = new Vector3(textDescriptor.PlacingConfig.Position.X + regularOffsetX, textDescriptor.PlacingConfig.Position.Y, textDescriptor.PlacingConfig.Position.Z);
+                        var startPoint = new Vector3(textDescriptor.PlacingConfig.Position.X + regularOffsetX, textDescriptor.PlacingConfig.Position.Y - regularOffsetY, textDescriptor.PlacingConfig.Position.Z);
+                        var startPointClone = new Vector3(textDescriptor.PlacingConfig.Position.X + cloneOffsetX, textDescriptor.PlacingConfig.Position.Y - regularOffsetY, textDescriptor.PlacingConfig.Position.Z);
 
                         Vector3 lastRowOrColumnStartPoint;
                         if (textDescriptor.MultiItemSettings.VerticalFirst)
                         {
-                            lastRowOrColumnStartPoint = new Vector3(startPoint.x, textDescriptor.PlacingConfig.Position.Y - (settings.SubItemsPerColumn - lastRowOrColumnItemCount) / 2f * rowHeight, startPoint.z);
+                            lastRowOrColumnStartPoint = new Vector3(startPoint.x, textDescriptor.PlacingConfig.Position.Y - CalculateOffsetYMultiItem(textDescriptor.MultiItemSettings.VerticalAlign, lastRowOrColumnItemCount, rowHeight), startPoint.z);
                         }
                         else
                         {
-                            var lastOffsetX = regularOffsetX = CalculateOffsetXMultiItem(textDescriptor.m_textAlign, lastRowOrColumnItemCount, columnWidth, maxWidth);
-                            lastRowOrColumnStartPoint = new Vector3(textDescriptor.PlacingConfig.Position.X + lastOffsetX, startPoint.y, startPoint.z);
+                            lastRowOrColumnStartPoint = new Vector3(textDescriptor.PlacingConfig.Position.X + CalculateOffsetXMultiItem(textDescriptor.m_textAlign, lastRowOrColumnItemCount, columnWidth, maxWidth), startPoint.y, startPoint.z);
                         }
                         Color colorToSet = GetTargetColor(refID, boardIdx, secIdx, descriptor, propLayout, textDescriptor);
                         //LogUtils.DoWarnLog($"sz = {resultArray.Length};targetCount = {targetCount}; origPos = {textDescriptor.PlacingConfig.Position}; maxItemsInAColumn = {maxItemsInAColumn}; maxItemsInARow = {maxItemsInARow};columnWidth={columnWidth};rowHeight={rowHeight}");
@@ -194,7 +196,7 @@ namespace Klyte.WriteTheSigns.Rendering
                             DrawTextBri(refID, boardIdx, secIdx, propMatrix, textDescriptor, materialPropertyBlock, currentItem, colorToSet, targetPosA, textDescriptor.PlacingConfig.Rotation, descriptor.PropScale, false, textDescriptor.m_textAlign, 0, instanceFlags, targetCamera, overrideShader);
                             if (textDescriptor.PlacingConfig.m_create180degYClone)
                             {
-                                targetPosA = startPoint - new Vector3(columnWidth * (maxItemsInARow - x - 1), rowHeight * y);
+                                targetPosA = startPointClone - new Vector3(columnWidth * (maxItemsInARow - x - 1), rowHeight * y);
                                 targetPosA.z *= -1;
                                 DrawTextBri(refID, boardIdx, secIdx, propMatrix, textDescriptor, materialPropertyBlock, currentItem, colorToSet, targetPosA, textDescriptor.PlacingConfig.Rotation + new Vector3(0, 180), descriptor.PropScale, false, textDescriptor.m_textAlign, 0, instanceFlags, targetCamera, overrideShader);
                             }
@@ -233,6 +235,22 @@ namespace Klyte.WriteTheSigns.Rendering
             }
 
             return offsetX;
+        }
+
+        private static float CalculateOffsetYMultiItem(UIVerticalAlignment alignment, int itemCount, float rowHeight)
+        {
+            var offsetY = 0f;
+            if (alignment == UIVerticalAlignment.Middle)
+            {
+                offsetY = -rowHeight * (itemCount - 1) / 2f;
+            }
+            else if (alignment == UIVerticalAlignment.Bottom)
+            {
+                offsetY = -(rowHeight * (itemCount - 1));
+            }
+
+
+            return offsetY;
         }
 
         private static Color GetTargetColor(ushort refID, int boardIdx, int secIdx, BoardInstanceXml descriptor, BoardDescriptorGeneralXml propLayout, BoardTextDescriptorGeneralXml textDescriptor)

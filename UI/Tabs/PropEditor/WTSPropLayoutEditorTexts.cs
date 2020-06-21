@@ -71,6 +71,7 @@ namespace Klyte.WriteTheSigns.UI
         private string m_clipboard;
         private UITextField m_spriteFilter;
         private UIListBox m_popup;
+        private UIDropDown m_verticalAlignDD;
 
         public void Awake()
         {
@@ -127,6 +128,7 @@ namespace Klyte.WriteTheSigns.UI
             AddVector2Field(Locale.Get("K45_WTS_TEXT_ROW_COLUMNS"), out m_arrayRowColumnsCount, helperConfig, OnRowColumnCountChanged, true, true);
             m_arrayRowColumnsCount.ForEach(x => x.allowNegative = false);
             AddVector2Field(Locale.Get("K45_WTS_TEXT_ROW_COLUMNS_SPACING"), out m_arrayRowColumnsSpacing, helperConfig, OnRowColumnSpacingChanged);
+            AddDropdown(Locale.Get("K45_WTS_VERTICAL_ALIGNMENT"), out m_verticalAlignDD, helperConfig, Enum.GetNames(typeof(UIVerticalAlignment)).Select(x => Locale.Get("K45_VERT_ALIGNMENT", x)).ToArray(), OnSetVerticalAlign);
             AddCheckboxLocale("K45_WTS_TEXT_FILLCOLUMNSFIRST", out m_checkboxVerticalFirst, helperConfig, OnColumnsFirstChanged);
 
             WTSUtils.ReloadFontsOf(m_overrideFontSelect, null, true, true);
@@ -155,7 +157,6 @@ namespace Klyte.WriteTheSigns.UI
 
 
         }
-
 
         public void Start() => WriteTheSignsMod.Controller.EventFontsReloadedFromFolder += () => SafeObtain((ref BoardTextDescriptorGeneralXml x) => WTSUtils.ReloadFontsOf(m_overrideFontSelect, x.m_overrideFont, true));
 
@@ -340,7 +341,7 @@ namespace Klyte.WriteTheSigns.UI
             if (obj >= 0)
             {
                 var targetValue = refArray[obj].Split(new char[] { '>' }, 2)[1].Trim();
-                SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_spriteName = targetValue);                
+                SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_spriteName = targetValue);
             }
             return GetCurrentSpriteName();
         }
@@ -404,6 +405,8 @@ namespace Klyte.WriteTheSigns.UI
         private void OnPositionChange(Vector3 obj) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.PlacingConfig.Position = (Vector3Xml)obj);
         private void OnSetAllCaps(bool isChecked) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_allCaps = isChecked);
         private void OnSetApplyAbbreviations(bool isChecked) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_applyAbbreviations = isChecked);
+        private void OnSetVerticalAlign(int sel) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.MultiItemSettings.VerticalAlign = (UIVerticalAlignment)sel);
+
 
 
         private void OnRowColumnSpacingChanged(Vector2 obj) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.MultiItemSettings.SubItemSpacing = (Vector2Xml)obj);
