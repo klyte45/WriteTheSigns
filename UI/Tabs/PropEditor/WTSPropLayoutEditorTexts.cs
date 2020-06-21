@@ -69,6 +69,8 @@ namespace Klyte.WriteTheSigns.UI
         private UIButton m_pasteButtonText;
 
         private string m_clipboard;
+        private UITextField m_spriteFilter;
+        private UIListBox m_popup;
 
         public void Awake()
         {
@@ -111,6 +113,9 @@ namespace Klyte.WriteTheSigns.UI
 
             AddDropdown(Locale.Get("K45_WTS_TEXT_CONTENT"), out m_dropdownTextContent, helperConfig, Enum.GetNames(typeof(TextType)).Select(x => Locale.Get("K45_WTS_BOARD_TEXT_TYPE_DESC", x.ToString())).ToArray(), OnSetTextOwnNameContent);
             AddTextField(Locale.Get("K45_WTS_CUSTOM_TEXT"), out m_customText, helperConfig, OnSetTextCustom);
+            AddFilterableInput(Locale.Get("K45_WTS_SPRITE_NAME"), helperConfig, out m_spriteFilter, out UIListBox popup, OnFilterSprites, GetCurrentSpriteName, OnSpriteNameChanged);
+            popup.processMarkup = true;
+
             AddDropdown(Locale.Get("K45_WTS_PROPLAYOUT_DESTINATIONREFERENCE"), out m_destinationRef, helperConfig, (Enum.GetValues(typeof(DestinationReference)) as DestinationReference[]).OrderBy(x => (int)x).Select(x => Locale.Get("K45_WTS_BOARD_TEXT_TYPE_DESC", x.ToString())).ToArray(), OnChangeDestinationRef);
             AddDropdown(Locale.Get("K45_WTS_TEXT_TARGETSEGMENTROTATION"), out m_referenceNode, helperConfig, (Enum.GetValues(typeof(ReferenceNode)) as ReferenceNode[]).OrderBy(x => (int)x).Select(x => Locale.Get("K45_WTS_TEXT_REFERENCENODE_OPT", x.ToString())).ToArray(), OnReferenceNodeChange);
             helperConfig.AddSpace(5);
@@ -150,6 +155,7 @@ namespace Klyte.WriteTheSigns.UI
 
 
         }
+
 
         public void Start() => WriteTheSignsMod.Controller.EventFontsReloadedFromFolder += () => SafeObtain((ref BoardTextDescriptorGeneralXml x) => WTSUtils.ReloadFontsOf(m_overrideFontSelect, x.m_overrideFont, true));
 
@@ -227,6 +233,8 @@ namespace Klyte.WriteTheSigns.UI
             m_textPrefix.text = x.m_prefix ?? "";
             m_textSuffix.text = x.m_suffix ?? "";
             m_allCaps.isChecked = x.m_allCaps;
+            m_spriteFilter.text = x.m_spriteName ?? "";
+
             m_arrayCustomBlink[0].text = x.ColoringConfig.CustomBlink.X.ToString("F3");
             m_arrayCustomBlink[1].text = x.ColoringConfig.CustomBlink.Y.ToString("F3");
             m_arrayCustomBlink[2].text = x.ColoringConfig.CustomBlink.Z.ToString("F3");
@@ -250,11 +258,12 @@ namespace Klyte.WriteTheSigns.UI
             m_dropdownBlinkType.parent.isVisible = x.ColoringConfig.MaterialType != MaterialType.OPAQUE;
             m_arrayCustomBlink[0].parent.isVisible = x.ColoringConfig.MaterialType != MaterialType.OPAQUE && m_dropdownBlinkType.selectedIndex == (int)BlinkType.Custom;
 
-            m_textPrefix.parent.isVisible = !x.IsMultiItemText();
-            m_textSuffix.parent.isVisible = !x.IsMultiItemText();
-            m_overrideFontSelect.parent.isVisible = !x.IsMultiItemText();
-            m_allCaps.isVisible = !x.IsMultiItemText();
+            m_textPrefix.parent.isVisible = !x.IsSpriteText();
+            m_textSuffix.parent.isVisible = !x.IsSpriteText();
+            m_overrideFontSelect.parent.isVisible = !x.IsSpriteText();
+            m_allCaps.isVisible = !x.IsSpriteText();
             m_applyAbbreviations.isVisible = x.m_textType == TextType.StreetSuffix || x.m_textType == TextType.StreetNameComplete || x.m_textType == TextType.StreetPrefix;
+            m_spriteFilter.parent.isVisible = x.m_textType == TextType.GameSprite;
             m_arrayRowColumnsCount[0].parent.isVisible = x.IsMultiItemText();
             m_arrayRowColumnsSpacing[0].parent.isVisible = x.IsMultiItemText();
             m_checkboxVerticalFirst.isVisible = x.IsMultiItemText();
@@ -318,6 +327,26 @@ namespace Klyte.WriteTheSigns.UI
             }
         });
         private void OnSetTextCustom(string text) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_fixedText = text);
+
+        private string GetCurrentSpriteName()
+        {
+            string result = null;
+            SafeObtain((ref BoardTextDescriptorGeneralXml desc) => result = desc.m_spriteName);
+            return result;
+        }
+
+        private string OnSpriteNameChanged(int obj, string[] refArray)
+        {
+            if (obj >= 0)
+            {
+                var targetValue = refArray[obj].Split(new char[] { '>' }, 2)[1].Trim();
+                SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_spriteName = targetValue);                
+            }
+            return GetCurrentSpriteName();
+        }
+
+        private string[] OnFilterSprites(string input) => m_spriteFilter.atlas.spriteNames.Where(x => x.ToLower().Contains(input.ToLower())).OrderBy(x => x).Select(x => $"<sprite {x}> {x}").ToArray();
+
         private void OnSetTextOwnNameContent(int sel)
         {
             SafeObtain((ref BoardTextDescriptorGeneralXml desc) =>

@@ -31,6 +31,8 @@ namespace Klyte.WriteTheSigns.Xml
         public int m_targetNodeRelative = 0;
         [XmlAttribute("fixedText")]
         public string m_fixedText = "Text";
+        [XmlAttribute("spriteName")]
+        public string m_spriteName = "";
 
         [XmlAttribute("overrideFont")] public string m_overrideFont;
 
@@ -89,11 +91,21 @@ namespace Klyte.WriteTheSigns.Xml
             }
             return false;
         }
+        public bool IsSpriteText()
+        {
+            switch (m_textType)
+            {
+                case TextType.LinesSymbols:
+                case TextType.GameSprite:
+                    return true;
+            }
+            return false;
+        }
 
         public class SubItemSettings
         {
             [XmlAttribute("subItemsPerRow")]
-            public int SubItemsPerRow { get => m_subItemsPerRow; set => m_subItemsPerRow = Math.Max(1, Math.Min(value,10)); }
+            public int SubItemsPerRow { get => m_subItemsPerRow; set => m_subItemsPerRow = Math.Max(1, Math.Min(value, 10)); }
             [XmlAttribute("subItemsPerColumn")]
             public int SubItemsPerColumn { get => m_subItemsPerColumn; set => m_subItemsPerColumn = Math.Max(1, Math.Min(value, 10)); }
 

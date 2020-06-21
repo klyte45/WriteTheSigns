@@ -31,9 +31,6 @@ namespace Klyte.WriteTheSigns.Singleton
 
         #endregion
 
-        private static readonly Texture2D m_aciReplacement = new Texture2D(Texture2D.blackTexture.width, Texture2D.blackTexture.height, TextureFormat.RGBA32, false);
-
-        static WTSVehicleTextsSingleton() => m_aciReplacement.SetPixels(new Color[Texture2D.blackTexture.width * Texture2D.blackTexture.height].Select(x => Color.blue).ToArray());
 
         public void AfterRenderExtraStuff(VehicleAI thiz, ushort vehicleID, ref Vehicle vehicleData, RenderManager.CameraInfo cameraInfo, InstanceID id, Vector3 position, Quaternion rotation, Vector4 tyrePosition, Vector4 lightState, Vector3 scale, Vector3 swayPosition, bool underground, bool overground)
         {
@@ -61,10 +58,12 @@ namespace Klyte.WriteTheSigns.Singleton
                         {
                             if (idx < thiz.m_info.m_subMeshes.Length && thiz.m_info.m_subMeshes[idx].m_subInfo?.m_material != null)
                             {
-                                thiz.m_info.m_subMeshes[idx].m_vehicleFlagsRequired = 0;
-                                thiz.m_info.m_subMeshes[idx].m_vehicleFlagsForbidden = 0;
-                                thiz.m_info.m_subMeshes[idx].m_subInfo.m_material.SetTexture("_ACIMap", m_aciReplacement);
                                 thiz.m_info.m_subMeshes[idx].m_subInfo.m_material.mainTexture = Texture2D.blackTexture;
+                                var aciReplacement = new Texture2D(thiz.m_info.m_subMeshes[idx].m_subInfo.m_material.mainTexture.width, thiz.m_info.m_subMeshes[idx].m_subInfo.m_material.mainTexture.height, TextureFormat.RGBA32, false);
+                                aciReplacement.SetPixels(new Color[thiz.m_info.m_subMeshes[idx].m_subInfo.m_material.mainTexture.width * thiz.m_info.m_subMeshes[idx].m_subInfo.m_material.mainTexture.height].Select(x => Color.blue).ToArray());
+                                thiz.m_info.m_subMeshes[idx].m_vehicleFlagsRequired = Vehicle.Flags.Created;
+                                thiz.m_info.m_subMeshes[idx].m_vehicleFlagsForbidden = 0;
+                                thiz.m_info.m_subMeshes[idx].m_subInfo.m_material.SetTexture("_ACIMap", aciReplacement);
                             }
                         }
                     }

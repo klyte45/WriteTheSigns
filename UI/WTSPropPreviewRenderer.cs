@@ -81,7 +81,7 @@ namespace Klyte.WriteTheSigns.UI
             if (referenceIdx < 0 || referenceIdx >= descriptor.TextDescriptors.Length)
             {
                 magnitude = info.m_mesh.bounds.extents.magnitude;
-                propMatrix = Matrix4x4.TRS(offsetPosition, Quaternion.Euler(offsetRotation.x, offsetRotation.y, offsetRotation.z), Vector3.one);
+                propMatrix = Matrix4x4.TRS(offsetPosition + new Vector3(0, -1000, 0), Quaternion.Euler(offsetRotation.x, offsetRotation.y, offsetRotation.z), Vector3.one);
             }
             else
             {
@@ -102,11 +102,11 @@ namespace Klyte.WriteTheSigns.UI
                     textExt.x = Mathf.Min(textExt.x * descriptor.TextDescriptors[referenceIdx].m_textScale, descriptor.TextDescriptors[referenceIdx].m_maxWidthMeters / WTSPropRenderingRules.SCALING_FACTOR) / descriptor.TextDescriptors[referenceIdx].m_textScale;
                 }
                 magnitude = Mathf.Min(regularMagn * 3, Mathf.Max(0.1f / WTSPropRenderingRules.SCALING_FACTOR, (textExt * descriptor.TextDescriptors[referenceIdx].m_textScale).magnitude));
-                propMatrix = Matrix4x4.TRS(offsetPosition, Quaternion.Euler(offsetRotation.x, offsetRotation.y, offsetRotation.z), Vector3.one) * sourceMatrix;
+                propMatrix = Matrix4x4.TRS(offsetPosition + new Vector3(0, -1000, 0), Quaternion.Euler(offsetRotation.x, offsetRotation.y, offsetRotation.z), Vector3.one) * sourceMatrix;
             }
             dist = magnitude + 16f;
             zoom *= magnitude * Zoom;
-            m_camera.transform.position = Vector3.forward * zoom;
+            m_camera.transform.position = Vector3.forward * zoom + new Vector3(0, -1000, 0);
             m_camera.transform.rotation = Quaternion.AngleAxis(180f, Vector3.up);
             m_camera.nearClipPlane = Mathf.Max(zoom - dist * 1.5f, 0.01f);
             m_camera.farClipPlane = zoom + dist * 1.5f;
@@ -125,23 +125,20 @@ namespace Klyte.WriteTheSigns.UI
             }
             PropManager propManager = instance;
             propManager.m_drawCallData.m_defaultCalls += 1;
-            if (info.m_material.shader == WTSController.DISALLOWED_SHADER_PROP)
-            {
-                info.m_material.shader = WTSController.REPLACEMENT_SHADER_PROP;
-            }
+
 
             Graphics.DrawMesh(info.m_mesh, propMatrix, info.m_material, info.m_prefabDataLayer, m_camera, 0, materialBlock, false, false, false);
 
             m_defaultInstance.Descriptor = descriptor;
             for (ushort i = 0; i < descriptor.TextDescriptors.Length; i++)
             {
-                WTSPropRenderingRules.RenderTextMesh(0, 0, i, m_defaultInstance, propMatrix, descriptor, ref descriptor.TextDescriptors[i], m_block, -1, m_camera, Shader.Find("Custom/Buildings/Building/AnimUV"));
+                WTSPropRenderingRules.RenderTextMesh(0, 0, i, m_defaultInstance, propMatrix, descriptor, ref descriptor.TextDescriptors[i], m_block, -1, m_camera);
             }
 
 
 
 
-            m_camera.RenderWithShader(info.m_material.shader, "");
+            m_camera.Render();
             sunLightSource.intensity = intensity;
             sunLightSource.color = color2;
             sunLightSource.transform.eulerAngles = eulerAngles;

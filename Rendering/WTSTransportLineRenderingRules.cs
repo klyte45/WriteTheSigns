@@ -28,10 +28,11 @@ namespace Klyte.WriteTheSigns.Rendering
         private void ResetAtlas()
         {
             m_referenceAtlas = ScriptableObject.CreateInstance<UITextureAtlas>();
-            m_referenceAtlas.material = new Material(Shader.Find("Custom/Props/Prop/Default"));
+            m_referenceAtlas.material = new Material(WTSController.DEFAULT_SHADER_TEXT);
         }
 
         private UITextureAtlas m_referenceAtlas;
+        private UITextureAtlas m_defaultAtlas;
 
         public void PurgeLine(ushort lineId)
         {
@@ -63,7 +64,7 @@ namespace Klyte.WriteTheSigns.Rendering
 
         public static void UpdateMaterial(ref bool IsDirty, UITextureAtlas referenceAtlas, Material material)
         {
-            if (IsDirty)
+            if (IsDirty || !material.HasProperty("_ACIMap"))
             {
                 var aciTex = new Texture2D(referenceAtlas.texture.width, referenceAtlas.texture.height);
                 aciTex.SetPixels(referenceAtlas.texture.GetPixels().Select(x => new Color(1 - x.a, 0, 1f, 1)).ToArray());
@@ -75,12 +76,14 @@ namespace Klyte.WriteTheSigns.Rendering
         }
 
         private readonly Dictionary<int, BasicRenderInformation> m_textCache = new Dictionary<int, BasicRenderInformation>();
+        private readonly Dictionary<string, BasicRenderInformation> m_defaultAtlasCache = new Dictionary<string, BasicRenderInformation>();
 
 
         private LineIconSpriteNames m_lineIconTest = LineIconSpriteNames.K45_HexagonIcon;
         private bool m_isDirty = false;
+        private bool m_isDirtyTextureAtlas = true;
 
-        public List<BasicRenderInformation> DrawLineFormats(IEnumerable<int> ids, Vector3 scale)
+        public List<BasicRenderInformation> DrawLineFormats(IEnumerable<int> ids)
         {
             var bris = new List<BasicRenderInformation>();
             if (ids.Count() == 0)
@@ -104,14 +107,64 @@ namespace Klyte.WriteTheSigns.Rendering
                         m_textCache[id] = null;
                     }
 
-                    StartCoroutine(WriteTextureCoroutine(id, scale));
+                    StartCoroutine(WriteTransportLineTextureCoroutine(id));
                 }
             }
             return bris;
 
         }
 
-        private IEnumerator WriteTextureCoroutine(int lineId, Vector3 scale)
+
+        public BasicRenderInformation GetSpriteFromDefaultAtlas(string spriteName)
+        {
+
+            if (m_defaultAtlasCache.TryGetValue(spriteName, out BasicRenderInformation bri))
+            {
+                return bri;
+            }
+            else
+            {
+                m_defaultAtlasCache[spriteName] = null;
+                StartCoroutine(CrateDefaultAtlasMeshCoroutine(spriteName));
+                return null;
+            }
+        }
+
+
+
+        private IEnumerator CrateDefaultAtlasMeshCoroutine(string spriteName)
+        {
+            yield return 0;
+            if (m_defaultAtlas == null)
+            {
+                m_defaultAtlas = new UITextureAtlas
+                {
+                    material = new Material(WTSController.DEFAULT_SHADER_TEXT)
+                };
+                TextureAtlasUtils.RegenerateTextureAtlas(m_defaultAtlas, UIView.GetAView().defaultAtlas.sprites.Select(x => new SpriteInfo
+                {
+                    border = x.border,
+                    name = x.name,
+                    texture = x.texture
+                }).ToList());
+            }
+            if (m_defaultAtlas[spriteName] == null)
+            {
+                yield break;
+            }
+            var bri = new BasicRenderInformation
+            {
+                m_YAxisOverflows = new RangeVector { min = 0, max = 20 },
+            };
+
+            yield return 0;
+            BuildMeshFromAtlas(spriteName, bri, m_defaultAtlas, m_defaultAtlas[spriteName].width / m_defaultAtlas[spriteName].height);
+            yield return 0;
+            RegisterMesh(spriteName, bri, m_defaultAtlasCache, m_defaultAtlas.material, ref m_isDirtyTextureAtlas, m_defaultAtlas);
+            yield break;
+        }
+
+        private IEnumerator WriteTransportLineTextureCoroutine(int lineId)
         {
             yield return 0;
             string id = $"{lineId}";
@@ -158,7 +211,7 @@ namespace Klyte.WriteTheSigns.Rendering
             };
 
             yield return 0;
-            BuildMeshFromAtlas(scale, id, bri, m_referenceAtlas);
+            BuildMeshFromAtlas(id, bri, m_referenceAtlas);
             yield return 0;
             RegisterMesh(lineId, bri, m_textCache, LinesMaterial, ref m_isDirty, m_referenceAtlas);
             yield break;
@@ -183,7 +236,7 @@ namespace Klyte.WriteTheSigns.Rendering
             }
         }
 
-        private static void BuildMeshFromAtlas(Vector3 scale, string id, BasicRenderInformation bri, UITextureAtlas referenceAtlas)
+        private static void BuildMeshFromAtlas(string id, BasicRenderInformation bri, UITextureAtlas referenceAtlas, float proportion = 1f)
         {
             var uirenderData = UIRenderData.Obtain();
             try
@@ -203,7 +256,7 @@ namespace Klyte.WriteTheSigns.Rendering
                 int baseIndex = 0;
                 float x = 0f;
                 float y = 0f;
-                float x2 = 64;
+                float x2 = 64 * proportion;
                 float y2 = -64;
                 vertices.Add(new Vector3(x, y2, 0f));
                 vertices.Add(new Vector3(x2, y2, 0f));
@@ -226,8 +279,6 @@ namespace Klyte.WriteTheSigns.Rendering
                 {
                     bri.m_mesh = new Mesh();
                 }
-                bri.m_YAxisOverflows.min *= scale.y;
-                bri.m_YAxisOverflows.max *= scale.y;
                 bri.m_mesh.Clear();
                 bri.m_mesh.vertices = AlignVertices(vertices);
                 bri.m_mesh.normals = normals.ToArray();

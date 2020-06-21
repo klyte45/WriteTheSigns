@@ -20,7 +20,8 @@
         NextStopLine,
         PrevStopLine,
         PlatformNumber,
-        PostalCode
+        PostalCode,
+        GameSprite
     }
 
 

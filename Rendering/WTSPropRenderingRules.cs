@@ -29,6 +29,7 @@ namespace Klyte.WriteTheSigns.Rendering
             [TextRenderingClass.RoadNodes] = new TextType[]
             {
                 TextType.Fixed,
+                TextType.GameSprite,
                 TextType.StreetPrefix,
                 TextType.StreetSuffix,
                 TextType.StreetNameComplete,
@@ -42,6 +43,7 @@ namespace Klyte.WriteTheSigns.Rendering
             [TextRenderingClass.MileageMarker] = new TextType[]
             {
                 TextType.Fixed,
+                TextType.GameSprite,
                 TextType.Direction,
                 TextType.Mileage,
                 TextType.StreetCode,
@@ -52,6 +54,7 @@ namespace Klyte.WriteTheSigns.Rendering
             [TextRenderingClass.Buildings] = new TextType[]
             {
                TextType.Fixed,
+               TextType.GameSprite,
                TextType.OwnName,
                TextType.LinesSymbols,
                TextType.NextStopLine, // Next Station Line 1
@@ -282,10 +285,16 @@ namespace Klyte.WriteTheSigns.Rendering
                 PropManager instance = Singleton<PropManager>.instance;
                 materialPropertyBlock.SetVector(instance.ID_ObjectIndex, objectIndex);
 
-
-                targetMaterial.shader = overrideShader ?? WTSController.DEFAULT_SHADER_TEXT;
-                Graphics.DrawMesh(renderInfo.m_mesh, matrix, targetMaterial, 10, targetCamera, 0, materialPropertyBlock, false);
-
+                var oldShader = targetMaterial.shader;
+                try
+                {
+                    targetMaterial.shader = overrideShader ?? WTSController.DEFAULT_SHADER_TEXT;
+                    Graphics.DrawMesh(renderInfo.m_mesh, matrix, targetMaterial, 10, targetCamera, 0, materialPropertyBlock, false);
+                }
+                finally
+                {
+                    targetMaterial.shader = oldShader;
+                }
             }
         }
 
@@ -495,9 +504,11 @@ namespace Klyte.WriteTheSigns.Rendering
                     case TextType.Park: return RenderUtils.GetTextData($"{otherText}Area", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                     case TextType.PlatformNumber: return RenderUtils.GetTextData("00", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                     case TextType.LinesSymbols:
-                        multipleOutput = WriteTheSignsMod.Controller.TransportLineRenderingRules.DrawLineFormats(new int[textDescriptor.MultiItemSettings.SubItemsPerColumn * textDescriptor.MultiItemSettings.SubItemsPerRow].Select((x, y) => -y - 1), Vector3.one);
+                        multipleOutput = WriteTheSignsMod.Controller.TransportLineRenderingRules.DrawLineFormats(new int[textDescriptor.MultiItemSettings.SubItemsPerColumn * textDescriptor.MultiItemSettings.SubItemsPerRow].Select((x, y) => -y - 1));
 
                         return null;
+                    case TextType.GameSprite:
+                        return WriteTheSignsMod.Controller.TransportLineRenderingRules.GetSpriteFromDefaultAtlas(textDescriptor.m_spriteName);
                     default:
                         string text = $"{textDescriptor.m_textType}: {preview.m_currentText}";
                         if (textDescriptor.m_allCaps)
@@ -513,11 +524,12 @@ namespace Klyte.WriteTheSigns.Rendering
                 TextType targetType = textDescriptor.m_textType;
                 switch (targetType)
                 {
+                    case TextType.GameSprite: return WriteTheSignsMod.Controller.TransportLineRenderingRules.GetSpriteFromDefaultAtlas(textDescriptor.m_spriteName);
                     case TextType.Fixed: return RenderUtils.GetTextData(textDescriptor.m_fixedText ?? "", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                     case TextType.OwnName: return GetFromCacheArray(refID, textDescriptor, RenderUtils.CacheArrayTypes.VehicleNumber, baseFont);
                     case TextType.LinesSymbols:
                         ref Vehicle[] buffer = ref VehicleManager.instance.m_vehicles.m_buffer;
-                        return WriteTheSignsMod.Controller.TransportLineRenderingRules.DrawLineFormats(new int[] { buffer[buffer[refID].GetFirstVehicle(refID)].m_transportLine }, Vector3.one).FirstOrDefault();
+                        return WriteTheSignsMod.Controller.TransportLineRenderingRules.DrawLineFormats(new int[] { buffer[buffer[refID].GetFirstVehicle(refID)].m_transportLine }).FirstOrDefault();
                     case TextType.LastStopLine:
                         ref Vehicle[] buffer2 = ref VehicleManager.instance.m_vehicles.m_buffer;
                         ref Vehicle targetVehicle = ref buffer2[buffer2[refID].GetFirstVehicle(refID)];
@@ -547,6 +559,7 @@ namespace Klyte.WriteTheSigns.Rendering
                 TextType targetType = textDescriptor.m_textType;
                 switch (targetType)
                 {
+                    case TextType.GameSprite: return WriteTheSignsMod.Controller.TransportLineRenderingRules.GetSpriteFromDefaultAtlas(textDescriptor.m_spriteName);
                     case TextType.Fixed: return RenderUtils.GetTextData(textDescriptor.m_fixedText ?? "", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                     case TextType.OwnName: return GetFromCacheArray(refID, textDescriptor, RenderUtils.CacheArrayTypes.BuildingName, baseFont);
                     case TextType.NextStopLine: return GetFromCacheArray(GetTargetStopInfo(buildingDescritpor, refID).FirstOrDefault().NextStopBuildingId, textDescriptor, RenderUtils.CacheArrayTypes.BuildingName, baseFont);
@@ -557,7 +570,7 @@ namespace Klyte.WriteTheSigns.Rendering
                     case TextType.StreetNameComplete: return GetFromCacheArray(WTSBuildingDataCaches.GetBuildingMainAccessSegment(refID), textDescriptor, RenderUtils.CacheArrayTypes.FullStreetName, baseFont);
                     case TextType.PlatformNumber: return RenderUtils.GetTextData((buildingDescritpor.m_platforms.FirstOrDefault() + 1).ToString(), textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                     case TextType.LinesSymbols:
-                        multipleOutput = WriteTheSignsMod.Controller.TransportLineRenderingRules.DrawLineFormats(GetAllTargetStopInfo(buildingDescritpor, refID).GroupBy(x => x.m_lineId).Select(x => x.First()).Select(x => (int)x.m_lineId), Vector3.one);
+                        multipleOutput = WriteTheSignsMod.Controller.TransportLineRenderingRules.DrawLineFormats(GetAllTargetStopInfo(buildingDescritpor, refID).GroupBy(x => x.m_lineId).Select(x => x.First()).Select(x => (int)x.m_lineId));
                         return null;
                     default:
                         return null;
@@ -648,6 +661,7 @@ namespace Klyte.WriteTheSigns.Rendering
                 }
                 return targetType switch
                 {
+                    TextType.GameSprite => WriteTheSignsMod.Controller.TransportLineRenderingRules.GetSpriteFromDefaultAtlas(textDescriptor.m_spriteName),
                     TextType.DistanceFromReference => RenderUtils.GetTextData($"{data.m_distanceRefKm}", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont),
                     TextType.Fixed => RenderUtils.GetTextData(textDescriptor.m_fixedText ?? "", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont),
                     TextType.StreetSuffix => GetFromCacheArray(data.m_segmentId, textDescriptor, RenderUtils.CacheArrayTypes.SuffixStreetName, baseFont),
