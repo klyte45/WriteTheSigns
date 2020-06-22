@@ -1,13 +1,10 @@
-﻿v0.0.1
-<color yellow>Alpha-1 version:</color>
+﻿v0.0.2
+<color yellow>Alpha-2 version:</color>
 	<color #00FFFF>Prop Layouts</color>
-	- Almost done. Preview works well most of time.	
-	- Added line symbols images (including TLM 13.3.6+ integration)
+	- Done.
 	<color #00FFFF>Buildings</color>
-	- Building layouts are working like it was in DTP, but requiring prop text layout configured before positioning it in building
-	- New pivot selection for building layouts
-	- Now layout list can be freely ordenated
-	- MISSING: Importing single prop layout from global/asset configurated descriptor
+	- Building layouts are working like it was in DTP, but requiring prop text layout configured before positioning it in building.
+	- Almost finished
 	- MISSING: Filter by subbuilding pivot on prop layout list
 	<color #00FFFF>Road Generated Props</color>
 	- Road corner works like DTP, but with more text options and Addresses (2.0.4+) integration
@@ -15,4 +12,9 @@
 	- MISSING: Next exits texts aren't implemented yet
 	- MISSING: Text rotation based on angle of exit not implemented yet.
 	<color #00FFFF>Vehicles</color>
-	Not implemented yet.
+	- Full implemented for building-based system
+	- Editor features full implemented
+	- BUG: Background text position isn't constant
+	<color #00FFFF>Fonts configurations</color>
+	- MISSING: Fallback font type (Regular, Electronic, etc...)
+

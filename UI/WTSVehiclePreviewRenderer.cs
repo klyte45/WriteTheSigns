@@ -25,23 +25,21 @@ namespace Klyte.WriteTheSigns.UI
             info.m_material.SetVectorArray(instance2.ID_TyreLocation, info.m_generatedInfo.m_tyres);
             Graphics.DrawMesh(GetMesh(info), matrix, GetMaterial(info), info.m_prefabDataLayer, m_camera, 0, materialBlock, false, false, false);
 
-            if (info.m_subMeshes != null && info.m_class.m_subService != ItemClass.SubService.PublicTransportTrolleybus)
+            for (int j = 0; j < info.m_subMeshes.Length; j++)
             {
-                for (int j = 0; j < info.m_subMeshes.Length; j++)
+                VehicleInfo.MeshInfo meshInfo = info.m_subMeshes[j];
+                var subInfo = meshInfo.m_subInfo as VehicleInfoSub;
+                if (subInfo != null && (meshInfo.m_vehicleFlagsRequired & Vehicle.Flags.LeftHandDrive) == 0)
                 {
-                    VehicleInfo.MeshInfo meshInfo = info.m_subMeshes[j];
-                    VehicleInfoBase subInfo = meshInfo.m_subInfo;
-                    if (subInfo != null)
-                    {
-                        VehicleManager.instance.m_drawCallData.m_defaultCalls = VehicleManager.instance.m_drawCallData.m_defaultCalls + 1;
+                    VehicleManager.instance.m_drawCallData.m_defaultCalls = VehicleManager.instance.m_drawCallData.m_defaultCalls + 1;
 
-                        subInfo.m_material.SetVectorArray(VehicleManager.instance.ID_TyreLocation, subInfo.m_generatedInfo.m_tyres);
-                        Graphics.DrawMesh(subInfo.m_mesh, matrix, subInfo.m_material, info.m_prefabDataLayer, null, 0, materialBlock);
-
-                    }
+                    subInfo.m_material.SetVectorArray(VehicleManager.instance.ID_TyreLocation, subInfo.m_generatedInfo.m_tyres);
+                    Graphics.DrawMesh(subInfo.m_mesh, matrix, subInfo.m_material, info.m_prefabDataLayer, null, 0, materialBlock);
 
                 }
+
             }
+
 
 
             return matrix;

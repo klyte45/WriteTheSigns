@@ -29,7 +29,6 @@ namespace Klyte.WriteTheSigns.Rendering
         {
             TextType.Fixed,
             TextType.GameSprite,
-            TextType.Fixed,
             TextType.OwnName,
             TextType.LinesSymbols,
             TextType.LastStopLine
