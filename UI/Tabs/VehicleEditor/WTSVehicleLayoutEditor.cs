@@ -29,6 +29,7 @@ namespace Klyte.WriteTheSigns.UI
         #region Panel areas
         private UIPanel m_topBar;
         private UIPanel m_middleBar;
+        private UILabel m_cantEditText;
         private UIPanel m_editArea;
         #endregion
 
@@ -90,7 +91,7 @@ namespace Klyte.WriteTheSigns.UI
             m_topBar.autoFitChildrenVertically = true;
             var m_topHelper = new UIHelperExtension(m_topBar);
 
-            AddFilterableInput("Selected model", m_topHelper, out m_vehicleSearch, out _, OnFilterVehicleTyped, GetCurrentSelection, OnVehicleNameSelected);
+            AddFilterableInput(Locale.Get("K45_WTS_VEHICLEEDITOR_SELECTMODEL"), m_topHelper, out m_vehicleSearch, out _, OnFilterVehicleTyped, GetCurrentSelection, OnVehicleNameSelected);
 
             AddLabel("", m_topHelper, out m_labelSelectionDescription, out m_containerSelectionDescription);
             KlyteMonoUtils.LimitWidthAndBox(m_labelSelectionDescription, (m_topHelper.Self.width / 2), true);
@@ -126,19 +127,20 @@ namespace Klyte.WriteTheSigns.UI
             m_plusButton.eventClicked += AddTabToItem;
 
             m_tabs = new UITemplateList<UIButton>(m_orderedRulesList, TAB_TEMPLATE_NAME);
+            KlyteMonoUtils.CreateUIElement(out m_cantEditText, MainContainer.transform, "text", new UnityEngine.Vector4(0, 0, MainContainer.width - MainContainer.padding.horizontal, MainContainer.height - m_middleBar.height - m_topBar.height - MainContainer.padding.vertical - (MainContainer.autoLayoutPadding.vertical * 2) - 5));
+            m_cantEditText.text = Locale.Get("K45_WTS_VEHICLEEDITOR_CANTEDITTEXT");
+            m_cantEditText.textAlignment = UIHorizontalAlignment.Center;
 
-            //KlyteMonoUtils.CreateUIElement(out m_editArea, MainContainer.transform, "editArea", new UnityEngine.Vector4(0, 0, MainContainer.width - MainContainer.padding.horizontal, MainContainer.height - m_middleBar.height - m_topBar.height - MainContainer.padding.vertical - (MainContainer.autoLayoutPadding.vertical * 2) - 5));
-            //m_editArea.padding = new RectOffset(5, 5, 5, 5);
+            KlyteMonoUtils.CreateUIElement(out m_editArea, MainContainer.transform, "editArea", new UnityEngine.Vector4(0, 0, MainContainer.width - MainContainer.padding.horizontal, MainContainer.height - m_middleBar.height - m_topBar.height - MainContainer.padding.vertical - (MainContainer.autoLayoutPadding.vertical * 2) - 5));
+            m_editArea.padding = new RectOffset(5, 5, 5, 5);
 
 
-            //KlyteMonoUtils.CreateUIElement(out m_basicInfoEditor, m_editArea.transform, "basicTab", new UnityEngine.Vector4(0, 0, m_editArea.width - m_editArea.padding.horizontal, m_editArea.height - m_editArea.padding.vertical));
-            //m_basicInfoEditor.gameObject.AddComponent<WTSVehicleLayoutEditorBasics>();
+            KlyteMonoUtils.CreateUIElement(out m_basicInfoEditor, m_editArea.transform, "basicTab", new UnityEngine.Vector4(0, 0, m_editArea.width - m_editArea.padding.horizontal, m_editArea.height - m_editArea.padding.vertical));
+            m_basicInfoEditor.gameObject.AddComponent<WTSVehicleLayoutEditorBasics>();
             //KlyteMonoUtils.CreateUIElement(out m_textInfoEditor, m_editArea.transform, "textTab", new UnityEngine.Vector4(0, 0, m_editArea.width - m_editArea.padding.horizontal, m_editArea.height - m_editArea.padding.vertical));
             //m_textInfoEditor.gameObject.AddComponent<WTSVehicleLayoutEditorTexts>();
             CreateTabTemplate();
 
-            //WTSPropLayoutData.Instance.EventDataChanged += RefreshConfigList;
-            //RefreshConfigList();
             ReloadVehicle();
             OnTabChange(0);
 
@@ -218,12 +220,11 @@ namespace Klyte.WriteTheSigns.UI
             ReloadVehicle();
         }
 
-        private void ReloadVehicle()
+        internal void ReloadVehicle()
         {
 
             m_middleBar.isVisible = CurrentVehicleInfo != null;
             m_containerSelectionDescription.isVisible = CurrentVehicleInfo != null;
-            //m_editArea.isVisible = isValidSelection;
             if (CurrentVehicleInfo != null)
             {
                 WTSVehicleTextsSingleton.GetTargetDescriptor(CurrentVehicleInfo.name, out ConfigurationSource source, out LayoutDescriptorVehicleXml target);
@@ -240,6 +241,8 @@ namespace Klyte.WriteTheSigns.UI
                 m_btnSteam.isVisible = CurrentConfigurationSource == ConfigurationSource.CITY && CurrentVehicleInfo.name.EndsWith("_Data");
                 OnTabChange(0);
             }
+            m_editArea.isVisible = CurrentVehicleInfo != null && CurrentConfigurationSource == ConfigurationSource.CITY;
+            m_cantEditText.isVisible = CurrentConfigurationSource == ConfigurationSource.ASSET || CurrentConfigurationSource == ConfigurationSource.GLOBAL;
         }
 
         private string OnVehicleNameSelected(int arg1, string[] arg2)
@@ -277,6 +280,7 @@ namespace Klyte.WriteTheSigns.UI
             CurrentTabChanged?.Invoke(idx);
             FixTabstrip();
             m_preview.ResetCamera();
+
         }
 
         private void AddTabToItem(UIComponent x, UIMouseEventParameter y)

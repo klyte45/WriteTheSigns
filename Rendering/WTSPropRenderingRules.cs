@@ -586,7 +586,7 @@ namespace Klyte.WriteTheSigns.Rendering
             }
             else if (instance is LayoutDescriptorVehicleXml vehicleDescriptor)
             {
-                baseFont ??= FontServer.instance[WTSVehicleData.Instance.DefaultFont];
+                baseFont ??= FontServer.instance[vehicleDescriptor.FontName] ?? FontServer.instance[WTSVehicleData.Instance.DefaultFont];
                 TextType targetType = textDescriptor.m_textType;
                 switch (targetType)
                 {

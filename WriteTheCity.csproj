@@ -216,6 +216,7 @@
     <Compile Include="UI\Tabs\BuildingEditor\WTSBuildingLayoutEditorPropDetail.cs" />
     <Compile Include="UI\Tabs\FontsConfig\WTSRoadCornerEditor.cs" />
     <Compile Include="UI\Tabs\RoadCornerEditor\WTSRoadCornerEditor.cs" />
+    <Compile Include="UI\Tabs\VehicleEditor\WTSVehicleLayoutEditorBasics.cs" />
     <Compile Include="UI\Tabs\VehicleEditor\WTSVehicleLayoutEditorPreview.cs" />
     <Compile Include="UI\Tabs\VehicleEditor\WTSVehicleLayoutEditor.cs" />
     <Compile Include="UI\WTSPrefabPreviewRenderer.cs" />
