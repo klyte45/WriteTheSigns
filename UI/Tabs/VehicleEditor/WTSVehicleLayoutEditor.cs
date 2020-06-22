@@ -3,7 +3,6 @@ using ColossalFramework.Globalization;
 using ColossalFramework.Packaging;
 using ColossalFramework.UI;
 using Klyte.Commons.Extensors;
-using Klyte.Commons.UI.SpriteNames;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Data;
 using Klyte.WriteTheSigns.Singleton;
@@ -50,7 +49,8 @@ namespace Klyte.WriteTheSigns.UI
         #region Mid bar controls
         private UIScrollablePanel m_editTabstrip;
         private UIButton m_plusButton;
-        private WTSVehicleLayoutEditorPreview m_propPreview;
+        private WTSVehicleLayoutEditorPreview m_preview;
+        private UIPanel m_orderedRulesList;
         #endregion
         #region Bottom bar panels
         private UIPanel m_basicInfoEditor;
@@ -60,6 +60,8 @@ namespace Klyte.WriteTheSigns.UI
         internal int CurrentTab { get; private set; }
 
         private LayoutDescriptorVehicleXml m_editingInstance;
+        private UITemplateList<UIButton> m_tabs;
+
         private event Action<LayoutDescriptorVehicleXml, ConfigurationSource> EventOnVehicleSelectionChanged;
 
         internal ref LayoutDescriptorVehicleXml EditingInstance => ref m_editingInstance;
@@ -108,16 +110,22 @@ namespace Klyte.WriteTheSigns.UI
 
 
             KlyteMonoUtils.CreateUIElement(out UIPanel previewContainer, m_middleBar.transform, "previewContainer", new UnityEngine.Vector4(0, 0, m_middleBar.width * .6f, m_middleBar.height - m_middleBar.padding.vertical));
-            m_propPreview = previewContainer.gameObject.AddComponent<WTSVehicleLayoutEditorPreview>();
+            m_preview = previewContainer.gameObject.AddComponent<WTSVehicleLayoutEditorPreview>();
 
 
             KlyteMonoUtils.CreateScrollPanel(m_middleBar, out m_editTabstrip, out _, m_middleBar.width - previewContainer.width - m_middleBar.padding.horizontal - (m_middleBar.autoLayoutPadding.horizontal * 2) - 20, 300);
             m_editTabstrip.autoLayout = true;
             m_editTabstrip.autoLayoutDirection = LayoutDirection.Vertical;
 
-            //InitTabButton(m_editTabstrip, out _, Locale.Get("K45_WTS_BASIC_INFO_TAB_TITLE"), new Vector2(m_editTabstrip.size.x, 30), (x, y) => OnTabChange(x.zOrder));
-            //InitTabButton(m_editTabstrip, out m_plusButton, Locale.Get("K45_WTS_ADD_NEW_TEXT_ENTRY"), new Vector2(m_editTabstrip.size.x, 30), null);
-            //m_plusButton.eventClicked += AddTabToItem;
+            InitTabButton(m_editTabstrip, out _, Locale.Get("K45_WTS_BASIC_INFO_TAB_TITLE"), new Vector2(m_editTabstrip.size.x, 30), (x, y) => OnTabChange(x.zOrder));
+            KlyteMonoUtils.CreateUIElement(out m_orderedRulesList, m_editTabstrip.transform, "GenTabs", new Vector4(0, 0, m_editTabstrip.width, 0));
+            m_orderedRulesList.autoFitChildrenVertically = true;
+            m_orderedRulesList.autoLayout = true;
+            m_orderedRulesList.autoLayoutDirection = LayoutDirection.Vertical;
+            InitTabButton(m_editTabstrip, out m_plusButton, Locale.Get("K45_WTS_ADD_NEW_TEXT_ENTRY"), new Vector2(m_editTabstrip.size.x, 30), null);
+            m_plusButton.eventClicked += AddTabToItem;
+
+            m_tabs = new UITemplateList<UIButton>(m_orderedRulesList, TAB_TEMPLATE_NAME);
 
             //KlyteMonoUtils.CreateUIElement(out m_editArea, MainContainer.transform, "editArea", new UnityEngine.Vector4(0, 0, MainContainer.width - MainContainer.padding.horizontal, MainContainer.height - m_middleBar.height - m_topBar.height - MainContainer.padding.vertical - (MainContainer.autoLayoutPadding.vertical * 2) - 5));
             //m_editArea.padding = new RectOffset(5, 5, 5, 5);
@@ -127,7 +135,7 @@ namespace Klyte.WriteTheSigns.UI
             //m_basicInfoEditor.gameObject.AddComponent<WTSVehicleLayoutEditorBasics>();
             //KlyteMonoUtils.CreateUIElement(out m_textInfoEditor, m_editArea.transform, "textTab", new UnityEngine.Vector4(0, 0, m_editArea.width - m_editArea.padding.horizontal, m_editArea.height - m_editArea.padding.vertical));
             //m_textInfoEditor.gameObject.AddComponent<WTSVehicleLayoutEditorTexts>();
-
+            CreateTabTemplate();
 
             //WTSPropLayoutData.Instance.EventDataChanged += RefreshConfigList;
             //RefreshConfigList();
@@ -218,7 +226,6 @@ namespace Klyte.WriteTheSigns.UI
             //m_editArea.isVisible = isValidSelection;
             if (CurrentVehicleInfo != null)
             {
-                OnTabChange(0);
                 WTSVehicleTextsSingleton.GetTargetDescriptor(CurrentVehicleInfo.name, out ConfigurationSource source, out LayoutDescriptorVehicleXml target);
                 m_labelSelectionDescription.text = (CurrentVehicleInfo.name?.EndsWith("_Data") ?? false) ? Locale.Get("VEHICLE_TITLE", CurrentVehicleInfo.name) + "\n" : $"{CurrentVehicleInfo.name}\n";
                 m_labelSelectionDescription.suffix = $"{Locale.Get("K45_WTS_CURRENTLY_USING")}: {Locale.Get("K45_WTS_CONFIGURATIONSOURCE", source.ToString())}";
@@ -231,6 +238,7 @@ namespace Klyte.WriteTheSigns.UI
                 m_btnDelete.isVisible = CurrentConfigurationSource == ConfigurationSource.CITY;
                 m_btnExport.isVisible = CurrentConfigurationSource == ConfigurationSource.CITY;
                 m_btnSteam.isVisible = CurrentConfigurationSource == ConfigurationSource.CITY && CurrentVehicleInfo.name.EndsWith("_Data");
+                OnTabChange(0);
             }
         }
 
@@ -267,43 +275,45 @@ namespace Klyte.WriteTheSigns.UI
             //m_basicInfoEditor.isVisible = CurrentTab == 0;
             //m_textInfoEditor.isVisible = CurrentTab != 0;
             CurrentTabChanged?.Invoke(idx);
+            FixTabstrip();
+            m_preview.ResetCamera();
         }
 
         private void AddTabToItem(UIComponent x, UIMouseEventParameter y)
         {
-            UIButton button = AddTabButton($"Tab {m_plusButton.zOrder - 1}");
             var newItem = new BoardTextDescriptorGeneralXml
             {
-                SaveName = $"Tab {button.zOrder}"
+                SaveName = $"New text"
             };
             EditingInstance.TextDescriptors = EditingInstance.TextDescriptors.Union(new BoardTextDescriptorGeneralXml[] { newItem
             }).ToArray();
-            button.text = newItem.SaveName;
+            FixTabstrip();
         }
 
-        private UIButton AddTabButton(string tabName)
+        private const string TAB_TEMPLATE_NAME = "K45_WTS_TabTemplateVehicle";
+
+        private void CreateTabTemplate()
         {
-            InitTabButton(m_editTabstrip, out UIButton button, "", new Vector2(m_editTabstrip.size.x, 30), (x, y) => OnTabChange(x.zOrder));
-            button.text = tabName;
-            m_plusButton.zOrder = 9999999;
-            return button;
+            var go = new GameObject();
+
+            InitTabButton(go, out UIButton button, "AAA", new Vector2(m_editTabstrip.size.x, 30), null);
+            UITemplateUtils.GetTemplateDict()[TAB_TEMPLATE_NAME] = button;
         }
 
-        internal void RemoveTabFromItem(int tabToEdit)
+        public void FixTabstrip()
         {
-            Destroy(m_editTabstrip.components[tabToEdit + 1]);
-            EditingInstance.TextDescriptors = EditingInstance.TextDescriptors.Where((x, y) => y != tabToEdit).ToArray();
-            OnTabChange(Mathf.Min(CurrentTab, EditingInstance.TextDescriptors.Length));
-        }
-
-        public void SetCurrentTabName(string name)
-        {
-            if (CurrentTab > 0 && CurrentTab < m_editTabstrip.components.Count - 1)
+            m_tabs.SetItemCount(EditingInstance?.TextDescriptors?.Length ?? 0);
+            for (int i = 0; i < (EditingInstance?.TextDescriptors?.Length ?? 0); i++)
             {
-                (m_editTabstrip.components[CurrentTab] as UIButton).text = name;
+                var but = m_tabs.items[i];
+                if (but.stringUserData.IsNullOrWhiteSpace())
+                {
+                    but.eventClicked += (x, y) => OnTabChange(x.zOrder + 1);
+                    but.stringUserData = "A";
+                }
+                but.text = EditingInstance.TextDescriptors[i]?.SaveName ?? "<EMPTY NAME>";
             }
         }
-
 
 
 
@@ -325,6 +335,17 @@ namespace Klyte.WriteTheSigns.UI
                         {
                             btn.state = UIButton.ButtonState.Normal;
                         }
+                    }
+                }
+                foreach (UIButton btn in m_orderedRulesList.GetComponentsInChildren<UIButton>())
+                {
+                    if (btn.zOrder == CurrentTab - 1)
+                    {
+                        btn.state = UIButton.ButtonState.Focused;
+                    }
+                    else
+                    {
+                        btn.state = UIButton.ButtonState.Normal;
                     }
                 }
             }

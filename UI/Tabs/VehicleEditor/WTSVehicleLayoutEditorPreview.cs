@@ -112,7 +112,7 @@ namespace Klyte.WriteTheSigns.UI
             {
                 m_maxZoom = Mathf.Max(Mathf.Pow(CurrentInfo.m_mesh.bounds.extents.y / CurrentInfo.m_mesh.bounds.extents.x, 1 / 3f) * 3f, 3f);
                 TargetZoom = m_maxZoom;
-                m_targetRotation = 90;
+                m_targetRotation = TabToPreview < 0 ? 90 : 0;
                 Vector3 target = CurrentInfo.m_mesh.bounds.center;
                 target.y *= -1;
                 m_targetCameraPosition = target;
@@ -128,8 +128,8 @@ namespace Klyte.WriteTheSigns.UI
                     Vector3 max;
                     max = new Vector3(Mathf.Max(Mathf.Abs(CurrentInfo.m_mesh.bounds.max.x - CurrentInfo.m_mesh.bounds.min.x), Mathf.Abs(CurrentInfo.m_mesh.bounds.max.z - CurrentInfo.m_mesh.bounds.min.z)), Mathf.Max(Mathf.Abs(CurrentInfo.m_mesh.bounds.max.y - CurrentInfo.m_mesh.bounds.min.y)), Mathf.Max(Mathf.Abs(CurrentInfo.m_mesh.bounds.max.x - CurrentInfo.m_mesh.bounds.min.x), Mathf.Abs(CurrentInfo.m_mesh.bounds.max.z - CurrentInfo.m_mesh.bounds.min.z)));
                     min = -max;
-                    min.y = -max.y;
-                    max.y = -CurrentInfo.m_mesh.bounds.min.y;
+                    //min.y = -max.y;
+                    //max.y = -CurrentInfo.m_mesh.bounds.min.y;
                     float moveMultiplier = 1;
                     if (CurrentTextDescriptor != null)
                     {
@@ -154,7 +154,12 @@ namespace Klyte.WriteTheSigns.UI
         {
             if (!m_viewLocked)
             {
-                TargetZoom = Mathf.Max(Mathf.Min(TargetZoom + eventParam.wheelDelta * 0.125f, m_maxZoom), 1f / CurrentInfo.m_mesh.bounds.extents.magnitude / CurrentInfo.m_mesh.bounds.extents.magnitude * Mathf.Min(1, CurrentTextDescriptor?.m_textScale ?? 1));
+                var multiplierMax = 1;
+                if (CurrentTextDescriptor != null)
+                {
+                    multiplierMax = 2;
+                }
+                TargetZoom = Mathf.Max(Mathf.Min(TargetZoom + eventParam.wheelDelta * 0.125f, m_maxZoom * multiplierMax), 1f / CurrentInfo.m_mesh.bounds.extents.magnitude / CurrentInfo.m_mesh.bounds.extents.magnitude / multiplierMax * Mathf.Min(1, CurrentTextDescriptor?.m_textScale ?? 1));
             }
         }
         private void RedrawModel()

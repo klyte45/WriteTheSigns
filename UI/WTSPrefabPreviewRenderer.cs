@@ -76,7 +76,10 @@ namespace Klyte.WriteTheSigns.UI
             {
                 BasicRenderInformation refer = WTSPropRenderingRules.GetTextMesh(TextDescriptors[referenceIdx], 0, 0, referenceIdx, m_defaultInstance, descriptor, out IEnumerable<BasicRenderInformation> briArr);
                 refer ??= briArr?.FirstOrDefault();
-
+                if (refer == null)
+                {
+                    return default;
+                }
 
                 sourceMatrix = Matrix4x4.Inverse(WTSPropRenderingRules.CalculateTextMatrix(TextDescriptors[referenceIdx].PlacingConfig.Position, TextDescriptors[referenceIdx].PlacingConfig.Rotation, Vector3.one, TextDescriptors[referenceIdx].m_textAlign, TextDescriptors[referenceIdx].m_maxWidthMeters, TextDescriptors[referenceIdx], refer, TextDescriptors[referenceIdx].PlacingConfig.m_create180degYClone, true).FirstOrDefault().First);
                 float regularMagn = GetMesh(info).bounds.extents.magnitude / WTSPropRenderingRules.SCALING_FACTOR;

@@ -257,7 +257,7 @@ namespace Klyte.WriteTheSigns.UI
             Dirty = true;
         };
 
-        private const string TAB_TEMPLATE_NAME = "K45_WTS_TabTemplate";
+        private const string TAB_TEMPLATE_NAME = "K45_WTS_TabTemplateBuilding";
 
         private void CreateTabTemplate()
         {

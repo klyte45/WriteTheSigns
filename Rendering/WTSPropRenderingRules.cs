@@ -530,15 +530,6 @@ namespace Klyte.WriteTheSigns.Rendering
             DynamicSpriteFont baseFont = FontServer.instance[propLayout?.FontName ?? ""];
             if (instance is BoardPreviewInstanceXml preview)
             {
-                if (!preview.m_overrideText.IsNullOrWhiteSpace())
-                {
-                    return RenderUtils.GetTextData(preview.m_overrideText, "", "", FontServer.instance[preview?.Descriptor?.FontName], textDescriptor.m_overrideFont);
-                }
-                string otherText = "";
-                if (textDescriptor.IsTextRelativeToSegment())
-                {
-                    otherText = $"({textDescriptor.m_destinationRelative}) ";
-                }
 
                 switch (propLayout?.m_allowedRenderClass)
                 {
@@ -555,7 +546,16 @@ namespace Klyte.WriteTheSigns.Rendering
                         baseFont ??= FontServer.instance[WTSVehicleData.Instance.DefaultFont];
                         break;
                 }
+                if (!preview.m_overrideText.IsNullOrWhiteSpace())
+                {
+                    return RenderUtils.GetTextData(preview.m_overrideText, "", "", baseFont, textDescriptor.m_overrideFont);
+                }
 
+                string otherText = "";
+                if (textDescriptor.IsTextRelativeToSegment())
+                {
+                    otherText = $"({textDescriptor.m_destinationRelative}) ";
+                }
                 switch (textDescriptor.m_textType)
                 {
                     case TextType.Fixed: return RenderUtils.GetTextData(textDescriptor.m_fixedText ?? "", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
