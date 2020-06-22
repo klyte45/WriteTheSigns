@@ -127,9 +127,10 @@ namespace Klyte.WriteTheSigns.UI
             m_plusButton.eventClicked += AddTabToItem;
 
             m_tabs = new UITemplateList<UIButton>(m_orderedRulesList, TAB_TEMPLATE_NAME);
-            KlyteMonoUtils.CreateUIElement(out m_cantEditText, MainContainer.transform, "text", new UnityEngine.Vector4(0, 0, MainContainer.width - MainContainer.padding.horizontal, MainContainer.height - m_middleBar.height - m_topBar.height - MainContainer.padding.vertical - (MainContainer.autoLayoutPadding.vertical * 2) - 5));
+            KlyteMonoUtils.CreateUIElement(out m_cantEditText, MainContainer.transform, "text", new UnityEngine.Vector4(0, 0, MainContainer.width - MainContainer.padding.horizontal, 315));
             m_cantEditText.text = Locale.Get("K45_WTS_VEHICLEEDITOR_CANTEDITTEXT");
             m_cantEditText.textAlignment = UIHorizontalAlignment.Center;
+            m_cantEditText.wordWrap = true;
 
             KlyteMonoUtils.CreateUIElement(out m_editArea, MainContainer.transform, "editArea", new UnityEngine.Vector4(0, 0, MainContainer.width - MainContainer.padding.horizontal, MainContainer.height - m_middleBar.height - m_topBar.height - MainContainer.padding.vertical - (MainContainer.autoLayoutPadding.vertical * 2) - 5));
             m_editArea.padding = new RectOffset(5, 5, 5, 5);
@@ -137,8 +138,8 @@ namespace Klyte.WriteTheSigns.UI
 
             KlyteMonoUtils.CreateUIElement(out m_basicInfoEditor, m_editArea.transform, "basicTab", new UnityEngine.Vector4(0, 0, m_editArea.width - m_editArea.padding.horizontal, m_editArea.height - m_editArea.padding.vertical));
             m_basicInfoEditor.gameObject.AddComponent<WTSVehicleLayoutEditorBasics>();
-            //KlyteMonoUtils.CreateUIElement(out m_textInfoEditor, m_editArea.transform, "textTab", new UnityEngine.Vector4(0, 0, m_editArea.width - m_editArea.padding.horizontal, m_editArea.height - m_editArea.padding.vertical));
-            //m_textInfoEditor.gameObject.AddComponent<WTSVehicleLayoutEditorTexts>();
+            KlyteMonoUtils.CreateUIElement(out m_textInfoEditor, m_editArea.transform, "textTab", new UnityEngine.Vector4(0, 0, m_editArea.width - m_editArea.padding.horizontal, m_editArea.height - m_editArea.padding.vertical));
+            m_textInfoEditor.gameObject.AddComponent<WTSVehicleLayoutEditorTexts>();
             CreateTabTemplate();
 
             ReloadVehicle();
@@ -206,6 +207,13 @@ namespace Klyte.WriteTheSigns.UI
                 return true;
             });
         }
+
+        internal void RemoveTabFromItem(int tabToEdit)
+        {
+            EditingInstance.TextDescriptors = EditingInstance.TextDescriptors.Where((x, y) => y != tabToEdit).ToArray();
+            OnTabChange(Mathf.Min(CurrentTab, EditingInstance.TextDescriptors.Length));
+        }
+
         private void OnCopyToCity()
         {
             WTSVehicleData.Instance.CityDescriptors[CurrentVehicleInfo.name] = XmlUtils.DefaultXmlDeserialize<LayoutDescriptorVehicleXml>(XmlUtils.DefaultXmlSerialize(EditingInstance));
@@ -243,6 +251,8 @@ namespace Klyte.WriteTheSigns.UI
             }
             m_editArea.isVisible = CurrentVehicleInfo != null && CurrentConfigurationSource == ConfigurationSource.CITY;
             m_cantEditText.isVisible = CurrentConfigurationSource == ConfigurationSource.ASSET || CurrentConfigurationSource == ConfigurationSource.GLOBAL;
+            m_plusButton.isVisible = CurrentVehicleInfo != null && CurrentConfigurationSource == ConfigurationSource.CITY;
+            m_editTabstrip.isVisible = CurrentVehicleInfo != null && CurrentConfigurationSource != ConfigurationSource.NONE;
         }
 
         private string OnVehicleNameSelected(int arg1, string[] arg2)
@@ -275,8 +285,8 @@ namespace Klyte.WriteTheSigns.UI
         private void OnTabChange(int idx)
         {
             CurrentTab = idx;
-            //m_basicInfoEditor.isVisible = CurrentTab == 0;
-            //m_textInfoEditor.isVisible = CurrentTab != 0;
+            m_basicInfoEditor.isVisible = CurrentTab == 0;
+            m_textInfoEditor.isVisible = CurrentTab != 0;
             CurrentTabChanged?.Invoke(idx);
             FixTabstrip();
             m_preview.ResetCamera();
@@ -319,9 +329,11 @@ namespace Klyte.WriteTheSigns.UI
             }
         }
 
-
-
-
+        internal void SetTabName(int tabToEdit, string text)
+        {
+            EditingInstance.TextDescriptors[tabToEdit].SaveName = text;
+            FixTabstrip();
+        }
 
         public void Update()
         {

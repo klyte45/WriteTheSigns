@@ -1,7 +1,6 @@
 ﻿using Klyte.Commons.Extensors;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Singleton;
-using System;
 using UnityEngine;
 
 namespace Klyte.WriteTheSigns.Overrides
@@ -38,13 +37,13 @@ namespace Klyte.WriteTheSigns.Overrides
             for (ushort buildingID = 1; buildingID < BuildingManager.MAX_BUILDING_COUNT; buildingID++)
             {
                 ref Building building = ref buildings[buildingID];
-                if ((building.m_flags & Building.Flags.Created) == 0)
+                BuildingInfo info = building.Info;
+                if ((building.m_flags & Building.Flags.Created) == 0 || info.m_mesh == null)
                 {
                     continue;
                 }
-                BuildingInfo info = building.Info;
                 Vector3 position = building.m_position;
-                float radius = info.m_renderSize + building.m_baseHeight * 0.5f;
+                float radius = info.m_renderSize + info.m_mesh.bounds.extents.sqrMagnitude;
                 position.y += (info.m_size.y - building.m_baseHeight) * 0.5f;
                 var shallRender = cameraInfo.Intersect(position, radius);
                 if (!shallRender && !(info.m_buildingAI is TransportStationAI) && !(info.m_buildingAI is OutsideConnectionAI))

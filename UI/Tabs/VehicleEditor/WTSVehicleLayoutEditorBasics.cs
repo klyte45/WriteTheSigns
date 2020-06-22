@@ -69,8 +69,9 @@ namespace Klyte.WriteTheSigns.UI
                 if (x == 0 && EditingInstance != null)
                 {
                     m_fontSelect.selectedIndex = EditingInstance.FontName == null ? 0 : EditingInstance.FontName == WTSController.DEFAULT_FONT_KEY ? 1 : Array.IndexOf(m_fontSelect.items, EditingInstance.FontName);
+                    FixSubmeshList();
                 }
-                FixSubmeshList();
+                MainContainer.isVisible = x == 0 && EditingInstance != null;
             };
 
             AddLibBox<WTSLibVehicleLayout, LayoutDescriptorVehicleXml>(helperLib, out UIButton m_copyButtonText,
@@ -90,7 +91,7 @@ namespace Klyte.WriteTheSigns.UI
 
         private void LoadIntoCurrentConfig(string loadedItem)
         {
-            WTSVehicleData.Instance.AssetsDescriptors[EditingInstance.VehicleAssetName] = XmlUtils.DefaultXmlDeserialize<LayoutDescriptorVehicleXml>(loadedItem);
+            WTSVehicleData.Instance.CityDescriptors[WTSVehicleLayoutEditor.Instance.CurrentVehicleInfo.name] = XmlUtils.DefaultXmlDeserialize<LayoutDescriptorVehicleXml>(loadedItem);
             WTSVehicleLayoutEditor.Instance.ReloadVehicle();
         }
 

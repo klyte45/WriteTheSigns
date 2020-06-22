@@ -25,6 +25,16 @@ namespace Klyte.WriteTheSigns.Rendering
         public static readonly int SHADER_PROP_COLOR2 = Shader.PropertyToID("_ColorV2");
         public static readonly int SHADER_PROP_COLOR3 = Shader.PropertyToID("_ColorV3");
 
+        public static readonly TextType[] ALLOWED_TYPES_VEHICLE = new TextType[]
+        {
+            TextType.Fixed,
+            TextType.GameSprite,
+            TextType.Fixed,
+            TextType.OwnName,
+            TextType.LinesSymbols,
+            TextType.LastStopLine
+        };
+
         public static readonly Dictionary<TextRenderingClass, TextType[]> ALLOWED_TYPES_PER_RENDERING_CLASS = new Dictionary<TextRenderingClass, TextType[]>
         {
             [TextRenderingClass.RoadNodes] = new TextType[]
@@ -546,7 +556,7 @@ namespace Klyte.WriteTheSigns.Rendering
                         baseFont ??= FontServer.instance[WTSVehicleData.Instance.DefaultFont];
                         break;
                 }
-                if (!preview.m_overrideText.IsNullOrWhiteSpace())
+                if (!preview.m_overrideText.IsNullOrWhiteSpace() && !textDescriptor.IsSpriteText())
                 {
                     return RenderUtils.GetTextData(preview.m_overrideText, "", "", baseFont, textDescriptor.m_overrideFont);
                 }

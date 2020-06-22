@@ -165,7 +165,7 @@ namespace Klyte.WriteTheSigns.Xml
         public class BackgroundMesh
         {
             [XmlElement("size")]
-            public Vector2Xml Size { get; set; }
+            public Vector2Xml Size { get; set; } = new Vector2Xml();
 
             [XmlIgnore]
             public Color BackgroundColor { get => m_cachedColor; set => m_cachedColor = value; }

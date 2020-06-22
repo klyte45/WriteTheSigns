@@ -93,6 +93,7 @@ namespace FontStashSharp
             FontHeight = 100;
             Color = Color.white;
             Spacing = 0;
+            m_lastCoroutineStep = 0;
         }
 
         public void AddFontMem(byte[] data)
@@ -143,9 +144,33 @@ namespace FontStashSharp
 
         }
 
+        private static uint m_lastCoroutineStep = 0;
+        private static int m_coroutineCounter = 0;
+
+        private bool CheckCoroutineCount()
+        {
+            if (m_lastCoroutineStep != SimulationManager.instance.m_currentTickIndex)
+            {
+                m_lastCoroutineStep = SimulationManager.instance.m_currentTickIndex;
+                m_coroutineCounter = 0;
+            }
+            if (m_coroutineCounter > 1)
+            {
+                return false;
+            }
+            m_coroutineCounter++;
+            return true;
+        }
+
         private IEnumerator WriteTextureCoroutine(float x, float y, string str, Vector3 scale, UIHorizontalAlignment alignment)
         {
             yield return 0;
+            while (!CheckCoroutineCount())
+            {
+                yield return 0;
+            }
+
+
             var bri = new BasicRenderInformation
             {
                 m_YAxisOverflows = new RangeVector { min = float.MaxValue, max = float.MinValue },
@@ -177,6 +202,11 @@ namespace FontStashSharp
 
             originY += ascent;
             yield return 0;
+            while (!CheckCoroutineCount())
+            {
+                yield return 0;
+            }
+
             var uirenderData = UIRenderData.Obtain();
             try
             {
@@ -251,6 +281,11 @@ namespace FontStashSharp
                 uirenderData.Release();
             }
             yield return 0;
+            while (!CheckCoroutineCount())
+            {
+                yield return 0;
+            }
+
 
             bri.m_mesh.RecalculateNormals();
             SolveTangents(bri.m_mesh);
