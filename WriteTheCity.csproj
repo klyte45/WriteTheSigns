@@ -207,7 +207,7 @@
     <Compile Include="ModShared\ConnectorTLM.cs" />
     <Compile Include="ModShared\ConnectorTLMFallback.cs" />
     <Compile Include="Overrides\BoardGeneration\VehicleAIOverrides.cs" />
-    <Compile Include="Overrides\BoardGeneration\BuildingAIOverrides.cs" />
+    <Compile Include="Overrides\BoardGeneration\ManagersOverrides.cs" />
     <Compile Include="Overrides\TransportLineOverrides.cs" />
     <Compile Include="Rendering\WTSSpritesRenderingRules.cs" />
     <Compile Include="Singleton\WTSVehicleTextsSingleton.cs" />
@@ -216,6 +216,10 @@
     <Compile Include="UI\Tabs\BuildingEditor\WTSBuildingLayoutEditorPropDetail.cs" />
     <Compile Include="UI\Tabs\FontsConfig\WTSRoadCornerEditor.cs" />
     <Compile Include="UI\Tabs\RoadCornerEditor\WTSRoadCornerEditor.cs" />
+    <Compile Include="UI\Tabs\VehicleEditor\WTSVehicleLayoutEditorPreview.cs" />
+    <Compile Include="UI\Tabs\VehicleEditor\WTSVehicleLayoutEditor.cs" />
+    <Compile Include="UI\WTSPrefabPreviewRenderer.cs" />
+    <Compile Include="UI\WTSVehiclePreviewRenderer.cs" />
     <Compile Include="Utils\WTSRoadNodeCommons.cs" />
     <Compile Include="Singleton\CacheDestinationRoute.cs" />
     <Compile Include="Overrides\BoardGeneration\RoadNodeOverrides.cs" />

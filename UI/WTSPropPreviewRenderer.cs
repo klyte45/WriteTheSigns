@@ -1,157 +1,38 @@
 ﻿using ColossalFramework;
 using Klyte.WriteTheSigns.Rendering;
 using Klyte.WriteTheSigns.Xml;
-using SpriteFontPlus.Utility;
-using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 namespace Klyte.WriteTheSigns.UI
 {
-    public class WTSPropPreviewRenderer : MonoBehaviour
+
+    internal class WTSPropPreviewRenderer : WTSPrefabPreviewRenderer<PropInfo>
     {
-        private readonly Camera m_camera;
-        private readonly MaterialPropertyBlock m_block = new MaterialPropertyBlock();
-        private readonly BoardPreviewInstanceXml m_defaultInstance = new BoardPreviewInstanceXml();
+        protected override ref Material GetMaterial(PropInfo info) => ref info.m_material;
+        protected override ref Mesh GetMesh(PropInfo info) => ref info.m_mesh;
 
-        public BoardPreviewInstanceXml GetDefaultInstance() => m_defaultInstance;
 
-        public Vector2 Size
+        protected override Matrix4x4 RenderMesh(PropInfo info, BoardTextDescriptorGeneralXml[] descriptor, Vector3 position, Quaternion rotation, Vector3 scale, Matrix4x4 sourceMatrix)
         {
-            get => new Vector2(m_camera.targetTexture.width, m_camera.targetTexture.height);
-            set {
-                if (Size != value)
-                {
-                    m_camera.targetTexture = new RenderTexture((int)value.x, (int)value.y, 24, RenderTextureFormat.ARGB32);
-                    m_camera.pixelRect = new Rect(0f, 0f, value.x, value.y);
-                }
-            }
-        }
-
-        public RenderTexture Texture => m_camera.targetTexture;
-        public float Zoom { get; set; } = 3f;
-
-        public WTSPropPreviewRenderer()
-        {
-            m_camera = new GameObject("Camera").AddComponent<Camera>();
-            m_camera.transform.SetParent(base.transform);
-            m_camera.backgroundColor = new Color(0f, 0f, 0f, 0f);
-            m_camera.fieldOfView = 30f;
-            m_camera.nearClipPlane = 0.0001f;
-            m_camera.farClipPlane = 1000f;
-            m_camera.allowHDR = true;
-            m_camera.enabled = false;
-            m_camera.targetTexture = new RenderTexture(512, 512, 24, RenderTextureFormat.ARGB32);
-            m_camera.pixelRect = new Rect(0f, 0f, 512f, 512f);
-            m_camera.clearFlags = CameraClearFlags.Color;
-            m_camera.name = "WTSCamera";
-        }
-
-        public Matrix4x4 RenderProp(PropInfo info, BoardDescriptorGeneralXml descriptor, int referenceIdx, string overrideText) => RenderProp(info, default, default, descriptor, referenceIdx, overrideText);
-
-        public Matrix4x4 RenderProp(PropInfo info, Vector3 offsetPosition, Vector3 offsetRotation, BoardDescriptorGeneralXml descriptor, int referenceIdx, string overrideText)
-        {
-            InfoManager instanceInfo = Singleton<InfoManager>.instance;
-            InfoManager.InfoMode currentMode = instanceInfo.CurrentMode;
-            InfoManager.SubInfoMode currentSubMode = instanceInfo.CurrentSubMode;
-            instanceInfo.SetCurrentMode(InfoManager.InfoMode.None, InfoManager.SubInfoMode.Default);
-            instanceInfo.UpdateInfoMode();
-            Light sunLightSource = DayNightProperties.instance.sunLightSource;
-            float intensity = sunLightSource.intensity;
-            Color color2 = sunLightSource.color;
-            Vector3 eulerAngles = sunLightSource.transform.eulerAngles;
-            sunLightSource.intensity = 2f;
-            sunLightSource.color = Color.white;
-            sunLightSource.transform.eulerAngles = new Vector3(50f, 180f, 70f);
-            Light mainLight = Singleton<RenderManager>.instance.MainLight;
-            Singleton<RenderManager>.instance.MainLight = sunLightSource;
-            if (mainLight == DayNightProperties.instance.moonLightSource)
-            {
-                DayNightProperties.instance.sunLightSource.enabled = true;
-                DayNightProperties.instance.moonLightSource.enabled = false;
-            }
-
-            m_defaultInstance.Descriptor = descriptor;
-            m_defaultInstance.m_overrideText = overrideText;
-
-            Matrix4x4 propMatrix;
-            float magnitude;
-            float dist;
-            float zoom = 1;
-            if (referenceIdx < 0 || referenceIdx >= descriptor.TextDescriptors.Length)
-            {
-                magnitude = info.m_mesh.bounds.extents.magnitude;
-                propMatrix = Matrix4x4.TRS(offsetPosition + new Vector3(0, -1000, 0), Quaternion.Euler(offsetRotation.x, offsetRotation.y, offsetRotation.z), Vector3.one);
-            }
-            else
-            {
-                BasicRenderInformation refer = WTSPropRenderingRules.GetTextMesh(descriptor.TextDescriptors[referenceIdx], 0, 0, referenceIdx, m_defaultInstance, descriptor, out IEnumerable<BasicRenderInformation> briArr);
-                refer ??= briArr?.FirstOrDefault();
-
-
-                var sourceMatrix = Matrix4x4.Inverse(WTSPropRenderingRules.CalculateTextMatrix(descriptor.TextDescriptors[referenceIdx].PlacingConfig.Position, descriptor.TextDescriptors[referenceIdx].PlacingConfig.Rotation, Vector3.one, descriptor.TextDescriptors[referenceIdx].m_textAlign, descriptor.TextDescriptors[referenceIdx].m_maxWidthMeters, descriptor.TextDescriptors[referenceIdx], refer, descriptor.TextDescriptors[referenceIdx].PlacingConfig.m_create180degYClone, true).FirstOrDefault().First);
-                float regularMagn = info.m_mesh.bounds.extents.magnitude / WTSPropRenderingRules.SCALING_FACTOR;
-                Vector3 textExt = refer?.m_mesh?.bounds.extents ?? default;
-                if (descriptor.TextDescriptors[referenceIdx].IsMultiItemText())
-                {
-                    textExt *= Mathf.Max(descriptor.TextDescriptors[referenceIdx].MultiItemSettings.SubItemsPerColumn, descriptor.TextDescriptors[referenceIdx].MultiItemSettings.SubItemsPerRow);
-                }
-
-                if (descriptor.TextDescriptors[referenceIdx].m_maxWidthMeters > 0)
-                {
-                    textExt.x = Mathf.Min(textExt.x * descriptor.TextDescriptors[referenceIdx].m_textScale, descriptor.TextDescriptors[referenceIdx].m_maxWidthMeters / WTSPropRenderingRules.SCALING_FACTOR) / descriptor.TextDescriptors[referenceIdx].m_textScale;
-                }
-                magnitude = Mathf.Min(regularMagn * 3, Mathf.Max(0.1f / WTSPropRenderingRules.SCALING_FACTOR, (textExt * descriptor.TextDescriptors[referenceIdx].m_textScale).magnitude));
-                propMatrix = Matrix4x4.TRS(offsetPosition + new Vector3(0, -1000, 0), Quaternion.Euler(offsetRotation.x, offsetRotation.y, offsetRotation.z), Vector3.one) * sourceMatrix;
-            }
-            dist = magnitude + 16f;
-            zoom *= magnitude * Zoom;
-            m_camera.transform.position = Vector3.forward * zoom + new Vector3(0, -1000, 0);
-            m_camera.transform.rotation = Quaternion.AngleAxis(180f, Vector3.up);
-            m_camera.nearClipPlane = Mathf.Max(zoom - dist * 1.5f, 0.01f);
-            m_camera.farClipPlane = zoom + dist * 1.5f;
-
-
-
+            var propMatrix = Matrix4x4.TRS(position, rotation, scale) * sourceMatrix;
             PropManager instance = Singleton<PropManager>.instance;
             MaterialPropertyBlock materialBlock = instance.m_materialBlock;
             materialBlock.Clear();
-            var targetColor = WTSPropRenderingRules.GetColor(0, 0, 0, m_defaultInstance, descriptor, out bool colorFound);
+            var targetColor = WTSPropRenderingRules.GetColor(0, 0, 0, m_defaultInstance, null, out bool colorFound);
             materialBlock.SetColor(instance.ID_Color, colorFound ? targetColor : Color.white);
-            if (info.m_rollLocation != null)
-            {
-                info.m_material.SetVectorArray(instance.ID_RollLocation, info.m_rollLocation);
-                info.m_material.SetVectorArray(instance.ID_RollParams, info.m_rollParams);
-            }
+
             PropManager propManager = instance;
             propManager.m_drawCallData.m_defaultCalls += 1;
 
-
-            Graphics.DrawMesh(info.m_mesh, propMatrix, info.m_material, info.m_prefabDataLayer, m_camera, 0, materialBlock, false, false, false);
-
-            m_defaultInstance.Descriptor = descriptor;
-            for (ushort i = 0; i < descriptor.TextDescriptors.Length; i++)
+            if (info.m_rollLocation != null)
             {
-                WTSPropRenderingRules.RenderTextMesh(0, 0, i, m_defaultInstance, propMatrix, descriptor, ref descriptor.TextDescriptors[i], m_block, -1, m_camera);
+                GetMaterial(info).SetVectorArray(instance.ID_RollLocation, info.m_rollLocation);
+                GetMaterial(info).SetVectorArray(instance.ID_RollParams, info.m_rollParams);
             }
 
-
-
-
-            m_camera.Render();
-            sunLightSource.intensity = intensity;
-            sunLightSource.color = color2;
-            sunLightSource.transform.eulerAngles = eulerAngles;
-            Singleton<RenderManager>.instance.MainLight = mainLight;
-            if (mainLight == DayNightProperties.instance.moonLightSource)
-            {
-                DayNightProperties.instance.sunLightSource.enabled = false;
-                DayNightProperties.instance.moonLightSource.enabled = true;
-            }
-            instanceInfo.SetCurrentMode(currentMode, currentSubMode);
-            instanceInfo.UpdateInfoMode();
-
+            Graphics.DrawMesh(GetMesh(info), propMatrix, GetMaterial(info), info.m_prefabDataLayer, m_camera, 0, materialBlock, false, false, false);
             return propMatrix;
         }
+
     }
 }

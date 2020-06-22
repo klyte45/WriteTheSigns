@@ -4,19 +4,19 @@ using Klyte.Commons.Extensors;
 using Klyte.Commons.UI.SpriteNames;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Rendering;
+using Klyte.WriteTheSigns.Singleton;
 using Klyte.WriteTheSigns.Xml;
-using SpriteFontPlus;
 using UnityEngine;
 
 namespace Klyte.WriteTheSigns.UI
 {
 
-    internal class WTSPropLayoutEditorPreview : UICustomControl
+    internal class WTSVehicleLayoutEditorPreview : UICustomControl
     {
 
         public UIPanel MainContainer { get; protected set; }
 
-        private WTSPropPreviewRenderer m_previewRenderer;
+        private WTSVehiclePreviewRenderer m_previewRenderer;
         private UIPanel m_previewPanel;
         private UITextureSprite m_preview;
         private UIPanel m_previewControls;
@@ -28,9 +28,9 @@ namespace Klyte.WriteTheSigns.UI
 
         private string m_overrideText = null;
 
-        private PropInfo CurrentInfo => WTSPropLayoutEditor.Instance.CurrentPropInfo;
-        private int TabToPreview => WTSPropLayoutEditor.Instance.CurrentTab - 1;
-        private BoardDescriptorGeneralXml EditingInstancePreview => WTSPropLayoutEditor.Instance.EditingInstance;
+        private VehicleInfo CurrentInfo => WTSVehicleLayoutEditor.Instance.CurrentVehicleInfo;
+        private int TabToPreview => WTSVehicleLayoutEditor.Instance.CurrentTab - 1;
+        private LayoutDescriptorVehicleXml EditingInstancePreview => WTSVehicleLayoutEditor.Instance.EditingInstance;
 
         private BoardTextDescriptorGeneralXml CurrentTextDescriptor => TabToPreview >= 0 && TabToPreview < EditingInstancePreview.TextDescriptors.Length ? EditingInstancePreview.TextDescriptors[TabToPreview] : default;
 
@@ -79,10 +79,7 @@ namespace Klyte.WriteTheSigns.UI
             KlyteMonoUtils.InitCircledButtonText(m_previewControls, out UIButton use50lText, "x50", (x, y) => m_overrideText = "Á" + new string('L', 48) + "j", Locale.Get("K45_WTS_USE_50LENGHT_TEXT"));
             KlyteMonoUtils.InitCircledButtonText(m_previewControls, out UIButton use100lText, "x200", (x, y) => m_overrideText = "Á" + new string('C', 198) + "j", Locale.Get("K45_WTS_USE_200LENGHT_TEXT"));
 
-            WTSPropLayoutEditor.Instance.CurrentTabChanged += (x) =>
-            {
-                ResetCamera();
-            };
+            WTSVehicleLayoutEditor.Instance.CurrentTabChanged += (x) => ResetCamera();
         }
 
         private void ToggleLock()
@@ -115,7 +112,7 @@ namespace Klyte.WriteTheSigns.UI
             {
                 m_maxZoom = Mathf.Max(Mathf.Pow(CurrentInfo.m_mesh.bounds.extents.y / CurrentInfo.m_mesh.bounds.extents.x, 1 / 3f) * 3f, 3f);
                 TargetZoom = m_maxZoom;
-                m_targetRotation = 0;
+                m_targetRotation = 90;
                 Vector3 target = CurrentInfo.m_mesh.bounds.center;
                 target.y *= -1;
                 m_targetCameraPosition = target;
@@ -168,7 +165,8 @@ namespace Klyte.WriteTheSigns.UI
             }
             m_preview.isVisible = true;
             m_previewControls.isVisible = true;
-            m_previewRenderer.RenderPrefab(CurrentInfo, m_cameraPosition, new Vector3(0, CameraRotation), EditingInstancePreview?.TextDescriptors, CurrentTextDescriptor != null ? TabToPreview : -1, m_overrideText, EditingInstancePreview);
+            WTSVehicleTextsSingleton.UpdateSubmeshes(CurrentInfo, EditingInstancePreview);
+            m_previewRenderer.RenderPrefab(CurrentInfo, m_cameraPosition, new Vector3(0, CameraRotation), EditingInstancePreview?.TextDescriptors, CurrentTextDescriptor != null ? TabToPreview : -1, m_overrideText);
         }
 
         public void Update()

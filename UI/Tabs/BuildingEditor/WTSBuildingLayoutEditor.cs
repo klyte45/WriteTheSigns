@@ -136,13 +136,13 @@ namespace Klyte.WriteTheSigns.UI
 
         private void OnExportAsAsset()
         {
-            File.WriteAllText(Path.Combine(Path.GetDirectoryName(PackageManager.FindAssetByName(CurrentBuildingName)?.package?.packagePath), $"{WTSController.m_defaultFileNameXml}.xml"), XmlUtils.DefaultXmlSerialize(CurrentEditingInstance));
+            File.WriteAllText(Path.Combine(Path.GetDirectoryName(PackageManager.FindAssetByName(CurrentBuildingName)?.package?.packagePath), $"{WTSController.m_defaultFileNameBuildingsXml}.xml"), XmlUtils.DefaultXmlSerialize(CurrentEditingInstance));
             WriteTheSignsMod.Controller?.BuildingPropsSingleton?.LoadAllBuildingConfigurations();
         }
 
         private void OnExportAsGlobal()
         {
-            File.WriteAllText(Path.Combine(WTSController.DefaultBuildingsConfigurationFolder, $"{WTSController.m_defaultFileNameXml}_{CurrentBuildingName}.xml"), XmlUtils.DefaultXmlSerialize(CurrentEditingInstance));
+            File.WriteAllText(Path.Combine(WTSController.DefaultBuildingsConfigurationFolder, $"{WTSController.m_defaultFileNameBuildingsXml}_{CurrentBuildingName}.xml"), XmlUtils.DefaultXmlSerialize(CurrentEditingInstance));
             WriteTheSignsMod.Controller?.BuildingPropsSingleton?.LoadAllBuildingConfigurations();
         }
 

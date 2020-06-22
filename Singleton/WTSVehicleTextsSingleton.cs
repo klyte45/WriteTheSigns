@@ -1,12 +1,9 @@
-﻿using ColossalFramework.UI;
-using Klyte.Commons;
-using Klyte.Commons.UI.Sprites;
+﻿using Klyte.Commons;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Data;
 using Klyte.WriteTheSigns.Rendering;
 using Klyte.WriteTheSigns.UI;
 using Klyte.WriteTheSigns.Xml;
-using SpriteFontPlus.Utility;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -53,27 +50,32 @@ namespace Klyte.WriteTheSigns.Singleton
                 MaterialPropertyBlock materialBlock = VehicleManager.instance.m_materialBlock;
                 materialBlock.Clear();
 
-                if (!targetDescriptor.SubmeshesUpdated)
-                {
-                    if (thiz.m_info?.m_subMeshes != null && targetDescriptor.BlackSubmeshes != null)
-                    {
-                        foreach (int idx in targetDescriptor.BlackSubmeshes)
-                        {
-                            if (idx < thiz.m_info.m_subMeshes.Length && thiz.m_info.m_subMeshes[idx].m_subInfo?.m_material != null)
-                            {
-                                thiz.m_info.m_subMeshes[idx].m_subInfo.m_material.mainTexture = Texture2D.blackTexture;
-                                var aciReplacement = new Texture2D(thiz.m_info.m_subMeshes[idx].m_subInfo.m_material.mainTexture.width, thiz.m_info.m_subMeshes[idx].m_subInfo.m_material.mainTexture.height, TextureFormat.RGBA32, false);
-                                aciReplacement.SetPixels(new Color[thiz.m_info.m_subMeshes[idx].m_subInfo.m_material.mainTexture.width * thiz.m_info.m_subMeshes[idx].m_subInfo.m_material.mainTexture.height].Select(x => Color.blue).ToArray());
-                                thiz.m_info.m_subMeshes[idx].m_vehicleFlagsRequired = Vehicle.Flags.Created;
-                                thiz.m_info.m_subMeshes[idx].m_vehicleFlagsForbidden = 0;
-                                thiz.m_info.m_subMeshes[idx].m_subInfo.m_material.SetTexture("_ACIMap", aciReplacement);
-                            }
-                        }
-                    }
-                    targetDescriptor.SubmeshesUpdated = true;
-                }
+                UpdateSubmeshes(thiz.m_info, targetDescriptor);
 
                 RenderDescriptor(ref vehicleData, cameraInfo, vehicleID, position, vehicleMatrix, ref targetDescriptor);
+            }
+        }
+
+        internal static void UpdateSubmeshes(VehicleInfo info, LayoutDescriptorVehicleXml targetDescriptor)
+        {
+            if (!targetDescriptor?.SubmeshesUpdated ?? false)
+            {
+                if (info?.m_subMeshes != null && targetDescriptor.BlackSubmeshes != null)
+                {
+                    foreach (int idx in targetDescriptor.BlackSubmeshes)
+                    {
+                        if (idx < info.m_subMeshes.Length && info.m_subMeshes[idx].m_subInfo?.m_material != null)
+                        {
+                            info.m_subMeshes[idx].m_subInfo.m_material.mainTexture = Texture2D.blackTexture;
+                            var aciReplacement = new Texture2D(info.m_subMeshes[idx].m_subInfo.m_material.mainTexture.width, info.m_subMeshes[idx].m_subInfo.m_material.mainTexture.height, TextureFormat.RGBA32, false);
+                            aciReplacement.SetPixels(new Color[info.m_subMeshes[idx].m_subInfo.m_material.mainTexture.width * info.m_subMeshes[idx].m_subInfo.m_material.mainTexture.height].Select(x => Color.blue).ToArray());
+                            info.m_subMeshes[idx].m_vehicleFlagsRequired = Vehicle.Flags.Created;
+                            info.m_subMeshes[idx].m_vehicleFlagsForbidden = 0;
+                            info.m_subMeshes[idx].m_subInfo.m_material.SetTexture("_ACIMap", aciReplacement);
+                        }
+                    }
+                }
+                targetDescriptor.SubmeshesUpdated = true;
             }
         }
 
@@ -137,7 +139,7 @@ namespace Klyte.WriteTheSigns.Singleton
 
         #region IO 
 
-        private static string DefaultFilename { get; } = $"{WTSController.m_defaultFileNameXml}.xml";
+        private static string DefaultFilename { get; } = $"{WTSController.m_defaultFileNameBuildingsXml}.xml";
 
         public void LoadAllVehiclesConfigurations()
         {

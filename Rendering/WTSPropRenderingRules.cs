@@ -540,7 +540,7 @@ namespace Klyte.WriteTheSigns.Rendering
                     otherText = $"({textDescriptor.m_destinationRelative}) ";
                 }
 
-                switch (propLayout.m_allowedRenderClass)
+                switch (propLayout?.m_allowedRenderClass)
                 {
                     case TextRenderingClass.RoadNodes:
                         baseFont ??= FontServer.instance[WTSRoadNodesData.Instance.DefaultFont];
@@ -550,6 +550,9 @@ namespace Klyte.WriteTheSigns.Rendering
                         break;
                     case TextRenderingClass.Buildings:
                         baseFont ??= FontServer.instance[WTSBuildingsData.Instance.DefaultFont];
+                        break;
+                    case null:
+                        baseFont ??= FontServer.instance[WTSVehicleData.Instance.DefaultFont];
                         break;
                 }
 

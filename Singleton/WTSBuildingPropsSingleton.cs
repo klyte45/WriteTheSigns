@@ -32,7 +32,6 @@ namespace Klyte.WriteTheSigns.Singleton
         internal readonly StopInformation[] m_stopInformation = new StopInformation[NetManager.MAX_NODE_COUNT];
         private ulong m_lastUpdateLines = SimulationManager.instance.m_currentTickIndex;
         private readonly ulong[] m_buildingLastUpdateLines = new ulong[BuildingManager.MAX_BUILDING_COUNT];
-        private ulong[] m_lastDrawBuilding = new ulong[BuildingManager.MAX_BUILDING_COUNT];
 
         #region Initialize
         public void Awake() => LoadAllBuildingConfigurations();
@@ -81,18 +80,8 @@ namespace Klyte.WriteTheSigns.Singleton
         {
             if (data.m_parentBuilding != 0)
             {
-                RenderManager instance = Singleton<RenderManager>.instance;
-                if (instance.RequireInstance(data.m_parentBuilding, 1u, out uint num))
-                {
-                    AfterRenderInstanceImpl(cameraInfo, data.m_parentBuilding, ref BuildingManager.instance.m_buildings.m_buffer[data.m_parentBuilding], layerMask, ref instance.m_instances[num]);
-                }
                 return;
             }
-            if (m_lastDrawBuilding[buildingID] >= SimulationManager.instance.m_currentTickIndex)
-            {
-                return;
-            }
-            m_lastDrawBuilding[buildingID] = SimulationManager.instance.m_currentTickIndex;
 
             string refName = GetReferenceModelName(ref data);
             if ((WTSBuildingLayoutEditor.Instance?.MainContainer?.isVisible ?? false) && (WTSBuildingLayoutEditor.Instance?.IsEditing(refName) ?? false))
@@ -593,7 +582,7 @@ namespace Klyte.WriteTheSigns.Singleton
         }
 
 
-        private static string DefaultFilename { get; } = $"{WTSController.m_defaultFileNameXml}.xml";
+        private static string DefaultFilename { get; } = $"{WTSController.m_defaultFileNameBuildingsXml}.xml";
 
         public void LoadAllBuildingConfigurations()
         {
@@ -621,8 +610,6 @@ namespace Klyte.WriteTheSigns.Singleton
                 }
             }
 
-
-            m_lastDrawBuilding = new ulong[BuildingManager.MAX_BUILDING_COUNT];
             if (errorList.Count > 0)
             {
                 K45DialogControl.ShowModal(new K45DialogControl.BindProperties

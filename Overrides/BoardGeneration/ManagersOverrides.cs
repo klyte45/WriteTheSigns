@@ -1,12 +1,13 @@
 ﻿using Klyte.Commons.Extensors;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Singleton;
+using System;
 using UnityEngine;
 
 namespace Klyte.WriteTheSigns.Overrides
 {
 
-    public class BuildingAIOverrides : Redirector, IRedirectable
+    public class ManagersOverrides : Redirector, IRedirectable
     {
 
         public void Awake()
@@ -20,17 +21,19 @@ namespace Klyte.WriteTheSigns.Overrides
             AddRedirect(orMeth, null, postRenderMeshs);
             System.Reflection.MethodInfo afterEndOverlayImpl = typeof(WTSBuildingPropsSingleton).GetMethod("AfterEndOverlayImpl", RedirectorUtils.allFlags);
             AddRedirect(typeof(ToolManager).GetMethod("EndOverlayImpl", RedirectorUtils.allFlags), null, afterEndOverlayImpl);
-
+            m_lastUpdateTime = 0;
             #endregion 
         }
-        public static void AfterRenderMeshes(RenderManager.CameraInfo cameraInfo, BuildingManager __instance)
+
+        private static uint m_lastUpdateTime = 0;
+        public static void AfterRenderMeshes(RenderManager.CameraInfo cameraInfo)
         {
-            if (WriteTheSignsMod.Controller?.BuildingPropsSingleton == null)
+            if (WriteTheSignsMod.Controller?.BuildingPropsSingleton == null || m_lastUpdateTime == SimulationManager.instance.m_currentTickIndex)
             {
                 return;
             }
 
-            ref Building[] buildings = ref __instance.m_buildings.m_buffer;
+            ref Building[] buildings = ref BuildingManager.instance.m_buildings.m_buffer;
             RenderManager renderManager = RenderManager.instance;
             for (ushort buildingID = 1; buildingID < BuildingManager.MAX_BUILDING_COUNT; buildingID++)
             {
@@ -67,7 +70,7 @@ namespace Klyte.WriteTheSigns.Overrides
                 }
             }
 
-
+            m_lastUpdateTime = SimulationManager.instance.m_currentTickIndex;
 
         }
 
