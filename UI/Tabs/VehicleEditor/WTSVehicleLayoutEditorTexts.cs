@@ -61,6 +61,7 @@ namespace Klyte.WriteTheSigns.UI
         private UIDropDown m_dropdownTextContent;
         private UITextField m_customText;
         private UIDropDown m_overrideFontSelect;
+        private UIDropDown m_fontClassSelect;
         private UITextField m_textPrefix;
         private UITextField m_textSuffix;
 
@@ -140,6 +141,7 @@ namespace Klyte.WriteTheSigns.UI
 
             helperConfig.AddSpace(5);
             AddDropdown(Locale.Get("K45_WTS_OVERRIDE_FONT"), out m_overrideFontSelect, helperConfig, new string[0], OnSetOverrideFont);
+            AddDropdown(Locale.Get("K45_WTS_CLASS_FONT"), out m_fontClassSelect, helperConfig, (Enum.GetValues(typeof(FontClass)) as FontClass[]).Select(x => Locale.Get("K45_WTS_FONTCLASS", x.ToString())).ToArray(), OnSetFontClass);
             AddTextField(Locale.Get("K45_WTS_PREFIX"), out m_textPrefix, helperConfig, OnSetPrefix);
             AddTextField(Locale.Get("K45_WTS_SUFFIX"), out m_textSuffix, helperConfig, OnSetSuffix);
             AddCheckboxLocale("K45_WTS_TEXT_ALL_CAPS", out m_allCaps, helperConfig, OnSetAllCaps);
@@ -227,6 +229,7 @@ namespace Klyte.WriteTheSigns.UI
             m_dropdownTextContent.selectedIndex = Array.IndexOf(WTSPropRenderingRules.ALLOWED_TYPES_VEHICLE, x.m_textType);
             m_customText.text = x.m_fixedText ?? "";
             m_overrideFontSelect.selectedIndex = x.m_overrideFont == null ? 0 : x.m_overrideFont == WTSController.DEFAULT_FONT_KEY ? 1 : Array.IndexOf(m_overrideFontSelect.items, x.m_overrideFont);
+            m_fontClassSelect.selectedIndex = (int)x.m_fontClass;
             m_textPrefix.text = x.m_prefix ?? "";
             m_textSuffix.text = x.m_suffix ?? "";
             m_allCaps.isChecked = x.m_allCaps;
@@ -257,6 +260,7 @@ namespace Klyte.WriteTheSigns.UI
             m_textPrefix.parent.isVisible = !x.IsSpriteText();
             m_textSuffix.parent.isVisible = !x.IsSpriteText();
             m_overrideFontSelect.parent.isVisible = !x.IsSpriteText();
+            m_fontClassSelect.parent.isVisible = !x.IsSpriteText();
             m_allCaps.isVisible = !x.IsSpriteText();
             m_applyAbbreviations.isVisible = x.m_textType == TextType.StreetSuffix || x.m_textType == TextType.StreetNameComplete || x.m_textType == TextType.StreetPrefix;
             m_spriteFilter.parent.isVisible = x.m_textType == TextType.GameSprite;
@@ -319,6 +323,14 @@ namespace Klyte.WriteTheSigns.UI
             else
             {
                 desc.m_overrideFont = null;
+            }
+        });
+        private void OnSetFontClass(int sel) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) =>
+        {
+            if (sel >= 0)
+            {
+                desc.m_fontClass = (FontClass)sel;
+
             }
         });
         private void OnSetTextCustom(string text) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_fixedText = text);

@@ -214,7 +214,7 @@
     <Compile Include="Singleton\WTSBuildingPropsSingleton.cs" />
     <Compile Include="UI\Tabs\BuildingEditor\WTSBuildingLayoutEditorPropList.cs" />
     <Compile Include="UI\Tabs\BuildingEditor\WTSBuildingLayoutEditorPropDetail.cs" />
-    <Compile Include="UI\Tabs\FontsConfig\WTSRoadCornerEditor.cs" />
+    <Compile Include="UI\Tabs\FontsConfig\WTSFontsSettings.cs" />
     <Compile Include="UI\Tabs\RoadCornerEditor\WTSRoadCornerEditor.cs" />
     <Compile Include="UI\Tabs\VehicleEditor\WTSVehicleLayoutEditorTexts.cs" />
     <Compile Include="UI\Tabs\VehicleEditor\WTSVehicleLayoutEditorBasics.cs" />

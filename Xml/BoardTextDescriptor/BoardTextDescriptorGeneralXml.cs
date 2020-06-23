@@ -35,6 +35,7 @@ namespace Klyte.WriteTheSigns.Xml
         public string m_spriteName = "";
 
         [XmlAttribute("overrideFont")] public string m_overrideFont;
+        [XmlAttribute("fontClass")] public FontClass m_fontClass = FontClass.Regular;
 
         [XmlAttribute("allCaps")]
         public bool m_allCaps = false;
@@ -188,6 +189,15 @@ namespace Klyte.WriteTheSigns.Xml
         StrongFade_250_250,
         Blink_025_025,
         Custom
+    }
+
+    public enum FontClass
+    {
+        Regular,
+        PublicTransport,
+        ElectronicBoards,
+        Stencil
+
     }
 
 

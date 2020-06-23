@@ -34,6 +34,7 @@ namespace Klyte.WriteTheSigns
             AddFolderButton(WTSController.DefaultVehiclesConfigurationFolder, group8, "K45_WTS_DEFAULT_VEHICLES_CONFIG_PATH_TITLE");
             AddFolderButton(WTSController.AbbreviationFilesPath, group8, "K45_WTS_ABBREVIATION_FILES_PATH_TITLE");
             AddFolderButton(WTSController.FontFilesPath, group8, "K45_WTS_FONT_FILES_PATH_TITLE");
+            AddFolderButton(WTSController.ExtraSpritesFolder, group8, "K45_WTS_EXTRA_SPRITES_PATH_TITLE");
             group8.AddLabel(Locale.Get("K45_WTS_GET_FILES_GITHUB"));
             group8.AddButton(Locale.Get("K45_WTS_GO_TO_GITHUB"), () => Application.OpenURL("https://github.com/klyte45/WriteTheSignsFiles"));
 

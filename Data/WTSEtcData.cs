@@ -1,9 +1,5 @@
-﻿using ColossalFramework.UI;
-using Klyte.Commons.Interfaces;
-using SpriteFontPlus;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using Klyte.Commons.Interfaces;
+using Klyte.WriteTheSigns.Xml;
 using System.Xml.Serialization;
 
 namespace Klyte.WriteTheSigns.Data
@@ -23,7 +19,7 @@ namespace Klyte.WriteTheSigns.Data
     {
         private string m_publicTransportLineSymbolFont;
 
-        [XmlAttribute("lineFont")]
+        [XmlAttribute("publicTransportFont")]
         public string PublicTransportLineSymbolFont
         {
             get => m_publicTransportLineSymbolFont; set {
@@ -35,40 +31,26 @@ namespace Klyte.WriteTheSigns.Data
             }
         }
 
-        [XmlElement("alias")]
-        [Obsolete]
-        public AliasEntry[] FontAliases
+        [XmlAttribute("electronicFont")]
+        public string ElectronicFont { get; set; }
+
+        [XmlAttribute("stencilFont")]
+        public string StencilFont { get; set; }
+
+        internal string GetTargetFont(FontClass fontClass)
         {
-            get => Aliases.Select(x => new AliasEntry
+            switch (fontClass)
             {
-                Original = x.Key,
-                Target = x.Value
-            }).ToArray();
-            set {
-                if (value != null)
-                {
-                    Aliases.Clear();
-                    value.ForEach(x =>
-                    {
-                        if (x.Original != null && x.Target != null)
-                        {
-                            Aliases[x.Original] = x.Target;
-                        }
-                    });
-                }
+                case FontClass.Regular:
+                    return null;
+                case FontClass.PublicTransport:
+                    return m_publicTransportLineSymbolFont ?? WTSController.DEFAULT_FONT_KEY;
+                case FontClass.ElectronicBoards:
+                    return ElectronicFont ?? WTSController.DEFAULT_FONT_KEY;
+                case FontClass.Stencil:
+                    return StencilFont ?? WTSController.DEFAULT_FONT_KEY;
             }
-        }
-
-
-        internal Dictionary<string, string> Aliases => FontServer.instance.Aliases;
-
-
-        public class AliasEntry
-        {
-            [XmlAttribute("original")]
-            public string Original { get; set; }
-            [XmlAttribute("target")]
-            public string Target { get; set; }
+            return null;
         }
     }
 

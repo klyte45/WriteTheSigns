@@ -550,7 +550,8 @@ namespace Klyte.WriteTheSigns.Rendering
         internal static BasicRenderInformation GetTextMesh(BoardTextDescriptorGeneralXml textDescriptor, ushort refID, int boardIdx, int secIdx, BoardInstanceXml instance, BoardDescriptorGeneralXml propLayout, out IEnumerable<BasicRenderInformation> multipleOutput)
         {
             multipleOutput = null;
-            DynamicSpriteFont baseFont = FontServer.instance[propLayout?.FontName ?? ""];
+            DynamicSpriteFont baseFont = FontServer.instance[WTSEtcData.Instance.FontSettings.GetTargetFont(textDescriptor.m_fontClass)] ?? FontServer.instance[propLayout?.FontName];
+
             if (instance is BoardPreviewInstanceXml preview)
             {
 

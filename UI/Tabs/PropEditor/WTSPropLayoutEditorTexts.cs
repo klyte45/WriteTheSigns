@@ -54,6 +54,7 @@ namespace Klyte.WriteTheSigns.UI
         private UITextField m_customText;
         private UIDropDown m_destinationRef;
         private UIDropDown m_referenceNode;
+        private UIDropDown m_fontClassSelect;
         private UIDropDown m_overrideFontSelect;
         private UITextField m_textPrefix;
         private UITextField m_textSuffix;
@@ -120,6 +121,7 @@ namespace Klyte.WriteTheSigns.UI
             AddDropdown(Locale.Get("K45_WTS_PROPLAYOUT_DESTINATIONREFERENCE"), out m_destinationRef, helperConfig, (Enum.GetValues(typeof(DestinationReference)) as DestinationReference[]).OrderBy(x => (int)x).Select(x => Locale.Get("K45_WTS_BOARD_TEXT_TYPE_DESC", x.ToString())).ToArray(), OnChangeDestinationRef);
             AddDropdown(Locale.Get("K45_WTS_TEXT_TARGETSEGMENTROTATION"), out m_referenceNode, helperConfig, (Enum.GetValues(typeof(ReferenceNode)) as ReferenceNode[]).OrderBy(x => (int)x).Select(x => Locale.Get("K45_WTS_TEXT_REFERENCENODE_OPT", x.ToString())).ToArray(), OnReferenceNodeChange);
             helperConfig.AddSpace(5);
+            AddDropdown(Locale.Get("K45_WTS_CLASS_FONT"), out m_fontClassSelect, helperConfig, (Enum.GetValues(typeof(FontClass)) as FontClass[]).Select(x => Locale.Get("K45_WTS_FONTCLASS", x.ToString())).ToArray(), OnSetFontClass);
             AddDropdown(Locale.Get("K45_WTS_OVERRIDE_FONT"), out m_overrideFontSelect, helperConfig, new string[0], OnSetOverrideFont);
             AddTextField(Locale.Get("K45_WTS_PREFIX"), out m_textPrefix, helperConfig, OnSetPrefix);
             AddTextField(Locale.Get("K45_WTS_SUFFIX"), out m_textSuffix, helperConfig, OnSetSuffix);
@@ -231,6 +233,7 @@ namespace Klyte.WriteTheSigns.UI
             m_destinationRef.selectedIndex = (int)(x.m_destinationRelative + 1);
             m_referenceNode.selectedIndex = x.m_targetNodeRelative + 7;
             m_overrideFontSelect.selectedIndex = x.m_overrideFont == null ? 0 : x.m_overrideFont == WTSController.DEFAULT_FONT_KEY ? 1 : Array.IndexOf(m_overrideFontSelect.items, x.m_overrideFont);
+            m_fontClassSelect.selectedIndex = (int)x.m_fontClass;
             m_textPrefix.text = x.m_prefix ?? "";
             m_textSuffix.text = x.m_suffix ?? "";
             m_allCaps.isChecked = x.m_allCaps;
@@ -262,6 +265,7 @@ namespace Klyte.WriteTheSigns.UI
             m_textPrefix.parent.isVisible = !x.IsSpriteText();
             m_textSuffix.parent.isVisible = !x.IsSpriteText();
             m_overrideFontSelect.parent.isVisible = !x.IsSpriteText();
+            m_fontClassSelect.parent.isVisible = !x.IsSpriteText();
             m_allCaps.isVisible = !x.IsSpriteText();
             m_applyAbbreviations.isVisible = x.m_textType == TextType.StreetSuffix || x.m_textType == TextType.StreetNameComplete || x.m_textType == TextType.StreetPrefix;
             m_spriteFilter.parent.isVisible = x.m_textType == TextType.GameSprite;
@@ -327,6 +331,14 @@ namespace Klyte.WriteTheSigns.UI
                 desc.m_overrideFont = null;
             }
         });
+        private void OnSetFontClass(int sel) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) =>
+       {
+           if (sel >= 0)
+           {
+               desc.m_fontClass = (FontClass)sel;
+
+           }
+       });
         private void OnSetTextCustom(string text) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_fixedText = text);
 
         private string GetCurrentSpriteName()
@@ -400,7 +412,7 @@ namespace Klyte.WriteTheSigns.UI
             ApplyShowRules(desc);
         });
         private void OnChangeIlluminationStrength(float val) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.IlluminationConfig.IlluminationStrength = val);
-        private void OnCustomBlinkChange(Vector4 obj) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.IlluminationConfig.CustomBlink= (Vector4Xml)obj);
+        private void OnCustomBlinkChange(Vector4 obj) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.IlluminationConfig.CustomBlink = (Vector4Xml)obj);
         private void OnRotationChange(Vector3 obj) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.PlacingConfig.Rotation = (Vector3Xml)obj);
         private void OnPositionChange(Vector3 obj) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.PlacingConfig.Position = (Vector3Xml)obj);
         private void OnSetAllCaps(bool isChecked) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_allCaps = isChecked);

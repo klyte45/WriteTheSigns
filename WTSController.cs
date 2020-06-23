@@ -1,6 +1,6 @@
 ﻿extern alias TLM;
 
-using ColossalFramework.UI;
+using ColossalFramework.Globalization;
 using Klyte.Commons.Interfaces;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Connectors;
@@ -16,6 +16,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using UnityEngine;
+using static ColossalFramework.UI.UITextureAtlas;
 
 namespace Klyte.WriteTheSigns
 {
@@ -73,6 +74,46 @@ namespace Klyte.WriteTheSigns
             VehicleTextsSingleton = gameObject.AddComponent<WTSVehicleTextsSingleton>();
             ConnectorTLM = PluginUtils.GetImplementationTypeForMod<ConnectorTLM, ConnectorTLMFallback, IConnectorTLM>(gameObject, "TransportLinesManager", "13.3.6");
             ConnectorADR = PluginUtils.GetImplementationTypeForMod<ConnectorADR, ConnectorADRFallback, IConnectorADR>(gameObject, "KlyteAddresses", "2.0.4");
+
+            var spritesToAdd = new List<SpriteInfo>();
+            var errors = new List<string>();
+            foreach (var imgFile in Directory.GetFiles(WTSController.ExtraSpritesFolder, "*.png"))
+            {
+                var fileData = File.ReadAllBytes(imgFile);
+                var tex = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+                if (tex.LoadImage(fileData))
+                {
+                    if (tex.width <= 256 && tex.width <= 256)
+                    {
+                        var imgName = $"K45_WKS_{Path.GetFileNameWithoutExtension(imgFile)}";
+                        spritesToAdd.Add(new SpriteInfo
+                        {
+                            border = new RectOffset(),
+                            name = imgName,
+                            texture = tex
+                        });
+                    }
+                    else
+                    {
+                        errors.Add($"{Path.GetFileName(imgFile)}: {Locale.Get("K45_WTS_CUSTOMSPRITE_IMAGETOOLARGE")} (max: 256x256)");
+                    }
+                }
+                else
+                {
+                    errors.Add($"{Path.GetFileName(imgFile)}: {Locale.Get("K45_WTS_CUSTOMSPRITE_FAILEDREADIMAGE")}");
+                }
+            }
+            if (spritesToAdd.Count > 0)
+            {
+                TextureAtlasUtils.RegenerateDefaultTextureAtlas(spritesToAdd);
+            }
+            if (errors.Count > 0)
+            {
+                K45DialogControl.ShowModal(new K45DialogControl.BindProperties
+                {
+                    message = $"{Locale.Get("K45_WTS_CUSTOMSPRITE_ERRORHEADER")}:\n\t{string.Join("\n\t", errors.ToArray())}"
+                }, (x) => true);
+            }
         }
         protected override void StartActions()
         {
@@ -144,11 +185,13 @@ namespace Klyte.WriteTheSigns
         public const string DEFAULT_GAME_VEHICLES_CONFIG_FOLDER = "VehiclesDefaultPlacing";
         public const string ABBREVIATION_FILES_FOLDER = "AbbreviationFiles";
         public const string FONTS_FILES_FOLDER = "Fonts";
+        public const string EXTRA_SPRITES_FILES_FOLDER = "Sprites";
 
         public const string DEFAULT_FONT_KEY = "/DEFAULT/";
 
         public static string DefaultBuildingsConfigurationFolder { get; } = FOLDER_NAME + Path.DirectorySeparatorChar + DEFAULT_GAME_BUILDINGS_CONFIG_FOLDER;
         public static string DefaultVehiclesConfigurationFolder { get; } = FOLDER_NAME + Path.DirectorySeparatorChar + DEFAULT_GAME_VEHICLES_CONFIG_FOLDER;
+        public static string ExtraSpritesFolder { get; } = FOLDER_NAME + Path.DirectorySeparatorChar + EXTRA_SPRITES_FILES_FOLDER;
         public static string AbbreviationFilesPath { get; } = FOLDER_NAME + Path.DirectorySeparatorChar + ABBREVIATION_FILES_FOLDER;
         public static string FontFilesPath { get; } = FOLDER_NAME + Path.DirectorySeparatorChar + FONTS_FILES_FOLDER;
         public static Shader DEFAULT_SHADER_TEXT = Shader.Find("Custom/Props/Prop/Default") ?? DistrictManager.instance.m_properties.m_areaNameShader;
