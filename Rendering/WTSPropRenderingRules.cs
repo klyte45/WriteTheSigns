@@ -360,11 +360,24 @@ namespace Klyte.WriteTheSigns.Rendering
                         materialPropertyBlock.SetColor(WTSPropRenderingRules.SHADER_PROP_COLOR1, textDescriptor.BackgroundMeshSettings.BackgroundColor);
                         materialPropertyBlock.SetColor(WTSPropRenderingRules.SHADER_PROP_COLOR2, textDescriptor.BackgroundMeshSettings.BackgroundColor);
                         materialPropertyBlock.SetColor(WTSPropRenderingRules.SHADER_PROP_COLOR3, textDescriptor.BackgroundMeshSettings.BackgroundColor);
+                        materialPropertyBlock.SetVector(instance.ID_ObjectIndex, new Vector4());
                         var bgBriMatrix = ApplyTextAdjustments(taregetPos, targetRotation, bgBri, baseScale, textDescriptor.BackgroundMeshSettings.Size.Y, targetTextAlignment, textDescriptor.BackgroundMeshSettings.Size.X, false, false);
+                        //LogUtils.DoWarnLog($"bg { bgBri.m_YAxisOverflows} ri {renderInfo.m_YAxisOverflows}");
+
+                        // var bgMatrix = textMatrixTuple.Second.First * textMatrixTuple.Second.Second * textMatrixTuple.Second.Third * textMatrixTuple.Second.Fourth;
+
 
                         //Size (64.0, 64.0); mesh bounds Center: (0.0, 32.0, 0.0), Extents: (32.0, 32.0, 0.0)
-                        //LogUtils.DoWarnLog($"Size {bgBri.m_sizeMetersUnscaled}; mesh bounds {bgBri.m_mesh.bounds}");
-                        Graphics.DrawMesh(bgBri.m_mesh, matrix * Matrix4x4.Translate(new Vector3(0, -bgBri.m_mesh.bounds.center.y, -0.0005f)) * Matrix4x4.Scale(new Vector3(textDescriptor.BackgroundMeshSettings.Size.X / bgBri.m_mesh.bounds.size.x / textMatrixTuple.Second.x, textDescriptor.BackgroundMeshSettings.Size.Y / bgBri.m_mesh.bounds.size.y / textMatrixTuple.Second.y, 1)), bgBri.m_generatedMaterial, 10, targetCamera, 0, materialPropertyBlock, false);
+                        //LogUtils.DoWarnLog($"Size {bgBri.m_sizeMetersUnscaled}; mesh bounds {bgBri.m_mesh.bounds}");,
+                        var bgMatrix = propMatrix
+                            * Matrix4x4.Translate(taregetPos)
+                            //* Matrix4x4.Translate(taregetPos + textMatrixTuple.Second.Second.MultiplyPoint((new Vector3(0, -(bgBri.m_YAxisOverflows.min + bgBri.m_YAxisOverflows.max) * SCALING_FACTOR * 0, 0))))
+                            * textMatrixTuple.Second.Second
+                            * Matrix4x4.Translate(new Vector3(0, (-textDescriptor.BackgroundMeshSettings.Size.Y / 2) + (32 * SCALING_FACTOR * textDescriptor.m_textScale) - (bgBri.m_YAxisOverflows.min + bgBri.m_YAxisOverflows.max) * SCALING_FACTOR * textDescriptor.m_textScale / 2, -0.0005f))
+                            * Matrix4x4.Scale(new Vector3(textDescriptor.BackgroundMeshSettings.Size.X / bgBri.m_mesh.bounds.size.x, textDescriptor.BackgroundMeshSettings.Size.Y / bgBri.m_mesh.bounds.size.y, 1))
+                            * textMatrixTuple.Second.Fourth;
+
+                        Graphics.DrawMesh(bgBri.m_mesh, bgMatrix, bgBri.m_generatedMaterial, 10, targetCamera, 0, materialPropertyBlock, false);
                     }
                 }
             }
@@ -372,9 +385,9 @@ namespace Klyte.WriteTheSigns.Rendering
 
         private static readonly float m_daynightOffTime = 6 * Convert.ToSingle(Math.Pow(Convert.ToDouble((6 - (15 / 2.5)) / 6), Convert.ToDouble(1 / 1.09)));
 
-        internal static List<Tuple<Matrix4x4, Vector3>> CalculateTextMatrix(Vector3 targetPosition, Vector3 targetRotation, Vector3 baseScale, UIHorizontalAlignment targetTextAlignment, float maxWidth, BoardTextDescriptorGeneralXml textDescriptor, BasicRenderInformation renderInfo, bool placeClone180Y, bool centerReference = false)
+        internal static List<Tuple<Matrix4x4, Tuple<Matrix4x4, Matrix4x4, Matrix4x4, Matrix4x4>>> CalculateTextMatrix(Vector3 targetPosition, Vector3 targetRotation, Vector3 baseScale, UIHorizontalAlignment targetTextAlignment, float maxWidth, BoardTextDescriptorGeneralXml textDescriptor, BasicRenderInformation renderInfo, bool placeClone180Y, bool centerReference = false)
         {
-            var result = new List<Tuple<Matrix4x4, Vector3>>();
+            var result = new List<Tuple<Matrix4x4, Tuple<Matrix4x4, Matrix4x4, Matrix4x4, Matrix4x4>>>();
             if (renderInfo == null)
             {
                 return result;
@@ -396,7 +409,7 @@ namespace Klyte.WriteTheSigns.Rendering
             return result;
         }
 
-        internal static Tuple<Matrix4x4, Vector3> ApplyTextAdjustments(Vector3 textPosition, Vector3 textRotation, BasicRenderInformation renderInfo, Vector3 propScale, float textScale, UIHorizontalAlignment horizontalAlignment, float maxWidth, bool applyResizeOverflowOnY, bool centerReference)
+        internal static Tuple<Matrix4x4, Tuple<Matrix4x4, Matrix4x4, Matrix4x4, Matrix4x4>> ApplyTextAdjustments(Vector3 textPosition, Vector3 textRotation, BasicRenderInformation renderInfo, Vector3 propScale, float textScale, UIHorizontalAlignment horizontalAlignment, float maxWidth, bool applyResizeOverflowOnY, bool centerReference)
         {
             float overflowScaleX = 1f;
             float overflowScaleY = 1f;
@@ -430,7 +443,7 @@ namespace Klyte.WriteTheSigns.Rendering
                 rotationMatrix *
                 Matrix4x4.Scale(scaleVector) * Matrix4x4.Scale(propScale)
                ;
-            return Tuple.New(textMatrix, scaleVector);
+            return Tuple.New(textMatrix, Tuple.New(Matrix4x4.Translate(targetRelativePosition), rotationMatrix, Matrix4x4.Scale(scaleVector), Matrix4x4.Scale(propScale)));
         }
 
         public static Color GetColor(ushort refId, int boardIdx, int secIdx, BoardInstanceXml instance, BoardDescriptorGeneralXml propLayout, out bool found)

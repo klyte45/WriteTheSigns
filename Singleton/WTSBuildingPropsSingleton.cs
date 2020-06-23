@@ -76,12 +76,19 @@ namespace Klyte.WriteTheSigns.Singleton
 
 
 
-        public void AfterRenderInstanceImpl(RenderManager.CameraInfo cameraInfo, ushort buildingID, ref Building data, int layerMask, ref RenderManager.Instance renderInstance)
+        public void AfterRenderInstanceImpl(RenderManager.CameraInfo cameraInfo, ushort sourceBuildingId, int layerMask, ref RenderManager.Instance renderInstance)
         {
-            if (data.m_parentBuilding != 0)
+            ref Building[] bArray = ref BuildingManager.instance.m_buildings.m_buffer;
+            ushort parentBuildingId = sourceBuildingId;
+            ushort subBuildingIdx = 0;
+            while (bArray[parentBuildingId].m_parentBuilding != 0)
             {
-                return;
+                parentBuildingId = bArray[parentBuildingId].m_parentBuilding;
+                subBuildingIdx++;
             }
+
+            ref Building data = ref bArray[parentBuildingId];
+
 
             string refName = GetReferenceModelName(ref data);
             if ((WTSBuildingLayoutEditor.Instance?.MainContainer?.isVisible ?? false) && (WTSBuildingLayoutEditor.Instance?.IsEditing(refName) ?? false))
@@ -97,7 +104,11 @@ namespace Klyte.WriteTheSigns.Singleton
                 }
             }
             GetTargetDescriptor(refName, out _, out BuildingGroupDescriptorXml targetDescriptor);
-            UpdateLinesBuilding(buildingID, refName, targetDescriptor, ref data, ref renderInstance.m_dataMatrix1);
+            if (subBuildingIdx == 0)
+            {
+                UpdateLinesBuilding(parentBuildingId, refName, targetDescriptor, ref data, ref renderInstance.m_dataMatrix1);
+            }
+
             if ((targetDescriptor?.PropInstances?.Length ?? 0) == 0)
             {
                 return;
@@ -105,7 +116,10 @@ namespace Klyte.WriteTheSigns.Singleton
 
             for (int i = 0; i < targetDescriptor.PropInstances.Length; i++)
             {
-                RenderDescriptor(cameraInfo, buildingID, ref data, layerMask, ref renderInstance, ref targetDescriptor, i);
+                if (targetDescriptor.PropInstances[i].SubBuildingPivotReference == subBuildingIdx - 1)
+                {
+                    RenderDescriptor(cameraInfo, parentBuildingId, ref data, layerMask, ref renderInstance, ref targetDescriptor, i);
+                }
             }
         }
 
@@ -358,7 +372,7 @@ namespace Klyte.WriteTheSigns.Singleton
                             }
                             if (inverseMatrix == default)
                             {
-                                LogUtils.DoWarnLog("--------------- end UpdateLinesBuilding - inverseMatrix is zero");
+                                LogUtils.DoWarnLog($"--------------- end UpdateLinesBuilding - inverseMatrix is zero (ID: {buildingID}) \n{Environment.StackTrace}");
                                 return;
                             }
                             float angleBuilding = data.m_angle * Mathf.Rad2Deg;

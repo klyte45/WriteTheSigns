@@ -161,7 +161,7 @@ namespace Klyte.WriteTheSigns.UI
                 var assetId = CurrentVehicleInfo.name.Split('.')[0] + ".";
                 var descriptorsToExport = new List<LayoutDescriptorVehicleXml>();
                 foreach (string assetName in m_loadedVehicles
-                .Where((x) => x.Value.name.StartsWith(assetId))
+                .Where((x) => x.Value.name.StartsWith(assetId) || x.Value.name == CurrentVehicleInfo.name)
                 .Select(x => x.Value.name))
                 {
                     WTSVehicleTextsSingleton.GetTargetDescriptor(assetName, out _, out LayoutDescriptorVehicleXml target);
@@ -184,7 +184,7 @@ namespace Klyte.WriteTheSigns.UI
             }
         }
 
-        private void OnExportAsGlobal() => ExportTo(Path.Combine(WTSController.DefaultVehiclesConfigurationFolder, $"{WTSController.m_defaultFileNameVehiclesXml}_{PackageManager.FindAssetByName(CurrentVehicleInfo.name)?.package.packageMainAsset}.xml"));
+        private void OnExportAsGlobal() => ExportTo(Path.Combine(WTSController.DefaultVehiclesConfigurationFolder, $"{WTSController.m_defaultFileNameVehiclesXml}_{PackageManager.FindAssetByName(CurrentVehicleInfo.name)?.package.packageMainAsset ?? CurrentVehicleInfo.name}.xml"));
 
         private void OnOpenGlobalFolder() => ColossalFramework.Utils.OpenInFileBrowser(WTSController.DefaultVehiclesConfigurationFolder);
         private void OnDeleteFromCity()

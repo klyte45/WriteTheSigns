@@ -43,28 +43,28 @@ namespace Klyte.WriteTheSigns.Overrides
                     continue;
                 }
                 Vector3 position = building.m_position;
-                float radius = info.m_renderSize + info.m_mesh.bounds.extents.sqrMagnitude;
+                float radius = info.m_renderSize + info.m_mesh.bounds.extents.magnitude;
                 position.y += (info.m_size.y - building.m_baseHeight) * 0.5f;
                 var shallRender = cameraInfo.Intersect(position, radius);
-                if (!shallRender && !(info.m_buildingAI is TransportStationAI) && !(info.m_buildingAI is OutsideConnectionAI))
+                if (!shallRender && ((!(info.m_buildingAI is TransportStationAI) && !(info.m_buildingAI is OutsideConnectionAI)) || building.m_parentBuilding != 0))
                 {
                     continue;
                 }
                 if (renderManager.RequireInstance(buildingID, 1u, out uint num))
                 {
                     ref RenderManager.Instance renderInstance = ref renderManager.m_instances[num];
+                    if (renderInstance.m_dirty)
+                    {
+                        renderInstance.m_dirty = false;
+                        info.m_buildingAI.RefreshInstance(cameraInfo, buildingID, ref building, -1, ref renderInstance);
+                    }
                     if (!shallRender)
                     {
-                        if (renderInstance.m_dirty)
-                        {
-                            renderInstance.m_dirty = false;
-                            info.m_buildingAI.RefreshInstance(cameraInfo, buildingID, ref building, -1, ref renderInstance);
-                        }
                         WriteTheSignsMod.Controller?.BuildingPropsSingleton?.UpdateLinesBuilding(buildingID, ref building, ref renderInstance.m_dataMatrix1);
                     }
                     else
                     {
-                        WriteTheSignsMod.Controller?.BuildingPropsSingleton?.AfterRenderInstanceImpl(cameraInfo, buildingID, ref building, -1, ref renderInstance);
+                        WriteTheSignsMod.Controller?.BuildingPropsSingleton?.AfterRenderInstanceImpl(cameraInfo, buildingID, -1, ref renderInstance);
                     }
                 }
             }
