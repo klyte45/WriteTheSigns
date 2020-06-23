@@ -31,6 +31,7 @@ namespace Klyte.WriteTheSigns.Rendering
             TextType.GameSprite,
             TextType.OwnName,
             TextType.LinesSymbols,
+            TextType.LineIdentifier,
             TextType.LastStopLine
         };
 
@@ -615,21 +616,52 @@ namespace Klyte.WriteTheSigns.Rendering
                     case TextType.GameSprite: return WriteTheSignsMod.Controller.SpriteRenderingRules.GetSpriteFromDefaultAtlas(textDescriptor.m_spriteName);
                     case TextType.Fixed: return RenderUtils.GetTextData(textDescriptor.m_fixedText ?? "", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                     case TextType.OwnName: return GetFromCacheArray(refID, textDescriptor, RenderUtils.CacheArrayTypes.VehicleNumber, baseFont);
-                    case TextType.LinesSymbols:
+                    case TextType.LineIdentifier:
                         ref Vehicle[] buffer = ref VehicleManager.instance.m_vehicles.m_buffer;
-                        return WriteTheSignsMod.Controller.SpriteRenderingRules.DrawLineFormats(new int[] { buffer[buffer[refID].GetFirstVehicle(refID)].m_transportLine }).FirstOrDefault();
+                        return GetFromCacheArray(buffer[buffer[refID].GetFirstVehicle(refID)].m_transportLine, textDescriptor, RenderUtils.CacheArrayTypes.LineIdentifier, baseFont);
+                    case TextType.LinesSymbols:
+                        ref Vehicle[] buffer1 = ref VehicleManager.instance.m_vehicles.m_buffer;
+                        return WriteTheSignsMod.Controller.SpriteRenderingRules.DrawLineFormats(new int[] { buffer1[buffer1[refID].GetFirstVehicle(refID)].m_transportLine }).FirstOrDefault();
                     case TextType.LastStopLine:
                         ref Vehicle[] buffer2 = ref VehicleManager.instance.m_vehicles.m_buffer;
                         ref Vehicle targetVehicle = ref buffer2[buffer2[refID].GetFirstVehicle(refID)];
                         if (targetVehicle.m_transportLine == 0)
                         {
-                            return GetFromCacheArray(WTSBuildingDataCaches.GetStopBuilding(targetVehicle.m_targetBuilding, targetVehicle.m_transportLine), textDescriptor, RenderUtils.CacheArrayTypes.BuildingName, baseFont);
+                            if (targetVehicle.m_targetBuilding == 0)
+                            {
+                                return GetFromCacheArray(targetVehicle.m_sourceBuilding, textDescriptor, RenderUtils.CacheArrayTypes.BuildingName, baseFont);
+                            }
+                            else
+                            {
+                                return GetFromCacheArray(WTSBuildingDataCaches.GetStopBuilding(targetVehicle.m_targetBuilding, targetVehicle.m_transportLine), textDescriptor, RenderUtils.CacheArrayTypes.BuildingName, baseFont);
+                            }
                         }
                         else
                         {
                             var target = targetVehicle.m_targetBuilding;
                             ref StopInformation stopInfo = ref GetTargetStopInfo(TransportLine.GetPrevStop(target));
-                            return GetFromCacheArray(stopInfo.DestinationBuildingId, textDescriptor, RenderUtils.CacheArrayTypes.BuildingName, baseFont);
+
+                            if (stopInfo.m_lineId == 0)
+                            {
+                                WriteTheSignsMod.Controller.ConnectorTLM.MapLineDestinations(targetVehicle.m_transportLine);
+                            }
+
+                            if (stopInfo.m_destinationString != null)
+                            {
+                                return RenderUtils.GetTextData(stopInfo.m_destinationString, textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
+                            }
+                            else if (stopInfo.DestinationBuildingId != 0)
+                            {
+                                return GetFromCacheArray(stopInfo.DestinationBuildingId, textDescriptor, RenderUtils.CacheArrayTypes.BuildingName, baseFont);
+                            }
+                            else if (stopInfo.m_destinationId != 0)
+                            {
+                                return RenderUtils.GetTextData(WriteTheSignsMod.Controller.ConnectorTLM.GetStopName(stopInfo.m_destinationId, targetVehicle.m_transportLine), textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
+                            }
+                            else
+                            {
+                                return RenderUtils.GetTextData(WriteTheSignsMod.Controller.ConnectorTLM.GetStopName(targetVehicle.m_targetBuilding, targetVehicle.m_transportLine), textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
+                            }
                         }
 
                     default:

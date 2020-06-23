@@ -28,10 +28,16 @@ namespace Klyte.WriteTheSigns.Singleton
         public SimpleXmlDictionary<string, ExportableBuildingGroupDescriptorXml> GlobalDescriptors => Data.GlobalDescriptors;
         public SimpleXmlDictionary<string, ExportableBuildingGroupDescriptorXml> AssetsDescriptors => Data.AssetsDescriptors;
 
-        internal readonly StopInformation[][][] m_platformToLine = new StopInformation[BuildingManager.MAX_BUILDING_COUNT][][];
-        internal readonly StopInformation[] m_stopInformation = new StopInformation[NetManager.MAX_NODE_COUNT];
+        internal StopInformation[][][] m_platformToLine = new StopInformation[BuildingManager.MAX_BUILDING_COUNT][][];
+        internal StopInformation[]     m_stopInformation = new StopInformation[NetManager.MAX_NODE_COUNT];
         private ulong m_lastUpdateLines = SimulationManager.instance.m_currentTickIndex;
         private readonly ulong[] m_buildingLastUpdateLines = new ulong[BuildingManager.MAX_BUILDING_COUNT];
+
+        public void ResetLines()
+        {
+            m_platformToLine = new StopInformation[BuildingManager.MAX_BUILDING_COUNT][][];
+            m_stopInformation = new StopInformation[NetManager.MAX_NODE_COUNT];
+        }
 
         #region Initialize
         public void Awake() => LoadAllBuildingConfigurations();

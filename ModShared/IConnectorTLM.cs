@@ -10,5 +10,7 @@ namespace Klyte.WriteTheSigns.Connectors
         string GetStopName(ushort stopId, ushort lineId);
         string GetLineSortString(ushort lineId);
         string GetVehicleIdentifier(ushort vehicleId);
+        string GetLineIdString(ushort lineId);
+        void MapLineDestinations(ushort lineId);
     }
 }

@@ -2,6 +2,9 @@ using ColossalFramework;
 using Klyte.Commons.UI.Sprites;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Utils;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using static ItemClass;
 
@@ -73,22 +76,33 @@ namespace Klyte.WriteTheSigns.Connectors
             return Tuple.New(KlyteResourceLoader.GetDefaultSpriteNameFor(lineIcon), lineColor, TransportManager.instance.m_lines.m_buffer[lineID].m_lineNumber.ToString());
         }
 
-        public string GetStopName(ushort stopId, ushort lineId)
+        public string GetStopName(ushort stopId, ushort lineId) => GetStopName(stopId, lineId, out _, out _, out _);
+
+
+        private string GetStopName(ushort stopId, ushort lineId, out ushort buildingID, out ushort parkID, out ushort districtID)
         {
-            ushort buildingID = WTSBuildingDataCaches.GetStopBuilding(stopId, lineId);
+            buildingID = WTSBuildingDataCaches.GetStopBuilding(stopId, lineId);
 
             if (buildingID > 0)
             {
                 string name = BuildingUtils.GetBuildingName(buildingID, out _, out _);
+                parkID = 0;
+                districtID = 0;
                 return name;
             }
             NetManager nm = Singleton<NetManager>.instance;
-            BuildingManager bm = Singleton<BuildingManager>.instance;
             NetNode nn = nm.m_nodes.m_buffer[stopId];
             Vector3 location = nn.m_position;
-            if (DistrictManager.instance.GetPark(location) > 0)
+            parkID = DistrictManager.instance.GetPark(location);
+            if (parkID > 0)
             {
-                return DistrictManager.instance.GetParkName(DistrictManager.instance.GetPark(location));
+                districtID = 0;
+                return DistrictManager.instance.GetParkName(parkID);
+            }
+            districtID = DistrictManager.instance.GetDistrict(location);
+            if (districtID > 0)
+            {
+                return DistrictManager.instance.GetDistrictName(districtID);
             }
             if (SegmentUtils.GetAddressStreetAndNumber(location, location, out int number, out string streetName) && !string.IsNullOrEmpty(streetName))
             {
@@ -146,6 +160,101 @@ namespace Klyte.WriteTheSigns.Connectors
         }
 
         public string GetVehicleIdentifier(ushort vehicleId) => vehicleId.ToString("D5");
+        public string GetLineIdString(ushort lineId) => TransportManager.instance.m_lines.m_buffer[lineId].m_lineNumber.ToString();
+        public void MapLineDestinations(ushort lineId)
+        {
+            CalculatePath(lineId, out ushort startStation, out ushort endStation);
+
+            ref TransportLine tl = ref TransportManager.instance.m_lines.m_buffer[lineId];
+            ref NetNode[] nodes = ref NetManager.instance.m_nodes.m_buffer;
+
+            var firstStop = startStation == 0 ? tl.m_stops : startStation;
+            var nextStop = firstStop;
+            var curStop = TransportLine.GetPrevStop(nextStop);
+            ushort prevStop = TransportLine.GetPrevStop(curStop);
+            var destination = endStation == 0 ? startStation : endStation;
+            var buildingSing = WriteTheSignsMod.Controller.BuildingPropsSingleton;
+            do
+            {
+                buildingSing.m_stopInformation[curStop] = new Xml.StopInformation
+                {
+                    m_lineId = lineId,
+                    m_destinationId = destination,
+                    m_nextStopId = nextStop,
+                    m_previousStopId = prevStop,
+                    m_stopId = curStop
+                };
+                prevStop = curStop;
+                curStop = nextStop;
+                nextStop = TransportLine.GetNextStop(nextStop);
+                if (curStop == startStation && endStation > 0)
+                {
+                    destination = endStation;
+                }
+                else if (curStop == endStation)
+                {
+                    destination = startStation;
+                }
+            } while (nextStop != 0 && nextStop != startStation);
+        }
+
+        private enum NamingType
+        {
+            STREET,
+            DISTRICT,
+            PARK,
+            BUILDING
+        }
+
+        private void CalculatePath(ushort lineIdx, out ushort startStation, out ushort endStation)
+        {
+            ref TransportLine t = ref Singleton<TransportManager>.instance.m_lines.m_buffer[lineIdx];
+            if ((t.m_flags & TransportLine.Flags.Complete) == TransportLine.Flags.None)
+            {
+                startStation = 0;
+                endStation = 0;
+                return;
+            }
+            ushort nextStop = t.m_stops;
+            var stations = new List<Tuple<NamingType, string, ushort>>();
+            do
+            {
+                NetNode stopNode = NetManager.instance.m_nodes.m_buffer[nextStop];
+                string stationName = GetStopName(nextStop, lineIdx, out ushort buildingId, out ushort parkId, out ushort districtId);
+                var tuple = Tuple.New(buildingId > 0 ? NamingType.BUILDING : parkId > 0 ? NamingType.PARK : districtId > 0 ? NamingType.DISTRICT : NamingType.STREET, stationName, nextStop);
+                stations.Add(tuple);
+                nextStop = TransportLine.GetNextStop(nextStop);
+            } while (nextStop != t.m_stops && nextStop != 0);
+
+            var idxStations = stations.Select((x, y) => Tuple.New(y, x.First, x.Second, x.Third)).OrderByDescending(x => x.Second).ToList();
+
+            int targetStart = 0;
+            int mostRelevantEndIdx = -1;
+            int j = 0;
+            int maxDistanceEnd = (int)(idxStations.Count / 8f + 0.5f);
+            do
+            {
+                Tuple<int, NamingType, string> peerCandidate = idxStations.Where(x => x.Third != idxStations[j].Third && Math.Abs((x.First < idxStations[j].First ? x.First + idxStations.Count : x.First) - idxStations.Count / 2 - idxStations[j].First) <= maxDistanceEnd).OrderByDescending(x => x.Second).FirstOrDefault();
+                if (peerCandidate != null && (mostRelevantEndIdx == -1 || stations[mostRelevantEndIdx].First < peerCandidate.Second))
+                {
+                    targetStart = j;
+                    mostRelevantEndIdx = peerCandidate.First;
+                }
+                j++;
+            } while (j < idxStations.Count && idxStations[j].Second == idxStations[0].Second);
+
+
+            if (mostRelevantEndIdx >= 0)
+            {
+                startStation = idxStations[targetStart].Fourth;
+                endStation = idxStations[mostRelevantEndIdx].Fourth;
+            }
+            else
+            {
+                startStation = idxStations[0].Fourth;
+                endStation = 0;
+            }
+        }
 
         private readonly TransferManager.TransferReason[] m_defaultAllowedVehicleTypes = {
             TransferManager.TransferReason.Blimp ,

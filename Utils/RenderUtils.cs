@@ -26,6 +26,7 @@ namespace Klyte.WriteTheSigns.Utils
             m_cache[(int)SuffixStreetNameAbbreviation] = new string[NetManager.MAX_SEGMENT_COUNT];
             m_cache[(int)BuildingName] = new string[BuildingManager.MAX_BUILDING_COUNT];
             m_cache[(int)VehicleNumber] = new string[ushort.MaxValue];
+            m_cache[(int)LineIdentifier] = new string[TransportManager.MAX_LINE_COUNT];
 
             m_cacheUpper[(int)FullStreetName] = new string[NetManager.MAX_SEGMENT_COUNT];
             m_cacheUpper[(int)StreetQualifier] = new string[NetManager.MAX_SEGMENT_COUNT];
@@ -113,7 +114,8 @@ namespace Klyte.WriteTheSigns.Utils
             SuffixStreetNameAbbreviation,
             BuildingName,
             VehicleNumber,
-            PostalCode
+            PostalCode,
+            LineIdentifier
         }
 
 
@@ -140,6 +142,7 @@ namespace Klyte.WriteTheSigns.Utils
                 CacheArrayTypes.BuildingName => UpdateMeshBuildingName(refId, ref (allCaps ? m_cacheUpper : m_cache)[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont),
                 CacheArrayTypes.PostalCode => UpdateMeshPostalCode(refId, ref m_cache[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont),
                 CacheArrayTypes.VehicleNumber => UpdateMeshVehicleNumber(refId, ref m_cache[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont),
+                CacheArrayTypes.LineIdentifier => UpdateMeshLineIdentifier(refId, ref m_cache[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont),
                 _ => null
             };
         }
@@ -254,6 +257,21 @@ namespace Klyte.WriteTheSigns.Utils
             }
             return GetTextData(name, prefix, suffix, primaryFont, overrideFont);
         }
+        public static BasicRenderInformation UpdateMeshLineIdentifier(ushort lineId, ref string name, string prefix, string suffix, bool allCaps, bool applyAbbreviations, DynamicSpriteFont primaryFont, string overrideFont)
+        {
+            if (name == null)
+            {
+                if (lineId == 0)
+                {
+                    name = "";
+                }
+                else
+                {
+                    name = WriteTheSignsMod.Controller.ConnectorTLM.GetLineIdString(lineId);
+                }
+            }
+            return GetTextData(name, prefix, suffix, primaryFont, overrideFont);
+        }
         public static BasicRenderInformation UpdateMeshPark(ushort parkId, ref string name, string prefix, string suffix, bool allCaps, bool applyAbbreviations, DynamicSpriteFont primaryFont, string overrideFont)
         {
             if (name == null)
@@ -293,7 +311,6 @@ namespace Klyte.WriteTheSigns.Utils
             }
             return GetTextData(name, prefix, suffix, primaryFont, overrideFont);
         }
-
 
         public static BasicRenderInformation GetTextData(string text, string prefix, string suffix, DynamicSpriteFont primaryFont, string overrideFont)
         {

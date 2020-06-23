@@ -21,7 +21,8 @@
         PrevStopLine,
         PlatformNumber,
         PostalCode,
-        GameSprite
+        GameSprite,
+        LineIdentifier
     }
 
 
