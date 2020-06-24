@@ -623,7 +623,7 @@ namespace Klyte.WriteTheSigns.Rendering
                         var transportLine = vehicle.m_transportLine;
                         if (transportLine > 0)
                         {
-                            return GetFromCacheArray(0, textDescriptor, RenderUtils.CacheArrayTypes.LineIdentifier, baseFont);
+                            return GetFromCacheArray(transportLine, textDescriptor, RenderUtils.CacheArrayTypes.LineIdentifier, baseFont);
                         }
                         else
                         {
