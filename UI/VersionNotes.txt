@@ -1,20 +1,15 @@
-﻿v0.0.2
-<color yellow>Alpha-2 version:</color>
-	<color #00FFFF>Prop Layouts</color>
-	- Done.
-	<color #00FFFF>Buildings</color>
-	- Building layouts are working like it was in DTP, but requiring prop text layout configured before positioning it in building.
-	- Almost finished
-	- MISSING: Filter by subbuilding pivot on prop layout list
-	<color #00FFFF>Road Generated Props</color>
-	- Road corner works like DTP, but with more text options and Addresses (2.0.4+) integration
-	- Highway signs can map destinations on exits automatically
-	- MISSING: Next exits texts aren't implemented yet
-	- MISSING: Text rotation based on angle of exit not implemented yet.
-	<color #00FFFF>Vehicles</color>
-	- Full implemented for building-based system
-	- Editor features full implemented
-	- BUG: Background text position isn't constant
-	<color #00FFFF>Fonts configurations</color>
-	- MISSING: Fallback font type (Regular, Electronic, etc...)
+﻿v0.1
+<color yellow>Beta-1 version:</color>
+	
+Welcome to the Write the Signs mod. The most features of this mod are finished but were not so deeply tested. Guide yourself thru the <sprite K45_QuestionMark> Help buttons and tooltips to learn how to use this mod.
 
+	This mod is an evolution of Dynamic Text Props, with a great increase of performance compared to its predecessor. 
+	Use the <color yellow>prop layout editor</color> to create prop layouts in any existing asset to use in street corners and buildings.
+	Create rules to be applied to certain circumstances and show a customized street corner plate or street directions sign.
+	Make layouts with dynamic texts for any building.
+	Place text spots in vehicles to show its destination or its serial number.
+	<color yellow>Share your layouts in assets at Steam Workshop</color> (for asset makers).
+
+<color cyan>NOTE: The integration with Transport Lines Manager will be available after version 13.4 of that mod. For Addresses & Namesmod, wait until the update to the version 2.0.4 or higher.</color>
+
+Click on <color yellow>second button</color> below to go to the mod page and check informations about where get some example layouts and other useful information!

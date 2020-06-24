@@ -6,11 +6,12 @@ using Klyte.Commons.Interfaces;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.UI;
 using SpriteFontPlus;
+using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using UnityEngine;
 
-[assembly: AssemblyVersion("0.1.0.*")]
+[assembly: AssemblyVersion("0.1.0.0")]
 namespace Klyte.WriteTheSigns
 {
     public class WriteTheSignsMod : BasicIUserMod<WriteTheSignsMod, WTSController, WTSPanel>
@@ -26,6 +27,9 @@ namespace Klyte.WriteTheSigns
 
         protected override void OnLevelLoadingInternal() => base.OnLevelLoadingInternal();
 
+        protected override List<ulong> IncompatibleModList => new List<ulong> { 1831805509 };
+        protected override List<string> IncompatibleDllModList => new List<string> { "KlyteDynamicTextProps" };
+
         public override void TopSettingsUI(UIHelperExtension helper)
         {
 
@@ -35,10 +39,8 @@ namespace Klyte.WriteTheSigns
             AddFolderButton(WTSController.AbbreviationFilesPath, group8, "K45_WTS_ABBREVIATION_FILES_PATH_TITLE");
             AddFolderButton(WTSController.FontFilesPath, group8, "K45_WTS_FONT_FILES_PATH_TITLE");
             AddFolderButton(WTSController.ExtraSpritesFolder, group8, "K45_WTS_EXTRA_SPRITES_PATH_TITLE");
-            group8.AddLabel(Locale.Get("K45_WTS_GET_FILES_GITHUB"));
-            group8.AddButton(Locale.Get("K45_WTS_GO_TO_GITHUB"), () => Application.OpenURL("https://github.com/klyte45/WriteTheSignsFiles"));
-
-            group8.AddButton("TSTS!", () => Controller?.VehicleTextsSingleton?.LoadAllVehiclesConfigurations());
+            //group8.AddLabel(Locale.Get("K45_WTS_GET_FILES_GITHUB"));
+            //group8.AddButton(Locale.Get("K45_WTS_GO_TO_GITHUB"), () => Application.OpenURL("https://github.com/klyte45/WriteTheSignsFiles"));
 
             UIHelperExtension group4 = helper.AddGroupExtended(Locale.Get("K45_WTS_GENERATED_TEXT_OPTIONS"));
             group4.AddDropdownLocalized("K45_WTS_INITIAL_TEXTURE_SIZE_FONT", new string[] { "512", "1024", "2048", "4096 (!)", "8192 (!!!)", "16384 (WTF??)" }, StartTextureSizeFont, (x) => StartTextureSizeFont.value = x);
