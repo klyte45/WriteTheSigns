@@ -1,6 +1,7 @@
 ﻿using Klyte.Commons.Extensors;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns;
+using Klyte.WriteTheSigns.Utils;
 using UnityEngine;
 
 namespace Klyte.DynamicTextProps.Overrides
@@ -17,11 +18,13 @@ namespace Klyte.DynamicTextProps.Overrides
             System.Reflection.MethodInfo postRenderExtraStuff = GetType().GetMethod("AfterRenderExtraStuff", RedirectorUtils.allFlags);
             LogUtils.DoLog($"Patching=> {postRenderExtraStuff}");
             AddRedirect(typeof(VehicleAI).GetMethod("RenderExtraStuff", RedirectorUtils.allFlags), null, postRenderExtraStuff);
-            //System.Reflection.MethodInfo afterEndOverlayImpl = GetType().GetMethod("AfterEndOverlayImpl", RedirectorUtils.allFlags);
-            //AddRedirect(typeof(ToolManager).GetMethod("EndOverlayImpl", RedirectorUtils.allFlags), null, afterEndOverlayImpl);
+            System.Reflection.MethodInfo afterSpawn = GetType().GetMethod("AfterSpawn", RedirectorUtils.allFlags);
+            AddRedirect(typeof(Vehicle).GetMethod("Spawn", RedirectorUtils.allFlags), null, afterSpawn);
 
             #endregion
         }
+
+        public static void AfterSpawn(ref ushort vehicleID) => RenderUtils.ClearCacheVehicleNumber(vehicleID);
 
         //public static void AfterEndOverlayImpl(RenderManager.CameraInfo cameraInfo)
         //{

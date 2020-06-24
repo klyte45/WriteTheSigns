@@ -374,7 +374,7 @@ namespace Klyte.WriteTheSigns.Rendering
                             * Matrix4x4.Translate(taregetPos)
                             //* Matrix4x4.Translate(taregetPos + textMatrixTuple.Second.Second.MultiplyPoint((new Vector3(0, -(bgBri.m_YAxisOverflows.min + bgBri.m_YAxisOverflows.max) * SCALING_FACTOR * 0, 0))))
                             * textMatrixTuple.Second.Second
-                            * Matrix4x4.Translate(new Vector3(0, (-textDescriptor.BackgroundMeshSettings.Size.Y / 2) + (32 * SCALING_FACTOR * textDescriptor.m_textScale) - (bgBri.m_YAxisOverflows.min + bgBri.m_YAxisOverflows.max) * SCALING_FACTOR * textDescriptor.m_textScale / 2, -0.0005f))
+                            * Matrix4x4.Translate(new Vector3(0, (-textDescriptor.BackgroundMeshSettings.Size.Y / 2) + (32 * SCALING_FACTOR * textDescriptor.m_textScale) - (bgBri.m_YAxisOverflows.min + bgBri.m_YAxisOverflows.max) * SCALING_FACTOR * textDescriptor.m_textScale / 2, -0.001f))
                             * Matrix4x4.Scale(new Vector3(textDescriptor.BackgroundMeshSettings.Size.X / bgBri.m_mesh.bounds.size.x, textDescriptor.BackgroundMeshSettings.Size.Y / bgBri.m_mesh.bounds.size.y, 1))
                             * textMatrixTuple.Second.Fourth;
 
@@ -419,7 +419,7 @@ namespace Klyte.WriteTheSigns.Rendering
             float realWidth = defaultMultiplierX * renderInfo.m_sizeMetersUnscaled.x;
             Vector3 targetRelativePosition = textPosition;
             //LogUtils.DoWarnLog($"[{renderInfo},{refID},{boardIdx},{secIdx}] realWidth = {realWidth}; realHeight = {realHeight};");
-            var rotationMatrix = Matrix4x4.TRS(Vector3.zero, Quaternion.AngleAxis(textRotation.x, Vector3.left) * Quaternion.AngleAxis(textRotation.y, Vector3.down) * Quaternion.AngleAxis(textRotation.z, Vector3.back), Vector3.one);
+            var rotationMatrix = Matrix4x4.TRS(Vector3.zero, Quaternion.Euler(textRotation), Vector3.one);
             if (maxWidth > 0 && maxWidth < realWidth)
             {
                 overflowScaleX = maxWidth / realWidth;
@@ -619,7 +619,23 @@ namespace Klyte.WriteTheSigns.Rendering
                     case TextType.OwnName: return GetFromCacheArray(refID, textDescriptor, RenderUtils.CacheArrayTypes.VehicleNumber, baseFont);
                     case TextType.LineIdentifier:
                         ref Vehicle[] buffer = ref VehicleManager.instance.m_vehicles.m_buffer;
-                        return GetFromCacheArray(buffer[buffer[refID].GetFirstVehicle(refID)].m_transportLine, textDescriptor, RenderUtils.CacheArrayTypes.LineIdentifier, baseFont);
+                        ref Vehicle vehicle =ref buffer[buffer[refID].GetFirstVehicle(refID)];
+                        var transportLine = vehicle.m_transportLine;
+                        if (transportLine > 0)
+                        {
+                            return GetFromCacheArray(0, textDescriptor, RenderUtils.CacheArrayTypes.LineIdentifier, baseFont);
+                        }
+                        else
+                        {
+                            if(vehicle.m_targetBuilding == 0)
+                            {
+                                return RenderUtils.GetTextData(vehicle.m_targetBuilding.ToString("D5"), textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
+                            }
+                            else
+                            {
+                                return RenderUtils.GetTextData($"R{vehicle.m_targetBuilding.ToString("X4")}", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
+                            }
+                        }
                     case TextType.LinesSymbols:
                         ref Vehicle[] buffer1 = ref VehicleManager.instance.m_vehicles.m_buffer;
                         return WriteTheSignsMod.Controller.SpriteRenderingRules.DrawLineFormats(new int[] { buffer1[buffer1[refID].GetFirstVehicle(refID)].m_transportLine }).FirstOrDefault();

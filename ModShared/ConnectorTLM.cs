@@ -1,5 +1,6 @@
 extern alias TLM;
 using Klyte.Commons.Utils;
+using Klyte.WriteTheSigns.Utils;
 using TLM::Klyte.TransportLinesManager.Extensors;
 using TLM::Klyte.TransportLinesManager.ModShared;
 using TLM::Klyte.TransportLinesManager.Utils;
@@ -11,7 +12,11 @@ namespace Klyte.WriteTheSigns.Connectors
     {
         public void Start()
         {
-            TLMShared.Instance.EventLineSymbolParameterChanged += WriteTheSignsMod.Controller.SpriteRenderingRules.PurgeAllLines;
+            TLMShared.Instance.EventLineSymbolParameterChanged += () =>
+            {
+                WriteTheSignsMod.Controller.SpriteRenderingRules.PurgeAllLines();
+                RenderUtils.ClearCacheLineId();
+            };
             TLMShared.Instance.EventAutoNameParameterChanged += WriteTheSignsMod.Controller.BuildingPropsSingleton.ResetLines;
         }
 

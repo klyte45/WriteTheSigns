@@ -27,7 +27,7 @@ namespace Klyte.WriteTheSigns.UI
         private UIPanel m_tabSettings;
         private UIPanel m_tabSize;
         private UIPanel m_tabAppearence;
-        private UIPanel m_tabConfig;
+        private UIScrollablePanel m_tabConfig;
 
         private UITextField m_tabName;
 
@@ -86,7 +86,7 @@ namespace Klyte.WriteTheSigns.UI
             m_tabSettings = TabCommons.CreateNonScrollableTabLocalized(m_tabstrip, KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_Settings), "K45_WTS_GENERAL_SETTINGS", "TxtSettings");
             m_tabSize = TabCommons.CreateNonScrollableTabLocalized(m_tabstrip, KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_MoveCross), "K45_WTS_TEXT_SIZE_ATTRIBUTES", "TxtSize");
             m_tabAppearence = TabCommons.CreateNonScrollableTabLocalized(m_tabstrip, KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_AutoColorIcon), "K45_WTS_TEXT_APPEARANCE_ATTRIBUTES", "TxtApp");
-            m_tabConfig = TabCommons.CreateNonScrollableTabLocalized(m_tabstrip, KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_AutoNameIcon), "K45_WTS_TEXT_CONFIGURATION_ATTRIBUTES", "TxtCnf");
+            m_tabConfig = TabCommons.CreateScrollableTabLocalized(m_tabstrip, KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_AutoNameIcon), "K45_WTS_TEXT_CONFIGURATION_ATTRIBUTES", "TxtCnf");
 
             var helperSettings = new UIHelperExtension(m_tabSettings, LayoutDirection.Vertical);
             var helperSize = new UIHelperExtension(m_tabSize, LayoutDirection.Vertical);
@@ -272,6 +272,7 @@ namespace Klyte.WriteTheSigns.UI
             m_arrayRowColumnsCount[0].parent.isVisible = x.IsMultiItemText();
             m_arrayRowColumnsSpacing[0].parent.isVisible = x.IsMultiItemText();
             m_checkboxVerticalFirst.isVisible = x.IsMultiItemText();
+            m_verticalAlignDD.parent.isVisible = x.IsMultiItemText();
         }
 
 

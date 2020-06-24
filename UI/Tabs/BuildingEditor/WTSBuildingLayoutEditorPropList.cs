@@ -359,7 +359,7 @@ namespace Klyte.WriteTheSigns.UI
             SelectedIndex = PropInstances.Length - 1;
             FixTabstrip();
         }
-        private void Help_RulesList(UIComponent component, UIMouseEventParameter eventParam) { }
+        private void Help_RulesList(UIComponent component, UIMouseEventParameter eventParam) => K45DialogControl.ShowModalHelp("BuildingLayouts.General", Locale.Get("K45_WTS_BUILIDINGEDITOR_HELPTITLE"), 0);
         public void Update()
         {
 

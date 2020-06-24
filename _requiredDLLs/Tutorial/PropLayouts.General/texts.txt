@@ -1,0 +1,14 @@
+Use this tab to configure the text layouts to use in buildings and streets compositions!
+
+The steps are:
+
+	1) Create a new model in <sprite K45_New> New button - or select one that already exists in the dropdown
+	2) Configure the basic data, like the prop model to use as base for the texts
+	3) Add new texts entries, using the list at right of the preview window buttons
+
+Use the librarty at <sprite K45_Load> tab to save or load presets. It's useful when doing the same kind of operation in multiple models.
+<BR>
+The preview window have some controls to assist you to test the dimensions of the the text, specially the text lenght.
+The <sprite K45_Font> button changes the text to the regular preview value, the multiplier buttons make all texts have that quantity of characters, so you can see how the text will look like in that length
+
+There are a lot of configurations in the texts instances. Explore them and see what it can do for you!

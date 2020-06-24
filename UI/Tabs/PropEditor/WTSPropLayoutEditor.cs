@@ -31,6 +31,7 @@ namespace Klyte.WriteTheSigns.UI
         private UIDropDown m_configList;
         private UIButton m_newButton;
         private UIButton m_deleteButton;
+        private UIButton m_helpButton;
         #endregion
         #region Mid bar controls
         private UIScrollablePanel m_editTabstrip;
@@ -78,10 +79,11 @@ namespace Klyte.WriteTheSigns.UI
 
 
             m_configList = UIHelperExtension.CloneBasicDropDownNoLabel(new string[0], (x) => OnConfigSelectionChange(x), m_topBar);
-            m_configList.width = 765;
+            m_configList.width = 725;
 
             KlyteMonoUtils.InitCircledButton(m_topBar, out m_newButton, CommonsSpriteNames.K45_New, OnNewConfig, "K45_WTS_CREATE_NEW_CONFIG");
             KlyteMonoUtils.InitCircledButton(m_topBar, out m_deleteButton, CommonsSpriteNames.K45_Delete, OnDeleteConfig, "K45_WTS_DELETE_SELECTED_CONFIG");
+            KlyteMonoUtils.InitCircledButton(m_topBar, out m_helpButton, CommonsSpriteNames.K45_QuestionMark, OnHelp_General, "K45_CMNS_HELP");
 
             KlyteMonoUtils.CreateUIElement(out m_middleBar, MainContainer.transform, "previewBar", new Vector4(0, 0, MainContainer.width - MainContainer.padding.horizontal, 300));
             m_middleBar.autoLayout = true;
@@ -116,6 +118,7 @@ namespace Klyte.WriteTheSigns.UI
 
         }
 
+        private void OnHelp_General(UIComponent component, UIMouseEventParameter eventParam) => K45DialogControl.ShowModalHelp("PropLayouts.General", Locale.Get("K45_WTS_PROPEDITOR_HELPTITLE"), 0);
 
         public void SetCurrentSelectionNewName(string newName)
         {

@@ -103,6 +103,9 @@ namespace Klyte.WriteTheSigns.Utils
         public static void ClearCacheVehicleNumber(ushort vehicleID) => m_cache[(int)VehicleNumber][vehicleID] = null;
         public static void ClearCacheVehicleNumber() => m_cache[(int)VehicleNumber] = new string[ushort.MaxValue];
 
+        public static void ClearCacheLineId() => m_cache[(int)LineIdentifier] = new string[TransportManager.MAX_LINE_COUNT];
+
+
         public enum CacheArrayTypes
         {
             FullStreetName,

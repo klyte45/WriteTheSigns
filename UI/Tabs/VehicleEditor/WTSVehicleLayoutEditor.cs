@@ -92,6 +92,7 @@ namespace Klyte.WriteTheSigns.UI
             var m_topHelper = new UIHelperExtension(m_topBar);
 
             AddFilterableInput(Locale.Get("K45_WTS_VEHICLEEDITOR_SELECTMODEL"), m_topHelper, out m_vehicleSearch, out _, OnFilterVehicleTyped, GetCurrentSelection, OnVehicleNameSelected);
+            AddButtonInEditorRow(m_vehicleSearch, Commons.UI.SpriteNames.CommonsSpriteNames.K45_QuestionMark, Help_VehicleModel, null, true, 30);
 
             AddLabel("", m_topHelper, out m_labelSelectionDescription, out m_containerSelectionDescription);
             KlyteMonoUtils.LimitWidthAndBox(m_labelSelectionDescription, (m_topHelper.Self.width / 2), true);
@@ -147,6 +148,7 @@ namespace Klyte.WriteTheSigns.UI
 
         }
 
+        private void Help_VehicleModel() => K45DialogControl.ShowModalHelp("VehicleLayouts.General", Locale.Get("K45_WTS_VEHICLEEDITOR_HELPTITLE"), 0);
 
         private void OnReloadDescriptors()
         {

@@ -1,0 +1,6 @@
+Fonts are the core of the mod. We have some categories for them:
+	- There are 3 special font classes: 
+		- Public Transport - it's used in the line symbol image (the text inside the format);
+		- Electronic - cosmetic only, asset creators can use this as fallback when the text represents a electronic board panel, like destination boards in modern vehicles;
+		- Stencil - cosmetic only.
+	- Each kind of layout (building, vehicle, street) have a default font. It's the default if theres no font class or override font setted in the text descriptor item.

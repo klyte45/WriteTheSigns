@@ -1,0 +1,5 @@
+This tab will allow you to create a custom text layout to any building in the game. This is done in the game mode and can create an unique layout for the city, if you want.
+Requires the props layouts have been done before start the layout setting here.
+
+Use the mod <color yellow>Camera Positions Utility</color> to see the props from near, and place them correctly.
+Also, all icon buttons have tooltips. Check them to know what they can do for you!

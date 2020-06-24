@@ -1,0 +1,4 @@
+This tab is used to create text layouts in vehicles. All you need to start configuring is to select a model typing its name or its creator name in the text input.
+There are tooltips in all icons buttons. Hover mouse over them to see what they do.
+The live preview works the same as the prop editor, and also the tabs and features.
+There are some specific settings that only can be done in vehicles, explore them to see what they can offer!

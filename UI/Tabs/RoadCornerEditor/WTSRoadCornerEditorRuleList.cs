@@ -306,7 +306,7 @@ namespace Klyte.WriteTheSigns.UI
             SelectedIndex = WTSRoadNodesData.Instance.DescriptorRulesOrder.Length - 1;
             FixTabstrip();
         }
-        private void Help_RulesList(UIComponent component, UIMouseEventParameter eventParam) { }
+        private void Help_RulesList(UIComponent component, UIMouseEventParameter eventParam) => K45DialogControl.ShowModalHelp("NodeRulesEditor.General", Locale.Get("K45_WTS_NODERULESEDITOR_HELPTITLE"), 0);
         public void Update()
         {
 

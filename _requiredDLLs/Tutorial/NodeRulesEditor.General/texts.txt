@@ -1,0 +1,7 @@
+Nodes rules are an evolution of old street corner sign placing from Dynamic Text Props.
+
+After creating a road placing layout in Props Layout tab, you can use them here and set some rules that will make them spawn in the streets. As example, you can set a street corner sign for each district!
+
+When selecting to place in segment, you can actually create a smart route sign, with some attributes like where the near road will end (District or road or whatever information from) and distance. <color yellow>WARNING: THIS IS A BETA FEATURE!</color>
+
+In the future, destination signs will be able to be placed directly in the segment, like it was in Dynamic Text Props mod.
