@@ -15,3 +15,4 @@ Welcome to the Write the Signs mod. The most features of this mod are finished b
 Click on <color yellow>second button</color> below to go to the mod page and check informations about where get some example layouts and other useful information!
 
 Update r1: Small fixes in text generation for line Id
+Update r2: Actual contrast color for vehicles implemented

@@ -458,7 +458,8 @@ namespace Klyte.WriteTheSigns.Rendering
             else if (instance is LayoutDescriptorVehicleXml vehicleDescriptor)
             {
                 found = true;
-                return Color.gray;
+                ref Vehicle targetVehicle = ref VehicleManager.instance.m_vehicles.m_buffer[refId];
+                return targetVehicle.Info.m_vehicleAI.GetColor(refId, ref targetVehicle, InfoManager.InfoMode.None);
             }
             else if (instance is BoardInstanceBuildingXml buildingDescriptor)
             {
@@ -619,7 +620,7 @@ namespace Klyte.WriteTheSigns.Rendering
                     case TextType.OwnName: return GetFromCacheArray(refID, textDescriptor, RenderUtils.CacheArrayTypes.VehicleNumber, baseFont);
                     case TextType.LineIdentifier:
                         ref Vehicle[] buffer = ref VehicleManager.instance.m_vehicles.m_buffer;
-                        ref Vehicle vehicle =ref buffer[buffer[refID].GetFirstVehicle(refID)];
+                        ref Vehicle vehicle = ref buffer[buffer[refID].GetFirstVehicle(refID)];
                         var transportLine = vehicle.m_transportLine;
                         if (transportLine > 0)
                         {
@@ -627,7 +628,7 @@ namespace Klyte.WriteTheSigns.Rendering
                         }
                         else
                         {
-                            if(vehicle.m_targetBuilding == 0)
+                            if (vehicle.m_targetBuilding == 0)
                             {
                                 return RenderUtils.GetTextData(vehicle.m_targetBuilding.ToString("D5"), textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                             }
