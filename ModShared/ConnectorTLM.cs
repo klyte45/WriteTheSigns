@@ -22,20 +22,19 @@ namespace Klyte.WriteTheSigns.Connectors
 
         public Tuple<string, Color, string> GetLineLogoParameters(ushort lineID)
         {
-            var result = TLMLineUtils.GetIconStringParameters(lineID);
+            var result = TLMShared.GetIconStringParameters(lineID);
             return Tuple.New(result.First, result.Second, result.Third);
         }
 
-        public string GetStopName(ushort stopId, ushort lineId) => TLMLineUtils.getFullStationName(stopId, lineId, TransportSystemDefinition.GetDefinitionForLine(lineId).SubService);
-
-        public ushort GetStopBuildingInternal(ushort stopId, ushort lineId) => TLMLineUtils.getStationBuilding(stopId, TransportSystemDefinition.GetDefinitionForLine(lineId).SubService, true);
-        public string GetLineSortString(ushort lineId) => TLMLineUtils.GetLineSortString(lineId, ref TransportManager.instance.m_lines.m_buffer[lineId]);
+        public string GetStopName(ushort stopId, ushort lineId) => TLMShared.GetFullStationName(stopId, lineId, TransportSystemDefinition.GetDefinitionForLine(lineId).SubService);
+        public ushort GetStopBuildingInternal(ushort stopId, ushort lineId) => TLMShared.GetStationBuilding(stopId, TransportSystemDefinition.GetDefinitionForLine(lineId).SubService, true);
+        public string GetLineSortString(ushort lineId) => TLMShared.GetLineSortString(lineId, ref TransportManager.instance.m_lines.m_buffer[lineId]);
 
         public string GetVehicleIdentifier(ushort vehicleId) => TLMShared.Instance.GetVehicleIdentifier(vehicleId);
-        public string GetLineIdString(ushort lineId) => TLMLineUtils.getLineStringId(lineId);
+        public string GetLineIdString(ushort lineId) => TLMShared.GetLineStringId(lineId);
         public void MapLineDestinations(ushort lineId)
         {
-            TLMLineUtils.CalculateAutoName(lineId, out ushort startStation, out ushort endStation, out string startStationStr, out string endStationStr);
+            TLMShared.CalculateAutoName(lineId, out ushort startStation, out ushort endStation, out string startStationStr, out string endStationStr);
             ref TransportLine tl = ref TransportManager.instance.m_lines.m_buffer[lineId];
             ref NetNode[] nodes = ref NetManager.instance.m_nodes.m_buffer;
 
