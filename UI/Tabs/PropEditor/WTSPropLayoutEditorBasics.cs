@@ -49,7 +49,7 @@ namespace Klyte.WriteTheSigns.UI
             get {
                 if (m_propsLoaded == null)
                 {
-                    m_propsLoaded = GetInfos<PropInfo>().Where(x => x != null).ToDictionary(x => GetListName(x), x => x?.name);
+                    m_propsLoaded = GetInfos<PropInfo>().GroupBy(x => x.name).Select(x => x.FirstOrDefault()).Where(x => x != null).ToDictionary(x => GetListName(x), x => x?.name);
                 }
                 return m_propsLoaded;
             }

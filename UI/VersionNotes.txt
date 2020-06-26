@@ -16,3 +16,4 @@ Click on <color yellow>second button</color> below to go to the mod page and che
 
 Update r1: Small fixes in text generation for line Id
 Update r2: Actual contrast color for vehicles implemented
+Update r3: Preventing error when finding duplicated vehicles or prop assets
