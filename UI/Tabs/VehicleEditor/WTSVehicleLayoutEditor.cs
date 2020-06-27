@@ -275,7 +275,7 @@ namespace Klyte.WriteTheSigns.UI
         {
             if (m_loadedVehicles == null)
             {
-                m_loadedVehicles = PrefabUtils.instance.GetInfos<VehicleInfo>().GroupBy(x=>x.name).Select(x=>x.FirstOrDefault()).ToDictionary(x => x.name.EndsWith("_Data") ? Locale.Get("VEHICLE_TITLE", x.name) : x.name, x => x);
+                m_loadedVehicles = PrefabUtils.instance.GetInfos<VehicleInfo>().GroupBy(x => x.name.EndsWith("_Data") ? Locale.Get("VEHICLE_TITLE", x.name) : x.name).Select(x => Tuple.New(x.Key, x.FirstOrDefault())).ToDictionary(x => x.First, x => x.Second);
             }
             return m_loadedVehicles
             .Where((x) => arg.IsNullOrWhiteSpace() ? true : LocaleManager.cultureInfo.CompareInfo.IndexOf(x.Key + (PrefabUtils.instance.AuthorList.TryGetValue(x.Value.name.Split('.')[0], out string author) ? "\n" + author : ""), arg, CompareOptions.IgnoreCase) >= 0)

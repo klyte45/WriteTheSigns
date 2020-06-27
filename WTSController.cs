@@ -25,6 +25,7 @@ namespace Klyte.WriteTheSigns
     {
         public RoadSegmentTool RoadSegmentToolInstance => FindObjectOfType<RoadSegmentTool>();
         public BuildingEditorTool BuildingEditorToolInstance => FindObjectOfType<BuildingEditorTool>();
+        public Dictionary<uint, ushort> m_stopsBuildingsCache => WTSBuildingDataCaches.m_stopsBuildingsCache;
 
         internal WTSSpritesRenderingRules SpriteRenderingRules { get; private set; }
         internal WTSBuildingPropsSingleton BuildingPropsSingleton { get; private set; }
@@ -72,8 +73,8 @@ namespace Klyte.WriteTheSigns
             RoadPropsSingleton = gameObject.AddComponent<WTSRoadPropsSingleton>();
             DestinationSingleton = gameObject.AddComponent<WTSDestinationSingleton>();
             VehicleTextsSingleton = gameObject.AddComponent<WTSVehicleTextsSingleton>();
-            ConnectorTLM = PluginUtils.GetImplementationTypeForMod<ConnectorTLM, ConnectorTLMFallback, IConnectorTLM>(gameObject, "TransportLinesManager", "13.4.0.0");
-            ConnectorADR = PluginUtils.GetImplementationTypeForMod<ConnectorADR, ConnectorADRFallback, IConnectorADR>(gameObject, "KlyteAddresses", "2.0.4.0");
+            ConnectorTLM = PluginUtils.GetImplementationTypeForMod<ConnectorTLM, ConnectorTLMFallback, IConnectorTLM>(gameObject, "TransportLinesManager", "13.4.0.1");
+            ConnectorADR = PluginUtils.GetImplementationTypeForMod<ConnectorADR, ConnectorADRFallback, IConnectorADR>(gameObject, "KlyteAddresses", "2.0.4.1");
 
             var spritesToAdd = new List<SpriteInfo>();
             var errors = new List<string>();

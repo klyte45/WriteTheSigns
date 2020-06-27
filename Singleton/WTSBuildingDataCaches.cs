@@ -7,7 +7,7 @@ namespace Klyte.WriteTheSigns.Utils
 {
     internal static class WTSBuildingDataCaches
     {
-        private static Dictionary<uint, ushort> m_stopsBuildingsCache = new Dictionary<uint, ushort>();
+        internal static Dictionary<uint, ushort> m_stopsBuildingsCache = new Dictionary<uint, ushort>();
 
         internal static void PurgeBuildingCache(ushort buildingId)
         {

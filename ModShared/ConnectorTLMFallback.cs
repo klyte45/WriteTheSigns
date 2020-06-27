@@ -148,6 +148,16 @@ namespace Klyte.WriteTheSigns.Connectors
                 return tempBuildingId;
             }
 
+            tempBuildingId = BuildingUtils.FindBuilding(position, 100f, ItemClass.Service.Road, ItemClass.SubService.None, null, Building.Flags.None, Building.Flags.None);
+            while (BuildingManager.instance.m_buildings.m_buffer[tempBuildingId].m_parentBuilding != 0)
+            {
+                tempBuildingId = BuildingManager.instance.m_buildings.m_buffer[tempBuildingId].m_parentBuilding;
+            }
+            if (BuildingUtils.IsBuildingValidForStation(true, bm, tempBuildingId))
+            {
+                return tempBuildingId;
+            }
+
             return 0;
 
         }
@@ -265,6 +275,8 @@ namespace Klyte.WriteTheSigns.Connectors
             TransferManager.TransferReason.PassengerTrain ,
             TransferManager.TransferReason.PassengerPlane ,
             TransferManager.TransferReason.PassengerShip ,
+            TransferManager.TransferReason.IntercityBus ,
+            TransferManager.TransferReason.TouristBus ,            
             TransferManager.TransferReason.Tram ,
             TransferManager.TransferReason.Bus
         };

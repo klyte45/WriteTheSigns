@@ -27,7 +27,7 @@ namespace Klyte.WriteTheSigns.Connectors
         }
 
         public string GetStopName(ushort stopId, ushort lineId) => TLMShared.GetFullStationName(stopId, lineId, TransportSystemDefinition.GetDefinitionForLine(lineId).SubService);
-        public ushort GetStopBuildingInternal(ushort stopId, ushort lineId) => TLMShared.GetStationBuilding(stopId, TransportSystemDefinition.GetDefinitionForLine(lineId).SubService, true);
+        public ushort GetStopBuildingInternal(ushort stopId, ushort lineId) => TLMShared.GetStationBuilding(stopId, lineId);
         public string GetLineSortString(ushort lineId) => TLMShared.GetLineSortString(lineId, ref TransportManager.instance.m_lines.m_buffer[lineId]);
 
         public string GetVehicleIdentifier(ushort vehicleId) => TLMShared.Instance.GetVehicleIdentifier(vehicleId);

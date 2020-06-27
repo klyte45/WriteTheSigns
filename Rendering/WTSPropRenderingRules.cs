@@ -630,7 +630,7 @@ namespace Klyte.WriteTheSigns.Rendering
                         {
                             if (vehicle.m_targetBuilding == 0)
                             {
-                                return RenderUtils.GetTextData(vehicle.m_targetBuilding.ToString("D5"), textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
+                                return RenderUtils.GetTextData(vehicle.m_sourceBuilding.ToString("D5"), textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                             }
                             else
                             {
@@ -643,6 +643,7 @@ namespace Klyte.WriteTheSigns.Rendering
                     case TextType.LastStopLine:
                         ref Vehicle[] buffer2 = ref VehicleManager.instance.m_vehicles.m_buffer;
                         ref Vehicle targetVehicle = ref buffer2[buffer2[refID].GetFirstVehicle(refID)];
+
                         if (targetVehicle.m_transportLine == 0)
                         {
                             if (targetVehicle.m_targetBuilding == 0)
