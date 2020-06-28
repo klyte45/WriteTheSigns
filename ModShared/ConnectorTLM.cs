@@ -18,6 +18,7 @@ namespace Klyte.WriteTheSigns.Connectors
                 RenderUtils.ClearCacheLineId();
             };
             TLMShared.Instance.EventAutoNameParameterChanged += WriteTheSignsMod.Controller.BuildingPropsSingleton.ResetLines;
+            TLMShared.Instance.EventVehicleIdentifierParameterChanged += RenderUtils.ClearCacheVehicleNumber;
         }
 
         public Tuple<string, Color, string> GetLineLogoParameters(ushort lineID)
