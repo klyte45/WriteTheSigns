@@ -275,6 +275,7 @@ namespace FontStashSharp
                 bri.m_mesh.triangles = triangles.ToArray();
                 bri.m_materialGeneratedTick = LastUpdateAtlas;
                 bri.m_fontBaseLimits = new RangeVector { min = prevGlyph.Font.Descent, max = prevGlyph.Font.Ascent };
+                bri.m_refText = str;
             }
             finally
             {

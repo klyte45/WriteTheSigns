@@ -10,6 +10,7 @@ namespace SpriteFontPlus.Utility
         public Material m_generatedMaterial;
         public RangeVector m_YAxisOverflows;
         public RangeVector m_fontBaseLimits;
+        public string m_refText;
 
         public override string ToString() => $"BRI [m={m_mesh?.bounds};sz={m_sizeMetersUnscaled}]";
     }

@@ -199,7 +199,6 @@
     <Compile Include="DynamicFont\src\Utility\IOUtils.cs" />
     <Compile Include="Libraries\BasicFileLib.cs" />
     <Compile Include="DynamicFont\src\Utility\BasicRenderInformation.cs" />
-    <Compile Include="Libraries\BasicLib.cs" />
     <Compile Include="ModShared\ConnectorADR.cs" />
     <Compile Include="ModShared\ConnectorADRFallback.cs" />
     <Compile Include="ModShared\IConnectorADR.cs" />
@@ -484,13 +483,13 @@
     <PostBuildEvent>xcopy /Y "$(TargetPath)" "$(ProjectDir)\_requiredDLLs"
 xcopy /Y "$(TargetDir)0Harmony.dll" "$(ProjectDir)\_requiredDLLs\"
 xcopy /Y /e "$(ProjectDir)\_requiredDLLs\*" "S:\Steam\steamapps\workshop\content\255710\2139980554\*"
-xcopy /Y /e "$(ProjectDir)\_requiredDLLs\*" "C:\Users\Leandro\AppData\Local\Colossal Order\Cities_Skylines\Addons\Mods\WTS\"</PostBuildEvent>
+rem xcopy /Y /e "$(ProjectDir)\_requiredDLLs\*" "C:\Users\Leandro\AppData\Local\Colossal Order\Cities_Skylines\Addons\Mods\WTS\"</PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
     <PreBuildEvent>del /q "S:\Steam\steamapps\workshop\content\255710\2139980554\*"
 del /q "$(ProjectDir)\_requiredDLLs\*"
-del /q "C:\Users\Leandro\AppData\Local\Colossal Order\Cities_Skylines\Addons\Mods\WTS\*" 
-rmdir "C:\Users\Leandro\AppData\Local\Colossal Order\Cities_Skylines\Addons\Mods\WTS\Tutorial" /Q /S
+rem del /q "C:\Users\Leandro\AppData\Local\Colossal Order\Cities_Skylines\Addons\Mods\WTS\*" 
+rem rmdir "C:\Users\Leandro\AppData\Local\Colossal Order\Cities_Skylines\Addons\Mods\WTS\Tutorial" /Q /S
 rmdir "S:\Steam\steamapps\workshop\content\255710\2139980554\Tutorial" /Q /S</PreBuildEvent>
   </PropertyGroup>
 </Project>

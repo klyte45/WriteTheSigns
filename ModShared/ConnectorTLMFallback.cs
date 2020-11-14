@@ -10,9 +10,9 @@ using static ItemClass;
 
 namespace Klyte.WriteTheSigns.Connectors
 {
-    internal class ConnectorTLMFallback : MonoBehaviour, IConnectorTLM
+    internal class ConnectorTLMFallback : IConnectorTLM
     {
-        public Tuple<string, Color, string> GetLineLogoParameters(ushort lineID)
+        public override Tuple<string, Color, string> GetLineLogoParameters(ushort lineID)
         {
             Color lineColor = TransportManager.instance.GetLineColor(lineID);
             LineIconSpriteNames lineIcon;
@@ -76,7 +76,7 @@ namespace Klyte.WriteTheSigns.Connectors
             return Tuple.New(KlyteResourceLoader.GetDefaultSpriteNameFor(lineIcon), lineColor, TransportManager.instance.m_lines.m_buffer[lineID].m_lineNumber.ToString());
         }
 
-        public string GetStopName(ushort stopId, ushort lineId) => GetStopName(stopId, lineId, out _, out _, out _);
+        public override string GetStopName(ushort stopId, ushort lineId) => GetStopName(stopId, lineId, out _, out _, out _);
 
 
         private string GetStopName(ushort stopId, ushort lineId, out ushort buildingID, out ushort parkID, out ushort districtID)
@@ -115,7 +115,7 @@ namespace Klyte.WriteTheSigns.Connectors
         }
 
 
-        public ushort GetStopBuildingInternal(ushort stopId, ushort lineId)
+        public override ushort GetStopBuildingInternal(ushort stopId, ushort lineId)
         {
             NetManager nm = Singleton<NetManager>.instance;
             BuildingManager bm = Singleton<BuildingManager>.instance;
@@ -162,50 +162,20 @@ namespace Klyte.WriteTheSigns.Connectors
 
         }
 
-        public string GetLineSortString(ushort lineId)
+        public override string GetLineSortString(ushort lineId)
         {
             ref TransportLine tl = ref TransportManager.instance.m_lines.m_buffer[lineId];
 
             return (((int)tl.Info.m_class.m_subService << 16) + tl.m_lineNumber).ToString("D8");
         }
 
-        public string GetVehicleIdentifier(ushort vehicleId) => vehicleId.ToString("D5");
-        public string GetLineIdString(ushort lineId) => TransportManager.instance.m_lines.m_buffer[lineId].m_lineNumber.ToString();
-        public void MapLineDestinations(ushort lineId)
+        public override string GetVehicleIdentifier(ushort vehicleId) => vehicleId.ToString("D5");
+        public override string GetLineIdString(ushort lineId) => TransportManager.instance.m_lines.m_buffer[lineId].m_lineNumber.ToString();
+        public override void MapLineDestinations(ushort lineId)
         {
             CalculatePath(lineId, out ushort startStation, out ushort endStation);
 
-            ref TransportLine tl = ref TransportManager.instance.m_lines.m_buffer[lineId];
-            ref NetNode[] nodes = ref NetManager.instance.m_nodes.m_buffer;
-
-            var firstStop = startStation == 0 ? tl.m_stops : startStation;
-            var nextStop = firstStop;
-            var curStop = TransportLine.GetPrevStop(nextStop);
-            ushort prevStop = TransportLine.GetPrevStop(curStop);
-            var destination = endStation == 0 ? startStation : endStation;
-            var buildingSing = WriteTheSignsMod.Controller.BuildingPropsSingleton;
-            do
-            {
-                buildingSing.m_stopInformation[curStop] = new Xml.StopInformation
-                {
-                    m_lineId = lineId,
-                    m_destinationId = destination,
-                    m_nextStopId = nextStop,
-                    m_previousStopId = prevStop,
-                    m_stopId = curStop
-                };
-                prevStop = curStop;
-                curStop = nextStop;
-                nextStop = TransportLine.GetNextStop(nextStop);
-                if (curStop == startStation && endStation > 0)
-                {
-                    destination = endStation;
-                }
-                else if (curStop == endStation)
-                {
-                    destination = startStation;
-                }
-            } while (nextStop != 0 && nextStop != startStation);
+            FillStops(lineId, startStation, endStation, null, null);
         }
 
         private enum NamingType
@@ -276,7 +246,7 @@ namespace Klyte.WriteTheSigns.Connectors
             TransferManager.TransferReason.PassengerPlane ,
             TransferManager.TransferReason.PassengerShip ,
             TransferManager.TransferReason.IntercityBus ,
-            TransferManager.TransferReason.TouristBus ,            
+            TransferManager.TransferReason.TouristBus ,
             TransferManager.TransferReason.Tram ,
             TransferManager.TransferReason.Bus
         };

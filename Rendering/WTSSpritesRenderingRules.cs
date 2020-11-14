@@ -160,6 +160,7 @@ namespace Klyte.WriteTheSigns.Rendering
             var bri = new BasicRenderInformation
             {
                 m_YAxisOverflows = new RangeVector { min = 0, max = 20 },
+                m_refText =  $"<sprite {spriteName}>"
             };
 
             yield return 0;
