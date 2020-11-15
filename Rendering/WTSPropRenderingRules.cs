@@ -356,6 +356,40 @@ namespace Klyte.WriteTheSigns.Rendering
                     BasicRenderInformation bgBri = WriteTheSignsMod.Controller.SpriteRenderingRules.GetSpriteFromDefaultAtlas(KlyteResourceLoader.GetDefaultSpriteNameFor(LineIconSpriteNames.K45_SquareIcon));
                     if (bgBri != null)
                     {
+
+                        if (genMesh == null)
+                        {
+                            WTSDisplayContainerMeshUtils.GenerateDisplayContainer(new Vector2(1, 1), new Vector2(1, 1), new Vector2(), 0.3f, 0.1f, out Vector3[] points);
+                            genMesh = new Mesh
+                            {
+                                vertices = points,
+                                colors32 = points.Select(x => new Color32(0, 0, 255, 0)).ToArray(),
+                                triangles = WTSDisplayContainerMeshUtils.m_triangles,
+                                uv = points.Select(x => new Vector2(0.5f, .5f)).ToArray()
+                            };
+                            genMesh.RecalculateNormals();
+                            MeshUtils.SolveTangents(genMesh);
+
+                            genMeshInv = new Mesh
+                            {
+                                vertices = points,
+                                colors32 = points.Select(x => new Color32(0, 0, 255, 0)).ToArray(),
+                                triangles = WTSDisplayContainerMeshUtils.m_triangles.Select((x, i) => WTSDisplayContainerMeshUtils.m_triangles[(((i / 3) << 0) * 3) + 2 - (i % 3)]).ToArray(),
+                                uv = points.Select(x => new Vector2(0.5f, .5f)).ToArray()
+                            };
+                            genMeshInv.RecalculateNormals();
+                            MeshUtils.SolveTangents(genMeshInv);
+
+                            genMeshGlass = new Mesh
+                            {
+                                vertices = points,
+                                colors32 = points.Select(x => new Color32(165, 0, 0, 0)).ToArray(),
+                                triangles = WTSDisplayContainerMeshUtils.m_trianglesGlass,
+                                uv = points.Select(x => new Vector2(0.5f, .5f)).ToArray()
+                            };
+                            genMeshInv.RecalculateNormals();
+                            MeshUtils.SolveTangents(genMeshInv);
+                        }
                         materialPropertyBlock.SetColor(WTSPropRenderingRules.SHADER_PROP_COLOR, textDescriptor.BackgroundMeshSettings.BackgroundColor);
                         materialPropertyBlock.SetColor(WTSPropRenderingRules.SHADER_PROP_COLOR0, textDescriptor.BackgroundMeshSettings.BackgroundColor);
                         materialPropertyBlock.SetColor(WTSPropRenderingRules.SHADER_PROP_COLOR1, textDescriptor.BackgroundMeshSettings.BackgroundColor);
@@ -370,19 +404,69 @@ namespace Klyte.WriteTheSigns.Rendering
 
                         //Size (64.0, 64.0); mesh bounds Center: (0.0, 32.0, 0.0), Extents: (32.0, 32.0, 0.0)
                         //LogUtils.DoWarnLog($"Size {bgBri.m_sizeMetersUnscaled}; mesh bounds {bgBri.m_mesh.bounds}");,
+                        var lineAdjustmentVector = new Vector3(0, (-textDescriptor.BackgroundMeshSettings.Size.Y / 2) + (32 * SCALING_FACTOR * textDescriptor.m_textScale) - (bgBri.m_YAxisOverflows.min + bgBri.m_YAxisOverflows.max) * SCALING_FACTOR * textDescriptor.m_textScale / 2, -0.001f);
+                        var containerMatrix = propMatrix
+                            * Matrix4x4.Translate(taregetPos)
+                            * textMatrixTuple.Second.Second
+                            * Matrix4x4.Translate(lineAdjustmentVector)
+                            * textMatrixTuple.Second.Fourth
+                            ;
                         var bgMatrix = propMatrix
                             * Matrix4x4.Translate(taregetPos)
                             //* Matrix4x4.Translate(taregetPos + textMatrixTuple.Second.Second.MultiplyPoint((new Vector3(0, -(bgBri.m_YAxisOverflows.min + bgBri.m_YAxisOverflows.max) * SCALING_FACTOR * 0, 0))))
                             * textMatrixTuple.Second.Second
-                            * Matrix4x4.Translate(new Vector3(0, (-textDescriptor.BackgroundMeshSettings.Size.Y / 2) + (32 * SCALING_FACTOR * textDescriptor.m_textScale) - (bgBri.m_YAxisOverflows.min + bgBri.m_YAxisOverflows.max) * SCALING_FACTOR * textDescriptor.m_textScale / 2, -0.001f))
+                            * Matrix4x4.Translate(lineAdjustmentVector)
                             * Matrix4x4.Scale(new Vector3(textDescriptor.BackgroundMeshSettings.Size.X / bgBri.m_mesh.bounds.size.x, textDescriptor.BackgroundMeshSettings.Size.Y / bgBri.m_mesh.bounds.size.y, 1))
                             * textMatrixTuple.Second.Fourth;
 
                         Graphics.DrawMesh(bgBri.m_mesh, bgMatrix, bgBri.m_generatedMaterial, 10, targetCamera, 0, materialPropertyBlock, false);
+
+                        if (textDescriptor.BackgroundMeshSettings.cachedBgArray == null)
+                        {
+                            WTSDisplayContainerMeshUtils.GenerateDisplayContainer(textDescriptor.BackgroundMeshSettings.Size, textDescriptor.BackgroundMeshSettings.Size, new Vector2(), 0.2f, 0.05f, out textDescriptor.BackgroundMeshSettings.cachedBgArray);
+
+                            textDescriptor.BackgroundMeshSettings.meshInnerContainer = new Mesh()
+                            {
+                                vertices = textDescriptor.BackgroundMeshSettings.cachedBgArray,
+                                triangles = genMeshInv.triangles,
+                                uv = genMeshInv.uv,
+                                normals = genMeshInv.normals,
+                                colors = genMeshInv.colors,
+                                tangents = genMeshInv.tangents,
+                            };
+                            textDescriptor.BackgroundMeshSettings.meshOuterContainer = new Mesh()
+                            {
+                                vertices = textDescriptor.BackgroundMeshSettings.cachedBgArray,
+                                triangles = genMesh.triangles,
+                                uv = genMesh.uv,
+                                normals = genMesh.normals,
+                                colors = genMesh.colors,
+                                tangents = genMesh.tangents,
+                            };
+                            textDescriptor.BackgroundMeshSettings.meshGlass = new Mesh()
+                            {
+                                vertices = textDescriptor.BackgroundMeshSettings.cachedBgArray,
+                                triangles = genMeshGlass.triangles,
+                                uv = genMeshGlass.uv,
+                                normals = genMeshGlass.normals,
+                                colors = textDescriptor.BackgroundMeshSettings.cachedBgArray.Select(x => new Color(.6f, 0, 0, 0)).ToArray(),
+                                tangents = genMeshGlass.tangents,
+                            };
+                        }
+
+                        Graphics.DrawMesh(textDescriptor.BackgroundMeshSettings.meshInnerContainer, containerMatrix, bgBri.m_generatedMaterial, 10, targetCamera, 0, materialPropertyBlock, false);
+                        Graphics.DrawMesh(textDescriptor.BackgroundMeshSettings.meshOuterContainer, containerMatrix, bgBri.m_generatedMaterial, 10, targetCamera, 0, materialPropertyBlock, false);
+                        Graphics.DrawMesh(textDescriptor.BackgroundMeshSettings.meshGlass, containerMatrix, rotorMaterial, 10, targetCamera, 0, materialPropertyBlock, false);
                     }
                 }
             }
         }
+
+        private static Material rotorMaterial = new Material(Shader.Find("Custom/Vehicles/Vehicle/Rotors"));
+
+        private static Mesh genMesh;
+        private static Mesh genMeshInv;
+        private static Mesh genMeshGlass;
 
         private static readonly float m_daynightOffTime = 6 * Convert.ToSingle(Math.Pow(Convert.ToDouble((6 - (15 / 2.5)) / 6), Convert.ToDouble(1 / 1.09)));
 

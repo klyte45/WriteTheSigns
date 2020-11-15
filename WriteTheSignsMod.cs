@@ -26,7 +26,7 @@ namespace Klyte.WriteTheSigns
         public override void OnReleased() => base.OnReleased();
 
         protected override void OnLevelLoadingInternal() => base.OnLevelLoadingInternal();
-
+         
         protected override List<ulong> IncompatibleModList => new List<ulong> { 1831805509 };
         protected override List<string> IncompatibleDllModList => new List<string> { "KlyteDynamicTextProps" };
 

@@ -166,14 +166,31 @@ namespace Klyte.WriteTheSigns.Xml
         public class BackgroundMesh
         {
             [XmlElement("size")]
-            public Vector2Xml Size { get; set; } = new Vector2Xml();
+            public Vector2Xml Size
+            {
+                get => m_size; set {
+                    cachedBgArray = null;
+                    m_size = value;
+                }
+            }
 
+            [XmlIgnore]
+            private Vector2Xml m_size = new Vector2Xml();
             [XmlIgnore]
             public Color BackgroundColor { get => m_cachedColor; set => m_cachedColor = value; }
             [XmlIgnore]
             private Color m_cachedColor;
             [XmlAttribute("color")]
             public string BgColorStr { get => m_cachedColor == null ? null : ColorExtensions.ToRGB(BackgroundColor); set => BackgroundColor = value.IsNullOrWhiteSpace() ? default : ColorExtensions.FromRGB(value); }
+
+            [XmlIgnore]
+            public Vector3[] cachedBgArray;
+            [XmlIgnore]
+            public Mesh meshOuterContainer;
+            [XmlIgnore]
+            public Mesh meshInnerContainer;
+            [XmlIgnore]
+            public Mesh meshGlass;
         }
     }
 
