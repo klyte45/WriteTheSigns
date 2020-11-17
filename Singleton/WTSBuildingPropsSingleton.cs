@@ -29,7 +29,7 @@ namespace Klyte.WriteTheSigns.Singleton
         public SimpleXmlDictionary<string, ExportableBuildingGroupDescriptorXml> AssetsDescriptors => Data.AssetsDescriptors;
 
         internal StopInformation[][][] m_platformToLine = new StopInformation[BuildingManager.MAX_BUILDING_COUNT][][];
-        internal StopInformation[]     m_stopInformation = new StopInformation[NetManager.MAX_NODE_COUNT];
+        internal StopInformation[] m_stopInformation = new StopInformation[NetManager.MAX_NODE_COUNT];
         private ulong m_lastUpdateLines = SimulationManager.instance.m_currentTickIndex;
         private readonly ulong[] m_buildingLastUpdateLines = new ulong[BuildingManager.MAX_BUILDING_COUNT];
 
@@ -271,7 +271,7 @@ namespace Klyte.WriteTheSigns.Singleton
 
         private void RenderSign(ref Building data, RenderManager.CameraInfo cameraInfo, ushort buildingId, int boardIdx, Vector3 position, Vector3 rotation, int layerMask, BoardDescriptorGeneralXml propLayout, ref BoardInstanceBuildingXml targetDescriptor, ref PropInfo cachedProp)
         {
-            WTSPropRenderingRules.RenderPropMesh(ref cachedProp, cameraInfo, buildingId, boardIdx, 0, layerMask, data.m_angle, position, Vector4.zero, ref propLayout.m_propName, rotation, targetDescriptor.PropScale, propLayout, targetDescriptor, out Matrix4x4 propMatrix, out bool rendered, new InstanceID { Building = buildingId });
+            var parentColor = WTSPropRenderingRules.RenderPropMesh(ref cachedProp, cameraInfo, buildingId, boardIdx, 0, layerMask, data.m_angle, position, Vector4.zero, ref propLayout.m_propName, rotation, targetDescriptor.PropScale, propLayout, targetDescriptor, out Matrix4x4 propMatrix, out bool rendered, new InstanceID { Building = buildingId });
             if (rendered)
             {
                 for (int j = 0; j < propLayout.TextDescriptors.Length; j++)
@@ -280,7 +280,7 @@ namespace Klyte.WriteTheSigns.Singleton
                     {
                         MaterialPropertyBlock properties = PropManager.instance.m_materialBlock;
                         properties.Clear();
-                        WTSPropRenderingRules.RenderTextMesh(buildingId, boardIdx, 0, targetDescriptor, propMatrix, propLayout, ref propLayout.TextDescriptors[j], properties, (int)data.m_flags);
+                        WTSPropRenderingRules.RenderTextMesh(buildingId, boardIdx, 0, targetDescriptor, propMatrix, propLayout, ref propLayout.TextDescriptors[j], properties, (int)data.m_flags, parentColor, data.Info);
                     }
                 }
             }

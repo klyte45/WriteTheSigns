@@ -169,7 +169,7 @@ namespace Klyte.WriteTheSigns.Xml
             public Vector2Xml Size
             {
                 get => m_size; set {
-                    cachedBgArray = null;
+                    FrameMeshSettings.cachedFrameArray = null;
                     m_size = value;
                 }
             }
@@ -183,15 +183,79 @@ namespace Klyte.WriteTheSigns.Xml
             [XmlAttribute("color")]
             public string BgColorStr { get => m_cachedColor == null ? null : ColorExtensions.ToRGB(BackgroundColor); set => BackgroundColor = value.IsNullOrWhiteSpace() ? default : ColorExtensions.FromRGB(value); }
 
-            [XmlIgnore]
-            public Vector3[] cachedBgArray;
-            [XmlIgnore]
-            public Mesh meshOuterContainer;
-            [XmlIgnore]
-            public Mesh meshInnerContainer;
-            [XmlIgnore]
-            public Mesh meshGlass;
+            [XmlAttribute("useFrame")]
+            public bool UseFrame { get; set; } = false;
+            [XmlElement("frane")]
+            public FrameMesh FrameMeshSettings { get; set; } = new FrameMesh();
         }
+    }
+
+    public class FrameMesh
+    {
+
+        [XmlIgnore]
+        public Color OutsideColor { get => m_cachedOutsideColor; set => m_cachedOutsideColor = value; }
+        [XmlIgnore]
+        private Color m_cachedOutsideColor;
+        [XmlAttribute("color")]
+        public string OutsideColorStr { get => m_cachedOutsideColor == null ? null : ColorExtensions.ToRGB(OutsideColor); set => OutsideColor = value.IsNullOrWhiteSpace() ? default : ColorExtensions.FromRGB(value); }
+        [XmlAttribute("inheritColor")]
+        public bool InheritColor { get; set; } = false;
+        [XmlAttribute("specularLevel")]
+        public float SpecularLevel { get; set; } = 0f;
+        [XmlElement("backSize")]
+        public Vector2Xml BackSize
+        {
+            get => m_backSize; set {
+                cachedFrameArray = null; m_backSize = value;
+            }
+        }
+        [XmlElement("backOffset")]
+        public Vector2Xml BackOffset
+        {
+            get => m_backOffset; set {
+                cachedFrameArray = null; m_backOffset = value;
+            }
+        }
+        [XmlAttribute("frontDepth")]
+        public float FrontDepth
+        {
+            get => m_frontDepth; set {
+                cachedFrameArray = null; m_frontDepth = value;
+            }
+        }
+        [XmlAttribute("backDepth")]
+        public float BackDepth
+        {
+            get => m_backDepth; set {
+                cachedFrameArray = null; m_backDepth = value;
+            }
+        }
+        [XmlAttribute("frontBorderThickness")]
+        public float FrontBorderThickness
+        {
+            get => m_frontBorderThickness; set {
+                cachedFrameArray = null; m_frontBorderThickness = value;
+            }
+        }
+        [XmlIgnore]
+        public Vector3[] cachedFrameArray;
+        [XmlIgnore]
+        public Mesh meshOuterContainer;
+        [XmlIgnore]
+        public Mesh meshInnerContainer;
+        [XmlIgnore]
+        public Mesh meshGlass;
+        [XmlIgnore]
+        private Vector2Xml m_backSize = new Vector2Xml();
+        [XmlIgnore]
+        private Vector2Xml m_backOffset = new Vector2Xml();
+        [XmlIgnore]
+        private float m_frontDepth = .1f;
+        [XmlIgnore]
+        private float m_backDepth = .5f;
+        [XmlIgnore]
+        private float m_frontBorderThickness = .05f;
     }
 
 
@@ -217,5 +281,5 @@ namespace Klyte.WriteTheSigns.Xml
 
     }
 
-
 }
+

@@ -196,7 +196,12 @@ namespace Klyte.WriteTheSigns
         public static string AbbreviationFilesPath { get; } = FOLDER_NAME + Path.DirectorySeparatorChar + ABBREVIATION_FILES_FOLDER;
         public static string FontFilesPath { get; } = FOLDER_NAME + Path.DirectorySeparatorChar + FONTS_FILES_FOLDER;
         public static Shader DEFAULT_SHADER_TEXT = Shader.Find("Custom/Props/Prop/Default") ?? DistrictManager.instance.m_properties.m_areaNameShader;
-
+        public static Shader TEST_SHADER = Shader.Find("Custom/Props/Prop/Default");
+        public static Material _outside;
+        public static Mesh _genMesh;
+        public static Material _rotor => WTSPropRenderingRules.rotorMaterial;
+        public static Color _SpecColor;
+        public static float _SpecLevel;
 
         internal bool? m_tlmExistsAndActive = null;
         internal bool? m_addressesExistsAndActive = null;

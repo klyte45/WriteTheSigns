@@ -99,14 +99,14 @@ namespace Klyte.WriteTheSigns.Rendering
         };
 
 
-        public static void RenderPropMesh(ref PropInfo propInfo, RenderManager.CameraInfo cameraInfo, ushort refId, int boardIdx, int secIdx, int layerMask, float refAngleRad, Vector3 position, Vector4 dataVector, ref string propName, Vector3 propAngle, Vector3 propScale, BoardDescriptorGeneralXml propLayout, BoardInstanceXml descriptor, out Matrix4x4 propMatrix, out bool rendered, InstanceID propRenderID)
+        public static Color RenderPropMesh(ref PropInfo propInfo, RenderManager.CameraInfo cameraInfo, ushort refId, int boardIdx, int secIdx, int layerMask, float refAngleRad, Vector3 position, Vector4 dataVector, ref string propName, Vector3 propAngle, Vector3 propScale, BoardDescriptorGeneralXml propLayout, BoardInstanceXml descriptor, out Matrix4x4 propMatrix, out bool rendered, InstanceID propRenderID)
         {
             Color propColor = WTSPropRenderingRules.GetColor(refId, boardIdx, secIdx, descriptor, propLayout, out bool colorFound);
             if (!colorFound)
             {
                 rendered = false;
                 propMatrix = new Matrix4x4();
-                return;
+                return propColor;
             }
             propColor.a = 1;
 
@@ -127,10 +127,12 @@ namespace Klyte.WriteTheSigns.Rendering
                 propInfo = null;
             }
             propMatrix = RenderUtils.RenderProp(refId, refAngleRad, cameraInfo, propInfo, propColor, position, dataVector, boardIdx, propAngle, propScale, layerMask, out rendered, propRenderID);
+            return propColor;
         }
 
 
-        public static void RenderTextMesh(ushort refID, int boardIdx, int secIdx, BoardInstanceXml descriptor, Matrix4x4 propMatrix, BoardDescriptorGeneralXml propLayout, ref BoardTextDescriptorGeneralXml textDescriptor, MaterialPropertyBlock materialPropertyBlock, int instanceFlags, Camera targetCamera = null, Shader overrideShader = null)
+        public static void RenderTextMesh(ushort refID, int boardIdx, int secIdx, BoardInstanceXml descriptor, Matrix4x4 propMatrix,
+            BoardDescriptorGeneralXml propLayout, ref BoardTextDescriptorGeneralXml textDescriptor, MaterialPropertyBlock materialPropertyBlock, int instanceFlags, Color parentColor, PrefabInfo srcInfo, Camera targetCamera = null, Shader overrideShader = null)
         {
             BasicRenderInformation renderInfo = GetTextMesh(textDescriptor, refID, boardIdx, secIdx, descriptor, propLayout, out IEnumerable<BasicRenderInformation> multipleOutput);
             if (renderInfo == null)
@@ -204,12 +206,12 @@ namespace Klyte.WriteTheSigns.Rendering
 
                             BasicRenderInformation currentItem = resultArray[i];
                             Vector3 targetPosA = (i >= firstItemIdxLastRowOrColumn ? lastRowOrColumnStartPoint : startPoint) - new Vector3(columnWidth * x, rowHeight * y);
-                            DrawTextBri(refID, boardIdx, secIdx, propMatrix, textDescriptor, materialPropertyBlock, currentItem, colorToSet, targetPosA, textDescriptor.PlacingConfig.Rotation, descriptor.PropScale, false, textDescriptor.m_textAlign, 0, instanceFlags, targetCamera, overrideShader);
+                            DrawTextBri(refID, boardIdx, secIdx, propMatrix, textDescriptor, materialPropertyBlock, currentItem, colorToSet, targetPosA, textDescriptor.PlacingConfig.Rotation, descriptor.PropScale, false, textDescriptor.m_textAlign, 0, instanceFlags, parentColor, srcInfo, targetCamera, overrideShader);
                             if (textDescriptor.PlacingConfig.m_create180degYClone)
                             {
                                 targetPosA = startPointClone - new Vector3(columnWidth * (maxItemsInARow - x - 1), rowHeight * y);
                                 targetPosA.z *= -1;
-                                DrawTextBri(refID, boardIdx, secIdx, propMatrix, textDescriptor, materialPropertyBlock, currentItem, colorToSet, targetPosA, textDescriptor.PlacingConfig.Rotation + new Vector3(0, 180), descriptor.PropScale, false, textDescriptor.m_textAlign, 0, instanceFlags, targetCamera, overrideShader);
+                                DrawTextBri(refID, boardIdx, secIdx, propMatrix, textDescriptor, materialPropertyBlock, currentItem, colorToSet, targetPosA, textDescriptor.PlacingConfig.Rotation + new Vector3(0, 180), descriptor.PropScale, false, textDescriptor.m_textAlign, 0, instanceFlags, parentColor, srcInfo, targetCamera, overrideShader);
                             }
                         }
                     }
@@ -227,7 +229,7 @@ namespace Klyte.WriteTheSigns.Rendering
             Vector3 targetPos = textDescriptor.PlacingConfig.Position;
 
 
-            DrawTextBri(refID, boardIdx, secIdx, propMatrix, textDescriptor, materialPropertyBlock, renderInfo, GetTargetColor(refID, boardIdx, secIdx, descriptor, propLayout, textDescriptor), targetPos, textDescriptor.PlacingConfig.Rotation, descriptor.PropScale, textDescriptor.PlacingConfig.m_create180degYClone, textDescriptor.m_textAlign, textDescriptor.m_maxWidthMeters, instanceFlags, targetCamera, overrideShader);
+            DrawTextBri(refID, boardIdx, secIdx, propMatrix, textDescriptor, materialPropertyBlock, renderInfo, GetTargetColor(refID, boardIdx, secIdx, descriptor, propLayout, textDescriptor), targetPos, textDescriptor.PlacingConfig.Rotation, descriptor.PropScale, textDescriptor.PlacingConfig.m_create180degYClone, textDescriptor.m_textAlign, textDescriptor.m_maxWidthMeters, instanceFlags, parentColor, srcInfo, targetCamera, overrideShader);
         }
 
         private static float CalculateOffsetXMultiItem(UIHorizontalAlignment alignment, int itemCount, float columnWidth, float maxWidth)
@@ -278,11 +280,12 @@ namespace Klyte.WriteTheSigns.Rendering
         }
 
         public static void DrawTextBri(ushort refID, int boardIdx, int secIdx, Matrix4x4 propMatrix, BoardTextDescriptorGeneralXml textDescriptor,
-            MaterialPropertyBlock materialPropertyBlock, BasicRenderInformation renderInfo, Color colorToSet, Vector3 taregetPos, Vector3 targetRotation,
-            Vector3 baseScale, bool placeClone180Y, UIHorizontalAlignment targetTextAlignment, float maxWidth, int instanceFlags, Camera targetCamera = null, Shader overrideShader = null)
+            MaterialPropertyBlock materialPropertyBlock, BasicRenderInformation renderInfo, Color colorToSet, Vector3 targetPos, Vector3 targetRotation,
+            Vector3 baseScale, bool placeClone180Y, UIHorizontalAlignment targetTextAlignment, float maxWidth, int instanceFlags, Color parentColor,
+            PrefabInfo srcInfo, Camera targetCamera = null, Shader overrideShader = null)
         {
 
-            var textMatrixes = CalculateTextMatrix(taregetPos, targetRotation, baseScale, targetTextAlignment, maxWidth, textDescriptor, renderInfo, placeClone180Y);
+            var textMatrixes = CalculateTextMatrix(targetPos, targetRotation, baseScale, targetTextAlignment, maxWidth, textDescriptor, renderInfo, placeClone180Y);
 
             foreach (var textMatrixTuple in textMatrixes)
             {
@@ -357,46 +360,10 @@ namespace Klyte.WriteTheSigns.Rendering
                     if (bgBri != null)
                     {
 
-                        if (genMesh == null)
-                        {
-                            WTSDisplayContainerMeshUtils.GenerateDisplayContainer(new Vector2(1, 1), new Vector2(1, 1), new Vector2(), 0.3f, 0.1f, out Vector3[] points);
-                            genMesh = new Mesh
-                            {
-                                vertices = points,
-                                colors32 = points.Select(x => new Color32(0, 0, 255, 0)).ToArray(),
-                                triangles = WTSDisplayContainerMeshUtils.m_triangles,
-                                uv = points.Select(x => new Vector2(0.5f, .5f)).ToArray()
-                            };
-                            genMesh.RecalculateNormals();
-                            MeshUtils.SolveTangents(genMesh);
 
-                            genMeshInv = new Mesh
-                            {
-                                vertices = points,
-                                colors32 = points.Select(x => new Color32(0, 0, 255, 0)).ToArray(),
-                                triangles = WTSDisplayContainerMeshUtils.m_triangles.Select((x, i) => WTSDisplayContainerMeshUtils.m_triangles[(((i / 3) << 0) * 3) + 2 - (i % 3)]).ToArray(),
-                                uv = points.Select(x => new Vector2(0.5f, .5f)).ToArray()
-                            };
-                            genMeshInv.RecalculateNormals();
-                            MeshUtils.SolveTangents(genMeshInv);
-
-                            genMeshGlass = new Mesh
-                            {
-                                vertices = points,
-                                colors32 = points.Select(x => new Color32(165, 0, 0, 0)).ToArray(),
-                                triangles = WTSDisplayContainerMeshUtils.m_trianglesGlass,
-                                uv = points.Select(x => new Vector2(0.5f, .5f)).ToArray()
-                            };
-                            genMeshInv.RecalculateNormals();
-                            MeshUtils.SolveTangents(genMeshInv);
-                        }
-                        materialPropertyBlock.SetColor(WTSPropRenderingRules.SHADER_PROP_COLOR, textDescriptor.BackgroundMeshSettings.BackgroundColor);
-                        materialPropertyBlock.SetColor(WTSPropRenderingRules.SHADER_PROP_COLOR0, textDescriptor.BackgroundMeshSettings.BackgroundColor);
-                        materialPropertyBlock.SetColor(WTSPropRenderingRules.SHADER_PROP_COLOR1, textDescriptor.BackgroundMeshSettings.BackgroundColor);
-                        materialPropertyBlock.SetColor(WTSPropRenderingRules.SHADER_PROP_COLOR2, textDescriptor.BackgroundMeshSettings.BackgroundColor);
-                        materialPropertyBlock.SetColor(WTSPropRenderingRules.SHADER_PROP_COLOR3, textDescriptor.BackgroundMeshSettings.BackgroundColor);
+                        materialPropertyBlock.SetColor(WTSPropRenderingRules.SHADER_PROP_COLOR, textDescriptor.BackgroundMeshSettings.BackgroundColor * new Color(1, 1, 1, 0));
                         materialPropertyBlock.SetVector(instance.ID_ObjectIndex, new Vector4());
-                        var bgBriMatrix = ApplyTextAdjustments(taregetPos, targetRotation, bgBri, baseScale, textDescriptor.BackgroundMeshSettings.Size.Y, targetTextAlignment, textDescriptor.BackgroundMeshSettings.Size.X, false, false);
+                        var bgBriMatrix = ApplyTextAdjustments(targetPos, targetRotation, bgBri, baseScale, textDescriptor.BackgroundMeshSettings.Size.Y, targetTextAlignment, textDescriptor.BackgroundMeshSettings.Size.X, false, false);
                         //LogUtils.DoWarnLog($"bg { bgBri.m_YAxisOverflows} ri {renderInfo.m_YAxisOverflows}");
 
                         // var bgMatrix = textMatrixTuple.Second.First * textMatrixTuple.Second.Second * textMatrixTuple.Second.Third * textMatrixTuple.Second.Fourth;
@@ -406,13 +373,13 @@ namespace Klyte.WriteTheSigns.Rendering
                         //LogUtils.DoWarnLog($"Size {bgBri.m_sizeMetersUnscaled}; mesh bounds {bgBri.m_mesh.bounds}");,
                         var lineAdjustmentVector = new Vector3(0, (-textDescriptor.BackgroundMeshSettings.Size.Y / 2) + (32 * SCALING_FACTOR * textDescriptor.m_textScale) - (bgBri.m_YAxisOverflows.min + bgBri.m_YAxisOverflows.max) * SCALING_FACTOR * textDescriptor.m_textScale / 2, -0.001f);
                         var containerMatrix = propMatrix
-                            * Matrix4x4.Translate(taregetPos)
+                            * Matrix4x4.Translate(targetPos)
                             * textMatrixTuple.Second.Second
                             * Matrix4x4.Translate(lineAdjustmentVector)
                             * textMatrixTuple.Second.Fourth
                             ;
                         var bgMatrix = propMatrix
-                            * Matrix4x4.Translate(taregetPos)
+                            * Matrix4x4.Translate(targetPos)
                             //* Matrix4x4.Translate(taregetPos + textMatrixTuple.Second.Second.MultiplyPoint((new Vector3(0, -(bgBri.m_YAxisOverflows.min + bgBri.m_YAxisOverflows.max) * SCALING_FACTOR * 0, 0))))
                             * textMatrixTuple.Second.Second
                             * Matrix4x4.Translate(lineAdjustmentVector)
@@ -420,51 +387,155 @@ namespace Klyte.WriteTheSigns.Rendering
                             * textMatrixTuple.Second.Fourth;
 
                         Graphics.DrawMesh(bgBri.m_mesh, bgMatrix, bgBri.m_generatedMaterial, 10, targetCamera, 0, materialPropertyBlock, false);
-
-                        if (textDescriptor.BackgroundMeshSettings.cachedBgArray == null)
+                        if (textDescriptor.BackgroundMeshSettings.UseFrame)
                         {
-                            WTSDisplayContainerMeshUtils.GenerateDisplayContainer(textDescriptor.BackgroundMeshSettings.Size, textDescriptor.BackgroundMeshSettings.Size, new Vector2(), 0.2f, 0.05f, out textDescriptor.BackgroundMeshSettings.cachedBgArray);
+                            if (genMesh == null)
+                            {
+                                WTSDisplayContainerMeshUtils.GenerateDisplayContainer(new Vector2(1, 1), new Vector2(1, 1), new Vector2(), 0.05f, 0.3f, 0.1f, out Vector3[] points, out Vector4[] tangents);
+                                genMesh = new Mesh
+                                {
+                                    vertices = points,
+                                    triangles = WTSDisplayContainerMeshUtils.m_triangles,
+                                    uv = points.Select((x, i) => new Vector2(i / 4f % 1, i / 2f % 1)).ToArray(),
+                                    colors = points.Select(x => Color.blue).ToArray(),
 
-                            textDescriptor.BackgroundMeshSettings.meshInnerContainer = new Mesh()
+                                };
+                                genMesh.RecalculateNormals();
+                                genMesh.tangents = tangents;
+
+                                genMeshInv = new Mesh
+                                {
+                                    vertices = points,
+                                    triangles = WTSDisplayContainerMeshUtils.m_triangles.Select((x, i) => WTSDisplayContainerMeshUtils.m_triangles[(((i / 3) << 0) * 3) + 2 - (i % 3)]).ToArray(),
+                                    uv = points.Select((x, i) => new Vector2(i / 4f % 1, i / 2f % 1)).ToArray(),
+                                    colors = points.Select(x => Color.blue).ToArray(),
+                                    tangents = tangents
+                                };
+
+                                genMeshGlass = new Mesh
+                                {
+                                    vertices = points.Take(4).ToArray(),
+                                    colors32 = points.Take(4).Select(x => new Color32(165, 0, 0, 0)).ToArray(),
+                                    triangles = WTSDisplayContainerMeshUtils.m_trianglesGlass,
+                                    uv = points.Take(4).Select(x => new Vector2(0.5f, .5f)).ToArray(),
+                                    tangents = tangents
+                                };
+                            }
+                            if (textDescriptor.BackgroundMeshSettings.FrameMeshSettings.cachedFrameArray == null)
                             {
-                                vertices = textDescriptor.BackgroundMeshSettings.cachedBgArray,
-                                triangles = genMeshInv.triangles,
-                                uv = genMeshInv.uv,
-                                normals = genMeshInv.normals,
-                                colors = genMeshInv.colors,
-                                tangents = genMeshInv.tangents,
-                            };
-                            textDescriptor.BackgroundMeshSettings.meshOuterContainer = new Mesh()
+                                WTSDisplayContainerMeshUtils.GenerateDisplayContainer(textDescriptor.BackgroundMeshSettings.Size,
+                                    textDescriptor.BackgroundMeshSettings.FrameMeshSettings.BackSize,
+                                    textDescriptor.BackgroundMeshSettings.FrameMeshSettings.BackOffset,
+                                    textDescriptor.BackgroundMeshSettings.FrameMeshSettings.FrontDepth,
+                                    textDescriptor.BackgroundMeshSettings.FrameMeshSettings.BackDepth,
+                                    textDescriptor.BackgroundMeshSettings.FrameMeshSettings.FrontBorderThickness,
+                                    out textDescriptor.BackgroundMeshSettings.FrameMeshSettings.cachedFrameArray,
+                                    out Vector4[] tangents);
+
+                                textDescriptor.BackgroundMeshSettings.FrameMeshSettings.meshInnerContainer = new Mesh()
+                                {
+                                    vertices = textDescriptor.BackgroundMeshSettings.FrameMeshSettings.cachedFrameArray,
+                                    triangles = genMeshInv.triangles,
+                                    uv = genMeshInv.uv,
+                                    normals = genMeshInv.normals,
+                                    colors = genMeshInv.colors,
+                                };
+                                textDescriptor.BackgroundMeshSettings.FrameMeshSettings.meshOuterContainer = new Mesh()
+                                {
+                                    vertices = textDescriptor.BackgroundMeshSettings.FrameMeshSettings.cachedFrameArray,
+                                    triangles = genMesh.triangles,
+                                    uv = genMesh.uv,
+                                    normals = genMesh.normals,
+                                    colors = genMesh.colors,
+                                };
+                                textDescriptor.BackgroundMeshSettings.FrameMeshSettings.meshGlass = new Mesh()
+                                {
+                                    vertices = textDescriptor.BackgroundMeshSettings.FrameMeshSettings.cachedFrameArray.Take(4).ToArray(),
+                                    triangles = genMeshGlass.triangles,
+                                    uv = genMeshGlass.uv,
+                                    normals = genMeshGlass.normals,
+                                    colors = textDescriptor.BackgroundMeshSettings.FrameMeshSettings.cachedFrameArray.Take(4).Select(x => new Color(.4f, 0, 0, 0)).ToArray(),
+                                };
+                                foreach (var k in new Mesh[]{
+                                    textDescriptor.BackgroundMeshSettings.FrameMeshSettings.meshOuterContainer,
+                                    textDescriptor.BackgroundMeshSettings.FrameMeshSettings.meshInnerContainer,
+                                     textDescriptor.BackgroundMeshSettings.FrameMeshSettings.meshGlass
+                                    })
+                                {
+                                    k.tangents = tangents;
+                                    k.RecalculateNormals();
+                                    //MeshUtils.SolveTangents(k);
+                                    //k.tangents = k.tangents.Select(x => new Vector4(0,1,0,1)).ToArray();
+                                }
+                            }
+                            var instance2 = Singleton<VehicleManager>.instance;
+                            Matrix4x4 value;
+                            if (srcInfo is VehicleInfo vi)
                             {
-                                vertices = textDescriptor.BackgroundMeshSettings.cachedBgArray,
-                                triangles = genMesh.triangles,
-                                uv = genMesh.uv,
-                                normals = genMesh.normals,
-                                colors = genMesh.colors,
-                                tangents = genMesh.tangents,
-                            };
-                            textDescriptor.BackgroundMeshSettings.meshGlass = new Mesh()
+                                var idt = Matrix4x4.identity;
+                                var qtr = Quaternion.Euler(targetRotation);
+                                value = vi.m_vehicleAI.CalculateTyreMatrix(Vehicle.Flags.Created | Vehicle.Flags.Spawned | Vehicle.Flags.TransferToTarget, ref targetPos, ref qtr, ref baseScale, ref idt);
+                            }
+                            else
                             {
-                                vertices = textDescriptor.BackgroundMeshSettings.cachedBgArray,
-                                triangles = genMeshGlass.triangles,
-                                uv = genMeshGlass.uv,
-                                normals = genMeshGlass.normals,
-                                colors = textDescriptor.BackgroundMeshSettings.cachedBgArray.Select(x => new Color(.6f, 0, 0, 0)).ToArray(),
-                                tangents = genMeshGlass.tangents,
-                            };
+                                return;
+                            }
+                            if (rotorMaterial == null)
+                            {
+                                rotorMaterial = new Material(Shader.Find("Custom/Vehicles/Vehicle/Rotors"));
+                                var targetTexture = new Texture2D(1, 1);
+                                targetTexture.SetPixels(targetTexture.GetPixels().Select(x => new Color(.5f, .5f, 0.7f, 1)).ToArray());
+                                targetTexture.Apply();
+                                rotorMaterial.SetTexture("_XYSMap", targetTexture);
+                                rotorMaterial.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive | MaterialGlobalIlluminationFlags.EmissiveIsBlack;
+                            }
+                            if (outsideMaterial == null)
+                            {
+                                var targetTexture = new Texture2D(1, 1);
+                                targetTexture.SetPixels(targetTexture.GetPixels().Select(x => new Color(.5f, .5f, .5f, 1)).ToArray());
+                                targetTexture.Apply();
+                                outsideMaterial = new Material(Shader.Find("Custom/Vehicles/Vehicle/Default"))
+                                {
+                                    mainTexture = targetTexture
+                                };
+                                targetTexture = new Texture2D(1, 1);
+                                targetTexture.SetPixels(targetTexture.GetPixels().Select(x => new Color(186/255f, 186/255f, 229/255f, 1)).ToArray());
+                                targetTexture.Apply();
+                                outsideMaterial.SetTexture(instance2.ID_XYSMap, targetTexture);
+                                targetTexture = new Texture2D(1, 1);
+                                targetTexture.SetPixels(targetTexture.GetPixels().Select(x => new Color(0, 0f, .5f, 0)).ToArray());
+                                targetTexture.Apply();
+                                outsideMaterial.SetTexture(instance2.ID_ACIMap, targetTexture);
+
+                                outsideMaterial.SetVector(instance2.ID_LightState, Vector3.zero);
+                                outsideMaterial.SetVector(instance2.ID_TyrePosition, Vector3.zero);
+                                outsideMaterial.SetMatrix(instance2.ID_TyreMatrix, Matrix4x4.identity);
+                                outsideMaterial.SetColor(WTSPropRenderingRules.SHADER_PROP_COLOR, Color.black * new Color(1, 1, 1, 0));
+                                outsideMaterial.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive | MaterialGlobalIlluminationFlags.EmissiveIsBlack;
+                            }
+
+                            Graphics.DrawMesh(textDescriptor.BackgroundMeshSettings.FrameMeshSettings.meshGlass, containerMatrix, rotorMaterial, srcInfo.m_prefabDataIndex, targetCamera, 0);
+
+                            materialPropertyBlock.Clear();
+                            materialPropertyBlock.SetVectorArray(instance2.ID_TyreLocation, vi.m_generatedInfo.m_tyres);
+                            materialPropertyBlock.SetColor("_SpecColor", WTSController._SpecColor);
+
+                            //vi.RenderMesh(targetCamera,  offset, Vehicle.Flags flags = Vehicle.Flags.Created | Vehicle.Flags.Spawned);    
+                            Graphics.DrawMesh(textDescriptor.BackgroundMeshSettings.FrameMeshSettings.meshInnerContainer, containerMatrix, outsideMaterial, srcInfo.m_prefabDataIndex, targetCamera, 0, materialPropertyBlock, true, true);
+                            //InheritColor
+                            var color = textDescriptor.BackgroundMeshSettings.FrameMeshSettings.InheritColor ? parentColor : textDescriptor.BackgroundMeshSettings.FrameMeshSettings.OutsideColor;
+                            materialPropertyBlock.SetColor(WTSPropRenderingRules.SHADER_PROP_COLOR, color * new Color(1, 1, 1, 0));
+                            Graphics.DrawMesh(textDescriptor.BackgroundMeshSettings.FrameMeshSettings.meshOuterContainer, containerMatrix, outsideMaterial, srcInfo.m_prefabDataIndex, targetCamera, 0, materialPropertyBlock, true, true);
                         }
-
-                        Graphics.DrawMesh(textDescriptor.BackgroundMeshSettings.meshInnerContainer, containerMatrix, bgBri.m_generatedMaterial, 10, targetCamera, 0, materialPropertyBlock, false);
-                        Graphics.DrawMesh(textDescriptor.BackgroundMeshSettings.meshOuterContainer, containerMatrix, bgBri.m_generatedMaterial, 10, targetCamera, 0, materialPropertyBlock, false);
-                        Graphics.DrawMesh(textDescriptor.BackgroundMeshSettings.meshGlass, containerMatrix, rotorMaterial, 10, targetCamera, 0, materialPropertyBlock, false);
                     }
                 }
             }
         }
 
-        private static Material rotorMaterial = new Material(Shader.Find("Custom/Vehicles/Vehicle/Rotors"));
+        internal static Material rotorMaterial;
+        internal static ref Material outsideMaterial => ref WTSController._outside;
 
-        private static Mesh genMesh;
+        private static ref Mesh genMesh => ref WTSController._genMesh;
         private static Mesh genMeshInv;
         private static Mesh genMeshGlass;
 

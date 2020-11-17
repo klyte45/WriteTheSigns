@@ -68,7 +68,7 @@ namespace Klyte.WriteTheSigns.UI
             {
                 magnitude = GetMesh(info).bounds.extents.magnitude;
                 positon = offsetPosition + new Vector3(0, -1000, 0);
-                rotation = Quaternion.Euler(offsetRotation.x, offsetRotation.y, offsetRotation.z);
+                rotation = Quaternion.Euler(offsetRotation);
                 scale = Vector3.one;
                 sourceMatrix = Matrix4x4.identity;
             }
@@ -105,17 +105,19 @@ namespace Klyte.WriteTheSigns.UI
             m_camera.nearClipPlane = Mathf.Max(zoom - dist * 1.5f, 0.01f);
             m_camera.farClipPlane = zoom + dist * 1.5f;
 
-            var propMatrix = RenderMesh(info, TextDescriptors, positon, rotation, scale, sourceMatrix);
+            var propMatrix = RenderMesh(info, TextDescriptors, positon, rotation, scale, sourceMatrix, out Color targetColor);
 
             for (ushort i = 0; i < TextDescriptors?.Length; i++)
             {
-                WTSPropRenderingRules.RenderTextMesh(0, 0, i, m_defaultInstance, propMatrix, descriptor, ref TextDescriptors[i], m_block, -1, m_camera);
+                WTSPropRenderingRules.RenderTextMesh(0, 0, i, m_defaultInstance, propMatrix, descriptor, ref TextDescriptors[i], m_block, -1, targetColor, info, m_camera);
             }
 
-
-
-
             m_camera.Render();
+
+
+
+
+
             sunLightSource.intensity = intensity;
             sunLightSource.color = color2;
             sunLightSource.transform.eulerAngles = eulerAngles;
@@ -128,8 +130,9 @@ namespace Klyte.WriteTheSigns.UI
             instanceInfo.SetCurrentMode(currentMode, currentSubMode);
             instanceInfo.UpdateInfoMode();
 
-            return propMatrix;
+            return default;//propMatrix;
         }
+
 
         private static void PrepareScene(out InfoManager instanceInfo, out InfoManager.InfoMode currentMode, out InfoManager.SubInfoMode currentSubMode, out Light sunLightSource, out float intensity, out Color color2, out Vector3 eulerAngles, out Light mainLight)
         {
@@ -154,7 +157,7 @@ namespace Klyte.WriteTheSigns.UI
             }
         }
 
-        protected abstract Matrix4x4 RenderMesh(PI info, BoardTextDescriptorGeneralXml[] textDescriptors, Vector3 position, Quaternion rotation, Vector3 scale, Matrix4x4 sourceMatrix);
+        protected abstract Matrix4x4 RenderMesh(PI info, BoardTextDescriptorGeneralXml[] textDescriptors, Vector3 position, Quaternion rotation, Vector3 scale, Matrix4x4 sourceMatrix, out Color targetColor);
         protected abstract ref Mesh GetMesh(PI info);
         protected abstract ref Material GetMaterial(PI info);
 
