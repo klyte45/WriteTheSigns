@@ -50,11 +50,7 @@ namespace Klyte.WriteTheSigns.Xml
         [XmlAttribute("spawnChance")] public byte SpawnChance { get; set; } = 255;
         [XmlAttribute("placeOnDistrictBorder")] public bool PlaceOnDistrictBorder { get; set; } = false;
         [XmlAttribute("placeOnTunnelBridgeStart")] public bool PlaceOnTunnelBridgeStart { get; set; } = false;
-        [XmlAttribute("ignoreEmptyNameRoads")] public bool IgnoreEmptyNameRoads { get; set; } = true;
-        [XmlAttribute("placeOnMidSegment")] public bool PlaceOnSegmentInsteadOfCorner { get; set; } = false;
-        [XmlAttribute("trafficDirectionRequired")] public TrafficDirectionRequired TrafficDirectionRequired { get; set; } = TrafficDirectionRequired.NONE;
-        [XmlAttribute("minDirectionTrafficLanes")] public int MinDirectionTrafficLanes { get; set; } = 1;
-        [XmlAttribute("maxDirectionTrafficLanes")] public int MaxDirectionTrafflcLanes { get; set; } = 99;
+        [XmlAttribute("ignoreEmptyNameRoads")] public bool IgnoreEmptyNameRoads { get; set; } = true; 
         [XmlAttribute("minRoadHalfWidth")] public float MinRoadHalfWidth { get; set; } = 0;
         [XmlAttribute("maxRoadHalfWidth")] public float MaxRoadHalfWidth { get; set; } = 999;
 
@@ -64,7 +60,6 @@ namespace Klyte.WriteTheSigns.Xml
         [XmlArray("SelectedDistricts")] [XmlArrayItem("District")] public HashSet<ushort> SelectedDistricts { get; set; } = new HashSet<ushort>();
         [XmlAttribute("districtSelectionIsBlacklist")] public bool SelectedDistrictsIsBlacklist { get; set; } = true;
         [XmlAttribute("districtRestrictionOrder")] public DistrictRestrictionOrder DistrictRestrictionOrder { get; set; }
-        [XmlAttribute("placingSide")] public RoadSide RoadSide { get; set; } = RoadSide.CENTER;
 
 
 

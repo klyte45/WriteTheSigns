@@ -228,54 +228,10 @@ namespace Klyte.WriteTheSigns.Singleton
 
             //LogUtils.DoLog($"[n{nodeID}/{i}] rotationOrderPosition = {rotationOrderPosition}; rotationOrder = {string.Join(",", rotationOrder.Select(x => x.ToString()).ToArray())}; originalNodeRotation = {string.Join(",", originalNodeRotation.Select(x => x.ToString()).ToArray())}; rotationAnglesOrder = {string.Join(",", rotationAnglesOrder.Select(x => x.ToString()).ToArray())}; originalNodeRotation = {string.Join(",", originalNodeRotation.Select(x => x.ToString()).ToArray())}");
 
-            var matchingDescriptors = new Stack<Tuple<int, BoardInstanceRoadNodeXml>>(Data.DescriptorRulesOrder.Select((x, y) => Tuple.New(y, x))
-                .Where(x => x.Second.PlaceOnSegmentInsteadOfCorner
-                && x.Second.AllowsClass(classI)
-                && x.Second.Descriptor.TextDescriptors.All(
-                        t =>
-                        {
-                            if (!t.IsTextRelativeToSegment() || t.m_targetNodeRelative == 0)
-                            {
-                                return true;
-                            }
-                            int nodeIdx = (rotationOrder.Length + t.m_targetNodeRelative) % rotationOrder.Length;
-                            return rotationAnglesOrder[nodeIdx] > 40 && rotationAnglesOrder[nodeIdx] < 320;
-                        })
-                && (WriteTheSignsMod.Controller.DestinationSingleton.m_updatedDestinations[nodeID] != true
-                    || x.Second.Descriptor.TextDescriptors.All(
-                        t =>
-                        {
-                            if (!t.IsTextRelativeToSegment())
-                            {
-                                return true;
-                            }
-                            if (Math.Abs(t.m_targetNodeRelative) >= rotationOrder.Length)
-                            {
-                                return false;
-                            }
-                            int nodeIdx = (rotationOrder.Length + t.m_targetNodeRelative) % rotationOrder.Length;
-                            int segmentIdx = rotationOrder[nodeIdx];
-                            return WriteTheSignsMod.Controller.DestinationSingleton.m_couldReachDestinations[nodeID, segmentIdx, (int)t.m_destinationRelative] == true;
-                        }))
-
-                ).OrderByDescending(x => x.First));
+            
             int secondaryIdx = 2;
             //LogUtils.DoLog($"[n{nodeID}/{i}] matchingDescriptors = {matchingDescriptors.Count} [{string.Join(",", matchingDescriptors.Select(x => x.Second.SaveName).ToArray())}] ");
-            while (matchingDescriptors.Count > 0 && (freeSlotLeft || freeSlotRight))
-            {
-                BoardInstanceRoadNodeXml targetDescriptor = matchingDescriptors.Pop()?.Second;
-                if ((freeSlotLeft || targetDescriptor.RoadSide == RoadSide.RIGHT) && (freeSlotRight || targetDescriptor.RoadSide == RoadSide.LEFT))
-                {
-                    ProcessDescriptorRoadSign(nodeID, ref NetManager.instance.m_nodes.m_buffer[nodeID], i, segmentIid, ref Singleton<NetManager>.instance.m_segments.m_buffer[segmentIid], leftSegmentIdx, rightSegmentIdx, targetDescriptor, incomingTraffic, outcomingTraffic, ref secondaryIdx, ref freeSlotLeft, ref freeSlotRight, rotationOrder, rotationAnglesOrder);
-                }
-                yield return 0;
-                //LogUtils.DoLog($"[n{nodeID}/{i}] ENDLOOP matchingDescriptors = {matchingDescriptors.Count} [{string.Join(",", matchingDescriptors.Select(x => x.Second.SaveName).ToArray())}] ");
-                if (m_updatedStreetPositions[nodeID] != false)
-                {
-                    //LogUtils.DoLog($"[n{nodeID}/{i}] BREAK matchingDescriptors = {matchingDescriptors.Count} [{string.Join(",", matchingDescriptors.Select(x => x.Second.SaveName).ToArray())}] ");
-                    break;
-                }
-            }
+           
             lock (Data.BoardsContainers)
             {
                 while (secondaryIdx < 4)
@@ -283,99 +239,9 @@ namespace Klyte.WriteTheSigns.Singleton
                     Data.BoardsContainers[nodeID, i, secondaryIdx++] = null;
                 }
             };
-        }
+        }       
 
-
-
-        private void ProcessDescriptorRoadSign(
-            ushort nodeID, ref NetNode data, int controlBoardIdx,
-            ushort segmentIid, ref NetSegment netSegmentI,
-            int leftSegmentIdx, int rightSegmentIdx,
-            BoardInstanceRoadNodeXml targetDescriptor, HashSet<ushort> incoming,
-            HashSet<ushort> outcoming, ref int subboardOffset,
-            ref bool leftSlot, ref bool rightSlot,
-            int[] nodeRotationOrder, int[] rotationAnglesOrder)
-        {
-            bool isSegmentIinverted = WTSRoadNodeCommons.CheckSegmentInverted(nodeID, ref netSegmentI);
-
-            if (targetDescriptor?.Descriptor?.m_propName == null
-                || new Randomizer(segmentIid).UInt32(255) > targetDescriptor.SpawnChance
-                || !CalculatePositionRoadSign(nodeID, ref data, segmentIid, ref netSegmentI, leftSegmentIdx, rightSegmentIdx, targetDescriptor, incoming, outcoming, isSegmentIinverted, out Vector3 platePosI))
-            {
-                return;
-            }
-            bool render = true;
-            lock (Data.BoardsContainers)
-            {
-                CacheRoadNodeItem a = FillCacheData(nodeID, controlBoardIdx, subboardOffset++, segmentIid, platePosI, new Vector3(0, (netSegmentI.m_startNode == nodeID ? netSegmentI.m_startDirection : netSegmentI.m_endDirection).GetAngleXZ() - 90, 0), targetDescriptor, nodeRotationOrder, rotationAnglesOrder, ref render);
-            }
-            if (render)
-            {
-                LogUtils.DoLog($"[n{nodeID}] renderTrue");
-                leftSlot &= targetDescriptor.RoadSide == RoadSide.RIGHT;
-                rightSlot &= targetDescriptor.RoadSide == RoadSide.LEFT;
-            }
-            else
-            {
-                LogUtils.DoLog($"[n{nodeID}] renderFalse");
-                subboardOffset--;
-            }
-        }
-
-        private static bool CalculatePositionRoadSign(ushort nodeID, ref NetNode data, ushort segmentExtId, ref NetSegment netSegmentExt, int leftSegmentIdx, int rightSegmentIdx, BoardInstanceRoadNodeXml targetDescriptor, HashSet<ushort> incoming, HashSet<ushort> outcoming, bool isSegmentExtInverted, out Vector3 platePosExt)
-        {
-            LogUtils.DoLog($"[n{nodeID}]Int = ;Ext = {segmentExtId}");
-            if (!targetDescriptor.AllowsClass(netSegmentExt.Info.m_class))
-            {
-                LogUtils.DoLog($"[n{nodeID}]NOT ALLOWED");
-                platePosExt = default;
-                return false;
-            }
-            ushort leftSegmentId = data.GetSegment(leftSegmentIdx);
-            ushort rightSegmentId = data.GetSegment(rightSegmentIdx);
-            ref NetSegment leftSegment = ref NetManager.instance.m_segments.m_buffer[leftSegmentId];
-            ref NetSegment rightSegment = ref NetManager.instance.m_segments.m_buffer[rightSegmentId];
-
-            LogUtils.DoLog($"[n{nodeID}]leftSegmentId = {leftSegmentId}; rightSegmentId = {rightSegmentId}");
-
-            if (targetDescriptor.RoadSide == RoadSide.LEFT)
-            {
-                platePosExt = CaculateCenterSegment(nodeID, ref netSegmentExt, ref leftSegment, segmentExtId, targetDescriptor, targetDescriptor.RoadSide);
-            }
-            else
-            {
-                platePosExt = CaculateCenterSegment(nodeID, ref netSegmentExt, ref rightSegment, segmentExtId, targetDescriptor, targetDescriptor.RoadSide);
-            }
-
-            if (targetDescriptor.TrafficDirectionRequired == TrafficDirectionRequired.OUTCOMING)
-            {
-                return outcoming.Contains(segmentExtId)
-                    && EnsureTrafficLanes(ref netSegmentExt, targetDescriptor, !isSegmentExtInverted)
-                    && EnsureRoadWidth(ref netSegmentExt, targetDescriptor)
-                    //&& ((incoming.Where(x => x != segmentExtId).Count() > 1 && netSegmentExt.Info.m_forwardVehicleLaneCount == 1 && !netSegmentExt.Info.m_hasBackwardVehicleLanes && netSegmentExt.Info.m_netAI is RoadBaseAI aiExt && aiExt.m_highwayRules)
-                    && (incoming.Where(x => x != segmentExtId).Count() > 1 || !SegmentUtils.IsSameName(incoming.First(), segmentExtId, false, false, true, false, false))
-                        ;
-            }
-            else if (targetDescriptor.TrafficDirectionRequired == TrafficDirectionRequired.INCOMING)
-            {
-                return incoming.Contains(segmentExtId)
-                    && EnsureTrafficLanes(ref netSegmentExt, targetDescriptor, !isSegmentExtInverted)
-                    && EnsureRoadWidth(ref netSegmentExt, targetDescriptor)
-                   //&& ((outcoming.Where(x => x != segmentExtId).Count() > 1 && netSegmentExt.Info.m_forwardVehicleLaneCount == 1 && !netSegmentExt.Info.m_hasBackwardVehicleLanes && netSegmentExt.Info.m_netAI is RoadBaseAI aiExt && aiExt.m_highwayRules)
-                   && outcoming.Where(x => x != segmentExtId).Count() > 1
-                    ;
-            }
-            else
-            {
-                return EnsureTrafficLanes(ref netSegmentExt, targetDescriptor, !isSegmentExtInverted) && EnsureRoadWidth(ref netSegmentExt, targetDescriptor) && (!SegmentUtils.IsSameName(outcoming.First(), segmentExtId, false, false, true, false, false));
-            }
-
-        }
-        private static bool EnsureTrafficLanes(ref NetSegment netSegment, BoardInstanceRoadNodeXml targetDescriptor, bool isSegmentInverted)
-        {
-            return (isSegmentInverted && netSegment.Info.m_backwardVehicleLaneCount >= targetDescriptor.MinDirectionTrafficLanes && netSegment.Info.m_backwardVehicleLaneCount <= targetDescriptor.MaxDirectionTrafflcLanes)
-               || (!isSegmentInverted && netSegment.Info.m_forwardVehicleLaneCount >= targetDescriptor.MinDirectionTrafficLanes && netSegment.Info.m_forwardVehicleLaneCount <= targetDescriptor.MaxDirectionTrafflcLanes);
-        }
+       
 
         private static bool EnsureRoadWidth(ref NetSegment netSegment, BoardInstanceRoadNodeXml targetDescriptor) => netSegment.Info?.m_halfWidth < targetDescriptor.MaxRoadHalfWidth + 0.002f && netSegment.Info?.m_halfWidth > targetDescriptor.MinRoadHalfWidth - 0.002f;
         #endregion
@@ -482,7 +348,7 @@ namespace Klyte.WriteTheSigns.Singleton
             ItemClass classI = Singleton<NetManager>.instance.m_segments.m_buffer[segmentIid].Info.m_class;
             ItemClass classJ = Singleton<NetManager>.instance.m_segments.m_buffer[segmentJid].Info.m_class;
             var matchingDescriptors = new Stack<Tuple<int, BoardInstanceRoadNodeXml>>(Data.DescriptorRulesOrder.Select((x, y) => Tuple.New(y, x))
-                .Where(x => !x.Second.PlaceOnSegmentInsteadOfCorner && (x.Second.AllowsClass(classI) || x.Second.AllowsClass(classJ))
+                .Where(x => (x.Second.AllowsClass(classI) || x.Second.AllowsClass(classJ))
                 ).OrderByDescending(x => x.First));
             int secondaryIdx = 0;
             bool hasSpawned = false;
