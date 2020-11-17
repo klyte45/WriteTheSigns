@@ -20,10 +20,7 @@ namespace Klyte.WriteTheSigns.Rendering
     {
         public const float SCALING_FACTOR = 0.005f;
         public static readonly int SHADER_PROP_COLOR = Shader.PropertyToID("_Color");
-        public static readonly int SHADER_PROP_COLOR0 = Shader.PropertyToID("_ColorV0");
-        public static readonly int SHADER_PROP_COLOR1 = Shader.PropertyToID("_ColorV1");
-        public static readonly int SHADER_PROP_COLOR2 = Shader.PropertyToID("_ColorV2");
-        public static readonly int SHADER_PROP_COLOR3 = Shader.PropertyToID("_ColorV3");
+        private static readonly float m_daynightOffTime = 6 * Convert.ToSingle(Math.Pow(Convert.ToDouble((6 - (15 / 2.5)) / 6), Convert.ToDouble(1 / 1.09)));
 
         public static readonly TextType[] ALLOWED_TYPES_VEHICLE = new TextType[]
         {
@@ -34,6 +31,13 @@ namespace Klyte.WriteTheSigns.Rendering
             TextType.LineIdentifier,
             TextType.LastStopLine
         };
+
+        internal static Material m_rotorMaterial;
+        internal static Material m_outsideMaterial;
+
+        private static Mesh m_genMesh;
+        private static Mesh m_genMeshInv;
+        private static Mesh m_genMeshGlass;
 
         public static readonly Dictionary<TextRenderingClass, TextType[]> ALLOWED_TYPES_PER_RENDERING_CLASS = new Dictionary<TextRenderingClass, TextType[]>
         {
@@ -98,10 +102,10 @@ namespace Klyte.WriteTheSigns.Rendering
             //},
         };
 
-
+        #region Main flow
         public static Color RenderPropMesh(ref PropInfo propInfo, RenderManager.CameraInfo cameraInfo, ushort refId, int boardIdx, int secIdx, int layerMask, float refAngleRad, Vector3 position, Vector4 dataVector, ref string propName, Vector3 propAngle, Vector3 propScale, BoardDescriptorGeneralXml propLayout, BoardInstanceXml descriptor, out Matrix4x4 propMatrix, out bool rendered, InstanceID propRenderID)
         {
-            Color propColor = WTSPropRenderingRules.GetColor(refId, boardIdx, secIdx, descriptor, propLayout, out bool colorFound);
+            Color propColor = WTSPropRenderingRules.GetPropColor(refId, boardIdx, secIdx, descriptor, propLayout, out bool colorFound);
             if (!colorFound)
             {
                 rendered = false;
@@ -184,7 +188,7 @@ namespace Klyte.WriteTheSigns.Rendering
                         {
                             lastRowOrColumnStartPoint = new Vector3(textDescriptor.PlacingConfig.Position.X + CalculateOffsetXMultiItem(textDescriptor.m_textAlign, lastRowOrColumnItemCount, columnWidth, maxWidth), startPoint.y, startPoint.z);
                         }
-                        Color colorToSet = GetTargetColor(refID, boardIdx, secIdx, descriptor, propLayout, textDescriptor);
+                        Color colorToSet = GetTextColor(refID, boardIdx, secIdx, descriptor, propLayout, textDescriptor);
                         //LogUtils.DoWarnLog($"sz = {resultArray.Length};targetCount = {targetCount}; origPos = {textDescriptor.PlacingConfig.Position}; maxItemsInAColumn = {maxItemsInAColumn}; maxItemsInARow = {maxItemsInARow};columnWidth={columnWidth};rowHeight={rowHeight}");
 
 
@@ -229,9 +233,269 @@ namespace Klyte.WriteTheSigns.Rendering
             Vector3 targetPos = textDescriptor.PlacingConfig.Position;
 
 
-            DrawTextBri(refID, boardIdx, secIdx, propMatrix, textDescriptor, materialPropertyBlock, renderInfo, GetTargetColor(refID, boardIdx, secIdx, descriptor, propLayout, textDescriptor), targetPos, textDescriptor.PlacingConfig.Rotation, descriptor.PropScale, textDescriptor.PlacingConfig.m_create180degYClone, textDescriptor.m_textAlign, textDescriptor.m_maxWidthMeters, instanceFlags, parentColor, srcInfo, targetCamera, overrideShader);
+            DrawTextBri(refID, boardIdx, secIdx, propMatrix, textDescriptor, materialPropertyBlock, renderInfo, GetTextColor(refID, boardIdx, secIdx, descriptor, propLayout, textDescriptor), targetPos, textDescriptor.PlacingConfig.Rotation, descriptor.PropScale, textDescriptor.PlacingConfig.m_create180degYClone, textDescriptor.m_textAlign, textDescriptor.m_maxWidthMeters, instanceFlags, parentColor, srcInfo, targetCamera, overrideShader);
         }
 
+
+        private static void DrawTextBri(ushort refID, int boardIdx, int secIdx, Matrix4x4 propMatrix, BoardTextDescriptorGeneralXml textDescriptor,
+            MaterialPropertyBlock materialPropertyBlock, BasicRenderInformation renderInfo, Color colorToSet, Vector3 targetPos, Vector3 targetRotation,
+            Vector3 baseScale, bool placeClone180Y, UIHorizontalAlignment targetTextAlignment, float maxWidth, int instanceFlags, Color parentColor,
+            PrefabInfo srcInfo, Camera targetCamera = null, Shader overrideShader = null)
+        {
+
+            var textMatrixes = CalculateTextMatrix(targetPos, targetRotation, baseScale, targetTextAlignment, maxWidth, textDescriptor, renderInfo, placeClone180Y);
+
+            foreach (var textMatrixTuple in textMatrixes)
+            {
+                Matrix4x4 matrix = propMatrix * textMatrixTuple.First;
+
+                materialPropertyBlock.Clear();
+
+                var objectIndex = new Vector4();
+
+                Material targetMaterial = renderInfo.m_generatedMaterial;
+                PropManager instance = CalculateIllumination(refID, boardIdx, secIdx, textDescriptor, materialPropertyBlock, ref colorToSet, instanceFlags, ref objectIndex);
+
+                var oldShader = targetMaterial.shader;
+                try
+                {
+                    targetMaterial.shader = overrideShader ?? WTSController.DEFAULT_SHADER_TEXT;
+                    Graphics.DrawMesh(renderInfo.m_mesh, matrix, targetMaterial, 10, targetCamera, 0, materialPropertyBlock, false);
+                }
+                finally
+                {
+                    targetMaterial.shader = oldShader;
+                }
+                if (((Vector2)textDescriptor.BackgroundMeshSettings.Size).sqrMagnitude != 0)
+                {
+                    BasicRenderInformation bgBri = WriteTheSignsMod.Controller.SpriteRenderingRules.GetSpriteFromDefaultAtlas(KlyteResourceLoader.GetDefaultSpriteNameFor(LineIconSpriteNames.K45_SquareIcon));
+                    if (bgBri != null)
+                    {
+                        Matrix4x4 containerMatrix = DrawBgMesh(ref propMatrix, textDescriptor, materialPropertyBlock, ref targetPos, ref targetRotation, ref baseScale, targetTextAlignment, targetCamera, textMatrixTuple, instance, bgBri);
+                        if (textDescriptor.BackgroundMeshSettings.UseFrame)
+                        {
+                            DrawTextFrame(textDescriptor, materialPropertyBlock, ref targetPos, ref targetRotation, ref baseScale, ref parentColor, srcInfo, targetCamera, ref containerMatrix);
+                        }
+                    }
+                }
+            }
+        }
+
+
+        private static Matrix4x4 DrawBgMesh(ref Matrix4x4 propMatrix, BoardTextDescriptorGeneralXml textDescriptor, MaterialPropertyBlock materialPropertyBlock, ref Vector3 targetPos, ref Vector3 targetRotation, ref Vector3 baseScale, UIHorizontalAlignment targetTextAlignment, Camera targetCamera, Tuple<Matrix4x4, Tuple<Matrix4x4, Matrix4x4, Matrix4x4, Matrix4x4>> textMatrixTuple, PropManager instance, BasicRenderInformation bgBri)
+        {
+            materialPropertyBlock.SetColor(WTSPropRenderingRules.SHADER_PROP_COLOR, textDescriptor.BackgroundMeshSettings.BackgroundColor * new Color(1, 1, 1, 0));
+            materialPropertyBlock.SetVector(instance.ID_ObjectIndex, new Vector4());
+            var bgBriMatrix = ApplyTextAdjustments(targetPos, targetRotation, bgBri, baseScale, textDescriptor.BackgroundMeshSettings.Size.Y, targetTextAlignment, textDescriptor.BackgroundMeshSettings.Size.X, false, false);
+
+            var lineAdjustmentVector = new Vector3(0, (-textDescriptor.BackgroundMeshSettings.Size.Y / 2) + (32 * SCALING_FACTOR * textDescriptor.m_textScale) - (bgBri.m_YAxisOverflows.min + bgBri.m_YAxisOverflows.max) * SCALING_FACTOR * textDescriptor.m_textScale / 2, -0.001f);
+            var containerMatrix = propMatrix
+                * Matrix4x4.Translate(targetPos)
+                * textMatrixTuple.Second.Second
+                * Matrix4x4.Translate(lineAdjustmentVector)
+                * textMatrixTuple.Second.Fourth
+                ;
+            var bgMatrix = propMatrix
+                * Matrix4x4.Translate(targetPos)
+                * textMatrixTuple.Second.Second
+                * Matrix4x4.Translate(lineAdjustmentVector)
+                * Matrix4x4.Scale(new Vector3(textDescriptor.BackgroundMeshSettings.Size.X / bgBri.m_mesh.bounds.size.x, textDescriptor.BackgroundMeshSettings.Size.Y / bgBri.m_mesh.bounds.size.y, 1))
+                * textMatrixTuple.Second.Fourth;
+
+            Graphics.DrawMesh(bgBri.m_mesh, bgMatrix, bgBri.m_generatedMaterial, 10, targetCamera, 0, materialPropertyBlock, false);
+            return containerMatrix;
+        }
+        private static void DrawTextFrame(BoardTextDescriptorGeneralXml textDescriptor, MaterialPropertyBlock materialPropertyBlock, ref Vector3 targetPos, ref Vector3 targetRotation, ref Vector3 baseScale, ref Color parentColor, PrefabInfo srcInfo, Camera targetCamera, ref Matrix4x4 containerMatrix)
+        {
+            if (m_genMesh == null)
+            {
+                WTSDisplayContainerMeshUtils.GenerateDisplayContainer(new Vector2(1, 1), new Vector2(1, 1), new Vector2(), 0.05f, 0.3f, 0.1f, out Vector3[] points, out Vector4[] tangents);
+                m_genMesh = new Mesh
+                {
+                    vertices = points,
+                    triangles = WTSDisplayContainerMeshUtils.m_triangles,
+                    uv = points.Select((x, i) => new Vector2(i / 4f % 1, i / 2f % 1)).ToArray(),
+                    colors = points.Select(x => Color.blue).ToArray(),
+
+                };
+                m_genMesh.RecalculateNormals();
+                m_genMesh.tangents = tangents;
+
+                m_genMeshInv = new Mesh
+                {
+                    vertices = points,
+                    triangles = WTSDisplayContainerMeshUtils.m_triangles.Select((x, i) => WTSDisplayContainerMeshUtils.m_triangles[(((i / 3) << 0) * 3) + 2 - (i % 3)]).ToArray(),
+                    uv = points.Select((x, i) => new Vector2(i / 4f % 1, i / 2f % 1)).ToArray(),
+                    colors = points.Select(x => Color.blue).ToArray(),
+                    tangents = tangents
+                };
+
+                m_genMeshGlass = new Mesh
+                {
+                    vertices = points.Take(4).ToArray(),
+                    colors32 = points.Take(4).Select(x => new Color32(165, 0, 0, 0)).ToArray(),
+                    triangles = WTSDisplayContainerMeshUtils.m_trianglesGlass,
+                    uv = points.Take(4).Select(x => new Vector2(0.5f, .5f)).ToArray(),
+                    tangents = tangents
+                };
+            }
+            if (textDescriptor.BackgroundMeshSettings.FrameMeshSettings.cachedFrameArray == null)
+            {
+                WTSDisplayContainerMeshUtils.GenerateDisplayContainer(textDescriptor.BackgroundMeshSettings.Size,
+                    textDescriptor.BackgroundMeshSettings.FrameMeshSettings.BackSize,
+                    textDescriptor.BackgroundMeshSettings.FrameMeshSettings.BackOffset,
+                    textDescriptor.BackgroundMeshSettings.FrameMeshSettings.FrontDepth,
+                    textDescriptor.BackgroundMeshSettings.FrameMeshSettings.BackDepth,
+                    textDescriptor.BackgroundMeshSettings.FrameMeshSettings.FrontBorderThickness,
+                    out textDescriptor.BackgroundMeshSettings.FrameMeshSettings.cachedFrameArray,
+                    out Vector4[] tangents);
+
+                textDescriptor.BackgroundMeshSettings.FrameMeshSettings.meshInnerContainer = new Mesh()
+                {
+                    vertices = textDescriptor.BackgroundMeshSettings.FrameMeshSettings.cachedFrameArray,
+                    triangles = m_genMeshInv.triangles,
+                    uv = m_genMeshInv.uv,
+                    normals = m_genMeshInv.normals,
+                    colors = m_genMeshInv.colors,
+                };
+                textDescriptor.BackgroundMeshSettings.FrameMeshSettings.meshOuterContainer = new Mesh()
+                {
+                    vertices = textDescriptor.BackgroundMeshSettings.FrameMeshSettings.cachedFrameArray,
+                    triangles = m_genMesh.triangles,
+                    uv = m_genMesh.uv,
+                    normals = m_genMesh.normals,
+                    colors = m_genMesh.colors,
+                };
+                textDescriptor.BackgroundMeshSettings.FrameMeshSettings.meshGlass = new Mesh()
+                {
+                    vertices = textDescriptor.BackgroundMeshSettings.FrameMeshSettings.cachedFrameArray.Take(4).ToArray(),
+                    triangles = m_genMeshGlass.triangles,
+                    uv = m_genMeshGlass.uv,
+                    normals = m_genMeshGlass.normals,
+                    colors = textDescriptor.BackgroundMeshSettings.FrameMeshSettings.cachedFrameArray.Take(4).Select(x => new Color(.4f, 0, 0, 0)).ToArray(),
+                };
+                foreach (var k in new Mesh[]{
+                                    textDescriptor.BackgroundMeshSettings.FrameMeshSettings.meshOuterContainer,
+                                    textDescriptor.BackgroundMeshSettings.FrameMeshSettings.meshInnerContainer,
+                                     textDescriptor.BackgroundMeshSettings.FrameMeshSettings.meshGlass
+                                    })
+                {
+                    k.tangents = tangents;
+                    k.RecalculateNormals();
+                    //MeshUtils.SolveTangents(k);
+                    //k.tangents = k.tangents.Select(x => new Vector4(0,1,0,1)).ToArray();
+                }
+            }
+            var instance2 = Singleton<VehicleManager>.instance;
+            Matrix4x4 value;
+            if (srcInfo is VehicleInfo vi)
+            {
+                var idt = Matrix4x4.identity;
+                var qtr = Quaternion.Euler(targetRotation);
+                value = vi.m_vehicleAI.CalculateTyreMatrix(Vehicle.Flags.Created | Vehicle.Flags.Spawned | Vehicle.Flags.TransferToTarget, ref targetPos, ref qtr, ref baseScale, ref idt);
+            }
+            else
+            {
+                return;
+            }
+            if (m_rotorMaterial == null)
+            {
+                m_rotorMaterial = new Material(Shader.Find("Custom/Vehicles/Vehicle/Rotors"));
+                var targetTexture = new Texture2D(1, 1);
+                targetTexture.SetPixels(targetTexture.GetPixels().Select(x => new Color(.5f, .5f, 0.7f, 1)).ToArray());
+                targetTexture.Apply();
+                m_rotorMaterial.SetTexture("_XYSMap", targetTexture);
+                m_rotorMaterial.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive | MaterialGlobalIlluminationFlags.EmissiveIsBlack;
+            }
+            if (m_outsideMaterial == null)
+            {
+                var targetTexture = new Texture2D(1, 1);
+                targetTexture.SetPixels(targetTexture.GetPixels().Select(x => new Color(.5f, .5f, .5f, 1)).ToArray());
+                targetTexture.Apply();
+                m_outsideMaterial = new Material(Shader.Find("Custom/Vehicles/Vehicle/Default"))
+                {
+                    mainTexture = targetTexture
+                };
+                targetTexture = new Texture2D(1, 1);
+                targetTexture.SetPixels(targetTexture.GetPixels().Select(x => new Color(186 / 255f, 186 / 255f, 229 / 255f, 1)).ToArray());
+                targetTexture.Apply();
+                m_outsideMaterial.SetTexture(instance2.ID_XYSMap, targetTexture);
+                targetTexture = new Texture2D(1, 1);
+                targetTexture.SetPixels(targetTexture.GetPixels().Select(x => new Color(0, 0f, .5f, 0)).ToArray());
+                targetTexture.Apply();
+                m_outsideMaterial.SetTexture(instance2.ID_ACIMap, targetTexture);
+
+                m_outsideMaterial.SetVector(instance2.ID_LightState, Vector3.zero);
+                m_outsideMaterial.SetVector(instance2.ID_TyrePosition, Vector3.zero);
+                m_outsideMaterial.SetMatrix(instance2.ID_TyreMatrix, Matrix4x4.identity);
+                m_outsideMaterial.SetColor(WTSPropRenderingRules.SHADER_PROP_COLOR, Color.black * new Color(1, 1, 1, 0));
+                m_outsideMaterial.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive | MaterialGlobalIlluminationFlags.EmissiveIsBlack;
+            }
+
+            Graphics.DrawMesh(textDescriptor.BackgroundMeshSettings.FrameMeshSettings.meshGlass, containerMatrix, m_rotorMaterial, srcInfo.m_prefabDataIndex, targetCamera, 0);
+
+            materialPropertyBlock.Clear();
+            materialPropertyBlock.SetVectorArray(instance2.ID_TyreLocation, vi.m_generatedInfo.m_tyres);
+
+            Graphics.DrawMesh(textDescriptor.BackgroundMeshSettings.FrameMeshSettings.meshInnerContainer, containerMatrix, m_outsideMaterial, srcInfo.m_prefabDataIndex, targetCamera, 0, materialPropertyBlock, true, true);
+            var color = textDescriptor.BackgroundMeshSettings.FrameMeshSettings.InheritColor ? parentColor : textDescriptor.BackgroundMeshSettings.FrameMeshSettings.OutsideColor;
+            materialPropertyBlock.SetColor(WTSPropRenderingRules.SHADER_PROP_COLOR, color * new Color(1, 1, 1, 0));
+            Graphics.DrawMesh(textDescriptor.BackgroundMeshSettings.FrameMeshSettings.meshOuterContainer, containerMatrix, m_outsideMaterial, srcInfo.m_prefabDataIndex, targetCamera, 0, materialPropertyBlock, true, true);
+        }
+        #endregion
+        #region Illumination handling
+        private static PropManager CalculateIllumination(ushort refID, int boardIdx, int secIdx, BoardTextDescriptorGeneralXml textDescriptor, MaterialPropertyBlock materialPropertyBlock, ref Color colorToSet, int instanceFlags, ref Vector4 objectIndex)
+        {
+            var randomizer = new Randomizer((refID << 8) + (boardIdx << 2) + secIdx);
+            switch (textDescriptor.IlluminationConfig.IlluminationType)
+            {
+                default:
+                case FontStashSharp.MaterialType.OPAQUE:
+                    objectIndex.z = 0;
+                    break;
+                case FontStashSharp.MaterialType.DAYNIGHT:
+                    float num = m_daynightOffTime + (randomizer.Int32(100000u) * 1E-05f);
+                    objectIndex.z = MathUtils.SmoothStep(num + 0.01f, num - 0.01f, Singleton<RenderManager>.instance.lightSystem.DayLightIntensity) * textDescriptor.IlluminationConfig.IlluminationStrength;
+                    break;
+                case FontStashSharp.MaterialType.FLAGS:
+                    objectIndex.z = ((instanceFlags & textDescriptor.IlluminationConfig.m_requiredFlags) == textDescriptor.IlluminationConfig.m_requiredFlags) && ((instanceFlags & textDescriptor.IlluminationConfig.m_forbiddenFlags) == 0) ? textDescriptor.IlluminationConfig.IlluminationStrength : 0;
+                    break;
+                case FontStashSharp.MaterialType.BRIGHT:
+                    objectIndex.z = textDescriptor.IlluminationConfig.IlluminationStrength;
+                    break;
+            }
+            colorToSet *= Color.Lerp(new Color(0.6f, 0.6f, 0.6f, 1), Color.white, objectIndex.z);
+            materialPropertyBlock.SetColor(SHADER_PROP_COLOR, colorToSet);
+
+
+            if (objectIndex.z > 0 && textDescriptor.IlluminationConfig.BlinkType != BlinkType.None)
+            {
+                CalculateBlinkEffect(textDescriptor, ref objectIndex, ref randomizer);
+            }
+            PropManager instance = Singleton<PropManager>.instance;
+            materialPropertyBlock.SetVector(instance.ID_ObjectIndex, objectIndex);
+            return instance;
+        }
+        private static void CalculateBlinkEffect(BoardTextDescriptorGeneralXml textDescriptor, ref Vector4 objectIndex, ref Randomizer randomizer)
+        {
+            float num = m_daynightOffTime + (randomizer.Int32(100000u) * 1E-05f);
+            Vector4 blinkVector;
+            if (textDescriptor.IlluminationConfig.BlinkType == BlinkType.Custom)
+            {
+                blinkVector = textDescriptor.IlluminationConfig.CustomBlink;
+            }
+            else
+            {
+                blinkVector = LightEffect.GetBlinkVector((LightEffect.BlinkType)textDescriptor.IlluminationConfig.BlinkType);
+            }
+            float num2 = num * 3.71f + Singleton<SimulationManager>.instance.m_simulationTimer / blinkVector.w;
+            num2 = (num2 - Mathf.Floor(num2)) * blinkVector.w;
+            float num3 = MathUtils.SmoothStep(blinkVector.x, blinkVector.y, num2);
+            float num4 = MathUtils.SmoothStep(blinkVector.w, blinkVector.z, num2);
+            objectIndex.z *= 1f - (num3 * num4);
+        }
+        #endregion
+        #region Text handling
         private static float CalculateOffsetXMultiItem(UIHorizontalAlignment alignment, int itemCount, float columnWidth, float maxWidth)
         {
             var offsetX = (columnWidth * (itemCount - 1) / 2);
@@ -265,281 +529,6 @@ namespace Klyte.WriteTheSigns.Rendering
 
             return offsetY;
         }
-
-        private static Color GetTargetColor(ushort refID, int boardIdx, int secIdx, BoardInstanceXml descriptor, BoardDescriptorGeneralXml propLayout, BoardTextDescriptorGeneralXml textDescriptor)
-        {
-            if (textDescriptor.ColoringConfig.m_useContrastColor)
-            {
-                return GetContrastColor(refID, boardIdx, secIdx, descriptor, propLayout);
-            }
-            else if (textDescriptor.ColoringConfig.m_defaultColor != null)
-            {
-                return textDescriptor.ColoringConfig.m_defaultColor;
-            }
-            return Color.white;
-        }
-
-        public static void DrawTextBri(ushort refID, int boardIdx, int secIdx, Matrix4x4 propMatrix, BoardTextDescriptorGeneralXml textDescriptor,
-            MaterialPropertyBlock materialPropertyBlock, BasicRenderInformation renderInfo, Color colorToSet, Vector3 targetPos, Vector3 targetRotation,
-            Vector3 baseScale, bool placeClone180Y, UIHorizontalAlignment targetTextAlignment, float maxWidth, int instanceFlags, Color parentColor,
-            PrefabInfo srcInfo, Camera targetCamera = null, Shader overrideShader = null)
-        {
-
-            var textMatrixes = CalculateTextMatrix(targetPos, targetRotation, baseScale, targetTextAlignment, maxWidth, textDescriptor, renderInfo, placeClone180Y);
-
-            foreach (var textMatrixTuple in textMatrixes)
-            {
-                Matrix4x4 matrix = propMatrix * textMatrixTuple.First;
-
-                materialPropertyBlock.Clear();
-
-                var objectIndex = new Vector4();
-
-                Material targetMaterial = renderInfo.m_generatedMaterial;
-                var randomizer = new Randomizer((refID << 8) + (boardIdx << 2) + secIdx);
-                switch (textDescriptor.IlluminationConfig.IlluminationType)
-                {
-                    default:
-                    case FontStashSharp.MaterialType.OPAQUE:
-                        objectIndex.z = 0;
-                        break;
-                    case FontStashSharp.MaterialType.DAYNIGHT:
-                        float num = m_daynightOffTime + (randomizer.Int32(100000u) * 1E-05f);
-                        objectIndex.z = MathUtils.SmoothStep(num + 0.01f, num - 0.01f, Singleton<RenderManager>.instance.lightSystem.DayLightIntensity) * textDescriptor.IlluminationConfig.IlluminationStrength;
-                        break;
-                    case FontStashSharp.MaterialType.FLAGS:
-                        objectIndex.z = ((instanceFlags & textDescriptor.IlluminationConfig.m_requiredFlags) == textDescriptor.IlluminationConfig.m_requiredFlags) && ((instanceFlags & textDescriptor.IlluminationConfig.m_forbiddenFlags) == 0) ? textDescriptor.IlluminationConfig.IlluminationStrength : 0;
-                        break;
-                    case FontStashSharp.MaterialType.BRIGHT:
-                        objectIndex.z = textDescriptor.IlluminationConfig.IlluminationStrength;
-                        break;
-                }
-                colorToSet *= Color.Lerp(new Color(0.6f, 0.6f, 0.6f, 1), Color.white, objectIndex.z);
-                materialPropertyBlock.SetColor(SHADER_PROP_COLOR, colorToSet);
-                materialPropertyBlock.SetColor(SHADER_PROP_COLOR0, colorToSet);
-                materialPropertyBlock.SetColor(SHADER_PROP_COLOR1, colorToSet);
-                materialPropertyBlock.SetColor(SHADER_PROP_COLOR2, colorToSet);
-                materialPropertyBlock.SetColor(SHADER_PROP_COLOR3, colorToSet);
-
-
-                if (objectIndex.z > 0 && textDescriptor.IlluminationConfig.BlinkType != BlinkType.None)
-                {
-                    float num = m_daynightOffTime + (randomizer.Int32(100000u) * 1E-05f);
-                    Vector4 blinkVector;
-                    if (textDescriptor.IlluminationConfig.BlinkType == BlinkType.Custom)
-                    {
-                        blinkVector = textDescriptor.IlluminationConfig.CustomBlink;
-                    }
-                    else
-                    {
-                        blinkVector = LightEffect.GetBlinkVector((LightEffect.BlinkType)textDescriptor.IlluminationConfig.BlinkType);
-                    }
-                    float num2 = num * 3.71f + Singleton<SimulationManager>.instance.m_simulationTimer / blinkVector.w;
-                    num2 = (num2 - Mathf.Floor(num2)) * blinkVector.w;
-                    float num3 = MathUtils.SmoothStep(blinkVector.x, blinkVector.y, num2);
-                    float num4 = MathUtils.SmoothStep(blinkVector.w, blinkVector.z, num2);
-                    objectIndex.z *= 1f - (num3 * num4);
-                }
-                PropManager instance = Singleton<PropManager>.instance;
-                materialPropertyBlock.SetVector(instance.ID_ObjectIndex, objectIndex);
-
-
-                var oldShader = targetMaterial.shader;
-                try
-                {
-                    targetMaterial.shader = overrideShader ?? WTSController.DEFAULT_SHADER_TEXT;
-                    Graphics.DrawMesh(renderInfo.m_mesh, matrix, targetMaterial, 10, targetCamera, 0, materialPropertyBlock, false);
-                }
-                finally
-                {
-                    targetMaterial.shader = oldShader;
-                }
-                if (((Vector2)textDescriptor.BackgroundMeshSettings.Size).sqrMagnitude != 0)
-                {
-                    BasicRenderInformation bgBri = WriteTheSignsMod.Controller.SpriteRenderingRules.GetSpriteFromDefaultAtlas(KlyteResourceLoader.GetDefaultSpriteNameFor(LineIconSpriteNames.K45_SquareIcon));
-                    if (bgBri != null)
-                    {
-
-
-                        materialPropertyBlock.SetColor(WTSPropRenderingRules.SHADER_PROP_COLOR, textDescriptor.BackgroundMeshSettings.BackgroundColor * new Color(1, 1, 1, 0));
-                        materialPropertyBlock.SetVector(instance.ID_ObjectIndex, new Vector4());
-                        var bgBriMatrix = ApplyTextAdjustments(targetPos, targetRotation, bgBri, baseScale, textDescriptor.BackgroundMeshSettings.Size.Y, targetTextAlignment, textDescriptor.BackgroundMeshSettings.Size.X, false, false);
-                        //LogUtils.DoWarnLog($"bg { bgBri.m_YAxisOverflows} ri {renderInfo.m_YAxisOverflows}");
-
-                        // var bgMatrix = textMatrixTuple.Second.First * textMatrixTuple.Second.Second * textMatrixTuple.Second.Third * textMatrixTuple.Second.Fourth;
-
-
-                        //Size (64.0, 64.0); mesh bounds Center: (0.0, 32.0, 0.0), Extents: (32.0, 32.0, 0.0)
-                        //LogUtils.DoWarnLog($"Size {bgBri.m_sizeMetersUnscaled}; mesh bounds {bgBri.m_mesh.bounds}");,
-                        var lineAdjustmentVector = new Vector3(0, (-textDescriptor.BackgroundMeshSettings.Size.Y / 2) + (32 * SCALING_FACTOR * textDescriptor.m_textScale) - (bgBri.m_YAxisOverflows.min + bgBri.m_YAxisOverflows.max) * SCALING_FACTOR * textDescriptor.m_textScale / 2, -0.001f);
-                        var containerMatrix = propMatrix
-                            * Matrix4x4.Translate(targetPos)
-                            * textMatrixTuple.Second.Second
-                            * Matrix4x4.Translate(lineAdjustmentVector)
-                            * textMatrixTuple.Second.Fourth
-                            ;
-                        var bgMatrix = propMatrix
-                            * Matrix4x4.Translate(targetPos)
-                            //* Matrix4x4.Translate(taregetPos + textMatrixTuple.Second.Second.MultiplyPoint((new Vector3(0, -(bgBri.m_YAxisOverflows.min + bgBri.m_YAxisOverflows.max) * SCALING_FACTOR * 0, 0))))
-                            * textMatrixTuple.Second.Second
-                            * Matrix4x4.Translate(lineAdjustmentVector)
-                            * Matrix4x4.Scale(new Vector3(textDescriptor.BackgroundMeshSettings.Size.X / bgBri.m_mesh.bounds.size.x, textDescriptor.BackgroundMeshSettings.Size.Y / bgBri.m_mesh.bounds.size.y, 1))
-                            * textMatrixTuple.Second.Fourth;
-
-                        Graphics.DrawMesh(bgBri.m_mesh, bgMatrix, bgBri.m_generatedMaterial, 10, targetCamera, 0, materialPropertyBlock, false);
-                        if (textDescriptor.BackgroundMeshSettings.UseFrame)
-                        {
-                            if (genMesh == null)
-                            {
-                                WTSDisplayContainerMeshUtils.GenerateDisplayContainer(new Vector2(1, 1), new Vector2(1, 1), new Vector2(), 0.05f, 0.3f, 0.1f, out Vector3[] points, out Vector4[] tangents);
-                                genMesh = new Mesh
-                                {
-                                    vertices = points,
-                                    triangles = WTSDisplayContainerMeshUtils.m_triangles,
-                                    uv = points.Select((x, i) => new Vector2(i / 4f % 1, i / 2f % 1)).ToArray(),
-                                    colors = points.Select(x => Color.blue).ToArray(),
-
-                                };
-                                genMesh.RecalculateNormals();
-                                genMesh.tangents = tangents;
-
-                                genMeshInv = new Mesh
-                                {
-                                    vertices = points,
-                                    triangles = WTSDisplayContainerMeshUtils.m_triangles.Select((x, i) => WTSDisplayContainerMeshUtils.m_triangles[(((i / 3) << 0) * 3) + 2 - (i % 3)]).ToArray(),
-                                    uv = points.Select((x, i) => new Vector2(i / 4f % 1, i / 2f % 1)).ToArray(),
-                                    colors = points.Select(x => Color.blue).ToArray(),
-                                    tangents = tangents
-                                };
-
-                                genMeshGlass = new Mesh
-                                {
-                                    vertices = points.Take(4).ToArray(),
-                                    colors32 = points.Take(4).Select(x => new Color32(165, 0, 0, 0)).ToArray(),
-                                    triangles = WTSDisplayContainerMeshUtils.m_trianglesGlass,
-                                    uv = points.Take(4).Select(x => new Vector2(0.5f, .5f)).ToArray(),
-                                    tangents = tangents
-                                };
-                            }
-                            if (textDescriptor.BackgroundMeshSettings.FrameMeshSettings.cachedFrameArray == null)
-                            {
-                                WTSDisplayContainerMeshUtils.GenerateDisplayContainer(textDescriptor.BackgroundMeshSettings.Size,
-                                    textDescriptor.BackgroundMeshSettings.FrameMeshSettings.BackSize,
-                                    textDescriptor.BackgroundMeshSettings.FrameMeshSettings.BackOffset,
-                                    textDescriptor.BackgroundMeshSettings.FrameMeshSettings.FrontDepth,
-                                    textDescriptor.BackgroundMeshSettings.FrameMeshSettings.BackDepth,
-                                    textDescriptor.BackgroundMeshSettings.FrameMeshSettings.FrontBorderThickness,
-                                    out textDescriptor.BackgroundMeshSettings.FrameMeshSettings.cachedFrameArray,
-                                    out Vector4[] tangents);
-
-                                textDescriptor.BackgroundMeshSettings.FrameMeshSettings.meshInnerContainer = new Mesh()
-                                {
-                                    vertices = textDescriptor.BackgroundMeshSettings.FrameMeshSettings.cachedFrameArray,
-                                    triangles = genMeshInv.triangles,
-                                    uv = genMeshInv.uv,
-                                    normals = genMeshInv.normals,
-                                    colors = genMeshInv.colors,
-                                };
-                                textDescriptor.BackgroundMeshSettings.FrameMeshSettings.meshOuterContainer = new Mesh()
-                                {
-                                    vertices = textDescriptor.BackgroundMeshSettings.FrameMeshSettings.cachedFrameArray,
-                                    triangles = genMesh.triangles,
-                                    uv = genMesh.uv,
-                                    normals = genMesh.normals,
-                                    colors = genMesh.colors,
-                                };
-                                textDescriptor.BackgroundMeshSettings.FrameMeshSettings.meshGlass = new Mesh()
-                                {
-                                    vertices = textDescriptor.BackgroundMeshSettings.FrameMeshSettings.cachedFrameArray.Take(4).ToArray(),
-                                    triangles = genMeshGlass.triangles,
-                                    uv = genMeshGlass.uv,
-                                    normals = genMeshGlass.normals,
-                                    colors = textDescriptor.BackgroundMeshSettings.FrameMeshSettings.cachedFrameArray.Take(4).Select(x => new Color(.4f, 0, 0, 0)).ToArray(),
-                                };
-                                foreach (var k in new Mesh[]{
-                                    textDescriptor.BackgroundMeshSettings.FrameMeshSettings.meshOuterContainer,
-                                    textDescriptor.BackgroundMeshSettings.FrameMeshSettings.meshInnerContainer,
-                                     textDescriptor.BackgroundMeshSettings.FrameMeshSettings.meshGlass
-                                    })
-                                {
-                                    k.tangents = tangents;
-                                    k.RecalculateNormals();
-                                    //MeshUtils.SolveTangents(k);
-                                    //k.tangents = k.tangents.Select(x => new Vector4(0,1,0,1)).ToArray();
-                                }
-                            }
-                            var instance2 = Singleton<VehicleManager>.instance;
-                            Matrix4x4 value;
-                            if (srcInfo is VehicleInfo vi)
-                            {
-                                var idt = Matrix4x4.identity;
-                                var qtr = Quaternion.Euler(targetRotation);
-                                value = vi.m_vehicleAI.CalculateTyreMatrix(Vehicle.Flags.Created | Vehicle.Flags.Spawned | Vehicle.Flags.TransferToTarget, ref targetPos, ref qtr, ref baseScale, ref idt);
-                            }
-                            else
-                            {
-                                return;
-                            }
-                            if (rotorMaterial == null)
-                            {
-                                rotorMaterial = new Material(Shader.Find("Custom/Vehicles/Vehicle/Rotors"));
-                                var targetTexture = new Texture2D(1, 1);
-                                targetTexture.SetPixels(targetTexture.GetPixels().Select(x => new Color(.5f, .5f, 0.7f, 1)).ToArray());
-                                targetTexture.Apply();
-                                rotorMaterial.SetTexture("_XYSMap", targetTexture);
-                                rotorMaterial.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive | MaterialGlobalIlluminationFlags.EmissiveIsBlack;
-                            }
-                            if (outsideMaterial == null)
-                            {
-                                var targetTexture = new Texture2D(1, 1);
-                                targetTexture.SetPixels(targetTexture.GetPixels().Select(x => new Color(.5f, .5f, .5f, 1)).ToArray());
-                                targetTexture.Apply();
-                                outsideMaterial = new Material(Shader.Find("Custom/Vehicles/Vehicle/Default"))
-                                {
-                                    mainTexture = targetTexture
-                                };
-                                targetTexture = new Texture2D(1, 1);
-                                targetTexture.SetPixels(targetTexture.GetPixels().Select(x => new Color(186/255f, 186/255f, 229/255f, 1)).ToArray());
-                                targetTexture.Apply();
-                                outsideMaterial.SetTexture(instance2.ID_XYSMap, targetTexture);
-                                targetTexture = new Texture2D(1, 1);
-                                targetTexture.SetPixels(targetTexture.GetPixels().Select(x => new Color(0, 0f, .5f, 0)).ToArray());
-                                targetTexture.Apply();
-                                outsideMaterial.SetTexture(instance2.ID_ACIMap, targetTexture);
-
-                                outsideMaterial.SetVector(instance2.ID_LightState, Vector3.zero);
-                                outsideMaterial.SetVector(instance2.ID_TyrePosition, Vector3.zero);
-                                outsideMaterial.SetMatrix(instance2.ID_TyreMatrix, Matrix4x4.identity);
-                                outsideMaterial.SetColor(WTSPropRenderingRules.SHADER_PROP_COLOR, Color.black * new Color(1, 1, 1, 0));
-                                outsideMaterial.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive | MaterialGlobalIlluminationFlags.EmissiveIsBlack;
-                            }
-
-                            Graphics.DrawMesh(textDescriptor.BackgroundMeshSettings.FrameMeshSettings.meshGlass, containerMatrix, rotorMaterial, srcInfo.m_prefabDataIndex, targetCamera, 0);
-
-                            materialPropertyBlock.Clear();
-                            materialPropertyBlock.SetVectorArray(instance2.ID_TyreLocation, vi.m_generatedInfo.m_tyres);
-                            materialPropertyBlock.SetColor("_SpecColor", WTSController._SpecColor);
-
-                            //vi.RenderMesh(targetCamera,  offset, Vehicle.Flags flags = Vehicle.Flags.Created | Vehicle.Flags.Spawned);    
-                            Graphics.DrawMesh(textDescriptor.BackgroundMeshSettings.FrameMeshSettings.meshInnerContainer, containerMatrix, outsideMaterial, srcInfo.m_prefabDataIndex, targetCamera, 0, materialPropertyBlock, true, true);
-                            //InheritColor
-                            var color = textDescriptor.BackgroundMeshSettings.FrameMeshSettings.InheritColor ? parentColor : textDescriptor.BackgroundMeshSettings.FrameMeshSettings.OutsideColor;
-                            materialPropertyBlock.SetColor(WTSPropRenderingRules.SHADER_PROP_COLOR, color * new Color(1, 1, 1, 0));
-                            Graphics.DrawMesh(textDescriptor.BackgroundMeshSettings.FrameMeshSettings.meshOuterContainer, containerMatrix, outsideMaterial, srcInfo.m_prefabDataIndex, targetCamera, 0, materialPropertyBlock, true, true);
-                        }
-                    }
-                }
-            }
-        }
-
-        internal static Material rotorMaterial;
-        internal static ref Material outsideMaterial => ref WTSController._outside;
-
-        private static ref Mesh genMesh => ref WTSController._genMesh;
-        private static Mesh genMeshInv;
-        private static Mesh genMeshGlass;
-
-        private static readonly float m_daynightOffTime = 6 * Convert.ToSingle(Math.Pow(Convert.ToDouble((6 - (15 / 2.5)) / 6), Convert.ToDouble(1 / 1.09)));
 
         internal static List<Tuple<Matrix4x4, Tuple<Matrix4x4, Matrix4x4, Matrix4x4, Matrix4x4>>> CalculateTextMatrix(Vector3 targetPosition, Vector3 targetRotation, Vector3 baseScale, UIHorizontalAlignment targetTextAlignment, float maxWidth, BoardTextDescriptorGeneralXml textDescriptor, BasicRenderInformation renderInfo, bool placeClone180Y, bool centerReference = false)
         {
@@ -600,8 +589,9 @@ namespace Klyte.WriteTheSigns.Rendering
                ;
             return Tuple.New(textMatrix, Tuple.New(Matrix4x4.Translate(targetRelativePosition), rotationMatrix, Matrix4x4.Scale(scaleVector), Matrix4x4.Scale(propScale)));
         }
-
-        public static Color GetColor(ushort refId, int boardIdx, int secIdx, BoardInstanceXml instance, BoardDescriptorGeneralXml propLayout, out bool found)
+        #endregion
+        #region Color rules
+        public static Color GetPropColor(ushort refId, int boardIdx, int secIdx, BoardInstanceXml instance, BoardDescriptorGeneralXml propLayout, out bool found)
         {
 
             if (instance is BoardInstanceRoadNodeXml)
@@ -654,6 +644,18 @@ namespace Klyte.WriteTheSigns.Rendering
             found = false;
             return default;
         }
+        private static Color GetTextColor(ushort refID, int boardIdx, int secIdx, BoardInstanceXml descriptor, BoardDescriptorGeneralXml propLayout, BoardTextDescriptorGeneralXml textDescriptor)
+        {
+            if (textDescriptor.ColoringConfig.m_useContrastColor)
+            {
+                return GetContrastColor(refID, boardIdx, secIdx, descriptor, propLayout);
+            }
+            else if (textDescriptor.ColoringConfig.m_defaultColor != null)
+            {
+                return textDescriptor.ColoringConfig.m_defaultColor;
+            }
+            return Color.white;
+        }
 
         internal static readonly Color[] m_spectreSteps = new Color[]
         {
@@ -698,10 +700,11 @@ namespace Klyte.WriteTheSigns.Rendering
             {
                 return KlyteMonoUtils.ContrastColor(preview?.Descriptor?.FixedColor ?? GetCurrentSimulationColor(), true);
             }
-            var targetColor = GetColor(refID, boardIdx, secIdx, instance, propLayout, out bool colorFound);
+            var targetColor = GetPropColor(refID, boardIdx, secIdx, instance, propLayout, out bool colorFound);
             return KlyteMonoUtils.ContrastColor(colorFound ? targetColor : Color.white);
         }
-
+        #endregion
+        #region Get text mesh
         internal static BasicRenderInformation GetTextMesh(BoardTextDescriptorGeneralXml textDescriptor, ushort refID, int boardIdx, int secIdx, BoardInstanceXml instance, BoardDescriptorGeneralXml propLayout, out IEnumerable<BasicRenderInformation> multipleOutput)
         {
             multipleOutput = null;
@@ -709,267 +712,285 @@ namespace Klyte.WriteTheSigns.Rendering
 
             if (instance is BoardPreviewInstanceXml preview)
             {
-
-                switch (propLayout?.m_allowedRenderClass)
-                {
-                    case TextRenderingClass.RoadNodes:
-                        baseFont ??= FontServer.instance[WTSRoadNodesData.Instance.DefaultFont];
-                        break;
-                    case TextRenderingClass.MileageMarker:
-                        baseFont ??= FontServer.instance[WTSRoadNodesData.Instance.DefaultFont];
-                        break;
-                    case TextRenderingClass.Buildings:
-                        baseFont ??= FontServer.instance[WTSBuildingsData.Instance.DefaultFont];
-                        break;
-                    case null:
-                        baseFont ??= FontServer.instance[WTSVehicleData.Instance.DefaultFont];
-                        break;
-                }
-                if (!preview.m_overrideText.IsNullOrWhiteSpace() && !textDescriptor.IsSpriteText())
-                {
-                    return RenderUtils.GetTextData(preview.m_overrideText, "", "", baseFont, textDescriptor.m_overrideFont);
-                }
-
-                string otherText = "";
-                if (textDescriptor.IsTextRelativeToSegment())
-                {
-                    otherText = $"({textDescriptor.m_destinationRelative}) ";
-                }
-                switch (textDescriptor.m_textType)
-                {
-                    case TextType.Fixed: return RenderUtils.GetTextData(textDescriptor.m_fixedText ?? "", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
-                    case TextType.DistanceFromReference: return RenderUtils.GetTextData("00", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
-                    case TextType.PostalCode: return RenderUtils.GetTextData("00000", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
-                    case TextType.StreetSuffix: return RenderUtils.GetTextData($"{otherText}Suffix", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
-                    case TextType.StreetPrefix: return RenderUtils.GetTextData($"{otherText}Pre.", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
-                    case TextType.StreetNameComplete: return RenderUtils.GetTextData($"{otherText}Full road name", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
-                    case TextType.District: return RenderUtils.GetTextData($"{otherText}District", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
-                    case TextType.DistrictOrPark: return RenderUtils.GetTextData($"{otherText}District or Area", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
-                    case TextType.ParkOrDistrict: return RenderUtils.GetTextData($"{otherText}Area or District", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
-                    case TextType.Park: return RenderUtils.GetTextData($"{otherText}Area", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
-                    case TextType.PlatformNumber: return RenderUtils.GetTextData("00", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
-                    case TextType.LinesSymbols:
-                        multipleOutput = WriteTheSignsMod.Controller.SpriteRenderingRules.DrawLineFormats(new int[textDescriptor.MultiItemSettings.SubItemsPerColumn * textDescriptor.MultiItemSettings.SubItemsPerRow].Select((x, y) => -y - 1));
-
-                        return null;
-                    case TextType.GameSprite:
-                        return WriteTheSignsMod.Controller.SpriteRenderingRules.GetSpriteFromDefaultAtlas(textDescriptor.m_spriteName);
-                    default:
-                        string text = $"{textDescriptor.m_textType}: {preview.m_currentText}";
-                        if (textDescriptor.m_allCaps)
-                        {
-                            text = text.ToUpper();
-                        }
-                        return RenderUtils.GetTextData(text, textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
-                };
+                return GetTextForPreview(textDescriptor, propLayout, ref multipleOutput, ref baseFont, preview);
             }
             else if (instance is LayoutDescriptorVehicleXml vehicleDescriptor)
             {
-                baseFont ??= FontServer.instance[vehicleDescriptor.FontName] ?? FontServer.instance[WTSVehicleData.Instance.DefaultFont];
-                TextType targetType = textDescriptor.m_textType;
-                switch (targetType)
-                {
-                    case TextType.GameSprite: return WriteTheSignsMod.Controller.SpriteRenderingRules.GetSpriteFromDefaultAtlas(textDescriptor.m_spriteName);
-                    case TextType.Fixed: return RenderUtils.GetTextData(textDescriptor.m_fixedText ?? "", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
-                    case TextType.OwnName: return GetFromCacheArray(refID, textDescriptor, RenderUtils.CacheArrayTypes.VehicleNumber, baseFont);
-                    case TextType.LineIdentifier:
-                        ref Vehicle[] buffer = ref VehicleManager.instance.m_vehicles.m_buffer;
-                        ref Vehicle vehicle = ref buffer[buffer[refID].GetFirstVehicle(refID)];
-                        var transportLine = vehicle.m_transportLine;
-                        if (transportLine > 0)
-                        {
-                            return GetFromCacheArray(transportLine, textDescriptor, RenderUtils.CacheArrayTypes.LineIdentifier, baseFont);
-                        }
-                        else
-                        {
-                            if (vehicle.m_targetBuilding == 0)
-                            {
-                                return RenderUtils.GetTextData(vehicle.m_sourceBuilding.ToString("D5"), textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
-                            }
-                            else
-                            {
-                                return RenderUtils.GetTextData($"R{vehicle.m_targetBuilding.ToString("X4")}", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
-                            }
-                        }
-                    case TextType.LinesSymbols:
-                        ref Vehicle[] buffer1 = ref VehicleManager.instance.m_vehicles.m_buffer;
-                        return WriteTheSignsMod.Controller.SpriteRenderingRules.DrawLineFormats(new int[] { buffer1[buffer1[refID].GetFirstVehicle(refID)].m_transportLine }).FirstOrDefault();
-                    case TextType.LastStopLine:
-                        ref Vehicle[] buffer2 = ref VehicleManager.instance.m_vehicles.m_buffer;
-                        ref Vehicle targetVehicle = ref buffer2[buffer2[refID].GetFirstVehicle(refID)];
-
-                        if (targetVehicle.m_transportLine == 0)
-                        {
-                            if (targetVehicle.m_targetBuilding == 0)
-                            {
-                                return GetFromCacheArray(targetVehicle.m_sourceBuilding, textDescriptor, RenderUtils.CacheArrayTypes.BuildingName, baseFont);
-                            }
-                            else
-                            {
-                                return GetFromCacheArray(WTSBuildingDataCaches.GetStopBuilding(targetVehicle.m_targetBuilding, targetVehicle.m_transportLine), textDescriptor, RenderUtils.CacheArrayTypes.BuildingName, baseFont);
-                            }
-                        }
-                        else
-                        {
-                            var target = targetVehicle.m_targetBuilding;
-                            var lastTarget = TransportLine.GetPrevStop(target);
-                            ref StopInformation stopInfo = ref GetTargetStopInfo(lastTarget);
-                            if (stopInfo.m_lineId == 0)
-                            {
-                                WriteTheSignsMod.Controller.ConnectorTLM.MapLineDestinations(targetVehicle.m_transportLine);
-                                stopInfo = ref GetTargetStopInfo(TransportLine.GetPrevStop(target));
-                            }
-                            BasicRenderInformation result;
-                            if (stopInfo.m_destinationString != null)
-                            {
-                                result = RenderUtils.GetTextData(stopInfo.m_destinationString, textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
-                            }
-                            else if (stopInfo.m_destinationId != 0)
-                            {
-                                result = RenderUtils.GetTextData(WriteTheSignsMod.Controller.ConnectorTLM.GetStopName(stopInfo.m_destinationId, targetVehicle.m_transportLine), textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
-                            }
-                            else
-                            {
-                                result = RenderUtils.GetTextData(WriteTheSignsMod.Controller.ConnectorTLM.GetStopName(targetVehicle.m_targetBuilding, targetVehicle.m_transportLine), textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
-                            }
-
-
-                            return result;
-                        }
-
-                    default:
-                        return null;
-                }
+                return GetTextForVehicle(textDescriptor, refID, ref baseFont, vehicleDescriptor);
             }
             else if (instance is BoardInstanceBuildingXml buildingDescritpor)
             {
-                ref BoardBunchContainerBuilding data = ref WTSBuildingsData.Instance.BoardsContainers[refID, 0, 0][boardIdx];
-                if (data == null)
-                {
-                    return null;
-                }
-                baseFont ??= FontServer.instance[WTSBuildingsData.Instance.DefaultFont];
-                TextType targetType = textDescriptor.m_textType;
-                switch (targetType)
-                {
-                    case TextType.GameSprite: return WriteTheSignsMod.Controller.SpriteRenderingRules.GetSpriteFromDefaultAtlas(textDescriptor.m_spriteName);
-                    case TextType.Fixed: return RenderUtils.GetTextData(textDescriptor.m_fixedText ?? "", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
-                    case TextType.OwnName: return GetFromCacheArray(refID, textDescriptor, RenderUtils.CacheArrayTypes.BuildingName, baseFont);
-                    case TextType.NextStopLine: return GetFromCacheArray(GetTargetStopInfo(buildingDescritpor, refID).FirstOrDefault().NextStopBuildingId, textDescriptor, RenderUtils.CacheArrayTypes.BuildingName, baseFont);
-                    case TextType.PrevStopLine: return GetFromCacheArray(GetTargetStopInfo(buildingDescritpor, refID).FirstOrDefault().PrevStopBuildingId, textDescriptor, RenderUtils.CacheArrayTypes.BuildingName, baseFont);
-                    case TextType.LastStopLine: return GetFromCacheArray(GetTargetStopInfo(buildingDescritpor, refID).FirstOrDefault().DestinationBuildingId, textDescriptor, RenderUtils.CacheArrayTypes.BuildingName, baseFont);
-                    case TextType.StreetPrefix: return GetFromCacheArray(WTSBuildingDataCaches.GetBuildingMainAccessSegment(refID), textDescriptor, RenderUtils.CacheArrayTypes.StreetQualifier, baseFont);
-                    case TextType.StreetSuffix: return GetFromCacheArray(WTSBuildingDataCaches.GetBuildingMainAccessSegment(refID), textDescriptor, RenderUtils.CacheArrayTypes.SuffixStreetName, baseFont);
-                    case TextType.StreetNameComplete: return GetFromCacheArray(WTSBuildingDataCaches.GetBuildingMainAccessSegment(refID), textDescriptor, RenderUtils.CacheArrayTypes.FullStreetName, baseFont);
-                    case TextType.PlatformNumber: return RenderUtils.GetTextData((buildingDescritpor.m_platforms.FirstOrDefault() + 1).ToString(), textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
-                    case TextType.LinesSymbols:
-                        multipleOutput = WriteTheSignsMod.Controller.SpriteRenderingRules.DrawLineFormats(GetAllTargetStopInfo(buildingDescritpor, refID).GroupBy(x => x.m_lineId).Select(x => x.First()).Select(x => (int)x.m_lineId));
-                        return null;
-                    default:
-                        return null;
-                }
+                return GetTextForBuilding(textDescriptor, refID, boardIdx, ref multipleOutput, ref baseFont, buildingDescritpor);
             }
-            else if (instance is BoardInstanceRoadNodeXml roadDescritpor)
+            else if (instance is BoardInstanceRoadNodeXml)
             {
-                CacheRoadNodeItem data = WTSRoadNodesData.Instance.BoardsContainers[refID, boardIdx, secIdx];
-                if (data == null)
-                {
-                    return null;
-                }
-
-                baseFont ??= FontServer.instance[WTSRoadNodesData.Instance.DefaultFont];
-
-                TextType targetType = textDescriptor.m_textType;
-                if (textDescriptor.IsTextRelativeToSegment() && textDescriptor.m_destinationRelative >= 0)
-                {
-                    CacheDestinationRoute destination = null;
-                    int segmentIdx = data.m_nodesOrder[(data.m_nodesOrder.Length + textDescriptor.m_targetNodeRelative) % data.m_nodesOrder.Length];
-                    switch (textDescriptor.m_destinationRelative)
-                    {
-                        case DestinationReference.NextExitMainRoad1:
-                        case DestinationReference.NextExitMainRoad2:
-                            destination = WriteTheSignsMod.Controller.DestinationSingleton.GetTargetDestination(refID, segmentIdx, (int)textDescriptor.m_destinationRelative);
-                            break;
-                        case DestinationReference.Next2ExitMainRoad1:
-                        case DestinationReference.Next2ExitMainRoad2:
-                        case DestinationReference.RoadEnd:
-                        case DestinationReference.Next2Exit:
-                        case DestinationReference.NextExit:
-                            return null;
-                        case DestinationReference.Self:
-                            break;
-                    }
-
-                    if (WriteTheSignsMod.Controller.DestinationSingleton.m_updatedDestinations[refID] == true && WriteTheSignsMod.Controller.DestinationSingleton.m_couldReachDestinations[refID, segmentIdx, (int)textDescriptor.m_destinationRelative] == false)
-                    {
-                        LogUtils.DoWarnLog($"[n{refID}/{boardIdx}] REMOVING UNAVAILABLE {WriteTheSignsMod.Controller.RoadPropsSingleton.Data.BoardsContainers[refID, boardIdx, secIdx] } (T={refID}, {segmentIdx}, {textDescriptor.m_destinationRelative} - rotationOrder = {string.Join(",", data.m_nodesOrder.Select(x => x.ToString()).ToArray())} - offset ={ textDescriptor.m_targetNodeRelative} )");
-
-                        WriteTheSignsMod.Controller.RoadPropsSingleton.Data.BoardsContainers[refID, boardIdx, secIdx] = null;
-                        WriteTheSignsMod.Controller.RoadPropsSingleton.m_updatedStreetPositions[refID] = null;
-                        return null;
-                    }
-                    if (WriteTheSignsMod.Controller.DestinationSingleton.m_updatedDestinations[refID] == false)
-                    {
-                        return RenderUtils.GetTextData("Loading" + new string('.', ((int)(SimulationManager.instance.m_currentTickIndex & 0x3F) >> 4) + 1), textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
-                    }
-                    if (destination != null)
-                    {
-                        switch (targetType)
-                        {
-                            case TextType.ParkOrDistrict: targetType = destination.m_parkId > 0 ? TextType.Park : TextType.District; break;
-                            case TextType.DistrictOrPark: targetType = destination.m_districtId == 0 && destination.m_parkId > 0 ? TextType.Park : TextType.District; break;
-                            case TextType.Park:
-                                if (destination.m_parkId == 0)
-                                {
-                                    return null;
-                                }
-                                break;
-                        }
-                        return targetType switch
-                        {
-                            TextType.DistanceFromReference => RenderUtils.GetTextData(destination.m_distanceMeanString, textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont),
-                            TextType.StreetSuffix => GetFromCacheArray(destination.m_segmentId, textDescriptor, RenderUtils.CacheArrayTypes.SuffixStreetName, baseFont),
-                            TextType.StreetPrefix => GetFromCacheArray(destination.m_segmentId, textDescriptor, RenderUtils.CacheArrayTypes.StreetQualifier, baseFont),
-                            TextType.PostalCode => GetFromCacheArray(destination.m_segmentId, textDescriptor, RenderUtils.CacheArrayTypes.PostalCode, baseFont),
-                            TextType.StreetNameComplete => GetFromCacheArray(destination.m_segmentId, textDescriptor, RenderUtils.CacheArrayTypes.FullStreetName, baseFont),
-                            TextType.District => GetFromCacheArray(destination.m_districtId, textDescriptor, RenderUtils.CacheArrayTypes.Districts, baseFont),
-                            TextType.Park => GetFromCacheArray(destination.m_parkId, textDescriptor, RenderUtils.CacheArrayTypes.Parks, baseFont),
-
-
-                            _ => null,
-                        };
-
-                    }
-                }
-                switch (targetType)
-                {
-                    case TextType.ParkOrDistrict: targetType = data.m_districtParkId > 0 ? TextType.Park : TextType.District; break;
-                    case TextType.DistrictOrPark: targetType = data.m_districtId == 0 && data.m_districtParkId > 0 ? TextType.Park : TextType.District; break;
-                    case TextType.Park:
-                        if (data.m_districtParkId == 0)
-                        {
-                            return null;
-                        }
-                        break;
-                }
-                return targetType switch
-                {
-                    TextType.GameSprite => WriteTheSignsMod.Controller.SpriteRenderingRules.GetSpriteFromDefaultAtlas(textDescriptor.m_spriteName),
-                    TextType.DistanceFromReference => RenderUtils.GetTextData($"{data.m_distanceRefKm}", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont),
-                    TextType.Fixed => RenderUtils.GetTextData(textDescriptor.m_fixedText ?? "", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont),
-                    TextType.StreetSuffix => GetFromCacheArray(data.m_segmentId, textDescriptor, RenderUtils.CacheArrayTypes.SuffixStreetName, baseFont),
-                    TextType.StreetNameComplete => GetFromCacheArray(data.m_segmentId, textDescriptor, RenderUtils.CacheArrayTypes.FullStreetName, baseFont),
-                    TextType.StreetPrefix => GetFromCacheArray(data.m_segmentId, textDescriptor, RenderUtils.CacheArrayTypes.StreetQualifier, baseFont),
-                    TextType.District => GetFromCacheArray(data.m_districtId, textDescriptor, RenderUtils.CacheArrayTypes.Districts, baseFont),
-                    TextType.Park => GetFromCacheArray(data.m_districtParkId, textDescriptor, RenderUtils.CacheArrayTypes.Parks, baseFont),
-                    TextType.PostalCode => GetFromCacheArray(data.m_segmentId, textDescriptor, RenderUtils.CacheArrayTypes.PostalCode, baseFont),
-
-                    _ => null,
-                };
+                return GetTextForRoadNode(textDescriptor, refID, boardIdx, secIdx, ref baseFont);
             }
             return RenderUtils.GetTextData(textDescriptor.m_fixedText ?? "", textDescriptor.m_prefix, textDescriptor.m_suffix, null, textDescriptor.m_overrideFont);
         }
 
+        private static BasicRenderInformation GetTextForRoadNode(BoardTextDescriptorGeneralXml textDescriptor, ushort refID, int boardIdx, int secIdx, ref DynamicSpriteFont baseFont)
+        {
+            CacheRoadNodeItem data = WTSRoadNodesData.Instance.BoardsContainers[refID, boardIdx, secIdx];
+            if (data == null)
+            {
+                return null;
+            }
+
+            baseFont ??= FontServer.instance[WTSRoadNodesData.Instance.DefaultFont];
+
+            TextType targetType = textDescriptor.m_textType;
+            if (textDescriptor.IsTextRelativeToSegment() && textDescriptor.m_destinationRelative >= 0)
+            {
+                CacheDestinationRoute destination = null;
+                int segmentIdx = data.m_nodesOrder[(data.m_nodesOrder.Length + textDescriptor.m_targetNodeRelative) % data.m_nodesOrder.Length];
+                switch (textDescriptor.m_destinationRelative)
+                {
+                    case DestinationReference.NextExitMainRoad1:
+                    case DestinationReference.NextExitMainRoad2:
+                        destination = WriteTheSignsMod.Controller.DestinationSingleton.GetTargetDestination(refID, segmentIdx, (int)textDescriptor.m_destinationRelative);
+                        break;
+                    case DestinationReference.Next2ExitMainRoad1:
+                    case DestinationReference.Next2ExitMainRoad2:
+                    case DestinationReference.RoadEnd:
+                    case DestinationReference.Next2Exit:
+                    case DestinationReference.NextExit:
+                        return null;
+                    case DestinationReference.Self:
+                        break;
+                }
+
+                if (WriteTheSignsMod.Controller.DestinationSingleton.m_updatedDestinations[refID] == true && WriteTheSignsMod.Controller.DestinationSingleton.m_couldReachDestinations[refID, segmentIdx, (int)textDescriptor.m_destinationRelative] == false)
+                {
+                    LogUtils.DoWarnLog($"[n{refID}/{boardIdx}] REMOVING UNAVAILABLE {WriteTheSignsMod.Controller.RoadPropsSingleton.Data.BoardsContainers[refID, boardIdx, secIdx] } (T={refID}, {segmentIdx}, {textDescriptor.m_destinationRelative} - rotationOrder = {string.Join(",", data.m_nodesOrder.Select(x => x.ToString()).ToArray())} - offset ={ textDescriptor.m_targetNodeRelative} )");
+
+                    WriteTheSignsMod.Controller.RoadPropsSingleton.Data.BoardsContainers[refID, boardIdx, secIdx] = null;
+                    WriteTheSignsMod.Controller.RoadPropsSingleton.m_updatedStreetPositions[refID] = null;
+                    return null;
+                }
+                if (WriteTheSignsMod.Controller.DestinationSingleton.m_updatedDestinations[refID] == false)
+                {
+                    return RenderUtils.GetTextData("Loading" + new string('.', ((int)(SimulationManager.instance.m_currentTickIndex & 0x3F) >> 4) + 1), textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
+                }
+                if (destination != null)
+                {
+                    switch (targetType)
+                    {
+                        case TextType.ParkOrDistrict: targetType = destination.m_parkId > 0 ? TextType.Park : TextType.District; break;
+                        case TextType.DistrictOrPark: targetType = destination.m_districtId == 0 && destination.m_parkId > 0 ? TextType.Park : TextType.District; break;
+                        case TextType.Park:
+                            if (destination.m_parkId == 0)
+                            {
+                                return null;
+                            }
+                            break;
+                    }
+                    return targetType switch
+                    {
+                        TextType.DistanceFromReference => RenderUtils.GetTextData(destination.m_distanceMeanString, textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont),
+                        TextType.StreetSuffix => GetFromCacheArray(destination.m_segmentId, textDescriptor, RenderUtils.CacheArrayTypes.SuffixStreetName, baseFont),
+                        TextType.StreetPrefix => GetFromCacheArray(destination.m_segmentId, textDescriptor, RenderUtils.CacheArrayTypes.StreetQualifier, baseFont),
+                        TextType.PostalCode => GetFromCacheArray(destination.m_segmentId, textDescriptor, RenderUtils.CacheArrayTypes.PostalCode, baseFont),
+                        TextType.StreetNameComplete => GetFromCacheArray(destination.m_segmentId, textDescriptor, RenderUtils.CacheArrayTypes.FullStreetName, baseFont),
+                        TextType.District => GetFromCacheArray(destination.m_districtId, textDescriptor, RenderUtils.CacheArrayTypes.Districts, baseFont),
+                        TextType.Park => GetFromCacheArray(destination.m_parkId, textDescriptor, RenderUtils.CacheArrayTypes.Parks, baseFont),
+
+
+                        _ => null,
+                    };
+
+                }
+            }
+            switch (targetType)
+            {
+                case TextType.ParkOrDistrict: targetType = data.m_districtParkId > 0 ? TextType.Park : TextType.District; break;
+                case TextType.DistrictOrPark: targetType = data.m_districtId == 0 && data.m_districtParkId > 0 ? TextType.Park : TextType.District; break;
+                case TextType.Park:
+                    if (data.m_districtParkId == 0)
+                    {
+                        return null;
+                    }
+                    break;
+            }
+            return targetType switch
+            {
+                TextType.GameSprite => WriteTheSignsMod.Controller.SpriteRenderingRules.GetSpriteFromDefaultAtlas(textDescriptor.m_spriteName),
+                TextType.DistanceFromReference => RenderUtils.GetTextData($"{data.m_distanceRefKm}", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont),
+                TextType.Fixed => RenderUtils.GetTextData(textDescriptor.m_fixedText ?? "", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont),
+                TextType.StreetSuffix => GetFromCacheArray(data.m_segmentId, textDescriptor, RenderUtils.CacheArrayTypes.SuffixStreetName, baseFont),
+                TextType.StreetNameComplete => GetFromCacheArray(data.m_segmentId, textDescriptor, RenderUtils.CacheArrayTypes.FullStreetName, baseFont),
+                TextType.StreetPrefix => GetFromCacheArray(data.m_segmentId, textDescriptor, RenderUtils.CacheArrayTypes.StreetQualifier, baseFont),
+                TextType.District => GetFromCacheArray(data.m_districtId, textDescriptor, RenderUtils.CacheArrayTypes.Districts, baseFont),
+                TextType.Park => GetFromCacheArray(data.m_districtParkId, textDescriptor, RenderUtils.CacheArrayTypes.Parks, baseFont),
+                TextType.PostalCode => GetFromCacheArray(data.m_segmentId, textDescriptor, RenderUtils.CacheArrayTypes.PostalCode, baseFont),
+
+                _ => null,
+            };
+        }
+
+        private static BasicRenderInformation GetTextForBuilding(BoardTextDescriptorGeneralXml textDescriptor, ushort refID, int boardIdx, ref IEnumerable<BasicRenderInformation> multipleOutput, ref DynamicSpriteFont baseFont, BoardInstanceBuildingXml buildingDescritpor)
+        {
+            ref BoardBunchContainerBuilding data = ref WTSBuildingsData.Instance.BoardsContainers[refID, 0, 0][boardIdx];
+            if (data == null)
+            {
+                return null;
+            }
+            baseFont ??= FontServer.instance[WTSBuildingsData.Instance.DefaultFont];
+            TextType targetType = textDescriptor.m_textType;
+            switch (targetType)
+            {
+                case TextType.GameSprite: return WriteTheSignsMod.Controller.SpriteRenderingRules.GetSpriteFromDefaultAtlas(textDescriptor.m_spriteName);
+                case TextType.Fixed: return RenderUtils.GetTextData(textDescriptor.m_fixedText ?? "", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
+                case TextType.OwnName: return GetFromCacheArray(refID, textDescriptor, RenderUtils.CacheArrayTypes.BuildingName, baseFont);
+                case TextType.NextStopLine: return GetFromCacheArray(GetTargetStopInfo(buildingDescritpor, refID).FirstOrDefault().NextStopBuildingId, textDescriptor, RenderUtils.CacheArrayTypes.BuildingName, baseFont);
+                case TextType.PrevStopLine: return GetFromCacheArray(GetTargetStopInfo(buildingDescritpor, refID).FirstOrDefault().PrevStopBuildingId, textDescriptor, RenderUtils.CacheArrayTypes.BuildingName, baseFont);
+                case TextType.LastStopLine: return GetFromCacheArray(GetTargetStopInfo(buildingDescritpor, refID).FirstOrDefault().DestinationBuildingId, textDescriptor, RenderUtils.CacheArrayTypes.BuildingName, baseFont);
+                case TextType.StreetPrefix: return GetFromCacheArray(WTSBuildingDataCaches.GetBuildingMainAccessSegment(refID), textDescriptor, RenderUtils.CacheArrayTypes.StreetQualifier, baseFont);
+                case TextType.StreetSuffix: return GetFromCacheArray(WTSBuildingDataCaches.GetBuildingMainAccessSegment(refID), textDescriptor, RenderUtils.CacheArrayTypes.SuffixStreetName, baseFont);
+                case TextType.StreetNameComplete: return GetFromCacheArray(WTSBuildingDataCaches.GetBuildingMainAccessSegment(refID), textDescriptor, RenderUtils.CacheArrayTypes.FullStreetName, baseFont);
+                case TextType.PlatformNumber: return RenderUtils.GetTextData((buildingDescritpor.m_platforms.FirstOrDefault() + 1).ToString(), textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
+                case TextType.LinesSymbols:
+                    multipleOutput = WriteTheSignsMod.Controller.SpriteRenderingRules.DrawLineFormats(GetAllTargetStopInfo(buildingDescritpor, refID).GroupBy(x => x.m_lineId).Select(x => x.First()).Select(x => (int)x.m_lineId));
+                    return null;
+                default:
+                    return null;
+            }
+        }
+
+        private static BasicRenderInformation GetTextForVehicle(BoardTextDescriptorGeneralXml textDescriptor, ushort refID, ref DynamicSpriteFont baseFont, LayoutDescriptorVehicleXml vehicleDescriptor)
+        {
+            baseFont ??= FontServer.instance[vehicleDescriptor.FontName] ?? FontServer.instance[WTSVehicleData.Instance.DefaultFont];
+            TextType targetType = textDescriptor.m_textType;
+            switch (targetType)
+            {
+                case TextType.GameSprite: return WriteTheSignsMod.Controller.SpriteRenderingRules.GetSpriteFromDefaultAtlas(textDescriptor.m_spriteName);
+                case TextType.Fixed: return RenderUtils.GetTextData(textDescriptor.m_fixedText ?? "", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
+                case TextType.OwnName: return GetFromCacheArray(refID, textDescriptor, RenderUtils.CacheArrayTypes.VehicleNumber, baseFont);
+                case TextType.LineIdentifier:
+                    ref Vehicle[] buffer = ref VehicleManager.instance.m_vehicles.m_buffer;
+                    ref Vehicle vehicle = ref buffer[buffer[refID].GetFirstVehicle(refID)];
+                    var transportLine = vehicle.m_transportLine;
+                    if (transportLine > 0)
+                    {
+                        return GetFromCacheArray(transportLine, textDescriptor, RenderUtils.CacheArrayTypes.LineIdentifier, baseFont);
+                    }
+                    else
+                    {
+                        if (vehicle.m_targetBuilding == 0)
+                        {
+                            return RenderUtils.GetTextData(vehicle.m_sourceBuilding.ToString("D5"), textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
+                        }
+                        else
+                        {
+                            return RenderUtils.GetTextData($"R{vehicle.m_targetBuilding.ToString("X4")}", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
+                        }
+                    }
+                case TextType.LinesSymbols:
+                    ref Vehicle[] buffer1 = ref VehicleManager.instance.m_vehicles.m_buffer;
+                    return WriteTheSignsMod.Controller.SpriteRenderingRules.DrawLineFormats(new int[] { buffer1[buffer1[refID].GetFirstVehicle(refID)].m_transportLine }).FirstOrDefault();
+                case TextType.LastStopLine:
+                    ref Vehicle[] buffer2 = ref VehicleManager.instance.m_vehicles.m_buffer;
+                    ref Vehicle targetVehicle = ref buffer2[buffer2[refID].GetFirstVehicle(refID)];
+
+                    if (targetVehicle.m_transportLine == 0)
+                    {
+                        if (targetVehicle.m_targetBuilding == 0)
+                        {
+                            return GetFromCacheArray(targetVehicle.m_sourceBuilding, textDescriptor, RenderUtils.CacheArrayTypes.BuildingName, baseFont);
+                        }
+                        else
+                        {
+                            return GetFromCacheArray(WTSBuildingDataCaches.GetStopBuilding(targetVehicle.m_targetBuilding, targetVehicle.m_transportLine), textDescriptor, RenderUtils.CacheArrayTypes.BuildingName, baseFont);
+                        }
+                    }
+                    else
+                    {
+                        var target = targetVehicle.m_targetBuilding;
+                        var lastTarget = TransportLine.GetPrevStop(target);
+                        ref StopInformation stopInfo = ref GetTargetStopInfo(lastTarget);
+                        if (stopInfo.m_lineId == 0)
+                        {
+                            WriteTheSignsMod.Controller.ConnectorTLM.MapLineDestinations(targetVehicle.m_transportLine);
+                            stopInfo = ref GetTargetStopInfo(TransportLine.GetPrevStop(target));
+                        }
+                        BasicRenderInformation result;
+                        if (stopInfo.m_destinationString != null)
+                        {
+                            result = RenderUtils.GetTextData(stopInfo.m_destinationString, textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
+                        }
+                        else if (stopInfo.m_destinationId != 0)
+                        {
+                            result = RenderUtils.GetTextData(WriteTheSignsMod.Controller.ConnectorTLM.GetStopName(stopInfo.m_destinationId, targetVehicle.m_transportLine), textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
+                        }
+                        else
+                        {
+                            result = RenderUtils.GetTextData(WriteTheSignsMod.Controller.ConnectorTLM.GetStopName(targetVehicle.m_targetBuilding, targetVehicle.m_transportLine), textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
+                        }
+
+
+                        return result;
+                    }
+
+                default:
+                    return null;
+            }
+        }
+
+        private static BasicRenderInformation GetTextForPreview(BoardTextDescriptorGeneralXml textDescriptor, BoardDescriptorGeneralXml propLayout, ref IEnumerable<BasicRenderInformation> multipleOutput, ref DynamicSpriteFont baseFont, BoardPreviewInstanceXml preview)
+        {
+            switch (propLayout?.m_allowedRenderClass)
+            {
+                case TextRenderingClass.RoadNodes:
+                    baseFont ??= FontServer.instance[WTSRoadNodesData.Instance.DefaultFont];
+                    break;
+                case TextRenderingClass.MileageMarker:
+                    baseFont ??= FontServer.instance[WTSRoadNodesData.Instance.DefaultFont];
+                    break;
+                case TextRenderingClass.Buildings:
+                    baseFont ??= FontServer.instance[WTSBuildingsData.Instance.DefaultFont];
+                    break;
+                case null:
+                    baseFont ??= FontServer.instance[WTSVehicleData.Instance.DefaultFont];
+                    break;
+            }
+            if (!preview.m_overrideText.IsNullOrWhiteSpace() && !textDescriptor.IsSpriteText())
+            {
+                return RenderUtils.GetTextData(preview.m_overrideText, "", "", baseFont, textDescriptor.m_overrideFont);
+            }
+
+            string otherText = "";
+            if (textDescriptor.IsTextRelativeToSegment())
+            {
+                otherText = $"({textDescriptor.m_destinationRelative}) ";
+            }
+            switch (textDescriptor.m_textType)
+            {
+                case TextType.Fixed: return RenderUtils.GetTextData(textDescriptor.m_fixedText ?? "", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
+                case TextType.DistanceFromReference: return RenderUtils.GetTextData("00", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
+                case TextType.PostalCode: return RenderUtils.GetTextData("00000", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
+                case TextType.StreetSuffix: return RenderUtils.GetTextData($"{otherText}Suffix", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
+                case TextType.StreetPrefix: return RenderUtils.GetTextData($"{otherText}Pre.", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
+                case TextType.StreetNameComplete: return RenderUtils.GetTextData($"{otherText}Full road name", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
+                case TextType.District: return RenderUtils.GetTextData($"{otherText}District", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
+                case TextType.DistrictOrPark: return RenderUtils.GetTextData($"{otherText}District or Area", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
+                case TextType.ParkOrDistrict: return RenderUtils.GetTextData($"{otherText}Area or District", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
+                case TextType.Park: return RenderUtils.GetTextData($"{otherText}Area", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
+                case TextType.PlatformNumber: return RenderUtils.GetTextData("00", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
+                case TextType.LinesSymbols:
+                    multipleOutput = WriteTheSignsMod.Controller.SpriteRenderingRules.DrawLineFormats(new int[textDescriptor.MultiItemSettings.SubItemsPerColumn * textDescriptor.MultiItemSettings.SubItemsPerRow].Select((x, y) => -y - 1));
+
+                    return null;
+                case TextType.GameSprite:
+                    return WriteTheSignsMod.Controller.SpriteRenderingRules.GetSpriteFromDefaultAtlas(textDescriptor.m_spriteName);
+                default:
+                    string text = $"{textDescriptor.m_textType}: {preview.m_currentText}";
+                    if (textDescriptor.m_allCaps)
+                    {
+                        text = text.ToUpper();
+                    }
+                    return RenderUtils.GetTextData(text, textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
+            };
+        }
 
         private static StopInformation[] GetTargetStopInfo(BoardInstanceBuildingXml descriptor, ushort buildingId)
         {
@@ -999,11 +1020,10 @@ namespace Klyte.WriteTheSigns.Rendering
 
         private static readonly StopInformation[] m_emptyInfo = new StopInformation[0];
 
-
         private static BasicRenderInformation GetFromCacheArray(ushort reference, BoardTextDescriptorGeneralXml textDescriptor, RenderUtils.CacheArrayTypes cacheType, DynamicSpriteFont baseFont)
             => RenderUtils.GetFromCacheArray2(reference, textDescriptor.m_prefix, textDescriptor.m_suffix, textDescriptor.m_allCaps, textDescriptor.m_applyAbbreviations, cacheType, baseFont, textDescriptor.m_overrideFont);
 
-
+        #endregion
     }
 
 

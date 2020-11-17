@@ -130,7 +130,7 @@ namespace Klyte.WriteTheSigns.UI
             instanceInfo.SetCurrentMode(currentMode, currentSubMode);
             instanceInfo.UpdateInfoMode();
 
-            return default;//propMatrix;
+            return propMatrix;
         }
 
 

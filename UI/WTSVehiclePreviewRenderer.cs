@@ -12,7 +12,7 @@ namespace Klyte.WriteTheSigns.UI
 
         protected override Matrix4x4 RenderMesh(VehicleInfo info, BoardTextDescriptorGeneralXml[] textDescriptors, Vector3 position, Quaternion rotation, Vector3 scale, Matrix4x4 sourceMatrix, out Color targetColor)
         {
-            targetColor = WTSPropRenderingRules.GetColor(0, 0, 0, m_defaultInstance, null, out _);
+            targetColor = WTSPropRenderingRules.GetPropColor(0, 0, 0, m_defaultInstance, null, out _);
             VehicleManager instance2 = Singleton<VehicleManager>.instance;
             Matrix4x4 matrix = Matrix4x4.TRS(position, rotation, scale) * sourceMatrix;
             Matrix4x4 value = info.m_vehicleAI.CalculateTyreMatrix(Vehicle.Flags.Created, ref position, ref rotation, ref scale, ref matrix);
