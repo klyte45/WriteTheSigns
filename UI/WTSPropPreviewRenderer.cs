@@ -18,7 +18,7 @@ namespace Klyte.WriteTheSigns.UI
             PropManager instance = Singleton<PropManager>.instance;
             MaterialPropertyBlock materialBlock = instance.m_materialBlock;
             materialBlock.Clear();
-            targetColor = WTSPropRenderingRules.GetPropColor(0, 0, 0, m_defaultInstance, null, out bool colorFound);
+            targetColor = WTSDynamicTextRenderingRules.GetPropColor(0, 0, 0, m_defaultInstance, null, out bool colorFound);
             materialBlock.SetColor(instance.ID_Color, colorFound ? targetColor : Color.white);
 
             PropManager propManager = instance;

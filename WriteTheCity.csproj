@@ -231,7 +231,7 @@
     <Compile Include="Overrides\BuildingManagerOverrides.cs" />
     <Compile Include="Overrides\DistrictManagerOverrides.cs" />
     <Compile Include="Rendering\TextRenderingClass.cs" />
-    <Compile Include="Rendering\WTSPropRenderingRules.cs" />
+    <Compile Include="Rendering\WTSDynamicTextRenderingRules.cs" />
     <Compile Include="Tools\BuildingTool.cs" />
     <Compile Include="UI\Tabs\RoadCornerEditor\WTSRoadCornerEditorDetailTabs.cs" />
     <Compile Include="UI\Tabs\BuildingEditor\WTSBuildingLayoutEditor.cs" />

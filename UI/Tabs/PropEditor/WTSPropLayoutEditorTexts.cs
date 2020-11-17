@@ -227,8 +227,8 @@ namespace Klyte.WriteTheSigns.UI
             m_dropdownBlinkType.selectedIndex = (int)x.IlluminationConfig.BlinkType;
             m_textFixedColor.selectedColor = x.ColoringConfig.m_defaultColor;
 
-            m_dropdownTextContent.items = WTSPropRenderingRules.ALLOWED_TYPES_PER_RENDERING_CLASS[WTSPropLayoutEditor.Instance.EditingInstance.m_allowedRenderClass].Select(x => Locale.Get("K45_WTS_BOARD_TEXT_TYPE_DESC", x.ToString())).ToArray();
-            m_dropdownTextContent.selectedIndex = Array.IndexOf(WTSPropRenderingRules.ALLOWED_TYPES_PER_RENDERING_CLASS[WTSPropLayoutEditor.Instance.EditingInstance.m_allowedRenderClass], x.m_textType);
+            m_dropdownTextContent.items = WTSDynamicTextRenderingRules.ALLOWED_TYPES_PER_RENDERING_CLASS[WTSPropLayoutEditor.Instance.EditingInstance.m_allowedRenderClass].Select(x => Locale.Get("K45_WTS_BOARD_TEXT_TYPE_DESC", x.ToString())).ToArray();
+            m_dropdownTextContent.selectedIndex = Array.IndexOf(WTSDynamicTextRenderingRules.ALLOWED_TYPES_PER_RENDERING_CLASS[WTSPropLayoutEditor.Instance.EditingInstance.m_allowedRenderClass], x.m_textType);
             m_customText.text = x.m_fixedText ?? "";
             m_destinationRef.selectedIndex = (int)(x.m_destinationRelative + 1);
             m_referenceNode.selectedIndex = x.m_targetNodeRelative + 7;
@@ -367,7 +367,7 @@ namespace Klyte.WriteTheSigns.UI
             {
                 if (sel >= 0)
                 {
-                    desc.m_textType = WTSPropRenderingRules.ALLOWED_TYPES_PER_RENDERING_CLASS[WTSPropLayoutEditor.Instance.EditingInstance.m_allowedRenderClass][sel];
+                    desc.m_textType = WTSDynamicTextRenderingRules.ALLOWED_TYPES_PER_RENDERING_CLASS[WTSPropLayoutEditor.Instance.EditingInstance.m_allowedRenderClass][sel];
                     ApplyShowRules(desc);
                 }
             });

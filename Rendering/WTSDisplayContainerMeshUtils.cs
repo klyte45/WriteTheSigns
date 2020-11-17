@@ -152,7 +152,9 @@ namespace Klyte.WriteTheSigns.Rendering
                Q3
             };
 
-            tangents = new Vector4[]
+            tangents = m_tangents;
+        }
+        private static readonly Vector4[] m_tangents = new Vector4[]
             {
            /* 0 */   new Vector4(1,0,0,1),
            /* 1 */   new Vector4(1,0,0,1),
@@ -192,9 +194,8 @@ namespace Klyte.WriteTheSigns.Rendering
            /*32 */   new Vector4(0,1,0,1),   
            /*33 */   new Vector4(0,1,0,1),   
            /*34 */   new Vector4(0,1,0,-1),   
-           /*35 */   new Vector4(0,1,0,-1),   
+           /*35 */   new Vector4(0,1,0,-1),
             };
-        }
 
         public static readonly int[] m_triangles = new int[]
         {

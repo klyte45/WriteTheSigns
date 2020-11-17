@@ -16,7 +16,7 @@ using UnityEngine;
 
 namespace Klyte.WriteTheSigns.Rendering
 {
-    internal static class WTSPropRenderingRules
+    internal static class WTSDynamicTextRenderingRules
     {
         public const float SCALING_FACTOR = 0.005f;
         public static readonly int SHADER_PROP_COLOR = Shader.PropertyToID("_Color");
@@ -38,6 +38,7 @@ namespace Klyte.WriteTheSigns.Rendering
         private static Mesh m_genMesh;
         private static Mesh m_genMeshInv;
         private static Mesh m_genMeshGlass;
+
 
         public static readonly Dictionary<TextRenderingClass, TextType[]> ALLOWED_TYPES_PER_RENDERING_CLASS = new Dictionary<TextRenderingClass, TextType[]>
         {
@@ -105,7 +106,7 @@ namespace Klyte.WriteTheSigns.Rendering
         #region Main flow
         public static Color RenderPropMesh(ref PropInfo propInfo, RenderManager.CameraInfo cameraInfo, ushort refId, int boardIdx, int secIdx, int layerMask, float refAngleRad, Vector3 position, Vector4 dataVector, ref string propName, Vector3 propAngle, Vector3 propScale, BoardDescriptorGeneralXml propLayout, BoardInstanceXml descriptor, out Matrix4x4 propMatrix, out bool rendered, InstanceID propRenderID)
         {
-            Color propColor = WTSPropRenderingRules.GetPropColor(refId, boardIdx, secIdx, descriptor, propLayout, out bool colorFound);
+            Color propColor = WTSDynamicTextRenderingRules.GetPropColor(refId, boardIdx, secIdx, descriptor, propLayout, out bool colorFound);
             if (!colorFound)
             {
                 rendered = false;
@@ -284,7 +285,7 @@ namespace Klyte.WriteTheSigns.Rendering
 
         private static Matrix4x4 DrawBgMesh(ref Matrix4x4 propMatrix, BoardTextDescriptorGeneralXml textDescriptor, MaterialPropertyBlock materialPropertyBlock, ref Vector3 targetPos, ref Vector3 targetRotation, ref Vector3 baseScale, UIHorizontalAlignment targetTextAlignment, Camera targetCamera, Tuple<Matrix4x4, Tuple<Matrix4x4, Matrix4x4, Matrix4x4, Matrix4x4>> textMatrixTuple, PropManager instance, BasicRenderInformation bgBri)
         {
-            materialPropertyBlock.SetColor(WTSPropRenderingRules.SHADER_PROP_COLOR, textDescriptor.BackgroundMeshSettings.BackgroundColor * new Color(1, 1, 1, 0));
+            materialPropertyBlock.SetColor(WTSDynamicTextRenderingRules.SHADER_PROP_COLOR, textDescriptor.BackgroundMeshSettings.BackgroundColor * new Color(1, 1, 1, 0));
             materialPropertyBlock.SetVector(instance.ID_ObjectIndex, new Vector4());
             var bgBriMatrix = ApplyTextAdjustments(targetPos, targetRotation, bgBri, baseScale, textDescriptor.BackgroundMeshSettings.Size.Y, targetTextAlignment, textDescriptor.BackgroundMeshSettings.Size.X, false, false);
 
@@ -307,6 +308,8 @@ namespace Klyte.WriteTheSigns.Rendering
         }
         private static void DrawTextFrame(BoardTextDescriptorGeneralXml textDescriptor, MaterialPropertyBlock materialPropertyBlock, ref Vector3 targetPos, ref Vector3 targetRotation, ref Vector3 baseScale, ref Color parentColor, PrefabInfo srcInfo, Camera targetCamera, ref Matrix4x4 containerMatrix)
         {
+            var frameConfig = textDescriptor.BackgroundMeshSettings.FrameMeshSettings;
+
             if (m_genMesh == null)
             {
                 WTSDisplayContainerMeshUtils.GenerateDisplayContainer(new Vector2(1, 1), new Vector2(1, 1), new Vector2(), 0.05f, 0.3f, 0.1f, out Vector3[] points, out Vector4[] tangents);
@@ -316,10 +319,8 @@ namespace Klyte.WriteTheSigns.Rendering
                     triangles = WTSDisplayContainerMeshUtils.m_triangles,
                     uv = points.Select((x, i) => new Vector2(i / 4f % 1, i / 2f % 1)).ToArray(),
                     colors = points.Select(x => Color.blue).ToArray(),
-
+                    tangents = tangents
                 };
-                m_genMesh.RecalculateNormals();
-                m_genMesh.tangents = tangents;
 
                 m_genMeshInv = new Mesh
                 {
@@ -339,68 +340,13 @@ namespace Klyte.WriteTheSigns.Rendering
                     tangents = tangents
                 };
             }
-            if (textDescriptor.BackgroundMeshSettings.FrameMeshSettings.cachedFrameArray == null)
-            {
-                WTSDisplayContainerMeshUtils.GenerateDisplayContainer(textDescriptor.BackgroundMeshSettings.Size,
-                    textDescriptor.BackgroundMeshSettings.FrameMeshSettings.BackSize,
-                    textDescriptor.BackgroundMeshSettings.FrameMeshSettings.BackOffset,
-                    textDescriptor.BackgroundMeshSettings.FrameMeshSettings.FrontDepth,
-                    textDescriptor.BackgroundMeshSettings.FrameMeshSettings.BackDepth,
-                    textDescriptor.BackgroundMeshSettings.FrameMeshSettings.FrontBorderThickness,
-                    out textDescriptor.BackgroundMeshSettings.FrameMeshSettings.cachedFrameArray,
-                    out Vector4[] tangents);
-
-                textDescriptor.BackgroundMeshSettings.FrameMeshSettings.meshInnerContainer = new Mesh()
-                {
-                    vertices = textDescriptor.BackgroundMeshSettings.FrameMeshSettings.cachedFrameArray,
-                    triangles = m_genMeshInv.triangles,
-                    uv = m_genMeshInv.uv,
-                    normals = m_genMeshInv.normals,
-                    colors = m_genMeshInv.colors,
-                };
-                textDescriptor.BackgroundMeshSettings.FrameMeshSettings.meshOuterContainer = new Mesh()
-                {
-                    vertices = textDescriptor.BackgroundMeshSettings.FrameMeshSettings.cachedFrameArray,
-                    triangles = m_genMesh.triangles,
-                    uv = m_genMesh.uv,
-                    normals = m_genMesh.normals,
-                    colors = m_genMesh.colors,
-                };
-                textDescriptor.BackgroundMeshSettings.FrameMeshSettings.meshGlass = new Mesh()
-                {
-                    vertices = textDescriptor.BackgroundMeshSettings.FrameMeshSettings.cachedFrameArray.Take(4).ToArray(),
-                    triangles = m_genMeshGlass.triangles,
-                    uv = m_genMeshGlass.uv,
-                    normals = m_genMeshGlass.normals,
-                    colors = textDescriptor.BackgroundMeshSettings.FrameMeshSettings.cachedFrameArray.Take(4).Select(x => new Color(.4f, 0, 0, 0)).ToArray(),
-                };
-                foreach (var k in new Mesh[]{
-                                    textDescriptor.BackgroundMeshSettings.FrameMeshSettings.meshOuterContainer,
-                                    textDescriptor.BackgroundMeshSettings.FrameMeshSettings.meshInnerContainer,
-                                     textDescriptor.BackgroundMeshSettings.FrameMeshSettings.meshGlass
-                                    })
-                {
-                    k.tangents = tangents;
-                    k.RecalculateNormals();
-                    //MeshUtils.SolveTangents(k);
-                    //k.tangents = k.tangents.Select(x => new Vector4(0,1,0,1)).ToArray();
-                }
-            }
             var instance2 = Singleton<VehicleManager>.instance;
-            Matrix4x4 value;
-            if (srcInfo is VehicleInfo vi)
-            {
-                var idt = Matrix4x4.identity;
-                var qtr = Quaternion.Euler(targetRotation);
-                value = vi.m_vehicleAI.CalculateTyreMatrix(Vehicle.Flags.Created | Vehicle.Flags.Spawned | Vehicle.Flags.TransferToTarget, ref targetPos, ref qtr, ref baseScale, ref idt);
-            }
-            else
-            {
-                return;
-            }
             if (m_rotorMaterial == null)
             {
-                m_rotorMaterial = new Material(Shader.Find("Custom/Vehicles/Vehicle/Rotors"));
+                m_rotorMaterial = new Material(Shader.Find("Custom/Vehicles/Vehicle/Rotors"))
+                {
+                    mainTexture = Texture2D.whiteTexture
+                };
                 var targetTexture = new Texture2D(1, 1);
                 targetTexture.SetPixels(targetTexture.GetPixels().Select(x => new Color(.5f, .5f, 0.7f, 1)).ToArray());
                 targetTexture.Apply();
@@ -428,19 +374,91 @@ namespace Klyte.WriteTheSigns.Rendering
                 m_outsideMaterial.SetVector(instance2.ID_LightState, Vector3.zero);
                 m_outsideMaterial.SetVector(instance2.ID_TyrePosition, Vector3.zero);
                 m_outsideMaterial.SetMatrix(instance2.ID_TyreMatrix, Matrix4x4.identity);
-                m_outsideMaterial.SetColor(WTSPropRenderingRules.SHADER_PROP_COLOR, Color.black * new Color(1, 1, 1, 0));
+                m_outsideMaterial.SetColor(WTSDynamicTextRenderingRules.SHADER_PROP_COLOR, Color.black * new Color(1, 1, 1, 0));
                 m_outsideMaterial.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive | MaterialGlobalIlluminationFlags.EmissiveIsBlack;
             }
 
-            Graphics.DrawMesh(textDescriptor.BackgroundMeshSettings.FrameMeshSettings.meshGlass, containerMatrix, m_rotorMaterial, srcInfo.m_prefabDataIndex, targetCamera, 0);
+            if (frameConfig.cachedFrameArray == null)
+            {
+                WTSDisplayContainerMeshUtils.GenerateDisplayContainer(textDescriptor.BackgroundMeshSettings.Size,
+                    frameConfig.BackSize,
+                    frameConfig.BackOffset,
+                    frameConfig.FrontDepth,
+                    frameConfig.BackDepth,
+                    frameConfig.FrontBorderThickness,
+                    out frameConfig.cachedFrameArray,
+                    out Vector4[] tangents);
+
+                frameConfig.meshInnerContainer = new Mesh()
+                {
+                    vertices = frameConfig.cachedFrameArray,
+                    triangles = m_genMeshInv.triangles,
+                    uv = m_genMeshInv.uv,
+                    normals = m_genMeshInv.normals,
+                    colors = m_genMeshInv.colors,
+                    tangents = tangents
+                };
+                frameConfig.meshOuterContainer = new Mesh()
+                {
+                    vertices = frameConfig.cachedFrameArray,
+                    triangles = m_genMesh.triangles,
+                    uv = m_genMesh.uv,
+                    normals = m_genMesh.normals,
+                    colors = m_genMesh.colors,
+                    tangents = tangents
+                };
+                frameConfig.meshGlass = new Mesh()
+                {
+                    vertices = frameConfig.cachedFrameArray.Take(4).ToArray(),
+                    triangles = m_genMeshGlass.triangles,
+                    uv = m_genMeshGlass.uv,
+                    normals = m_genMeshGlass.normals,
+                    colors = frameConfig.cachedFrameArray.Take(4).Select(x => new Color(1 - frameConfig.GlassTransparency, 0, 0, 0)).ToArray(),
+                    tangents = tangents.Take(4).ToArray()
+                };
+                foreach (var k in new Mesh[] { frameConfig.meshOuterContainer, frameConfig.meshInnerContainer, frameConfig.meshGlass })
+                {
+
+                    k.RecalculateNormals();
+                }
+
+                frameConfig.cachedGlassMain ??= new Texture2D(1, 1);
+                frameConfig.cachedGlassXYS ??= new Texture2D(1, 1);
+                frameConfig.cachedOuterXYS ??= new Texture2D(1, 1);
+                frameConfig.cachedGlassMain.SetPixels(new Color[] { frameConfig.GlassColor });
+                frameConfig.cachedGlassXYS.SetPixels(new Color[] { new Color(.5f, .5f, 1 - frameConfig.GlassSpecularLevel, 1) });
+                frameConfig.cachedOuterXYS.SetPixels(new Color[] { new Color(.5f, .5f, 1 - frameConfig.OuterSpecularLevel, 1) });
+                frameConfig.cachedGlassMain.Apply();
+                frameConfig.cachedGlassXYS.Apply();
+                frameConfig.cachedOuterXYS.Apply();
+
+
+            }
+            Matrix4x4 value;
+            if (srcInfo is VehicleInfo vi)
+            {
+                var idt = Matrix4x4.identity;
+                var qtr = Quaternion.Euler(targetRotation);
+                value = vi.m_vehicleAI.CalculateTyreMatrix(Vehicle.Flags.Created | Vehicle.Flags.Spawned | Vehicle.Flags.TransferToTarget, ref targetPos, ref qtr, ref baseScale, ref idt);
+            }
+            else
+            {
+                return;
+            }
+
+            materialPropertyBlock.Clear();
+            materialPropertyBlock.SetTexture(instance2.ID_XYSMap, frameConfig.cachedGlassXYS);
+            materialPropertyBlock.SetTexture(instance2.ID_MainTex, frameConfig.cachedGlassMain);
+            Graphics.DrawMesh(frameConfig.meshGlass, containerMatrix,m_rotorMaterial, srcInfo.m_prefabDataIndex, targetCamera, 0, materialPropertyBlock);
 
             materialPropertyBlock.Clear();
             materialPropertyBlock.SetVectorArray(instance2.ID_TyreLocation, vi.m_generatedInfo.m_tyres);
 
-            Graphics.DrawMesh(textDescriptor.BackgroundMeshSettings.FrameMeshSettings.meshInnerContainer, containerMatrix, m_outsideMaterial, srcInfo.m_prefabDataIndex, targetCamera, 0, materialPropertyBlock, true, true);
-            var color = textDescriptor.BackgroundMeshSettings.FrameMeshSettings.InheritColor ? parentColor : textDescriptor.BackgroundMeshSettings.FrameMeshSettings.OutsideColor;
-            materialPropertyBlock.SetColor(WTSPropRenderingRules.SHADER_PROP_COLOR, color * new Color(1, 1, 1, 0));
-            Graphics.DrawMesh(textDescriptor.BackgroundMeshSettings.FrameMeshSettings.meshOuterContainer, containerMatrix, m_outsideMaterial, srcInfo.m_prefabDataIndex, targetCamera, 0, materialPropertyBlock, true, true);
+            Graphics.DrawMesh(frameConfig.meshInnerContainer, containerMatrix, m_outsideMaterial, srcInfo.m_prefabDataIndex, targetCamera, 0, materialPropertyBlock, true, true);
+            var color = frameConfig.InheritColor ? parentColor : frameConfig.OutsideColor;
+            materialPropertyBlock.SetColor(WTSDynamicTextRenderingRules.SHADER_PROP_COLOR, color * new Color(1, 1, 1, 0));
+            materialPropertyBlock.SetTexture(instance2.ID_XYSMap, frameConfig.cachedOuterXYS);
+            Graphics.DrawMesh(frameConfig.meshOuterContainer, containerMatrix, m_outsideMaterial, srcInfo.m_prefabDataIndex, targetCamera, 0, materialPropertyBlock, true, true);
         }
         #endregion
         #region Illumination handling

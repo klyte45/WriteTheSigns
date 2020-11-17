@@ -191,7 +191,7 @@ namespace Klyte.WriteTheSigns.Rendering
                 }
                 else if (lineId < 0)
                 {
-                    lineParams = Tuple.New(KlyteResourceLoader.GetDefaultSpriteNameFor((LineIconSpriteNames)(-lineId % (Enum.GetValues(typeof(LineIconSpriteNames)).Length - 1) + 1)), WTSPropRenderingRules.m_spectreSteps[(-lineId) % WTSPropRenderingRules.m_spectreSteps.Length], $"{-lineId}");
+                    lineParams = Tuple.New(KlyteResourceLoader.GetDefaultSpriteNameFor((LineIconSpriteNames)(-lineId % (Enum.GetValues(typeof(LineIconSpriteNames)).Length - 1) + 1)), WTSDynamicTextRenderingRules.m_spectreSteps[(-lineId) % WTSDynamicTextRenderingRules.m_spectreSteps.Length], $"{-lineId}");
                 }
                 else
                 {

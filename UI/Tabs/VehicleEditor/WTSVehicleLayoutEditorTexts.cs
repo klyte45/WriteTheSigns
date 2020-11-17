@@ -65,6 +65,10 @@ namespace Klyte.WriteTheSigns.UI
         private UITextField m_frameFrontBorder;
         private UIColorField m_frameColor;
         private UICheckBox m_frameUseVehicleColor;
+        private UISlider m_frameGlassTransparency;
+        private UIColorField m_frameGlassColor;
+        private UISlider m_frameOuterSpecularLevel;
+        private UISlider m_frameGlassSpecularLevel;
 
         private UIDropDown m_dropdownTextContent;
         private UITextField m_customText;
@@ -88,13 +92,13 @@ namespace Klyte.WriteTheSigns.UI
             MainContainer = GetComponent<UIPanel>();
             MainContainer.autoLayout = true;
             MainContainer.autoLayoutDirection = LayoutDirection.Vertical;
-            MainContainer.padding = new RectOffset(5, 5, 5, 5); 
+            MainContainer.padding = new RectOffset(5, 5, 5, 5);
             MainContainer.autoLayoutPadding = new RectOffset(0, 0, 3, 3);
 
             KlyteMonoUtils.CreateTabsComponent(out m_tabstrip, out m_tabContainer, MainContainer.transform, "TextEditor", new Vector4(0, 0, MainContainer.width, 40), new Vector4(0, 0, MainContainer.width, 315));
             m_tabSettings = TabCommons.CreateNonScrollableTabLocalized(m_tabstrip, KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_Settings), "K45_WTS_GENERAL_SETTINGS", "TxtSettings");
             m_tabSize = TabCommons.CreateNonScrollableTabLocalized(m_tabstrip, KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_MoveCross), "K45_WTS_TEXT_SIZE_ATTRIBUTES", "TxtSize");
-            m_tabAppearence = TabCommons.CreateNonScrollableTabLocalized(m_tabstrip, KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_AutoColorIcon), "K45_WTS_TEXT_APPEARANCE_ATTRIBUTES", "TxtApp"); 
+            m_tabAppearence = TabCommons.CreateNonScrollableTabLocalized(m_tabstrip, KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_AutoColorIcon), "K45_WTS_TEXT_APPEARANCE_ATTRIBUTES", "TxtApp");
             m_tabFrame = TabCommons.CreateScrollableTabLocalized(m_tabstrip, "frame", "K45_WTS_TEXT_CONTAINERFRAME_ATTRIBUTES", "TxtFrm");
             m_tabIllumination = TabCommons.CreateScrollableTabLocalized(m_tabstrip, "SubBarPropsCommonLights", "K45_WTS_TEXT_ILLUMINATION_ATTRIBUTES", "TxtIll");
             m_tabConfig = TabCommons.CreateNonScrollableTabLocalized(m_tabstrip, KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_AutoNameIcon), "K45_WTS_TEXT_CONFIGURATION_ATTRIBUTES", "TxtCnf");
@@ -127,10 +131,14 @@ namespace Klyte.WriteTheSigns.UI
             AddCheckboxLocale("K45_WTS_TEXT_USEFRAME", out m_useFrame, helperFrame, OnUseFrameChange);
             AddCheckboxLocale("K45_WTS_TEXT_CONTAINERUSEVEHICLECOLOR", out m_frameUseVehicleColor, helperFrame, OnFrameUseVehicleColorChange);
             AddColorField(helperFrame, Locale.Get("K45_WTS_TEXT_CONTAINEROUTERCOLOR"), out m_frameColor, OnFrameColorChanged);
-            AddVector2Field(Locale.Get("K45_WTS_TEXT_CONTAINERBACKSIZE"), out m_frameBackSize, helperFrame, OnFrameBackSizeChanged,true, false,false);
+            AddSlider(Locale.Get("K45_WTS_TEXT_CONTAINEROUTERSPECULARITY"), out m_frameOuterSpecularLevel, helperFrame, OnFrameOuterSpecularLevelChanged, 0, 1, 0.01f, (x) => (x * 100).ToString("F0") + "%");
+            AddVector2Field(Locale.Get("K45_WTS_TEXT_CONTAINERBACKSIZE"), out m_frameBackSize, helperFrame, OnFrameBackSizeChanged, true, false, false);
             AddVector2Field(Locale.Get("K45_WTS_TEXT_CONTAINERBACKOFFSET"), out m_frameBackOffset, helperFrame, OnFrameBackOffsetChanged);
             AddVector2Field(Locale.Get("K45_WTS_TEXT_CONTAINERDEPTHFRONTBACK"), out m_frameDepths, helperFrame, OnFrameDepthsChanged, true, false, false);
             AddFloatField(Locale.Get("K45_WTS_TEXT_CONTAINERFRONTBORDERTHICKNESS"), out m_frameFrontBorder, helperFrame, OnFrameBorderThicknessChanged, false);
+            AddColorField(helperFrame, Locale.Get("K45_WTS_TEXT_CONTAINERGLASSCOLOR"), out m_frameGlassColor, OnFrameGlassColorChanged);
+            AddSlider(Locale.Get("K45_WTS_TEXT_CONTAINERGLASSTRANSPARENCY"), out m_frameGlassTransparency, helperFrame, OnFrameGlassTransparencyChanged, 0, 1, 0.01f, (x) => (x * 100).ToString("F0") + "%");
+            AddSlider(Locale.Get("K45_WTS_TEXT_CONTAINERGLASSSPECULARITY"), out m_frameGlassSpecularLevel, helperFrame, OnFrameGlassSpecularLevelChanged, 0, 1, 0.01f, (x) => (x * 100).ToString("F0") + "%");
 
             AddDropdown(Locale.Get("K45_WTS_TEXT_MATERIALTYPE"), out m_dropdownMaterialType, helperIllumination, Enum.GetNames(typeof(MaterialType)).Select(x => Locale.Get("K45_WTS_TEXTMATERIALTYPE", x.ToString())).ToArray(), OnSetMaterialType);
             AddSlider(Locale.Get("K45_WTS_TEXT_ILLUMINATIONSTRENGTH"), out m_sliderIllumination, helperIllumination, OnChangeIlluminationStrength, 0, 1, 0.025f, (x) => $"{x.ToString("P1")}");
@@ -152,7 +160,7 @@ namespace Klyte.WriteTheSigns.UI
             });
 
 
-            AddDropdown(Locale.Get("K45_WTS_TEXT_CONTENT"), out m_dropdownTextContent, helperConfig, WTSPropRenderingRules.ALLOWED_TYPES_VEHICLE.Select(x => Locale.Get("K45_WTS_BOARD_TEXT_TYPE_DESC_VEHICLE", x.ToString())).ToArray(), OnSetTextOwnNameContent);
+            AddDropdown(Locale.Get("K45_WTS_TEXT_CONTENT"), out m_dropdownTextContent, helperConfig, WTSDynamicTextRenderingRules.ALLOWED_TYPES_VEHICLE.Select(x => Locale.Get("K45_WTS_BOARD_TEXT_TYPE_DESC_VEHICLE", x.ToString())).ToArray(), OnSetTextOwnNameContent);
             AddTextField(Locale.Get("K45_WTS_CUSTOM_TEXT"), out m_customText, helperConfig, OnSetTextCustom);
             AddFilterableInput(Locale.Get("K45_WTS_SPRITE_NAME"), helperConfig, out m_spriteFilter, out UIListBox popup, OnFilterSprites, GetCurrentSpriteName, OnSpriteNameChanged);
             popup.processMarkup = true;
@@ -253,10 +261,14 @@ namespace Klyte.WriteTheSigns.UI
             m_frameDepths[0].text = x.BackgroundMeshSettings.FrameMeshSettings.FrontDepth.ToString("F3");
             m_frameDepths[1].text = x.BackgroundMeshSettings.FrameMeshSettings.BackDepth.ToString("F3");
             m_frameFrontBorder.text = x.BackgroundMeshSettings.FrameMeshSettings.FrontBorderThickness.ToString("F3");
-            m_frameUseVehicleColor.isChecked= x.BackgroundMeshSettings.FrameMeshSettings.InheritColor;
+            m_frameGlassTransparency.value = x.BackgroundMeshSettings.FrameMeshSettings.GlassTransparency;
+            m_frameOuterSpecularLevel.value = x.BackgroundMeshSettings.FrameMeshSettings.OuterSpecularLevel;
+            m_frameGlassSpecularLevel.value = x.BackgroundMeshSettings.FrameMeshSettings.GlassSpecularLevel;
+            m_frameUseVehicleColor.isChecked = x.BackgroundMeshSettings.FrameMeshSettings.InheritColor;
             m_frameColor.selectedColor = x.BackgroundMeshSettings.FrameMeshSettings.OutsideColor;
+            m_frameGlassColor.selectedColor = x.BackgroundMeshSettings.FrameMeshSettings.GlassColor;
 
-            m_dropdownTextContent.selectedIndex = Array.IndexOf(WTSPropRenderingRules.ALLOWED_TYPES_VEHICLE, x.m_textType);
+            m_dropdownTextContent.selectedIndex = Array.IndexOf(WTSDynamicTextRenderingRules.ALLOWED_TYPES_VEHICLE, x.m_textType);
             m_customText.text = x.m_fixedText ?? "";
             m_overrideFontSelect.selectedIndex = x.m_overrideFont == null ? 0 : x.m_overrideFont == WTSController.DEFAULT_FONT_KEY ? 1 : Array.IndexOf(m_overrideFontSelect.items, x.m_overrideFont);
             m_fontClassSelect.selectedIndex = (int)x.m_fontClass;
@@ -302,8 +314,12 @@ namespace Klyte.WriteTheSigns.UI
             m_frameBackOffset[0].parent.isVisible = x.BackgroundMeshSettings.UseFrame;
             m_frameDepths[0].parent.isVisible = x.BackgroundMeshSettings.UseFrame;
             m_frameFrontBorder.parent.isVisible = x.BackgroundMeshSettings.UseFrame;
+            m_frameGlassTransparency.parent.isVisible = x.BackgroundMeshSettings.UseFrame;
+            m_frameOuterSpecularLevel.parent.isVisible = x.BackgroundMeshSettings.UseFrame;
+            m_frameGlassSpecularLevel.parent.isVisible = x.BackgroundMeshSettings.UseFrame;
             m_frameUseVehicleColor.isVisible = x.BackgroundMeshSettings.UseFrame;
             m_frameColor.parent.isVisible = x.BackgroundMeshSettings.UseFrame && !x.BackgroundMeshSettings.FrameMeshSettings.InheritColor;
+            m_frameGlassColor.parent.isVisible = x.BackgroundMeshSettings.UseFrame;
         }
 
 
@@ -398,7 +414,7 @@ namespace Klyte.WriteTheSigns.UI
             {
                 if (sel >= 0)
                 {
-                    desc.m_textType = WTSPropRenderingRules.ALLOWED_TYPES_VEHICLE[sel];
+                    desc.m_textType = WTSDynamicTextRenderingRules.ALLOWED_TYPES_VEHICLE[sel];
                     ApplyShowRules(desc);
                 }
             });
@@ -473,6 +489,9 @@ namespace Klyte.WriteTheSigns.UI
 
         #region Frame
         private void OnFrameBorderThicknessChanged(float obj) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.BackgroundMeshSettings.FrameMeshSettings.FrontBorderThickness = obj);
+        private void OnFrameGlassTransparencyChanged(float obj) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.BackgroundMeshSettings.FrameMeshSettings.GlassTransparency = obj);
+        private void OnFrameGlassSpecularLevelChanged(float obj) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.BackgroundMeshSettings.FrameMeshSettings.GlassSpecularLevel = obj);
+        private void OnFrameOuterSpecularLevelChanged(float obj) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.BackgroundMeshSettings.FrameMeshSettings.OuterSpecularLevel = obj);
         private void OnFrameDepthsChanged(Vector2 obj) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) =>
         {
             desc.BackgroundMeshSettings.FrameMeshSettings.FrontDepth = obj.x;
@@ -492,6 +511,7 @@ namespace Klyte.WriteTheSigns.UI
             ApplyShowRules(desc);
         });
         private void OnFrameColorChanged(UIComponent component, Color value) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.BackgroundMeshSettings.FrameMeshSettings.OutsideColor = value);
+        private void OnFrameGlassColorChanged(UIComponent component, Color value) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.BackgroundMeshSettings.FrameMeshSettings.GlassColor = value);
         #endregion
     }
 

@@ -132,7 +132,7 @@ namespace Klyte.WriteTheSigns.Singleton
                         flags ^= Vehicle.Flags.Reversed;
                     }
                     ref Vehicle vehicle = ref instance.m_vehicles.m_buffer[vehicleId];
-                    WTSPropRenderingRules.RenderTextMesh(vehicleId, 0, 0, targetDescriptor, vehicleMatrix, null, ref targetDescriptor.TextDescriptors[j], properties, (int)flags, vehicle.Info.m_vehicleAI.GetColor(vehicleId, ref vehicle, InfoManager.InfoMode.None),v.Info);
+                    WTSDynamicTextRenderingRules.RenderTextMesh(vehicleId, 0, 0, targetDescriptor, vehicleMatrix, null, ref targetDescriptor.TextDescriptors[j], properties, (int)flags, vehicle.Info.m_vehicleAI.GetColor(vehicleId, ref vehicle, InfoManager.InfoMode.None),v.Info);
                 }
             }
 

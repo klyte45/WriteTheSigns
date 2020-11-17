@@ -133,13 +133,13 @@ namespace Klyte.WriteTheSigns.UI
                     float moveMultiplier = 1;
                     if (CurrentTextDescriptor != null)
                     {
-                        Vector3 textExt = WTSPropRenderingRules.GetTextMesh(CurrentTextDescriptor, 0, 0, 0, m_previewRenderer.GetDefaultInstance(), m_previewRenderer.GetDefaultInstance().Descriptor, out _)?.m_mesh?.bounds.extents ?? default;
+                        Vector3 textExt = WTSDynamicTextRenderingRules.GetTextMesh(CurrentTextDescriptor, 0, 0, 0, m_previewRenderer.GetDefaultInstance(), m_previewRenderer.GetDefaultInstance().Descriptor, out _)?.m_mesh?.bounds.extents ?? default;
 
                         if (CurrentTextDescriptor.m_maxWidthMeters > 0)
                         {
-                            textExt.x = Mathf.Min(textExt.x * CurrentTextDescriptor.m_textScale, CurrentTextDescriptor.m_maxWidthMeters / WTSPropRenderingRules.SCALING_FACTOR) / CurrentTextDescriptor.m_textScale;
+                            textExt.x = Mathf.Min(textExt.x * CurrentTextDescriptor.m_textScale, CurrentTextDescriptor.m_maxWidthMeters / WTSDynamicTextRenderingRules.SCALING_FACTOR) / CurrentTextDescriptor.m_textScale;
                         }
-                        moveMultiplier /= WTSPropRenderingRules.SCALING_FACTOR;
+                        moveMultiplier /= WTSDynamicTextRenderingRules.SCALING_FACTOR;
                     }
 
                     m_targetCameraPosition = Vector2.Max(min, Vector2.Min(max, new Vector2(-eventParam.moveDelta.x / component.width * moveMultiplier, eventParam.moveDelta.y / component.height * moveMultiplier) + m_targetCameraPosition));

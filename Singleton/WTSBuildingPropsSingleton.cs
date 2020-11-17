@@ -271,7 +271,7 @@ namespace Klyte.WriteTheSigns.Singleton
 
         private void RenderSign(ref Building data, RenderManager.CameraInfo cameraInfo, ushort buildingId, int boardIdx, Vector3 position, Vector3 rotation, int layerMask, BoardDescriptorGeneralXml propLayout, ref BoardInstanceBuildingXml targetDescriptor, ref PropInfo cachedProp)
         {
-            var parentColor = WTSPropRenderingRules.RenderPropMesh(ref cachedProp, cameraInfo, buildingId, boardIdx, 0, layerMask, data.m_angle, position, Vector4.zero, ref propLayout.m_propName, rotation, targetDescriptor.PropScale, propLayout, targetDescriptor, out Matrix4x4 propMatrix, out bool rendered, new InstanceID { Building = buildingId });
+            var parentColor = WTSDynamicTextRenderingRules.RenderPropMesh(ref cachedProp, cameraInfo, buildingId, boardIdx, 0, layerMask, data.m_angle, position, Vector4.zero, ref propLayout.m_propName, rotation, targetDescriptor.PropScale, propLayout, targetDescriptor, out Matrix4x4 propMatrix, out bool rendered, new InstanceID { Building = buildingId });
             if (rendered)
             {
                 for (int j = 0; j < propLayout.TextDescriptors.Length; j++)
@@ -280,7 +280,7 @@ namespace Klyte.WriteTheSigns.Singleton
                     {
                         MaterialPropertyBlock properties = PropManager.instance.m_materialBlock;
                         properties.Clear();
-                        WTSPropRenderingRules.RenderTextMesh(buildingId, boardIdx, 0, targetDescriptor, propMatrix, propLayout, ref propLayout.TextDescriptors[j], properties, (int)data.m_flags, parentColor, data.Info);
+                        WTSDynamicTextRenderingRules.RenderTextMesh(buildingId, boardIdx, 0, targetDescriptor, propMatrix, propLayout, ref propLayout.TextDescriptors[j], properties, (int)data.m_flags, parentColor, data.Info);
                     }
                 }
             }
