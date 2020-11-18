@@ -10,5 +10,8 @@
         public int m_distanceKm;
         public string m_distanceMeanString;
         public string m_outsideConnectionName;
+        public float m_distanceExit;
+        public int m_distanceExitKm;
+        public string m_distanceExitMeanString;
     }
 }

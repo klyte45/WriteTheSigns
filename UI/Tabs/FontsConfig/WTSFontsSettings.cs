@@ -20,6 +20,7 @@ namespace Klyte.WriteTheSigns.UI
         private UIDropDown m_fontSelectStreetSigns;
         private UIDropDown m_fontSelectBuildings;
         private UIDropDown m_fontSelectVehicles;
+        private UIDropDown m_fontSelectOnNet;
         private UIDropDown m_fontSelectLineSymbols;
         private UIDropDown m_fontSelectElectronic;
         private UIDropDown m_fontSelectStencil;
@@ -39,6 +40,7 @@ namespace Klyte.WriteTheSigns.UI
             AddFontDD("K45_WTS_FONT_ST_CORNERS", m_uiHelperHS, out m_fontSelectStreetSigns, OnSetFontStreet);
             AddFontDD("K45_WTS_FONT_STATIONS", m_uiHelperHS, out m_fontSelectBuildings, OnSetFontBuildings);
             AddFontDD("K45_WTS_FONT_VEHICLES", m_uiHelperHS, out m_fontSelectVehicles, OnSetFontVehicles);
+            AddFontDD("K45_WTS_FONT_ONNET", m_uiHelperHS, out m_fontSelectOnNet, OnSetFontOnNet);
             AddLabel(Locale.Get("K45_WTS_SPECIALFONTS"), m_uiHelperHS, out _, out _);
             AddFontDD("K45_WTS_FONT_TRANSPORTLINES", m_uiHelperHS, out m_fontSelectLineSymbols, OnSetFontPublicTransportLineSymbol);
             AddFontDD("K45_WTS_FONT_ELECTRONIC", m_uiHelperHS, out m_fontSelectElectronic, OnSetFontPublicElectronic);
@@ -106,6 +108,17 @@ namespace Klyte.WriteTheSigns.UI
             else if (sel == 0)
             {
                 WTSVehicleData.Instance.DefaultFont = null;
+            }
+        }
+        private void OnSetFontOnNet(int sel)
+        {
+            if (sel > 0)
+            {
+                WTSOnNetData.Instance.DefaultFont = m_fontSelectOnNet.selectedValue;
+            }
+            else if (sel == 0)
+            {
+                WTSOnNetData.Instance.DefaultFont = null;
             }
         }
         private void OnSetFontPublicStencil(int sel)

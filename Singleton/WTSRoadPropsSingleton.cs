@@ -178,14 +178,6 @@ namespace Klyte.WriteTheSigns.Singleton
                         {
                             yield break;
                         }
-
-                        LogUtils.DoLog($"[n{nodeID}/{i}] pre ProcessRoadSigns");
-                        yield return StartCoroutine(ProcessRoadSigns(nodeID, incomingTraffic, outcomingTraffic, rotationOrder, rotationAnglesOrder, i, segmentIid));
-                        if (m_updatedStreetPositions[nodeID] != false)
-                        {
-                            yield break;
-                        }
-
                     }
                 }
             }
@@ -193,102 +185,9 @@ namespace Klyte.WriteTheSigns.Singleton
             m_updatedStreetPositions[nodeID] = true;
             LogUtils.DoLog($"[n{nodeID}/] END PROCESS!");
         }
-
-        #region roadSigns process
-        private IEnumerator ProcessRoadSigns(ushort nodeID, HashSet<ushort> incomingTraffic, HashSet<ushort> outcomingTraffic, int[] originalNodeRotation, int[] originalRotationAnglesOrder, int i, ushort segmentIid)
-        {
-            yield return 0;
-            if (m_updatedStreetPositions[nodeID] != false)
-            {
-                LogUtils.DoLog($"[n{nodeID}/{i}] BREAK D");
-                yield break;
-            }
-            ItemClass classI = Singleton<NetManager>.instance.m_segments.m_buffer[segmentIid].Info.m_class;
-
-            int[] rotationOrder, rotationAnglesOrder;
-            int idx = Array.IndexOf(originalNodeRotation, i);
-            rotationOrder = new int[originalNodeRotation.Length];
-            rotationAnglesOrder = new int[originalNodeRotation.Length];
-            int itemsAfter = originalNodeRotation.Length - idx;
-            Array.Copy(originalNodeRotation, idx, rotationOrder, 0, itemsAfter);
-            Array.Copy(originalRotationAnglesOrder, idx, rotationAnglesOrder, 0, itemsAfter);
-            if (idx != 0)
-            {
-                Array.Copy(originalNodeRotation, 0, rotationOrder, itemsAfter, originalNodeRotation.Length - itemsAfter);
-                Array.Copy(originalRotationAnglesOrder, 0, rotationAnglesOrder, itemsAfter, originalNodeRotation.Length - itemsAfter);
-            }
-            int rot0 = rotationAnglesOrder[0];
-            rotationAnglesOrder = rotationAnglesOrder.Select(x => (((x - rot0) % 360) + 360) % 360).ToArray();
-
-            int rotationOrderPosition = Array.IndexOf(rotationOrder, i);
-            int leftSegmentIdx = rotationOrder[(rotationOrderPosition + rotationOrder.Length - 1) % rotationOrder.Length];
-            int rightSegmentIdx = rotationOrder[(rotationOrderPosition + 1) % rotationOrder.Length];
-            bool freeSlotLeft = true;
-            bool freeSlotRight = true;
-
-            //LogUtils.DoLog($"[n{nodeID}/{i}] rotationOrderPosition = {rotationOrderPosition}; rotationOrder = {string.Join(",", rotationOrder.Select(x => x.ToString()).ToArray())}; originalNodeRotation = {string.Join(",", originalNodeRotation.Select(x => x.ToString()).ToArray())}; rotationAnglesOrder = {string.Join(",", rotationAnglesOrder.Select(x => x.ToString()).ToArray())}; originalNodeRotation = {string.Join(",", originalNodeRotation.Select(x => x.ToString()).ToArray())}");
-
-            
-            int secondaryIdx = 2;
-            //LogUtils.DoLog($"[n{nodeID}/{i}] matchingDescriptors = {matchingDescriptors.Count} [{string.Join(",", matchingDescriptors.Select(x => x.Second.SaveName).ToArray())}] ");
-           
-            lock (Data.BoardsContainers)
-            {
-                while (secondaryIdx < 4)
-                {
-                    Data.BoardsContainers[nodeID, i, secondaryIdx++] = null;
-                }
-            };
-        }       
-
-       
-
-        private static bool EnsureRoadWidth(ref NetSegment netSegment, BoardInstanceRoadNodeXml targetDescriptor) => netSegment.Info?.m_halfWidth < targetDescriptor.MaxRoadHalfWidth + 0.002f && netSegment.Info?.m_halfWidth > targetDescriptor.MinRoadHalfWidth - 0.002f;
-        #endregion
-
+  
         #region Corner process
-        private static Vector3 CaculateCenterSegment(int nodeID, ref NetSegment segmentI, ref NetSegment segmentJ, ushort segmentId, BoardInstanceRoadNodeXml descriptor, RoadSide roadSide)
-        {
-            bool comingFromNode = segmentI.m_startNode == nodeID;
-            bool invertedSegment = (segmentI.m_flags & NetSegment.Flags.Invert) != 0 != comingFromNode != (SimulationManager.instance.m_metaData.m_invertTraffic == SimulationMetaData.MetaBool.False);
-            Vector3 platePosI;
-            Vector3 bezierPos;
-            float angle;
-            float targetOffsetX;
-            if (descriptor.PropPosition.Z < 1)
-            {
-                bezierPos = segmentI.GetBezier().Position(Mathf.Max(0, Mathf.Min(1, (descriptor.PropPosition.Z / (invertedSegment ? 2 : -2)) + 0.5f)));
-                angle = default;
-                targetOffsetX = descriptor.PropPosition.X;
-            }
-            else
-            {
-                segmentI.CalculateCorner(segmentId, true, comingFromNode, roadSide == RoadSide.LEFT, out bezierPos, out Vector3 angleVec, out _);
-                if (roadSide == RoadSide.CENTER)
-                {
-                    segmentI.CalculateCorner(segmentId, true, comingFromNode, true, out Vector3 bezierPos2, out Vector3 angleVec2, out _);
-                    bezierPos = (bezierPos + bezierPos2) / 2;
-                    angleVec = (angleVec + angleVec2) / 2;
-                }
-                targetOffsetX = descriptor.PropPosition.X * (segmentI.Info.m_pavementWidth + segmentJ.Info.m_pavementWidth) / (roadSide == RoadSide.LEFT ? 2 : -2);
-                angle = angleVec.GetAngleXZ();
-
-                invertedSegment ^= angleVec.GetAngleXZ() < 0;
-
-                LogUtils.DoLog($"[n{nodeID}]{segmentId} angleVec = ({angleVec.GetAngleXZ()}) (roadSide = {roadSide})");
-            }
-
-
-            segmentI.GetClosestPositionAndDirection(bezierPos, out _, out Vector3 dir);
-            int rotationOffsetSide = invertedSegment ? 90 : -90;
-            float rotation = dir.GetAngleXZ();
-
-            Vector3 rotationVectorSide = VectorUtils.X_Y(KlyteMathUtils.DegreeToVector2(rotation + rotationOffsetSide - angle));
-            platePosI = bezierPos + (descriptor.PropPosition.Z < 1 ? roadSide == RoadSide.CENTER ? default : rotationVectorSide * (segmentI.Info.m_halfWidth - segmentI.Info.m_pavementWidth) : default) + (rotationVectorSide * targetOffsetX);
-            platePosI.y += descriptor.PropPosition.Y;
-
-            return platePosI;
-        }
+       
 
         private bool ProcessDescriptorCorner(
           ushort nodeID, ref NetNode data, int controlBoardIdx,

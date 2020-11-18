@@ -25,12 +25,12 @@ namespace Klyte.WriteTheSigns
     {
         public RoadSegmentTool RoadSegmentToolInstance => FindObjectOfType<RoadSegmentTool>();
         public BuildingEditorTool BuildingEditorToolInstance => FindObjectOfType<BuildingEditorTool>();
-        public Dictionary<uint, ushort> m_stopsBuildingsCache => WTSBuildingDataCaches.m_stopsBuildingsCache;
 
         internal WTSSpritesRenderingRules SpriteRenderingRules { get; private set; }
         internal WTSBuildingPropsSingleton BuildingPropsSingleton { get; private set; }
         internal WTSVehicleTextsSingleton VehicleTextsSingleton { get; private set; }
         internal WTSDestinationSingleton DestinationSingleton { get; private set; }
+        internal WTSOnNetPropsSingleton OnNetPropsSingleton { get; private set; }
         internal IConnectorTLM ConnectorTLM { get; private set; }
         internal IConnectorADR ConnectorADR { get; private set; }
 
@@ -51,7 +51,6 @@ namespace Klyte.WriteTheSigns
         public static void OnParkChanged() => WriteTheSignsMod.Controller?.EventOnParkChanged?.Invoke();
         public static void OnBuildingNameChanged() => WriteTheSignsMod.Controller?.EventOnBuildingNameChanged?.Invoke();
         public static void OnZeroMarkChanged() => WriteTheSignsMod.Controller?.EventOnZeroMarkerChanged?.Invoke();
-
         public static void OnPostalCodeChanged() => WriteTheSignsMod.Controller?.EventOnPostalCodeChanged?.Invoke();
 
         public void Awake()
@@ -73,6 +72,7 @@ namespace Klyte.WriteTheSigns
             RoadPropsSingleton = gameObject.AddComponent<WTSRoadPropsSingleton>();
             DestinationSingleton = gameObject.AddComponent<WTSDestinationSingleton>();
             VehicleTextsSingleton = gameObject.AddComponent<WTSVehicleTextsSingleton>();
+            OnNetPropsSingleton = gameObject.AddComponent<WTSOnNetPropsSingleton>();
             ConnectorTLM = PluginUtils.GetImplementationTypeForMod<ConnectorTLM, ConnectorTLMFallback, IConnectorTLM>(gameObject, "TransportLinesManager", "13.4.0.1");
             ConnectorADR = PluginUtils.GetImplementationTypeForMod<ConnectorADR, ConnectorADRFallback, IConnectorADR>(gameObject, "KlyteAddresses", "2.0.4.1");
 
@@ -187,7 +187,6 @@ namespace Klyte.WriteTheSigns
         public const string ABBREVIATION_FILES_FOLDER = "AbbreviationFiles";
         public const string FONTS_FILES_FOLDER = "Fonts";
         public const string EXTRA_SPRITES_FILES_FOLDER = "Sprites";
-
         public const string DEFAULT_FONT_KEY = "/DEFAULT/";
 
         public static string DefaultBuildingsConfigurationFolder { get; } = FOLDER_NAME + Path.DirectorySeparatorChar + DEFAULT_GAME_BUILDINGS_CONFIG_FOLDER;
@@ -195,6 +194,7 @@ namespace Klyte.WriteTheSigns
         public static string ExtraSpritesFolder { get; } = FOLDER_NAME + Path.DirectorySeparatorChar + EXTRA_SPRITES_FILES_FOLDER;
         public static string AbbreviationFilesPath { get; } = FOLDER_NAME + Path.DirectorySeparatorChar + ABBREVIATION_FILES_FOLDER;
         public static string FontFilesPath { get; } = FOLDER_NAME + Path.DirectorySeparatorChar + FONTS_FILES_FOLDER;
+
         public static Shader DEFAULT_SHADER_TEXT = Shader.Find("Custom/Props/Prop/Default") ?? DistrictManager.instance.m_properties.m_areaNameShader;
         internal bool? m_tlmExistsAndActive = null;
         internal bool? m_addressesExistsAndActive = null;

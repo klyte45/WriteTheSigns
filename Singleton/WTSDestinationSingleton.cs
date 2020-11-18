@@ -39,46 +39,6 @@ namespace Klyte.WriteTheSigns.Singleton
                 LogUtils.DoLog($"CD[{nodeID}] = Start segment {i} (id: {targetSegmentId})!");
                 if (targetSegmentId != 0)
                 {
-                    if (outcomingTraffic.Contains(targetSegmentId))
-                    {
-                        LogUtils.DoLog($"CD[{nodeID}/{i}] start tracking - MR1");
-                        var cd = CoroutineWithData.From(WriteTheSignsMod.Controller, MapSegmentFlow(nodeID, targetSegmentId, 124000, 2, thisIncomingTraffic));
-                        // TupleRef<SegmentMappingObject, HashSet<ushort>, bool> cd = MapSegmentFlow(nodeID, targetSegmentId, 124000, 1, thisIncomingTraffic, 10000);
-                        yield return cd.Coroutine;
-                        if (m_updatedDestinations[nodeID] != false)
-                        {
-                            LogUtils.DoLog($"[n{nodeID}] STOPPING B");
-                            yield break;
-                        }
-                        if (cd.result.First.Count >= 1)
-                        {
-                            LogUtils.DoLog($"CD[{nodeID}/{i}] WRITING - MR1");
-                            //SegmentUtils.GetSegmentRoadEdges(endSegment.segmentId, false, false, false, out ComparableRoad startRef, out ComparableRoad endRef, out ushort[] nodesPath);
-                            MarkSuccessDestination(nodeID, i, DestinationReference.NextExitMainRoad1, cd.result.First[0].segmentId, cd.result.First[0].nodeList, cd.result.First[0].distanceWalked);
-                            if (cd.result.First.Count >= 2)
-                            {
-                                LogUtils.DoLog($"CD[{nodeID}/{i}] WRITING - MR2");
-                                MarkSuccessDestination(nodeID, i, DestinationReference.NextExitMainRoad2, cd.result.First[1].segmentId, cd.result.First[1].nodeList, cd.result.First[1].distanceWalked);
-                            }
-                            else
-                            {
-                                LogUtils.DoLog($"CD[{nodeID}/{i}] NOTFOUND - MR2");
-                                MarkFailureDestination(nodeID, i, DestinationReference.NextExitMainRoad2, cd.result.Second);
-                            }
-                        }
-                        else
-                        {
-                            LogUtils.DoLog($"CD[{nodeID}/{i}] NOTFOUND - MR1/2");
-                            MarkFailureDestination(nodeID, i, DestinationReference.NextExitMainRoad1, cd.result.Second);
-                            MarkFailureDestination(nodeID, i, DestinationReference.NextExitMainRoad2, cd.result.Second);
-                        }
-                    }
-                    else
-                    {
-                        LogUtils.DoLog($"CD[{nodeID}/{i}] has no outcoming!");
-                        m_couldReachDestinations[nodeID, i, (int)DestinationReference.NextExitMainRoad1] = false;
-                        m_couldReachDestinations[nodeID, i, (int)DestinationReference.NextExitMainRoad2] = false;
-                    }
 
                 }
             }
@@ -322,7 +282,7 @@ namespace Klyte.WriteTheSigns.Singleton
         private static bool CheckIfFlowIsAllowed(ushort nodeID, NetSegment targetSegment)
         {
             bool isSegmentInverted = WTSRoadNodeCommons.CheckSegmentInverted(nodeID, ref targetSegment);
-            bool canFlowThruThisSegment = isSegmentInverted && targetSegment.Info.m_hasBackwardVehicleLanes || !isSegmentInverted && targetSegment.Info.m_hasForwardVehicleLanes;
+            bool canFlowThruThisSegment = (isSegmentInverted && targetSegment.Info.m_hasBackwardVehicleLanes) || !isSegmentInverted && targetSegment.Info.m_hasForwardVehicleLanes;
             return canFlowThruThisSegment;
         }
 

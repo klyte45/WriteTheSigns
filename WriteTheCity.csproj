@@ -182,7 +182,7 @@
     <Compile Include="Data\WTSHighwayMileageData.cs" />
     <Compile Include="Data\WTSPropLayoutData.cs" />
     <Compile Include="Data\WTSRoadNodesData.cs" />
-    <Compile Include="Data\WTSHighwaySignsData.cs" />
+    <Compile Include="Data\WTSOnNetData.cs" />
     <Compile Include="DynamicFont\src\CharacterRange.cs" />
     <Compile Include="DynamicFont\src\DynamicSpriteFont.cs" />
     <Compile Include="DynamicFont\src\FontStashSharp\Bounds.cs" />
@@ -211,11 +211,15 @@
     <Compile Include="Overrides\TransportLineOverrides.cs" />
     <Compile Include="Rendering\WTSDisplayContainerMeshUtils.cs" />
     <Compile Include="Rendering\WTSSpritesRenderingRules.cs" />
+    <Compile Include="Singleton\WTSOnNetPropsSingleton.cs" />
     <Compile Include="Singleton\WTSVehicleTextsSingleton.cs" />
     <Compile Include="Singleton\WTSBuildingPropsSingleton.cs" />
     <Compile Include="UI\Tabs\BuildingEditor\WTSBuildingLayoutEditorPropList.cs" />
     <Compile Include="UI\Tabs\BuildingEditor\WTSBuildingLayoutEditorPropDetail.cs" />
     <Compile Include="UI\Tabs\FontsConfig\WTSFontsSettings.cs" />
+    <Compile Include="UI\Tabs\PlaceInSegmentEditor\WTSOnNetLayoutEditor.cs" />
+    <Compile Include="UI\Tabs\PlaceInSegmentEditor\WTSOnNetLayoutEditorPropDetail.cs" />
+    <Compile Include="UI\Tabs\PlaceInSegmentEditor\WTSOnNetLayoutEditorPropList.cs" />
     <Compile Include="UI\Tabs\RoadCornerEditor\WTSRoadCornerEditor.cs" />
     <Compile Include="UI\Tabs\VehicleEditor\WTSVehicleLayoutEditorTexts.cs" />
     <Compile Include="UI\Tabs\VehicleEditor\WTSVehicleLayoutEditorBasics.cs" />
@@ -261,8 +265,8 @@
     <Compile Include="Overrides\BoardGeneration\PathCrawler\RoadIdentifier.cs" />
     <Compile Include="Xml\BoardDescriptor\BoardDescriptorMileageMarkerXml.cs" />
     <Compile Include="Xml\Cache\CacheControlRoadNode.cs" />
-    <Compile Include="Xml\Containers\BoardBunchContainerOnNetXml.cs" />
-    <Compile Include="Xml\BoardDescriptor\BoardDescriptorOnNetXml.cs" />
+    <Compile Include="Xml\Containers\OnNetGroupDescriptorXml.cs" />
+    <Compile Include="Xml\BoardDescriptor\BoardInstanceOnNetXml.cs" />
     <Compile Include="Overrides\TransportManagerOverrides.cs" />
     <Compile Include="WriteTheSignsMod.cs" />
     <Compile Include="WTSController.cs" />

@@ -22,7 +22,8 @@
         PlatformNumber,
         PostalCode,
         GameSprite,
-        LineIdentifier
+        LineIdentifier,
+        ExitDistance
     }
 
 

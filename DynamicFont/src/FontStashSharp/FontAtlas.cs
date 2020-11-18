@@ -1,8 +1,6 @@
 ﻿using ColossalFramework.Threading;
-using Klyte.Commons.Utils;
 using StbTrueTypeSharp;
 using System;
-using System.IO;
 using System.Linq;
 using UnityEngine;
 
@@ -34,6 +32,7 @@ namespace FontStashSharp
         {
             get; set;
         }
+        private Texture2D m_xys;
         private Material m_materialBright;
         public Material Material
         {
@@ -44,9 +43,21 @@ namespace FontStashSharp
                     {
                         mainTexture = Texture
                     };
+                    UnityEngine.Object.Destroy(m_xys);
+                    m_xys = new Texture2D(Texture.width, Texture.height);
+                    m_xys.SetPixels(Texture.GetPixels().Select(x => new Color(.5f, .5f, .99f)).ToArray());
+                    m_xys.Apply();
+                    m_materialBright.SetTexture(PropManager.instance.ID_XYSMap, m_xys);
                 }
                 return m_materialBright;
             }
+        }
+
+        ~FontAtlas()
+        {
+            UnityEngine.Object.Destroy(m_xys);
+            UnityEngine.Object.Destroy(Texture);
+            UnityEngine.Object.Destroy(Material);
         }
 
         public FontAtlas(int w, int h, int count)

@@ -53,7 +53,6 @@ namespace Klyte.WriteTheSigns.UI
         private UIDropDown m_dropdownTextContent;
         private UITextField m_customText;
         private UIDropDown m_destinationRef;
-        private UIDropDown m_referenceNode;
         private UIDropDown m_fontClassSelect;
         private UIDropDown m_overrideFontSelect;
         private UITextField m_textPrefix;
@@ -118,8 +117,7 @@ namespace Klyte.WriteTheSigns.UI
             AddFilterableInput(Locale.Get("K45_WTS_SPRITE_NAME"), helperConfig, out m_spriteFilter, out UIListBox popup, OnFilterSprites, GetCurrentSpriteName, OnSpriteNameChanged);
             popup.processMarkup = true;
 
-            AddDropdown(Locale.Get("K45_WTS_PROPLAYOUT_DESTINATIONREFERENCE"), out m_destinationRef, helperConfig, (Enum.GetValues(typeof(DestinationReference)) as DestinationReference[]).OrderBy(x => (int)x).Select(x => Locale.Get("K45_WTS_BOARD_TEXT_TYPE_DESC", x.ToString())).ToArray(), OnChangeDestinationRef);
-            AddDropdown(Locale.Get("K45_WTS_TEXT_TARGETSEGMENTROTATION"), out m_referenceNode, helperConfig, (Enum.GetValues(typeof(ReferenceNode)) as ReferenceNode[]).OrderBy(x => (int)x).Select(x => Locale.Get("K45_WTS_TEXT_REFERENCENODE_OPT", x.ToString())).ToArray(), OnReferenceNodeChange);
+            AddDropdown(Locale.Get("K45_WTS_PROPLAYOUT_DESTINATIONREFERENCE"), out m_destinationRef, helperConfig, (Enum.GetValues(typeof(DestinationReference)) as DestinationReference[]).OrderBy(x => (int)x).Select(x => Locale.Get("K45_WTS_ONNETTEXT_DESTINATION_DESC", x.ToString())).ToArray(), OnChangeDestinationRef);
             helperConfig.AddSpace(5);
             AddDropdown(Locale.Get("K45_WTS_CLASS_FONT"), out m_fontClassSelect, helperConfig, (Enum.GetValues(typeof(FontClass)) as FontClass[]).Select(x => Locale.Get("K45_WTS_FONTCLASS", x.ToString())).ToArray(), OnSetFontClass);
             AddDropdown(Locale.Get("K45_WTS_OVERRIDE_FONT"), out m_overrideFontSelect, helperConfig, new string[0], OnSetOverrideFont);
@@ -163,27 +161,7 @@ namespace Klyte.WriteTheSigns.UI
         public void Start() => WriteTheSignsMod.Controller.EventFontsReloadedFromFolder += () => SafeObtain((ref BoardTextDescriptorGeneralXml x) => WTSUtils.ReloadFontsOf(m_overrideFontSelect, x.m_overrideFont, true));
 
 
-        private enum ReferenceNode
-        {
-            E6,
-            E5,
-            E4,
-            E3,
-            E2,
-            E1,
-            E0,
-            C,
-            D0,
-            D1,
-            D2,
-            D3,
-            D4,
-            D5,
-            D6
-        }
-
-        private void OnReferenceNodeChange(int selIdx) => SafeObtain((ref BoardTextDescriptorGeneralXml x) => x.m_targetNodeRelative = selIdx - 7);
-        private void OnChangeDestinationRef(int selIdx) => SafeObtain((ref BoardTextDescriptorGeneralXml x) => x.m_destinationRelative = (DestinationReference)selIdx - 1);
+        private void OnChangeDestinationRef(int selIdx) => SafeObtain((ref BoardTextDescriptorGeneralXml x) => x.m_destinationRelative = (DestinationReference)selIdx);
 
 
         private void DoDeleteText() => WTSPropLayoutEditor.Instance.RemoveTabFromItem(TabToEdit);
@@ -230,14 +208,14 @@ namespace Klyte.WriteTheSigns.UI
             m_dropdownTextContent.items = WTSDynamicTextRenderingRules.ALLOWED_TYPES_PER_RENDERING_CLASS[WTSPropLayoutEditor.Instance.EditingInstance.m_allowedRenderClass].Select(x => Locale.Get("K45_WTS_BOARD_TEXT_TYPE_DESC", x.ToString())).ToArray();
             m_dropdownTextContent.selectedIndex = Array.IndexOf(WTSDynamicTextRenderingRules.ALLOWED_TYPES_PER_RENDERING_CLASS[WTSPropLayoutEditor.Instance.EditingInstance.m_allowedRenderClass], x.m_textType);
             m_customText.text = x.m_fixedText ?? "";
-            m_destinationRef.selectedIndex = (int)(x.m_destinationRelative + 1);
-            m_referenceNode.selectedIndex = x.m_targetNodeRelative + 7;
+            m_destinationRef.selectedIndex = (int)(x.m_destinationRelative);
             m_overrideFontSelect.selectedIndex = x.m_overrideFont == null ? 0 : x.m_overrideFont == WTSController.DEFAULT_FONT_KEY ? 1 : Array.IndexOf(m_overrideFontSelect.items, x.m_overrideFont);
             m_fontClassSelect.selectedIndex = (int)x.m_fontClass;
             m_textPrefix.text = x.m_prefix ?? "";
             m_textSuffix.text = x.m_suffix ?? "";
             m_allCaps.isChecked = x.m_allCaps;
             m_spriteFilter.text = x.m_spriteName ?? "";
+            m_applyAbbreviations.isChecked = x.m_applyAbbreviations;
 
             m_arrayCustomBlink[0].text = x.IlluminationConfig.CustomBlink.X.ToString("F3");
             m_arrayCustomBlink[1].text = x.IlluminationConfig.CustomBlink.Y.ToString("F3");
@@ -254,8 +232,7 @@ namespace Klyte.WriteTheSigns.UI
         private void ApplyShowRules(BoardTextDescriptorGeneralXml x)
         {
             m_customText.parent.isVisible = x.m_textType == TextType.Fixed;
-            m_destinationRef.parent.isVisible = WTSPropLayoutEditor.Instance.EditingInstance.m_allowedRenderClass == TextRenderingClass.RoadNodes && x.IsTextRelativeToSegment();
-            m_referenceNode.parent.isVisible = WTSPropLayoutEditor.Instance.EditingInstance.m_allowedRenderClass == TextRenderingClass.RoadNodes && x.IsTextRelativeToSegment();
+            m_destinationRef.parent.isVisible = WTSPropLayoutEditor.Instance.EditingInstance.m_allowedRenderClass == TextRenderingClass.PlaceOnNet && x.IsTextRelativeToSegment();
             m_textFixedColor.parent.isVisible = !x.ColoringConfig.m_useContrastColor;
             m_invertTextHorizontalAlignClone.isVisible = x.PlacingConfig.m_create180degYClone;
             m_sliderIllumination.parent.isVisible = x.IlluminationConfig.IlluminationType != MaterialType.OPAQUE;

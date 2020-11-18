@@ -7,21 +7,37 @@ namespace Klyte.WriteTheSigns.Xml
 {
     public class BoardInstanceXml
     {
+        private Vector3Xml m_propPosition = new Vector3Xml();
+        private Vector3Xml m_propRotation = new Vector3Xml();
+        private Vector3Xml m_scale = (Vector3Xml)Vector3.one;
+
         [XmlIgnore]
         public Vector3 PropScale
         {
-            get => Scale;//new Vector3(Scale.X, Scale.Y == 0 ? Scale.X : Scale.Y, Scale.Z == 0 ? Scale.X : Scale.Z);
+            get => Scale;
             set => Scale = (Vector3Xml)value;
         }
 
         [XmlElement("position")]
-        public Vector3Xml PropPosition { get; set; } = new Vector3Xml();
-
+        public Vector3Xml PropPosition
+        {
+            get => m_propPosition;
+            set { m_propPosition = value; OnChangeMatrixData(); }
+        }
         [XmlElement("rotation")]
-        public Vector3Xml PropRotation { get; set; } = new Vector3Xml();
-
+        public Vector3Xml PropRotation
+        {
+            get => m_propRotation;
+            set { m_propRotation = value; OnChangeMatrixData(); }
+        }
         [XmlElement("scale")]
-        public Vector3Xml Scale { get; set; } = (Vector3Xml)Vector3.one;
+        public Vector3Xml Scale
+        {
+            get => m_scale;
+            set { m_scale = value; OnChangeMatrixData(); }
+        }
+
+        public virtual void OnChangeMatrixData() { }
     }
 
 }

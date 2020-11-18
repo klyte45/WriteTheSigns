@@ -25,10 +25,8 @@ namespace Klyte.WriteTheSigns.Xml
         public UIHorizontalAlignment m_textAlign = UIHorizontalAlignment.Center;
         [XmlAttribute("textContent")]
         public TextType m_textType = TextType.Fixed;
-        [XmlAttribute("destinationRelative")]
+        [XmlAttribute("destinationReference")]
         public DestinationReference m_destinationRelative = DestinationReference.Self;
-        [XmlAttribute("targetNodeRelative")]
-        public int m_targetNodeRelative = 0;
         [XmlAttribute("fixedText")]
         public string m_fixedText = "Text";
         [XmlAttribute("spriteName")]
@@ -40,7 +38,7 @@ namespace Klyte.WriteTheSigns.Xml
         [XmlAttribute("allCaps")]
         public bool m_allCaps = false;
         [XmlAttribute("applyAbbreviations")]
-        public bool m_applyAbbreviations = true;
+        public bool m_applyAbbreviations = false;
         [XmlAttribute("prefix")]
         public string m_prefix = "";
         [XmlAttribute("suffix")]
@@ -62,6 +60,7 @@ namespace Klyte.WriteTheSigns.Xml
 
         [XmlElement("MultiItemSettings")]
         public SubItemSettings MultiItemSettings { get; set; } = new SubItemSettings();
+
         [XmlElement("BackgroundMeshSettings")]
         public BackgroundMesh BackgroundMeshSettings { get; set; } = new BackgroundMesh();
 
@@ -80,6 +79,7 @@ namespace Klyte.WriteTheSigns.Xml
                 case TextType.StreetPrefix:
                 case TextType.StreetSuffix:
                 case TextType.DistanceFromReference:
+                case TextType.ExitDistance:
                     return true;
             }
             return false;

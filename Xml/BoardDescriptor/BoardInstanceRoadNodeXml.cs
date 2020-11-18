@@ -27,13 +27,13 @@ namespace Klyte.WriteTheSigns.Xml
         private BoardDescriptorGeneralXml m_descriptor;
 
         [XmlIgnore]
-        public  BoardDescriptorGeneralXml Descriptor
+        public BoardDescriptorGeneralXml Descriptor
         {
             get {
                 if (m_descriptor == null && m_propLayoutName != null)
                 {
                     m_descriptor = WTSPropLayoutData.Instance.Get(m_propLayoutName);
-                    if (m_descriptor == null)
+                    if (m_descriptor == null || m_descriptor.m_allowedRenderClass != Rendering.TextRenderingClass.RoadNodes)
                     {
                         m_propLayoutName = null;
                     }
@@ -50,7 +50,7 @@ namespace Klyte.WriteTheSigns.Xml
         [XmlAttribute("spawnChance")] public byte SpawnChance { get; set; } = 255;
         [XmlAttribute("placeOnDistrictBorder")] public bool PlaceOnDistrictBorder { get; set; } = false;
         [XmlAttribute("placeOnTunnelBridgeStart")] public bool PlaceOnTunnelBridgeStart { get; set; } = false;
-        [XmlAttribute("ignoreEmptyNameRoads")] public bool IgnoreEmptyNameRoads { get; set; } = true; 
+        [XmlAttribute("ignoreEmptyNameRoads")] public bool IgnoreEmptyNameRoads { get; set; } = true;
         [XmlAttribute("minRoadHalfWidth")] public float MinRoadHalfWidth { get; set; } = 0;
         [XmlAttribute("maxRoadHalfWidth")] public float MaxRoadHalfWidth { get; set; } = 999;
 

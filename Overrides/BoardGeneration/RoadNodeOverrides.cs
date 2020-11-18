@@ -19,8 +19,10 @@ namespace Klyte.WriteTheSigns.Overrides
 
         public static void AfterRenderSegment(RenderManager.CameraInfo cameraInfo, ushort segmentID)
         {
-            WriteTheSignsMod.Controller?.RoadPropsSingleton?.AfterRenderInstanceImpl(cameraInfo, NetManager.instance.m_segments.m_buffer[segmentID].m_startNode, ref NetManager.instance.m_nodes.m_buffer[NetManager.instance.m_segments.m_buffer[segmentID].m_startNode]);
-            WriteTheSignsMod.Controller?.RoadPropsSingleton?.AfterRenderInstanceImpl(cameraInfo, NetManager.instance.m_segments.m_buffer[segmentID].m_endNode, ref NetManager.instance.m_nodes.m_buffer[NetManager.instance.m_segments.m_buffer[segmentID].m_endNode]);
+            ref NetSegment data = ref NetManager.instance.m_segments.m_buffer[segmentID];
+            WriteTheSignsMod.Controller?.RoadPropsSingleton?.AfterRenderInstanceImpl(cameraInfo, data.m_startNode, ref NetManager.instance.m_nodes.m_buffer[data.m_startNode]);
+            WriteTheSignsMod.Controller?.RoadPropsSingleton?.AfterRenderInstanceImpl(cameraInfo, data.m_endNode, ref NetManager.instance.m_nodes.m_buffer[data.m_endNode]);
+            WriteTheSignsMod.Controller?.OnNetPropsSingleton?.AfterRenderInstanceImpl(cameraInfo, segmentID, ref data);
         }
     }
 }
