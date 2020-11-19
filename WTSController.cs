@@ -29,7 +29,6 @@ namespace Klyte.WriteTheSigns
         internal WTSSpritesRenderingRules SpriteRenderingRules { get; private set; }
         internal WTSBuildingPropsSingleton BuildingPropsSingleton { get; private set; }
         internal WTSVehicleTextsSingleton VehicleTextsSingleton { get; private set; }
-        internal WTSDestinationSingleton DestinationSingleton { get; private set; }
         internal WTSOnNetPropsSingleton OnNetPropsSingleton { get; private set; }
         internal IConnectorTLM ConnectorTLM { get; private set; }
         internal IConnectorADR ConnectorADR { get; private set; }
@@ -70,7 +69,6 @@ namespace Klyte.WriteTheSigns
             SpriteRenderingRules = gameObject.AddComponent<WTSSpritesRenderingRules>();
             BuildingPropsSingleton = gameObject.AddComponent<WTSBuildingPropsSingleton>();
             RoadPropsSingleton = gameObject.AddComponent<WTSRoadPropsSingleton>();
-            DestinationSingleton = gameObject.AddComponent<WTSDestinationSingleton>();
             VehicleTextsSingleton = gameObject.AddComponent<WTSVehicleTextsSingleton>();
             OnNetPropsSingleton = gameObject.AddComponent<WTSOnNetPropsSingleton>();
             ConnectorTLM = PluginUtils.GetImplementationTypeForMod<ConnectorTLM, ConnectorTLMFallback, IConnectorTLM>(gameObject, "TransportLinesManager", "13.4.0.1");

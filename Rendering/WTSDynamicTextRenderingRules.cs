@@ -4,7 +4,6 @@ using ColossalFramework.UI;
 using Klyte.Commons.UI.Sprites;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Data;
-using Klyte.WriteTheSigns.Singleton;
 using Klyte.WriteTheSigns.Utils;
 using Klyte.WriteTheSigns.Xml;
 using SpriteFontPlus;
@@ -81,24 +80,24 @@ namespace Klyte.WriteTheSigns.Rendering
             [TextRenderingClass.PlaceOnNet] = new TextType[]
             {
                 TextType.Fixed,
-
-                TextType.Fixed,
                 TextType.GameSprite,
                 TextType.StreetPrefix,
                 TextType.StreetSuffix,
                 TextType.StreetNameComplete,
-                TextType.DistanceFromReference,
                 TextType.PostalCode,
                 TextType.District,
                 TextType.Park,
                 TextType.DistrictOrPark,
                 TextType.ParkOrDistrict,
-                TextType.ExitDistance,
+                TextType.ParameterizedText,
             },
         };
 
         #region Main flow
-        public static Color RenderPropMesh(ref PropInfo propInfo, RenderManager.CameraInfo cameraInfo, ushort refId, int boardIdx, int secIdx, int layerMask, float refAngleRad, Vector3 position, Vector4 dataVector, ref string propName, Vector3 propAngle, Vector3 propScale, BoardDescriptorGeneralXml propLayout, BoardInstanceXml descriptor, out Matrix4x4 propMatrix, out bool rendered, InstanceID propRenderID)
+        public static Color RenderPropMesh(ref PropInfo propInfo, RenderManager.CameraInfo cameraInfo, ushort refId, int boardIdx, int secIdx,
+            int layerMask, float refAngleRad, Vector3 position, Vector4 dataVector, ref string propName, Vector3 propAngle, Vector3 propScale,
+            BoardDescriptorGeneralXml propLayout, BoardInstanceXml descriptor,
+            out Matrix4x4 propMatrix, out bool rendered, InstanceID propRenderID)
         {
             Color propColor = WTSDynamicTextRenderingRules.GetPropColor(refId, boardIdx, secIdx, descriptor, propLayout, out bool colorFound);
             if (!colorFound)
@@ -131,7 +130,8 @@ namespace Klyte.WriteTheSigns.Rendering
 
 
         public static void RenderTextMesh(ushort refID, int boardIdx, int secIdx, BoardInstanceXml descriptor, Matrix4x4 propMatrix,
-            BoardDescriptorGeneralXml propLayout, ref BoardTextDescriptorGeneralXml textDescriptor, MaterialPropertyBlock materialPropertyBlock, int instanceFlags, Color parentColor, PrefabInfo srcInfo, Camera targetCamera = null, Shader overrideShader = null)
+            BoardDescriptorGeneralXml propLayout, ref BoardTextDescriptorGeneralXml textDescriptor, MaterialPropertyBlock materialPropertyBlock,
+            int instanceFlags, Color parentColor, PrefabInfo srcInfo, Camera targetCamera = null, Shader overrideShader = null)
         {
             BasicRenderInformation renderInfo = GetTextMesh(textDescriptor, refID, boardIdx, secIdx, descriptor, propLayout, out IEnumerable<BasicRenderInformation> multipleOutput);
             if (renderInfo == null)
@@ -939,12 +939,13 @@ namespace Klyte.WriteTheSigns.Rendering
                 case TextType.ParkOrDistrict: return RenderUtils.GetTextData($"{otherText}Area or District", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                 case TextType.Park: return RenderUtils.GetTextData($"{otherText}Area", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                 case TextType.PlatformNumber: return RenderUtils.GetTextData("00", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
+                case TextType.ParameterizedText: return RenderUtils.GetTextData($"##PARAM{textDescriptor.m_parameterIdx}##", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                 case TextType.LinesSymbols:
                     multipleOutput = WriteTheSignsMod.Controller.SpriteRenderingRules.DrawLineFormats(new int[textDescriptor.MultiItemSettings.SubItemsPerColumn * textDescriptor.MultiItemSettings.SubItemsPerRow].Select((x, y) => -y - 1));
 
                     return null;
                 case TextType.GameSprite:
-                    return WriteTheSignsMod.Controller.SpriteRenderingRules.GetSpriteFromDefaultAtlas(textDescriptor.m_spriteName);
+                    return WriteTheSignsMod.Controller.SpriteRenderingRules.GetSpriteFromDefaultAtlas(textDescriptor.m_spriteName) ?? RenderUtils.GetTextData("<Invalid Sprite!>", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                 default:
                     string text = $"{textDescriptor.m_textType}: {preview.m_currentText}";
                     if (textDescriptor.m_allCaps)
@@ -966,67 +967,27 @@ namespace Klyte.WriteTheSigns.Rendering
             baseFont ??= FontServer.instance[WTSRoadNodesData.Instance.DefaultFont];
 
             TextType targetType = textDescriptor.m_textType;
-            if (textDescriptor.IsTextRelativeToSegment() && textDescriptor.m_destinationRelative > 0)
+            ushort targetSegment = textDescriptor.m_destinationRelative switch
             {
-                CacheDestinationRoute destination = null;
-                var targetSegment = textDescriptor.m_destinationRelative switch
-                {
-                    DestinationReference.Self => segmentId,
-                    DestinationReference.Target1 => propDescriptor.m_targetSegment1,
-                    DestinationReference.Target2 => propDescriptor.m_targetSegment2,
-                    DestinationReference.Target3 => propDescriptor.m_targetSegment3,
-                    DestinationReference.Target4 => propDescriptor.m_targetSegment4,
-                    _ => 0
-                };
+                DestinationReference.Self => segmentId,
+                DestinationReference.Target1 => propDescriptor.m_targetSegment1,
+                DestinationReference.Target2 => propDescriptor.m_targetSegment2,
+                DestinationReference.Target3 => propDescriptor.m_targetSegment3,
+                DestinationReference.Target4 => propDescriptor.m_targetSegment4,
+                _ => (ushort)0
+            };
 
-                if (targetSegment == 0)
-                {
-                    return RenderUtils.GetTextData($"<TARGET NOT SET! ({textDescriptor.m_destinationRelative})>", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
-                }
-
-                if (WriteTheSignsMod.Controller.DestinationSingleton.m_updatedDestinations[segmentId] == true && WriteTheSignsMod.Controller.DestinationSingleton.m_couldReachDestinations[segmentId, targetSegment, (int)textDescriptor.m_destinationRelative] == false)
-                {
-                    return RenderUtils.GetTextData($"<NO PATH TO TARGET! ({textDescriptor.m_destinationRelative})>", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
-                }
-                if (WriteTheSignsMod.Controller.DestinationSingleton.m_updatedDestinations[segmentId] == false)
-                {
-                    return RenderUtils.GetTextData("Loading" + new string('.', ((int)(SimulationManager.instance.m_currentTickIndex & 0x3F) >> 4) + 1), textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
-                }
-                if (destination != null)
-                {
-                    switch (targetType)
-                    {
-                        case TextType.ParkOrDistrict: targetType = destination.m_parkId > 0 ? TextType.Park : TextType.District; break;
-                        case TextType.DistrictOrPark: targetType = destination.m_districtId == 0 && destination.m_parkId > 0 ? TextType.Park : TextType.District; break;
-                        case TextType.Park:
-                            if (destination.m_parkId == 0)
-                            {
-                                return null;
-                            }
-                            break;
-                    }
-                    return targetType switch
-                    {
-                        TextType.DistanceFromReference => RenderUtils.GetTextData(destination.m_distanceMeanString, textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont),
-                        TextType.StreetSuffix => GetFromCacheArray(destination.m_segmentId, textDescriptor, RenderUtils.CacheArrayTypes.SuffixStreetName, baseFont),
-                        TextType.StreetPrefix => GetFromCacheArray(destination.m_segmentId, textDescriptor, RenderUtils.CacheArrayTypes.StreetQualifier, baseFont),
-                        TextType.PostalCode => GetFromCacheArray(destination.m_segmentId, textDescriptor, RenderUtils.CacheArrayTypes.PostalCode, baseFont),
-                        TextType.StreetNameComplete => GetFromCacheArray(destination.m_segmentId, textDescriptor, RenderUtils.CacheArrayTypes.FullStreetName, baseFont),
-                        TextType.District => GetFromCacheArray(destination.m_districtId, textDescriptor, RenderUtils.CacheArrayTypes.Districts, baseFont),
-                        TextType.Park => GetFromCacheArray(destination.m_parkId, textDescriptor, RenderUtils.CacheArrayTypes.Parks, baseFont),
-                        TextType.ExitDistance => RenderUtils.GetTextData(destination.m_distanceExitMeanString, textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont),
-
-                        _ => null,
-                    };
-
-                }
+            if (targetSegment == 0)
+            {
+                return RenderUtils.GetTextData($"<TARGET NOT SET! ({textDescriptor.m_destinationRelative})>", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
             }
+
             switch (targetType)
             {
-                case TextType.ParkOrDistrict: targetType = propDescriptor.CachedDistrictParkId > 0 ? TextType.Park : TextType.District; break;
-                case TextType.DistrictOrPark: targetType = propDescriptor.CachedDistrictId == 0 && propDescriptor.CachedDistrictParkId > 0 ? TextType.Park : TextType.District; break;
+                case TextType.ParkOrDistrict: targetType = WTSOnNetData.Instance.GetCachedDistrictParkId(targetSegment) > 0 ? TextType.Park : TextType.District; break;
+                case TextType.DistrictOrPark: targetType = WTSOnNetData.Instance.GetCachedDistrictId(targetSegment) == 0 && WTSOnNetData.Instance.GetCachedDistrictParkId(targetSegment) > 0 ? TextType.Park : TextType.District; break;
                 case TextType.Park:
-                    if (propDescriptor.CachedDistrictParkId == 0)
+                    if (WTSOnNetData.Instance.GetCachedDistrictParkId(targetSegment) == 0)
                     {
                         return null;
                     }
@@ -1036,12 +997,13 @@ namespace Klyte.WriteTheSigns.Rendering
             {
                 TextType.GameSprite => WriteTheSignsMod.Controller.SpriteRenderingRules.GetSpriteFromDefaultAtlas(textDescriptor.m_spriteName),
                 TextType.Fixed => RenderUtils.GetTextData(textDescriptor.m_fixedText ?? "", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont),
-                TextType.StreetSuffix => GetFromCacheArray(segmentId, textDescriptor, RenderUtils.CacheArrayTypes.SuffixStreetName, baseFont),
-                TextType.StreetNameComplete => GetFromCacheArray(segmentId, textDescriptor, RenderUtils.CacheArrayTypes.FullStreetName, baseFont),
-                TextType.StreetPrefix => GetFromCacheArray(segmentId, textDescriptor, RenderUtils.CacheArrayTypes.StreetQualifier, baseFont),
-                TextType.District => GetFromCacheArray(propDescriptor.CachedDistrictId, textDescriptor, RenderUtils.CacheArrayTypes.Districts, baseFont),
-                TextType.Park => GetFromCacheArray(propDescriptor.CachedDistrictParkId, textDescriptor, RenderUtils.CacheArrayTypes.Parks, baseFont),
-                TextType.PostalCode => GetFromCacheArray(segmentId, textDescriptor, RenderUtils.CacheArrayTypes.PostalCode, baseFont),
+                TextType.StreetSuffix => GetFromCacheArray(targetSegment, textDescriptor, RenderUtils.CacheArrayTypes.SuffixStreetName, baseFont),
+                TextType.StreetNameComplete => GetFromCacheArray(targetSegment, textDescriptor, RenderUtils.CacheArrayTypes.FullStreetName, baseFont),
+                TextType.StreetPrefix => GetFromCacheArray(targetSegment, textDescriptor, RenderUtils.CacheArrayTypes.StreetQualifier, baseFont),
+                TextType.District => GetFromCacheArray(WTSOnNetData.Instance.GetCachedDistrictId(targetSegment), textDescriptor, RenderUtils.CacheArrayTypes.Districts, baseFont),
+                TextType.Park => GetFromCacheArray(WTSOnNetData.Instance.GetCachedDistrictParkId(targetSegment), textDescriptor, RenderUtils.CacheArrayTypes.Parks, baseFont),
+                TextType.PostalCode => GetFromCacheArray(targetSegment, textDescriptor, RenderUtils.CacheArrayTypes.PostalCode, baseFont),
+                TextType.ParameterizedText => RenderUtils.GetTextData(propDescriptor.GetTextParam(textDescriptor.m_parameterIdx) ?? $"<PARAM#{textDescriptor.m_parameterIdx} NOT SET>", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont),
 
                 _ => null,
             };

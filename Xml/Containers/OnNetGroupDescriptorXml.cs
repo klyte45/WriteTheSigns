@@ -35,6 +35,11 @@ namespace Klyte.WriteTheSigns.Xml
             }
             set { }
         }
+
+        [XmlIgnore]
+        private long m_districtUpdated;
+        [XmlIgnore]
+        private long m_parkUpdated;
     }
     public class ExportableBoardInstanceOnNetListXml : ILibable
     {

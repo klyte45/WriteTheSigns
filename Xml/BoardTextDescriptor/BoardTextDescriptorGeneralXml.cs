@@ -27,6 +27,8 @@ namespace Klyte.WriteTheSigns.Xml
         public TextType m_textType = TextType.Fixed;
         [XmlAttribute("destinationReference")]
         public DestinationReference m_destinationRelative = DestinationReference.Self;
+        [XmlAttribute("parameterIdx")]
+        public int m_parameterIdx = 1;
         [XmlAttribute("fixedText")]
         public string m_fixedText = "Text";
         [XmlAttribute("spriteName")]
@@ -79,7 +81,6 @@ namespace Klyte.WriteTheSigns.Xml
                 case TextType.StreetPrefix:
                 case TextType.StreetSuffix:
                 case TextType.DistanceFromReference:
-                case TextType.ExitDistance:
                     return true;
             }
             return false;

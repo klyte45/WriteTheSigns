@@ -3,6 +3,7 @@ using Klyte.Commons.Utils;
 using SpriteFontPlus;
 using SpriteFontPlus.Utility;
 using System;
+using System.Linq;
 using UnityEngine;
 using static Klyte.WriteTheSigns.Utils.RenderUtils.CacheArrayTypes;
 
@@ -10,101 +11,114 @@ namespace Klyte.WriteTheSigns.Utils
 {
     internal static class RenderUtils
     {
-
-        private static string[][] m_cache = new string[Enum.GetValues(typeof(CacheArrayTypes)).Length][];
-        private static string[][] m_cacheUpper = new string[Enum.GetValues(typeof(CacheArrayTypes)).Length][];
+        private static string[][][] m_generalCache = new string[Enum.GetValues(typeof(CacheTransformTypes)).Length][][].Select(x => new string[Enum.GetValues(typeof(CacheArrayTypes)).Length][]).ToArray();
 
         static RenderUtils()
         {
-            m_cache[(int)FullStreetName] = new string[NetManager.MAX_SEGMENT_COUNT];
-            m_cache[(int)StreetQualifier] = new string[NetManager.MAX_SEGMENT_COUNT];
-            m_cache[(int)SuffixStreetName] = new string[NetManager.MAX_SEGMENT_COUNT];
-            m_cache[(int)PostalCode] = new string[NetManager.MAX_SEGMENT_COUNT];
-            m_cache[(int)Districts] = new string[DistrictManager.MAX_DISTRICT_COUNT];
-            m_cache[(int)Parks] = new string[DistrictManager.MAX_DISTRICT_COUNT];
-            m_cache[(int)FullStreetNameAbbreviation] = new string[NetManager.MAX_SEGMENT_COUNT];
-            m_cache[(int)SuffixStreetNameAbbreviation] = new string[NetManager.MAX_SEGMENT_COUNT];
-            m_cache[(int)BuildingName] = new string[BuildingManager.MAX_BUILDING_COUNT];
-            m_cache[(int)VehicleNumber] = new string[ushort.MaxValue];
-            m_cache[(int)LineIdentifier] = new string[TransportManager.MAX_LINE_COUNT];
-
-            m_cacheUpper[(int)FullStreetName] = new string[NetManager.MAX_SEGMENT_COUNT];
-            m_cacheUpper[(int)StreetQualifier] = new string[NetManager.MAX_SEGMENT_COUNT];
-            m_cacheUpper[(int)SuffixStreetName] = new string[NetManager.MAX_SEGMENT_COUNT];
-            m_cacheUpper[(int)Districts] = new string[DistrictManager.MAX_DISTRICT_COUNT];
-            m_cacheUpper[(int)Parks] = new string[DistrictManager.MAX_DISTRICT_COUNT];
-            m_cacheUpper[(int)FullStreetNameAbbreviation] = new string[NetManager.MAX_SEGMENT_COUNT];
-            m_cacheUpper[(int)SuffixStreetNameAbbreviation] = new string[NetManager.MAX_SEGMENT_COUNT];
-            m_cacheUpper[(int)BuildingName] = new string[BuildingManager.MAX_BUILDING_COUNT];
-
+            foreach (string[][] m_cache in m_generalCache)
+            {
+                m_cache[(int)FullStreetName] = new string[NetManager.MAX_SEGMENT_COUNT];
+                m_cache[(int)StreetQualifier] = new string[NetManager.MAX_SEGMENT_COUNT];
+                m_cache[(int)SuffixStreetName] = new string[NetManager.MAX_SEGMENT_COUNT];
+                m_cache[(int)PostalCode] = new string[NetManager.MAX_SEGMENT_COUNT];
+                m_cache[(int)Districts] = new string[DistrictManager.MAX_DISTRICT_COUNT];
+                m_cache[(int)Parks] = new string[DistrictManager.MAX_DISTRICT_COUNT];
+                m_cache[(int)BuildingName] = new string[BuildingManager.MAX_BUILDING_COUNT];
+                m_cache[(int)VehicleNumber] = new string[ushort.MaxValue];
+                m_cache[(int)LineIdentifier] = new string[TransportManager.MAX_LINE_COUNT];
+            }
         }
-
-
-
 
         public static void ClearCachePostalCode()
         {
-            m_cache[(int)PostalCode] = new string[NetManager.MAX_SEGMENT_COUNT];
-
-            m_cacheUpper[(int)PostalCode] = new string[NetManager.MAX_SEGMENT_COUNT];
+            foreach (string[][] m_cache in m_generalCache)
+            {
+                m_cache[(int)PostalCode] = new string[NetManager.MAX_SEGMENT_COUNT];
+            }
         }
 
         public static void ClearCacheStreetName()
         {
-            m_cache[(int)SuffixStreetName] = new string[NetManager.MAX_SEGMENT_COUNT];
-            m_cache[(int)SuffixStreetNameAbbreviation] = new string[NetManager.MAX_SEGMENT_COUNT];
-
-            m_cacheUpper[(int)SuffixStreetName] = new string[NetManager.MAX_SEGMENT_COUNT];
-            m_cacheUpper[(int)SuffixStreetNameAbbreviation] = new string[NetManager.MAX_SEGMENT_COUNT];
+            foreach (string[][] m_cache in m_generalCache)
+            {
+                m_cache[(int)SuffixStreetName] = new string[NetManager.MAX_SEGMENT_COUNT];
+            }
         }
 
         public static void ClearCacheStreetQualifier()
         {
-            m_cache[(int)StreetQualifier] = new string[NetManager.MAX_SEGMENT_COUNT];
-
-            m_cacheUpper[(int)StreetQualifier] = new string[NetManager.MAX_SEGMENT_COUNT];
+            foreach (string[][] m_cache in m_generalCache)
+            {
+                m_cache[(int)StreetQualifier] = new string[NetManager.MAX_SEGMENT_COUNT];
+            }
         }
 
         public static void ClearCacheFullStreetName()
         {
-            m_cache[(int)FullStreetName] = new string[NetManager.MAX_SEGMENT_COUNT];
-            m_cache[(int)FullStreetNameAbbreviation] = new string[NetManager.MAX_SEGMENT_COUNT];
+            foreach (string[][] m_cache in m_generalCache)
+            {
+                m_cache[(int)FullStreetName] = new string[NetManager.MAX_SEGMENT_COUNT];
+            }
 
-            m_cacheUpper[(int)FullStreetName] = new string[NetManager.MAX_SEGMENT_COUNT];
-            m_cacheUpper[(int)FullStreetNameAbbreviation] = new string[NetManager.MAX_SEGMENT_COUNT];
         }
 
         public static void ClearCacheDistrictName()
         {
-            m_cache[(int)Districts] = new string[DistrictManager.MAX_DISTRICT_COUNT];
 
-            m_cacheUpper[(int)Districts] = new string[DistrictManager.MAX_DISTRICT_COUNT];
+            foreach (string[][] m_cache in m_generalCache)
+            {
+                m_cache[(int)Districts] = new string[DistrictManager.MAX_DISTRICT_COUNT];
+            }
         }
 
         public static void ClearCacheParkName()
         {
-            m_cache[(int)Parks] = new string[DistrictManager.MAX_DISTRICT_COUNT];
-
-            m_cacheUpper[(int)Parks] = new string[DistrictManager.MAX_DISTRICT_COUNT];
+            foreach (string[][] m_cache in m_generalCache)
+            {
+                m_cache[(int)Parks] = new string[DistrictManager.MAX_DISTRICT_COUNT];
+            }
         }
 
         public static void ClearCacheBuildingName()
         {
-            m_cache[(int)BuildingName] = new string[BuildingManager.MAX_BUILDING_COUNT];
-
-            m_cacheUpper[(int)BuildingName] = new string[BuildingManager.MAX_BUILDING_COUNT];
+            foreach (string[][] m_cache in m_generalCache)
+            {
+                m_cache[(int)BuildingName] = new string[BuildingManager.MAX_BUILDING_COUNT];
+            }
         }
 
         public static void ClearCacheBuildingName(ushort buildingID)
         {
-            m_cache[(int)BuildingName][buildingID] = null;
-            m_cacheUpper[(int)BuildingName][buildingID] = null;
+            foreach (string[][] m_cache in m_generalCache)
+            {
+                m_cache[(int)BuildingName][buildingID] = null;
+            }
         }
-        public static void ClearCacheVehicleNumber(ushort vehicleID) => m_cache[(int)VehicleNumber][vehicleID] = null;
-        public static void ClearCacheVehicleNumber() => m_cache[(int)VehicleNumber] = new string[ushort.MaxValue];
+        public static void ClearCacheVehicleNumber(ushort vehicleID)
+        {
 
-        public static void ClearCacheLineId() => m_cache[(int)LineIdentifier] = new string[TransportManager.MAX_LINE_COUNT];
+            foreach (string[][] m_cache in m_generalCache)
+            {
+                m_cache[(int)VehicleNumber][vehicleID] = null;
+            }
+        }
 
+        public static void ClearCacheVehicleNumber()
+        {
+
+            foreach (string[][] m_cache in m_generalCache)
+            {
+                m_cache[(int)VehicleNumber] = new string[ushort.MaxValue];
+            }
+        }
+
+        public static void ClearCacheLineId()
+        {
+            foreach (string[][] m_cache in m_generalCache)
+            {
+                m_cache[(int)LineIdentifier] = new string[TransportManager.MAX_LINE_COUNT];
+            }
+        }
 
         public enum CacheArrayTypes
         {
@@ -113,41 +127,50 @@ namespace Klyte.WriteTheSigns.Utils
             StreetQualifier,
             Districts,
             Parks,
-            FullStreetNameAbbreviation,
-            SuffixStreetNameAbbreviation,
             BuildingName,
             VehicleNumber,
             PostalCode,
             LineIdentifier
         }
+        public enum CacheTransformTypes
+        {
+            NORMAL,
+            CAPS,
+            ABBREV,
+            CAPS_ABBREV
+        }
+
 
 
         public static BasicRenderInformation GetFromCacheArray2(ushort refId, string prefix, string suffix, bool allCaps, bool applyAbbreviations, CacheArrayTypes type, DynamicSpriteFont primaryFont, string overrideFont = null)
         {
-            if (applyAbbreviations)
-            {
-                type = type switch
-                {
-                    CacheArrayTypes.SuffixStreetName => CacheArrayTypes.SuffixStreetNameAbbreviation,
-                    CacheArrayTypes.FullStreetName => CacheArrayTypes.FullStreetNameAbbreviation,
-                    _ => type
-                };
-            }
+            ref string[][] cache = ref m_generalCache[(allCaps ? 1 : 0) + (applyAbbreviations ? 1 : 2)];
             return type switch
             {
-                CacheArrayTypes.Districts => UpdateMeshDistrict(refId, ref (allCaps ? m_cacheUpper : m_cache)[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont),
-                CacheArrayTypes.Parks => UpdateMeshPark(refId, ref (allCaps ? m_cacheUpper : m_cache)[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont),
-                CacheArrayTypes.SuffixStreetName => UpdateMeshStreetSuffix(refId, ref (allCaps ? m_cacheUpper : m_cache)[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont),
-                CacheArrayTypes.FullStreetName => UpdateMeshFullNameStreet(refId, ref (allCaps ? m_cacheUpper : m_cache)[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont),
-                CacheArrayTypes.StreetQualifier => UpdateMeshStreetQualifier(refId, ref (allCaps ? m_cacheUpper : m_cache)[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont),
-                CacheArrayTypes.SuffixStreetNameAbbreviation => UpdateMeshStreetSuffix(refId, ref (allCaps ? m_cacheUpper : m_cache)[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont),
-                CacheArrayTypes.FullStreetNameAbbreviation => UpdateMeshFullNameStreet(refId, ref (allCaps ? m_cacheUpper : m_cache)[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont),
-                CacheArrayTypes.BuildingName => UpdateMeshBuildingName(refId, ref (allCaps ? m_cacheUpper : m_cache)[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont),
-                CacheArrayTypes.PostalCode => UpdateMeshPostalCode(refId, ref m_cache[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont),
-                CacheArrayTypes.VehicleNumber => UpdateMeshVehicleNumber(refId, ref m_cache[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont),
-                CacheArrayTypes.LineIdentifier => UpdateMeshLineIdentifier(refId, ref m_cache[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont),
+                CacheArrayTypes.Districts => UpdateMeshDistrict(refId, ref cache[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont),
+                CacheArrayTypes.Parks => UpdateMeshPark(refId, ref cache[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont),
+                CacheArrayTypes.SuffixStreetName => UpdateMeshStreetSuffix(refId, ref cache[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont),
+                CacheArrayTypes.FullStreetName => UpdateMeshFullNameStreet(refId, ref cache[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont),
+                CacheArrayTypes.StreetQualifier => UpdateMeshStreetQualifier(refId, ref cache[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont),
+                CacheArrayTypes.BuildingName => UpdateMeshBuildingName(refId, ref cache[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont),
+                CacheArrayTypes.PostalCode => UpdateMeshPostalCode(refId, ref cache[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont),
+                CacheArrayTypes.VehicleNumber => UpdateMeshVehicleNumber(refId, ref cache[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont),
+                CacheArrayTypes.LineIdentifier => UpdateMeshLineIdentifier(refId, ref cache[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont),
                 _ => null
             };
+        }
+        private static string ApplyTransforms(string name, bool allCaps, bool applyAbbreviations)
+        {
+            if (applyAbbreviations)
+            {
+                name = WTSUtils.ApplyAbbreviations(name);
+            }
+            if (allCaps)
+            {
+                name = name.ToUpper();
+            }
+
+            return name;
         }
 
         public static BasicRenderInformation UpdateMeshFullNameStreet(ushort idx, ref string name, string prefix, string suffix, bool allCaps, bool applyAbbreviations, DynamicSpriteFont primaryFont, string overrideFont)
@@ -161,19 +184,15 @@ namespace Klyte.WriteTheSigns.Utils
                 else
                 {
                     name = WriteTheSignsMod.Controller.ConnectorADR.GetStreetFullName(idx) ?? "";
-                    if (applyAbbreviations)
-                    {
-                        name = WTSUtils.ApplyAbbreviations(name);
-                    }
-                    if (allCaps)
-                    {
-                        name = name.ToUpper();
-                    }
+                    name = ApplyTransforms(name, allCaps, applyAbbreviations);
                 }
                 LogUtils.DoLog($"!GenName {name} for {idx} (UC={allCaps})");
             }
             return GetTextData(name, prefix, suffix, primaryFont, overrideFont);
         }
+
+
+
         public static BasicRenderInformation UpdateMeshStreetQualifier(ushort idx, ref string name, string prefix, string suffix, bool allCaps, bool applyAbbreviations, DynamicSpriteFont primaryFont, string overrideFont)
         {
             if (name == null)
@@ -192,14 +211,7 @@ namespace Klyte.WriteTheSigns.Utils
                     {
                         name = WriteTheSignsMod.Controller.ConnectorADR.GetStreetQualifierCustom(idx);
                     }
-                    if (applyAbbreviations)
-                    {
-                        name = WTSUtils.ApplyAbbreviations(name);
-                    }
-                    if (allCaps)
-                    {
-                        name = name.ToUpper();
-                    }
+                    name = ApplyTransforms(name, allCaps, applyAbbreviations);
                 }
                 LogUtils.DoLog($"!GenName {name} for {idx} (UC={allCaps})");
             }
@@ -233,10 +245,7 @@ namespace Klyte.WriteTheSigns.Utils
                 {
                     name = DistrictManager.instance.GetDistrictName(districtId);
                 }
-                if (allCaps)
-                {
-                    name = name.ToUpper();
-                }
+                name = ApplyTransforms(name, allCaps, applyAbbreviations);
             }
             return GetTextData(name, prefix, suffix, primaryFont, overrideFont);
         }
@@ -245,10 +254,7 @@ namespace Klyte.WriteTheSigns.Utils
             if (name == null)
             {
                 name = BuildingManager.instance.GetBuildingName(buildingId, InstanceID.Empty) ?? "";
-                if (allCaps)
-                {
-                    name = name?.ToUpper();
-                }
+                name = ApplyTransforms(name, allCaps, applyAbbreviations);
             }
             return GetTextData(name, prefix, suffix, primaryFont, overrideFont);
         }
@@ -280,10 +286,7 @@ namespace Klyte.WriteTheSigns.Utils
             if (name == null)
             {
                 name = DistrictManager.instance.GetParkName(parkId);
-                if (allCaps)
-                {
-                    name = name.ToUpper();
-                }
+                name = ApplyTransforms(name, allCaps, applyAbbreviations);
             }
             return GetTextData(name, prefix, suffix, primaryFont, overrideFont);
         }
@@ -300,16 +303,13 @@ namespace Klyte.WriteTheSigns.Utils
                     LogUtils.DoLog($"!UpdateMeshStreetSuffix {idx} (UC={allCaps})");
                     if ((NetManager.instance.m_segments.m_buffer[idx].m_flags & NetSegment.Flags.CustomName) == 0)
                     {
-                        name = applyAbbreviations ? WTSUtils.ApplyAbbreviations(WriteTheSignsMod.Controller.ConnectorADR.GetStreetSuffix(idx)) : WriteTheSignsMod.Controller.ConnectorADR.GetStreetSuffix(idx);
+                        name = WriteTheSignsMod.Controller.ConnectorADR.GetStreetSuffix(idx);
                     }
                     else
                     {
-                        name = applyAbbreviations ? WTSUtils.ApplyAbbreviations(WriteTheSignsMod.Controller.ConnectorADR.GetStreetSuffixCustom(idx)) : WriteTheSignsMod.Controller.ConnectorADR.GetStreetSuffixCustom(idx);
+                        name = WriteTheSignsMod.Controller.ConnectorADR.GetStreetSuffixCustom(idx);
                     }
-                    if (allCaps)
-                    {
-                        name = name.ToUpper();
-                    }
+                    name = ApplyTransforms(name, allCaps, applyAbbreviations);
                 }
             }
             return GetTextData(name, prefix, suffix, primaryFont, overrideFont);

@@ -43,7 +43,6 @@ namespace Klyte.WriteTheSigns.UI
         private UIPanel m_secondaryContainer;
         private UILabel m_labelSelectionDescription;
         private UIPanel m_containerSelectionDescription;
-        private UIButton m_btnReload;
         private UIButton m_btnLock;
 
         public WTSOnNetLayoutEditorPropList LayoutList { get; private set; }
@@ -67,7 +66,6 @@ namespace Klyte.WriteTheSigns.UI
             AddLabel("", m_uiHelperHS, out m_labelSelectionDescription, out m_containerSelectionDescription);
             KlyteMonoUtils.LimitWidthAndBox(m_labelSelectionDescription, (m_uiHelperHS.Self.width / 2), true);
             m_labelSelectionDescription.prefix = Locale.Get("K45_WTS_CURRENTSELECTION") + ": ";
-            m_btnReload = AddButtonInEditorRow(m_containerSelectionDescription, Commons.UI.SpriteNames.CommonsSpriteNames.K45_Reload, OnReloadDescriptors, "K45_WTS_SEGMENTEDITOR_BUTTONROWACTION_RELOADDESCRIPTORS", false);
             m_btnLock = AddButtonInEditorRow(m_containerSelectionDescription, CommonsSpriteNames.K45_Lock, OnLockSelection, "K45_WTS_SEGMENTEDITOR_BUTTONROWACTION_LOCKCAMERASELECTION", false);
             m_btnLock.color = LockSelection ? Color.red : Color.white;
             m_btnLock.focusedColor = LockSelection ? Color.red : Color.white;
@@ -95,7 +93,6 @@ namespace Klyte.WriteTheSigns.UI
             m_btnLock.focusedColor = LockSelection ? Color.red : Color.white;
             m_btnLock.pressedColor = LockSelection ? Color.red : Color.white;
         }
-        private void OnReloadDescriptors() => ReloadSegment();
 
         private void EnablePickTool()
         {

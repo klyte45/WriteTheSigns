@@ -35,9 +35,6 @@ namespace Klyte.WriteTheSigns.Data
             }
         }
 
-        [XmlIgnore]
-        internal long m_lastUpdateDistrict;
-
         public override string SaveId => "K45_WTS_WTSOnNetData";
 
         public override void LoadDefaults()
@@ -48,6 +45,34 @@ namespace Klyte.WriteTheSigns.Data
 
         [XmlAttribute("defaultFont")]
         public virtual string DefaultFont { get; set; }
+
+
+        [XmlIgnore]
+        private byte?[] m_cachedDistrictParkId = new byte?[NetManager.MAX_SEGMENT_COUNT];
+        [XmlIgnore]
+        private byte?[] m_cachedDistrictId = new byte?[NetManager.MAX_SEGMENT_COUNT];
+        public ushort GetCachedDistrictParkId(ushort segmentId)
+        {
+            if ( m_cachedDistrictParkId[segmentId] == null)
+            {
+                m_cachedDistrictParkId[segmentId] = DistrictManager.instance.GetPark(NetManager.instance.m_segments.m_buffer[segmentId].m_middlePosition);
+            }
+            return m_cachedDistrictParkId[segmentId] ?? 0;
+        }
+        public ushort GetCachedDistrictId(ushort segmentId)
+        {
+            if ( m_cachedDistrictId[segmentId] == null)
+            {
+                m_cachedDistrictId[segmentId] = DistrictManager.instance.GetDistrict(NetManager.instance.m_segments.m_buffer[segmentId].m_middlePosition);
+            }
+            return m_cachedDistrictId[segmentId] ?? 0;
+        }
+
+        public void ResetDistrictCache()
+        {
+            m_cachedDistrictParkId = new byte?[NetManager.MAX_SEGMENT_COUNT];
+            m_cachedDistrictId = new byte?[NetManager.MAX_SEGMENT_COUNT];
+        }
 
     }
 

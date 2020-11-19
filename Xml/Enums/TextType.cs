@@ -23,7 +23,7 @@
         PostalCode,
         GameSprite,
         LineIdentifier,
-        ExitDistance
+        ParameterizedText
     }
 
 

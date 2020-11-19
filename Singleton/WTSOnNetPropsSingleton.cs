@@ -2,6 +2,7 @@
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Data;
 using Klyte.WriteTheSigns.Rendering;
+using Klyte.WriteTheSigns.UI;
 using Klyte.WriteTheSigns.Xml;
 using UnityEngine;
 namespace Klyte.WriteTheSigns.Singleton
@@ -15,7 +16,7 @@ namespace Klyte.WriteTheSigns.Singleton
         public void Start() => WriteTheSignsMod.Controller.EventOnDistrictChanged += OnDistrictChange;
 
 
-        private void OnDistrictChange() => Data.m_lastUpdateDistrict++;
+        private void OnDistrictChange() => Data.ResetDistrictCache();
         #endregion
 
 
@@ -58,16 +59,16 @@ namespace Klyte.WriteTheSigns.Singleton
                     targetDescriptor.m_cachedPosition.Y += targetDescriptor.PropPosition.Y;
                     targetDescriptor.m_cachedRotation = (Vector3Xml)(targetDescriptor.PropRotation + new Vector3(0, rotation + 90));
                 }
-                RenderSign(cameraInfo, segmentId, i, ref targetDescriptor, ref targetDescriptor.m_cachedProp, ref data);
+                RenderSign(cameraInfo, segmentId, i, ref targetDescriptor, ref targetDescriptor.m_cachedProp);
             }
 
         }
 
-        private void RenderSign(RenderManager.CameraInfo cameraInfo, ushort nodeID, int boardIdx, ref OnNetInstanceCacheContainerXml targetDescriptor, ref PropInfo cachedProp, ref NetSegment data)
+        private void RenderSign(RenderManager.CameraInfo cameraInfo, ushort segmentId, int boardIdx, ref OnNetInstanceCacheContainerXml targetDescriptor, ref PropInfo cachedProp)
         {
             var position = targetDescriptor.m_cachedPosition ?? Vector3.zero;
             var rotation = targetDescriptor.m_cachedRotation ?? Vector3.zero;
-            Color parentColor = WTSDynamicTextRenderingRules.RenderPropMesh(ref cachedProp, cameraInfo, nodeID, boardIdx, 0, 0xFFFFFFF, 0, position, Vector4.zero, ref targetDescriptor.Descriptor.m_propName, rotation, targetDescriptor.PropScale, targetDescriptor.Descriptor, targetDescriptor, out Matrix4x4 propMatrix, out bool rendered, new InstanceID { NetNode = nodeID });
+            Color parentColor = WTSDynamicTextRenderingRules.RenderPropMesh(ref cachedProp, cameraInfo, segmentId, boardIdx, 0, 0xFFFFFFF, 0, position, Vector4.zero, ref targetDescriptor.Descriptor.m_propName, rotation, targetDescriptor.PropScale, targetDescriptor.Descriptor, targetDescriptor, out Matrix4x4 propMatrix, out bool rendered, new InstanceID { NetNode = segmentId });
             if (rendered)
             {
 
@@ -75,20 +76,17 @@ namespace Klyte.WriteTheSigns.Singleton
                 {
                     if (cameraInfo.CheckRenderDistance(position, 200 * targetDescriptor.Descriptor.TextDescriptors[j].m_textScale * (targetDescriptor.Descriptor.TextDescriptors[j].IlluminationConfig.IlluminationType == FontStashSharp.MaterialType.OPAQUE ? 1 : 3)))
                     {
-                        if (targetDescriptor.Descriptor.TextDescriptors[j].m_destinationRelative != DestinationReference.Self)
-                        {
-                            if (WriteTheSignsMod.Controller.DestinationSingleton.m_updatedDestinations[nodeID] == null)
-                            {
-                                WriteTheSignsMod.Controller.StartCoroutine(WriteTheSignsMod.Controller.DestinationSingleton.CalculateDestinations(nodeID));
-                            }
-                        }
-
-
                         MaterialPropertyBlock properties = PropManager.instance.m_materialBlock;
                         properties.Clear();
-                        WTSDynamicTextRenderingRules.RenderTextMesh(nodeID, boardIdx, 0, targetDescriptor, propMatrix, targetDescriptor.Descriptor, ref targetDescriptor.Descriptor.TextDescriptors[j], properties, 0, parentColor, cachedProp);
+                        WTSDynamicTextRenderingRules.RenderTextMesh(segmentId, boardIdx, 0, targetDescriptor, propMatrix, targetDescriptor.Descriptor, ref targetDescriptor.Descriptor.TextDescriptors[j], properties, 0, parentColor, cachedProp);
                     }
+
                 }
+            }
+
+            if ((WTSOnNetLayoutEditor.Instance?.MainContainer?.isVisible ?? false) && WTSOnNetLayoutEditor.Instance.LockSelection && (WTSOnNetLayoutEditor.Instance?.CurrentSegmentId == segmentId) && WTSOnNetLayoutEditor.Instance.LayoutList.SelectedIndex == boardIdx)
+            {
+                ToolsModifierControl.cameraController.m_targetPosition = position;
             }
         }
     }

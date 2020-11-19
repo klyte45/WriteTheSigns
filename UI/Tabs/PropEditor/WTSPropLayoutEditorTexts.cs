@@ -53,6 +53,7 @@ namespace Klyte.WriteTheSigns.UI
         private UIDropDown m_dropdownTextContent;
         private UITextField m_customText;
         private UIDropDown m_destinationRef;
+        private UIDropDown m_parameterIdx;
         private UIDropDown m_fontClassSelect;
         private UIDropDown m_overrideFontSelect;
         private UITextField m_textPrefix;
@@ -118,6 +119,7 @@ namespace Klyte.WriteTheSigns.UI
             popup.processMarkup = true;
 
             AddDropdown(Locale.Get("K45_WTS_PROPLAYOUT_DESTINATIONREFERENCE"), out m_destinationRef, helperConfig, (Enum.GetValues(typeof(DestinationReference)) as DestinationReference[]).OrderBy(x => (int)x).Select(x => Locale.Get("K45_WTS_ONNETTEXT_DESTINATION_DESC", x.ToString())).ToArray(), OnChangeDestinationRef);
+            AddDropdown(Locale.Get("K45_WTS_PROPLAYOUT_TEXTPARAMETERIDX"), out m_parameterIdx, helperConfig, new string[8].Select((x, i) => $"#{i+1}").ToArray(), OnChangeTextParameterIdx);
             helperConfig.AddSpace(5);
             AddDropdown(Locale.Get("K45_WTS_CLASS_FONT"), out m_fontClassSelect, helperConfig, (Enum.GetValues(typeof(FontClass)) as FontClass[]).Select(x => Locale.Get("K45_WTS_FONTCLASS", x.ToString())).ToArray(), OnSetFontClass);
             AddDropdown(Locale.Get("K45_WTS_OVERRIDE_FONT"), out m_overrideFontSelect, helperConfig, new string[0], OnSetOverrideFont);
@@ -162,6 +164,7 @@ namespace Klyte.WriteTheSigns.UI
 
 
         private void OnChangeDestinationRef(int selIdx) => SafeObtain((ref BoardTextDescriptorGeneralXml x) => x.m_destinationRelative = (DestinationReference)selIdx);
+        private void OnChangeTextParameterIdx(int selIdx) => SafeObtain((ref BoardTextDescriptorGeneralXml x) => x.m_parameterIdx = 1 + selIdx);
 
 
         private void DoDeleteText() => WTSPropLayoutEditor.Instance.RemoveTabFromItem(TabToEdit);
@@ -209,6 +212,7 @@ namespace Klyte.WriteTheSigns.UI
             m_dropdownTextContent.selectedIndex = Array.IndexOf(WTSDynamicTextRenderingRules.ALLOWED_TYPES_PER_RENDERING_CLASS[WTSPropLayoutEditor.Instance.EditingInstance.m_allowedRenderClass], x.m_textType);
             m_customText.text = x.m_fixedText ?? "";
             m_destinationRef.selectedIndex = (int)(x.m_destinationRelative);
+            m_parameterIdx.selectedIndex = x.m_parameterIdx - 1;
             m_overrideFontSelect.selectedIndex = x.m_overrideFont == null ? 0 : x.m_overrideFont == WTSController.DEFAULT_FONT_KEY ? 1 : Array.IndexOf(m_overrideFontSelect.items, x.m_overrideFont);
             m_fontClassSelect.selectedIndex = (int)x.m_fontClass;
             m_textPrefix.text = x.m_prefix ?? "";
@@ -233,6 +237,7 @@ namespace Klyte.WriteTheSigns.UI
         {
             m_customText.parent.isVisible = x.m_textType == TextType.Fixed;
             m_destinationRef.parent.isVisible = WTSPropLayoutEditor.Instance.EditingInstance.m_allowedRenderClass == TextRenderingClass.PlaceOnNet && x.IsTextRelativeToSegment();
+            m_parameterIdx.parent.isVisible = WTSPropLayoutEditor.Instance.EditingInstance.m_allowedRenderClass == TextRenderingClass.PlaceOnNet && x.m_textType == TextType.ParameterizedText;
             m_textFixedColor.parent.isVisible = !x.ColoringConfig.m_useContrastColor;
             m_invertTextHorizontalAlignClone.isVisible = x.PlacingConfig.m_create180degYClone;
             m_sliderIllumination.parent.isVisible = x.IlluminationConfig.IlluminationType != MaterialType.OPAQUE;
@@ -244,7 +249,6 @@ namespace Klyte.WriteTheSigns.UI
             m_overrideFontSelect.parent.isVisible = !x.IsSpriteText();
             m_fontClassSelect.parent.isVisible = !x.IsSpriteText();
             m_allCaps.isVisible = !x.IsSpriteText();
-            m_applyAbbreviations.isVisible = x.m_textType == TextType.StreetSuffix || x.m_textType == TextType.StreetNameComplete || x.m_textType == TextType.StreetPrefix;
             m_spriteFilter.parent.isVisible = x.m_textType == TextType.GameSprite;
             m_arrayRowColumnsCount[0].parent.isVisible = x.IsMultiItemText();
             m_arrayRowColumnsSpacing[0].parent.isVisible = x.IsMultiItemText();

@@ -120,6 +120,7 @@ namespace Klyte.WriteTheSigns.Rendering
 
         public BasicRenderInformation GetSpriteFromDefaultAtlas(string spriteName)
         {
+            if(spriteName.IsNullOrWhiteSpace()) return null;
 
             if (m_defaultAtlasCache.TryGetValue(spriteName, out BasicRenderInformation bri))
             {

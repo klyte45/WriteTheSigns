@@ -133,15 +133,6 @@ namespace Klyte.WriteTheSigns.Singleton
                 {
                     if (cameraInfo.CheckRenderDistance(position, 200 * targetDescriptor.Descriptor.TextDescriptors[j].m_textScale * (targetDescriptor.Descriptor.TextDescriptors[j].IlluminationConfig.IlluminationType == FontStashSharp.MaterialType.OPAQUE ? 1 : 3)))
                     {
-                        if (targetDescriptor.Descriptor.TextDescriptors[j].m_destinationRelative != DestinationReference.Self)
-                        {
-                            if (WriteTheSignsMod.Controller.DestinationSingleton.m_updatedDestinations[nodeID] == null)
-                            {
-                                WriteTheSignsMod.Controller.StartCoroutine(WriteTheSignsMod.Controller.DestinationSingleton.CalculateDestinations(nodeID));
-                            }
-                        }
-
-
                         MaterialPropertyBlock properties = PropManager.instance.m_materialBlock;
                         properties.Clear();
                         WTSDynamicTextRenderingRules.RenderTextMesh(nodeID, boardIdx, secIdx, targetDescriptor, propMatrix, targetDescriptor.Descriptor, ref targetDescriptor.Descriptor.TextDescriptors[j], properties, 0, parentColor, cachedProp);
