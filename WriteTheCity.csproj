@@ -207,7 +207,7 @@
     <Compile Include="ModShared\ConnectorTLM.cs" />
     <Compile Include="ModShared\ConnectorTLMFallback.cs" />
     <Compile Include="Overrides\BoardGeneration\VehicleAIOverrides.cs" />
-    <Compile Include="Overrides\BoardGeneration\ManagersOverrides.cs" />
+    <Compile Include="Overrides\BoardGeneration\ToolManagerOverrides.cs" />
     <Compile Include="Overrides\TransportLineOverrides.cs" />
     <Compile Include="Rendering\WTSDisplayContainerMeshUtils.cs" />
     <Compile Include="Rendering\WTSSpritesRenderingRules.cs" />
@@ -246,7 +246,7 @@
     <Compile Include="UI\Tabs\PropEditor\WTSPropLayoutEditor.cs" />
     <Compile Include="Singleton\WTSBuildingDataCaches.cs" />
     <Compile Include="Utils\RenderUtils.cs" />
-    <Compile Include="Xml\BoardDescriptor\BoardDescriptorBuildingXml.cs" />
+    <Compile Include="Xml\BoardDescriptor\BoardInstanceBuildingXml.cs" />
     <Compile Include="Xml\BoardDescriptor\BoardDescriptorGeneralXml.cs" />
     <Compile Include="Xml\BoardDescriptor\ExportableLayoutDescriptorVehicleXml.cs" />
     <Compile Include="Xml\BoardDescriptor\LayoutDescriptorVehicleXml.cs" />
@@ -263,13 +263,13 @@
     <Compile Include="Overrides\BoardGeneration\PathCrawler\MileageMarkerDescriptor.cs" />
     <Compile Include="Overrides\BoardGeneration\PathCrawler\RoadIdentifier.cs" />
     <Compile Include="Xml\BoardDescriptor\BoardDescriptorMileageMarkerXml.cs" />
-    <Compile Include="Xml\Cache\CacheControlRoadNode.cs" />
+    <Compile Include="Xml\Cache\CacheRoadNodeItem.cs" />
     <Compile Include="Xml\Containers\OnNetGroupDescriptorXml.cs" />
     <Compile Include="Xml\BoardDescriptor\BoardInstanceOnNetXml.cs" />
     <Compile Include="Overrides\TransportManagerOverrides.cs" />
     <Compile Include="WriteTheSignsMod.cs" />
     <Compile Include="WTSController.cs" />
-    <Compile Include="Xml\Cache\CacheControlOnNet.cs" />
+    <Compile Include="Xml\Cache\OnNetInstanceCacheContainerXml.cs" />
     <Compile Include="Xml\Containers\IBoardBunchContainer.cs" />
     <Compile Include="Overrides\InstanceManagerOverrides.cs" />
     <Compile Include="Overrides\NetManagerOverrides.cs" />

@@ -109,7 +109,7 @@ namespace Klyte.WriteTheSigns.Rendering
             else if (info.m_effectLayer == layer || (info.m_effectLayer == lightSystem.m_lightLayer && layer == lightSystem.m_lightLayerFloating))
             {
                 Matrix4x4 matrix4x = default;
-                matrix4x.SetTRS(position, Quaternion.AngleAxis(angle.x, Vector3.left) * Quaternion.AngleAxis(angle.y, Vector3.down)* Quaternion.AngleAxis(angle.z, Vector3.back), scale);
+                matrix4x.SetTRS(position, Quaternion.AngleAxis(angle.x, Vector3.left) * Quaternion.AngleAxis(angle.y, Vector3.down) * Quaternion.AngleAxis(angle.z, Vector3.back), scale);
                 for (int i = 0; i < info.m_effects.Length; i++)
                 {
                     Vector3 pos = matrix4x.MultiplyPoint(info.m_effects[i].m_position);
@@ -638,6 +638,8 @@ namespace Klyte.WriteTheSigns.Rendering
         }
         #endregion
         #region Color rules
+
+        private static Randomizer rand = new Randomizer(0);
         public static Color GetPropColor(ushort refId, int boardIdx, int secIdx, BoardInstanceXml instance, BoardDescriptorGeneralXml propLayout, out bool found)
         {
 
@@ -658,12 +660,14 @@ namespace Klyte.WriteTheSigns.Rendering
                 switch (buildingDescriptor.ColorModeProp)
                 {
                     case ColoringMode.Fixed:
-                        return propLayout.FixedColor ?? default;
+                        rand.seed = refId * (1u + (uint)boardIdx);
+                        return propLayout?.FixedColor ?? buildingDescriptor.SimpleProp?.GetColor(ref rand) ?? Color.white;
                     case ColoringMode.ByPlatform:
                         var stops = GetAllTargetStopInfo(buildingDescriptor, refId).Where(x => x.m_lineId != 0);
                         if (buildingDescriptor.UseFixedIfMultiline && stops.Count() > 1)
                         {
-                            return propLayout.FixedColor ?? Color.white;
+                            rand.seed = refId * (1u + (uint)boardIdx);
+                            return propLayout?.FixedColor ?? buildingDescriptor.SimpleProp?.GetColor(ref rand) ?? Color.white;
                         }
                         StopInformation stop = stops.FirstOrDefault();
                         if (stop.m_lineId != 0)
@@ -691,7 +695,7 @@ namespace Klyte.WriteTheSigns.Rendering
             else if (instance is BoardInstanceOnNetXml n)
             {
                 found = n.Descriptor != null || n.SimpleProp != null;
-                return n.Descriptor?.FixedColor ?? Color.white;
+                return n.Descriptor?.FixedColor ?? n.SimpleProp?.m_color0 ?? Color.white;
             }
             found = false;
             return default;

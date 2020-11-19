@@ -99,8 +99,9 @@ namespace Klyte.WriteTheSigns.Singleton
         }
 
 
-        internal void CalculateGroupData(ushort nodeID, int layer, ref int vertexCount, ref int triangleCount, ref int objectCount, ref RenderGroup.VertexArrays vertexArrays)
+        internal bool CalculateGroupData(ushort nodeID, int layer, ref int vertexCount, ref int triangleCount, ref int objectCount, ref RenderGroup.VertexArrays vertexArrays)
         {
+            var result = false;
             for (int y = 0; y < Data.BoardsContainers.GetLength(1); y++)
             {
                 for (int z = 0; z < Data.BoardsContainers.GetLength(2); z++)
@@ -121,11 +122,12 @@ namespace Klyte.WriteTheSigns.Singleton
                         WTSDynamicTextRenderingRules.EnsurePropCache(ref item.m_cachedProp, nodeID, y, z, ref targetDescriptor.Descriptor.m_propName, targetDescriptor.Descriptor, targetDescriptor, out bool rendered);
                         if (rendered)
                         {
-                            PropInstance.CalculateGroupData(item.m_cachedProp, layer, ref vertexCount, ref triangleCount, ref objectCount, ref vertexArrays);
+                            result = PropInstance.CalculateGroupData(item.m_cachedProp, layer, ref vertexCount, ref triangleCount, ref objectCount, ref vertexArrays);
                         }
                     }
                 }
             }
+            return result;
         }
         internal void PopulateGroupData(ushort nodeID, int layer, ref int vertexIndex, ref int triangleIndex, Vector3 groupPosition, RenderGroup.MeshData data, ref Vector3 min, ref Vector3 max, ref float maxRenderDistance, ref float maxInstanceDistance)
         {
@@ -137,7 +139,7 @@ namespace Klyte.WriteTheSigns.Singleton
                     if (item?.m_renderPlate ?? false)
                     {
                         BoardInstanceRoadNodeXml targetDescriptor = item.m_currentDescriptor;
-                        if (targetDescriptor?.Descriptor?.m_propName == null)
+                        if (targetDescriptor?.Descriptor?.m_propName == null || item.m_cachedProp == null)
                         {
                             continue;
                         }

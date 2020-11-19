@@ -3,6 +3,7 @@ using Klyte.Commons.Interfaces;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Data;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Xml;
 using System.Xml.Serialization;
@@ -23,7 +24,7 @@ namespace Klyte.WriteTheSigns.Xml
                 if (value != null)
                 {
                     m_propInstances = value;
-                    m_descriptors = new BoardDescriptorGeneralXml[PropInstances.Length];
+                    m_propInstances.ForEach((x) => x.ParentGroup = this);
                 }
             }
         }
@@ -39,29 +40,11 @@ namespace Klyte.WriteTheSigns.Xml
         [XmlAttribute("versionWTSCreation")]
         public string VersionWTSCreation { get; private set; } = WriteTheSignsMod.FullVersion;
 
-
+        [XmlIgnore]
+        internal Dictionary<string, BoardDescriptorGeneralXml> m_localLayouts;
 
         [XmlIgnore]
-        protected BoardDescriptorGeneralXml[] m_descriptors = new BoardDescriptorGeneralXml[0];
         protected BoardInstanceBuildingXml[] m_propInstances = new BoardInstanceBuildingXml[0];
-
-        public virtual BoardDescriptorGeneralXml GetDescriptorOf(int id)
-        {
-            if (m_descriptors == null || id >= m_descriptors.Length)
-            {
-                return null;
-            }
-            ref BoardDescriptorGeneralXml descriptor = ref m_descriptors[id];
-            if (descriptor?.SaveName != m_propInstances[id].PropLayoutName && m_propInstances[id].PropLayoutName != null)
-            {
-                descriptor = WTSPropLayoutData.Instance.Get(m_propInstances[id].PropLayoutName);
-                if (descriptor == null)
-                {
-                    m_propInstances[id].PropLayoutName = null;
-                }
-            }
-            return descriptor;
-        }
 
         [XmlElement("localLayout")]
         [Obsolete]

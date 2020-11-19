@@ -373,7 +373,7 @@ namespace Klyte.WriteTheSigns.UI
                 m_tabstrip.HideTab("TpSettings");
                 m_tabstrip.HideTab("TgSettings");
                 m_propFilter.Enable();
-                m_propFilter.text = x.m_simplePropName ?? "";
+                m_propFilter.text = x.SimpleProp?.name ?? "";
                 m_propFilter.parent.GetComponentInChildren<UILabel>().text = Locale.Get("K45_WTS_ONNETEDITOR_PROPMODELSELECT");
             }
         }

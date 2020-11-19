@@ -1,11 +1,7 @@
 ﻿using ColossalFramework;
-using Harmony;
 using Klyte.Commons.Extensors;
 using Klyte.Commons.Utils;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection.Emit;
 using UnityEngine;
 
 namespace Klyte.WriteTheSigns.Overrides
@@ -41,73 +37,14 @@ namespace Klyte.WriteTheSigns.Overrides
             WriteTheSignsMod.Controller?.OnNetPropsSingleton?.AfterRenderInstanceImpl(cameraInfo, segmentID, ref data);
         }
 
-        //public static IEnumerable<CodeInstruction> TranspileCalculate(IEnumerable<CodeInstruction> instr)
-        //{
 
-        //    System.Reflection.MethodInfo calcGroup = typeof(NetSegment).GetMethod("CalculateGroupData", new Type[] { typeof(ushort), typeof(int), typeof(int).MakeByRefType(), typeof(int).MakeByRefType(), typeof(int).MakeByRefType(), typeof(RenderGroup.VertexArrays).MakeByRefType() });
-        //    System.Reflection.MethodInfo calcGroupOver = typeof(RoadNodeOverrides).GetMethod("AfterCalculateGroupData", RedirectorUtils.allFlags);
-        //    var instList = instr.ToList();
-
-        //    for (int i = 2; i < instList.Count; i++)
-        //    {
-        //        if (instList[i - 2].operand == calcGroup)
-        //        {
-        //            instList.InsertRange(i, new CodeInstruction[]
-        //            {
-        //                new CodeInstruction(OpCodes.Ldloc_S,13),
-        //                new CodeInstruction(OpCodes.Ldarg_3),
-        //                new CodeInstruction(OpCodes.Ldarg_S,4),
-        //                new CodeInstruction(OpCodes.Ldarg_S,5),
-        //                new CodeInstruction(OpCodes.Ldarg_S,6),
-        //                new CodeInstruction(OpCodes.Ldarg_S,7),
-        //                new CodeInstruction(OpCodes.Call,calcGroupOver)
-        //            });
-        //            break;
-        //        }
-        //    }
-
-
-        //    LogUtils.PrintMethodIL(instList);
-        //    return instr;
-        //}
-
-
-        //public static IEnumerable<CodeInstruction> TranspilePopulate(IEnumerable<CodeInstruction> instr)
-        //{
-
-        //    System.Reflection.MethodInfo popGroup = typeof(NetSegment).GetMethod("PopulateGroupData", new Type[] { typeof(ushort), typeof(int), typeof(int), typeof(int), typeof(int).MakeByRefType(), typeof(int).MakeByRefType(), typeof(Vector3), typeof(RenderGroup.MeshData), typeof(Vector3).MakeByRefType(), typeof(Vector3).MakeByRefType(), typeof(float).MakeByRefType(), typeof(float).MakeByRefType(), typeof(bool).MakeByRefType() });
-        //    System.Reflection.MethodInfo popGroupOver = typeof(RoadNodeOverrides).GetMethod("AfterPopulateGroupData", RedirectorUtils.allFlags);
-        //    var instList = instr.ToList();
-
-        //    for (int i = 2; i < instList.Count; i++)
-        //    {
-        //        if (instList[i - 1].operand == popGroup)
-        //        {
-        //            instList.InsertRange(i, new CodeInstruction[]
-        //            {
-        //                new CodeInstruction(OpCodes.Ldloc_S,12),
-        //                new CodeInstruction(OpCodes.Ldarg_3),
-        //                new CodeInstruction(OpCodes.Ldarg_S,4),
-        //                new CodeInstruction(OpCodes.Ldarg_S,5),
-        //                new CodeInstruction(OpCodes.Ldarg_S,6),
-        //                new CodeInstruction(OpCodes.Ldarg_S,7),
-        //                new CodeInstruction(OpCodes.Ldarg_S,8),
-        //                new CodeInstruction(OpCodes.Ldarg_S,9),
-        //                new CodeInstruction(OpCodes.Ldarg_S,10),
-        //                new CodeInstruction(OpCodes.Ldarg_S,11),
-        //                new CodeInstruction(OpCodes.Call,popGroupOver)
-        //            });
-        //            break;
-        //        }
-        //    }
-
-
-        //    LogUtils.PrintMethodIL(instList);
-        //    return instr;
-        //}
-
-        public static void AfterCalculateGroupData(ref NetManager __instance, int groupX, int groupZ, int layer, ref int vertexCount, ref int triangleCount, ref int objectCount, ref RenderGroup.VertexArrays vertexArrays)
+        public static void AfterCalculateGroupData(ref NetManager __instance, int groupX, int groupZ, int layer, ref int vertexCount, ref int triangleCount, ref int objectCount, ref RenderGroup.VertexArrays vertexArrays, ref bool __result)
         {
+            if (WriteTheSignsMod.Controller?.RoadPropsSingleton == null)
+            {
+                return;
+            }
+
             int num = groupX * 270 / 45;
             int num2 = groupZ * 270 / 45;
             int num3 = (groupX + 1) * 270 / 45 - 1;
@@ -121,7 +58,10 @@ namespace Klyte.WriteTheSigns.Overrides
                     int num7 = 0;
                     while (num6 != 0)
                     {
-                        WriteTheSignsMod.Controller?.RoadPropsSingleton?.CalculateGroupData(num6, layer, ref vertexCount, ref triangleCount, ref objectCount, ref vertexArrays);
+                        if (WriteTheSignsMod.Controller.RoadPropsSingleton.CalculateGroupData(num6, layer, ref vertexCount, ref triangleCount, ref objectCount, ref vertexArrays))
+                        {
+                            __result = true;
+                        }
                         num6 = __instance.m_nodes.m_buffer[num6].m_nextGridNode;
                         if (++num7 >= 32768)
                         {

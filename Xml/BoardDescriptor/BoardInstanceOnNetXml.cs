@@ -40,8 +40,6 @@ namespace Klyte.WriteTheSigns.Xml
         private string m_propLayoutName;
 
 
-        [XmlAttribute("simplePropName")]
-        public string m_simplePropName;
 
         [XmlIgnore]
         private BoardDescriptorGeneralXml m_descriptor;
@@ -70,7 +68,9 @@ namespace Klyte.WriteTheSigns.Xml
         }
 
 
-
+        
+        [XmlAttribute("simplePropName")]
+        public string m_simplePropName;
         [XmlIgnore]
         public PropInfo SimpleProp
         {

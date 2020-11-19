@@ -80,7 +80,56 @@ namespace Klyte.WriteTheSigns.Singleton
         }
         #endregion
 
+        public bool CalculateGroupData(ushort buildingID, int layer, ref int vertexCount, ref int triangleCount, ref int objectCount, ref RenderGroup.VertexArrays vertexArrays)
+        {
+            if (Data.BoardsContainers[buildingID, 0, 0] == null)
+            {
+                return false;
+            }
+            bool result = false;
+            for (int i = 0; i < Data.BoardsContainers[buildingID, 0, 0].Length; i++)
+            {
+                ref BoardBunchContainerBuilding item = ref Data.BoardsContainers[buildingID, 0, 0][i];
 
+                for (int j = 0; j <= item.m_cachedArrayRepeatTimes; j++)
+                {
+                    if (item.m_cachedProp != null)
+                    {
+                        if (PropInstance.CalculateGroupData(item.m_cachedProp, layer, ref vertexCount, ref triangleCount, ref objectCount, ref vertexArrays))
+                        {
+                            result = true;
+                        }
+                    }
+                }
+            }
+            return result;
+        }
+        public bool PopulateGroupData(ushort buildingID, int layer, ref int vertexIndex, ref int triangleIndex, Vector3 groupPosition, RenderGroup.MeshData data, ref Vector3 min, ref Vector3 max, ref float maxRenderDistance, ref float maxInstanceDistance)
+        {
+            if (Data.BoardsContainers[buildingID, 0, 0] == null)
+            {
+                return false;
+            }
+            bool result = false;
+            float buildingAngle = BuildingManager.instance.m_buildings.m_buffer[buildingID].m_angle * Mathf.Rad2Deg;
+            for (int i = 0; i < Data.BoardsContainers[buildingID, 0, 0].Length; i++)
+            {
+                ref BoardBunchContainerBuilding item = ref Data.BoardsContainers[buildingID, 0, 0][i];
+                if (item?.m_cachedProp != null)
+                {
+                    var targetPosition = item.m_cachedPosition ?? default;
+                    for (int j = 0; j <= item.m_cachedArrayRepeatTimes; j++)
+                    {
+                        if (j > 0)
+                        {
+                            targetPosition = item.m_cachedMatrix.MultiplyPoint(item.m_cachedOriginalPosition + (j * item.m_cachedArrayItemPace));
+                        }
+                        WTSDynamicTextRenderingRules.PropInstancePopulateGroupData(item.m_cachedProp, layer, new InstanceID { Building = buildingID }, targetPosition, item.m_cachedScale ?? Vector3.one, (item.m_cachedRotation ?? default) + new Vector3(0, buildingAngle), ref vertexIndex, ref triangleIndex, groupPosition, data, ref min, ref max, ref maxRenderDistance, ref maxInstanceDistance);
+                    }
+                }
+            }
+            return result;
+        }
 
         public void AfterRenderInstanceImpl(RenderManager.CameraInfo cameraInfo, ushort sourceBuildingId, int layerMask, ref RenderManager.Instance renderInstance)
         {
@@ -208,12 +257,13 @@ namespace Klyte.WriteTheSigns.Singleton
 
         private void RenderDescriptor(RenderManager.CameraInfo cameraInfo, ushort buildingID, ref Building data, int layerMask, ref RenderManager.Instance renderInstance, ref BuildingGroupDescriptorXml parentDescriptor, int idx)
         {
-            BoardDescriptorGeneralXml propLayout = parentDescriptor.GetDescriptorOf(idx);
-            if (propLayout?.m_propName == null)
+            ref BoardInstanceBuildingXml targetDescriptor = ref parentDescriptor.PropInstances[idx];
+            if (targetDescriptor?.Descriptor == null && targetDescriptor.SimpleProp == null)
             {
                 return;
             }
-            ref BoardInstanceBuildingXml targetDescriptor = ref parentDescriptor.PropInstances[idx];
+            var targetPropName = targetDescriptor?.Descriptor?.SaveName ?? targetDescriptor.SimpleProp.name;
+
             if (Data.BoardsContainers[buildingID, 0, 0] == null || Data.BoardsContainers[buildingID, 0, 0].Length != parentDescriptor.PropInstances.Length)
             {
                 Data.BoardsContainers[buildingID, 0, 0] = new BoardBunchContainerBuilding[parentDescriptor.PropInstances.Length];
@@ -224,11 +274,11 @@ namespace Klyte.WriteTheSigns.Singleton
             {
                 item = new BoardBunchContainerBuilding();
             }
-            if (item.m_cachedProp?.name != propLayout.m_propName)
+            if (item.m_cachedProp?.name != targetPropName)
             {
                 item.m_cachedProp = null;
             }
-            if (item.m_cachedPosition == null || item.m_cachedRotation == null)
+            if (item.m_cachedPosition == null || item.m_cachedRotation == null || item.m_cachedScale == null)
             {
                 if (targetDescriptor.SubBuildingPivotReference >= 0 && targetDescriptor.SubBuildingPivotReference < data.Info.m_subBuildings.Length)
                 {
@@ -252,16 +302,21 @@ namespace Klyte.WriteTheSigns.Singleton
                     item.m_cachedMatrix = renderInstance.m_dataMatrix1;
                 }
                 item.m_cachedPosition = item.m_cachedMatrix.MultiplyPoint(targetDescriptor.PropPosition);
+                item.m_cachedOriginalPosition = targetDescriptor.PropPosition;
                 item.m_cachedRotation = targetDescriptor.PropRotation;
+                item.m_cachedScale = targetDescriptor.PropScale;
+                item.m_cachedArrayRepeatTimes = targetDescriptor.ArrayRepeatTimes;
+                item.m_cachedArrayItemPace = targetDescriptor.ArrayRepeat;
+                targetDescriptor.OnChangeMatrixData();
             }
             Vector3 targetPostion = item.m_cachedPosition ?? default;
-            for (int i = 0; i <= targetDescriptor.m_arrayRepeatTimes; i++)
+            for (int i = 0; i <= targetDescriptor.ArrayRepeatTimes; i++)
             {
                 if (i > 0)
                 {
                     targetPostion = item.m_cachedMatrix.MultiplyPoint(targetDescriptor.PropPosition + (i * (Vector3)targetDescriptor.ArrayRepeat));
                 }
-                RenderSign(ref data, cameraInfo, buildingID, idx, targetPostion, item.m_cachedRotation ?? default, layerMask, propLayout, ref targetDescriptor, ref item.m_cachedProp);
+                RenderSign(ref data, cameraInfo, buildingID, idx, targetPostion, item.m_cachedRotation ?? default, layerMask, ref targetDescriptor, ref item.m_cachedProp);
                 if (i == 0 && (WTSBuildingLayoutEditor.Instance?.MainContainer?.isVisible ?? false) && WTSBuildingLayoutEditor.Instance.LockSelection && (WTSBuildingLayoutEditor.Instance?.CurrentBuildingId == buildingID) && WTSBuildingLayoutEditor.Instance.LayoutList.SelectedIndex == idx)
                 {
                     ToolsModifierControl.cameraController.m_targetPosition = targetPostion;
@@ -269,11 +324,19 @@ namespace Klyte.WriteTheSigns.Singleton
             }
         }
 
-        private void RenderSign(ref Building data, RenderManager.CameraInfo cameraInfo, ushort buildingId, int boardIdx, Vector3 position, Vector3 rotation, int layerMask, BoardDescriptorGeneralXml propLayout, ref BoardInstanceBuildingXml targetDescriptor, ref PropInfo cachedProp)
+        private void RenderSign(ref Building data, RenderManager.CameraInfo cameraInfo, ushort buildingId, int boardIdx, Vector3 position, Vector3 rotation, int layerMask, ref BoardInstanceBuildingXml targetDescriptor, ref PropInfo cachedProp)
         {
-            var parentColor = WTSDynamicTextRenderingRules.RenderPropMesh(ref cachedProp, cameraInfo, buildingId, boardIdx, 0, layerMask, data.m_angle, position, Vector4.zero, ref propLayout.m_propName, rotation, targetDescriptor.PropScale, propLayout, targetDescriptor, out Matrix4x4 propMatrix, out bool rendered, new InstanceID { Building = buildingId });
-            if (rendered)
+            var isSimple = targetDescriptor.Descriptor == null;
+
+            var propname = isSimple ? targetDescriptor.m_simplePropName : targetDescriptor.Descriptor.m_propName;
+
+            Color parentColor = WTSDynamicTextRenderingRules.RenderPropMesh(ref cachedProp, cameraInfo, buildingId, boardIdx, 0, layerMask, data.m_angle, position, Vector4.zero, ref propname, rotation, targetDescriptor.PropScale, targetDescriptor.Descriptor, targetDescriptor, out Matrix4x4 propMatrix, out bool rendered, new InstanceID { Building = buildingId });
+
+            (isSimple ? ref targetDescriptor.m_simplePropName : ref targetDescriptor.Descriptor.m_propName) = propname;
+
+            if (rendered && !isSimple)
             {
+                var propLayout = targetDescriptor.Descriptor;
                 for (int j = 0; j < propLayout.TextDescriptors.Length; j++)
                 {
                     if (cameraInfo.CheckRenderDistance(position, 200 * propLayout.TextDescriptors[j].m_textScale * targetDescriptor.PropScale.magnitude * (propLayout.TextDescriptors[j].IlluminationConfig.IlluminationType == FontStashSharp.MaterialType.OPAQUE ? 1 : 2)))

@@ -30,26 +30,6 @@ namespace Klyte.WriteTheSigns.Xml
             set => m_localLayouts = value;
         }
 
-
-        private Dictionary<string, BoardDescriptorGeneralXml> m_localLayouts;
-
-        public override BoardDescriptorGeneralXml GetDescriptorOf(int id)
-        {
-            if (m_descriptors == null || id >= m_descriptors.Length)
-            {
-                return null;
-            }
-            ref BoardDescriptorGeneralXml descriptor = ref m_descriptors[id];
-            if (descriptor == null && m_propInstances[id].PropLayoutName != null)
-            {
-                if (!TryGetDescriptor(m_propInstances[id].PropLayoutName, out descriptor))
-                {
-                    m_propInstances[id].PropLayoutName = null;
-                }
-            }
-            return descriptor;
-        }
-
         private bool TryGetDescriptor(string layoutName, out BoardDescriptorGeneralXml descriptor)
         {
             descriptor = WTSPropLayoutData.Instance.Get(layoutName);
