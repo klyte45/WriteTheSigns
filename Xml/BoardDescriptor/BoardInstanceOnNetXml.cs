@@ -66,11 +66,15 @@ namespace Klyte.WriteTheSigns.Xml
             get => Descriptor?.SaveName;
             set {
                 m_propLayoutName = value;
-                Descriptor = WTSPropLayoutData.Instance.Get(m_propLayoutName);
+                m_descriptor = null;
             }
         }
 
         private string m_propLayoutName;
+
+
+        [XmlAttribute("simplePropName")]
+        public string m_simplePropName;
 
         [XmlIgnore]
         private BoardDescriptorGeneralXml m_descriptor;
@@ -96,6 +100,30 @@ namespace Klyte.WriteTheSigns.Xml
                 m_descriptor = WTSPropLayoutData.Instance.Get(m_propLayoutName);
             }
         }
+
+
+
+        [XmlIgnore]
+        public PropInfo SimpleProp
+        {
+            get {
+                if (m_simplePropName != null && m_simpleProp?.name != m_simplePropName)
+                {
+                    m_simpleProp = PrefabCollection<PropInfo>.FindLoaded(m_simplePropName);
+                    if (m_simpleProp == null)
+                    {
+                        m_simplePropName = null;
+                    }
+                }
+                return m_simpleProp;
+            }
+            internal set {
+                m_simplePropName = value?.name;
+                m_simpleProp = null;
+            }
+        }
+        [XmlIgnore]
+        private PropInfo m_simpleProp;
 
         [XmlAttribute("saveName")]
         public string SaveName { get; set; }

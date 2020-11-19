@@ -94,10 +94,10 @@ namespace Klyte.WriteTheSigns.Rendering
         };
 
         #region Main flow
-        public static Color RenderPropMesh(ref PropInfo propInfo, RenderManager.CameraInfo cameraInfo, ushort refId, int boardIdx, int secIdx,
+        public static Color RenderPropMesh<DESC>(ref PropInfo propInfo, RenderManager.CameraInfo cameraInfo, ushort refId, int boardIdx, int secIdx,
             int layerMask, float refAngleRad, Vector3 position, Vector4 dataVector, ref string propName, Vector3 propAngle, Vector3 propScale,
-            BoardDescriptorGeneralXml propLayout, BoardInstanceXml descriptor,
-            out Matrix4x4 propMatrix, out bool rendered, InstanceID propRenderID)
+            BoardDescriptorGeneralXml propLayout, DESC descriptor,
+            out Matrix4x4 propMatrix, out bool rendered, InstanceID propRenderID) where DESC : BoardInstanceXml
         {
             Color propColor = WTSDynamicTextRenderingRules.GetPropColor(refId, boardIdx, secIdx, descriptor, propLayout, out bool colorFound);
             if (!colorFound)
@@ -655,7 +655,7 @@ namespace Klyte.WriteTheSigns.Rendering
             }
             else if (instance is BoardInstanceOnNetXml n)
             {
-                found = n.Descriptor != null;
+                found = n.Descriptor != null || n.SimpleProp != null;
                 return n.Descriptor?.FixedColor ?? Color.white;
             }
             found = false;

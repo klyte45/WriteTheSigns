@@ -19,6 +19,7 @@ namespace Klyte.WriteTheSigns.UI
         public static WTSPropLayoutEditor Instance { get; private set; }
         public UIPanel MainContainer { get; protected set; }
 
+        public WTSPropLayoutEditorBasics m_basicsTab;
 
 
         #region Panel areas
@@ -107,7 +108,7 @@ namespace Klyte.WriteTheSigns.UI
 
 
             KlyteMonoUtils.CreateUIElement(out m_basicInfoEditor, m_editArea.transform, "basicTab", new UnityEngine.Vector4(0, 0, m_editArea.width - m_editArea.padding.horizontal, m_editArea.height - m_editArea.padding.vertical));
-            m_basicInfoEditor.gameObject.AddComponent<WTSPropLayoutEditorBasics>();
+             m_basicsTab =  m_basicInfoEditor.gameObject.AddComponent<WTSPropLayoutEditorBasics>();
             KlyteMonoUtils.CreateUIElement(out m_textInfoEditor, m_editArea.transform, "textTab", new UnityEngine.Vector4(0, 0, m_editArea.width - m_editArea.padding.horizontal, m_editArea.height - m_editArea.padding.vertical));
             m_textInfoEditor.gameObject.AddComponent<WTSPropLayoutEditorTexts>();
 

@@ -34,12 +34,22 @@ namespace Klyte.WriteTheSigns.Singleton
                 var targetDescriptor = itemGroup.BoardsData[i];
                 if (targetDescriptor?.Descriptor == null)
                 {
-                    continue;
-                }
+                    if (targetDescriptor?.SimpleProp == null)
+                    {
+                        continue;
+                    }
 
-                if (targetDescriptor.m_cachedProp?.name != targetDescriptor.Descriptor.m_propName)
+                    if (targetDescriptor.m_cachedProp?.name != targetDescriptor.m_simplePropName)
+                    {
+                        targetDescriptor.m_cachedProp = null;
+                    }
+                }
+                else
                 {
-                    targetDescriptor.m_cachedProp = null;
+                    if (targetDescriptor.m_cachedProp?.name != targetDescriptor.Descriptor.m_propName)
+                    {
+                        targetDescriptor.m_cachedProp = null;
+                    }
                 }
                 if (targetDescriptor.m_cachedPosition == null || targetDescriptor.m_cachedRotation == null)
                 {
@@ -63,13 +73,20 @@ namespace Klyte.WriteTheSigns.Singleton
             }
 
         }
-
+        
         private void RenderSign(RenderManager.CameraInfo cameraInfo, ushort segmentId, int boardIdx, ref OnNetInstanceCacheContainerXml targetDescriptor, ref PropInfo cachedProp)
         {
             var position = targetDescriptor.m_cachedPosition ?? Vector3.zero;
             var rotation = targetDescriptor.m_cachedRotation ?? Vector3.zero;
-            Color parentColor = WTSDynamicTextRenderingRules.RenderPropMesh(ref cachedProp, cameraInfo, segmentId, boardIdx, 0, 0xFFFFFFF, 0, position, Vector4.zero, ref targetDescriptor.Descriptor.m_propName, rotation, targetDescriptor.PropScale, targetDescriptor.Descriptor, targetDescriptor, out Matrix4x4 propMatrix, out bool rendered, new InstanceID { NetNode = segmentId });
-            if (rendered)
+            var isSimple = targetDescriptor.Descriptor == null;
+
+            var propname = isSimple ? targetDescriptor.m_simplePropName : targetDescriptor.Descriptor.m_propName;
+
+            Color parentColor = WTSDynamicTextRenderingRules.RenderPropMesh(ref cachedProp, cameraInfo, segmentId, boardIdx, 0, 0xFFFFFFF, 0, position, Vector4.zero, ref propname, rotation, targetDescriptor.PropScale, targetDescriptor.Descriptor, targetDescriptor, out Matrix4x4 propMatrix, out bool rendered, new InstanceID { NetNode = segmentId });
+
+            (isSimple ? ref targetDescriptor.m_simplePropName : ref targetDescriptor.Descriptor.m_propName) = propname;
+
+            if (rendered && !isSimple)
             {
 
                 for (int j = 0; j < targetDescriptor.Descriptor.TextDescriptors.Length; j++)
