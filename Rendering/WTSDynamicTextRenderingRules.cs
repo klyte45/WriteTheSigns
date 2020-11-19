@@ -94,16 +94,52 @@ namespace Klyte.WriteTheSigns.Rendering
         };
 
         #region Main flow
+        public static void PropInstancePopulateGroupData(PropInfo info, int layer, InstanceID id, Vector3 position, Vector3 scale, Vector3 angle, ref int vertexIndex, ref int triangleIndex, Vector3 groupPosition, RenderGroup.MeshData data, ref Vector3 min, ref Vector3 max, ref float maxRenderDistance, ref float maxInstanceDistance)
+        {
+            LightSystem lightSystem = RenderManager.instance.lightSystem;
+            if (info.m_prefabDataLayer == layer)
+            {
+                float y = info.m_generatedInfo.m_size.y * scale.y;
+                float num = Mathf.Max(info.m_generatedInfo.m_size.x, info.m_generatedInfo.m_size.z) * scale.y * 0.5f;
+                min = Vector3.Min(min, position - new Vector3(num, 0f, num));
+                max = Vector3.Max(max, position + new Vector3(num, y, num));
+                maxRenderDistance = Mathf.Max(maxRenderDistance, info.m_maxRenderDistance);
+                maxInstanceDistance = Mathf.Max(maxInstanceDistance, info.m_maxRenderDistance);
+            }
+            else if (info.m_effectLayer == layer || (info.m_effectLayer == lightSystem.m_lightLayer && layer == lightSystem.m_lightLayerFloating))
+            {
+                Matrix4x4 matrix4x = default;
+                matrix4x.SetTRS(position, Quaternion.AngleAxis(angle.x, Vector3.left) * Quaternion.AngleAxis(angle.y, Vector3.down)* Quaternion.AngleAxis(angle.z, Vector3.back), scale);
+                for (int i = 0; i < info.m_effects.Length; i++)
+                {
+                    Vector3 pos = matrix4x.MultiplyPoint(info.m_effects[i].m_position);
+                    Vector3 dir = matrix4x.MultiplyVector(info.m_effects[i].m_direction);
+                    info.m_effects[i].m_effect.PopulateGroupData(layer, id, pos, dir, ref vertexIndex, ref triangleIndex, groupPosition, data, ref min, ref max, ref maxRenderDistance, ref maxInstanceDistance);
+                }
+            }
+        }
+
         public static Color RenderPropMesh<DESC>(ref PropInfo propInfo, RenderManager.CameraInfo cameraInfo, ushort refId, int boardIdx, int secIdx,
             int layerMask, float refAngleRad, Vector3 position, Vector4 dataVector, ref string propName, Vector3 propAngle, Vector3 propScale,
             BoardDescriptorGeneralXml propLayout, DESC descriptor,
             out Matrix4x4 propMatrix, out bool rendered, InstanceID propRenderID) where DESC : BoardInstanceXml
         {
+            Color propColor = EnsurePropCache(ref propInfo, refId, boardIdx, secIdx, ref propName, propLayout, descriptor, out rendered);
+            if (!rendered)
+            {
+                propMatrix = new Matrix4x4();
+                return propColor;
+            }
+            propMatrix = RenderUtils.RenderProp(refId, refAngleRad, cameraInfo, propInfo, propColor, position, dataVector, boardIdx, propAngle, propScale, layerMask, out rendered, propRenderID);
+            return propColor;
+        }
+
+        public static Color EnsurePropCache<DESC>(ref PropInfo propInfo, ushort refId, int boardIdx, int secIdx, ref string propName, BoardDescriptorGeneralXml propLayout, DESC descriptor, out bool rendered) where DESC : BoardInstanceXml
+        {
             Color propColor = WTSDynamicTextRenderingRules.GetPropColor(refId, boardIdx, secIdx, descriptor, propLayout, out bool colorFound);
             if (!colorFound)
             {
                 rendered = false;
-                propMatrix = new Matrix4x4();
                 return propColor;
             }
             propColor.a = 1;
@@ -124,10 +160,9 @@ namespace Klyte.WriteTheSigns.Rendering
             {
                 propInfo = null;
             }
-            propMatrix = RenderUtils.RenderProp(refId, refAngleRad, cameraInfo, propInfo, propColor, position, dataVector, boardIdx, propAngle, propScale, layerMask, out rendered, propRenderID);
+            rendered = true;
             return propColor;
         }
-
 
         public static void RenderTextMesh(ushort refID, int boardIdx, int secIdx, BoardInstanceXml descriptor, Matrix4x4 propMatrix,
             BoardDescriptorGeneralXml propLayout, ref BoardTextDescriptorGeneralXml textDescriptor, MaterialPropertyBlock materialPropertyBlock,

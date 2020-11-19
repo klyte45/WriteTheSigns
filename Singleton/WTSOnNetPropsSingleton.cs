@@ -73,7 +73,84 @@ namespace Klyte.WriteTheSigns.Singleton
             }
 
         }
-        
+
+        internal void CalculateGroupData(ushort segmentID, int layer, ref int vertexCount, ref int triangleCount, ref int objectCount, ref RenderGroup.VertexArrays vertexArrays)
+        {
+            ref OnNetGroupDescriptorXml itemGroup = ref Data.m_boardsContainers[segmentID];
+            if (itemGroup == null || !itemGroup.HasAnyBoard())
+            {
+                return;
+            }
+            for (var i = 0; i < itemGroup.BoardsData.Length; i++)
+            {
+                var targetDescriptor = itemGroup.BoardsData[i];
+                if (targetDescriptor?.Descriptor == null)
+                {
+                    if (targetDescriptor?.SimpleProp == null)
+                    {
+                        continue;
+                    }
+
+                    if (targetDescriptor.m_cachedProp?.name != targetDescriptor.m_simplePropName)
+                    {
+                        targetDescriptor.m_cachedProp = null;
+                    }
+                }
+                else
+                {
+                    if (targetDescriptor.m_cachedProp?.name != targetDescriptor.Descriptor.m_propName)
+                    {
+                        targetDescriptor.m_cachedProp = null;
+                    }
+                }
+                var isSimple = targetDescriptor.Descriptor == null;
+                var propname = isSimple ? targetDescriptor.m_simplePropName : targetDescriptor.Descriptor.m_propName;
+                WTSDynamicTextRenderingRules.EnsurePropCache(ref targetDescriptor.m_cachedProp, segmentID, i, 0, ref propname, targetDescriptor.Descriptor, targetDescriptor, out bool rendered);
+                (isSimple ? ref targetDescriptor.m_simplePropName : ref targetDescriptor.Descriptor.m_propName) = propname;
+                if (rendered)
+                {
+                    PropInstance.CalculateGroupData(targetDescriptor.m_cachedProp, layer, ref vertexCount, ref triangleCount, ref objectCount, ref vertexArrays);
+                }
+            }
+        }
+
+        internal void PopulateGroupData(ushort segmentID, int layer, ref int vertexIndex, ref int triangleIndex, Vector3 groupPosition, RenderGroup.MeshData data, ref Vector3 min, ref Vector3 max, ref float maxRenderDistance, ref float maxInstanceDistance)
+        {
+            ref OnNetGroupDescriptorXml itemGroup = ref Data.m_boardsContainers[segmentID];
+            if (itemGroup == null || !itemGroup.HasAnyBoard())
+            {
+                return;
+            }
+            for (var i = 0; i < itemGroup.BoardsData.Length; i++)
+            {
+                var targetDescriptor = itemGroup.BoardsData[i];
+                if (targetDescriptor?.Descriptor == null)
+                {
+                    if (targetDescriptor?.SimpleProp == null)
+                    {
+                        continue;
+                    }
+
+                    if (targetDescriptor.m_cachedProp?.name != targetDescriptor.m_simplePropName)
+                    {
+                        targetDescriptor.m_cachedProp = null;
+                    }
+                }
+                else
+                {
+                    if (targetDescriptor.m_cachedProp?.name != targetDescriptor.Descriptor.m_propName)
+                    {
+                        targetDescriptor.m_cachedProp = null;
+                    }
+                }
+                if (targetDescriptor.m_cachedProp != null)
+                {
+                    WTSDynamicTextRenderingRules.PropInstancePopulateGroupData(targetDescriptor.m_cachedProp, layer, new InstanceID { NetSegment = segmentID }, targetDescriptor.m_cachedPosition, targetDescriptor.Scale, targetDescriptor.m_cachedRotation ?? default(Vector3), ref vertexIndex, ref triangleIndex, groupPosition, data, ref min, ref max, ref maxRenderDistance, ref maxInstanceDistance);
+                }
+            }
+        }
+
+
         private void RenderSign(RenderManager.CameraInfo cameraInfo, ushort segmentId, int boardIdx, ref OnNetInstanceCacheContainerXml targetDescriptor, ref PropInfo cachedProp)
         {
             var position = targetDescriptor.m_cachedPosition ?? Vector3.zero;

@@ -17,7 +17,7 @@ namespace Klyte.WriteTheSigns.Xml
             get => Descriptor?.SaveName;
             set {
                 m_propLayoutName = value;
-                Descriptor = WTSPropLayoutData.Instance.Get(m_propLayoutName);
+                m_descriptor = null;
             }
         }
 
@@ -37,12 +37,13 @@ namespace Klyte.WriteTheSigns.Xml
                     {
                         m_propLayoutName = null;
                     }
+                    OnChangeMatrixData();
                 }
                 return m_descriptor;
             }
             internal set {
                 m_propLayoutName = value?.SaveName;
-                m_descriptor = WTSPropLayoutData.Instance.Get(m_propLayoutName);
+                m_descriptor = null;
             }
         }
 

@@ -39,13 +39,10 @@ namespace FontStashSharp
             get {
                 if (m_materialBright == null)
                 {
-                    m_materialBright = new Material(Shader.Find("Custom/Props/Prop/Default"))
-                    {
-                        mainTexture = Texture
-                    };
+                    m_materialBright = new Material(Shader.Find("Custom/Props/Prop/Default"));
                     UnityEngine.Object.Destroy(m_xys);
-                    m_xys = new Texture2D(Texture.width, Texture.height);
-                    m_xys.SetPixels(Texture.GetPixels().Select(x => new Color(.5f, .5f, .99f)).ToArray());
+                    m_xys = new Texture2D(Width, Height);
+                    m_xys.SetPixels(new string[Width * Height].Select(x => new Color(.5f, .5f, .99f)).ToArray());
                     m_xys.Apply();
                     m_materialBright.SetTexture(PropManager.instance.ID_XYSMap, m_xys);
                 }

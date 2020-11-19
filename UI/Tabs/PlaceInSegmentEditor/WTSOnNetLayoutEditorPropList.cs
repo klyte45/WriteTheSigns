@@ -85,20 +85,20 @@ namespace Klyte.WriteTheSigns.UI
 
             KlyteMonoUtils.CreateUIElement(out UILabel m_topPanelTitle, m_topPanel.transform, "topListPanelTitle", new UnityEngine.Vector4(0, 0, m_topPanel.width - 16, 15));
             KlyteMonoUtils.LimitWidthAndBox(m_topPanelTitle, m_topPanel.width - 16, true);
-            m_topPanelTitle.text = Locale.Get("K45_WTS_Segment_LISTORDERTITLE");
+            m_topPanelTitle.text = Locale.Get("K45_WTS_SEGMENT_LISTORDERTITLE");
             m_topPanelTitle.textAlignment = UIHorizontalAlignment.Center;
 
             int btnSize = 36;
             KlyteMonoUtils.CreateUIElement<UILabel>(out UILabel spacing, m_topPanel.transform, "_", new Vector4(0, 0, btnSize / 2, btnSize));
             spacing.textScale = 0;
             spacing.width = btnSize / 4;
-            KlyteMonoUtils.InitCircledButton(m_topPanel, out m_import, CommonsSpriteNames.K45_Import, OnImportData, "K45_WTS_Segment_IMPORTDATA", btnSize);
-            KlyteMonoUtils.InitCircledButton(m_topPanel, out m_export, CommonsSpriteNames.K45_Export, (x, y) => OnExportData(), "K45_WTS_Segment_EXPORTDATA", btnSize);
+            KlyteMonoUtils.InitCircledButton(m_topPanel, out m_import, CommonsSpriteNames.K45_Import, OnImportData, "K45_WTS_SEGMENT_IMPORTDATA", btnSize);
+            KlyteMonoUtils.InitCircledButton(m_topPanel, out m_export, CommonsSpriteNames.K45_Export, (x, y) => OnExportData(), "K45_WTS_SEGMENT_EXPORTDATA", btnSize);
             KlyteMonoUtils.InitCircledButton(m_topPanel, out m_help, CommonsSpriteNames.K45_QuestionMark, Help_RulesList, "K45_CMNS_HELP", btnSize);
-            KlyteMonoUtils.InitCircledButton(m_topPanel, out m_new, CommonsSpriteNames.K45_New, OnAddItemOnList, "K45_WTS_Segment_ADDITEMLIST", btnSize);
-            KlyteMonoUtils.InitCircledButton(m_topPanel, out m_up, CommonsSpriteNames.K45_Up, OnMoveItemUpOnList, "K45_WTS_Segment_MOVEITEMUP", btnSize);
-            KlyteMonoUtils.InitCircledButton(m_topPanel, out m_down, CommonsSpriteNames.K45_Down, OnMoveItemDownOnList, "K45_WTS_Segment_MOVEITEMDOWN", btnSize);
-            KlyteMonoUtils.InitCircledButton(m_topPanel, out m_remove, CommonsSpriteNames.K45_X, OnRemoveItem, "K45_WTS_Segment_REMOVEITEM", btnSize);
+            KlyteMonoUtils.InitCircledButton(m_topPanel, out m_new, CommonsSpriteNames.K45_New, OnAddItemOnList, "K45_WTS_SEGMENT_ADDITEMLIST", btnSize);
+            KlyteMonoUtils.InitCircledButton(m_topPanel, out m_up, CommonsSpriteNames.K45_Up, OnMoveItemUpOnList, "K45_WTS_SEGMENT_MOVEITEMUP", btnSize);
+            KlyteMonoUtils.InitCircledButton(m_topPanel, out m_down, CommonsSpriteNames.K45_Down, OnMoveItemDownOnList, "K45_WTS_SEGMENT_MOVEITEMDOWN", btnSize);
+            KlyteMonoUtils.InitCircledButton(m_topPanel, out m_remove, CommonsSpriteNames.K45_X, OnRemoveItem, "K45_WTS_SEGMENT_REMOVEITEM", btnSize);
 
             KlyteMonoUtils.CreateUIElement(out UIPanel m_listContainer, MainContainer.transform, "previewPanel", new Vector4(0, 0, MainContainer.width, MainContainer.height - 126));
             KlyteMonoUtils.CreateScrollPanel(m_listContainer, out m_orderedRulesList, out _, m_listContainer.width - 20, m_listContainer.height);
@@ -116,8 +116,8 @@ namespace Klyte.WriteTheSigns.UI
             K45DialogControl.ShowModalPromptText(new K45DialogControl.BindProperties
             {
                 defaultTextFieldContent = defaultText,
-                title = Locale.Get("K45_WTS_Segment_EXPORTRULESTITLE"),
-                message = Locale.Get("K45_WTS_Segment_EXPORTRULESMESSAGE"),
+                title = Locale.Get("K45_WTS_SEGMENT_EXPORTRULESTITLE"),
+                message = Locale.Get("K45_WTS_SEGMENT_EXPORTRULESMESSAGE"),
                 showButton1 = true,
                 textButton1 = Locale.Get("SAVE"),
                 showButton2 = true,
@@ -128,7 +128,7 @@ namespace Klyte.WriteTheSigns.UI
                  {
                      if (text.IsNullOrWhiteSpace())
                      {
-                         K45DialogControl.UpdateCurrentMessage($"<color #FFFF00>{Locale.Get("K45_WTS_Segment_EXPORTRULESMESSAGE_INVALIDNAME")}</color>\n\n{Locale.Get("K45_WTS_Segment_EXPORTRULESMESSAGE")}");
+                         K45DialogControl.UpdateCurrentMessage($"<color #FFFF00>{Locale.Get("K45_WTS_SEGMENT_EXPORTRULESMESSAGE_INVALIDNAME")}</color>\n\n{Locale.Get("K45_WTS_SEGMENT_EXPORTRULESMESSAGE")}");
                          return false;
                      }
                      WTSLibOnNetPropLayoutList.Reload();
@@ -141,8 +141,8 @@ namespace Klyte.WriteTheSigns.UI
                      {
                          K45DialogControl.ShowModal(new K45DialogControl.BindProperties
                          {
-                             title = Locale.Get("K45_WTS_Segment_EXPORTRULESTITLE"),
-                             message = string.Format(Locale.Get("K45_WTS_Segment_EXPORTRULESMESSAGE_CONFIRMOVERWRITE"), text),
+                             title = Locale.Get("K45_WTS_SEGMENT_EXPORTRULESTITLE"),
+                             message = string.Format(Locale.Get("K45_WTS_SEGMENT_EXPORTRULESMESSAGE_CONFIRMOVERWRITE"), text),
                              showButton1 = true,
                              textButton1 = Locale.Get("YES"),
                              showButton2 = true,
@@ -169,12 +169,12 @@ namespace Klyte.WriteTheSigns.UI
         private void AddCurrentListToLibrary(string text)
         {
             WTSLibOnNetPropLayoutList.Reload();
-            var newItem = new ExportableBoardInstanceOnNetListXml { Instances = CurrentEdited.BoardsData, Layouts = CurrentEdited.LocalLayouts };
+            var newItem = new ExportableBoardInstanceOnNetListXml { Instances = CurrentEdited.BoardsData.Select((x) => XmlUtils.DefaultXmlDeserialize<BoardInstanceOnNetXml>(XmlUtils.DefaultXmlSerialize(x))).ToArray(), Layouts = CurrentEdited.LocalLayouts };
             WTSLibOnNetPropLayoutList.Instance.Add(text, ref newItem);
             K45DialogControl.ShowModal(new K45DialogControl.BindProperties
             {
-                title = Locale.Get("K45_WTS_Segment_EXPORTRULESTITLE"),
-                message = string.Format(Locale.Get("K45_WTS_Segment_EXPORTRULESMESSAGE_SUCCESSSAVEDATA"), WTSLibOnNetPropLayoutList.Instance.DefaultXmlFileBaseFullPath),
+                title = Locale.Get("K45_WTS_SEGMENT_EXPORTRULESTITLE"),
+                message = string.Format(Locale.Get("K45_WTS_SEGMENT_EXPORTRULESMESSAGE_SUCCESSSAVEDATA"), WTSLibOnNetPropLayoutList.Instance.DefaultXmlFileBaseFullPath),
                 showButton1 = true,
                 textButton1 = Locale.Get("EXCEPTION_OK"),
                 showButton2 = true,
@@ -198,18 +198,29 @@ namespace Klyte.WriteTheSigns.UI
             {
                 K45DialogControl.ShowModalPromptDropDown(new K45DialogControl.BindProperties
                 {
-                    title = Locale.Get("K45_WTS_Segment_IMPORTRULESTITLE"),
-                    message = Locale.Get("K45_WTS_Segment_IMPORTRULESMESSAGE"),
+                    title = Locale.Get("K45_WTS_SEGMENT_IMPORTRULESTITLE"),
+                    message = Locale.Get("K45_WTS_SEGMENT_IMPORTRULESMESSAGE"),
                     showButton1 = true,
-                    textButton1 = Locale.Get("LOAD"),
+                    textButton1 = Locale.Get("GOALSPANEL_ADD"),
                     showButton2 = true,
-                    textButton2 = Locale.Get("CANCEL"),
+                    textButton2 = Locale.Get("CONTENTMANAGER_REPLACE"),
+                    showButton3 = true,
+                    textButton3 = Locale.Get("CANCEL"),
                 }, optionList, 0, (ret, idx, selText) =>
                 {
-                    if (ret == 1)
+                    if (ret == 1 || ret == 2)
                     {
                         var newConfig = WTSLibOnNetPropLayoutList.Instance.Get(selText);
-                        CurrentEdited.BoardsData = XmlUtils.DefaultXmlDeserialize<OnNetInstanceCacheContainerXml[]>(XmlUtils.DefaultXmlSerialize(newConfig.Instances));
+
+                        var newEntries = XmlUtils.DefaultXmlDeserialize<OnNetInstanceCacheContainerXml[]>(XmlUtils.DefaultXmlSerialize(newConfig.Instances).Replace(typeof(BoardInstanceOnNetXml).Name, typeof(OnNetInstanceCacheContainerXml).Name));
+                        if (ret == 1)
+                        {
+                            CurrentEdited.BoardsData = CurrentEdited.BoardsData.Union(newEntries).ToArray();
+                        }
+                        else
+                        {
+                            CurrentEdited.BoardsData = newEntries;
+                        }
                         newConfig.Layouts.ForEach(x =>
                         {
                             if (WTSPropLayoutData.Instance.Get(x.Key) == null)
@@ -228,8 +239,8 @@ namespace Klyte.WriteTheSigns.UI
             {
                 K45DialogControl.ShowModal(new K45DialogControl.BindProperties
                 {
-                    title = Locale.Get("K45_WTS_Segment_IMPORTRULESTITLE"),
-                    message = Locale.Get("K45_WTS_Segment_IMPORTRULESMESSAGE_NOENTRIESFOUND"),
+                    title = Locale.Get("K45_WTS_SEGMENT_IMPORTRULESTITLE"),
+                    message = Locale.Get("K45_WTS_SEGMENT_IMPORTRULESMESSAGE_NOENTRIESFOUND"),
                     showButton1 = true,
                     textButton1 = Locale.Get("EXCEPTION_OK"),
                     showButton2 = true,

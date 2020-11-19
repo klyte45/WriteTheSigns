@@ -98,6 +98,55 @@ namespace Klyte.WriteTheSigns.Singleton
             RenderNodeSigns(cameraInfo, nodeID);
         }
 
+
+        internal void CalculateGroupData(ushort nodeID, int layer, ref int vertexCount, ref int triangleCount, ref int objectCount, ref RenderGroup.VertexArrays vertexArrays)
+        {
+            for (int y = 0; y < Data.BoardsContainers.GetLength(1); y++)
+            {
+                for (int z = 0; z < Data.BoardsContainers.GetLength(2); z++)
+                {
+                    ref CacheRoadNodeItem item = ref Data.BoardsContainers[nodeID, y, z];
+                    if (item?.m_renderPlate ?? false)
+                    {
+                        ref BoardInstanceRoadNodeXml targetDescriptor = ref item.m_currentDescriptor;
+                        if (targetDescriptor?.Descriptor?.m_propName == null)
+                        {
+                            continue;
+                        }
+
+                        if (item.m_cachedProp?.name != targetDescriptor?.Descriptor?.m_propName)
+                        {
+                            item.m_cachedProp = null;
+                        }
+                        WTSDynamicTextRenderingRules.EnsurePropCache(ref item.m_cachedProp, nodeID, y, z, ref targetDescriptor.Descriptor.m_propName, targetDescriptor.Descriptor, targetDescriptor, out bool rendered);
+                        if (rendered)
+                        {
+                            PropInstance.CalculateGroupData(item.m_cachedProp, layer, ref vertexCount, ref triangleCount, ref objectCount, ref vertexArrays);
+                        }
+                    }
+                }
+            }
+        }
+        internal void PopulateGroupData(ushort nodeID, int layer, ref int vertexIndex, ref int triangleIndex, Vector3 groupPosition, RenderGroup.MeshData data, ref Vector3 min, ref Vector3 max, ref float maxRenderDistance, ref float maxInstanceDistance)
+        {
+            for (int y = 0; y < Data.BoardsContainers.GetLength(1); y++)
+            {
+                for (int z = 0; z < Data.BoardsContainers.GetLength(2); z++)
+                {
+                    ref CacheRoadNodeItem item = ref Data.BoardsContainers[nodeID, y, z];
+                    if (item?.m_renderPlate ?? false)
+                    {
+                        BoardInstanceRoadNodeXml targetDescriptor = item.m_currentDescriptor;
+                        if (targetDescriptor?.Descriptor?.m_propName == null)
+                        {
+                            continue;
+                        }
+                        WTSDynamicTextRenderingRules.PropInstancePopulateGroupData(item.m_cachedProp, layer, new InstanceID { NetNode = nodeID }, item.m_platePosition, targetDescriptor.Scale, new Vector3(0, item.m_streetDirection, 0), ref vertexIndex, ref triangleIndex, groupPosition, data, ref min, ref max, ref maxRenderDistance, ref maxInstanceDistance);
+                    }
+                }
+            }
+        }
+
         private void RenderNodeSigns(RenderManager.CameraInfo cameraInfo, ushort nodeID)
         {
             for (int y = 0; y < Data.BoardsContainers.GetLength(1); y++)
@@ -176,9 +225,9 @@ namespace Klyte.WriteTheSigns.Singleton
             m_updatedStreetPositions[nodeID] = true;
             LogUtils.DoLog($"[n{nodeID}/] END PROCESS!");
         }
-  
+
         #region Corner process
-       
+
 
         private bool ProcessDescriptorCorner(
           ushort nodeID, ref NetNode data, int controlBoardIdx,

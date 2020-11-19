@@ -37,7 +37,13 @@ namespace Klyte.WriteTheSigns.Xml
             set { m_scale = value; OnChangeMatrixData(); }
         }
 
-        public virtual void OnChangeMatrixData() { }
+        public virtual void OnChangeMatrixData()
+        {
+            for (int i = 0; i < 32; i++)
+            {
+                RenderManager.instance.UpdateGroups(i);
+            }
+        }
     }
 
 }
