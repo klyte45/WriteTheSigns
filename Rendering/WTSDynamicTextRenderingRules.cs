@@ -76,6 +76,7 @@ namespace Klyte.WriteTheSigns.Rendering
                TextType.PrevStopLine, // Previous Station Line 2
                TextType.LastStopLine, // Line Destination (Last stop before get back) 3
                TextType.PlatformNumber,
+               TextType.TimeTemperature,
             },
             [TextRenderingClass.PlaceOnNet] = new TextType[]
             {
@@ -90,6 +91,7 @@ namespace Klyte.WriteTheSigns.Rendering
                 TextType.DistrictOrPark,
                 TextType.ParkOrDistrict,
                 TextType.ParameterizedText,
+                TextType.TimeTemperature,
             },
         };
 
@@ -848,6 +850,7 @@ namespace Klyte.WriteTheSigns.Rendering
                 case TextType.StreetSuffix: return GetFromCacheArray(WTSBuildingDataCaches.GetBuildingMainAccessSegment(refID), textDescriptor, RenderUtils.CacheArrayTypes.SuffixStreetName, baseFont);
                 case TextType.StreetNameComplete: return GetFromCacheArray(WTSBuildingDataCaches.GetBuildingMainAccessSegment(refID), textDescriptor, RenderUtils.CacheArrayTypes.FullStreetName, baseFont);
                 case TextType.PlatformNumber: return RenderUtils.GetTextData((buildingDescritpor.m_platforms.FirstOrDefault() + 1).ToString(), textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
+                case TextType.TimeTemperature: return GetTimeTemperatureText(textDescriptor, ref baseFont);
                 case TextType.LinesSymbols:
                     multipleOutput = WriteTheSignsMod.Controller.SpriteRenderingRules.DrawLineFormats(GetAllTargetStopInfo(buildingDescritpor, refID).GroupBy(x => x.m_lineId).Select(x => x.First()).Select(x => (int)x.m_lineId));
                     return null;
@@ -979,6 +982,7 @@ namespace Klyte.WriteTheSigns.Rendering
                 case TextType.Park: return RenderUtils.GetTextData($"{otherText}Area", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                 case TextType.PlatformNumber: return RenderUtils.GetTextData("00", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                 case TextType.ParameterizedText: return RenderUtils.GetTextData($"##PARAM{textDescriptor.m_parameterIdx}##", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
+                case TextType.TimeTemperature: return RenderUtils.GetTextData($"??°C", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                 case TextType.LinesSymbols:
                     multipleOutput = WriteTheSignsMod.Controller.SpriteRenderingRules.DrawLineFormats(new int[textDescriptor.MultiItemSettings.SubItemsPerColumn * textDescriptor.MultiItemSettings.SubItemsPerRow].Select((x, y) => -y - 1));
 
@@ -1043,9 +1047,22 @@ namespace Klyte.WriteTheSigns.Rendering
                 TextType.Park => GetFromCacheArray(WTSOnNetData.Instance.GetCachedDistrictParkId(targetSegment), textDescriptor, RenderUtils.CacheArrayTypes.Parks, baseFont),
                 TextType.PostalCode => GetFromCacheArray(targetSegment, textDescriptor, RenderUtils.CacheArrayTypes.PostalCode, baseFont),
                 TextType.ParameterizedText => RenderUtils.GetTextData(propDescriptor.GetTextParam(textDescriptor.m_parameterIdx) ?? $"<PARAM#{textDescriptor.m_parameterIdx} NOT SET>", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont),
-
+                TextType.TimeTemperature => GetTimeTemperatureText(textDescriptor, ref baseFont),
                 _ => null,
             };
+        }
+
+        private static BasicRenderInformation GetTimeTemperatureText(BoardTextDescriptorGeneralXml textDescriptor, ref DynamicSpriteFont baseFont)
+        {
+            if (SimulationManager.instance.m_currentFrameIndex % 760 < 380)
+            {
+                var time = SimulationManager.instance.m_currentDayTimeHour;
+                return RenderUtils.GetTextData($"{((int)time).ToString("D2")}{(SimulationManager.instance.m_currentFrameIndex % 150 > 75 ? ":" : ".")}{(((int)(time % 1 * 12)) * 5).ToString("D2")}", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
+            }
+            else
+            {
+                return RenderUtils.GetTextData($"{(int)(WeatherManager.instance.m_currentTemperature)}°C", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
+            }
         }
 
         private static StopInformation[] GetTargetStopInfo(BoardInstanceBuildingXml descriptor, ushort buildingId)

@@ -89,11 +89,11 @@ namespace Klyte.WriteTheSigns.Singleton
             bool result = false;
             for (int i = 0; i < Data.BoardsContainers[buildingID, 0, 0].Length; i++)
             {
-                ref BoardBunchContainerBuilding item = ref Data.BoardsContainers[buildingID, 0, 0][i];
+                BoardBunchContainerBuilding item = Data.BoardsContainers[buildingID, 0, 0][i];
 
-                for (int j = 0; j <= item.m_cachedArrayRepeatTimes; j++)
+                for (int j = 0; j <= item?.m_cachedArrayRepeatTimes; j++)
                 {
-                    if (item.m_cachedProp != null)
+                    if (item?.m_cachedProp != null)
                     {
                         if (PropInstance.CalculateGroupData(item.m_cachedProp, layer, ref vertexCount, ref triangleCount, ref objectCount, ref vertexArrays))
                         {

@@ -23,7 +23,8 @@
         PostalCode,
         GameSprite,
         LineIdentifier,
-        ParameterizedText
+        ParameterizedText,
+        TimeTemperature
     }
 
 

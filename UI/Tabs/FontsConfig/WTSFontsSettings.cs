@@ -63,6 +63,7 @@ namespace Klyte.WriteTheSigns.UI
             WTSUtils.ReloadFontsOf(m_fontSelectBuildings, WTSBuildingsData.Instance.DefaultFont, false, true);
             WTSUtils.ReloadFontsOf(m_fontSelectLineSymbols, WTSEtcData.Instance.FontSettings.PublicTransportLineSymbolFont, false, true);
             WTSUtils.ReloadFontsOf(m_fontSelectVehicles, WTSVehicleData.Instance.DefaultFont, false, true);
+            WTSUtils.ReloadFontsOf(m_fontSelectOnNet, WTSOnNetData.Instance.DefaultFont, false, true);
             WTSUtils.ReloadFontsOf(m_fontSelectElectronic, WTSEtcData.Instance.FontSettings.ElectronicFont, false, true);
             WTSUtils.ReloadFontsOf(m_fontSelectStencil, WTSEtcData.Instance.FontSettings.StencilFont, false, true);
         }
