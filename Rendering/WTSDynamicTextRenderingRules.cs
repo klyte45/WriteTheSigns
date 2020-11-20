@@ -1061,7 +1061,7 @@ namespace Klyte.WriteTheSigns.Rendering
             }
             else
             {
-                return RenderUtils.GetTextData($"{(int)(WeatherManager.instance.m_currentTemperature)}°C", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
+                return RenderUtils.GetTextData(WTSEtcData.FormatTemp(WeatherManager.instance.m_currentTemperature), textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
             }
         }
 

@@ -1,4 +1,5 @@
-﻿using Klyte.Commons.Interfaces;
+﻿using ColossalFramework;
+using Klyte.Commons.Interfaces;
 using Klyte.WriteTheSigns.Xml;
 using System.Xml.Serialization;
 
@@ -12,8 +13,15 @@ namespace Klyte.WriteTheSigns.Data
         [XmlElement("fontSettings")]
         public FontSettings FontSettings { get; set; } = new FontSettings();
 
+        [XmlIgnore]
+        private static readonly SavedInt m_temperatureUnit = new SavedInt(Settings.temperatureUnit, Settings.gameSettingsFile, DefaultSettings.temperatureUnit, true);
 
+        //	this.m_String = StringUtils.SafeFormat((num != 0) ? "{0:0.0}°F" : "{0:0.0}°C", newVal);
 
+        internal static string FormatTemp(float num) => StringUtils.SafeFormat((m_temperatureUnit != 0) ? kFormatFahrenheit : kFormatCelsius, (num * (m_temperatureUnit != 0 ? 1.8 : 1)) + (m_temperatureUnit != 0 ? 32 : 0));
+
+        public const string kFormatCelsius = "{0:0}°C";
+        public const string kFormatFahrenheit = "{0:0}°F";
     }
     public class FontSettings
     {
@@ -53,7 +61,4 @@ namespace Klyte.WriteTheSigns.Data
             return null;
         }
     }
-
-
-
 }

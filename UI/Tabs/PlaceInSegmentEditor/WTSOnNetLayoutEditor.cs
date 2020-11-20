@@ -59,7 +59,7 @@ namespace Klyte.WriteTheSigns.UI
 
             var m_uiHelperHS = new UIHelperExtension(MainContainer); 
 
-             m_buttonTool = (UIButton)m_uiHelperHS.AddButton(Locale.Get("K45_WTS_PICK_A_Segment"), EnablePickTool);
+             m_buttonTool = (UIButton)m_uiHelperHS.AddButton(Locale.Get("K45_WTS_PICK_A_SEGMENT"), EnablePickTool);
             KlyteMonoUtils.LimitWidth(m_buttonTool, (m_uiHelperHS.Self.width - 20), true);
 
 
