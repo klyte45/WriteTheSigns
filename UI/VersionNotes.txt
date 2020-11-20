@@ -1,20 +1,22 @@
-﻿v0.1 
-<color yellow>Beta-1 version:</color>
-	
-Welcome to the Write the Signs mod. The most features of this mod are finished but were not so deeply tested. Guide yourself thru the <sprite K45_QuestionMark> Help buttons and tooltips to learn how to use this mod.
+﻿v0.2 - 20/NOV/2020
+<color yellow>Beta-2 version:</color>
+<color cyan>- Parameterized box generation for vehicles texts</color>
+Useful to create a container to fit better the texts in vehicles. Specially useful for destination boards.
 
-	This mod is an evolution of Dynamic Text Props, with a great increase of performance compared to its predecessor. 
-	Use the <color yellow>prop layout editor</color> to create prop layouts in any existing asset to use in street corners and buildings.
-	Create rules to be applied to certain circumstances and show a customized street corner plate or street directions sign.
-	Make layouts with dynamic texts for any building.
-	Place text spots in vehicles to show its destination or its serial number.
-	<color yellow>Share your layouts in assets at Steam Workshop</color> (for asset makers).
+<color cyan>- Changes in road destination mapping system</color>
+The system used to generate procedural destination boards was removed. Now you can place them directly at segments that you want, and customize the texts via parameters (4 reference targets to extract text + up to 8 text parameters). 
+Also added an option to place a simple prop instead of a built layout. It makes all Procedural Objects' mod workshop assets compatible with Write The Signs, once you can assemble props as you can do there now.
 
-<color cyan>NOTE: The integration with Transport Lines Manager will be available after version 13.4 of that mod. For Addresses & Namesmod, wait until the update to the version 2.0.4 or higher.</color>
+<color cyan>- Lights are on!</color>
+Fixed light system from props placed with Write the Signs. Available in Building, Road Corners and On Segment Placing modes!
 
-Click on <color yellow>second button</color> below to go to the mod page and check informations about where get some example layouts and other useful information!
+<color cyan>- Time & temperature dynamic text</color>
+New option that generates a switching text between current time and temperature in the city. Functional digital clocks are now possible!
 
-Update r1: Small fixes in text generation for line Id
-Update r2: Actual contrast color for vehicles implemented
-Update r3: Preventing error when finding duplicated vehicles or prop assets
-Update r4: Fixed intercity bus destination search
+<color cyan>- Bug fixes</color>
+A lot of fixes were done. Main ones:
+- Increased performance
+- Fixed flickering props at buildings
+- Fixed some i18n errors
+- Fixed neutral white text tone
+- Other minor fixes
