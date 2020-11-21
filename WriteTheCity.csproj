@@ -131,7 +131,7 @@
     <Compile Include="commons\Utils\NumberingUtils.cs" />
     <Compile Include="commons\Utils\PastelConfig.cs" />
     <Compile Include="commons\Utils\PluginUtils.cs" />
-    <Compile Include="commons\Utils\PrefabUtils.cs" />
+    <Compile Include="commons\Utils\PrefabIndexes.cs" />
     <Compile Include="commons\Utils\RandomPastelColorGenerator.cs" />
     <Compile Include="commons\Utils\ReflectionUtils.cs" />
     <Compile Include="commons\Utils\RoadSearchUtils.cs" />

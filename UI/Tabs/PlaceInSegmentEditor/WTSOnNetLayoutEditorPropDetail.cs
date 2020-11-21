@@ -8,9 +8,6 @@ using Klyte.WriteTheSigns.Data;
 using Klyte.WriteTheSigns.Libraries;
 using Klyte.WriteTheSigns.Rendering;
 using Klyte.WriteTheSigns.Xml;
-using System;
-using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using UnityEngine;
 using static Klyte.Commons.UI.DefaultEditorUILib;
@@ -72,8 +69,6 @@ namespace Klyte.WriteTheSigns.UI
         private UIButton m_libSave;
         private UIButton m_gotoFileLib;
 
-        public Dictionary<string, string> PropsLoaded => WTSPropLayoutEditor.Instance.m_basicsTab.PropsLoaded;
-
 
         public void Awake()
         {
@@ -99,18 +94,8 @@ namespace Klyte.WriteTheSigns.UI
             helperSettings.AddSpace(5);
 
             AddDropdown(Locale.Get("K45_WTS_ONNETEDITOR_PROPLAYOUT"), out m_propLayoutSelect, helperSettings, new string[0], OnPropLayoutChange);
-            AddTextField(Locale.Get("K45_WTS_ONNETEDITOR_PROPMODELSELECT"), out m_propFilter, helperSettings, null);
+            AddFilterableInput(Locale.Get("K45_WTS_ONNETEDITOR_PROPMODELSELECT"), helperSettings, out m_propFilter, out _, PrefabIndexes<PropInfo>.instance.BasicInputFiltering, OnSetProp);
 
-            KlyteMonoUtils.UiTextFieldDefaultsForm(m_propFilter);
-            var selectorPanel = m_propFilter.parent as UIPanel;
-            selectorPanel.autoLayout = true;
-            selectorPanel.width = MainContainer.width;
-            selectorPanel.autoFitChildrenHorizontally = false;
-            selectorPanel.autoFitChildrenVertically = true;
-            selectorPanel.width = MainContainer.width;
-            selectorPanel.wrapLayout = true;
-
-            m_popup = ConfigurePropSelectionPopup(selectorPanel);
 
             AddButtonInEditorRow(m_propLayoutSelect, CommonsSpriteNames.K45_Reload, LoadAvailableLayouts);
             AddSlider(Locale.Get("K45_WTS_ONNETEDITOR_SEGMENTPOSITION"), out m_segmentPosition, helperSettings, OnSegmentPositionChanged, 0, 1, 0.01f, (x) => x.ToString("F2"));
@@ -180,89 +165,23 @@ namespace Klyte.WriteTheSigns.UI
             }
         }
 
-        #region Simple Prop selection
 
-        private PropInfo m_lastSelection;
-        private UIListBox ConfigurePropSelectionPopup(UIPanel selectorPanel)
+        private string OnSetProp(string typed, int sel, string[] items)
         {
-            UIListBox m_popup = CreatePopup(selectorPanel);
-            m_popup.isVisible = false;
-            m_propFilter.eventGotFocus += (x, t) =>
+            if (sel >= 0)
             {
-                m_popup.isVisible = true;
-                m_popup.items = GetFilterResult();
-                m_popup.selectedIndex = Array.IndexOf(m_popup.items, m_propFilter.text);
-                m_popup.EnsureVisible(m_popup.selectedIndex);
-                m_propFilter.SelectAll();
-            };
-            m_propFilter.eventLostFocus += (x, t) =>
-            {
-                if (m_popup.selectedIndex >= 0)
-                {
-                    m_propFilter.text = m_popup.items[m_popup.selectedIndex];
-                    OnSetProp(m_popup.selectedIndex);
-                }
-                else
-                {
-                    m_propFilter.text = GetListName(m_lastSelection);
-                }
-                m_popup.isVisible = false;
-            };
-            m_propFilter.eventKeyUp += (x, y) =>
-            {
-                if (m_propFilter.hasFocus)
-                {
-                    m_popup.items = GetFilterResult();
-                    m_popup.Invalidate();
-                }
-            };
-            m_popup.eventSelectedIndexChanged += (x, y) =>
-            {
-                if (!m_propFilter.hasFocus)
-                {
-                    if (m_popup.selectedIndex >= 0)
-                    {
-                        m_propFilter.text = m_popup.items[m_popup.selectedIndex];
-                        OnSetProp(m_popup.selectedIndex);
-                    }
-                    else
-                    {
-                        m_propFilter.text = "";
-                    }
-                }
-            };
-            return m_popup;
-        }
-        private string[] GetFilterResult() => PropsLoaded
-          .ToList()
-          .Where((x) => m_propFilter.text.IsNullOrWhiteSpace() ? true : LocaleManager.cultureInfo.CompareInfo.IndexOf(x.Value + (PrefabUtils.instance.AuthorList.TryGetValue(x.Value.Split('.')[0], out string author) ? "\n" + author : ""), m_propFilter.text, CompareOptions.IgnoreCase) >= 0)
-          .Select(x => x.Key)
-          .OrderBy((x) => x)
-          .ToArray();
-        private static string GetListName(PropInfo x) => (x?.name?.EndsWith("_Data") ?? false) ? $"{x?.GetLocalizedTitle()}" : x?.name ?? "";
-        private void OnSetProp(int sel)
-        {
-            PropInfo targetProp = (sel < 0 ? null : m_lastSelection = GetInfos<PropInfo>().Where(x => x.name == PropsLoaded[m_popup.items[sel]]).FirstOrDefault());
-            SafeObtain((OnNetInstanceCacheContainerXml x) => x.SimpleProp = targetProp);
-        }
-
-        private List<T> GetInfos<T>() where T : PrefabInfo
-        {
-            var list = new List<T>();
-            uint num = 0u;
-            while (num < (ulong)PrefabCollection<T>.LoadedCount())
-            {
-                T prefabInfo = PrefabCollection<T>.GetLoaded(num);
-                if (prefabInfo != null)
-                {
-                    list.Add(prefabInfo);
-                }
-                num += 1u;
+                PrefabIndexes<PropInfo>.instance.PrefabsLoaded.TryGetValue(items[sel], out PropInfo targetProp);
+                SafeObtain((OnNetInstanceCacheContainerXml x) => x.SimpleProp = targetProp);
+                return items[sel];
             }
-            return list;
+            else
+            {
+                SafeObtain((OnNetInstanceCacheContainerXml x) => x.SimpleProp = null);
+                return null;
+            }
+
         }
 
-        #endregion
 
 
         private void OnEnterPickTarget1()
@@ -390,7 +309,7 @@ namespace Klyte.WriteTheSigns.UI
                 m_tabstrip.HideTab("TpSettings");
                 m_tabstrip.HideTab("TgSettings");
                 m_propFilter.Enable();
-                m_propFilter.text = x.SimpleProp?.name ?? "";
+                m_propFilter.text = PrefabIndexes<PropInfo>.GetListName(x.SimpleProp);
                 m_propFilter.parent.GetComponentInChildren<UILabel>().text = Locale.Get("K45_WTS_ONNETEDITOR_PROPMODELSELECT");
             }
         }
@@ -441,12 +360,12 @@ namespace Klyte.WriteTheSigns.UI
             }
         }
 
-        private void OnLoadRule(string obj) => SafeObtain((OnNetInstanceCacheContainerXml x) =>
+        private void OnLoadRule(string obj)
         {
-            x = XmlUtils.DefaultXmlDeserialize<OnNetInstanceCacheContainerXml>(obj);
+            WTSOnNetLayoutEditor.Instance.LayoutList.CurrentPropLayout = XmlUtils.DefaultXmlDeserialize<OnNetInstanceCacheContainerXml>(obj);
             WTSOnNetLayoutEditor.Instance.LayoutList.FixTabstrip();
             ReloadData();
-        });
+        }
         private void OnPasteRule() => OnLoadRule(m_clipboard);
         private void OnCopyRule() => SafeObtain((OnNetInstanceCacheContainerXml x) =>
         {

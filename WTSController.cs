@@ -37,8 +37,8 @@ namespace Klyte.WriteTheSigns
         public Dictionary<string, Dictionary<string, string>> AbbreviationFiles { get; private set; }
         public FontServer FontServer => FontServer.instance;
 
-        public static int DefaultTextureSizeFont => 512 << WriteTheSignsMod.Instance.StartTextureSizeFont;
-
+        public static int DefaultTextureSizeFont => 512 << WriteTheSignsMod.StartTextureSizeFont;
+        
         public event Action EventFontsReloadedFromFolder;
         public event Action EventOnDistrictChanged;
         public event Action EventOnParkChanged;

@@ -9,7 +9,6 @@ using Klyte.WriteTheSigns.Singleton;
 using Klyte.WriteTheSigns.Xml;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using UnityEngine;
@@ -23,8 +22,6 @@ namespace Klyte.WriteTheSigns.UI
         public static WTSVehicleLayoutEditor Instance { get; private set; }
         public UIPanel MainContainer { get; protected set; }
 
-
-        private Dictionary<string, VehicleInfo> m_loadedVehicles;
 
         #region Panel areas
         private UIPanel m_topBar;
@@ -91,7 +88,7 @@ namespace Klyte.WriteTheSigns.UI
             m_topBar.autoFitChildrenVertically = true;
             var m_topHelper = new UIHelperExtension(m_topBar);
 
-            AddFilterableInput(Locale.Get("K45_WTS_VEHICLEEDITOR_SELECTMODEL"), m_topHelper, out m_vehicleSearch, out _, OnFilterVehicleTyped, OnVehicleNameSelected);
+            AddFilterableInput(Locale.Get("K45_WTS_VEHICLEEDITOR_SELECTMODEL"), m_topHelper, out m_vehicleSearch, out _, PrefabIndexes<VehicleInfo>.instance.BasicInputFiltering, OnVehicleNameSelected);
             AddButtonInEditorRow(m_vehicleSearch, Commons.UI.SpriteNames.CommonsSpriteNames.K45_QuestionMark, Help_VehicleModel, null, true, 30);
 
             AddLabel("", m_topHelper, out m_labelSelectionDescription, out m_containerSelectionDescription);
@@ -162,7 +159,7 @@ namespace Klyte.WriteTheSigns.UI
             {
                 var assetId = CurrentVehicleInfo.name.Split('.')[0] + ".";
                 var descriptorsToExport = new List<LayoutDescriptorVehicleXml>();
-                foreach (string assetName in m_loadedVehicles
+                foreach (string assetName in PrefabIndexes<VehicleInfo>.instance.PrefabsLoaded
                 .Where((x) => x.Value.name.StartsWith(assetId) || x.Value.name == CurrentVehicleInfo.name)
                 .Select(x => x.Value.name))
                 {
@@ -266,21 +263,9 @@ namespace Klyte.WriteTheSigns.UI
                 return "";
             }
             var result = arg2[arg1];
-            CurrentVehicleInfo = m_loadedVehicles.TryGetValue(result, out VehicleInfo info) ? info : null;
+            CurrentVehicleInfo = PrefabIndexes<VehicleInfo>.instance.PrefabsLoaded.TryGetValue(result, out VehicleInfo info) ? info : null;
             ReloadVehicle();
             return result;
-        }
-        private string[] OnFilterVehicleTyped(string arg)
-        {
-            if (m_loadedVehicles == null)
-            {
-                m_loadedVehicles = PrefabUtils.instance.GetInfos<VehicleInfo>().GroupBy(x => x.name.EndsWith("_Data") ? Locale.Get("VEHICLE_TITLE", x.name) : x.name).Select(x => Tuple.New(x.Key, x.FirstOrDefault())).ToDictionary(x => x.First, x => x.Second);
-            }
-            return m_loadedVehicles
-            .Where((x) => arg.IsNullOrWhiteSpace() ? true : LocaleManager.cultureInfo.CompareInfo.IndexOf(x.Key + (PrefabUtils.instance.AuthorList.TryGetValue(x.Value.name.Split('.')[0], out string author) ? "\n" + author : ""), arg, CompareOptions.IgnoreCase) >= 0)
-            .Select(x => x.Key)
-            .OrderBy((x) => x)
-            .ToArray();
         }
 
         private void OnTabChange(int idx)

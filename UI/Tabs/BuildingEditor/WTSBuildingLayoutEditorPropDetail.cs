@@ -12,7 +12,6 @@ using Klyte.WriteTheSigns.Singleton;
 using Klyte.WriteTheSigns.Xml;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using UnityEngine;
 using static Klyte.Commons.UI.DefaultEditorUILib;
@@ -77,9 +76,6 @@ namespace Klyte.WriteTheSigns.UI
         private UICheckBox m_chkUseFixedIfMulti;
 
         private UITextField m_propFilter;
-        private UIListBox m_popup;
-
-        public Dictionary<string, string> PropsLoaded => WTSPropLayoutEditor.Instance.m_basicsTab.PropsLoaded;
 
         private IEnumerable<UIComponent> AllFields
         {
@@ -133,19 +129,8 @@ namespace Klyte.WriteTheSigns.UI
 
             AddDropdown(Locale.Get("K45_WTS_BUILDINGEDITOR_PROPLAYOUT"), out m_propLayoutSelect, helperSettings, new string[0], OnPropLayoutChange);
             AddButtonInEditorRow(m_propLayoutSelect, CommonsSpriteNames.K45_Reload, LoadAvailableLayouts);
-            AddTextField(Locale.Get("K45_WTS_BUILDINGEDITOR_PROPMODELSELECT"), out m_propFilter, helperSettings, null);
+            AddFilterableInput(Locale.Get("K45_WTS_BUILDINGEDITOR_PROPMODELSELECT"), helperSettings, out m_propFilter, out _, PrefabIndexes<PropInfo>.instance.BasicInputFiltering, OnSetProp);
 
-            KlyteMonoUtils.UiTextFieldDefaultsForm(m_propFilter);
-            var selectorPanel = m_propFilter.parent as UIPanel;
-            selectorPanel.autoLayout = true;
-            selectorPanel.width = MainContainer.width;
-            selectorPanel.autoFitChildrenHorizontally = false;
-            selectorPanel.autoFitChildrenVertically = true;
-            selectorPanel.width = MainContainer.width;
-            selectorPanel.wrapLayout = true;
-
-            m_popup = ConfigurePropSelectionPopup(selectorPanel);
-            helperSettings.AddSpace(5);
             AddVector3Field(Locale.Get("K45_WTS_BUILDINGEDITOR_POSITION"), out m_position, helperSettings, OnPositionChanged);
             AddVector3Field(Locale.Get("K45_WTS_BUILDINGEDITOR_ROTATION"), out m_rotation, helperSettings, OnRotationChanged);
             AddVector3Field(Locale.Get("K45_WTS_BUILDINGEDITOR_SCALE"), out m_scale, helperSettings, OnScaleChanged);
@@ -227,26 +212,22 @@ namespace Klyte.WriteTheSigns.UI
                 checkbox.objectUserData = platformData;
                 if (checkbox.label.objectUserData == null)
                 {
-                    checkbox.eventCheckChanged += (x, y) =>
+                    checkbox.eventCheckChanged += (x, y) => SafeObtain((ref BoardInstanceBuildingXml z) =>
                     {
-                        SafeObtain((ref BoardInstanceBuildingXml z) =>
+                        if (x.objectUserData is PlatformItem pi)
                         {
-                            if (x.objectUserData is PlatformItem pi)
+                            if (y)
                             {
-                                if (y)
-                                {
-                                    z.m_platforms = z.m_platforms.Union(new int[] { pi.index }).ToArray();
-                                    x.parent.zOrder = z.m_platforms.Length - 1;
-                                }
-                                else
-                                {
-                                    z.m_platforms = z.m_platforms.Where(x => x != pi.index).ToArray();
-                                    x.parent.zOrder = z.m_platforms.Length;
-                                }
+                                z.m_platforms = z.m_platforms.Union(new int[] { pi.index }).ToArray();
+                                x.parent.zOrder = z.m_platforms.Length - 1;
                             }
-                        });
-
-                    };
+                            else
+                            {
+                                z.m_platforms = z.m_platforms.Where(x => x != pi.index).ToArray();
+                                x.parent.zOrder = z.m_platforms.Length;
+                            }
+                        }
+                    });
                     KlyteMonoUtils.LimitWidthAndBox(checkbox.label, m_platformList.width - 50);
 
 
@@ -285,22 +266,6 @@ namespace Klyte.WriteTheSigns.UI
             LoadAvailableLayouts();
             Dirty = true;
         }
-
-        //    [XmlArray("platformOrder")]
-        //    [XmlArrayItem("p")]
-        //    public int[] m_platforms = new int[0];
-        //    [XmlAttribute("showIfNoLine")]
-        //    public bool m_showIfNoLine = true;
-        //
-        //    [XmlElement("arrayRepeatOffset")]
-        //    public Vector3Xml ArrayRepeat { get; set; }
-        //
-        //
-        //    [XmlAttribute("arrayRepeatTimes")]
-        //    public int m_arrayRepeatTimes = 0;
-        //
-        //    [XmlAttribute("coloringMode")]
-        //    public ColoringMode ColorModeProp { get; set; } = ColoringMode.Fixed;
 
         private void ReloadData()
         {
@@ -385,7 +350,7 @@ namespace Klyte.WriteTheSigns.UI
             else
             {
                 m_propFilter.Enable();
-                m_propFilter.text = x.SimpleProp?.name ?? "";
+                m_propFilter.text = PrefabIndexes<PropInfo>.GetListName(x.SimpleProp);
                 m_propFilter.parent.GetComponentInChildren<UILabel>().text = Locale.Get("K45_WTS_ONNETEDITOR_PROPMODELSELECT");
             }
         }
@@ -500,85 +465,24 @@ namespace Klyte.WriteTheSigns.UI
 
         #region Simple Prop selection
 
-        private PropInfo m_lastSelection;
-        private UIListBox ConfigurePropSelectionPopup(UIPanel selectorPanel)
+
+
+        private string OnSetProp(string typed, int sel, string[] items)
         {
-            UIListBox m_popup = CreatePopup(selectorPanel);
-            m_popup.isVisible = false;
-            m_propFilter.eventGotFocus += (x, t) =>
+            if (sel >= 0)
             {
-                m_popup.isVisible = true;
-                m_popup.items = GetFilterResult();
-                m_popup.selectedIndex = Array.IndexOf(m_popup.items, m_propFilter.text);
-                m_popup.EnsureVisible(m_popup.selectedIndex);
-                m_propFilter.SelectAll();
-            };
-            m_propFilter.eventLostFocus += (x, t) =>
+                PrefabIndexes<PropInfo>.instance.PrefabsLoaded.TryGetValue(items[sel], out PropInfo targetProp);
+                SafeObtain((ref BoardInstanceBuildingXml x) => x.SimpleProp = targetProp);
+                return items[sel];
+            }
+            else
             {
-                if (m_popup.selectedIndex >= 0)
-                {
-                    m_propFilter.text = m_popup.items[m_popup.selectedIndex];
-                    OnSetProp(m_popup.selectedIndex);
-                }
-                else
-                {
-                    m_propFilter.text = GetListName(m_lastSelection);
-                }
-                m_popup.isVisible = false;
-            };
-            m_propFilter.eventKeyUp += (x, y) =>
-            {
-                if (m_propFilter.hasFocus)
-                {
-                    m_popup.items = GetFilterResult();
-                    m_popup.Invalidate();
-                }
-            };
-            m_popup.eventSelectedIndexChanged += (x, y) =>
-            {
-                if (!m_propFilter.hasFocus)
-                {
-                    if (m_popup.selectedIndex >= 0)
-                    {
-                        m_propFilter.text = m_popup.items[m_popup.selectedIndex];
-                        OnSetProp(m_popup.selectedIndex);
-                    }
-                    else
-                    {
-                        m_propFilter.text = "";
-                    }
-                }
-            };
-            return m_popup;
-        }
-        private string[] GetFilterResult() => PropsLoaded
-          .ToList()
-          .Where((x) => m_propFilter.text.IsNullOrWhiteSpace() ? true : LocaleManager.cultureInfo.CompareInfo.IndexOf(x.Value + (PrefabUtils.instance.AuthorList.TryGetValue(x.Value.Split('.')[0], out string author) ? "\n" + author : ""), m_propFilter.text, CompareOptions.IgnoreCase) >= 0)
-          .Select(x => x.Key)
-          .OrderBy((x) => x)
-          .ToArray();
-        private static string GetListName(PropInfo x) => (x?.name?.EndsWith("_Data") ?? false) ? $"{x?.GetLocalizedTitle()}" : x?.name ?? "";
-        private void OnSetProp(int sel)
-        {
-            PropInfo targetProp = (sel < 0 ? null : m_lastSelection = GetInfos<PropInfo>().Where(x => x.name == PropsLoaded[m_popup.items[sel]]).FirstOrDefault());
-            SafeObtain((ref BoardInstanceBuildingXml x) => x.SimpleProp = targetProp);
+                SafeObtain((ref BoardInstanceBuildingXml x) => x.SimpleProp = null);
+                return null;
+            }
+
         }
 
-        private List<T> GetInfos<T>() where T : PrefabInfo
-        {
-            var list = new List<T>();
-            uint num = 0u;
-            while (num < (ulong)PrefabCollection<T>.LoadedCount())
-            {
-                T prefabInfo = PrefabCollection<T>.GetLoaded(num);
-                if (prefabInfo != null)
-                {
-                    list.Add(prefabInfo);
-                }
-                num += 1u;
-            }
-            return list;
-        }
 
         #endregion
 

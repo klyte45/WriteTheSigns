@@ -34,44 +34,13 @@ namespace Klyte.WriteTheSigns.UI
         protected UITextField m_name;
         protected UIColorField m_fixedColor;
         private UIDropDown m_dropdownTextContent;
-        private UIListBox m_popup;
 
         private UIButton m_pasteButton;
 
-        private Dictionary<string, string> m_propsLoaded;
 
         private PropInfo m_lastSelection;
 
         private BoardDescriptorGeneralXml EditingInstance => WTSPropLayoutEditor.Instance.EditingInstance;
-
-        public Dictionary<string, string> PropsLoaded
-        {
-            get {
-                if (m_propsLoaded == null)
-                {
-                    m_propsLoaded = GetInfos<PropInfo>().Where(x => x?.name != null).GroupBy(x => GetListName(x)).Select(x => Tuple.New(x.Key, x.FirstOrDefault())).ToDictionary(x => x.First, x => x.Second.name);
-                }
-                return m_propsLoaded;
-            }
-        }
-
-
-
-        private List<T> GetInfos<T>() where T : PrefabInfo
-        {
-            var list = new List<T>();
-            uint num = 0u;
-            while (num < (ulong)PrefabCollection<T>.LoadedCount())
-            {
-                T prefabInfo = PrefabCollection<T>.GetLoaded(num);
-                if (prefabInfo != null)
-                {
-                    list.Add(prefabInfo);
-                }
-                num += 1u;
-            }
-            return list;
-        }
 
         public void Awake()
         {
@@ -80,9 +49,7 @@ namespace Klyte.WriteTheSigns.UI
             MainContainer.autoLayoutDirection = LayoutDirection.Vertical;
             MainContainer.padding = new RectOffset(5, 5, 5, 5);
             MainContainer.autoLayoutPadding = new RectOffset(0, 0, 3, 3);
-
-            m_propsLoaded = null;
-
+            
 
             KlyteMonoUtils.CreateTabsComponent(out m_tabstrip, out m_tabContainer, MainContainer.transform, "TextEditor", new Vector4(0, 0, MainContainer.width, 40), new Vector4(0, 0, MainContainer.width, MainContainer.height - 40));
             m_tabSettings = TabCommons.CreateNonScrollableTabLocalized(m_tabstrip, KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_Settings), "K45_WTS_GENERAL_SETTINGS", "PrpSettings");
@@ -96,16 +63,7 @@ namespace Klyte.WriteTheSigns.UI
 
 
 
-            AddTextField(Locale.Get("K45_WTS_PROP_MODEL_SELECT"), out m_propFilter, helperSettings, null);
-
-            KlyteMonoUtils.UiTextFieldDefaultsForm(m_propFilter);
-            var selectorPanel = m_propFilter.parent as UIPanel;
-            selectorPanel.autoLayout = true;
-            selectorPanel.width = MainContainer.width;
-            selectorPanel.autoFitChildrenHorizontally = false;
-            selectorPanel.autoFitChildrenVertically = true;
-            selectorPanel.width = MainContainer.width;
-            selectorPanel.wrapLayout = true;
+            AddFilterableInput(Locale.Get("K45_WTS_PROP_MODEL_SELECT"), helperSettings, out m_propFilter, out _, PrefabIndexes<PropInfo>.instance.BasicInputFiltering, OnSetProp);
 
 
             AddTextField(Locale.Get("K45_WTS_PROP_TAB_TITLE"), out m_name, helperSettings, OnSetName);
@@ -126,14 +84,14 @@ namespace Klyte.WriteTheSigns.UI
                     m_fontSelect.selectedIndex = EditingInstance.FontName == null ? 0 : EditingInstance.FontName == WTSController.DEFAULT_FONT_KEY ? 1 : Array.IndexOf(m_fontSelect.items, EditingInstance.FontName);
                     m_dropdownTextContent.selectedIndex = (int)EditingInstance.m_allowedRenderClass;
 
-                    m_lastSelection = GetInfos<PropInfo>().Where(x => x?.name == EditingInstance.m_propName).FirstOrDefault();
+                    var currentKV = PrefabIndexes<PropInfo>.instance.PrefabsLoaded.Where(x => x.Value.name == EditingInstance.m_propName).FirstOrDefault();
+                    m_lastSelection = currentKV.Value;
                     WTSPropLayoutEditor.Instance.CurrentPropInfo = m_lastSelection;
-                    m_propFilter.text = (m_lastSelection != null) ? GetListName(m_lastSelection) : "";
+                    m_propFilter.text = currentKV.Key ?? "";
                 }
             };
 
 
-            m_popup = ConfigurePropSelectionPopup(selectorPanel);
 
 
             AddLibBox<WTSLibPropSettings, BoardDescriptorGeneralXml>(helperLib, out UIButton m_copyButtonText,
@@ -163,56 +121,6 @@ namespace Klyte.WriteTheSigns.UI
             m_pasteButton.isVisible = true;
         }
 
-        private UIListBox ConfigurePropSelectionPopup(UIPanel selectorPanel)
-        {
-            UIListBox m_popup = CreatePopup(selectorPanel);
-            m_popup.isVisible = false;
-            m_propFilter.eventGotFocus += (x, t) =>
-            {
-                m_popup.isVisible = true;
-                m_popup.items = GetFilterResult();
-                m_popup.selectedIndex = Array.IndexOf(m_popup.items, m_propFilter.text);
-                m_popup.EnsureVisible(m_popup.selectedIndex);
-                m_propFilter.SelectAll();
-            };
-            m_propFilter.eventLostFocus += (x, t) =>
-            {
-                if (m_popup.selectedIndex >= 0)
-                {
-                    m_propFilter.text = m_popup.items[m_popup.selectedIndex];
-                    OnSetProp(m_popup.selectedIndex);
-                }
-                else
-                {
-                    m_propFilter.text = GetListName(m_lastSelection);
-                }
-                m_popup.isVisible = false;
-            };
-            m_propFilter.eventKeyUp += (x, y) =>
-            {
-                if (m_propFilter.hasFocus)
-                {
-                    m_popup.items = GetFilterResult();
-                    m_popup.Invalidate();
-                }
-            };
-            m_popup.eventSelectedIndexChanged += (x, y) =>
-            {
-                if (!m_propFilter.hasFocus)
-                {
-                    if (m_popup.selectedIndex >= 0)
-                    {
-                        m_propFilter.text = m_popup.items[m_popup.selectedIndex];
-                        OnSetProp(m_popup.selectedIndex);
-                    }
-                    else
-                    {
-                        m_propFilter.text = "";
-                    }
-                }
-            };
-            return m_popup;
-        }
 
         private void OnSetName(string text)
         {
@@ -271,31 +179,32 @@ namespace Klyte.WriteTheSigns.UI
             string error = null;
             if (text.IsNullOrWhiteSpace())
             {
-                error = $"{ Locale.Get("K45_WTS_PROPEDIT_CONFIGNEW_INVALIDNAME")}";
+                error = $"{Locale.Get("K45_WTS_PROPEDIT_CONFIGNEW_INVALIDNAME")}";
             }
             else if (text != EditingInstance.SaveName && WTSPropLayoutData.Instance.Get(text) != null)
             {
-                error = $"{ Locale.Get("K45_WTS_PROPEDIT_CONFIGNEW_ALREADY_EXISTS")}";
+                error = $"{Locale.Get("K45_WTS_PROPEDIT_CONFIGNEW_ALREADY_EXISTS")}";
             }
 
             return error;
         }
 
-        private string[] GetFilterResult() => PropsLoaded
-            .ToList()
-            .Where((x) => m_propFilter.text.IsNullOrWhiteSpace() ? true : LocaleManager.cultureInfo.CompareInfo.IndexOf(x.Value + (PrefabUtils.instance.AuthorList.TryGetValue(x.Value.Split('.')[0], out string author) ? "\n" + author : ""), m_propFilter.text, CompareOptions.IgnoreCase) >= 0)
-            .Select(x => x.Key)
-            .OrderBy((x) => x)
-            .ToArray();
-        private static string GetListName(PropInfo x) => (x?.name?.EndsWith("_Data") ?? false) ? $"{x?.GetLocalizedTitle()}" : x?.name ?? "";
-
         #region Actions        
         private void OnSetPropColor(UIComponent component, Color value) => EditingInstance.FixedColor = (value == default ? (Color?)null : value);
 
-        private void OnSetProp(int sel)
+        private string OnSetProp(string typed, int sel, string[] items)
         {
-            PropInfo targetProp = (sel < 0 ? null : m_lastSelection = GetInfos<PropInfo>().Where(x => x.name == PropsLoaded[m_popup.items[sel]]).FirstOrDefault());
-            WTSPropLayoutEditor.Instance.CurrentPropInfo = targetProp;
+            if (sel >= 0)
+            {
+                PrefabIndexes<PropInfo>.instance.PrefabsLoaded.TryGetValue(items[sel], out PropInfo targetProp);
+                WTSPropLayoutEditor.Instance.CurrentPropInfo = targetProp;
+                return items[sel];
+            }
+            else
+            {
+                WTSPropLayoutEditor.Instance.CurrentPropInfo = null;
+                return null;
+            }
         }
 
         protected void OnSetFont(int idx)

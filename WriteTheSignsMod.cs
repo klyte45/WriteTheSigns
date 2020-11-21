@@ -6,6 +6,7 @@ using Klyte.Commons.Interfaces;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.UI;
 using SpriteFontPlus;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
@@ -21,12 +22,15 @@ namespace Klyte.WriteTheSigns
         public override string Description => "Texts, texts everywhere...";
         public override string IconName => "K45_KWTSIcon";
 
-        public SavedInt StartTextureSizeFont = new SavedInt("K45_WTS_startTextureSizeFont", Settings.gameSettingsFile, 0);
-        public SavedInt FontQuality = new SavedInt("K45_WTS_fontQuality", Settings.gameSettingsFile, 2);
+        public static SavedInt StartTextureSizeFont = new SavedInt("K45_WTS_startTextureSizeFont", Settings.gameSettingsFile, 0);
+        public static SavedInt FontQuality = new SavedInt("K45_WTS_fontQuality", Settings.gameSettingsFile, 2);
+        public static SavedFloat ClockPrecision = new SavedFloat("K45_WTS_clockPrecision", Settings.gameSettingsFile, 15);
+        public static SavedBool ClockShowLeadingZero = new SavedBool("K45_WTS_clockShowLeadingZero", Settings.gameSettingsFile, true);
+        public static SavedBool Clock12hFormat = new SavedBool("K45_WTS_clock12hFormat", Settings.gameSettingsFile, false);
         public override void OnReleased() => base.OnReleased();
 
         protected override void OnLevelLoadingInternal() => base.OnLevelLoadingInternal();
-         
+
         protected override List<ulong> IncompatibleModList => new List<ulong> { 1831805509 };
         protected override List<string> IncompatibleDllModList => new List<string> { "KlyteDynamicTextProps" };
 
@@ -51,6 +55,14 @@ namespace Klyte.WriteTheSigns
                 WTSController.ReloadFontsFromPath();
             });
             FontServer.instance.SetQualityMultiplier(m_qualityArray[FontQuality]);
+            UIHelperExtension group5 = helper.AddGroupExtended(Locale.Get("K45_WTS_GENERATED_CLOCK_OPTIONS"));
+            group5.AddDropdownLocalized("K45_WTS_CLOCK_MINUTES_PRECISION", new string[] { "30", "20", "15 (DEFAULT)", "12", "10", "6", "5", "4", "3 (!)", "2 (!!)", "1 (!!!!)" }, Array.IndexOf(m_clockPrecision, ClockPrecision), (x) =>
+            {
+                ClockPrecision.value = m_clockPrecision[x];
+            });
+            group5.AddCheckboxLocale("K45_WTS_CLOCK_SHOW_LEADING_ZERO", ClockShowLeadingZero, (x) => ClockShowLeadingZero.value = x);
+            group5.AddCheckboxLocale("K45_WTS_CLOCK_12H_CLOCK", Clock12hFormat, (x) => Clock12hFormat.value = x);
+
         }
 
         private readonly float[] m_qualityArray = new float[]
@@ -63,6 +75,11 @@ namespace Klyte.WriteTheSigns
             2f,
             4f,
             8f
+        };
+
+        private readonly float[] m_clockPrecision = new float[]
+        {
+           30, 20, 15, 12, 10, 7.5f,6, 5, 4,3, 2,1
         };
 
 
