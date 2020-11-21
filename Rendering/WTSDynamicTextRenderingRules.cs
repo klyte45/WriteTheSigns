@@ -53,7 +53,7 @@ namespace Klyte.WriteTheSigns.Rendering
                 TextType.District,
                 TextType.Park,
                 TextType.DistrictOrPark,
-                TextType.ParkOrDistrict,
+                TextType.ParkOrDistrict
             },
             [TextRenderingClass.MileageMarker] = new TextType[]
             {
@@ -76,12 +76,13 @@ namespace Klyte.WriteTheSigns.Rendering
                TextType.PrevStopLine, // Previous Station Line 2
                TextType.LastStopLine, // Line Destination (Last stop before get back) 3
                TextType.PlatformNumber,
-               TextType.TimeTemperature,
+               TextType.TimeTemperature
             },
             [TextRenderingClass.PlaceOnNet] = new TextType[]
             {
                 TextType.Fixed,
                 TextType.GameSprite,
+                TextType.ParameterizedGameSprite,
                 TextType.StreetPrefix,
                 TextType.StreetSuffix,
                 TextType.StreetNameComplete,
@@ -91,7 +92,7 @@ namespace Klyte.WriteTheSigns.Rendering
                 TextType.DistrictOrPark,
                 TextType.ParkOrDistrict,
                 TextType.ParameterizedText,
-                TextType.TimeTemperature,
+                TextType.TimeTemperature
             },
         };
 
@@ -982,6 +983,7 @@ namespace Klyte.WriteTheSigns.Rendering
                 case TextType.Park: return RenderUtils.GetTextData($"{otherText}Area", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                 case TextType.PlatformNumber: return RenderUtils.GetTextData("00", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                 case TextType.ParameterizedText: return RenderUtils.GetTextData($"##PARAM{textDescriptor.m_parameterIdx}##", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
+                case TextType.ParameterizedGameSprite: return WriteTheSignsMod.Controller.SpriteRenderingRules.GetSpriteFromDefaultAtlas("K45_WTS FrameBorder");
                 case TextType.TimeTemperature: return RenderUtils.GetTextData($"??°C", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                 case TextType.LinesSymbols:
                     multipleOutput = WriteTheSignsMod.Controller.SpriteRenderingRules.DrawLineFormats(new int[textDescriptor.MultiItemSettings.SubItemsPerColumn * textDescriptor.MultiItemSettings.SubItemsPerRow].Select((x, y) => -y - 1));
@@ -1046,8 +1048,9 @@ namespace Klyte.WriteTheSigns.Rendering
                 TextType.District => GetFromCacheArray(WTSOnNetData.Instance.GetCachedDistrictId(targetSegment), textDescriptor, RenderUtils.CacheArrayTypes.Districts, baseFont),
                 TextType.Park => GetFromCacheArray(WTSOnNetData.Instance.GetCachedDistrictParkId(targetSegment), textDescriptor, RenderUtils.CacheArrayTypes.Parks, baseFont),
                 TextType.PostalCode => GetFromCacheArray(targetSegment, textDescriptor, RenderUtils.CacheArrayTypes.PostalCode, baseFont),
-                TextType.ParameterizedText => RenderUtils.GetTextData(propDescriptor.GetTextParam(textDescriptor.m_parameterIdx) ?? $"<PARAM#{textDescriptor.m_parameterIdx} NOT SET>", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont),
+                TextType.ParameterizedText => RenderUtils.GetTextData(propDescriptor.GetTextParameter(textDescriptor.m_parameterIdx) ?? $"<PARAM#{textDescriptor.m_parameterIdx} NOT SET>", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont),
                 TextType.TimeTemperature => GetTimeTemperatureText(textDescriptor, ref baseFont),
+                TextType.ParameterizedGameSprite => GetSpriteFromCycle(textDescriptor, propDescriptor.ParameterizedValidImages),
                 _ => null,
             };
         }
@@ -1063,6 +1066,20 @@ namespace Klyte.WriteTheSigns.Rendering
             {
                 return RenderUtils.GetTextData(WTSEtcData.FormatTemp(WeatherManager.instance.m_currentTemperature), textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
             }
+        }
+
+        private static BasicRenderInformation GetSpriteFromCycle(BoardTextDescriptorGeneralXml textDescriptor, string[] spritesAvailable)
+        {
+            if (spritesAvailable == null || spritesAvailable.Length == 0)
+            {
+                return RenderUtils.GetTextData($"<PARAMETER IMAGES NOT SET OR INVALID!>", textDescriptor.m_prefix, textDescriptor.m_suffix, null, textDescriptor.m_overrideFont);
+            }
+            if (textDescriptor.AnimationSettings.m_itemCycleFramesDuration == 0)
+            {
+                return RenderUtils.GetTextData($"<ITEM CYCLE FRAME CANNOT BE 0!>", textDescriptor.m_prefix, textDescriptor.m_suffix, null, textDescriptor.m_overrideFont);
+            }
+            var idx = spritesAvailable.Length == 1 ? 0 : (int)((SimulationManager.instance.m_currentFrameIndex + textDescriptor.AnimationSettings.m_extraDelayCycleFrames) % (spritesAvailable.Length * textDescriptor.AnimationSettings.m_itemCycleFramesDuration) / textDescriptor.AnimationSettings.m_itemCycleFramesDuration);
+            return WriteTheSignsMod.Controller.SpriteRenderingRules.GetSpriteFromDefaultAtlas(spritesAvailable[idx]);
         }
 
         private static StopInformation[] GetTargetStopInfo(BoardInstanceBuildingXml descriptor, ushort buildingId)

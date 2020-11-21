@@ -162,7 +162,7 @@ namespace Klyte.WriteTheSigns.UI
 
             AddDropdown(Locale.Get("K45_WTS_TEXT_CONTENT"), out m_dropdownTextContent, helperConfig, WTSDynamicTextRenderingRules.ALLOWED_TYPES_VEHICLE.Select(x => Locale.Get("K45_WTS_BOARD_TEXT_TYPE_DESC_VEHICLE", x.ToString())).ToArray(), OnSetTextOwnNameContent);
             AddTextField(Locale.Get("K45_WTS_CUSTOM_TEXT"), out m_customText, helperConfig, OnSetTextCustom);
-            AddFilterableInput(Locale.Get("K45_WTS_SPRITE_NAME"), helperConfig, out m_spriteFilter, out UIListBox popup, OnFilterSprites, GetCurrentSpriteName, OnSpriteNameChanged);
+            AddFilterableInput(Locale.Get("K45_WTS_SPRITE_NAME"), helperConfig, out m_spriteFilter, out UIListBox popup, OnFilterSprites, OnSpriteNameChanged);
             popup.processMarkup = true;
             popup.height = 210;
 
@@ -396,7 +396,7 @@ namespace Klyte.WriteTheSigns.UI
             return result;
         }
 
-        private string OnSpriteNameChanged(int obj, string[] refArray)
+        private string OnSpriteNameChanged(string input, int obj, string[] refArray)
         {
             if (obj >= 0)
             {

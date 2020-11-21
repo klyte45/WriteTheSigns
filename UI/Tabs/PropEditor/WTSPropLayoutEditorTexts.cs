@@ -73,6 +73,8 @@ namespace Klyte.WriteTheSigns.UI
         private UITextField m_spriteFilter;
         private UIListBox m_popup;
         private UIDropDown m_verticalAlignDD;
+        private UITextField m_slideDurationFrames;
+        private UITextField m_slideDesync;
 
         public void Awake()
         {
@@ -115,11 +117,14 @@ namespace Klyte.WriteTheSigns.UI
 
             AddDropdown(Locale.Get("K45_WTS_TEXT_CONTENT"), out m_dropdownTextContent, helperConfig, Enum.GetNames(typeof(TextType)).Select(x => Locale.Get("K45_WTS_BOARD_TEXT_TYPE_DESC", x.ToString())).ToArray(), OnSetTextOwnNameContent);
             AddTextField(Locale.Get("K45_WTS_CUSTOM_TEXT"), out m_customText, helperConfig, OnSetTextCustom);
-            AddFilterableInput(Locale.Get("K45_WTS_SPRITE_NAME"), helperConfig, out m_spriteFilter, out UIListBox popup, OnFilterSprites, GetCurrentSpriteName, OnSpriteNameChanged);
+            AddFilterableInput(Locale.Get("K45_WTS_SPRITE_NAME"), helperConfig, out m_spriteFilter, out UIListBox popup, OnFilterSprites, OnSpriteNameChanged);
+            popup.size = new Vector2(824, 220);
             popup.processMarkup = true;
 
             AddDropdown(Locale.Get("K45_WTS_PROPLAYOUT_DESTINATIONREFERENCE"), out m_destinationRef, helperConfig, (Enum.GetValues(typeof(DestinationReference)) as DestinationReference[]).OrderBy(x => (int)x).Select(x => Locale.Get("K45_WTS_ONNETTEXT_DESTINATION_DESC", x.ToString())).ToArray(), OnChangeDestinationRef);
-            AddDropdown(Locale.Get("K45_WTS_PROPLAYOUT_TEXTPARAMETERIDX"), out m_parameterIdx, helperConfig, new string[8].Select((x, i) => $"#{i+1}").ToArray(), OnChangeTextParameterIdx);
+            AddDropdown(Locale.Get("K45_WTS_PROPLAYOUT_TEXTPARAMETERIDX"), out m_parameterIdx, helperConfig, new string[BoardInstanceOnNetXml.TEXT_PARAMETERS_COUNT].Select((x, i) => $"#{i}").ToArray(), OnChangeTextParameterIdx);
+            AddIntField(Locale.Get("K45_WTS_PROPLAYOUT_ITEMDURATIONFRAMES"), out m_slideDurationFrames, helperConfig, OnSetDurationFrames, false);
+            AddIntField(Locale.Get("K45_WTS_PROPLAYOUT_DESYNCFRAMES"), out m_slideDesync, helperConfig, OnSetDesyncOffset, false);
             helperConfig.AddSpace(5);
             AddDropdown(Locale.Get("K45_WTS_CLASS_FONT"), out m_fontClassSelect, helperConfig, (Enum.GetValues(typeof(FontClass)) as FontClass[]).Select(x => Locale.Get("K45_WTS_FONTCLASS", x.ToString())).ToArray(), OnSetFontClass);
             AddDropdown(Locale.Get("K45_WTS_OVERRIDE_FONT"), out m_overrideFontSelect, helperConfig, new string[0], OnSetOverrideFont);
@@ -163,8 +168,10 @@ namespace Klyte.WriteTheSigns.UI
         public void Start() => WriteTheSignsMod.Controller.EventFontsReloadedFromFolder += () => SafeObtain((ref BoardTextDescriptorGeneralXml x) => WTSUtils.ReloadFontsOf(m_overrideFontSelect, x.m_overrideFont, true));
 
 
+        private void OnSetDesyncOffset(int obj) => SafeObtain((ref BoardTextDescriptorGeneralXml x) => x.AnimationSettings.m_extraDelayCycleFrames = (ushort)obj);
+        private void OnSetDurationFrames(int obj) => SafeObtain((ref BoardTextDescriptorGeneralXml x) => x.AnimationSettings.m_itemCycleFramesDuration = (ushort)obj);
         private void OnChangeDestinationRef(int selIdx) => SafeObtain((ref BoardTextDescriptorGeneralXml x) => x.m_destinationRelative = (DestinationReference)selIdx);
-        private void OnChangeTextParameterIdx(int selIdx) => SafeObtain((ref BoardTextDescriptorGeneralXml x) => x.m_parameterIdx = 1 + selIdx);
+        private void OnChangeTextParameterIdx(int selIdx) => SafeObtain((ref BoardTextDescriptorGeneralXml x) => x.m_parameterIdx = selIdx);
 
 
         private void DoDeleteText() => WTSPropLayoutEditor.Instance.RemoveTabFromItem(TabToEdit);
@@ -213,6 +220,8 @@ namespace Klyte.WriteTheSigns.UI
             m_customText.text = x.m_fixedText ?? "";
             m_destinationRef.selectedIndex = (int)(x.m_destinationRelative);
             m_parameterIdx.selectedIndex = x.m_parameterIdx - 1;
+            m_slideDesync.text = x.AnimationSettings.m_extraDelayCycleFrames.ToString();
+            m_slideDurationFrames.text = x.AnimationSettings.m_itemCycleFramesDuration.ToString();
             m_overrideFontSelect.selectedIndex = x.m_overrideFont == null ? 0 : x.m_overrideFont == WTSController.DEFAULT_FONT_KEY ? 1 : Array.IndexOf(m_overrideFontSelect.items, x.m_overrideFont);
             m_fontClassSelect.selectedIndex = (int)x.m_fontClass;
             m_textPrefix.text = x.m_prefix ?? "";
@@ -238,6 +247,8 @@ namespace Klyte.WriteTheSigns.UI
             m_customText.parent.isVisible = x.m_textType == TextType.Fixed;
             m_destinationRef.parent.isVisible = WTSPropLayoutEditor.Instance.EditingInstance.m_allowedRenderClass == TextRenderingClass.PlaceOnNet && x.IsTextRelativeToSegment();
             m_parameterIdx.parent.isVisible = WTSPropLayoutEditor.Instance.EditingInstance.m_allowedRenderClass == TextRenderingClass.PlaceOnNet && x.m_textType == TextType.ParameterizedText;
+            m_slideDurationFrames.parent.isVisible = x.m_textType == TextType.ParameterizedGameSprite;
+            m_slideDesync.parent.isVisible = x.m_textType == TextType.ParameterizedGameSprite;
             m_textFixedColor.parent.isVisible = !x.ColoringConfig.m_useContrastColor;
             m_invertTextHorizontalAlignClone.isVisible = x.PlacingConfig.m_create180degYClone;
             m_sliderIllumination.parent.isVisible = x.IlluminationConfig.IlluminationType != MaterialType.OPAQUE;
@@ -330,7 +341,7 @@ namespace Klyte.WriteTheSigns.UI
             return result;
         }
 
-        private string OnSpriteNameChanged(int obj, string[] refArray)
+        private string OnSpriteNameChanged(string input, int obj, string[] refArray)
         {
             if (obj >= 0)
             {

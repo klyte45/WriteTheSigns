@@ -24,7 +24,8 @@
         GameSprite,
         LineIdentifier,
         ParameterizedText,
-        TimeTemperature
+        TimeTemperature,
+        ParameterizedGameSprite
     }
 
 

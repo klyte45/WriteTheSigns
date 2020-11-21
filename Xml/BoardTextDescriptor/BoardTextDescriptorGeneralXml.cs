@@ -66,6 +66,9 @@ namespace Klyte.WriteTheSigns.Xml
         [XmlElement("BackgroundMeshSettings")]
         public BackgroundMesh BackgroundMeshSettings { get; set; } = new BackgroundMesh();
 
+        [XmlElement("AnimationSettings")]
+        public AnimationSettings AnimationSettings { get; set; } = new AnimationSettings();
+
 
         public bool IsTextRelativeToSegment()
         {
@@ -314,7 +317,13 @@ namespace Klyte.WriteTheSigns.Xml
         }
     }
 
-
+    public class AnimationSettings
+    {
+        [XmlAttribute("extraDelayCycleFrames")]
+        public int m_extraDelayCycleFrames;
+        [XmlAttribute("itemCycleFramesDuration")]
+        public int m_itemCycleFramesDuration = 400;
+    }
 
     public enum BlinkType
     {

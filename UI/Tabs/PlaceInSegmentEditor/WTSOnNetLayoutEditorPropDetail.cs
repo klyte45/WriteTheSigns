@@ -58,14 +58,7 @@ namespace Klyte.WriteTheSigns.UI
         private UILabel m_labelTarget3;
         private UILabel m_labelTarget4;
 
-        private UITextField m_textParam1;
-        private UITextField m_textParam2;
-        private UITextField m_textParam3;
-        private UITextField m_textParam4;
-        private UITextField m_textParam5;
-        private UITextField m_textParam6;
-        private UITextField m_textParam7;
-        private UITextField m_textParam8;
+        private UITextField[] m_textParams;
 
 
         private UIDropDown m_loadDD;
@@ -139,14 +132,18 @@ namespace Klyte.WriteTheSigns.UI
             AddButtonInEditorRow(m_labelTarget3, CommonsSpriteNames.K45_Pipette, OnEnterPickTarget3, "K45_WTS_ONNETEDITOR_PICKNEWTARGET", true, 20).zOrder = 9999;
             AddButtonInEditorRow(m_labelTarget4, CommonsSpriteNames.K45_Pipette, OnEnterPickTarget4, "K45_WTS_ONNETEDITOR_PICKNEWTARGET", true, 20).zOrder = 9999;
 
-            AddTextField(Locale.Get("K45_WTS_ONNETEDITOR_TEXTPARAM1"), out m_textParam1, helperParameters, (txt) => OnChangeTextParameter(1, txt));
-            AddTextField(Locale.Get("K45_WTS_ONNETEDITOR_TEXTPARAM2"), out m_textParam2, helperParameters, (txt) => OnChangeTextParameter(2, txt));
-            AddTextField(Locale.Get("K45_WTS_ONNETEDITOR_TEXTPARAM3"), out m_textParam3, helperParameters, (txt) => OnChangeTextParameter(3, txt));
-            AddTextField(Locale.Get("K45_WTS_ONNETEDITOR_TEXTPARAM4"), out m_textParam4, helperParameters, (txt) => OnChangeTextParameter(4, txt));
-            AddTextField(Locale.Get("K45_WTS_ONNETEDITOR_TEXTPARAM5"), out m_textParam5, helperParameters, (txt) => OnChangeTextParameter(5, txt));
-            AddTextField(Locale.Get("K45_WTS_ONNETEDITOR_TEXTPARAM6"), out m_textParam6, helperParameters, (txt) => OnChangeTextParameter(6, txt));
-            AddTextField(Locale.Get("K45_WTS_ONNETEDITOR_TEXTPARAM7"), out m_textParam7, helperParameters, (txt) => OnChangeTextParameter(7, txt));
-            AddTextField(Locale.Get("K45_WTS_ONNETEDITOR_TEXTPARAM8"), out m_textParam8, helperParameters, (txt) => OnChangeTextParameter(8, txt));
+            m_textParams = new UITextField[BoardInstanceOnNetXml.TEXT_PARAMETERS_COUNT];
+            for (int i = 0; i < BoardInstanceOnNetXml.TEXT_PARAMETERS_COUNT; i++)
+            {
+                var currentIdx = i;
+                AddFilterableInput(string.Format(Locale.Get($"K45_WTS_ONNETEDITOR_TEXTPARAM"), currentIdx), helperParameters, out m_textParams[i], out UIListBox lb, OnFilterParamImages, (t, x, y) => OnParamChanged(t, currentIdx, x, y));
+                lb.processMarkup = true;
+                var sprite = AddSpriteInEditorRow(lb, true, 300);
+                m_textParams[i].eventGotFocus += (x, y) => sprite.spriteName = ((UITextField)x).text.Substring(4);
+                lb.eventItemMouseHover += (x, y) => sprite.spriteName = lb.items[y].Split(">".ToCharArray(), 2)[1].Trim();
+                lb.eventVisibilityChanged += (x, y) => sprite.isVisible = y;
+                sprite.isVisible = false;
+            }
 
             AddLibBox<WTSLibOnNetPropLayout, BoardInstanceOnNetXml>(helperSettings, out m_copySettings, OnCopyRule, out m_pasteSettings, OnPasteRule, out _, null, out m_loadDD, out m_libLoad, out m_libDelete, out m_libSaveNameField, out m_libSave, out m_gotoFileLib, OnLoadRule, GetRuleSerialized);
 
@@ -158,6 +155,31 @@ namespace Klyte.WriteTheSigns.UI
 
 
         }
+
+        private string OnParamChanged(string inputText, int paramIdx, int selIdx, string[] array)
+        {
+            if (selIdx >= 0)
+            {
+                CurrentEdited.SetTextParameter(paramIdx, "IMG_" + array[selIdx].Split(new char[] { '>' }, 2)[1].Trim());
+            }
+            else
+            {
+                CurrentEdited.SetTextParameter(paramIdx, inputText);
+            }
+            return CurrentEdited?.GetTextParameter(paramIdx) ?? "";
+        }
+        private string[] OnFilterParamImages(string arg)
+        {
+            if (arg?.ToUpper().StartsWith("IMG_") == true)
+            {
+                return m_textParams[0].atlas.spriteNames.Where(x => x.ToLower().Contains(arg.Substring(4).ToLower())).OrderBy(x => x).Select(x => $"<sprite {x}> {x}").ToArray();
+            }
+            else
+            {
+                return null;
+            }
+        }
+
         #region Simple Prop selection
 
         private PropInfo m_lastSelection;
@@ -333,15 +355,10 @@ namespace Klyte.WriteTheSigns.UI
                 m_segmentPosition.value = x.SegmentPosition;
                 m_invertSide.isChecked = x.InvertSign;
 
-                m_textParam1.text = x.m_textParameter1 ?? "";
-                m_textParam2.text = x.m_textParameter2 ?? "";
-                m_textParam3.text = x.m_textParameter3 ?? "";
-                m_textParam4.text = x.m_textParameter4 ?? "";
-                m_textParam5.text = x.m_textParameter5 ?? "";
-                m_textParam6.text = x.m_textParameter6 ?? "";
-                m_textParam7.text = x.m_textParameter7 ?? "";
-                m_textParam8.text = x.m_textParameter8 ?? "";
-
+                for (int i = 0; i < m_textParams.Length; i++)
+                {
+                    m_textParams[i].text = x.GetTextParameter(i) ?? "";
+                }
                 ReloadTargets(x);
                 UpdateTabsVisibility(x);
                 m_isLoading = false;
@@ -470,20 +487,6 @@ namespace Klyte.WriteTheSigns.UI
         });
 
 
-        private void OnChangeTextParameter(int v, string txt) => SafeObtain((OnNetInstanceCacheContainerXml x) =>
-        {
-            switch (v)
-            {
-                case 1: x.m_textParameter1 = txt; break;
-                case 2: x.m_textParameter2 = txt; break;
-                case 3: x.m_textParameter3 = txt; break;
-                case 4: x.m_textParameter4 = txt; break;
-                case 5: x.m_textParameter5 = txt; break;
-                case 6: x.m_textParameter6 = txt; break;
-                case 7: x.m_textParameter7 = txt; break;
-                case 8: x.m_textParameter8 = txt; break;
-            }
-        });
     }
 
 

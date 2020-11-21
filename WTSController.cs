@@ -82,9 +82,9 @@ namespace Klyte.WriteTheSigns
                 var tex = new Texture2D(2, 2, TextureFormat.RGBA32, false);
                 if (tex.LoadImage(fileData))
                 {
-                    if (tex.width <= 256 && tex.width <= 256)
+                    if (tex.width <= 400 && tex.width <= 400)
                     {
-                        var imgName = $"K45_WKS_{Path.GetFileNameWithoutExtension(imgFile)}";
+                        var imgName = $"K45_WTS_{Path.GetFileNameWithoutExtension(imgFile)}";
                         spritesToAdd.Add(new SpriteInfo
                         {
                             border = new RectOffset(),
@@ -94,7 +94,7 @@ namespace Klyte.WriteTheSigns
                     }
                     else
                     {
-                        errors.Add($"{Path.GetFileName(imgFile)}: {Locale.Get("K45_WTS_CUSTOMSPRITE_IMAGETOOLARGE")} (max: 256x256)");
+                        errors.Add($"{Path.GetFileName(imgFile)}: {Locale.Get("K45_WTS_CUSTOMSPRITE_IMAGETOOLARGE")} (max: 400x400)");
                     }
                 }
                 else

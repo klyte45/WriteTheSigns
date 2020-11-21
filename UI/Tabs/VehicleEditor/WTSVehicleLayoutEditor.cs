@@ -91,7 +91,7 @@ namespace Klyte.WriteTheSigns.UI
             m_topBar.autoFitChildrenVertically = true;
             var m_topHelper = new UIHelperExtension(m_topBar);
 
-            AddFilterableInput(Locale.Get("K45_WTS_VEHICLEEDITOR_SELECTMODEL"), m_topHelper, out m_vehicleSearch, out _, OnFilterVehicleTyped, GetCurrentSelection, OnVehicleNameSelected);
+            AddFilterableInput(Locale.Get("K45_WTS_VEHICLEEDITOR_SELECTMODEL"), m_topHelper, out m_vehicleSearch, out _, OnFilterVehicleTyped, OnVehicleNameSelected);
             AddButtonInEditorRow(m_vehicleSearch, Commons.UI.SpriteNames.CommonsSpriteNames.K45_QuestionMark, Help_VehicleModel, null, true, 30);
 
             AddLabel("", m_topHelper, out m_labelSelectionDescription, out m_containerSelectionDescription);
@@ -257,7 +257,7 @@ namespace Klyte.WriteTheSigns.UI
             m_editTabstrip.isVisible = CurrentVehicleInfo != null && CurrentConfigurationSource != ConfigurationSource.NONE;
         }
 
-        private string OnVehicleNameSelected(int arg1, string[] arg2)
+        private string OnVehicleNameSelected(string input, int arg1, string[] arg2)
         {
             if (arg1 < 0)
             {
@@ -270,7 +270,6 @@ namespace Klyte.WriteTheSigns.UI
             ReloadVehicle();
             return result;
         }
-        private string GetCurrentSelection() => CurrentVehicleInfo?.name ?? "";
         private string[] OnFilterVehicleTyped(string arg)
         {
             if (m_loadedVehicles == null)
