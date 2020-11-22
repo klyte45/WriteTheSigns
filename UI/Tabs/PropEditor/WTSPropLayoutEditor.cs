@@ -7,6 +7,7 @@ using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Data;
 using Klyte.WriteTheSigns.Xml;
 using System;
+using System.Globalization;
 using System.Linq;
 using UnityEngine;
 using static Klyte.Commons.UI.DefaultEditorUILib;
@@ -23,13 +24,12 @@ namespace Klyte.WriteTheSigns.UI
 
 
         #region Panel areas
-        private UIPanel m_topBar;
         private UIPanel m_middleBar;
         private UIPanel m_editArea;
         #endregion
 
         #region Top bar controls
-        private UIDropDown m_configList;
+        private UITextField m_configList;
         private UIButton m_newButton;
         private UIButton m_deleteButton;
         private UIButton m_helpButton;
@@ -72,19 +72,17 @@ namespace Klyte.WriteTheSigns.UI
             MainContainer.autoLayoutDirection = LayoutDirection.Vertical;
             MainContainer.autoLayoutPadding = new RectOffset(5, 5, 5, 5);
 
-
-            KlyteMonoUtils.CreateUIElement(out m_topBar, MainContainer.transform, "topBar", new UnityEngine.Vector4(0, 0, MainContainer.width - MainContainer.padding.horizontal, 50));
-            m_topBar.autoLayout = true;
-            m_topBar.autoLayoutDirection = LayoutDirection.Horizontal;
-            m_topBar.padding = new RectOffset(5, 5, 5, 5);
+            var mainContainerHelper = new UIHelperExtension(MainContainer);
 
 
-            m_configList = UIHelperExtension.CloneBasicDropDownNoLabel(new string[0], (x) => OnConfigSelectionChange(x), m_topBar);
-            m_configList.width = 725;
+            AddFilterableInput("AAAA", mainContainerHelper, out m_configList, out _, OnFilterLayouts, OnConfigSelectionChange);
+            m_configList.width += m_configList.parent.GetComponentInChildren<UILabel>().width;
+            GameObject.Destroy(m_configList.parent.GetComponentInChildren<UILabel>());
+            m_configList.tooltipLocaleID = "K45_WTS_TOOLTIP_LAYOUTSELECTOR";
 
-            KlyteMonoUtils.InitCircledButton(m_topBar, out m_newButton, CommonsSpriteNames.K45_New, OnNewConfig, "K45_WTS_CREATE_NEW_CONFIG");
-            KlyteMonoUtils.InitCircledButton(m_topBar, out m_deleteButton, CommonsSpriteNames.K45_Delete, OnDeleteConfig, "K45_WTS_DELETE_SELECTED_CONFIG");
-            KlyteMonoUtils.InitCircledButton(m_topBar, out m_helpButton, CommonsSpriteNames.K45_QuestionMark, OnHelp_General, "K45_CMNS_HELP");
+            m_helpButton = AddButtonInEditorRow(m_configList, CommonsSpriteNames.K45_QuestionMark, OnHelp_General, "K45_CMNS_HELP", true, 30);
+            m_deleteButton = AddButtonInEditorRow(m_configList, CommonsSpriteNames.K45_Delete, OnDeleteConfig, "K45_WTS_DELETE_SELECTED_CONFIG", true, 30);
+            m_newButton = AddButtonInEditorRow(m_configList, CommonsSpriteNames.K45_New, ShowNewConfigModal, "K45_WTS_CREATE_NEW_CONFIG", true, 30);
 
             KlyteMonoUtils.CreateUIElement(out m_middleBar, MainContainer.transform, "previewBar", new Vector4(0, 0, MainContainer.width - MainContainer.padding.horizontal, 300));
             m_middleBar.autoLayout = true;
@@ -103,29 +101,25 @@ namespace Klyte.WriteTheSigns.UI
             InitTabButton(m_editTabstrip, out m_plusButton, Locale.Get("K45_WTS_ADD_NEW_TEXT_ENTRY"), new Vector2(m_editTabstrip.size.x, 30), null);
             m_plusButton.eventClicked += AddTabToItem;
 
-            KlyteMonoUtils.CreateUIElement(out m_editArea, MainContainer.transform, "editArea", new UnityEngine.Vector4(0, 0, MainContainer.width - MainContainer.padding.horizontal, MainContainer.height - m_middleBar.height - m_topBar.height - MainContainer.padding.vertical - (MainContainer.autoLayoutPadding.vertical * 2) - 5));
+            KlyteMonoUtils.CreateUIElement(out m_editArea, MainContainer.transform, "editArea", new UnityEngine.Vector4(0, 0, MainContainer.width - MainContainer.padding.horizontal, MainContainer.height - m_middleBar.height - m_configList.parent.height - MainContainer.padding.vertical - (MainContainer.autoLayoutPadding.vertical * 2) - 5));
             m_editArea.padding = new RectOffset(5, 5, 5, 5);
 
 
             KlyteMonoUtils.CreateUIElement(out m_basicInfoEditor, m_editArea.transform, "basicTab", new UnityEngine.Vector4(0, 0, m_editArea.width - m_editArea.padding.horizontal, m_editArea.height - m_editArea.padding.vertical));
-             m_basicsTab =  m_basicInfoEditor.gameObject.AddComponent<WTSPropLayoutEditorBasics>();
+            m_basicsTab = m_basicInfoEditor.gameObject.AddComponent<WTSPropLayoutEditorBasics>();
             KlyteMonoUtils.CreateUIElement(out m_textInfoEditor, m_editArea.transform, "textTab", new UnityEngine.Vector4(0, 0, m_editArea.width - m_editArea.padding.horizontal, m_editArea.height - m_editArea.padding.vertical));
             m_textInfoEditor.gameObject.AddComponent<WTSPropLayoutEditorTexts>();
 
-
-            WTSPropLayoutData.Instance.EventDataChanged += RefreshConfigList;
-            RefreshConfigList();
             OnTabChange(0);
-
+            OnConfigSelectionChange("", -1, new string[0]);
         }
 
-        private void OnHelp_General(UIComponent component, UIMouseEventParameter eventParam) => K45DialogControl.ShowModalHelp("PropLayouts.General", Locale.Get("K45_WTS_PROPEDITOR_HELPTITLE"), 0);
+        private void OnHelp_General() => K45DialogControl.ShowModalHelp("PropLayouts.General", Locale.Get("K45_WTS_PROPEDITOR_HELPTITLE"), 0);
 
         public void SetCurrentSelectionNewName(string newName)
         {
             WTSPropLayoutData.Instance.Add(newName, ref EditingInstance);
-            m_configList.items[m_configList.selectedIndex] = newName;
-            m_configList.Invalidate();
+            m_configList.text = newName;
         }
 
 
@@ -172,13 +166,13 @@ namespace Klyte.WriteTheSigns.UI
             }
         }
 
-        private void OnDeleteConfig(UIComponent component, UIMouseEventParameter eventParam)
+        private void OnDeleteConfig()
         {
             K45DialogControl.ShowModal(
                    new K45DialogControl.BindProperties
                    {
                        title = Locale.Get("K45_WTS_PROPEDIT_CONFIGDELETE_TITLE"),
-                       message = string.Format(Locale.Get("K45_WTS_PROPEDIT_CONFIGDELETE_MESSAGE"), m_configList.selectedValue),
+                       message = string.Format(Locale.Get("K45_WTS_PROPEDIT_CONFIGDELETE_MESSAGE"), m_configList.text),
                        showButton1 = true,
                        textButton1 = Locale.Get("YES"),
                        showButton2 = true,
@@ -188,16 +182,16 @@ namespace Klyte.WriteTheSigns.UI
                 {
                     if (x == 1)
                     {
-                        WTSPropLayoutData.Instance.Remove(m_configList.selectedValue);
-                        RefreshConfigList();
+                        WTSPropLayoutData.Instance.Remove(m_configList.text);
+                        ExecuteItemChange("", false);
                     }
                     return true;
                 }); ;
         }
 
-        private void OnNewConfig(UIComponent component, UIMouseEventParameter eventParam) => ShowNewConfigModal();
 
-        private void ShowNewConfigModal(string lastError = null)
+        private void ShowNewConfigModal() => ShowNewConfigModal(null);
+        private void ShowNewConfigModal(string lastError)
         {
             K45DialogControl.ShowModalPromptText(
                   new K45DialogControl.BindProperties
@@ -217,7 +211,7 @@ namespace Klyte.WriteTheSigns.UI
                           {
                               error = $"{ Locale.Get("K45_WTS_PROPEDIT_CONFIGNEW_INVALIDNAME")}";
                           }
-                          else if (Array.IndexOf(m_configList.items, text) >= 0)
+                          else if (WTSPropLayoutData.Instance.List().Contains(text))
                           {
                               error = $"{ Locale.Get("K45_WTS_PROPEDIT_CONFIGNEW_ALREADY_EXISTS")}";
                           }
@@ -226,8 +220,7 @@ namespace Klyte.WriteTheSigns.UI
                           {
                               var newModel = new BoardDescriptorGeneralXml();
                               WTSPropLayoutData.Instance.Add(text, ref newModel);
-                              m_configList.items = WTSPropLayoutData.Instance.List().ToArray();
-                              m_configList.selectedValue = text;
+                              m_configList.text = ExecuteItemChange(text, true);
                           }
                           else
                           {
@@ -243,28 +236,24 @@ namespace Klyte.WriteTheSigns.UI
         {
             BoardDescriptorGeneralXml newItem = XmlUtils.DefaultXmlDeserialize<BoardDescriptorGeneralXml>(data);
             WTSPropLayoutData.Instance.Add(key, ref newItem);
-            RefreshConfigList();
             OnTabChange(0);
         }
 
-        private void RefreshConfigList()
-        {
-            string currentSelection = m_configList.selectedValue;
-            m_configList.items = WTSPropLayoutData.Instance.List().ToArray();
-            m_configList.selectedValue = currentSelection;
+        private string[] OnFilterLayouts(string input) => WTSPropLayoutData.Instance.FilterBy(input, null);
 
+        private string OnConfigSelectionChange(string typed, int sel, string[] items)
+        {
+            if (sel == -1)
+            {
+                sel = Array.IndexOf(items, typed?.Trim());
+            }
+            bool isValidSelection = sel >= 0 && sel < items.Length;
+            string targetValue = isValidSelection ? items[sel] : "";
+
+            return ExecuteItemChange(targetValue, isValidSelection);
         }
 
-        private void OnConfigSelectionChange(int sel)
-        {
-            string targetValue = m_configList.selectedValue;
-            bool isValidSelection = sel >= 0;
-
-            ExecuteItemChange(targetValue, isValidSelection);
-
-        }
-
-        private void ExecuteItemChange(string targetValue, bool isValidSelection)
+        private string ExecuteItemChange(string targetValue, bool isValidSelection)
         {
 
             m_middleBar.isVisible = isValidSelection;
@@ -288,6 +277,7 @@ namespace Klyte.WriteTheSigns.UI
                 }
 
             }
+            return isValidSelection ? targetValue : null;
         }
 
 

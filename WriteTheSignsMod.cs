@@ -12,7 +12,7 @@ using System.IO;
 using System.Reflection;
 using UnityEngine;
 
-[assembly: AssemblyVersion("0.2.0.1")]
+[assembly: AssemblyVersion("0.2.0.*")]
 namespace Klyte.WriteTheSigns
 {
     public class WriteTheSignsMod : BasicIUserMod<WriteTheSignsMod, WTSController, WTSPanel>
@@ -56,10 +56,10 @@ namespace Klyte.WriteTheSigns
             });
             FontServer.instance.SetQualityMultiplier(m_qualityArray[FontQuality]);
             UIHelperExtension group5 = helper.AddGroupExtended(Locale.Get("K45_WTS_GENERATED_CLOCK_OPTIONS"));
-            group5.AddDropdownLocalized("K45_WTS_CLOCK_MINUTES_PRECISION", new string[] { "30", "20", "15 (DEFAULT)", "12", "10", "6", "5", "4", "3 (!)", "2 (!!)", "1 (!!!!)" }, Array.IndexOf(m_clockPrecision, ClockPrecision), (x) =>
-            {
-                ClockPrecision.value = m_clockPrecision[x];
-            });
+            group5.AddDropdownLocalized("K45_WTS_CLOCK_MINUTES_PRECISION", new string[] { "30", "20", "15 (DEFAULT)", "12", "10", "7.5", "6", "5", "4", "3 (!)", "2 (!!)", "1 (!!!!)" }, Array.IndexOf(m_clockPrecision, ClockPrecision), (x) =>
+             {
+                 ClockPrecision.value = m_clockPrecision[x];
+             });
             group5.AddCheckboxLocale("K45_WTS_CLOCK_SHOW_LEADING_ZERO", ClockShowLeadingZero, (x) => ClockShowLeadingZero.value = x);
             group5.AddCheckboxLocale("K45_WTS_CLOCK_12H_CLOCK", Clock12hFormat, (x) => Clock12hFormat.value = x);
 

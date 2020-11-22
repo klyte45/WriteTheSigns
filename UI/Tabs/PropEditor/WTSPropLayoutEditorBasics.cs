@@ -84,7 +84,7 @@ namespace Klyte.WriteTheSigns.UI
                     m_fontSelect.selectedIndex = EditingInstance.FontName == null ? 0 : EditingInstance.FontName == WTSController.DEFAULT_FONT_KEY ? 1 : Array.IndexOf(m_fontSelect.items, EditingInstance.FontName);
                     m_dropdownTextContent.selectedIndex = (int)EditingInstance.m_allowedRenderClass;
 
-                    var currentKV = PrefabIndexes<PropInfo>.instance.PrefabsLoaded.Where(x => x.Value.name == EditingInstance.m_propName).FirstOrDefault();
+                    var currentKV = PrefabIndexes<PropInfo>.instance.PrefabsLoaded.Where(x => x.Value?.name == EditingInstance.m_propName).FirstOrDefault();
                     m_lastSelection = currentKV.Value;
                     WTSPropLayoutEditor.Instance.CurrentPropInfo = m_lastSelection;
                     m_propFilter.text = currentKV.Key ?? "";

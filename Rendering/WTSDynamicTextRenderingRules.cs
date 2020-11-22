@@ -1065,7 +1065,7 @@ namespace Klyte.WriteTheSigns.Rendering
                     time = ((time + 11) % 12) + 1;
                 }
                 var precision = WriteTheSignsMod.ClockPrecision.value;
-                return RenderUtils.GetTextData($"{((int)time).ToString($"D{(WriteTheSignsMod.ClockShowLeadingZero ? "2" : "1")}")}{(SimulationManager.instance.m_currentFrameIndex % 150 > 75 ? ":" : ".")}{(((int)(time % 1 * 60 / precision)) * precision).ToString("D2")}", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
+                return RenderUtils.GetTextData($"{((int)time).ToString($"D{(WriteTheSignsMod.ClockShowLeadingZero ? "2" : "1")}")}{(SimulationManager.instance.m_currentFrameIndex % 150 > 75 ? ":" : ".")}{((int)(((int)(time % 1 * 60 / precision)) * precision)).ToString("D2")}", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
             }
             else
             {

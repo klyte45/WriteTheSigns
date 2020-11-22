@@ -8,6 +8,7 @@ using Klyte.WriteTheSigns.Data;
 using Klyte.WriteTheSigns.Libraries;
 using Klyte.WriteTheSigns.Rendering;
 using Klyte.WriteTheSigns.Xml;
+using System;
 using System.Linq;
 using UnityEngine;
 using static Klyte.Commons.UI.DefaultEditorUILib;
@@ -41,9 +42,8 @@ namespace Klyte.WriteTheSigns.UI
         private UITabstrip m_tabstrip;
 
         private UITextField m_name;
-        private UIDropDown m_propLayoutSelect;
+        private UIDropDown m_propSelectionType;
         private UITextField m_propFilter;
-        private UIListBox m_popup;
         private UISlider m_segmentPosition;
         private UITextField[] m_position;
         private UITextField[] m_rotation;
@@ -92,12 +92,11 @@ namespace Klyte.WriteTheSigns.UI
             AddTextField(Locale.Get("K45_WTS_ONNETEDITOR_NAME"), out m_name, helperSettings, OnSetName);
 
             helperSettings.AddSpace(5);
+            
+            AddDropdown(Locale.Get("K45_WTS_BUILDINGEDITOR_PROPTYPE"), out m_propSelectionType, helperSettings, new string[] { Locale.Get("K45_WTS_ONNETEDITOR_PROPLAYOUT"), Locale.Get("K45_WTS_ONNETEDITOR_PROPMODELSELECT") }, OnPropSelecionClassChange);
+            AddFilterableInput(Locale.Get("K45_WTS_BUILDINGEDITOR_MODELLAYOUTSELECT"), helperSettings, out m_propFilter, out _, OnFilterLayouts, OnConfigSelectionChange);
 
-            AddDropdown(Locale.Get("K45_WTS_ONNETEDITOR_PROPLAYOUT"), out m_propLayoutSelect, helperSettings, new string[0], OnPropLayoutChange);
-            AddFilterableInput(Locale.Get("K45_WTS_ONNETEDITOR_PROPMODELSELECT"), helperSettings, out m_propFilter, out _, PrefabIndexes<PropInfo>.instance.BasicInputFiltering, OnSetProp);
 
-
-            AddButtonInEditorRow(m_propLayoutSelect, CommonsSpriteNames.K45_Reload, LoadAvailableLayouts);
             AddSlider(Locale.Get("K45_WTS_ONNETEDITOR_SEGMENTPOSITION"), out m_segmentPosition, helperSettings, OnSegmentPositionChanged, 0, 1, 0.01f, (x) => x.ToString("F2"));
             AddVector3Field(Locale.Get("K45_WTS_ONNETEDITOR_POSITIONOFFSET"), out m_position, helperSettings, OnPositionChanged);
             AddVector3Field(Locale.Get("K45_WTS_ONNETEDITOR_ROTATION"), out m_rotation, helperSettings, OnRotationChanged);
@@ -133,7 +132,6 @@ namespace Klyte.WriteTheSigns.UI
             AddLibBox<WTSLibOnNetPropLayout, BoardInstanceOnNetXml>(helperSettings, out m_copySettings, OnCopyRule, out m_pasteSettings, OnPasteRule, out _, null, out m_loadDD, out m_libLoad, out m_libDelete, out m_libSaveNameField, out m_libSave, out m_gotoFileLib, OnLoadRule, GetRuleSerialized);
 
             WTSOnNetLayoutEditor.Instance.LayoutList.EventSelectionChanged += OnChangeTab;
-            LoadAvailableLayouts();
             MainContainer.isVisible = false;
             m_pasteSettings.isVisible = false;
 
@@ -166,22 +164,54 @@ namespace Klyte.WriteTheSigns.UI
         }
 
 
-        private string OnSetProp(string typed, int sel, string[] items)
+        private string[] OnFilterLayouts(string input) => m_propSelectionType.selectedIndex == 0 ? WTSPropLayoutData.Instance.FilterBy(input, TextRenderingClass.Buildings) : PrefabIndexes<PropInfo>.instance.BasicInputFiltering(input);
+
+        private string OnConfigSelectionChange(string typed, int sel, string[] items)
         {
-            if (sel >= 0)
+            if (sel == -1)
             {
-                PrefabIndexes<PropInfo>.instance.PrefabsLoaded.TryGetValue(items[sel], out PropInfo targetProp);
-                SafeObtain((OnNetInstanceCacheContainerXml x) => x.SimpleProp = targetProp);
-                return items[sel];
+                sel = Array.IndexOf(items, typed?.Trim());
+            }
+            bool isValidSelection = sel >= 0 && sel < items.Length;
+            string targetValue = isValidSelection ? items[sel] : "";
+
+            SafeObtain((OnNetInstanceCacheContainerXml x) =>
+            {
+                if (m_propSelectionType.selectedIndex == 0)
+                {
+                    x.PropLayoutName = targetValue;
+                    x.m_simplePropName = null;
+                }
+                else
+                {
+                    x.PropLayoutName = null;
+                    x.m_simplePropName = targetValue;
+                }
+            });
+
+            return targetValue;
+        }
+
+
+        private void OnPropSelecionClassChange(int sel) => SafeObtain((OnNetInstanceCacheContainerXml x) =>
+        {
+            m_propFilter.text = sel == 0 ? x.PropLayoutName ?? "" : PrefabIndexes<PropInfo>.GetListName(x.SimpleProp);
+            UpdateTabsVisibility(sel);
+        });
+
+        private void UpdateTabsVisibility(int sel)
+        {
+            if (sel == 0)
+            {
+                m_tabstrip.ShowTab("TpSettings");
+                m_tabstrip.ShowTab("TgSettings");
             }
             else
             {
-                SafeObtain((OnNetInstanceCacheContainerXml x) => x.SimpleProp = null);
-                return null;
+                m_tabstrip.HideTab("TpSettings");
+                m_tabstrip.HideTab("TgSettings");
             }
-
         }
-
 
 
         private void OnEnterPickTarget1()
@@ -221,19 +251,6 @@ namespace Klyte.WriteTheSigns.UI
             WriteTheSignsMod.Controller.RoadSegmentToolInstance.enabled = true;
         }
 
-        private void LoadAvailableLayouts()
-        {
-            m_propLayoutSelect.items = new string[] { Locale.Get("K45_WTS_ONNET_USESIMPLEPROPOPTION") }.Union(WTSPropLayoutData.Instance.ListWhere(x => x.m_allowedRenderClass == TextRenderingClass.PlaceOnNet)).ToArray();
-            SafeObtain((OnNetInstanceCacheContainerXml x) =>
-            {
-                if (x.PropLayoutName != null && !m_propLayoutSelect.items.Contains(x.PropLayoutName))
-                {
-                    m_propLayoutSelect.items = m_propLayoutSelect.items.Union(new string[] { x.PropLayoutName }).OrderBy(x => x).ToArray();
-                }
-                m_propLayoutSelect.selectedValue = x.PropLayoutName;
-            });
-        }
-
 
 
         private bool m_isLoading;
@@ -249,7 +266,6 @@ namespace Klyte.WriteTheSigns.UI
         private void OnChangeTab(ref OnNetInstanceCacheContainerXml current)
         {
             MainContainer.isVisible = current != null;
-            LoadAvailableLayouts();
             Dirty = true;
         }
 
@@ -260,8 +276,8 @@ namespace Klyte.WriteTheSigns.UI
             {
                 m_isLoading = true;
                 m_name.text = x.SaveName ?? "";
-                m_propLayoutSelect.selectedValue = x.PropLayoutName ?? m_propLayoutSelect.items[0];
-                m_propFilter.text = x.m_simplePropName ?? "";
+                m_propSelectionType.selectedIndex = x.PropLayoutName == null ? 1 : 0;
+                m_propFilter.text = x.PropLayoutName ?? PrefabIndexes<PropInfo>.GetListName(x.SimpleProp) ?? "";
                 m_position[0].text = x.PropPosition.X.ToString("F3");
                 m_position[1].text = x.PropPosition.Y.ToString("F3");
                 m_position[2].text = x.PropPosition.Z.ToString("F3");
@@ -279,7 +295,7 @@ namespace Klyte.WriteTheSigns.UI
                     m_textParams[i].text = x.GetTextParameter(i) ?? "";
                 }
                 ReloadTargets(x);
-                UpdateTabsVisibility(x);
+                UpdateTabsVisibility(m_propSelectionType.selectedIndex);
                 m_isLoading = false;
             });
             Dirty = false;
@@ -293,26 +309,6 @@ namespace Klyte.WriteTheSigns.UI
             m_labelTarget4.suffix = GetTextForSegment(x.m_targetSegment4) ?? "";
         }
 
-        private void UpdateTabsVisibility(OnNetInstanceCacheContainerXml x)
-        {
-            bool isLayout = m_propLayoutSelect.selectedIndex != 0;
-            if (isLayout)
-            {
-                m_tabstrip.ShowTab("TpSettings");
-                m_tabstrip.ShowTab("TgSettings");
-                m_propFilter.Disable();
-                m_propFilter.text = "";
-                m_propFilter.parent.GetComponentInChildren<UILabel>().text = "";
-            }
-            else
-            {
-                m_tabstrip.HideTab("TpSettings");
-                m_tabstrip.HideTab("TgSettings");
-                m_propFilter.Enable();
-                m_propFilter.text = PrefabIndexes<PropInfo>.GetListName(x.SimpleProp);
-                m_propFilter.parent.GetComponentInChildren<UILabel>().text = Locale.Get("K45_WTS_ONNETEDITOR_PROPMODELSELECT");
-            }
-        }
 
         private string GetTextForSegment(ushort targetSegment)
         {
@@ -380,18 +376,7 @@ namespace Klyte.WriteTheSigns.UI
         private void OnSegmentPositionChanged(float val) => SafeObtain((OnNetInstanceCacheContainerXml x) => x.SegmentPosition = val);
         private void OnInvertSideChanged(bool isChecked) => SafeObtain((OnNetInstanceCacheContainerXml x) => x.InvertSign = isChecked);
 
-        private void OnPropLayoutChange(int sel) => SafeObtain((OnNetInstanceCacheContainerXml x) =>
-        {
-            if (sel > 0)
-            {
-                x.PropLayoutName = m_propLayoutSelect.items[sel];
-            }
-            else
-            {
-                x.PropLayoutName = null;
-            }
-            UpdateTabsVisibility(x);
-        });
+
 
         private void OnSetName(string text) => SafeObtain((OnNetInstanceCacheContainerXml x) =>
         {

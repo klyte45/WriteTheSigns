@@ -48,7 +48,7 @@ namespace Klyte.WriteTheSigns.UI
         private UITabstrip m_tabstrip;
 
         private UITextField m_name;
-        private UIDropDown m_propLayoutSelect;
+        private UIDropDown m_propSelectionType;
         private UITextField[] m_position;
         private UITextField[] m_rotation;
         private UITextField[] m_scale;
@@ -86,14 +86,15 @@ namespace Klyte.WriteTheSigns.UI
                     m_allFields = new UIComponent[]
                         {
                             m_name,
-                            m_propLayoutSelect,
+                            m_propSelectionType,
                             m_chkShowIfNoLine,
                             m_repeatTimes,
                             m_colorModeDD,
                             m_pasteSettings,
                             m_libLoad,
                             m_subBuildingSelect,
-                            m_chkUseFixedIfMulti
+                            m_chkUseFixedIfMulti,
+                            m_propFilter
                 }.Union(m_position).Union(m_rotation).Union(m_repeatArrayDistance).Union(m_scale).ToArray();
                 }
                 return m_allFields.Union(m_checkboxTemplateList.items.Select(x => x as UIComponent));
@@ -127,9 +128,8 @@ namespace Klyte.WriteTheSigns.UI
 
             helperSettings.AddSpace(5);
 
-            AddDropdown(Locale.Get("K45_WTS_BUILDINGEDITOR_PROPLAYOUT"), out m_propLayoutSelect, helperSettings, new string[0], OnPropLayoutChange);
-            AddButtonInEditorRow(m_propLayoutSelect, CommonsSpriteNames.K45_Reload, LoadAvailableLayouts);
-            AddFilterableInput(Locale.Get("K45_WTS_BUILDINGEDITOR_PROPMODELSELECT"), helperSettings, out m_propFilter, out _, PrefabIndexes<PropInfo>.instance.BasicInputFiltering, OnSetProp);
+            AddDropdown(Locale.Get("K45_WTS_BUILDINGEDITOR_PROPTYPE"), out m_propSelectionType, helperSettings, new string[] { Locale.Get("K45_WTS_BUILDINGEDITOR_PROPLAYOUT"), Locale.Get("K45_WTS_BUILDINGEDITOR_PROPMODELSELECT") }, OnPropSelecionClassChange);
+            AddFilterableInput(Locale.Get("K45_WTS_BUILDINGEDITOR_MODELLAYOUTSELECT"), helperSettings, out m_propFilter, out _, OnFilterLayouts, OnConfigSelectionChange);
 
             AddVector3Field(Locale.Get("K45_WTS_BUILDINGEDITOR_POSITION"), out m_position, helperSettings, OnPositionChanged);
             AddVector3Field(Locale.Get("K45_WTS_BUILDINGEDITOR_ROTATION"), out m_rotation, helperSettings, OnRotationChanged);
@@ -148,7 +148,6 @@ namespace Klyte.WriteTheSigns.UI
             AddCheckboxLocale("K45_WTS_USEFIXEDIFMULTILINES", out m_chkUseFixedIfMulti, helperAppearence, OnUseFixedIfMultiChanged);
 
             WTSBuildingLayoutEditor.Instance.LayoutList.EventSelectionChanged += OnChangeTab;
-            LoadAvailableLayouts();
             MainContainer.isVisible = false;
             m_pasteSettings.isVisible = false;
 
@@ -184,20 +183,6 @@ namespace Klyte.WriteTheSigns.UI
             uiCheckbox.label.padding.bottom = -20;
             UITemplateUtils.GetTemplateDict()[PLATFORM_SELECTION_TEMPLATE_NAME] = panel;
         }
-
-        private void LoadAvailableLayouts()
-        {
-            m_propLayoutSelect.items = new string[] { Locale.Get("K45_WTS_BUILDING_USESIMPLEPROPOPTION") }.Union(WTSPropLayoutData.Instance.ListWhere(x => x.m_allowedRenderClass == TextRenderingClass.Buildings)).ToArray();
-            SafeObtain((ref BoardInstanceBuildingXml x) =>
-            {
-                if (x.PropLayoutName != null && !m_propLayoutSelect.items.Contains(x.PropLayoutName))
-                {
-                    m_propLayoutSelect.items = m_propLayoutSelect.items.Union(new string[] { x.PropLayoutName }).OrderBy(x => x).ToArray();
-                }
-                m_propLayoutSelect.selectedValue = x.PropLayoutName;
-            });
-        }
-
 
         private void UpdatePlatformList(ref BoardInstanceBuildingXml reference)
         {
@@ -263,7 +248,6 @@ namespace Klyte.WriteTheSigns.UI
             CurrentBuildingName = buildingName;
             Source = source;
             MainContainer.isVisible = current != null;
-            LoadAvailableLayouts();
             Dirty = true;
         }
 
@@ -274,8 +258,8 @@ namespace Klyte.WriteTheSigns.UI
                 var isPublicTransportStation = PrefabCollection<BuildingInfo>.FindLoaded(CurrentBuildingName)?.m_buildingAI is TransportStationAI;
 
                 m_name.text = x.SaveName ?? "";
-                m_propLayoutSelect.selectedValue = x.PropLayoutName ?? m_propLayoutSelect.items[0];
-                m_propFilter.text = x.m_simplePropName ?? "";
+                m_propSelectionType.selectedIndex = x.PropLayoutName == null ? 1 : 0;
+                m_propFilter.text = x.PropLayoutName ?? PrefabIndexes<PropInfo>.GetListName(x.SimpleProp) ?? "";
                 m_position[0].text = x.PropPosition.X.ToString("F3");
                 m_position[1].text = x.PropPosition.Y.ToString("F3");
                 m_position[2].text = x.PropPosition.Z.ToString("F3");
@@ -319,12 +303,10 @@ namespace Klyte.WriteTheSigns.UI
                 if (Source != ConfigurationSource.CITY)
                 {
                     AllFields.ForEach(x => x.Disable());
-                    m_propFilter.Disable();
                 }
                 else
                 {
                     AllFields.ForEach(x => x.Enable());
-                    TogglePropFilter(x);
                 }
                 if (isPublicTransportStation)
                 {
@@ -338,22 +320,37 @@ namespace Klyte.WriteTheSigns.UI
             Dirty = false;
         }
 
-        private void TogglePropFilter(BoardInstanceBuildingXml x)
+
+        private string[] OnFilterLayouts(string input) => m_propSelectionType.selectedIndex == 0 ? WTSPropLayoutData.Instance.FilterBy(input, TextRenderingClass.Buildings) : PrefabIndexes<PropInfo>.instance.BasicInputFiltering(input);
+
+        private string OnConfigSelectionChange(string typed, int sel, string[] items)
         {
-            bool isLayout = m_propLayoutSelect.selectedIndex != 0;
-            if (isLayout)
+            if (sel == -1)
             {
-                m_propFilter.Disable();
-                m_propFilter.text = "";
-                m_propFilter.parent.GetComponentInChildren<UILabel>().text = "";
+                sel = Array.IndexOf(items, typed?.Trim());
             }
-            else
+            bool isValidSelection = sel >= 0 && sel < items.Length;
+            string targetValue = isValidSelection ? items[sel] : "";
+
+            SafeObtain((ref BoardInstanceBuildingXml x) =>
             {
-                m_propFilter.Enable();
-                m_propFilter.text = PrefabIndexes<PropInfo>.GetListName(x.SimpleProp);
-                m_propFilter.parent.GetComponentInChildren<UILabel>().text = Locale.Get("K45_WTS_ONNETEDITOR_PROPMODELSELECT");
-            }
+                if (m_propSelectionType.selectedIndex == 0)
+                {
+                    x.PropLayoutName = targetValue;
+                    x.m_simplePropName = null;
+                }
+                else
+                {
+                    x.PropLayoutName = null;
+                    x.m_simplePropName = targetValue;
+                }
+            });
+
+            return targetValue;
         }
+
+
+        private void OnPropSelecionClassChange(int sel) => SafeObtain((ref BoardInstanceBuildingXml x) => m_propFilter.text = sel == 0 ? x.PropLayoutName ?? "" : PrefabIndexes<PropInfo>.GetListName(x.SimpleProp));
 
         public void Update()
         {
@@ -422,18 +419,7 @@ namespace Klyte.WriteTheSigns.UI
             m_chkUseFixedIfMulti.isVisible = x.ColorModeProp == ColoringMode.ByPlatform;
         });
         private void OnUseFixedIfMultiChanged(bool isChecked) => SafeObtain((ref BoardInstanceBuildingXml x) => x.UseFixedIfMultiline = isChecked);
-        private void OnPropLayoutChange(int sel) => SafeObtain((ref BoardInstanceBuildingXml x) =>
-        {
-            if (sel > 0)
-            {
-                x.PropLayoutName = m_propLayoutSelect.items[sel];
-            }
-            else
-            {
-                x.PropLayoutName = null;
-            }
-            TogglePropFilter(x);
-        });
+
 
         private void OnSetName(string text) => SafeObtain((ref BoardInstanceBuildingXml x) =>
         {
