@@ -7,7 +7,6 @@ using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Data;
 using Klyte.WriteTheSigns.Xml;
 using System;
-using System.Globalization;
 using System.Linq;
 using UnityEngine;
 using static Klyte.Commons.UI.DefaultEditorUILib;
@@ -32,7 +31,9 @@ namespace Klyte.WriteTheSigns.UI
         private UITextField m_configList;
         private UIButton m_newButton;
         private UIButton m_deleteButton;
+        private UIButton m_importButton;
         private UIButton m_helpButton;
+        private UILabel m_scopeInfo;
         #endregion
         #region Mid bar controls
         private UIScrollablePanel m_editTabstrip;
@@ -71,6 +72,7 @@ namespace Klyte.WriteTheSigns.UI
             MainContainer.autoLayout = true;
             MainContainer.autoLayoutDirection = LayoutDirection.Vertical;
             MainContainer.autoLayoutPadding = new RectOffset(5, 5, 5, 5);
+            MainContainer.width = MainContainer.parent.width;
 
             var mainContainerHelper = new UIHelperExtension(MainContainer);
 
@@ -79,10 +81,17 @@ namespace Klyte.WriteTheSigns.UI
             m_configList.width += m_configList.parent.GetComponentInChildren<UILabel>().width;
             GameObject.Destroy(m_configList.parent.GetComponentInChildren<UILabel>());
             m_configList.tooltipLocaleID = "K45_WTS_TOOLTIP_LAYOUTSELECTOR";
+            AddLabel("", mainContainerHelper, out m_scopeInfo, out _);
+            m_scopeInfo.processMarkup = true;
 
             m_helpButton = AddButtonInEditorRow(m_configList, CommonsSpriteNames.K45_QuestionMark, OnHelp_General, "K45_CMNS_HELP", true, 30);
             m_deleteButton = AddButtonInEditorRow(m_configList, CommonsSpriteNames.K45_Delete, OnDeleteConfig, "K45_WTS_DELETE_SELECTED_CONFIG", true, 30);
+            m_importButton = AddButtonInEditorRow(m_configList, CommonsSpriteNames.K45_Import, OnImportIntoCity, "K45_WTS_IMPORTINTOCITY_CONFIG", false, 30);
             m_newButton = AddButtonInEditorRow(m_configList, CommonsSpriteNames.K45_New, ShowNewConfigModal, "K45_WTS_CREATE_NEW_CONFIG", true, 30);
+            AddButtonInEditorRow(m_configList, CommonsSpriteNames.K45_Reload, OnRefresh, "K45_WTS_RELOADFILES", true, 30);
+
+            m_importButton.color = Color.green;
+            m_deleteButton.color = Color.red;
 
             KlyteMonoUtils.CreateUIElement(out m_middleBar, MainContainer.transform, "previewBar", new Vector4(0, 0, MainContainer.width - MainContainer.padding.horizontal, 300));
             m_middleBar.autoLayout = true;
@@ -101,7 +110,7 @@ namespace Klyte.WriteTheSigns.UI
             InitTabButton(m_editTabstrip, out m_plusButton, Locale.Get("K45_WTS_ADD_NEW_TEXT_ENTRY"), new Vector2(m_editTabstrip.size.x, 30), null);
             m_plusButton.eventClicked += AddTabToItem;
 
-            KlyteMonoUtils.CreateUIElement(out m_editArea, MainContainer.transform, "editArea", new UnityEngine.Vector4(0, 0, MainContainer.width - MainContainer.padding.horizontal, MainContainer.height - m_middleBar.height - m_configList.parent.height - MainContainer.padding.vertical - (MainContainer.autoLayoutPadding.vertical * 2) - 5));
+            KlyteMonoUtils.CreateUIElement(out m_editArea, MainContainer.transform, "editArea", new UnityEngine.Vector4(0, 0, MainContainer.width - MainContainer.padding.horizontal, MainContainer.height - m_middleBar.height - 80 - MainContainer.padding.vertical - (MainContainer.autoLayoutPadding.vertical * 2) - 5));
             m_editArea.padding = new RectOffset(5, 5, 5, 5);
 
 
@@ -112,6 +121,12 @@ namespace Klyte.WriteTheSigns.UI
 
             OnTabChange(0);
             OnConfigSelectionChange("", -1, new string[0]);
+        }
+
+        private void OnRefresh()
+        {
+            WTSPropLayoutData.Instance.ReloadAllPropsConfigurations();
+            m_configList.text = ExecuteItemChange(m_configList.text, WTSPropLayoutData.Instance.Get(m_configList.text) != null) ?? "";
         }
 
         private void OnHelp_General() => K45DialogControl.ShowModalHelp("PropLayouts.General", Locale.Get("K45_WTS_PROPEDITOR_HELPTITLE"), 0);
@@ -138,7 +153,8 @@ namespace Klyte.WriteTheSigns.UI
             {
                 SaveName = $"Tab {button.zOrder}"
             };
-            EditingInstance.TextDescriptors = EditingInstance.TextDescriptors.Union(new BoardTextDescriptorGeneralXml[] { newItem
+            EditingInstance.TextDescriptors = EditingInstance.TextDescriptors.Union(new BoardTextDescriptorGeneralXml[] {
+                newItem
             }).ToArray();
             button.text = newItem.SaveName;
         }
@@ -166,6 +182,11 @@ namespace Klyte.WriteTheSigns.UI
             }
         }
 
+        private void OnImportIntoCity()
+        {
+            EditingInstance.m_configurationSource = ConfigurationSource.CITY;
+            ExecuteItemChange(EditingInstance.SaveName, true);
+        }
         private void OnDeleteConfig()
         {
             K45DialogControl.ShowModal(
@@ -183,7 +204,7 @@ namespace Klyte.WriteTheSigns.UI
                     if (x == 1)
                     {
                         WTSPropLayoutData.Instance.Remove(m_configList.text);
-                        ExecuteItemChange("", false);
+                        OnRefresh();
                     }
                     return true;
                 }); ;
@@ -255,11 +276,10 @@ namespace Klyte.WriteTheSigns.UI
 
         private string ExecuteItemChange(string targetValue, bool isValidSelection)
         {
-
-            m_middleBar.isVisible = isValidSelection;
             m_editArea.isVisible = isValidSelection;
             if (isValidSelection)
             {
+                m_middleBar.Enable();
                 EditingInstance = WTSPropLayoutData.Instance.Get(targetValue);
                 OnTabChange(0);
                 while (m_editTabstrip.components.Count > EditingInstance.TextDescriptors.Length + 2)
@@ -275,7 +295,41 @@ namespace Klyte.WriteTheSigns.UI
                 {
                     (m_editTabstrip.components[i] as UIButton).text = EditingInstance.TextDescriptors[i - 1].SaveName;
                 }
+                switch (EditingInstance.m_configurationSource)
+                {
+                    case ConfigurationSource.ASSET:
+                        m_deleteButton.isVisible = false;
+                        m_importButton.isVisible = true;
+                        m_plusButton.isVisible = false;
+                        m_scopeInfo.localeID = "K45_WTS_CURRENTSOURCEPROP_ASSET";
+                        break;
+                    case ConfigurationSource.GLOBAL:
+                        m_deleteButton.isVisible = false;
+                        m_importButton.isVisible = true;
+                        m_plusButton.isVisible = false;
+                        m_scopeInfo.localeID = "K45_WTS_CURRENTSOURCEPROP_GLOBAL";
+                        break;
+                    case ConfigurationSource.CITY:
+                        m_deleteButton.Enable();
+                        m_deleteButton.isVisible = true;
+                        m_importButton.isVisible = false;
+                        m_plusButton.isVisible = true;
+                        m_scopeInfo.localeID = "K45_WTS_CURRENTSOURCEPROP_CITY";
+                        break;
+                }
 
+            }
+            else
+            {
+                while (m_editTabstrip.components.Count > 2)
+                {
+                    Destroy(m_editTabstrip.components[m_editTabstrip.components.Count - 2]);
+                    m_editTabstrip.RemoveUIComponent(m_editTabstrip.components[m_editTabstrip.components.Count - 2]);
+                }
+                m_middleBar.Disable();
+                m_scopeInfo.localeID = "K45_WTS_PROPLAYOUT_SELECTAITEM";
+                m_deleteButton.Disable();
+                m_importButton.isVisible = false;
             }
             return isValidSelection ? targetValue : null;
         }

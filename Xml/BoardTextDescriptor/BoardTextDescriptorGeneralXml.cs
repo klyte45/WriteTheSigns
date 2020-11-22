@@ -190,6 +190,7 @@ namespace Klyte.WriteTheSigns.Xml
             [XmlAttribute("useFrame")]
             public bool UseFrame { get; set; } = false;
             [XmlElement("frane")]
+            [XmlElement("frame")]
             public FrameMesh FrameMeshSettings { get; set; } = new FrameMesh();
         }
     }

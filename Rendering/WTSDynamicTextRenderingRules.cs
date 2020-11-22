@@ -1077,11 +1077,11 @@ namespace Klyte.WriteTheSigns.Rendering
         {
             if (spritesAvailable == null || spritesAvailable.Length == 0)
             {
-                return RenderUtils.GetTextData($"<PARAMETER IMAGES NOT SET OR INVALID!>", textDescriptor.m_prefix, textDescriptor.m_suffix, null, textDescriptor.m_overrideFont);
+                return WriteTheSignsMod.Controller.SpriteRenderingRules.GetSpriteFromDefaultAtlas("K45_WTS FrameBorder");
             }
             if (textDescriptor.AnimationSettings.m_itemCycleFramesDuration == 0)
             {
-                return RenderUtils.GetTextData($"<ITEM CYCLE FRAME CANNOT BE 0!>", textDescriptor.m_prefix, textDescriptor.m_suffix, null, textDescriptor.m_overrideFont);
+                textDescriptor.AnimationSettings.m_itemCycleFramesDuration = 100;
             }
             var idx = spritesAvailable.Length == 1 ? 0 : (int)((SimulationManager.instance.m_currentFrameIndex + textDescriptor.AnimationSettings.m_extraDelayCycleFrames + (refId * (1 + secIdx))) % (spritesAvailable.Length * textDescriptor.AnimationSettings.m_itemCycleFramesDuration) / textDescriptor.AnimationSettings.m_itemCycleFramesDuration);
             return WriteTheSignsMod.Controller.SpriteRenderingRules.GetSpriteFromDefaultAtlas(spritesAvailable[idx]);

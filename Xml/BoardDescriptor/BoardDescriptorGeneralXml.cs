@@ -58,6 +58,9 @@ namespace Klyte.WriteTheSigns.Xml
         private string m_originalSaveName;
 
         public string GetKeyString() => m_saveName;
+
+        [XmlIgnore]
+        internal ConfigurationSource m_configurationSource;
     }
 
 }

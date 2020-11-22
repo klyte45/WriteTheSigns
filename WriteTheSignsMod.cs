@@ -40,6 +40,7 @@ namespace Klyte.WriteTheSigns
             UIHelperExtension group8 = helper.AddGroupExtended(Locale.Get("K45_WTS_GENERAL_INFO"));
             AddFolderButton(WTSController.DefaultBuildingsConfigurationFolder, group8, "K45_WTS_DEFAULT_BUILDINGS_CONFIG_PATH_TITLE");
             AddFolderButton(WTSController.DefaultVehiclesConfigurationFolder, group8, "K45_WTS_DEFAULT_VEHICLES_CONFIG_PATH_TITLE");
+            AddFolderButton(WTSController.DefaultPropsLayoutConfigurationFolder, group8, "K45_WTS_DEFAULT_PROP_LAYOUTS_PATH_TITLE");
             AddFolderButton(WTSController.AbbreviationFilesPath, group8, "K45_WTS_ABBREVIATION_FILES_PATH_TITLE");
             AddFolderButton(WTSController.FontFilesPath, group8, "K45_WTS_FONT_FILES_PATH_TITLE");
             AddFolderButton(WTSController.ExtraSpritesFolder, group8, "K45_WTS_EXTRA_SPRITES_PATH_TITLE");

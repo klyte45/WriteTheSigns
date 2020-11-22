@@ -49,6 +49,7 @@ namespace Klyte.WriteTheSigns.UI
             KlyteMonoUtils.CreateUIElement(out m_previewPanel, MainContainer.transform, "previewPanel", new UnityEngine.Vector4(0, 0, MainContainer.width - 66, 300));
             m_previewPanel.backgroundSprite = "GenericPanel";
             m_previewPanel.autoLayout = true;
+            m_previewPanel.disabledColor = Color.black;
 
             KlyteMonoUtils.CreateUIElement(out m_preview, m_previewPanel.transform, "preview", new UnityEngine.Vector4(0, 0, m_previewPanel.width, m_previewPanel.height));
             KlyteMonoUtils.CreateElement(out m_previewRenderer, MainContainer.transform);
@@ -57,6 +58,7 @@ namespace Klyte.WriteTheSigns.UI
             m_preview.eventMouseWheel += ChangeViewZoom;
             m_preview.eventMouseMove += OnMouseMove;
             m_previewRenderer.Zoom = TargetZoom;
+            m_preview.disabledColor = Color.black;
 
             KlyteMonoUtils.CreateUIElement(out m_previewControls, MainContainer.transform, "controls", new UnityEngine.Vector4(0, 0, 50, 300));
             m_previewControls.padding = new RectOffset(5, 5, 5, 5);
@@ -79,10 +81,7 @@ namespace Klyte.WriteTheSigns.UI
             KlyteMonoUtils.InitCircledButtonText(m_previewControls, out UIButton use50lText, "x50", (x, y) => m_overrideText = "Á" + new string('L', 48) + "j", Locale.Get("K45_WTS_USE_50LENGHT_TEXT"));
             KlyteMonoUtils.InitCircledButtonText(m_previewControls, out UIButton use100lText, "x200", (x, y) => m_overrideText = "Á" + new string('C', 198) + "j", Locale.Get("K45_WTS_USE_200LENGHT_TEXT"));
 
-            WTSPropLayoutEditor.Instance.CurrentTabChanged += (x) =>
-            {
-                ResetCamera();
-            };
+            WTSPropLayoutEditor.Instance.CurrentTabChanged += (x) => ResetCamera();
         }
 
         private void ToggleLock()
@@ -173,7 +172,7 @@ namespace Klyte.WriteTheSigns.UI
 
         public void Update()
         {
-            if (CurrentInfo != default && MainContainer.isVisible)
+            if (CurrentInfo != default && MainContainer.isEnabled)
             {
                 if (Mathf.Abs(m_previewRenderer.Zoom - TargetZoom) > 0.01f)
                 {

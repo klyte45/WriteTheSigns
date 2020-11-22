@@ -1,5 +1,6 @@
 ﻿using ColossalFramework;
 using ColossalFramework.Globalization;
+using ColossalFramework.Packaging;
 using ColossalFramework.UI;
 using Klyte.Commons.Extensors;
 using Klyte.Commons.UI.SpriteNames;
@@ -10,11 +11,11 @@ using Klyte.WriteTheSigns.Rendering;
 using Klyte.WriteTheSigns.Utils;
 using Klyte.WriteTheSigns.Xml;
 using System;
-using System.Collections.Generic;
-using System.Globalization;
+using System.IO;
 using System.Linq;
 using UnityEngine;
 using static Klyte.Commons.UI.DefaultEditorUILib;
+using static Klyte.Commons.Utils.XmlUtils;
 
 namespace Klyte.WriteTheSigns.UI
 {
@@ -36,6 +37,8 @@ namespace Klyte.WriteTheSigns.UI
         private UIDropDown m_dropdownTextContent;
 
         private UIButton m_pasteButton;
+        private UIButton m_exportAsAsset;
+        private UIButton m_exportAsGlobal;
 
 
         private PropInfo m_lastSelection;
@@ -49,7 +52,7 @@ namespace Klyte.WriteTheSigns.UI
             MainContainer.autoLayoutDirection = LayoutDirection.Vertical;
             MainContainer.padding = new RectOffset(5, 5, 5, 5);
             MainContainer.autoLayoutPadding = new RectOffset(0, 0, 3, 3);
-            
+
 
             KlyteMonoUtils.CreateTabsComponent(out m_tabstrip, out m_tabContainer, MainContainer.transform, "TextEditor", new Vector4(0, 0, MainContainer.width, 40), new Vector4(0, 0, MainContainer.width, MainContainer.height - 40));
             m_tabSettings = TabCommons.CreateNonScrollableTabLocalized(m_tabstrip, KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_Settings), "K45_WTS_GENERAL_SETTINGS", "PrpSettings");
@@ -84,10 +87,25 @@ namespace Klyte.WriteTheSigns.UI
                     m_fontSelect.selectedIndex = EditingInstance.FontName == null ? 0 : EditingInstance.FontName == WTSController.DEFAULT_FONT_KEY ? 1 : Array.IndexOf(m_fontSelect.items, EditingInstance.FontName);
                     m_dropdownTextContent.selectedIndex = (int)EditingInstance.m_allowedRenderClass;
 
-                    var currentKV = PrefabIndexes<PropInfo>.instance.PrefabsLoaded.Where(x => x.Value?.name == EditingInstance.m_propName).FirstOrDefault();
+                    var currentKV = PrefabIndexes<PropInfo>.instance.PrefabsLoaded.Where(x =>
+                    {
+                        try
+                        {
+                            return x.Value?.name == EditingInstance?.m_propName;
+                        }
+                        catch { return false; }
+                    }).FirstOrDefault();
                     m_lastSelection = currentKV.Value;
                     WTSPropLayoutEditor.Instance.CurrentPropInfo = m_lastSelection;
                     m_propFilter.text = currentKV.Key ?? "";
+                    if (EditingInstance.m_configurationSource == ConfigurationSource.CITY)
+                    {
+                        m_tabContainer.Enable();
+                    }
+                    else
+                    {
+                        m_tabContainer.Disable();
+                    }
                 }
             };
 
@@ -100,6 +118,10 @@ namespace Klyte.WriteTheSigns.UI
                 null, LoadIntoCurrentConfig,
                 () => XmlUtils.DefaultXmlSerialize(WTSPropLayoutEditor.Instance.EditingInstance));
             m_pasteButton.isVisible = m_clipboard != null;
+
+            m_exportAsGlobal = (UIButton)helperLib.AddButton(Locale.Get("K45_WTS_PROPEDIT_EXPORTGLOBAL"), OnExportAsGlobal);
+            m_exportAsAsset = (UIButton)helperLib.AddButton(Locale.Get("K45_WTS_PROPEDIT_EXPORTASSET"), OnExportAsAsset);
+            helperLib.Self.clipChildren = false;
 
         }
 
@@ -189,6 +211,66 @@ namespace Klyte.WriteTheSigns.UI
             return error;
         }
 
+        private void OnExportAsAsset() => ExportTo(Path.Combine(Path.GetDirectoryName(PackageManager.FindAssetByName(EditingInstance?.m_propName)?.package?.packagePath), $"{WTSController.m_defaultFileNamePropsXml}.xml"), true);
+        private void ExportTo(string output, bool isAsset)
+        {
+            if (EditingInstance?.m_propName != null)
+            {
+                ListWrapper<BoardDescriptorGeneralXml> currentFile;
+                if (File.Exists(output))
+                {
+                    currentFile = DefaultXmlDeserialize<ListWrapper<BoardDescriptorGeneralXml>>(File.ReadAllText(output), (x, y) => currentFile = new ListWrapper<BoardDescriptorGeneralXml>());
+                }
+                else
+                {
+                    currentFile = new ListWrapper<BoardDescriptorGeneralXml>();
+                }
+
+                var targetLayoutName = EditingInstance.SaveName;
+                var assetId = EditingInstance.m_propName.Split('.')[0];
+                if (isAsset && targetLayoutName.StartsWith($"{assetId}/"))
+                {
+                    targetLayoutName = targetLayoutName.Split("/".ToCharArray(), 2)[1];
+                }
+                assetId += ".";
+                var exportableLayouts = new ListWrapper<BoardDescriptorGeneralXml>
+                {
+                    listVal = currentFile.listVal
+                    .Where(x => x.SaveName != targetLayoutName)
+                    .Union(new BoardDescriptorGeneralXml[] { CloneViaXml(EditingInstance) }.Select(x => { x.SaveName = targetLayoutName; return x; }))
+                    .ToList()
+                };
+                File.WriteAllText(output, DefaultXmlSerialize(exportableLayouts));
+
+                WTSPropLayoutData.Instance.ReloadAllPropsConfigurations();
+
+                K45DialogControl.ShowModal(
+                  new K45DialogControl.BindProperties
+                  {
+                      title = WriteTheSignsMod.Instance.SimpleName,
+                      message = string.Format(Locale.Get("K45_WTS_SAVESUCCESSFULLAT"), output),
+                      showButton1 = true,
+                      textButton1 = Locale.Get("K45_CMNS_GOTO_FILELOC"),
+                      showButton2 = true,
+                      textButton2 = Locale.Get("EXCEPTION_OK"),
+                  }
+               , (x) =>
+               {
+                   if (x == 1)
+                   {
+                       ColossalFramework.Utils.OpenInFileBrowser(output);
+                       return false;
+                   }
+                   return true;
+               }); ;
+
+            }
+        }
+
+        private void OnExportAsGlobal() => ExportTo(Path.Combine(WTSController.DefaultPropsLayoutConfigurationFolder, $"{WTSController.m_defaultFileNamePropsXml}_{PackageManager.FindAssetByName(EditingInstance?.m_propName)?.package.packageMainAsset ?? EditingInstance?.m_propName}.xml"), false);
+
+
+
         #region Actions        
         private void OnSetPropColor(UIComponent component, Color value) => EditingInstance.FixedColor = (value == default ? (Color?)null : value);
 
@@ -198,11 +280,15 @@ namespace Klyte.WriteTheSigns.UI
             {
                 PrefabIndexes<PropInfo>.instance.PrefabsLoaded.TryGetValue(items[sel], out PropInfo targetProp);
                 WTSPropLayoutEditor.Instance.CurrentPropInfo = targetProp;
+                m_exportAsGlobal.isVisible = true;
+                m_exportAsAsset.isVisible = long.TryParse(targetProp.name.Split('.')[0], out _);
                 return items[sel];
             }
             else
             {
                 WTSPropLayoutEditor.Instance.CurrentPropInfo = null;
+                m_exportAsGlobal.isVisible = false;
+                m_exportAsAsset.isVisible = false;
                 return null;
             }
         }

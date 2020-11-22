@@ -14,13 +14,6 @@ using static Klyte.Commons.UI.DefaultEditorUILib;
 
 namespace Klyte.WriteTheSigns.UI
 {
-    internal enum ConfigurationSource
-    {
-        NONE,
-        ASSET,
-        GLOBAL,
-        CITY
-    }
 
     internal class WTSBuildingLayoutEditor : UICustomControl
     {

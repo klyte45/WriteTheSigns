@@ -382,11 +382,11 @@ namespace Klyte.WriteTheSigns.UI
         {
             if (!text.IsNullOrWhiteSpace())
             {
-                x.m_simplePropName = text;
+                x.SaveName = text;
             }
             else
             {
-                m_propFilter.text = x.m_simplePropName;
+                m_name.text = x.SaveName;
             }
         });
 

@@ -180,6 +180,8 @@ namespace Klyte.WriteTheSigns
         public static readonly string FOLDER_NAME = FileUtils.BASE_FOLDER_PATH + "WriteTheSigns";
         public const string m_defaultFileNameBuildingsXml = "WTS_DefaultBuildingsConfig";
         public const string m_defaultFileNameVehiclesXml = "WTS_DefaultVehiclesConfig";
+        public const string m_defaultFileNamePropsXml = "WTS_DefaultPropsConfig";
+        public const string DEFAULT_GAME_PROP_LAYOUT_FOLDER = "PropsDefaultLayouts";
         public const string DEFAULT_GAME_BUILDINGS_CONFIG_FOLDER = "BuildingsDefaultPlacing";
         public const string DEFAULT_GAME_VEHICLES_CONFIG_FOLDER = "VehiclesDefaultPlacing";
         public const string ABBREVIATION_FILES_FOLDER = "AbbreviationFiles";
@@ -187,6 +189,7 @@ namespace Klyte.WriteTheSigns
         public const string EXTRA_SPRITES_FILES_FOLDER = "Sprites";
         public const string DEFAULT_FONT_KEY = "/DEFAULT/";
 
+        public static string DefaultPropsLayoutConfigurationFolder { get; } = FOLDER_NAME + Path.DirectorySeparatorChar + DEFAULT_GAME_PROP_LAYOUT_FOLDER;
         public static string DefaultBuildingsConfigurationFolder { get; } = FOLDER_NAME + Path.DirectorySeparatorChar + DEFAULT_GAME_BUILDINGS_CONFIG_FOLDER;
         public static string DefaultVehiclesConfigurationFolder { get; } = FOLDER_NAME + Path.DirectorySeparatorChar + DEFAULT_GAME_VEHICLES_CONFIG_FOLDER;
         public static string ExtraSpritesFolder { get; } = FOLDER_NAME + Path.DirectorySeparatorChar + EXTRA_SPRITES_FILES_FOLDER;

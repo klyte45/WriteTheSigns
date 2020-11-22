@@ -214,6 +214,7 @@
     <Compile Include="Singleton\WTSOnNetPropsSingleton.cs" />
     <Compile Include="Singleton\WTSVehicleTextsSingleton.cs" />
     <Compile Include="Singleton\WTSBuildingPropsSingleton.cs" />
+    <Compile Include="Xml\Enums\ConfigurationSource.cs" />
     <Compile Include="UI\Tabs\BuildingEditor\WTSBuildingLayoutEditorPropList.cs" />
     <Compile Include="UI\Tabs\BuildingEditor\WTSBuildingLayoutEditorPropDetail.cs" />
     <Compile Include="UI\Tabs\FontsConfig\WTSFontsSettings.cs" />
@@ -228,7 +229,6 @@
     <Compile Include="UI\WTSPrefabPreviewRenderer.cs" />
     <Compile Include="UI\WTSVehiclePreviewRenderer.cs" />
     <Compile Include="Utils\WTSRoadNodeCommons.cs" />
-    <Compile Include="Singleton\CacheDestinationRoute.cs" />
     <Compile Include="Overrides\BoardGeneration\RoadNodeOverrides.cs" />
     <Compile Include="Singleton\WTSRoadPropsSingleton.cs" />
     <Compile Include="Overrides\BuildingManagerOverrides.cs" />
