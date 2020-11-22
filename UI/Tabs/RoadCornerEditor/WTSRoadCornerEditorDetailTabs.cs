@@ -27,7 +27,7 @@ namespace Klyte.WriteTheSigns.UI
         private UITabstrip m_tabstrip;
 
         private UITextField m_name;
-        private UIDropDown m_propLayoutSelect;
+        private UITextField m_propLayoutSelect;
         private UITextField[] m_position;
         private UITextField[] m_rotation;
         private UITextField[] m_scale;
@@ -49,7 +49,7 @@ namespace Klyte.WriteTheSigns.UI
         private UIPanel m_spawnInCornerOptions;
         private UICheckBox m_placeDistrictBorder;
         private UICheckBox m_placeRoadTransition;
-        
+
         private UICheckBox m_useDistrictColor;
 
         private UICheckBox m_districtWhiteList;
@@ -88,8 +88,8 @@ namespace Klyte.WriteTheSigns.UI
 
             helperSettings.AddSpace(5);
 
-            AddDropdown(Locale.Get("K45_WTS_ROADCORNER_PROPLAYOUT"), out m_propLayoutSelect, helperSettings, new string[0], OnPropLayoutChange);
-            AddButtonInEditorRow(m_propLayoutSelect, CommonsSpriteNames.K45_Reload, LoadAvailableLayouts);
+            AddFilterableInput(Locale.Get("K45_WTS_ROADCORNER_PROPLAYOUT"), helperSettings, out m_propLayoutSelect, out _, OnFilterLayouts, OnPropLayoutChange);
+
             AddVector3Field(Locale.Get("K45_WTS_ROADCORNER_POSITION"), out m_position, helperSettings, OnPositionChanged);
             AddVector3Field(Locale.Get("K45_WTS_ROADCORNER_ROTATION"), out m_rotation, helperSettings, OnRotationChanged);
             AddVector3Field(Locale.Get("K45_WTS_ROADCORNER_SCALE"), out m_scale, helperSettings, OnScaleChanged);
@@ -128,11 +128,11 @@ namespace Klyte.WriteTheSigns.UI
 
 
             WTSRoadCornerEditor.Instance.RuleList.EventSelectionChanged += OnChangeTab;
-            LoadAvailableLayouts();
             MainContainer.isVisible = false;
             m_pasteSettings.isVisible = false;
         }
 
+        private string[] OnFilterLayouts(string input) => WTSPropLayoutData.Instance.FilterBy(input, TextRenderingClass.RoadNodes);
 
         private void UpdateDistrictList(ref BoardInstanceRoadNodeXml reference)
         {
@@ -232,12 +232,6 @@ namespace Klyte.WriteTheSigns.UI
         }
 
 
-        private void LoadAvailableLayouts()
-        {
-            m_propLayoutSelect.items = WTSPropLayoutData.Instance.ListWhere(x => x.m_allowedRenderClass == TextRenderingClass.RoadNodes).ToArray();
-            SafeObtain((ref BoardInstanceRoadNodeXml x) => m_propLayoutSelect.selectedIndex = Math.Max(0, Array.IndexOf(m_propLayoutSelect.items, x.PropLayoutName)));
-        }
-
 
         private delegate void SafeObtainMethod(ref BoardInstanceRoadNodeXml x);
         private void SafeObtain(SafeObtainMethod action, int? targetTab = null)
@@ -265,8 +259,8 @@ namespace Klyte.WriteTheSigns.UI
         {
             SafeObtain((ref BoardInstanceRoadNodeXml x) =>
             {
-                m_name.text = x.SaveName;
-                m_propLayoutSelect.selectedValue = x.PropLayoutName;
+                m_name.text = x.SaveName ?? "";
+                m_propLayoutSelect.text = x.PropLayoutName ?? "";
                 m_position[0].text = x.PropPosition.X.ToString("F3");
                 m_position[1].text = x.PropPosition.Y.ToString("F3");
                 m_position[2].text = x.PropPosition.Z.ToString("F3");
@@ -341,7 +335,7 @@ namespace Klyte.WriteTheSigns.UI
 
         private void OnChangePlaceRoadTransition(bool isChecked) => SafeObtain((ref BoardInstanceRoadNodeXml x) => x.PlaceOnTunnelBridgeStart = isChecked);
         private void OnChangeIgnoreEmpty(bool isChecked) => SafeObtain((ref BoardInstanceRoadNodeXml x) => x.IgnoreEmptyNameRoads = isChecked);
-  
+
         private void ToggleAllow(Level targetLevel, bool value) => SafeObtain((ref BoardInstanceRoadNodeXml x) =>
         {
             if (value)
@@ -356,17 +350,28 @@ namespace Klyte.WriteTheSigns.UI
         private void OnRotationChanged(Vector3 obj) => SafeObtain((ref BoardInstanceRoadNodeXml x) => x.PropRotation = (Vector3Xml)obj);
         private void OnScaleChanged(Vector3 obj) => SafeObtain((ref BoardInstanceRoadNodeXml x) => x.PropScale = obj);
         private void OnPositionChanged(Vector3 obj) => SafeObtain((ref BoardInstanceRoadNodeXml x) => x.PropPosition = (Vector3Xml)obj);
-        private void OnPropLayoutChange(int sel) => SafeObtain((ref BoardInstanceRoadNodeXml x) =>
+        private string OnPropLayoutChange(string input, int sel, string[] args)
         {
-            if (sel >= 0)
+            if (sel == -1)
             {
-                x.PropLayoutName = m_propLayoutSelect.items[sel];
+                sel = Array.IndexOf(args, input);
             }
-            else
+            string result = null;
+            SafeObtain((ref BoardInstanceRoadNodeXml x) =>
             {
-                x.PropLayoutName = null;
-            }
-        });
+                if (sel >= 0)
+                {
+                    x.PropLayoutName = args[sel];
+                }
+                else
+                {
+                    x.PropLayoutName = null;
+                }
+                result = x.PropLayoutName;
+            });
+            return result;
+        }
+
         private void OnChangeUseDistrictColor(bool isChecked) => SafeObtain((ref BoardInstanceRoadNodeXml x) => x.UseDistrictColor = isChecked);
 
         private void OnSetMinMaxHalfWidth(Vector2 obj) => SafeObtain((ref BoardInstanceRoadNodeXml x) =>

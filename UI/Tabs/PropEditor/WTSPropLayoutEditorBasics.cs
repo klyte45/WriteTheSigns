@@ -133,7 +133,6 @@ namespace Klyte.WriteTheSigns.UI
 
         private void LoadIntoCurrentConfig(string loadedItem) => WTSPropLayoutEditor.Instance.ReplaceItem(EditingInstance.SaveName, loadedItem);
 
-
         private string m_clipboard;
 
         private void DoPasteText() => LoadIntoCurrentConfig(m_clipboard);

@@ -39,6 +39,7 @@ namespace Klyte.WriteTheSigns.UI
         private UICheckBox m_applyScaleOnY;
         private UICheckBox m_create180degSimmetricClone;
         private UICheckBox m_invertTextHorizontalAlignClone;
+//        private UICheckBox m_mirrored;
 
 
         private UIDropDown m_dropdownTextAlignHorizontal;
@@ -103,6 +104,8 @@ namespace Klyte.WriteTheSigns.UI
             AddCheckboxLocale("K45_WTS_RESIZE_Y_TEXT_OVERFLOW", out m_applyScaleOnY, helperSize, OnChangeApplyRescaleOnY);
             AddCheckboxLocale("K45_WTS_CREATE_CLONE_180DEG", out m_create180degSimmetricClone, helperSize, OnChangeCreateSimmetricClone);
             AddCheckboxLocale("K45_WTS_CLONE_180DEG_INVERT_TEXT_HOR_ALIGN", out m_invertTextHorizontalAlignClone, helperSize, OnChangeInvertCloneTextHorizontalAlignment);
+
+      //      AddCheckboxLocale("K45_WTS_MIRRORED", out m_mirrored, helperSize, OnChangeMirrored);
 
             AddDropdown(Locale.Get("K45_WTS_TEXT_ALIGN_HOR"), out m_dropdownTextAlignHorizontal, helperAppearance, Enum.GetNames(typeof(UIHorizontalAlignment)).Select(x => Locale.Get("K45_ALIGNMENT", x)).ToArray(), OnSetTextAlignmentHorizontal);
             helperAppearance.AddSpace(5);
@@ -214,6 +217,7 @@ namespace Klyte.WriteTheSigns.UI
             m_applyScaleOnY.isChecked = x.m_applyOverflowResizingOnY;
             m_invertTextHorizontalAlignClone.isChecked = x.PlacingConfig.m_invertYCloneHorizontalAlign;
             m_create180degSimmetricClone.isChecked = x.PlacingConfig.m_create180degYClone;
+          //  m_mirrored.isChecked = x.PlacingConfig.m_mirrored;
 
             m_dropdownTextAlignHorizontal.selectedIndex = (int)x.m_textAlign;
             m_useContrastColor.isChecked = x.ColoringConfig.m_useContrastColor;
@@ -384,6 +388,11 @@ namespace Klyte.WriteTheSigns.UI
             });
 
         }
+        private void OnChangeMirrored(bool isChecked) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) =>
+        {
+            desc.PlacingConfig.m_mirrored = isChecked;
+            ApplyShowRules(desc);
+        });
 
         private void OnSetTextAlignmentHorizontal(int sel) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_textAlign = (UIHorizontalAlignment)sel);
         private void OnFixedColorChanged(UIComponent component, Color value) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.ColoringConfig.m_defaultColor = value);

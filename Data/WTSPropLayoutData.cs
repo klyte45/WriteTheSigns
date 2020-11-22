@@ -34,7 +34,7 @@ namespace Klyte.WriteTheSigns.Data
 
         public string[] FilterBy(string input, TextRenderingClass? renderClass) =>
             m_indexes
-            .Where((x) => (renderClass == null || renderClass == m_savedDescriptorsSerialized[x.Value].m_allowedRenderClass) && input.IsNullOrWhiteSpace() ? true : LocaleManager.cultureInfo.CompareInfo.IndexOf(x.Key, input, CompareOptions.IgnoreCase) >= 0)
+            .Where((x) => (renderClass == null || renderClass == m_savedDescriptorsSerialized[x.Value].m_allowedRenderClass) && (input.IsNullOrWhiteSpace() ? true : LocaleManager.cultureInfo.CompareInfo.IndexOf(x.Key, input, CompareOptions.IgnoreCase) >= 0))
             .OrderBy((x) => ((int)(4 - m_savedDescriptorsSerialized[x.Value].m_configurationSource)) + x.Key)
             .Select(x => x.Key)
             .ToArray();

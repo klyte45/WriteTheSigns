@@ -240,6 +240,7 @@ namespace Klyte.WriteTheSigns.UI
                           if (error.IsNullOrWhiteSpace())
                           {
                               var newModel = new BoardDescriptorGeneralXml();
+                              newModel.m_configurationSource = ConfigurationSource.CITY;
                               WTSPropLayoutData.Instance.Add(text, ref newModel);
                               m_configList.text = ExecuteItemChange(text, true);
                           }
@@ -256,6 +257,7 @@ namespace Klyte.WriteTheSigns.UI
         internal void ReplaceItem(string key, string data)
         {
             BoardDescriptorGeneralXml newItem = XmlUtils.DefaultXmlDeserialize<BoardDescriptorGeneralXml>(data);
+            newItem.m_configurationSource = ConfigurationSource.CITY;
             WTSPropLayoutData.Instance.Add(key, ref newItem);
             OnTabChange(0);
         }

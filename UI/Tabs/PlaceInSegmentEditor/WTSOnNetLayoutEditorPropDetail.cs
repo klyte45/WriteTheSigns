@@ -164,7 +164,7 @@ namespace Klyte.WriteTheSigns.UI
         }
 
 
-        private string[] OnFilterLayouts(string input) => m_propSelectionType.selectedIndex == 0 ? WTSPropLayoutData.Instance.FilterBy(input, TextRenderingClass.Buildings) : PrefabIndexes<PropInfo>.instance.BasicInputFiltering(input);
+        private string[] OnFilterLayouts(string input) => m_propSelectionType.selectedIndex == 0 ? WTSPropLayoutData.Instance.FilterBy(input, TextRenderingClass.PlaceOnNet) : PrefabIndexes<PropInfo>.instance.BasicInputFiltering(input);
 
         private string OnConfigSelectionChange(string typed, int sel, string[] items)
         {
