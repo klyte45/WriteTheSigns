@@ -14,7 +14,7 @@ namespace Klyte.WriteTheSigns.Xml
         public string m_propName;
 
         [XmlAttribute("availability")]
-        public TextRenderingClass m_allowedRenderClass = TextRenderingClass.RoadNodes;
+        public TextRenderingClass m_allowedRenderClass = TextRenderingClass.PlaceOnNet;
 
         [XmlIgnore]
         public Color? FixedColor { get => m_cachedColor; set => m_cachedColor = value; }

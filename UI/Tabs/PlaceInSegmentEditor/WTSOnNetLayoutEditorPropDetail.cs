@@ -185,7 +185,8 @@ namespace Klyte.WriteTheSigns.UI
                 else
                 {
                     x.PropLayoutName = null;
-                    x.m_simplePropName = targetValue;
+                    PrefabIndexes<PropInfo>.instance. PrefabsLoaded.TryGetValue( targetValue, out PropInfo info);
+                    x.SimpleProp = info;
                 }
             });
 
@@ -276,7 +277,7 @@ namespace Klyte.WriteTheSigns.UI
             {
                 m_isLoading = true;
                 m_name.text = x.SaveName ?? "";
-                m_propSelectionType.selectedIndex = x.PropLayoutName == null ? 1 : 0;
+                m_propSelectionType.selectedIndex = x.PropLayoutName == null ? 1 : x.SimpleProp == null ? 0 : 1;
                 m_propFilter.text = x.PropLayoutName ?? PrefabIndexes<PropInfo>.GetListName(x.SimpleProp) ?? "";
                 m_position[0].text = x.PropPosition.X.ToString("F3");
                 m_position[1].text = x.PropPosition.Y.ToString("F3");

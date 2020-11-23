@@ -21,3 +21,7 @@ r2 - 22/NOV/2020
 <color cyan>- UX Improvements</color>: Now all prop layouts dropdowns were replaced by a search filter. Easier to find out your layouts!
 <color cyan>- Text preview fix</color>: Now it will center the text correctly in the preview window when editing one of them.
 <color cyan>- New update news modal behavior</color>: Now this screen is shown only after loading a city. 
+
+r3 - 23/NOV/2020
+<color cyan>- New text type: Parameterized sprite</color>: It's like the slideshow, but will read only the selected parameter instead of pass thru all parameters set.
+<color cyan>- Bug fixes post r2 release</color>

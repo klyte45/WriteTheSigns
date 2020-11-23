@@ -157,6 +157,7 @@ namespace Klyte.WriteTheSigns.UI
                 newItem
             }).ToArray();
             button.text = newItem.SaveName;
+            OnTabChange(EditingInstance.TextDescriptors.Length);
         }
 
         private UIButton AddTabButton(string tabName)
@@ -239,8 +240,10 @@ namespace Klyte.WriteTheSigns.UI
 
                           if (error.IsNullOrWhiteSpace())
                           {
-                              var newModel = new BoardDescriptorGeneralXml();
-                              newModel.m_configurationSource = ConfigurationSource.CITY;
+                              var newModel = new BoardDescriptorGeneralXml
+                              {
+                                  m_configurationSource = ConfigurationSource.CITY
+                              };
                               WTSPropLayoutData.Instance.Add(text, ref newModel);
                               m_configList.text = ExecuteItemChange(text, true);
                           }

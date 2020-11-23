@@ -45,6 +45,8 @@ namespace Klyte.WriteTheSigns.UI
 
         private BoardDescriptorGeneralXml EditingInstance => WTSPropLayoutEditor.Instance.EditingInstance;
 
+        private TextRenderingClass[] ddOrder = new TextRenderingClass[] { TextRenderingClass.PlaceOnNet, TextRenderingClass.Buildings, TextRenderingClass.RoadNodes };
+
         public void Awake()
         {
             MainContainer = GetComponent<UIPanel>();
@@ -74,39 +76,13 @@ namespace Klyte.WriteTheSigns.UI
 
             AddDropdown(Locale.Get("K45_WTS_OVERRIDE_FONT"), out m_fontSelect, helperSettings, new string[0], OnSetFont);
 
-            AddDropdown(Locale.Get("K45_WTS_TEXT_AVAILABILITY"), out m_dropdownTextContent, helperSettings, Enum.GetNames(typeof(TextRenderingClass)).Select(x => Locale.Get("K45_WTS_BOARD_TEXT_AVAILABILITY_DESC", x.ToString())).ToArray(), OnSetTextOwnNameContent);
+            AddDropdown(Locale.Get("K45_WTS_TEXT_AVAILABILITY"), out m_dropdownTextContent, helperSettings, ddOrder.Select(x => Locale.Get("K45_WTS_BOARD_TEXT_AVAILABILITY_DESC", x.ToString())).ToArray(), OnSetTextOwnNameContent);
 
 
 
             WTSPropLayoutEditor.Instance.CurrentTabChanged += (x) =>
             {
-                if (x == 0 && EditingInstance != null)
-                {
-                    m_name.text = EditingInstance.SaveName;
-                    m_fixedColor.selectedColor = EditingInstance.FixedColor ?? default;
-                    m_fontSelect.selectedIndex = EditingInstance.FontName == null ? 0 : EditingInstance.FontName == WTSController.DEFAULT_FONT_KEY ? 1 : Array.IndexOf(m_fontSelect.items, EditingInstance.FontName);
-                    m_dropdownTextContent.selectedIndex = (int)EditingInstance.m_allowedRenderClass;
-
-                    var currentKV = PrefabIndexes<PropInfo>.instance.PrefabsLoaded.Where(x =>
-                    {
-                        try
-                        {
-                            return x.Value?.name == EditingInstance?.m_propName;
-                        }
-                        catch { return false; }
-                    }).FirstOrDefault();
-                    m_lastSelection = currentKV.Value;
-                    WTSPropLayoutEditor.Instance.CurrentPropInfo = m_lastSelection;
-                    m_propFilter.text = currentKV.Key ?? "";
-                    if (EditingInstance.m_configurationSource == ConfigurationSource.CITY)
-                    {
-                        m_tabContainer.Enable();
-                    }
-                    else
-                    {
-                        m_tabContainer.Disable();
-                    }
-                }
+                ReloadInfo(x);
             };
 
 
@@ -125,6 +101,37 @@ namespace Klyte.WriteTheSigns.UI
 
         }
 
+        private void ReloadInfo(int x)
+        {
+            if (x == 0 && EditingInstance != null)
+            {
+                m_name.text = EditingInstance.SaveName;
+                m_fixedColor.selectedColor = EditingInstance.FixedColor ?? default;
+                m_fontSelect.selectedIndex = EditingInstance.FontName == null ? 0 : EditingInstance.FontName == WTSController.DEFAULT_FONT_KEY ? 1 : Array.IndexOf(m_fontSelect.items, EditingInstance.FontName);
+                m_dropdownTextContent.selectedIndex = Array.IndexOf(ddOrder, EditingInstance.m_allowedRenderClass);
+
+                var currentKV = PrefabIndexes<PropInfo>.instance.PrefabsLoaded.Where(x =>
+                {
+                    try
+                    {
+                        return x.Value?.name == EditingInstance?.m_propName;
+                    }
+                    catch { return false; }
+                }).FirstOrDefault();
+                m_lastSelection = currentKV.Value;
+                WTSPropLayoutEditor.Instance.CurrentPropInfo = m_lastSelection;
+                m_propFilter.text = currentKV.Key ?? "";
+                if (EditingInstance.m_configurationSource == ConfigurationSource.CITY)
+                {
+                    m_tabContainer.Enable();
+                }
+                else
+                {
+                    m_tabContainer.Disable();
+                }
+            }
+        }
+
         public void Start()
         {
             WriteTheSignsMod.Controller.EventFontsReloadedFromFolder += () => WTSUtils.ReloadFontsOf(m_fontSelect, EditingInstance?.FontName, true);
@@ -135,7 +142,12 @@ namespace Klyte.WriteTheSigns.UI
 
         private string m_clipboard;
 
-        private void DoPasteText() => LoadIntoCurrentConfig(m_clipboard);
+        private void DoPasteText()
+        {
+            LoadIntoCurrentConfig(m_clipboard);
+            ReloadInfo(0);
+        }
+
         private void DoCopyText()
         {
             m_clipboard = XmlUtils.DefaultXmlSerialize(EditingInstance);
@@ -275,6 +287,10 @@ namespace Klyte.WriteTheSigns.UI
 
         private string OnSetProp(string typed, int sel, string[] items)
         {
+            if (sel == -1)
+            {
+                sel = Array.IndexOf(items, typed);
+            }
             if (sel >= 0)
             {
                 PrefabIndexes<PropInfo>.instance.PrefabsLoaded.TryGetValue(items[sel], out PropInfo targetProp);
@@ -310,7 +326,7 @@ namespace Klyte.WriteTheSigns.UI
                 }
             }
         }
-        private void OnSetTextOwnNameContent(int sel) => EditingInstance.m_allowedRenderClass = (TextRenderingClass)sel;
+        private void OnSetTextOwnNameContent(int sel) => EditingInstance.m_allowedRenderClass = ddOrder[sel];
 
         #endregion
 

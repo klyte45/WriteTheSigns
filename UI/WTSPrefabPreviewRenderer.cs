@@ -93,8 +93,11 @@ namespace Klyte.WriteTheSigns.UI
                 {
                     textExt.x = Mathf.Min(textExt.x * TextDescriptors[referenceIdx].m_textScale, TextDescriptors[referenceIdx].m_maxWidthMeters / WTSDynamicTextRenderingRules.SCALING_FACTOR) / TextDescriptors[referenceIdx].m_textScale;
                 }
-                offsetPosition.y -= refer.m_YAxisOverflows.Offset * TextDescriptors[referenceIdx].m_textScale;
-                magnitude = Mathf.Min(regularMagn * 3, Mathf.Max(0.3f / WTSDynamicTextRenderingRules.SCALING_FACTOR, (textExt * TextDescriptors[referenceIdx].m_textScale).magnitude));
+                if (TextDescriptors[referenceIdx].m_textScale > 1)
+                {
+                    offsetPosition.y -= refer.m_YAxisOverflows.Offset * (TextDescriptors[referenceIdx].m_textScale-1);
+                }
+                magnitude = Mathf.Min(regularMagn * 3, Mathf.Max(0.25f / WTSDynamicTextRenderingRules.SCALING_FACTOR, (textExt * TextDescriptors[referenceIdx].m_textScale).magnitude));
                 positon = offsetPosition + new Vector3(0, -1000, 0);
                 rotation = Quaternion.Euler(offsetRotation.x, offsetRotation.y, offsetRotation.z);
                 scale = Vector3.one;

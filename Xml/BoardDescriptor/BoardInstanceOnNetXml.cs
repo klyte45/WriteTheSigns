@@ -95,12 +95,13 @@ namespace Klyte.WriteTheSigns.Xml
             }
             internal set {
                 m_simplePropName = value?.name;
-                m_simpleProp = null;
+                m_simpleProp = value;
             }
         }
         [XmlIgnore]
         private PropInfo m_simpleProp;
         private string[] m_parameterizedValidImages;
+        private string[] m_indexedValidImages;
 
         [XmlAttribute("saveName")]
         public string SaveName { get; set; }
@@ -157,6 +158,27 @@ namespace Klyte.WriteTheSigns.Xml
             }
             private set => m_parameterizedValidImages = value;
         }
+        [XmlIgnore]
+        public string[] IndexedValidImages
+        {
+            get {
+                if (m_indexedValidImages == null)
+                {
+                    m_indexedValidImages = new string[TEXT_PARAMETERS_COUNT];
+                    if (m_textParameters != null)
+                    {
+                        var sprites = UIView.GetAView().defaultAtlas.spriteNames;
+                        for (int i = 0; i < TEXT_PARAMETERS_COUNT; i++)
+                        {
+                            var x = m_textParameters[i];
+                            m_indexedValidImages[i] = x != null && x.ToUpper().StartsWith("IMG_") && sprites.Contains(x.Substring(4)) ? x.Substring(4) : null;
+                        }
+                    }
+                }
+                return m_indexedValidImages;
+            }
+            private set => m_indexedValidImages = value;
+        }
 
         public void SetTextParameter(int idx, string val)
         {
@@ -165,7 +187,11 @@ namespace Klyte.WriteTheSigns.Xml
             InvalidateImageParamCache();
         }
 
-        public void InvalidateImageParamCache() => m_parameterizedValidImages = null;
+        public void InvalidateImageParamCache()
+        {
+            m_parameterizedValidImages = null;
+            m_indexedValidImages = null;
+        }
     }
 
 }

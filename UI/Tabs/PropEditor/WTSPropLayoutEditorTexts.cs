@@ -39,7 +39,7 @@ namespace Klyte.WriteTheSigns.UI
         private UICheckBox m_applyScaleOnY;
         private UICheckBox m_create180degSimmetricClone;
         private UICheckBox m_invertTextHorizontalAlignClone;
-//        private UICheckBox m_mirrored;
+        //        private UICheckBox m_mirrored;
 
 
         private UIDropDown m_dropdownTextAlignHorizontal;
@@ -105,7 +105,7 @@ namespace Klyte.WriteTheSigns.UI
             AddCheckboxLocale("K45_WTS_CREATE_CLONE_180DEG", out m_create180degSimmetricClone, helperSize, OnChangeCreateSimmetricClone);
             AddCheckboxLocale("K45_WTS_CLONE_180DEG_INVERT_TEXT_HOR_ALIGN", out m_invertTextHorizontalAlignClone, helperSize, OnChangeInvertCloneTextHorizontalAlignment);
 
-      //      AddCheckboxLocale("K45_WTS_MIRRORED", out m_mirrored, helperSize, OnChangeMirrored);
+            //      AddCheckboxLocale("K45_WTS_MIRRORED", out m_mirrored, helperSize, OnChangeMirrored);
 
             AddDropdown(Locale.Get("K45_WTS_TEXT_ALIGN_HOR"), out m_dropdownTextAlignHorizontal, helperAppearance, Enum.GetNames(typeof(UIHorizontalAlignment)).Select(x => Locale.Get("K45_ALIGNMENT", x)).ToArray(), OnSetTextAlignmentHorizontal);
             helperAppearance.AddSpace(5);
@@ -217,7 +217,7 @@ namespace Klyte.WriteTheSigns.UI
             m_applyScaleOnY.isChecked = x.m_applyOverflowResizingOnY;
             m_invertTextHorizontalAlignClone.isChecked = x.PlacingConfig.m_invertYCloneHorizontalAlign;
             m_create180degSimmetricClone.isChecked = x.PlacingConfig.m_create180degYClone;
-          //  m_mirrored.isChecked = x.PlacingConfig.m_mirrored;
+            //  m_mirrored.isChecked = x.PlacingConfig.m_mirrored;
 
             m_dropdownTextAlignHorizontal.selectedIndex = (int)x.m_textAlign;
             m_useContrastColor.isChecked = x.ColoringConfig.m_useContrastColor;
@@ -230,7 +230,7 @@ namespace Klyte.WriteTheSigns.UI
             m_dropdownTextContent.selectedIndex = Array.IndexOf(WTSDynamicTextRenderingRules.ALLOWED_TYPES_PER_RENDERING_CLASS[WTSPropLayoutEditor.Instance.EditingInstance.m_allowedRenderClass], x.m_textType);
             m_customText.text = x.m_fixedText ?? "";
             m_destinationRef.selectedIndex = (int)(x.m_destinationRelative);
-            m_parameterIdx.selectedIndex = x.m_parameterIdx - 1;
+            m_parameterIdx.selectedIndex = x.m_parameterIdx;
             m_slideDesync.text = x.AnimationSettings.m_extraDelayCycleFrames.ToString();
             m_slideDurationFrames.text = x.AnimationSettings.m_itemCycleFramesDuration.ToString();
             m_overrideFontSelect.selectedIndex = x.m_overrideFont == null ? 0 : x.m_overrideFont == WTSController.DEFAULT_FONT_KEY ? 1 : Array.IndexOf(m_overrideFontSelect.items, x.m_overrideFont);
@@ -257,7 +257,7 @@ namespace Klyte.WriteTheSigns.UI
         {
             m_customText.parent.isVisible = x.m_textType == TextType.Fixed;
             m_destinationRef.parent.isVisible = WTSPropLayoutEditor.Instance.EditingInstance.m_allowedRenderClass == TextRenderingClass.PlaceOnNet && x.IsTextRelativeToSegment();
-            m_parameterIdx.parent.isVisible = WTSPropLayoutEditor.Instance.EditingInstance.m_allowedRenderClass == TextRenderingClass.PlaceOnNet && x.m_textType == TextType.ParameterizedText;
+            m_parameterIdx.parent.isVisible = WTSPropLayoutEditor.Instance.EditingInstance.m_allowedRenderClass == TextRenderingClass.PlaceOnNet && (x.m_textType == TextType.ParameterizedText || x.m_textType == TextType.ParameterizedGameSpriteIndexed);
             m_slideDurationFrames.parent.isVisible = x.m_textType == TextType.ParameterizedGameSprite;
             m_slideDesync.parent.isVisible = x.m_textType == TextType.ParameterizedGameSprite;
             m_textFixedColor.parent.isVisible = !x.ColoringConfig.m_useContrastColor;
