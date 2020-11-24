@@ -111,10 +111,10 @@ namespace Klyte.WriteTheSigns.UI
             m_labelTarget2.prefix = Locale.Get("K45_WTS_ONNETEDITOR_TARGET2");
             m_labelTarget3.prefix = Locale.Get("K45_WTS_ONNETEDITOR_TARGET3");
             m_labelTarget4.prefix = Locale.Get("K45_WTS_ONNETEDITOR_TARGET4");
-            AddButtonInEditorRow(m_labelTarget1, CommonsSpriteNames.K45_Pipette, OnEnterPickTarget1, "K45_WTS_ONNETEDITOR_PICKNEWTARGET", true, 20).zOrder = 9999;
-            AddButtonInEditorRow(m_labelTarget2, CommonsSpriteNames.K45_Pipette, OnEnterPickTarget2, "K45_WTS_ONNETEDITOR_PICKNEWTARGET", true, 20).zOrder = 9999;
-            AddButtonInEditorRow(m_labelTarget3, CommonsSpriteNames.K45_Pipette, OnEnterPickTarget3, "K45_WTS_ONNETEDITOR_PICKNEWTARGET", true, 20).zOrder = 9999;
-            AddButtonInEditorRow(m_labelTarget4, CommonsSpriteNames.K45_Pipette, OnEnterPickTarget4, "K45_WTS_ONNETEDITOR_PICKNEWTARGET", true, 20).zOrder = 9999;
+            AddButtonInEditorRow(m_labelTarget1, CommonsSpriteNames.K45_Dropper, OnEnterPickTarget1, "K45_WTS_ONNETEDITOR_PICKNEWTARGET", true, 20).zOrder = 9999;
+            AddButtonInEditorRow(m_labelTarget2, CommonsSpriteNames.K45_Dropper, OnEnterPickTarget2, "K45_WTS_ONNETEDITOR_PICKNEWTARGET", true, 20).zOrder = 9999;
+            AddButtonInEditorRow(m_labelTarget3, CommonsSpriteNames.K45_Dropper, OnEnterPickTarget3, "K45_WTS_ONNETEDITOR_PICKNEWTARGET", true, 20).zOrder = 9999;
+            AddButtonInEditorRow(m_labelTarget4, CommonsSpriteNames.K45_Dropper, OnEnterPickTarget4, "K45_WTS_ONNETEDITOR_PICKNEWTARGET", true, 20).zOrder = 9999;
 
             m_textParams = new UITextField[BoardInstanceOnNetXml.TEXT_PARAMETERS_COUNT];
             for (int i = 0; i < BoardInstanceOnNetXml.TEXT_PARAMETERS_COUNT; i++)
