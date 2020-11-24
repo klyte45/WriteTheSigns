@@ -147,7 +147,7 @@ namespace Klyte.WriteTheSigns.Utils
             ref string[][] cache = ref m_generalCache[(allCaps ? 1 : 0) + (applyAbbreviations ? 1 : 2)];
             return type switch
             {
-                CacheArrayTypes.Districts => UpdateMeshDistrict(refId, ref cache[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont),
+                CacheArrayTypes.Districts => refId > 256 ? UpdateMeshBuildingName((ushort)(refId - 256), ref cache[(int)BuildingName][refId - 256], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont) : UpdateMeshDistrict(refId, ref cache[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont),
                 CacheArrayTypes.Parks => UpdateMeshPark(refId, ref cache[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont),
                 CacheArrayTypes.SuffixStreetName => UpdateMeshStreetSuffix(refId, ref cache[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont),
                 CacheArrayTypes.FullStreetName => UpdateMeshFullNameStreet(refId, ref cache[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont),

@@ -25,3 +25,7 @@ r2 - 22/NOV/2020
 r3 - 23/NOV/2020
 <color cyan>- New text type: Parameterized sprite</color>: It's like the slideshow, but will read only the selected parameter instead of pass thru all parameters set.
 <color cyan>- Bug fixes post r2 release</color>
+
+r4 - 24/NOV/2020
+<color cyan>- Outside connections support</color>: Now a segment set as target will return the neighbor city name as the district name, if it's in the edge of the map.
+<color cyan>- Bug fixes post r3 release</color>

@@ -168,6 +168,7 @@ namespace Klyte.WriteTheSigns.UI
                 if (WTSPropLayoutData.Instance.Get(x.Key) == null)
                 {
                     var value = x.Value;
+                    x.Value.m_configurationSource = ConfigurationSource.CITY;
                     WTSPropLayoutData.Instance.Add(x.Key, ref value);
                 }
             });

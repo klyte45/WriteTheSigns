@@ -82,6 +82,7 @@ namespace Klyte.WriteTheSigns.Singleton
 
         public bool CalculateGroupData(ushort buildingID, int layer, ref int vertexCount, ref int triangleCount, ref int objectCount, ref RenderGroup.VertexArrays vertexArrays)
         {
+            // LogUtils.DoLog("Building: CalculateGroupData {0}", buildingID);
             if (Data.BoardsContainers[buildingID, 0, 0] == null)
             {
                 return false;
@@ -106,6 +107,7 @@ namespace Klyte.WriteTheSigns.Singleton
         }
         public bool PopulateGroupData(ushort buildingID, int layer, ref int vertexIndex, ref int triangleIndex, Vector3 groupPosition, RenderGroup.MeshData data, ref Vector3 min, ref Vector3 max, ref float maxRenderDistance, ref float maxInstanceDistance)
         {
+            //  LogUtils.DoLog("Building: PopulateGroupData {0}", buildingID);
             if (Data.BoardsContainers[buildingID, 0, 0] == null)
             {
                 return false;
@@ -215,7 +217,8 @@ namespace Klyte.WriteTheSigns.Singleton
 
         public static void AfterEndOverlayImpl(RenderManager.CameraInfo cameraInfo)
         {
-            if (WTSBuildingLayoutEditor.Instance.MainContainer.isVisible)
+
+            if (WTSBuildingLayoutEditor.Instance?.MainContainer?.isVisible ?? false)
             {
                 foreach (Tuple<Vector3, float, Color> tuple in WriteTheSignsMod.Controller.BuildingPropsSingleton.m_onOverlayRenderQueue)
                 {

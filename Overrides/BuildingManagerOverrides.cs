@@ -1,8 +1,11 @@
 ﻿using ColossalFramework;
+using Harmony;
 using Klyte.Commons.Extensors;
 using Klyte.Commons.Utils;
 using System;
+using System.Collections.Generic;
 using System.Reflection;
+using System.Reflection.Emit;
 using UnityEngine;
 
 namespace Klyte.WriteTheSigns.Overrides
@@ -21,8 +24,8 @@ namespace Klyte.WriteTheSigns.Overrides
             MethodInfo popGroup = typeof(BuildingManager).GetMethod("PopulateGroupData");
 
 
-            System.Reflection.MethodInfo postRenderMeshs = GetType().GetMethod("AfterRenderMeshes", RedirectorUtils.allFlags);
-            var orMeth = typeof(Building).GetMethod("RenderInstance", RedirectorUtils.allFlags & ~BindingFlags.NonPublic);
+            System.Reflection.MethodInfo postRenderMeshs = GetType().GetMethod("TranspileEndRenderingImpl", RedirectorUtils.allFlags);
+            var orMeth = typeof(BuildingManager).GetMethod("EndRenderingImpl", RedirectorUtils.allFlags & ~BindingFlags.Public);
             MethodInfo AfterCalculateGroupData = GetType().GetMethod("AfterCalculateGroupData", RedirectorUtils.allFlags);
             MethodInfo AfterPopulateGroupData = GetType().GetMethod("AfterPopulateGroupData", RedirectorUtils.allFlags);
 
@@ -33,7 +36,7 @@ namespace Klyte.WriteTheSigns.Overrides
             LogUtils.DoLog($"Patching=> {AfterPopulateGroupData}");
             RedirectorInstance.AddRedirect(popGroup, null, AfterPopulateGroupData);
             LogUtils.DoLog($"Patching=> {postRenderMeshs}");
-            RedirectorInstance.AddRedirect(orMeth, null, postRenderMeshs);
+            RedirectorInstance.AddRedirect(orMeth, null, null, postRenderMeshs);
         }
         #endregion
 
@@ -102,6 +105,27 @@ namespace Klyte.WriteTheSigns.Overrides
                     }
                 }
             }
+        }
+
+        public static IEnumerable<CodeInstruction> TranspileEndRenderingImpl(IEnumerable<CodeInstruction> instr, ILGenerator il)
+        {
+            var instrList = new List<CodeInstruction>(instr);
+            MethodInfo postRenderMeshs = typeof(BuildingManagerOverrides).GetMethod("AfterRenderMeshes", RedirectorUtils.allFlags);
+            for (int i = 1; i < instrList.Count; i++)
+            {
+                if (instrList[i - 1].opcode == OpCodes.Call && instrList[i - 1].operand is MethodInfo mi && mi.Name == "RenderInstance" && mi.DeclaringType == typeof(Building))
+                {
+                    instrList.InsertRange(i, new List<CodeInstruction> {
+                        new CodeInstruction(OpCodes.Ldarg_1),
+                        new CodeInstruction(OpCodes.Ldloc_S,11),
+                        new CodeInstruction(OpCodes.Call,postRenderMeshs),
+                    });
+                    break;
+                }
+            }
+
+            LogUtils.PrintMethodIL(instrList);
+            return instrList;
         }
 
         public static void AfterRenderMeshes(RenderManager.CameraInfo cameraInfo, ushort buildingID)

@@ -178,7 +178,7 @@ namespace Klyte.WriteTheSigns.Singleton
                 }
             }
 
-            if ((WTSOnNetLayoutEditor.Instance?.MainContainer?.isVisible ?? false) && WTSOnNetLayoutEditor.Instance.LockSelection && (WTSOnNetLayoutEditor.Instance?.CurrentSegmentId == segmentId) && WTSOnNetLayoutEditor.Instance.LayoutList.SelectedIndex == boardIdx)
+            if ((WTSOnNetLayoutEditor.Instance?.MainContainer?.isVisible ?? false) && WTSOnNetLayoutEditor.Instance.LockSelection && (WTSOnNetLayoutEditor.Instance?.CurrentSegmentId == segmentId) && WTSOnNetLayoutEditor.Instance.LayoutList.SelectedIndex == boardIdx && !WriteTheSignsMod.Controller.RoadSegmentToolInstance.enabled)
             {
                 ToolsModifierControl.cameraController.m_targetPosition = position;
             }

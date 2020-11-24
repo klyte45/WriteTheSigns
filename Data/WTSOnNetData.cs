@@ -50,10 +50,10 @@ namespace Klyte.WriteTheSigns.Data
         [XmlIgnore]
         private byte?[] m_cachedDistrictParkId = new byte?[NetManager.MAX_SEGMENT_COUNT];
         [XmlIgnore]
-        private byte?[] m_cachedDistrictId = new byte?[NetManager.MAX_SEGMENT_COUNT];
+        private ushort?[] m_cachedDistrictId = new ushort?[NetManager.MAX_SEGMENT_COUNT];
         public ushort GetCachedDistrictParkId(ushort segmentId)
         {
-            if ( m_cachedDistrictParkId[segmentId] == null)
+            if (m_cachedDistrictParkId[segmentId] == null)
             {
                 m_cachedDistrictParkId[segmentId] = DistrictManager.instance.GetPark(NetManager.instance.m_segments.m_buffer[segmentId].m_middlePosition);
             }
@@ -61,9 +61,23 @@ namespace Klyte.WriteTheSigns.Data
         }
         public ushort GetCachedDistrictId(ushort segmentId)
         {
-            if ( m_cachedDistrictId[segmentId] == null)
+            if (m_cachedDistrictId[segmentId] == null)
             {
-                m_cachedDistrictId[segmentId] = DistrictManager.instance.GetDistrict(NetManager.instance.m_segments.m_buffer[segmentId].m_middlePosition);
+                ref NetSegment currSegment = ref NetManager.instance.m_segments.m_buffer[segmentId];
+                ref NetNode nodeEnd = ref NetManager.instance.m_nodes.m_buffer[currSegment.m_endNode];
+                ref NetNode nodeStart = ref NetManager.instance.m_nodes.m_buffer[currSegment.m_startNode];
+                if (nodeEnd.m_building > 0 && BuildingManager.instance.m_buildings.m_buffer[nodeEnd.m_building].Info.m_buildingAI is OutsideConnectionAI)
+                {
+                    m_cachedDistrictId[segmentId] = (ushort)(nodeEnd.m_building + 256u);
+                }
+                else if (nodeStart.m_building > 0 && BuildingManager.instance.m_buildings.m_buffer[nodeStart.m_building].Info.m_buildingAI is OutsideConnectionAI)
+                {
+                    m_cachedDistrictId[segmentId] = (ushort)(nodeStart.m_building + 256u);
+                }
+                else
+                {
+                    m_cachedDistrictId[segmentId] = DistrictManager.instance.GetDistrict(NetManager.instance.m_segments.m_buffer[segmentId].m_middlePosition);
+                }
             }
             return m_cachedDistrictId[segmentId] ?? 0;
         }
@@ -71,7 +85,7 @@ namespace Klyte.WriteTheSigns.Data
         public void ResetDistrictCache()
         {
             m_cachedDistrictParkId = new byte?[NetManager.MAX_SEGMENT_COUNT];
-            m_cachedDistrictId = new byte?[NetManager.MAX_SEGMENT_COUNT];
+            m_cachedDistrictId = new ushort?[NetManager.MAX_SEGMENT_COUNT];
         }
 
     }
