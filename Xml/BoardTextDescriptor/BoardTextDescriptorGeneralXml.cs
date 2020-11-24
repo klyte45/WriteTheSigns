@@ -93,6 +93,7 @@ namespace Klyte.WriteTheSigns.Xml
             switch (m_textType)
             {
                 case TextType.LinesSymbols:
+                case TextType.LineFullName:
                     return true;
             }
             return false;

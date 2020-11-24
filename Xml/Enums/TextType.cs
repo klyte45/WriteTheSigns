@@ -26,7 +26,8 @@
         ParameterizedText,
         TimeTemperature,
         ParameterizedGameSprite,
-        ParameterizedGameSpriteIndexed
+        ParameterizedGameSpriteIndexed,
+        LineFullName
     }
 
 

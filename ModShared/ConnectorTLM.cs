@@ -16,7 +16,11 @@ namespace Klyte.WriteTheSigns.Connectors
                 WriteTheSignsMod.Controller.SpriteRenderingRules.PurgeAllLines();
                 RenderUtils.ClearCacheLineId();
             };
-            TLMShared.Instance.EventAutoNameParameterChanged += WriteTheSignsMod.Controller.BuildingPropsSingleton.ResetLines;
+            TLMShared.Instance.EventAutoNameParameterChanged += () =>
+            {
+                WriteTheSignsMod.Controller.BuildingPropsSingleton.ResetLines();
+                RenderUtils.ClearCacheLineName();
+            };;
             TLMShared.Instance.EventVehicleIdentifierParameterChanged += RenderUtils.ClearCacheVehicleNumber;
         }
 

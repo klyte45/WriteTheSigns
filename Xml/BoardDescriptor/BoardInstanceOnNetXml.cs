@@ -151,7 +151,7 @@ namespace Klyte.WriteTheSigns.Xml
                     else
                     {
                         var sprites = UIView.GetAView().defaultAtlas.spriteNames;
-                        m_parameterizedValidImages = m_textParameters.Where(x => x != null && x.ToUpper().StartsWith("IMG_") && sprites.Contains(x.Substring(4))).Select(x => x.Substring(4)).ToArray();
+                        m_parameterizedValidImages = m_textParameters.Where(x => x != null && x.Length >= 4 && x.ToUpper().StartsWith("IMG_") && sprites.Contains(x.Substring(4))).Select(x => x.Substring(4)).ToArray();
                     }
                 }
                 return m_parameterizedValidImages;
@@ -171,7 +171,7 @@ namespace Klyte.WriteTheSigns.Xml
                         for (int i = 0; i < TEXT_PARAMETERS_COUNT; i++)
                         {
                             var x = m_textParameters[i];
-                            m_indexedValidImages[i] = x != null && x.ToUpper().StartsWith("IMG_") && sprites.Contains(x.Substring(4)) ? x.Substring(4) : null;
+                            m_indexedValidImages[i] = x != null && x.Length >= 4 && x.ToUpper().StartsWith("IMG_") && sprites.Contains(x.Substring(4)) ? x.Substring(4) : null;
                         }
                     }
                 }

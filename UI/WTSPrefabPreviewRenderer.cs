@@ -50,8 +50,21 @@ namespace Klyte.WriteTheSigns.UI
         public Matrix4x4 RenderPrefab(PI info, Vector3 offsetPosition, Vector3 offsetRotation, BoardTextDescriptorGeneralXml[] TextDescriptors, int referenceIdx, string overrideText, BoardDescriptorGeneralXml descriptor = null)
         {
 
-            PrepareScene(out InfoManager instanceInfo, out InfoManager.InfoMode currentMode, out InfoManager.SubInfoMode currentSubMode, out Light sunLightSource, out float intensity, out Color color2, out Vector3 eulerAngles, out Light mainLight);
-
+            var instanceInfo = Singleton<InfoManager>.instance;
+            var sunLightSource = DayNightProperties.instance.sunLightSource;
+            var intensity = sunLightSource.intensity;
+            var color2 = sunLightSource.color;
+            var eulerAngles = sunLightSource.transform.eulerAngles;
+           sunLightSource.intensity = 2f;
+           sunLightSource.color = Color.white;
+           sunLightSource.transform.eulerAngles = new Vector3(50f, 180f, 70f);
+            var mainLight = Singleton<RenderManager>.instance.MainLight;
+            Singleton<RenderManager>.instance.MainLight = sunLightSource;
+            if (mainLight == DayNightProperties.instance.moonLightSource)
+            {
+                DayNightProperties.instance.sunLightSource.enabled = true;
+                DayNightProperties.instance.moonLightSource.enabled = false;
+            }
             m_defaultInstance.Descriptor = descriptor ?? new BoardDescriptorGeneralXml
             {
                 TextDescriptors = TextDescriptors
@@ -95,7 +108,7 @@ namespace Klyte.WriteTheSigns.UI
                 }
                 if (TextDescriptors[referenceIdx].m_textScale > 1)
                 {
-                    offsetPosition.y -= refer.m_YAxisOverflows.Offset * (TextDescriptors[referenceIdx].m_textScale-1);
+                    offsetPosition.y -= refer.m_YAxisOverflows.Offset * (TextDescriptors[referenceIdx].m_textScale - 1);
                 }
                 magnitude = Mathf.Min(regularMagn * 3, Mathf.Max(0.25f / WTSDynamicTextRenderingRules.SCALING_FACTOR, (textExt * TextDescriptors[referenceIdx].m_textScale).magnitude));
                 positon = offsetPosition + new Vector3(0, -1000, 0);
@@ -131,35 +144,12 @@ namespace Klyte.WriteTheSigns.UI
                 DayNightProperties.instance.sunLightSource.enabled = false;
                 DayNightProperties.instance.moonLightSource.enabled = true;
             }
-            instanceInfo.SetCurrentMode(currentMode, currentSubMode);
-            instanceInfo.UpdateInfoMode();
 
             return propMatrix;
         }
 
 
-        private static void PrepareScene(out InfoManager instanceInfo, out InfoManager.InfoMode currentMode, out InfoManager.SubInfoMode currentSubMode, out Light sunLightSource, out float intensity, out Color color2, out Vector3 eulerAngles, out Light mainLight)
-        {
-            instanceInfo = Singleton<InfoManager>.instance;
-            currentMode = instanceInfo.CurrentMode;
-            currentSubMode = instanceInfo.CurrentSubMode;
-            instanceInfo.SetCurrentMode(InfoManager.InfoMode.None, InfoManager.SubInfoMode.Default);
-            instanceInfo.UpdateInfoMode();
-            sunLightSource = DayNightProperties.instance.sunLightSource;
-            intensity = sunLightSource.intensity;
-            color2 = sunLightSource.color;
-            eulerAngles = sunLightSource.transform.eulerAngles;
-            sunLightSource.intensity = 2f;
-            sunLightSource.color = Color.white;
-            sunLightSource.transform.eulerAngles = new Vector3(50f, 180f, 70f);
-            mainLight = Singleton<RenderManager>.instance.MainLight;
-            Singleton<RenderManager>.instance.MainLight = sunLightSource;
-            if (mainLight == DayNightProperties.instance.moonLightSource)
-            {
-                DayNightProperties.instance.sunLightSource.enabled = true;
-                DayNightProperties.instance.moonLightSource.enabled = false;
-            }
-        }
+
 
         protected abstract Matrix4x4 RenderMesh(PI info, BoardTextDescriptorGeneralXml[] textDescriptors, Vector3 position, Quaternion rotation, Vector3 scale, Matrix4x4 sourceMatrix, out Color targetColor);
         protected abstract ref Mesh GetMesh(PI info);

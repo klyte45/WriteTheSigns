@@ -29,3 +29,7 @@ r3 - 23/NOV/2020
 r4 - 24/NOV/2020
 <color cyan>- Outside connections support</color>: Now a segment set as target will return the neighbor city name as the district name, if it's in the edge of the map.
 <color cyan>- Bug fixes post r3 release</color>
+
+r5 - 24/NOV/2020
+<color cyan>- Full line name text for Vehicles and Buildings</color>: Can be formatted in rows & columns, like a table. Same setup way than the line symbols layout for buildings.
+<color cyan>- Bug fixes post r4 release</color>

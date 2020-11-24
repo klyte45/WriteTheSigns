@@ -28,7 +28,8 @@ namespace Klyte.WriteTheSigns.Rendering
             TextType.OwnName,
             TextType.LinesSymbols,
             TextType.LineIdentifier,
-            TextType.LastStopLine
+            TextType.LastStopLine,
+            TextType.LineFullName
         };
 
         internal static Material m_rotorMaterial;
@@ -72,6 +73,7 @@ namespace Klyte.WriteTheSigns.Rendering
                TextType.GameSprite,
                TextType.OwnName,
                TextType.LinesSymbols,
+               TextType.LineFullName,
                TextType.NextStopLine, // Next Station Line 1
                TextType.PrevStopLine, // Previous Station Line 2
                TextType.LastStopLine, // Line Destination (Last stop before get back) 3
@@ -200,8 +202,8 @@ namespace Klyte.WriteTheSigns.Rendering
                             maxItemsInAColumn = Mathf.CeilToInt((float)targetCount / settings.SubItemsPerRow);
                             lastRowOrColumnItemCount = targetCount % settings.SubItemsPerRow;
                         }
-                        float unscaledColumnWidth = resultArray.Max(x => x.m_sizeMetersUnscaled.x) * SCALING_FACTOR;
-                        float rowHeight = resultArray.Max(x => x.m_sizeMetersUnscaled.y) * SCALING_FACTOR * textDescriptor.m_textScale + textDescriptor.MultiItemSettings.SubItemSpacing.Y;
+                        float unscaledColumnWidth = resultArray.Max(x => x?.m_sizeMetersUnscaled.x ?? 0) * SCALING_FACTOR;
+                        float rowHeight = resultArray.Max(x => x?.m_sizeMetersUnscaled.y ?? 0) * SCALING_FACTOR * textDescriptor.m_textScale + textDescriptor.MultiItemSettings.SubItemSpacing.Y;
                         float columnWidth = (unscaledColumnWidth * textDescriptor.m_textScale) + textDescriptor.MultiItemSettings.SubItemSpacing.X;
                         var maxWidth = textDescriptor.m_maxWidthMeters;
 
@@ -831,14 +833,14 @@ namespace Klyte.WriteTheSigns.Rendering
             };
         }
 
-        private static BasicRenderInformation GetTextForBuilding(BoardTextDescriptorGeneralXml textDescriptor, ushort refID, int boardIdx, ref IEnumerable<BasicRenderInformation> multipleOutput, ref DynamicSpriteFont baseFont, BoardInstanceBuildingXml buildingDescritpor)
+        private static BasicRenderInformation GetTextForBuilding(BoardTextDescriptorGeneralXml textDescriptor, ushort refID, int boardIdx, ref IEnumerable<BasicRenderInformation> multipleOutput, ref DynamicSpriteFont baseFontRef, BoardInstanceBuildingXml buildingDescritpor)
         {
             ref BoardBunchContainerBuilding data = ref WTSBuildingsData.Instance.BoardsContainers[refID, 0, 0][boardIdx];
             if (data == null)
             {
                 return null;
             }
-            baseFont ??= FontServer.instance[WTSBuildingsData.Instance.DefaultFont];
+            var baseFont = baseFontRef ?? FontServer.instance[WTSBuildingsData.Instance.DefaultFont];
             TextType targetType = textDescriptor.m_textType;
             switch (targetType)
             {
@@ -855,6 +857,9 @@ namespace Klyte.WriteTheSigns.Rendering
                 case TextType.TimeTemperature: return GetTimeTemperatureText(textDescriptor, ref baseFont, refID, boardIdx);
                 case TextType.LinesSymbols:
                     multipleOutput = WriteTheSignsMod.Controller.SpriteRenderingRules.DrawLineFormats(GetAllTargetStopInfo(buildingDescritpor, refID).GroupBy(x => x.m_lineId).Select(x => x.First()).Select(x => (int)x.m_lineId));
+                    return null;
+                case TextType.LineFullName:
+                    multipleOutput = GetAllTargetStopInfo(buildingDescritpor, refID).GroupBy(x => x.m_lineId).Select(x => x.First()).Select(x => GetFromCacheArray(x.m_lineId, textDescriptor, RenderUtils.CacheArrayTypes.LineFullName, baseFont));
                     return null;
                 default:
                     return null;
@@ -892,6 +897,10 @@ namespace Klyte.WriteTheSigns.Rendering
                 case TextType.LinesSymbols:
                     ref Vehicle[] buffer1 = ref VehicleManager.instance.m_vehicles.m_buffer;
                     return WriteTheSignsMod.Controller.SpriteRenderingRules.DrawLineFormats(new int[] { buffer1[buffer1[refID].GetFirstVehicle(refID)].m_transportLine }).FirstOrDefault();
+                case TextType.LineFullName:
+                    ref Vehicle[] buffer4 = ref VehicleManager.instance.m_vehicles.m_buffer;
+                    ref Vehicle targetVehicle4 = ref buffer4[buffer4[refID].GetFirstVehicle(refID)];
+                    return GetFromCacheArray(targetVehicle4.m_transportLine, textDescriptor, RenderUtils.CacheArrayTypes.LineFullName, baseFont);
                 case TextType.LastStopLine:
                     ref Vehicle[] buffer2 = ref VehicleManager.instance.m_vehicles.m_buffer;
                     ref Vehicle targetVehicle = ref buffer2[buffer2[refID].GetFirstVehicle(refID)];

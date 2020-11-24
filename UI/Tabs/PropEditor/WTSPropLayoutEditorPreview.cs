@@ -172,7 +172,7 @@ namespace Klyte.WriteTheSigns.UI
 
         public void Update()
         {
-            if (CurrentInfo != default && MainContainer.isEnabled)
+            if (CurrentInfo != default && MainContainer.isVisible && MainContainer.isActiveAndEnabled)
             {
                 if (Mathf.Abs(m_previewRenderer.Zoom - TargetZoom) > 0.01f)
                 {

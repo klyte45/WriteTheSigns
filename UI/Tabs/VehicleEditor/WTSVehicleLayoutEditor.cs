@@ -92,7 +92,7 @@ namespace Klyte.WriteTheSigns.UI
             m_topBar.autoFitChildrenVertically = true;
             var m_topHelper = new UIHelperExtension(m_topBar);
 
-            AddFilterableInput(Locale.Get("K45_WTS_VEHICLEEDITOR_SELECTMODEL"), m_topHelper, out m_vehicleSearch, out _, PrefabIndexes<VehicleInfo>.instance.BasicInputFiltering, OnVehicleNameSelected);
+            AddFilterableInput(Locale.Get("K45_WTS_VEHICLEEDITOR_SELECTMODEL"), m_topHelper, out m_vehicleSearch, out _, VehiclesIndexes.instance.BasicInputFiltering, OnVehicleNameSelected);
             AddButtonInEditorRow(m_vehicleSearch, Commons.UI.SpriteNames.CommonsSpriteNames.K45_QuestionMark, Help_VehicleModel, null, true, 30);
 
             AddLabel("", m_topHelper, out m_labelSelectionDescription, out m_containerSelectionDescription);
@@ -166,7 +166,7 @@ namespace Klyte.WriteTheSigns.UI
             {
                 var assetId = CurrentVehicleInfo.name.Split('.')[0] + ".";
                 var descriptorsToExport = new List<LayoutDescriptorVehicleXml>();
-                foreach (string assetName in PrefabIndexes<VehicleInfo>.instance.PrefabsLoaded
+                foreach (string assetName in VehiclesIndexes.instance.PrefabsLoaded
                 .Where((x) => x.Value.name.StartsWith(assetId) || x.Value.name == CurrentVehicleInfo.name)
                 .Select(x => x.Value.name))
                 {
@@ -279,7 +279,7 @@ namespace Klyte.WriteTheSigns.UI
                 return "";
             }
             var result = arg2[arg1];
-            CurrentVehicleInfo = PrefabIndexes<VehicleInfo>.instance.PrefabsLoaded.TryGetValue(result, out VehicleInfo info) ? info : null;
+            CurrentVehicleInfo = VehiclesIndexes.instance.PrefabsLoaded.TryGetValue(result, out VehicleInfo info) ? info : null;
             ReloadVehicle();
             return result;
         }

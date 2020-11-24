@@ -143,10 +143,12 @@ namespace Klyte.WriteTheSigns.UI
                     }
 
                     m_targetCameraPosition = Vector2.Max(min, Vector2.Min(max, new Vector2(-eventParam.moveDelta.x / component.width * moveMultiplier, eventParam.moveDelta.y / component.height * moveMultiplier) + m_targetCameraPosition));
+
                 }
                 else if ((eventParam.buttons & UIMouseButton.Right) != 0)
                 {
                     m_targetRotation += eventParam.moveDelta.x;
+
                 }
             }
         }
@@ -172,11 +174,12 @@ namespace Klyte.WriteTheSigns.UI
             m_previewControls.isVisible = true;
             WTSVehicleTextsSingleton.UpdateSubmeshes(CurrentInfo, EditingInstancePreview);
             m_previewRenderer.RenderPrefab(CurrentInfo, m_cameraPosition, new Vector3(0, CameraRotation), EditingInstancePreview?.TextDescriptors, CurrentTextDescriptor != null ? TabToPreview : -1, m_overrideText);
+
         }
 
         public void Update()
         {
-            if (CurrentInfo != default && MainContainer.isVisible)
+            if (CurrentInfo != default && MainContainer.isVisible && MainContainer.isActiveAndEnabled)
             {
                 if (Mathf.Abs(m_previewRenderer.Zoom - TargetZoom) > 0.01f)
                 {
@@ -190,7 +193,6 @@ namespace Klyte.WriteTheSigns.UI
                 {
                     m_cameraPosition = Vector2.Lerp(m_cameraPosition, m_targetCameraPosition, 0.25f);
                 }
-
                 RedrawModel();
             }
             else

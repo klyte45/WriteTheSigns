@@ -68,7 +68,7 @@ namespace Klyte.WriteTheSigns.UI
 
 
 
-            AddFilterableInput(Locale.Get("K45_WTS_PROP_MODEL_SELECT"), helperSettings, out m_propFilter, out _, PrefabIndexes<PropInfo>.instance.BasicInputFiltering, OnSetProp);
+            AddFilterableInput(Locale.Get("K45_WTS_PROP_MODEL_SELECT"), helperSettings, out m_propFilter, out _, PropIndexes.instance.BasicInputFiltering, OnSetProp);
 
 
             AddTextField(Locale.Get("K45_WTS_PROP_TAB_TITLE"), out m_name, helperSettings, OnSetName);
@@ -110,7 +110,7 @@ namespace Klyte.WriteTheSigns.UI
                 m_fontSelect.selectedIndex = EditingInstance.FontName == null ? 0 : EditingInstance.FontName == WTSController.DEFAULT_FONT_KEY ? 1 : Array.IndexOf(m_fontSelect.items, EditingInstance.FontName);
                 m_dropdownTextContent.selectedIndex = Array.IndexOf(ddOrder, EditingInstance.m_allowedRenderClass);
 
-                var currentKV = PrefabIndexes<PropInfo>.instance.PrefabsLoaded.Where(x =>
+                var currentKV = PropIndexes.instance.PrefabsLoaded.Where(x =>
                 {
                     try
                     {
@@ -293,7 +293,7 @@ namespace Klyte.WriteTheSigns.UI
             }
             if (sel >= 0)
             {
-                PrefabIndexes<PropInfo>.instance.PrefabsLoaded.TryGetValue(items[sel], out PropInfo targetProp);
+                PropIndexes.instance.PrefabsLoaded.TryGetValue(items[sel], out PropInfo targetProp);
                 WTSPropLayoutEditor.Instance.CurrentPropInfo = targetProp;
                 m_exportAsGlobal.isVisible = true;
                 m_exportAsAsset.isVisible = long.TryParse(targetProp.name.Split('.')[0], out _);

@@ -26,6 +26,7 @@ namespace Klyte.WriteTheSigns.Utils
                 m_cache[(int)BuildingName] = new string[BuildingManager.MAX_BUILDING_COUNT];
                 m_cache[(int)VehicleNumber] = new string[ushort.MaxValue];
                 m_cache[(int)LineIdentifier] = new string[TransportManager.MAX_LINE_COUNT];
+                m_cache[(int)LineFullName] = new string[TransportManager.MAX_LINE_COUNT];
             }
         }
 
@@ -69,6 +70,7 @@ namespace Klyte.WriteTheSigns.Utils
             {
                 m_cache[(int)Districts] = new string[DistrictManager.MAX_DISTRICT_COUNT];
             }
+            ClearCacheLineName();
         }
 
         public static void ClearCacheParkName()
@@ -77,6 +79,7 @@ namespace Klyte.WriteTheSigns.Utils
             {
                 m_cache[(int)Parks] = new string[DistrictManager.MAX_DISTRICT_COUNT];
             }
+            ClearCacheLineName();
         }
 
         public static void ClearCacheBuildingName()
@@ -85,6 +88,7 @@ namespace Klyte.WriteTheSigns.Utils
             {
                 m_cache[(int)BuildingName] = new string[BuildingManager.MAX_BUILDING_COUNT];
             }
+            ClearCacheLineName();
         }
 
         public static void ClearCacheBuildingName(ushort buildingID)
@@ -93,6 +97,7 @@ namespace Klyte.WriteTheSigns.Utils
             {
                 m_cache[(int)BuildingName][buildingID] = null;
             }
+            ClearCacheLineName();
         }
         public static void ClearCacheVehicleNumber(ushort vehicleID)
         {
@@ -118,6 +123,14 @@ namespace Klyte.WriteTheSigns.Utils
             {
                 m_cache[(int)LineIdentifier] = new string[TransportManager.MAX_LINE_COUNT];
             }
+            ClearCacheLineName();
+        }
+        public static void ClearCacheLineName()
+        {
+            foreach (string[][] m_cache in m_generalCache)
+            {
+                m_cache[(int)LineFullName] = new string[TransportManager.MAX_LINE_COUNT];
+            }
         }
 
         public enum CacheArrayTypes
@@ -130,7 +143,8 @@ namespace Klyte.WriteTheSigns.Utils
             BuildingName,
             VehicleNumber,
             PostalCode,
-            LineIdentifier
+            LineIdentifier,
+            LineFullName
         }
         public enum CacheTransformTypes
         {
@@ -156,6 +170,7 @@ namespace Klyte.WriteTheSigns.Utils
                 CacheArrayTypes.PostalCode => UpdateMeshPostalCode(refId, ref cache[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont),
                 CacheArrayTypes.VehicleNumber => UpdateMeshVehicleNumber(refId, ref cache[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont),
                 CacheArrayTypes.LineIdentifier => UpdateMeshLineIdentifier(refId, ref cache[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont),
+                CacheArrayTypes.LineFullName => UpdateMeshLineFullName(refId, ref cache[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont),
                 _ => null
             };
         }
@@ -277,6 +292,22 @@ namespace Klyte.WriteTheSigns.Utils
                 else
                 {
                     name = WriteTheSignsMod.Controller.ConnectorTLM.GetLineIdString(lineId);
+                }
+            }
+            return GetTextData(name, prefix, suffix, primaryFont, overrideFont);
+        }
+        public static BasicRenderInformation UpdateMeshLineFullName(ushort lineId, ref string name, string prefix, string suffix, bool allCaps, bool applyAbbreviations, DynamicSpriteFont primaryFont, string overrideFont)
+        {
+            if (name == null)
+            {
+                if (lineId == 0)
+                {
+                    name = "";
+                }
+                else
+                {
+                    name = TransportManager.instance.GetLineName(lineId);
+                    name = ApplyTransforms(name, allCaps, applyAbbreviations);
                 }
             }
             return GetTextData(name, prefix, suffix, primaryFont, overrideFont);

@@ -259,7 +259,7 @@ namespace Klyte.WriteTheSigns.UI
 
                 m_name.text = x.SaveName ?? "";
                 m_propSelectionType.selectedIndex = x.PropLayoutName == null ? 1 : x.SimpleProp == null ? 0 : 1; 
-                m_propFilter.text = x.PropLayoutName ?? PrefabIndexes<PropInfo>.GetListName(x.SimpleProp) ?? "";
+                m_propFilter.text = x.PropLayoutName ?? PropIndexes.GetListName(x.SimpleProp) ?? "";
                 m_position[0].text = x.PropPosition.X.ToString("F3");
                 m_position[1].text = x.PropPosition.Y.ToString("F3");
                 m_position[2].text = x.PropPosition.Z.ToString("F3");
@@ -321,7 +321,7 @@ namespace Klyte.WriteTheSigns.UI
         }
 
 
-        private string[] OnFilterLayouts(string input) => m_propSelectionType.selectedIndex == 0 ? WTSPropLayoutData.Instance.FilterBy(input, TextRenderingClass.Buildings) : PrefabIndexes<PropInfo>.instance.BasicInputFiltering(input);
+        private string[] OnFilterLayouts(string input) => m_propSelectionType.selectedIndex == 0 ? WTSPropLayoutData.Instance.FilterBy(input, TextRenderingClass.Buildings) : PropIndexes.instance.BasicInputFiltering(input);
 
         private string OnConfigSelectionChange(string typed, int sel, string[] items)
         {
@@ -342,7 +342,7 @@ namespace Klyte.WriteTheSigns.UI
                 else
                 {
                     x.PropLayoutName = null;
-                    PrefabIndexes<PropInfo>.instance.PrefabsLoaded.TryGetValue(targetValue, out PropInfo info);
+                    PropIndexes.instance.PrefabsLoaded.TryGetValue(targetValue, out PropInfo info);
                     x.SimpleProp = info;
                 }
             });
@@ -351,7 +351,7 @@ namespace Klyte.WriteTheSigns.UI
         }
 
 
-        private void OnPropSelecionClassChange(int sel) => SafeObtain((ref BoardInstanceBuildingXml x) => m_propFilter.text = sel == 0 ? x.PropLayoutName ?? "" : PrefabIndexes<PropInfo>.GetListName(x.SimpleProp));
+        private void OnPropSelecionClassChange(int sel) => SafeObtain((ref BoardInstanceBuildingXml x) => m_propFilter.text = sel == 0 ? x.PropLayoutName ?? "" : PropIndexes.GetListName(x.SimpleProp));
 
         public void Update()
         {
@@ -458,7 +458,7 @@ namespace Klyte.WriteTheSigns.UI
         {
             if (sel >= 0)
             {
-                PrefabIndexes<PropInfo>.instance.PrefabsLoaded.TryGetValue(items[sel], out PropInfo targetProp);
+                PropIndexes.instance.PrefabsLoaded.TryGetValue(items[sel], out PropInfo targetProp);
                 SafeObtain((ref BoardInstanceBuildingXml x) => x.SimpleProp = targetProp);
                 return items[sel];
             }
