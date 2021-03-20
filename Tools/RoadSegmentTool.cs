@@ -19,7 +19,7 @@ namespace Klyte.WriteTheSigns.Tools
             if (m_hoverSegment != 0)
             {
                 Color toolColor = m_hoverColor;
-                RenderOverlay(cameraInfo, toolColor,  m_hoverSegment);
+                RenderOverlayUtils.RenderNetSegmentOverlay(cameraInfo, toolColor,  m_hoverSegment);
                 return;
             }
 

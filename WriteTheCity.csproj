@@ -11,7 +11,7 @@
     <AssemblyName>KlyteWriteTheSigns</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <TargetFrameworkProfile />
-    <LangVersion>8.0</LangVersion>
+    <LangVersion>latest</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
     <DebugSymbols>True</DebugSymbols>
@@ -121,6 +121,7 @@
     <Compile Include="commons\UI\SpriteNames\LineIconSpriteNames.cs" />
     <Compile Include="commons\UI\TLMAgesChartPanel.cs" />
     <Compile Include="commons\UI\TLMWorkersChartPanel.cs" />
+    <Compile Include="commons\UI\UIPagingBar.cs" />
     <Compile Include="commons\UI\UIRadialChartExtended.cs" />
     <Compile Include="commons\Utils\BuildingUtils.cs" />
     <Compile Include="commons\Utils\DistrictUtils.cs" />
@@ -130,14 +131,15 @@
     <Compile Include="commons\Utils\KlyteMonoUtils.cs" />
     <Compile Include="commons\Utils\KlyteResourceLoader.cs" />
     <Compile Include="commons\Utils\LogUtils.cs" />
-    <Compile Include="commons\Utils\MeshUtils.cs" />
     <Compile Include="commons\Utils\MapUtils.cs" />
+    <Compile Include="commons\Utils\MeshUtils.cs" />
     <Compile Include="commons\Utils\NumberingUtils.cs" />
     <Compile Include="commons\Utils\PastelConfig.cs" />
     <Compile Include="commons\Utils\PluginUtils.cs" />
     <Compile Include="commons\Utils\PrefabIndexes.cs" />
     <Compile Include="commons\Utils\RandomPastelColorGenerator.cs" />
     <Compile Include="commons\Utils\ReflectionUtils.cs" />
+    <Compile Include="commons\Utils\RenderOverlayUtils.cs" />
     <Compile Include="commons\Utils\RoadSearchUtils.cs" />
     <Compile Include="commons\Utils\SegmentUtils.cs" />
     <Compile Include="commons\Utils\SerializationUtils.cs" />
@@ -147,6 +149,7 @@
     <Compile Include="commons\Utils\StructExtensions\Int32Extensions.cs" />
     <Compile Include="commons\Utils\StructExtensions\NetSegmentExtensions.cs" />
     <Compile Include="commons\Utils\StructExtensions\PathUnitExtensions.cs" />
+    <Compile Include="commons\Utils\StructExtensions\StringExtensions.cs" />
     <Compile Include="commons\Utils\StructExtensions\Vector2Extensions.cs" />
     <Compile Include="commons\Utils\StructExtensions\Vector3Extensions.cs" />
     <Compile Include="commons\Utils\TabCommons.cs" />
@@ -175,6 +178,7 @@
     <Compile Include="commons\Utils\UtilitiesClasses\TimeableList.cs" />
     <Compile Include="commons\Utils\UtilitiesClasses\Tuple.cs" />
     <Compile Include="commons\Utils\UtilitiesClasses\VectorsXml.cs" />
+    <Compile Include="commons\Utils\UtilitiesClasses\XmlDictionary.cs" />
     <Compile Include="commons\Utils\VehicleUtils.cs" />
     <Compile Include="commons\Utils\XmlUtils.cs" />
     <Compile Include="commons\Utils\ZipUtils.cs" />
@@ -399,6 +403,7 @@
     <EmbeddedResource Include="commons\UI\Images\%25K45_DepotIcon.png" />
     <EmbeddedResource Include="commons\UI\Images\%25K45_DiamondIcon.png" />
     <EmbeddedResource Include="commons\UI\Images\%25K45_Down.png" />
+    <EmbeddedResource Include="commons\UI\Images\%25K45_Dropper.png" />
     <EmbeddedResource Include="commons\UI\Images\%25K45_Export.png" />
     <EmbeddedResource Include="commons\UI\Images\%25K45_FontIcon.png" />
     <EmbeddedResource Include="commons\UI\Images\%25K45_HeptagonIcon.png" />
@@ -443,6 +448,7 @@
     <EmbeddedResource Include="commons\UI\Images\%25K45_Save.png" />
     <EmbeddedResource Include="commons\UI\Images\%25K45_Settings.png" />
     <EmbeddedResource Include="commons\UI\Images\%25K45_SquareIcon.png" />
+    <EmbeddedResource Include="commons\UI\Images\%25K45_Steam.png" />
     <EmbeddedResource Include="commons\UI\Images\%25K45_TrapezeIcon.png" />
     <EmbeddedResource Include="commons\UI\Images\%25K45_TriangleIcon.png" />
     <EmbeddedResource Include="commons\UI\Images\%25K45_Unlock.png" />
@@ -454,7 +460,7 @@
   <ItemGroup>
     <EmbeddedResource Include="UI\Images\%25K45_KWTSIcon.png" />
     <None Include="commons\README.md" />
-    <None Include="commons\UI\Images\lineFormats.psd" />
+    <EmbeddedResource Include="commons\UI\i18n\cn.properties" />
     <None Include="README.md" />
     <EmbeddedResource Include="UI\DefaultFont\SourceSansPro-Regular.ttf" />
     <None Include="UI\Images\sprites.psd" />
@@ -478,17 +484,15 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="commons\UI\Images\%25K45_AbsoluteMode.png" />
-    <EmbeddedResource Include="commons\UI\Images\%25K45_Dropper.png" />
-    <Content Include="commons\UI\Images\%25K45_MenuPanel_color.png" />
     <EmbeddedResource Include="UI\Images\%25K45_WTS FrameParamsNotSet.png" />
     <EmbeddedResource Include="UI\Images\%25K45_WTS FrameBorder.png" />
-    <Content Include="commons\UI\Images\%25K45_RelativeMode.png" />
-    <Content Include="commons\UI\Images\%25K45_RemoveUnwantedIcon.png" />
-    <EmbeddedResource Include="commons\UI\Images\%25K45_Steam.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="commons\UI\Images\%25K45_AbsoluteMode.png" />
+    <EmbeddedResource Include="commons\UI\Images\%25K45_MenuPanel_color.png" />
+    <EmbeddedResource Include="commons\UI\Images\%25K45_RelativeMode.png" />
+    <EmbeddedResource Include="commons\UI\Images\%25K45_RemoveUnwantedIcon.png" />
     <Content Include="commons\UI\Images\base.psd" />
-    <Content Include="commons\UI\Images\lineFormat.png" />
-    <Content Include="commons\UI\Images\lineFormat.psd" />
     <Content Include="commons\UI\Images\sprites.psd" />
   </ItemGroup>
   <PropertyGroup>
