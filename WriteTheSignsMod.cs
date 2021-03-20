@@ -12,7 +12,7 @@ using System.IO;
 using System.Reflection;
 using UnityEngine;
 
-[assembly: AssemblyVersion("0.2.0.*")] 
+[assembly: AssemblyVersion("0.2.0.6")]
 namespace Klyte.WriteTheSigns
 {
     public class WriteTheSignsMod : BasicIUserMod<WriteTheSignsMod, WTSController, WTSPanel>
@@ -63,6 +63,15 @@ namespace Klyte.WriteTheSigns
              });
             group5.AddCheckboxLocale("K45_WTS_CLOCK_SHOW_LEADING_ZERO", ClockShowLeadingZero, (x) => ClockShowLeadingZero.value = x);
             group5.AddCheckboxLocale("K45_WTS_CLOCK_12H_CLOCK", Clock12hFormat, (x) => Clock12hFormat.value = x);
+
+            var aaa = helper.AddGroupExtended("AAAAAA");
+            aaa.AddButton("AAAAAAA REMOVE", () =>
+            {
+
+                GameObject.Destroy(PropIndexes.instance);
+                GameObject.Destroy(BuildingIndexes.instance);
+                GameObject.Destroy(VehiclesIndexes.instance);
+            });
 
         }
 

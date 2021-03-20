@@ -32,7 +32,6 @@ namespace FontStashSharp
         {
             get; set;
         }
-        private Texture2D m_xys;
         private Material m_materialBright;
         public Material Material
         {
@@ -40,11 +39,6 @@ namespace FontStashSharp
                 if (m_materialBright == null)
                 {
                     m_materialBright = new Material(Shader.Find("Custom/Props/Prop/Default"));
-                    UnityEngine.Object.Destroy(m_xys);
-                    m_xys = new Texture2D(Width, Height);
-                    m_xys.SetPixels(new string[Width * Height].Select(x => new Color(.5f, .5f, .99f)).ToArray());
-                    m_xys.Apply();
-                    m_materialBright.SetTexture(PropManager.instance.ID_XYSMap, m_xys);
                 }
                 return m_materialBright;
             }
@@ -52,7 +46,6 @@ namespace FontStashSharp
 
         ~FontAtlas()
         {
-            UnityEngine.Object.Destroy(m_xys);
             UnityEngine.Object.Destroy(Texture);
             UnityEngine.Object.Destroy(Material);
         }

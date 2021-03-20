@@ -129,6 +129,7 @@ namespace Klyte.WriteTheSigns
             EventOnBuildingNameChanged += RenderUtils.ClearCacheBuildingName;
             EventOnPostalCodeChanged += RenderUtils.ClearCachePostalCode;
             EventOnZeroMarkerChanged += OnNameSeedChanged;
+
         }
 
         private void OnNameSeedChanged(ushort segmentId) => OnNameSeedChanged();
