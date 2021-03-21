@@ -670,7 +670,7 @@ namespace Klyte.WriteTheSigns.Rendering
                         return propLayout?.FixedColor ?? buildingDescriptor.SimpleProp?.GetColor(ref rand) ?? Color.white;
                     case ColoringMode.ByPlatform:
                         var stops = GetAllTargetStopInfo(buildingDescriptor, refId).Where(x => x.m_lineId != 0);
-                        if (buildingDescriptor.UseFixedIfMultiline && stops.Count() > 1)
+                        if (buildingDescriptor.UseFixedIfMultiline && stops.GroupBy(x=>x.m_lineId).Count() > 1)
                         {
                             rand.seed = refId * (1u + (uint)boardIdx);
                             return propLayout?.FixedColor ?? buildingDescriptor.SimpleProp?.GetColor(ref rand) ?? Color.white;
