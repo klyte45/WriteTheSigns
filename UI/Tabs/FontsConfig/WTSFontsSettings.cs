@@ -36,7 +36,7 @@ namespace Klyte.WriteTheSigns.UI
             var m_uiHelperHS = new UIHelperExtension(MainContainer);
 
             AddLabel(Locale.Get("K45_WTS_BASICFONTS"), m_uiHelperHS, out UILabel containerTitle, out _);
-            AddButtonInEditorRow(containerTitle, CommonsSpriteNames.K45_QuestionMark, Help_Fonts, null, true, 20);
+            AddButtonInEditorRow(containerTitle, CommonsSpriteNames.K45_QuestionMark, Help_Fonts, null, false, 20).forceZOrder = 9999999;
             AddFontDD("K45_WTS_FONT_ST_CORNERS", m_uiHelperHS, out m_fontSelectStreetSigns, OnSetFontStreet);
             AddFontDD("K45_WTS_FONT_STATIONS", m_uiHelperHS, out m_fontSelectBuildings, OnSetFontBuildings);
             AddFontDD("K45_WTS_FONT_VEHICLES", m_uiHelperHS, out m_fontSelectVehicles, OnSetFontVehicles);
@@ -49,7 +49,7 @@ namespace Klyte.WriteTheSigns.UI
             ReloadFonts();
         }
 
-        private void Help_Fonts() => K45DialogControl.ShowModalHelp("FontsSettings.General", Locale.Get("K45_WTS_FONTS_HELPTITLE"), 0);
+        private void Help_Fonts() => Application.OpenURL("https://github.com/klyte45/WriteTheSigns/wiki/WTS-Fonts#basic--special-fonts");
 
         private void AddFontDD(string locale, UIHelperExtension m_uiHelperHS, out UIDropDown targetDD, OnDropdownSelectionChanged callback)
         {

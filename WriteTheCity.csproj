@@ -256,7 +256,7 @@
     <Compile Include="Utils\RenderUtils.cs" />
     <Compile Include="Xml\BoardDescriptor\BoardInstanceBuildingXml.cs" />
     <Compile Include="Xml\BoardDescriptor\BoardDescriptorGeneralXml.cs" />
-    <Compile Include="Xml\BoardDescriptor\ExportableLayoutDescriptorVehicleXml.cs" />
+    <Compile Include="Xml\Containers\ExportableLayoutDescriptorVehicleXml.cs" />
     <Compile Include="Xml\BoardDescriptor\LayoutDescriptorVehicleXml.cs" />
     <Compile Include="Xml\BoardDescriptor\BoardInstanceRoadNodeXml.cs" />
     <Compile Include="Xml\BoardDescriptor\BoardInstanceXml.cs" />

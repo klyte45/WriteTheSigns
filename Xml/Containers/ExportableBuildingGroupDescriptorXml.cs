@@ -14,7 +14,7 @@ namespace Klyte.WriteTheSigns.Xml
     {
 
         [XmlElement("localLayout")]
-        [Obsolete]
+        [Obsolete("XML EXPORTING ONLY!")]
         public override SimpleXmlDictionary<string, BoardDescriptorGeneralXml> LocalLayouts
         {
             get {

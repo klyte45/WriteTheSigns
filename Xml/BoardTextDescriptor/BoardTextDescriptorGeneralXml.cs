@@ -50,22 +50,16 @@ namespace Klyte.WriteTheSigns.Xml
         [XmlAttribute("saveName")]
         public string SaveName { get; set; }
 
-
         [XmlElement("PlacingSettings")]
         public PlacingSettings PlacingConfig { get; set; } = new PlacingSettings();
-
         [XmlElement("ColoringSettings")]
         public ColoringSettings ColoringConfig { get; set; } = new ColoringSettings();
-
         [XmlElement("IlluminationSettings")]
         public IlluminationSettings IlluminationConfig { get; set; } = new IlluminationSettings();
-
         [XmlElement("MultiItemSettings")]
         public SubItemSettings MultiItemSettings { get; set; } = new SubItemSettings();
-
         [XmlElement("BackgroundMeshSettings")]
         public BackgroundMesh BackgroundMeshSettings { get; set; } = new BackgroundMesh();
-
         [XmlElement("AnimationSettings")]
         public AnimationSettings AnimationSettings { get; set; } = new AnimationSettings();
 
