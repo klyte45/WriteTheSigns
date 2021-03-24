@@ -208,7 +208,7 @@ namespace Klyte.WriteTheSigns.UI
                             }
                             else
                             {
-                                z.m_platforms = z.m_platforms.Where(x => x != pi.index).ToArray();
+                                z.m_platforms = z.m_platforms.Where(w => w != pi.index).ToArray();
                                 x.parent.zOrder = z.m_platforms.Length;
                             }
                         }
@@ -273,7 +273,7 @@ namespace Klyte.WriteTheSigns.UI
                 var buildingInfo = PrefabCollection<BuildingInfo>.FindLoaded(CurrentBuildingName);
                 if ((buildingInfo.m_subBuildings?.Length ?? 0) > 0)
                 {
-                    m_subBuildingSelect.items = new string[] { Locale.Get("K45_WTS_MAINBUILIDING") }.Union(buildingInfo.m_subBuildings?.Select((x, y) => $"{y}: {x.m_buildingInfo.name.Split(new char[] { '.' }, 2).LastOrDefault()}")).ToArray();
+                    m_subBuildingSelect.items = new string[] { Locale.Get("K45_WTS_MAINBUILIDING") }.Union(buildingInfo.m_subBuildings?.Select((z, y) => $"{y}: {z.m_buildingInfo.name.Split(new char[] { '.' }, 2).LastOrDefault()}")).ToArray();
                     m_subBuildingSelect.selectedIndex = x.SubBuildingPivotReference + 1;
                 }
                 else
@@ -302,11 +302,11 @@ namespace Klyte.WriteTheSigns.UI
 
                 if (Source != ConfigurationSource.CITY)
                 {
-                    AllFields.ForEach(x => x.Disable());
+                    AllFields.ForEach(y => y.Disable());
                 }
                 else
                 {
-                    AllFields.ForEach(x => x.Enable());
+                    AllFields.ForEach(y => y.Enable());
                 }
                 if (isPublicTransportStation)
                 {

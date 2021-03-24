@@ -2,7 +2,6 @@
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Data;
 using Klyte.WriteTheSigns.Rendering;
-using Klyte.WriteTheSigns.UI;
 using Klyte.WriteTheSigns.Xml;
 using System;
 using System.Collections.Generic;
@@ -132,7 +131,7 @@ namespace Klyte.WriteTheSigns.Singleton
                         flags ^= Vehicle.Flags.Reversed;
                     }
                     ref Vehicle vehicle = ref instance.m_vehicles.m_buffer[vehicleId];
-                    WTSDynamicTextRenderingRules.RenderTextMesh(vehicleId, 0, 0, targetDescriptor, vehicleMatrix, null, ref targetDescriptor.TextDescriptors[j], properties, (int)flags, vehicle.Info.m_vehicleAI.GetColor(vehicleId, ref vehicle, InfoManager.InfoMode.None),v.Info);
+                    WTSDynamicTextRenderingRules.RenderTextMesh(vehicleId, 0, 0, targetDescriptor, vehicleMatrix, null, ref targetDescriptor.TextDescriptors[j], properties, (int)flags, vehicle.Info.m_vehicleAI.GetColor(vehicleId, ref vehicle, InfoManager.InfoMode.None), v.Info);
                 }
             }
 
@@ -158,8 +157,10 @@ namespace Klyte.WriteTheSigns.Singleton
                     {
                         LogUtils.DoLog($"Trying deserialize {filename}:\n{File.ReadAllText(filename)}");
                     }
-                    using FileStream stream = File.OpenRead(filename);
-                    LoadDescriptorsFromXmlCommon(stream, null);
+                    using (FileStream stream = File.OpenRead(filename))
+                    {
+                        LoadDescriptorsFromXmlCommon(stream, null);
+                    }
                 }
                 catch (Exception e)
                 {

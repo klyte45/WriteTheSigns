@@ -31,7 +31,7 @@ namespace Klyte.WriteTheSigns.Data
         public string PublicTransportLineSymbolFont
         {
             get => m_publicTransportLineSymbolFont; set {
-                if (m_publicTransportLineSymbolFont != value)
+                if (WriteTheSignsMod.Controller is null || m_publicTransportLineSymbolFont != value)
                 {
                     m_publicTransportLineSymbolFont = value;
                     WriteTheSignsMod.Controller?.SpriteRenderingRules?.PurgeAllLines();

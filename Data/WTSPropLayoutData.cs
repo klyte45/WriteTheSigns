@@ -63,8 +63,10 @@ namespace Klyte.WriteTheSigns.Data
                     {
                         LogUtils.DoLog($"Trying deserialize {filename}:\n{File.ReadAllText(filename)}");
                     }
-                    using FileStream stream = File.OpenRead(filename);
-                    LoadDescriptorsFromXml(stream, null);
+                    using (FileStream stream = File.OpenRead(filename))
+                    {
+                        LoadDescriptorsFromXml(stream, null);
+                    }
                 }
                 catch (Exception e)
                 {

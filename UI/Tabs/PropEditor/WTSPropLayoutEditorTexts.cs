@@ -226,7 +226,7 @@ namespace Klyte.WriteTheSigns.UI
             m_dropdownBlinkType.selectedIndex = (int)x.IlluminationConfig.BlinkType;
             m_textFixedColor.selectedColor = x.ColoringConfig.m_defaultColor;
 
-            m_dropdownTextContent.items = WTSDynamicTextRenderingRules.ALLOWED_TYPES_PER_RENDERING_CLASS[WTSPropLayoutEditor.Instance.EditingInstance.m_allowedRenderClass].Select(x => Locale.Get("K45_WTS_BOARD_TEXT_TYPE_DESC", x.ToString())).ToArray();
+            m_dropdownTextContent.items = WTSDynamicTextRenderingRules.ALLOWED_TYPES_PER_RENDERING_CLASS[WTSPropLayoutEditor.Instance.EditingInstance.m_allowedRenderClass].Select(y => Locale.Get("K45_WTS_BOARD_TEXT_TYPE_DESC", y.ToString())).ToArray();
             m_dropdownTextContent.selectedIndex = Array.IndexOf(WTSDynamicTextRenderingRules.ALLOWED_TYPES_PER_RENDERING_CLASS[WTSPropLayoutEditor.Instance.EditingInstance.m_allowedRenderClass], x.m_textType);
             m_customText.text = x.m_fixedText ?? "";
             m_destinationRef.selectedIndex = (int)(x.m_destinationRelative);

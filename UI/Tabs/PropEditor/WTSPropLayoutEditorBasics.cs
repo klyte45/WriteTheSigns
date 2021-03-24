@@ -110,11 +110,11 @@ namespace Klyte.WriteTheSigns.UI
                 m_fontSelect.selectedIndex = EditingInstance.FontName == null ? 0 : EditingInstance.FontName == WTSController.DEFAULT_FONT_KEY ? 1 : Array.IndexOf(m_fontSelect.items, EditingInstance.FontName);
                 m_dropdownTextContent.selectedIndex = Array.IndexOf(ddOrder, EditingInstance.m_allowedRenderClass);
 
-                var currentKV = PropIndexes.instance.PrefabsLoaded.Where(x =>
+                var currentKV = PropIndexes.instance.PrefabsLoaded.Where(y =>
                 {
                     try
                     {
-                        return x.Value?.name == EditingInstance?.m_propName;
+                        return y.Value?.name == EditingInstance?.m_propName;
                     }
                     catch { return false; }
                 }).FirstOrDefault();

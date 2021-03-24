@@ -367,7 +367,7 @@ namespace Klyte.WriteTheSigns.Singleton
                 NetManager nmInstance = NetManager.instance;
                 LogUtils.DoLog($"--------------- UpdateLinesBuilding {buildingID}");
 
-                m_platformToLine[buildingID]?.ForEach(x => x?.ForEach(x => m_stopInformation[x.m_stopId] = default));
+                m_platformToLine[buildingID]?.ForEach(x => x?.ForEach(y => m_stopInformation[y.m_stopId] = default));
                 m_platformToLine[buildingID] = null;
                 if (!m_buildingStopsDescriptor.ContainsKey(refName))
                 {
@@ -475,7 +475,7 @@ namespace Klyte.WriteTheSigns.Singleton
                 }
                 if (m_platformToLine[buildingID]?.Length > 0)
                 {
-                    m_platformToLine[buildingID]?.ForEach(x => x?.ForEach(x => m_stopInformation[x.m_stopId] = x));
+                    m_platformToLine[buildingID]?.ForEach(x => x?.ForEach(y => m_stopInformation[y.m_stopId] = y));
                 }
 
                 m_buildingLastUpdateLines[buildingID] = m_lastUpdateLines;
@@ -485,7 +485,11 @@ namespace Klyte.WriteTheSigns.Singleton
 
         private StopInformation UpdateStopInformation(ushort stopId, string buildingName = null, int i = 0, float anglePlat = 0, NetManager nmInstance = null)
         {
-            nmInstance ??= NetManager.instance;
+            if (nmInstance is null)
+            {
+                nmInstance = NetManager.instance;
+            }
+
             var result = new StopInformation
             {
                 m_lineId = nmInstance.m_nodes.m_buffer[stopId].m_transportLine,
@@ -686,8 +690,10 @@ namespace Klyte.WriteTheSigns.Singleton
                     {
                         LogUtils.DoLog($"Trying deserialize {filename}:\n{File.ReadAllText(filename)}");
                     }
-                    using FileStream stream = File.OpenRead(filename);
-                    LoadDescriptorsFromXmlCommon(stream, null);
+                    using (FileStream stream = File.OpenRead(filename))
+                    {
+                        LoadDescriptorsFromXmlCommon(stream, null);
+                    }
                 }
                 catch (Exception e)
                 {

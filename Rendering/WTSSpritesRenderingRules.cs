@@ -59,7 +59,8 @@ namespace Klyte.WriteTheSigns.Rendering
         public bool IsDirty { get => m_isDirty; private set => m_isDirty = value; }
         public LineIconSpriteNames LineIconTest
         {
-            get => m_lineIconTest; set {
+            get => m_lineIconTest; set
+            {
                 m_lineIconTest = value;
                 PurgeLine(0);
             }
@@ -120,7 +121,10 @@ namespace Klyte.WriteTheSigns.Rendering
 
         public BasicRenderInformation GetSpriteFromDefaultAtlas(string spriteName)
         {
-            if(spriteName.IsNullOrWhiteSpace()) return null;
+            if (spriteName.IsNullOrWhiteSpace())
+            {
+                return null;
+            }
 
             if (m_defaultAtlasCache.TryGetValue(spriteName, out BasicRenderInformation bri))
             {
@@ -161,7 +165,7 @@ namespace Klyte.WriteTheSigns.Rendering
             var bri = new BasicRenderInformation
             {
                 m_YAxisOverflows = new RangeVector { min = 0, max = 20 },
-                m_refText =  $"<sprite {spriteName}>"
+                m_refText = $"<sprite {spriteName}>"
             };
 
             yield return 0;
@@ -316,7 +320,7 @@ namespace Klyte.WriteTheSigns.Rendering
                 bri.m_mesh.Clear();
                 bri.m_mesh.vertices = AlignVertices(vertices);
                 bri.m_mesh.normals = normals.ToArray();
-                bri.m_mesh.colors32 = colors.Select(x => new Color32(x.a, x.a, x.a, x.a)).ToArray();
+                bri.m_mesh.colors32 = colors.Select(z => new Color32(z.a, z.a, z.a, z.a)).ToArray();
                 bri.m_mesh.uv = uvs.ToArray();
                 bri.m_mesh.triangles = triangles.ToArray();
                 bri.m_fontBaseLimits = new RangeVector { min = 0, max = referenceAtlas[id].texture.height };
@@ -332,7 +336,11 @@ namespace Klyte.WriteTheSigns.Rendering
 
         public static IEnumerator<Texture2D> RenderSpriteLine(DynamicSpriteFont font, UITextureAtlas atlas, string spriteName, Color bgColor, string text, float textScale = 1)
         {
-            font ??= FontServer.instance[WTSController.DEFAULT_FONT_KEY];
+            if (font is null)
+            {
+                font = FontServer.instance[WTSController.DEFAULT_FONT_KEY];
+            }
+
             UITextureAtlas.SpriteInfo spriteInfo = atlas[spriteName];
             if (spriteInfo == null)
             {

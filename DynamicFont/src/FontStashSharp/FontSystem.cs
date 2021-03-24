@@ -270,7 +270,7 @@ namespace FontStashSharp
                 bri.m_mesh.Clear();
                 bri.m_mesh.vertices = AlignVertices(vertices, alignment);
                 bri.m_mesh.normals = normals.ToArray();
-                bri.m_mesh.colors32 = colors.Select(x => new Color32(x.a, x.a, x.a, x.a)).ToArray();
+                bri.m_mesh.colors32 = colors.Select(z => new Color32(z.a, z.a, z.a, z.a)).ToArray();
                 bri.m_mesh.uv = uvs.ToArray();
                 bri.m_mesh.triangles = triangles.ToArray();
                 bri.m_materialGeneratedTick = LastUpdateAtlas;

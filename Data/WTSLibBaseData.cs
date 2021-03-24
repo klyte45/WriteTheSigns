@@ -15,7 +15,7 @@ namespace Klyte.WriteTheSigns.Data
         public static LIB Instance
         {
             get {
-                if (!ExtensorContainer.instance.Instances.TryGetValue(typeof(LIB), out IDataExtensor result) || result == null)
+                if (!ExtensorContainer.instance.Instances.TryGetValue(typeof(LIB), out IDataExtensor result) || result is null)
                 {
                     ExtensorContainer.instance.Instances[typeof(LIB)] = new LIB();
                 }

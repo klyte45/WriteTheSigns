@@ -159,19 +159,19 @@ namespace Klyte.WriteTheSigns.Utils
         public static BasicRenderInformation GetFromCacheArray2(ushort refId, string prefix, string suffix, bool allCaps, bool applyAbbreviations, CacheArrayTypes type, DynamicSpriteFont primaryFont, string overrideFont = null)
         {
             ref string[][] cache = ref m_generalCache[(allCaps ? 1 : 0) + (applyAbbreviations ? 1 : 2)];
-            return type switch
+            switch (type)
             {
-                CacheArrayTypes.Districts => refId > 256 ? UpdateMeshBuildingName((ushort)(refId - 256), ref cache[(int)BuildingName][refId - 256], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont) : UpdateMeshDistrict(refId, ref cache[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont),
-                CacheArrayTypes.Parks => UpdateMeshPark(refId, ref cache[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont),
-                CacheArrayTypes.SuffixStreetName => UpdateMeshStreetSuffix(refId, ref cache[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont),
-                CacheArrayTypes.FullStreetName => UpdateMeshFullNameStreet(refId, ref cache[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont),
-                CacheArrayTypes.StreetQualifier => UpdateMeshStreetQualifier(refId, ref cache[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont),
-                CacheArrayTypes.BuildingName => UpdateMeshBuildingName(refId, ref cache[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont),
-                CacheArrayTypes.PostalCode => UpdateMeshPostalCode(refId, ref cache[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont),
-                CacheArrayTypes.VehicleNumber => UpdateMeshVehicleNumber(refId, ref cache[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont),
-                CacheArrayTypes.LineIdentifier => UpdateMeshLineIdentifier(refId, ref cache[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont),
-                CacheArrayTypes.LineFullName => UpdateMeshLineFullName(refId, ref cache[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont),
-                _ => null
+                case CacheArrayTypes.Districts: return refId > 256 ? UpdateMeshBuildingName((ushort)(refId - 256), ref cache[(int)BuildingName][refId - 256], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont) : UpdateMeshDistrict(refId, ref cache[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont);
+                case CacheArrayTypes.Parks: return UpdateMeshPark(refId, ref cache[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont);
+                case CacheArrayTypes.SuffixStreetName: return UpdateMeshStreetSuffix(refId, ref cache[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont);
+                case CacheArrayTypes.FullStreetName: return UpdateMeshFullNameStreet(refId, ref cache[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont);
+                case CacheArrayTypes.StreetQualifier: return UpdateMeshStreetQualifier(refId, ref cache[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont);
+                case CacheArrayTypes.BuildingName: return UpdateMeshBuildingName(refId, ref cache[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont);
+                case CacheArrayTypes.PostalCode: return UpdateMeshPostalCode(refId, ref cache[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont);
+                case CacheArrayTypes.VehicleNumber: return UpdateMeshVehicleNumber(refId, ref cache[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont);
+                case CacheArrayTypes.LineIdentifier: return UpdateMeshLineIdentifier(refId, ref cache[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont);
+                case CacheArrayTypes.LineFullName: return UpdateMeshLineFullName(refId, ref cache[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont);
+                default: return null;
             };
         }
         private static string ApplyTransforms(string name, bool allCaps, bool applyAbbreviations)

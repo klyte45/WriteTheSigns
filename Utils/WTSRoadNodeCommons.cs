@@ -34,9 +34,9 @@ namespace Klyte.WriteTheSigns.Utils
                     appointingAngle.Add(Tuple.New(i, (isStart ? segment.m_startDirection : segment.m_endDirection).GetAngleXZ()));
                 }
             }
-            IOrderedEnumerable<Tuple<int, float>> x = appointingAngle.OrderBy(x => x.Second);
-            rotationOrder = x.Select(x => x.First).ToArray();
-            angles = x.Select(x => Mathf.RoundToInt(x.Second)).ToArray();
+            IOrderedEnumerable<Tuple<int, float>> x = appointingAngle.OrderBy(y => y.Second);
+            rotationOrder = x.Select(y => y.First).ToArray();
+            angles = x.Select(y => Mathf.RoundToInt(y.Second)).ToArray();
         }
         public static bool CheckSegmentInverted(ushort nodeID, ref NetSegment netSegmentJ)
         {

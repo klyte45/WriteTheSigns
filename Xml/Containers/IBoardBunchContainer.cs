@@ -2,7 +2,7 @@
 {
     public interface IBoardBunchContainer
     {
-        public bool HasAnyBoard();
+        bool HasAnyBoard();
     }
 
     public class BasicBoardBunchContainer : IBoardBunchContainer

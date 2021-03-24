@@ -87,8 +87,7 @@ namespace Klyte.WriteTheSigns.UI
             }
             else
             {
-                BasicRenderInformation refer = WTSDynamicTextRenderingRules.GetTextMesh(TextDescriptors[referenceIdx], 0, 0, referenceIdx, m_defaultInstance, descriptor, out IEnumerable<BasicRenderInformation> briArr);
-                refer ??= briArr?.FirstOrDefault();
+                BasicRenderInformation refer = WTSDynamicTextRenderingRules.GetTextMesh(TextDescriptors[referenceIdx], 0, 0, referenceIdx, m_defaultInstance, descriptor, out IEnumerable<BasicRenderInformation> briArr) ?? briArr?.FirstOrDefault();
                 if (refer == null)
                 {
                     return default;
