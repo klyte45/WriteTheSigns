@@ -10,14 +10,6 @@ namespace Klyte.WriteTheSigns.Overrides
 
         public Redirector RedirectorInstance { get; private set; }
 
-        #region Events
-
-
-
-        #endregion
-
-
-
         #region Hooking 
 
         public void Start()
@@ -32,12 +24,11 @@ namespace Klyte.WriteTheSigns.Overrides
             RedirectorInstance.AddRedirect(typeof(DistrictManager).GetMethod("AreaModified", RedirectorUtils.allFlags), null, posChange);
             RedirectorInstance.AddRedirect(typeof(DistrictManager).GetMethod("SetParkName", RedirectorUtils.allFlags), null, posChangePark);
             RedirectorInstance.AddRedirect(typeof(DistrictManager).GetMethod("ParksAreaModified", RedirectorUtils.allFlags), null, posChangePark);
+
+            RedirectorInstance.AddRedirect(typeof(InfoPanel).GetMethod("SetName", RedirectorUtils.allFlags), null, typeof(WTSController).GetMethod("OnCityNameChanged", RedirectorUtils.allFlags));
             #endregion
         }
-
-
         #endregion
-
 
 
     }

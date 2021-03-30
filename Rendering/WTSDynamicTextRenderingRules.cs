@@ -29,7 +29,8 @@ namespace Klyte.WriteTheSigns.Rendering
             TextType.LinesSymbols,
             TextType.LineIdentifier,
             TextType.LastStopLine,
-            TextType.LineFullName
+            TextType.LineFullName,            
+            TextType.CityName
         };
 
         internal static Material m_rotorMaterial;
@@ -54,7 +55,8 @@ namespace Klyte.WriteTheSigns.Rendering
                 TextType.District,
                 TextType.Park,
                 TextType.DistrictOrPark,
-                TextType.ParkOrDistrict
+                TextType.ParkOrDistrict,
+                TextType.CityName
             },
             [TextRenderingClass.MileageMarker] = new TextType[]
             {
@@ -66,6 +68,7 @@ namespace Klyte.WriteTheSigns.Rendering
                 TextType.StreetPrefix,
                 TextType.StreetSuffix,
                 TextType.StreetNameComplete,
+                TextType.CityName,
             },
             [TextRenderingClass.Buildings] = new TextType[]
             {
@@ -78,7 +81,8 @@ namespace Klyte.WriteTheSigns.Rendering
                TextType.PrevStopLine, // Previous Station Line 2
                TextType.LastStopLine, // Line Destination (Last stop before get back) 3
                TextType.PlatformNumber,
-               TextType.TimeTemperature
+               TextType.TimeTemperature,
+               TextType.CityName
             },
             [TextRenderingClass.PlaceOnNet] = new TextType[]
             {
@@ -843,6 +847,7 @@ namespace Klyte.WriteTheSigns.Rendering
                 case TextType.District: return GetFromCacheArray(data.m_districtId, textDescriptor, RenderUtils.CacheArrayTypes.Districts, baseFont);
                 case TextType.Park: return GetFromCacheArray(data.m_districtParkId, textDescriptor, RenderUtils.CacheArrayTypes.Parks, baseFont);
                 case TextType.PostalCode: return GetFromCacheArray(data.m_segmentId, textDescriptor, RenderUtils.CacheArrayTypes.PostalCode, baseFont);
+                case TextType.CityName: return GetFromCacheArray(0, textDescriptor, RenderUtils.CacheArrayTypes.Districts, baseFont);
                 default: return null;
             };
         }
@@ -869,6 +874,7 @@ namespace Klyte.WriteTheSigns.Rendering
                 case TextType.StreetNameComplete: return GetFromCacheArray(WTSBuildingDataCaches.GetBuildingMainAccessSegment(refID), textDescriptor, RenderUtils.CacheArrayTypes.FullStreetName, baseFont);
                 case TextType.PlatformNumber: return RenderUtils.GetTextData((buildingDescritpor.m_platforms.FirstOrDefault() + 1).ToString(), textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                 case TextType.TimeTemperature: return GetTimeTemperatureText(textDescriptor, ref baseFont, refID, boardIdx);
+                case TextType.CityName: return GetFromCacheArray(0, textDescriptor, RenderUtils.CacheArrayTypes.Districts, baseFont);
                 case TextType.LinesSymbols:
                     multipleOutput = WriteTheSignsMod.Controller.SpriteRenderingRules.DrawLineFormats(GetAllTargetStopInfo(buildingDescritpor, refID).GroupBy(x => x.m_lineId).Select(x => x.First()).Select(x => (int)x.m_lineId));
                     return null;
@@ -890,6 +896,7 @@ namespace Klyte.WriteTheSigns.Rendering
             TextType targetType = textDescriptor.m_textType;
             switch (targetType)
             {
+                case TextType.CityName: return GetFromCacheArray(0, textDescriptor, RenderUtils.CacheArrayTypes.Districts, baseFont);
                 case TextType.GameSprite: return WriteTheSignsMod.Controller.SpriteRenderingRules.GetSpriteFromDefaultAtlas(textDescriptor.m_spriteName);
                 case TextType.Fixed: return RenderUtils.GetTextData(textDescriptor.m_fixedText ?? "", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                 case TextType.OwnName: return GetFromCacheArray(refID, textDescriptor, RenderUtils.CacheArrayTypes.VehicleNumber, baseFont);
@@ -942,7 +949,7 @@ namespace Klyte.WriteTheSigns.Rendering
                         if (stopInfo.m_lineId == 0)
                         {
                             WriteTheSignsMod.Controller.ConnectorTLM.MapLineDestinations(targetVehicle.m_transportLine);
-                            stopInfo = ref GetTargetStopInfo(TransportLine.GetPrevStop(target));
+                            stopInfo = ref GetTargetStopInfo(lastTarget);
                         }
                         BasicRenderInformation result;
                         if (stopInfo.m_destinationString != null)
@@ -1003,6 +1010,7 @@ namespace Klyte.WriteTheSigns.Rendering
             }
             switch (textDescriptor.m_textType)
             {
+                case TextType.CityName: return RenderUtils.GetTextData("[City Name]", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                 case TextType.Fixed: return RenderUtils.GetTextData(textDescriptor.m_fixedText ?? "", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                 case TextType.DistanceFromReference: return RenderUtils.GetTextData("00", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                 case TextType.PostalCode: return RenderUtils.GetTextData("00000", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
@@ -1075,6 +1083,7 @@ namespace Klyte.WriteTheSigns.Rendering
             }
             switch (targetType)
             {
+                case TextType.CityName: return GetFromCacheArray(0, textDescriptor, RenderUtils.CacheArrayTypes.Districts, baseFont);
                 case TextType.GameSprite: return WriteTheSignsMod.Controller.SpriteRenderingRules.GetSpriteFromDefaultAtlas(textDescriptor.m_spriteName);
                 case TextType.Fixed: return RenderUtils.GetTextData(textDescriptor.m_fixedText ?? "", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                 case TextType.StreetSuffix: return GetFromCacheArray(targetSegment, textDescriptor, RenderUtils.CacheArrayTypes.SuffixStreetName, baseFont);

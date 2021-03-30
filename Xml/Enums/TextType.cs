@@ -27,7 +27,8 @@
         TimeTemperature,
         ParameterizedGameSprite,
         ParameterizedGameSpriteIndexed,
-        LineFullName
+        LineFullName,
+        CityName
     }
 
 

@@ -73,6 +73,15 @@ namespace Klyte.WriteTheSigns.Utils
             ClearCacheLineName();
         }
 
+        public static void ClearCacheCityName()
+        {
+            foreach (string[][] m_cache in m_generalCache)
+            {
+                m_cache[(int)Districts][0] = null;
+            }
+            ClearCacheLineName();
+        }
+
         public static void ClearCacheParkName()
         {
             foreach (string[][] m_cache in m_generalCache)
@@ -124,6 +133,7 @@ namespace Klyte.WriteTheSigns.Utils
                 m_cache[(int)LineIdentifier] = new string[TransportManager.MAX_LINE_COUNT];
             }
             ClearCacheLineName();
+            ClearCacheVehicleNumber();
         }
         public static void ClearCacheLineName()
         {

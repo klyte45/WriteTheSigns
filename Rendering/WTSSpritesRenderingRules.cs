@@ -175,6 +175,7 @@ namespace Klyte.WriteTheSigns.Rendering
             yield break;
         }
 
+
         private IEnumerator WriteTransportLineTextureCoroutine(int lineId)
         {
             yield return 0;
@@ -247,7 +248,7 @@ namespace Klyte.WriteTheSigns.Rendering
                 m_lastCoroutineStep = SimulationManager.instance.m_currentTickIndex;
                 m_coroutineCounter = 0;
             }
-            while (m_coroutineCounter > 1)
+            if (m_coroutineCounter >= 1)
             {
                 return false;
             }
