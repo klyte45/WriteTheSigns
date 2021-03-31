@@ -99,7 +99,8 @@ namespace Klyte.WriteTheSigns.Rendering
                 TextType.DistrictOrPark,
                 TextType.ParkOrDistrict,
                 TextType.ParameterizedText,
-                TextType.TimeTemperature
+                TextType.TimeTemperature,
+               TextType.CityName
             },
         };
 
