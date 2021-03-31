@@ -12,7 +12,7 @@ using System.IO;
 using System.Reflection;
 using UnityEngine;
 
-[assembly: AssemblyVersion("0.2.1.*")]
+[assembly: AssemblyVersion("0.2.1.0")]
 namespace Klyte.WriteTheSigns
 {
     public class WriteTheSignsMod : BasicIUserMod<WriteTheSignsMod, WTSController, WTSPanel>
@@ -47,6 +47,7 @@ namespace Klyte.WriteTheSigns
             group8.AddLabel(Locale.Get("K45_WTS_GET_FILES_GITHUB"));
             group8.AddButton(Locale.Get("K45_WTS_GO_TO_GITHUB"), () => Application.OpenURL("https://github.com/klyte45/WriteTheSignsFiles"));
             group8.AddButton(Locale.Get("K45_WTS_GO_TO_WIKI"), () => Application.OpenURL("https://github.com/klyte45/WriteTheSigns/wiki"));
+            group8.AddButton(Locale.Get("K45_WTS_GO_TO_WTSWORKSHOP"), () => Application.OpenURL("https://github.com/klyte45/WriteTheSigns/wiki"));
 
             UIHelperExtension group4 = helper.AddGroupExtended(Locale.Get("K45_WTS_GENERATED_TEXT_OPTIONS"));
             (group4.AddDropdownLocalized("K45_WTS_INITIAL_TEXTURE_SIZE_FONT", new string[] { "512", "1024", "2048", "4096 (!)", "8192 (!!!)", "16384 (WTF??)" }, StartTextureSizeFont, (x) => StartTextureSizeFont.value = x).parent as UIPanel).autoFitChildrenVertically = true;
@@ -95,6 +96,7 @@ namespace Klyte.WriteTheSigns
             namesFilesButton.text = fileInfo.FullName + Path.DirectorySeparatorChar;
         }
 
+        protected override Tuple<string, string> GetButtonLink() => Tuple.New("Request & Read future features of/for WTS", "https://github.com/klyte45/WriteTheSigns/issues");
 
     }
 }

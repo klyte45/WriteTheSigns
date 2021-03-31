@@ -1,35 +1,15 @@
-﻿<extended>v0.2 - 20/NOV/2020
-<color yellow>Beta-2 version:</color>
-<color cyan>- Parameterized box generation for vehicles texts</color>: Useful to create a container to fit better the texts in vehicles. Specially useful for destination boards.
-<color cyan>- Changes in road destination mapping system</color>: The system used to generate procedural destination boards was removed. Now you can place them directly at segments that you want, and customize the texts via parameters (4 reference targets to extract text + up to 8 text parameters). Also added an option to place a simple prop instead of a built layout. It makes all Procedural Objects' mod workshop assets compatible with Write The Signs, once you can assemble props as you can do there now.
-<color cyan>- Lights are on!</color>: Fixed light system from props placed with Write the Signs. Available in Building, Road Corners and On Segment Placing modes!
-<color cyan>- Time & temperature dynamic text</color>: New option that generates a switching text between current time and temperature in the city. Functional digital clocks are now possible!
-<color cyan>- Bug fixes</color>: A lot of fixes were done. Main ones:
-- Increased performance
-- Fixed flickering props at buildings
-- Fixed some i18n errors
-- Fixed neutral white text tone
-- Other minor fixes
+﻿<extended>v0.2.1 - 31/MAR/21
+<color yellow>Beta-2.1 version:</color>
+<color cyan>- Multiline color check</color>: Now use neutral colors only if there are more than 1 different line in the selected platforms, not different stops. (only if "Use neutral if multiline" option is enabled for building props)
+<color cyan>- Downgrade to C#7.x</color>: The mod must be more stable now, and must work in any OS.
+<color cyan>- New text type</color>: Support to city name in text spots.
+<color cyan>- WTS Wiki</color>: Check out the new button at mod options screen to read the wiki of Write the Signs mod! W.I.P.
+<color cyan>- Workshop asset with WTS export automated</color>: Now any WTS related file exported to be bundled within to send to Steam Workshop will be automatically copied to the staging folder.
+<color cyan>- Workshop asset tags for WTS</color>: The tags "Write The Signs" and "K45 WTS" will both be added to an asset item sent to workshop if they contain any WTS related file. Check all assets sent with WTS layouts using the button at mod options window.
 
-r1 - 21/NOV/2020
-<color cyan>- Sprites slideshow</color>: This text type, available for place on segment layouts, allow to animate a sprite slideshow using the parameters set at instance. Type "IMG_" at parameters tab to select an image to use it there.
-<color cyan>- Limits raised</color>: Now there are 10 variables for the instances of place on segment layouts. Also, the max size allowed to import images into the game was raised to 400x400.
-<color cyan>- Clock configurations</color>: Now you can set the clock precision and formatting. Note that using a precision below 15min isn't recommended, except if you have a high spec PC and is using Real Time mod.
-
-r2 - 22/NOV/2020
-<color cyan>- Prop layouts scope: Savegame, Global & Asset</color>: Now you will be able to export as many layouts you want to props. So it will make the steps easier for who will use your prop model at WTS. Note you need to share the asset through workshop before exporting a Asset scope layout. And don't forget to check if the game has copied the XML file to the upload folder when updating your item with the pre-made layouts!
-<color cyan>- UX Improvements</color>: Now all prop layouts dropdowns were replaced by a search filter. Easier to find out your layouts!
-<color cyan>- Text preview fix</color>: Now it will center the text correctly in the preview window when editing one of them.
-<color cyan>- New update news modal behavior</color>: Now this screen is shown only after loading a city. 
-
-r3 - 23/NOV/2020
-<color cyan>- New text type: Parameterized sprite</color>: It's like the slideshow, but will read only the selected parameter instead of pass thru all parameters set.
-<color cyan>- Bug fixes post r2 release</color>
-
-r4 - 24/NOV/2020
-<color cyan>- Outside connections support</color>: Now a segment set as target will return the neighbor city name as the district name, if it's in the edge of the map.
-<color cyan>- Bug fixes post r3 release</color>
-
-r5 - 24/NOV/2020
-<color cyan>- Full line name text for Vehicles and Buildings</color>: Can be formatted in rows & columns, like a table. Same setup way than the line symbols layout for buildings.
-<color cyan>- Bug fixes post r4 release</color>
+<color #ffff66>Coming soon in beta 3:
+	- Sprites grouping as slideshow using subfolders
+	- Assets with built-in images to use as slideshow
+	- Exportable instance variables for buildings and vehicles
+	- More... Check the opened issues and their statuses at GitHub (third button of this screen!)
+</color>
