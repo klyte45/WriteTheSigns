@@ -7,7 +7,7 @@ namespace Klyte.WriteTheSigns.Data
 {
 
     [XmlRoot("WTSOnNetData")]
-    public class WTSOnNetData : DataExtensorBase<WTSOnNetData>
+    public class WTSOnNetData : DataExtensionBase<WTSOnNetData>
     {
         [XmlIgnore]
         public OnNetGroupDescriptorXml[] m_boardsContainers = new OnNetGroupDescriptorXml[NetManager.MAX_SEGMENT_COUNT];

@@ -1,7 +1,7 @@
 extern alias TLM;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Utils;
-using TLM::Klyte.TransportLinesManager.Extensors;
+using TLM::Klyte.TransportLinesManager.Extensions;
 using TLM::Klyte.TransportLinesManager.ModShared;
 using UnityEngine;
 

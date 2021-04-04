@@ -2,7 +2,7 @@
 using ColossalFramework.Globalization;
 using ColossalFramework.UI;
 using FontStashSharp;
-using Klyte.Commons.Extensors;
+using Klyte.Commons.Extensions;
 using Klyte.Commons.UI.SpriteNames;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Libraries;
@@ -408,57 +408,44 @@ namespace Klyte.WriteTheSigns.UI
 
         private string[] OnFilterSprites(string input) => m_spriteFilter.atlas.spriteNames.Where(x => x.ToLower().Contains(input.ToLower())).OrderBy(x => x).Select(x => $"<sprite {x}> {x}").ToArray();
 
-        private void OnSetTextOwnNameContent(int sel)
-        {
-            SafeObtain((ref BoardTextDescriptorGeneralXml desc) =>
-            {
-                if (sel >= 0)
-                {
-                    desc.m_textType = WTSDynamicTextRenderingRules.ALLOWED_TYPES_VEHICLE[sel];
-                    ApplyShowRules(desc);
-                }
-            });
-        }
+        private void OnSetTextOwnNameContent(int sel) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) =>
+                                                       {
+                                                           if (sel >= 0)
+                                                           {
+                                                               desc.m_textType = WTSDynamicTextRenderingRules.ALLOWED_TYPES_VEHICLE[sel];
+                                                               ApplyShowRules(desc);
+                                                           }
+                                                       });
 
         //private void OnSetShader(int sel) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => { });
         private void OnChangeApplyRescaleOnY(bool isChecked) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_applyOverflowResizingOnY = isChecked);
         private void OnChangeInvertCloneTextHorizontalAlignment(bool isChecked) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.PlacingConfig.m_invertYCloneHorizontalAlign = isChecked);
-        private void OnChangeCreateSimmetricClone(bool isChecked)
-        {
-            SafeObtain((ref BoardTextDescriptorGeneralXml desc) =>
-            {
-                desc.PlacingConfig.m_create180degYClone = isChecked;
-                ApplyShowRules(desc);
-            });
-
-        }
+        private void OnChangeCreateSimmetricClone(bool isChecked) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) =>
+                                                                   {
+                                                                       desc.PlacingConfig.m_create180degYClone = isChecked;
+                                                                       ApplyShowRules(desc);
+                                                                   });
 
         private void OnSetTextAlignmentHorizontal(int sel) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_textAlign = (UIHorizontalAlignment)sel);
-        private void OnFixedColorChanged(UIComponent component, Color value) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.ColoringConfig.m_defaultColor = value);
+        private void OnFixedColorChanged(Color value) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.ColoringConfig.m_defaultColor = value);
         private void OnMaxWidthChange(float obj) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_maxWidthMeters = obj);
         private void OnScaleSubmit(float scale) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_textScale = scale);
-        private void OnContrastColorChange(bool isChecked)
-        {
-            SafeObtain((ref BoardTextDescriptorGeneralXml desc) =>
-            {
-                desc.ColoringConfig.m_useContrastColor = isChecked;
-                ApplyShowRules(desc);
-            });
-        }
+        private void OnContrastColorChange(bool isChecked) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) =>
+                                                            {
+                                                                desc.ColoringConfig.m_useContrastColor = isChecked;
+                                                                ApplyShowRules(desc);
+                                                            });
         private void OnBgSizeChanged(Vector2 obj) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) =>
         {
             desc.BackgroundMeshSettings.Size = (Vector2Xml)obj;
             ApplyShowRules(desc);
         });
-        private void OnBgColorChanged(UIComponent component, Color value) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.BackgroundMeshSettings.BackgroundColor = value);
-        private void OnSetMaterialType(int sel)
-        {
-            SafeObtain((ref BoardTextDescriptorGeneralXml desc) =>
-            {
-                desc.IlluminationConfig.IlluminationType = (MaterialType)sel;
-                ApplyShowRules(desc);
-            });
-        }
+        private void OnBgColorChanged(Color value) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.BackgroundMeshSettings.BackgroundColor = value);
+        private void OnSetMaterialType(int sel) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) =>
+                                                 {
+                                                     desc.IlluminationConfig.IlluminationType = (MaterialType)sel;
+                                                     ApplyShowRules(desc);
+                                                 });
 
         private void OnSetBlinkType(int sel) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) =>
         {
@@ -510,8 +497,8 @@ namespace Klyte.WriteTheSigns.UI
             desc.BackgroundMeshSettings.FrameMeshSettings.InheritColor = isChecked;
             ApplyShowRules(desc);
         });
-        private void OnFrameColorChanged(UIComponent component, Color value) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.BackgroundMeshSettings.FrameMeshSettings.OutsideColor = value);
-        private void OnFrameGlassColorChanged(UIComponent component, Color value) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.BackgroundMeshSettings.FrameMeshSettings.GlassColor = value);
+        private void OnFrameColorChanged(Color value) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.BackgroundMeshSettings.FrameMeshSettings.OutsideColor = value);
+        private void OnFrameGlassColorChanged(Color value) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.BackgroundMeshSettings.FrameMeshSettings.GlassColor = value);
         #endregion
     }
 

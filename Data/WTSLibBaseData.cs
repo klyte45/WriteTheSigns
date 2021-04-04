@@ -7,7 +7,7 @@ using System.Text;
 
 namespace Klyte.WriteTheSigns.Data
 {
-    public abstract class WTSLibBaseData<LIB, DESC> : BasicLib<LIB, DESC>, IDataExtensor
+    public abstract class WTSLibBaseData<LIB, DESC> : BasicLib<LIB, DESC>, IDataExtension
         where LIB : WTSLibBaseData<LIB, DESC>, new()
         where DESC : ILibable
     {
@@ -15,16 +15,16 @@ namespace Klyte.WriteTheSigns.Data
         public static LIB Instance
         {
             get {
-                if (!ExtensorContainer.instance.Instances.TryGetValue(typeof(LIB), out IDataExtensor result) || result is null)
+                if (!DataContainer.instance.Instances.TryGetValue(typeof(LIB), out IDataExtension result) || result is null)
                 {
-                    ExtensorContainer.instance.Instances[typeof(LIB)] = new LIB();
+                    DataContainer.instance.Instances[typeof(LIB)] = new LIB();
                 }
-                return ExtensorContainer.instance.Instances[typeof(LIB)] as LIB;
+                return DataContainer.instance.Instances[typeof(LIB)] as LIB;
             }
         }
 
 
-        public IDataExtensor Deserialize(Type type, byte[] data)
+        public IDataExtension Deserialize(Type type, byte[] data)
         {
             string content;
             if (data[0] == '<')

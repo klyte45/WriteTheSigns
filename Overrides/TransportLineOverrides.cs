@@ -1,7 +1,7 @@
-﻿using Klyte.Commons.Extensors;
+﻿using Klyte.Commons.Extensions;
 using Klyte.Commons.Utils;
 using System.Reflection;
-using static Klyte.Commons.Extensors.RedirectorUtils;
+using static Klyte.Commons.Extensions.RedirectorUtils;
 namespace Klyte.WriteTheSigns.Overrides
 {
     public class TransportLineOverrides : Redirector, IRedirectable

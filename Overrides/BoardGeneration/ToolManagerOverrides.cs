@@ -1,4 +1,4 @@
-﻿using Klyte.Commons.Extensors;
+﻿using Klyte.Commons.Extensions;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Singleton;
 using UnityEngine;

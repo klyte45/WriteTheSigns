@@ -2,7 +2,7 @@
 using ColossalFramework.Globalization;
 using ColossalFramework.Packaging;
 using ColossalFramework.UI;
-using Klyte.Commons.Extensors;
+using Klyte.Commons.Extensions;
 using Klyte.Commons.UI.SpriteNames;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Data;
@@ -283,7 +283,7 @@ namespace Klyte.WriteTheSigns.UI
 
 
         #region Actions        
-        private void OnSetPropColor(UIComponent component, Color value) => EditingInstance.FixedColor = (value == default ? (Color?)null : value);
+        private void OnSetPropColor( Color value) => EditingInstance.FixedColor = (value == default ? (Color?)null : value);
 
         private string OnSetProp(string typed, int sel, string[] items)
         {

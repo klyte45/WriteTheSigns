@@ -3,7 +3,7 @@ using System.Xml.Serialization;
 
 namespace Klyte.WriteTheSigns.Data
 {
-    public abstract class WTSBaseData<D, CC> : DataExtensorBase<D> where D : WTSBaseData<D, CC>, new()
+    public abstract class WTSBaseData<D, CC> : DataExtensionBase<D> where D : WTSBaseData<D, CC>, new()
     {
         private CC[,,] m_boardsContainers;
 

@@ -6,7 +6,7 @@ using System.Xml.Serialization;
 namespace Klyte.WriteTheSigns.Data
 {
     [XmlRoot("WTSEtcData")]
-    public class WTSEtcData : DataExtensorBase<WTSEtcData>
+    public class WTSEtcData : DataExtensionBase<WTSEtcData>
     {
         public override string SaveId => "K45_WTS_EtcData";
 
