@@ -1,9 +1,9 @@
 ﻿using Klyte.Commons.Utils;
 using UnityEngine;
 
-namespace Klyte.WriteTheSigns.Connectors
+namespace Klyte.WriteTheSigns.ModShared
 {
-    internal abstract class IConnectorTLM : MonoBehaviour
+    internal abstract class IBridgeTLM : MonoBehaviour
     {
         public abstract Tuple<string, Color, string> GetLineLogoParameters(ushort lineID);
         public abstract ushort GetStopBuildingInternal(ushort stopId, ushort lineId);

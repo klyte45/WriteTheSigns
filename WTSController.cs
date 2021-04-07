@@ -3,7 +3,7 @@
 using ColossalFramework.Globalization;
 using Klyte.Commons.Interfaces;
 using Klyte.Commons.Utils;
-using Klyte.WriteTheSigns.Connectors;
+using Klyte.WriteTheSigns.ModShared;
 using Klyte.WriteTheSigns.Overrides;
 using Klyte.WriteTheSigns.Rendering;
 using Klyte.WriteTheSigns.Singleton;
@@ -30,15 +30,15 @@ namespace Klyte.WriteTheSigns
         internal WTSBuildingPropsSingleton BuildingPropsSingleton { get; private set; }
         internal WTSVehicleTextsSingleton VehicleTextsSingleton { get; private set; }
         internal WTSOnNetPropsSingleton OnNetPropsSingleton { get; private set; }
-        internal IConnectorTLM ConnectorTLM { get; private set; }
-        internal IConnectorADR ConnectorADR { get; private set; }
+        internal IBridgeTLM ConnectorTLM { get; private set; }
+        internal IBridgeADR ConnectorADR { get; private set; }
 
         public WTSRoadPropsSingleton RoadPropsSingleton { get; private set; }
         public Dictionary<string, Dictionary<string, string>> AbbreviationFiles { get; private set; }
         public FontServer FontServer => FontServer.instance;
 
         public static int DefaultTextureSizeFont => 512 << WriteTheSignsMod.StartTextureSizeFont;
-        
+
         public event Action EventFontsReloadedFromFolder;
         public event Action EventOnDistrictChanged;
         public event Action EventOnParkChanged;
@@ -57,12 +57,12 @@ namespace Klyte.WriteTheSigns
         {
             if (RoadSegmentToolInstance == null)
             {
-                FindObjectOfType<ToolController>().gameObject.AddComponent<RoadSegmentTool>();
+                ToolsModifierControl.toolController.gameObject.AddComponent<RoadSegmentTool>();
             }
 
             if (BuildingEditorToolInstance == null)
             {
-                FindObjectOfType<ToolController>().gameObject.AddComponent<BuildingEditorTool>();
+                ToolsModifierControl.toolController.gameObject.AddComponent<BuildingEditorTool>();
             }
             ReloadAbbreviationFiles();
 
@@ -72,8 +72,8 @@ namespace Klyte.WriteTheSigns
             RoadPropsSingleton = gameObject.AddComponent<WTSRoadPropsSingleton>();
             VehicleTextsSingleton = gameObject.AddComponent<WTSVehicleTextsSingleton>();
             OnNetPropsSingleton = gameObject.AddComponent<WTSOnNetPropsSingleton>();
-            ConnectorTLM = PluginUtils.GetImplementationTypeForMod<ConnectorTLM, ConnectorTLMFallback, IConnectorTLM>(gameObject, "TransportLinesManager", "13.4.0.1");
-            ConnectorADR = PluginUtils.GetImplementationTypeForMod<ConnectorADR, ConnectorADRFallback, IConnectorADR>(gameObject, "KlyteAddresses", "2.0.4.1");
+            ConnectorTLM = PluginUtils.GetImplementationTypeForMod<BridgeTLM, BridgeTLMFallback, IBridgeTLM>(gameObject, "TransportLinesManager", "13.4.0.1");
+            ConnectorADR = PluginUtils.GetImplementationTypeForMod<BridgeADR, BridgeADRFallback, IBridgeADR>(gameObject, "KlyteAddresses", "2.0.4.1");
 
             var spritesToAdd = new List<SpriteInfo>();
             var errors = new List<string>();

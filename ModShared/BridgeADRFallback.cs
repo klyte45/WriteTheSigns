@@ -2,9 +2,9 @@ using ColossalFramework.Math;
 using Klyte.Commons.Utils;
 using UnityEngine;
 
-namespace Klyte.WriteTheSigns.Connectors
+namespace Klyte.WriteTheSigns.ModShared
 {
-    internal class ConnectorADRFallback : IConnectorADR
+    internal class BridgeADRFallback : IBridgeADR
     {
 
         public override string GetStreetSuffix(ushort idx)

@@ -1,6 +1,7 @@
 ﻿using ColossalFramework;
 using ColossalFramework.Globalization;
 using Klyte.Commons;
+using Klyte.Commons.Interfaces;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Rendering;
 using Klyte.WriteTheSigns.Xml;
@@ -15,7 +16,7 @@ using static Klyte.Commons.Utils.XmlUtils;
 namespace Klyte.WriteTheSigns.Data
 {
     [XmlRoot("PropLayoutData")]
-    public class WTSPropLayoutData : WTSLibBaseData<WTSPropLayoutData, BoardDescriptorGeneralXml>
+    public class WTSPropLayoutData : DataExtensionLibBase<WTSPropLayoutData, BoardDescriptorGeneralXml>
     {
 
         public override string SaveId => "K45_WTS_PropLayoutData";

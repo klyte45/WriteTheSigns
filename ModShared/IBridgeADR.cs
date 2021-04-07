@@ -2,9 +2,9 @@
 using Klyte.WriteTheSigns.Xml;
 using UnityEngine;
 
-namespace Klyte.WriteTheSigns.Connectors
+namespace Klyte.WriteTheSigns.ModShared
 {
-    internal abstract class IConnectorADR : MonoBehaviour
+    internal abstract class IBridgeADR : MonoBehaviour
     {
         public abstract Color GetDistrictColor(ushort districtId);
         public abstract Vector2 GetStartPoint();

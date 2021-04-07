@@ -8,9 +8,9 @@ using System.Linq;
 using UnityEngine;
 using static ItemClass;
 
-namespace Klyte.WriteTheSigns.Connectors
+namespace Klyte.WriteTheSigns.ModShared
 {
-    internal class ConnectorTLMFallback : IConnectorTLM
+    internal class BridgeTLMFallback : IBridgeTLM
     {
         public override Tuple<string, Color, string> GetLineLogoParameters(ushort lineID)
         {

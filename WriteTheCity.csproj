@@ -182,7 +182,7 @@
     <Compile Include="commons\Utils\ZipUtils.cs" />
     <Compile Include="Data\WTSEtcData.cs" />
     <Compile Include="Data\WTSVehicleData.cs" />
-    <Compile Include="Data\WTSLibBaseData.cs" />
+    <Compile Include="commons\Interfaces\Warehouse\DataExtensionLibBase.cs" />
     <Compile Include="Data\WTSBaseData.cs" />
     <Compile Include="Data\WTSBuildingsData.cs" />
     <Compile Include="Data\WTSHighwayMileageData.cs" />
@@ -206,12 +206,12 @@
     <Compile Include="DynamicFont\src\Utility\IOUtils.cs" />
     <Compile Include="Libraries\BasicFileLib.cs" />
     <Compile Include="DynamicFont\src\Utility\BasicRenderInformation.cs" />
-    <Compile Include="ModShared\ConnectorADR.cs" />
-    <Compile Include="ModShared\ConnectorADRFallback.cs" />
-    <Compile Include="ModShared\IConnectorADR.cs" />
-    <Compile Include="ModShared\IConnectorTLM.cs" />
-    <Compile Include="ModShared\ConnectorTLM.cs" />
-    <Compile Include="ModShared\ConnectorTLMFallback.cs" />
+    <Compile Include="ModShared\BridgeADR.cs" />
+    <Compile Include="ModShared\BridgeADRFallback.cs" />
+    <Compile Include="ModShared\IBridgeADR.cs" />
+    <Compile Include="ModShared\IBridgeTLM.cs" />
+    <Compile Include="ModShared\BridgeTLM.cs" />
+    <Compile Include="ModShared\BridgeTLMFallback.cs" />
     <Compile Include="Overrides\BoardGeneration\VehicleAIOverrides.cs" />
     <Compile Include="Overrides\BoardGeneration\ToolManagerOverrides.cs" />
     <Compile Include="Overrides\TransportLineOverrides.cs" />
