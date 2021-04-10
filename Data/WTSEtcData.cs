@@ -34,7 +34,7 @@ namespace Klyte.WriteTheSigns.Data
                 if (WriteTheSignsMod.Controller is null || m_publicTransportLineSymbolFont != value)
                 {
                     m_publicTransportLineSymbolFont = value;
-                    WriteTheSignsMod.Controller?.SpriteRenderingRules?.PurgeAllLines();
+                    WriteTheSignsMod.Controller?.AtlasesLibrary?.PurgeAllLines();
                 }
             }
         }

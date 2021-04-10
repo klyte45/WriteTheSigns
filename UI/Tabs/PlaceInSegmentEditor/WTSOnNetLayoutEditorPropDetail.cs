@@ -9,7 +9,6 @@ using Klyte.WriteTheSigns.Libraries;
 using Klyte.WriteTheSigns.Rendering;
 using Klyte.WriteTheSigns.Xml;
 using System;
-using System.Linq;
 using UnityEngine;
 using static Klyte.Commons.UI.DefaultEditorUILib;
 
@@ -27,7 +26,8 @@ namespace Klyte.WriteTheSigns.UI
         private bool m_dirty;
         public bool Dirty
         {
-            get => m_dirty; set {
+            get => m_dirty; set
+            {
                 if (value && MainContainer.isVisible)
                 {
                     ReloadData();
@@ -120,11 +120,12 @@ namespace Klyte.WriteTheSigns.UI
             for (int i = 0; i < BoardInstanceOnNetXml.TEXT_PARAMETERS_COUNT; i++)
             {
                 var currentIdx = i;
-                AddFilterableInput(string.Format(Locale.Get($"K45_WTS_ONNETEDITOR_TEXTPARAM"), currentIdx), helperParameters, out m_textParams[i], out UIListBox lb, OnFilterParamImages, (t, x, y) => OnParamChanged(t, currentIdx, x, y));
+                UISprite sprite = null;
+                AddFilterableInput(string.Format(Locale.Get($"K45_WTS_ONNETEDITOR_TEXTPARAM"), currentIdx), helperParameters, out m_textParams[i], out UIListBox lb, (x) => OnFilterParamImages(sprite, x), (t, x, y) => OnParamChanged(t, currentIdx, x, y));
                 lb.processMarkup = true;
-                var sprite = AddSpriteInEditorRow(lb, true, 300);
+                sprite = AddSpriteInEditorRow(lb, true, 300);
                 m_textParams[i].eventGotFocus += (x, y) => sprite.spriteName = ((UITextField)x).text.Length >= 4 ? ((UITextField)x).text.Substring(4) : "";
-                lb.eventItemMouseHover += (x, y) => sprite.spriteName = lb.items[y].Split(">".ToCharArray(), 2)[1].Trim();
+                lb.eventItemMouseHover += (x, y) => sprite.spriteName = lb.items[y].Trim();
                 lb.eventVisibilityChanged += (x, y) => sprite.isVisible = y;
                 sprite.isVisible = false;
             }
@@ -143,7 +144,7 @@ namespace Klyte.WriteTheSigns.UI
         {
             if (selIdx >= 0)
             {
-                CurrentEdited.SetTextParameter(paramIdx, "IMG_" + array[selIdx].Split(new char[] { '>' }, 2)[1].Trim());
+                CurrentEdited.SetTextParameter(paramIdx, "IMG_" + array[selIdx].Trim());
             }
             else
             {
@@ -151,11 +152,14 @@ namespace Klyte.WriteTheSigns.UI
             }
             return CurrentEdited?.GetTextParameter(paramIdx) ?? "";
         }
-        private string[] OnFilterParamImages(string arg)
+        private string[] OnFilterParamImages(UISprite sprite, string arg)
         {
             if (arg.Length >= 4 && arg?.ToUpper().StartsWith("IMG_") == true)
             {
-                return m_textParams[0].atlas.spriteNames.Where(x => x.ToLower().Contains(arg.Substring(4).ToLower())).OrderBy(x => x).Select(x => $"<sprite {x}> {x}").ToArray();
+                var searchName = arg.Substring(4).ToLower();
+                string[] results = WriteTheSignsMod.Controller.AtlasesLibrary.FindByInLocal(string.Empty, searchName, out UITextureAtlas atlas);
+                sprite.atlas = atlas;
+                return results;
             }
             else
             {

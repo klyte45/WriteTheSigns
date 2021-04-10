@@ -29,7 +29,7 @@ namespace Klyte.WriteTheSigns.Rendering
             TextType.LinesSymbols,
             TextType.LineIdentifier,
             TextType.LastStopLine,
-            TextType.LineFullName,            
+            TextType.LineFullName,
             TextType.CityName
         };
 
@@ -309,7 +309,7 @@ namespace Klyte.WriteTheSigns.Rendering
                 }
                 if (((Vector2)textDescriptor.BackgroundMeshSettings.Size).sqrMagnitude != 0)
                 {
-                    BasicRenderInformation bgBri = WriteTheSignsMod.Controller.SpriteRenderingRules.GetSpriteFromDefaultAtlas(KlyteResourceLoader.GetDefaultSpriteNameFor(LineIconSpriteNames.K45_SquareIcon));
+                    BasicRenderInformation bgBri = WriteTheSignsMod.Controller.AtlasesLibrary.GetFromLocalAtlases(null, KlyteResourceLoader.GetDefaultSpriteNameFor(LineIconSpriteNames.K45_SquareIcon));
                     if (bgBri != null)
                     {
                         Matrix4x4 containerMatrix = DrawBgMesh(ref propMatrix, textDescriptor, materialPropertyBlock, ref targetPos, ref targetRotation, ref baseScale, targetTextAlignment, targetCamera, textMatrixTuple, instance, bgBri);
@@ -839,7 +839,7 @@ namespace Klyte.WriteTheSigns.Rendering
             }
             switch (targetType)
             {
-                case TextType.GameSprite: return WriteTheSignsMod.Controller.SpriteRenderingRules.GetSpriteFromDefaultAtlas(textDescriptor.m_spriteName);
+                case TextType.GameSprite: return WriteTheSignsMod.Controller.AtlasesLibrary.GetFromLocalAtlases(null, textDescriptor.m_spriteName);
                 case TextType.DistanceFromReference: return RenderUtils.GetTextData($"{data.m_distanceRefKm}", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                 case TextType.Fixed: return RenderUtils.GetTextData(textDescriptor.m_fixedText ?? "", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                 case TextType.StreetSuffix: return GetFromCacheArray(data.m_segmentId, textDescriptor, RenderUtils.CacheArrayTypes.SuffixStreetName, baseFont);
@@ -864,7 +864,7 @@ namespace Klyte.WriteTheSigns.Rendering
             TextType targetType = textDescriptor.m_textType;
             switch (targetType)
             {
-                case TextType.GameSprite: return WriteTheSignsMod.Controller.SpriteRenderingRules.GetSpriteFromDefaultAtlas(textDescriptor.m_spriteName);
+                case TextType.GameSprite: return WriteTheSignsMod.Controller.AtlasesLibrary.GetFromLocalAtlases(null, textDescriptor.m_spriteName);
                 case TextType.Fixed: return RenderUtils.GetTextData(textDescriptor.m_fixedText ?? "", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                 case TextType.OwnName: return GetFromCacheArray(refID, textDescriptor, RenderUtils.CacheArrayTypes.BuildingName, baseFont);
                 case TextType.NextStopLine: return GetFromCacheArray(GetTargetStopInfo(buildingDescritpor, refID).FirstOrDefault().NextStopBuildingId, textDescriptor, RenderUtils.CacheArrayTypes.BuildingName, baseFont);
@@ -877,7 +877,7 @@ namespace Klyte.WriteTheSigns.Rendering
                 case TextType.TimeTemperature: return GetTimeTemperatureText(textDescriptor, ref baseFont, refID, boardIdx);
                 case TextType.CityName: return GetFromCacheArray(0, textDescriptor, RenderUtils.CacheArrayTypes.Districts, baseFont);
                 case TextType.LinesSymbols:
-                    multipleOutput = WriteTheSignsMod.Controller.SpriteRenderingRules.DrawLineFormats(GetAllTargetStopInfo(buildingDescritpor, refID).GroupBy(x => x.m_lineId).Select(x => x.First()).Select(x => (int)x.m_lineId));
+                    multipleOutput = WriteTheSignsMod.Controller.AtlasesLibrary.DrawLineFormats(GetAllTargetStopInfo(buildingDescritpor, refID).GroupBy(x => x.m_lineId).Select(x => x.First()).Select(x => (int)x.m_lineId));
                     return null;
                 case TextType.LineFullName:
                     multipleOutput = GetAllTargetStopInfo(buildingDescritpor, refID).GroupBy(x => x.m_lineId).Select(x => x.First()).Select(x => GetFromCacheArray(x.m_lineId, textDescriptor, RenderUtils.CacheArrayTypes.LineFullName, baseFont));
@@ -898,7 +898,7 @@ namespace Klyte.WriteTheSigns.Rendering
             switch (targetType)
             {
                 case TextType.CityName: return GetFromCacheArray(0, textDescriptor, RenderUtils.CacheArrayTypes.Districts, baseFont);
-                case TextType.GameSprite: return WriteTheSignsMod.Controller.SpriteRenderingRules.GetSpriteFromDefaultAtlas(textDescriptor.m_spriteName);
+                case TextType.GameSprite: return WriteTheSignsMod.Controller.AtlasesLibrary.GetFromLocalAtlases(null, textDescriptor.m_spriteName);
                 case TextType.Fixed: return RenderUtils.GetTextData(textDescriptor.m_fixedText ?? "", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                 case TextType.OwnName: return GetFromCacheArray(refID, textDescriptor, RenderUtils.CacheArrayTypes.VehicleNumber, baseFont);
                 case TextType.LineIdentifier:
@@ -922,7 +922,7 @@ namespace Klyte.WriteTheSigns.Rendering
                     }
                 case TextType.LinesSymbols:
                     ref Vehicle[] buffer1 = ref VehicleManager.instance.m_vehicles.m_buffer;
-                    return WriteTheSignsMod.Controller.SpriteRenderingRules.DrawLineFormats(new int[] { buffer1[buffer1[refID].GetFirstVehicle(refID)].m_transportLine }).FirstOrDefault();
+                    return WriteTheSignsMod.Controller.AtlasesLibrary.DrawLineFormats(new int[] { buffer1[buffer1[refID].GetFirstVehicle(refID)].m_transportLine }).FirstOrDefault();
                 case TextType.LineFullName:
                     ref Vehicle[] buffer4 = ref VehicleManager.instance.m_vehicles.m_buffer;
                     ref Vehicle targetVehicle4 = ref buffer4[buffer4[refID].GetFirstVehicle(refID)];
@@ -1024,15 +1024,15 @@ namespace Klyte.WriteTheSigns.Rendering
                 case TextType.Park: return RenderUtils.GetTextData($"{otherText}Area", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                 case TextType.PlatformNumber: return RenderUtils.GetTextData("00", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                 case TextType.ParameterizedText: return RenderUtils.GetTextData($"##PARAM{textDescriptor.m_parameterIdx}##", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
-                case TextType.ParameterizedGameSprite: return WriteTheSignsMod.Controller.SpriteRenderingRules.GetSpriteFromDefaultAtlas("K45_WTS FrameBorder");
-                case TextType.ParameterizedGameSpriteIndexed: return WriteTheSignsMod.Controller.SpriteRenderingRules.GetSpriteFromDefaultAtlas("K45_WTS FrameBorder");
+                case TextType.ParameterizedGameSprite: return WriteTheSignsMod.Controller.AtlasesLibrary.GetFromLocalAtlases(null, "K45_WTS FrameBorder");
+                case TextType.ParameterizedGameSpriteIndexed: return WriteTheSignsMod.Controller.AtlasesLibrary.GetFromLocalAtlases(null, "K45_WTS FrameBorder");
                 case TextType.TimeTemperature: return RenderUtils.GetTextData($"24:60", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                 case TextType.LinesSymbols:
-                    multipleOutput = WriteTheSignsMod.Controller.SpriteRenderingRules.DrawLineFormats(new int[textDescriptor.MultiItemSettings.SubItemsPerColumn * textDescriptor.MultiItemSettings.SubItemsPerRow].Select((x, y) => -y - 1));
+                    multipleOutput = WriteTheSignsMod.Controller.AtlasesLibrary.DrawLineFormats(new int[textDescriptor.MultiItemSettings.SubItemsPerColumn * textDescriptor.MultiItemSettings.SubItemsPerRow].Select((x, y) => -y - 1));
 
                     return null;
                 case TextType.GameSprite:
-                    return WriteTheSignsMod.Controller.SpriteRenderingRules.GetSpriteFromDefaultAtlas(textDescriptor.m_spriteName) ?? RenderUtils.GetTextData("<Invalid Sprite!>", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
+                    return WriteTheSignsMod.Controller.AtlasesLibrary.GetFromLocalAtlases(null, textDescriptor.m_spriteName) ?? RenderUtils.GetTextData("<Invalid Sprite!>", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                 default:
                     string text = $"{textDescriptor.m_textType}: {preview.m_currentText}";
                     if (textDescriptor.m_allCaps)
@@ -1085,7 +1085,7 @@ namespace Klyte.WriteTheSigns.Rendering
             switch (targetType)
             {
                 case TextType.CityName: return GetFromCacheArray(0, textDescriptor, RenderUtils.CacheArrayTypes.Districts, baseFont);
-                case TextType.GameSprite: return WriteTheSignsMod.Controller.SpriteRenderingRules.GetSpriteFromDefaultAtlas(textDescriptor.m_spriteName);
+                case TextType.GameSprite: return WriteTheSignsMod.Controller.AtlasesLibrary.GetFromLocalAtlases(null, textDescriptor.m_spriteName);
                 case TextType.Fixed: return RenderUtils.GetTextData(textDescriptor.m_fixedText ?? "", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                 case TextType.StreetSuffix: return GetFromCacheArray(targetSegment, textDescriptor, RenderUtils.CacheArrayTypes.SuffixStreetName, baseFont);
                 case TextType.StreetNameComplete: return GetFromCacheArray(targetSegment, textDescriptor, RenderUtils.CacheArrayTypes.FullStreetName, baseFont);
@@ -1123,22 +1123,22 @@ namespace Klyte.WriteTheSigns.Rendering
         {
             if (spritesAvailable == null || spritesAvailable.Length == 0)
             {
-                return WriteTheSignsMod.Controller.SpriteRenderingRules.GetSpriteFromDefaultAtlas("K45_WTS FrameParamsNotSet");
+                return WriteTheSignsMod.Controller.AtlasesLibrary.GetFromLocalAtlases(null, "K45_WTS FrameParamsNotSet");
             }
             if (textDescriptor.AnimationSettings.m_itemCycleFramesDuration == 0)
             {
                 textDescriptor.AnimationSettings.m_itemCycleFramesDuration = 100;
             }
             var idx = spritesAvailable.Length == 1 ? 0 : (int)((SimulationManager.instance.m_currentFrameIndex + textDescriptor.AnimationSettings.m_extraDelayCycleFrames + (refId * (1 + secIdx))) % (spritesAvailable.Length * textDescriptor.AnimationSettings.m_itemCycleFramesDuration) / textDescriptor.AnimationSettings.m_itemCycleFramesDuration);
-            return WriteTheSignsMod.Controller.SpriteRenderingRules.GetSpriteFromDefaultAtlas(spritesAvailable[idx]);
+            return WriteTheSignsMod.Controller.AtlasesLibrary.GetFromLocalAtlases(null, spritesAvailable[idx]);
         }
         private static BasicRenderInformation GetSpriteFromParameter(string[] spritesAvailable, int idx)
         {
             if (spritesAvailable == null || spritesAvailable.Length <= idx || spritesAvailable[idx] == null)
             {
-                return WriteTheSignsMod.Controller.SpriteRenderingRules.GetSpriteFromDefaultAtlas("K45_WTS FrameParamsNotSet");
+                return WriteTheSignsMod.Controller.AtlasesLibrary.GetFromLocalAtlases(null, "K45_WTS FrameParamsNotSet");
             }
-            return WriteTheSignsMod.Controller.SpriteRenderingRules.GetSpriteFromDefaultAtlas(spritesAvailable[idx]);
+            return WriteTheSignsMod.Controller.AtlasesLibrary.GetFromLocalAtlases(null, spritesAvailable[idx]);
         }
 
         private static StopInformation[] GetTargetStopInfo(BoardInstanceBuildingXml descriptor, ushort buildingId)

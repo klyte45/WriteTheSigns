@@ -13,7 +13,7 @@ namespace Klyte.WriteTheSigns.ModShared
         {
             TLMFacade.Instance.EventLineSymbolParameterChanged += () =>
             {
-                WriteTheSignsMod.Controller.SpriteRenderingRules.PurgeAllLines();
+                WriteTheSignsMod.Controller.AtlasesLibrary.PurgeAllLines();
                 RenderUtils.ClearCacheLineId();
             };
             TLMFacade.Instance.EventAutoNameParameterChanged += () =>

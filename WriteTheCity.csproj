@@ -216,10 +216,11 @@
     <Compile Include="Overrides\BoardGeneration\ToolManagerOverrides.cs" />
     <Compile Include="Overrides\TransportLineOverrides.cs" />
     <Compile Include="Rendering\WTSDisplayContainerMeshUtils.cs" />
-    <Compile Include="Rendering\WTSSpritesRenderingRules.cs" />
     <Compile Include="Singleton\WTSOnNetPropsSingleton.cs" />
     <Compile Include="Singleton\WTSVehicleTextsSingleton.cs" />
     <Compile Include="Singleton\WTSBuildingPropsSingleton.cs" />
+    <Compile Include="SpriteAtlas\WTSAtlasesLibrary.cs" />
+    <Compile Include="Utils\WTSAtlasLoadingUtils.cs" />
     <Compile Include="Xml\Enums\ConfigurationSource.cs" />
     <Compile Include="UI\Tabs\BuildingEditor\WTSBuildingLayoutEditorPropList.cs" />
     <Compile Include="UI\Tabs\BuildingEditor\WTSBuildingLayoutEditorPropDetail.cs" />

@@ -18,7 +18,8 @@ namespace Klyte.WriteTheSigns.Xml
         [XmlAttribute("inverted")]
         public bool InvertSign
         {
-            get => m_invertSign; set {
+            get => m_invertSign; set
+            {
                 m_invertSign = value;
                 OnChangeMatrixData();
             }
@@ -26,7 +27,8 @@ namespace Klyte.WriteTheSigns.Xml
         [XmlAttribute("segmentPosition")]
         public float SegmentPosition
         {
-            get => m_segmentPosition; set {
+            get => m_segmentPosition; set
+            {
                 m_segmentPosition = value;
                 OnChangeMatrixData();
             }
@@ -36,7 +38,8 @@ namespace Klyte.WriteTheSigns.Xml
         public string PropLayoutName
         {
             get => Descriptor?.SaveName;
-            set {
+            set
+            {
                 m_propLayoutName = value;
                 m_descriptor = null;
                 OnChangeMatrixData();
@@ -55,7 +58,8 @@ namespace Klyte.WriteTheSigns.Xml
         [XmlIgnore]
         public BoardDescriptorGeneralXml Descriptor
         {
-            get {
+            get
+            {
                 if (m_descriptor == null && m_propLayoutName != null)
                 {
                     m_descriptor = WTSPropLayoutData.Instance.Get(m_propLayoutName);
@@ -67,7 +71,8 @@ namespace Klyte.WriteTheSigns.Xml
                 }
                 return m_descriptor;
             }
-            internal set {
+            internal set
+            {
                 m_propLayoutName = value?.SaveName;
                 m_descriptor = WTSPropLayoutData.Instance.Get(m_propLayoutName);
             }
@@ -82,7 +87,8 @@ namespace Klyte.WriteTheSigns.Xml
         [XmlIgnore]
         public PropInfo SimpleProp
         {
-            get {
+            get
+            {
                 if (m_simplePropName != null && m_simpleProp?.name != m_simplePropName)
                 {
                     m_simpleProp = PrefabCollection<PropInfo>.FindLoaded(m_simplePropName);
@@ -93,7 +99,8 @@ namespace Klyte.WriteTheSigns.Xml
                 }
                 return m_simpleProp;
             }
-            internal set {
+            internal set
+            {
                 m_simplePropName = value?.name;
                 m_simpleProp = value;
             }
@@ -119,7 +126,8 @@ namespace Klyte.WriteTheSigns.Xml
         [Obsolete("Used for export only!")]
         public SimpleNonSequentialList<string> TextParameters
         {
-            get {
+            get
+            {
                 var res = new SimpleNonSequentialList<string>();
                 for (int i = 0; i < m_textParameters.Length; i++)
                 {
@@ -130,7 +138,8 @@ namespace Klyte.WriteTheSigns.Xml
                 }
                 return res;
             }
-            set {
+            set
+            {
                 foreach (var k in value?.Keys)
                 {
                     m_textParameters[k] = value[k];
@@ -141,7 +150,8 @@ namespace Klyte.WriteTheSigns.Xml
         [XmlIgnore]
         public string[] ParameterizedValidImages
         {
-            get {
+            get
+            {
                 if (m_parameterizedValidImages == null)
                 {
                     if (m_textParameters == null)
@@ -150,7 +160,7 @@ namespace Klyte.WriteTheSigns.Xml
                     }
                     else
                     {
-                        var sprites = UIView.GetAView().defaultAtlas.spriteNames;
+                        var sprites = WriteTheSignsMod.Controller.AtlasesLibrary.FindByInLocal(null, "", out _);
                         m_parameterizedValidImages = m_textParameters.Where(x => x != null && x.Length >= 4 && x.ToUpper().StartsWith("IMG_") && sprites.Contains(x.Substring(4))).Select(x => x.Substring(4)).ToArray();
                     }
                 }
@@ -161,7 +171,8 @@ namespace Klyte.WriteTheSigns.Xml
         [XmlIgnore]
         public string[] IndexedValidImages
         {
-            get {
+            get
+            {
                 if (m_indexedValidImages == null)
                 {
                     m_indexedValidImages = new string[TEXT_PARAMETERS_COUNT];

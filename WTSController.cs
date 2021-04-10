@@ -7,6 +7,7 @@ using Klyte.WriteTheSigns.ModShared;
 using Klyte.WriteTheSigns.Overrides;
 using Klyte.WriteTheSigns.Rendering;
 using Klyte.WriteTheSigns.Singleton;
+using Klyte.WriteTheSigns.Sprites;
 using Klyte.WriteTheSigns.Tools;
 using Klyte.WriteTheSigns.Utils;
 using SpriteFontPlus;
@@ -26,7 +27,7 @@ namespace Klyte.WriteTheSigns
         public RoadSegmentTool RoadSegmentToolInstance => FindObjectOfType<RoadSegmentTool>();
         public BuildingEditorTool BuildingEditorToolInstance => FindObjectOfType<BuildingEditorTool>();
 
-        internal WTSSpritesRenderingRules SpriteRenderingRules { get; private set; }
+        internal WTSAtlasesLibrary AtlasesLibrary { get; private set; }
         internal WTSBuildingPropsSingleton BuildingPropsSingleton { get; private set; }
         internal WTSVehicleTextsSingleton VehicleTextsSingleton { get; private set; }
         internal WTSOnNetPropsSingleton OnNetPropsSingleton { get; private set; }
@@ -67,54 +68,17 @@ namespace Klyte.WriteTheSigns
             ReloadAbbreviationFiles();
 
             FontServer.Ensure();
-            SpriteRenderingRules = gameObject.AddComponent<WTSSpritesRenderingRules>();
+            AtlasesLibrary = gameObject.AddComponent<WTSAtlasesLibrary>();
             BuildingPropsSingleton = gameObject.AddComponent<WTSBuildingPropsSingleton>();
             RoadPropsSingleton = gameObject.AddComponent<WTSRoadPropsSingleton>();
             VehicleTextsSingleton = gameObject.AddComponent<WTSVehicleTextsSingleton>();
             OnNetPropsSingleton = gameObject.AddComponent<WTSOnNetPropsSingleton>();
             ConnectorTLM = PluginUtils.GetImplementationTypeForMod<BridgeTLM, BridgeTLMFallback, IBridgeTLM>(gameObject, "TransportLinesManager", "13.4.0.1");
             ConnectorADR = PluginUtils.GetImplementationTypeForMod<BridgeADR, BridgeADRFallback, IBridgeADR>(gameObject, "KlyteAddresses", "2.0.4.1");
-
-            var spritesToAdd = new List<SpriteInfo>();
-            var errors = new List<string>();
-            foreach (var imgFile in Directory.GetFiles(WTSController.ExtraSpritesFolder, "*.png"))
-            {
-                var fileData = File.ReadAllBytes(imgFile);
-                var tex = new Texture2D(2, 2, TextureFormat.RGBA32, false);
-                if (tex.LoadImage(fileData))
-                {
-                    if (tex.width <= 400 && tex.width <= 400)
-                    {
-                        var imgName = $"K45_WTS_{Path.GetFileNameWithoutExtension(imgFile)}";
-                        spritesToAdd.Add(new SpriteInfo
-                        {
-                            border = new RectOffset(),
-                            name = imgName,
-                            texture = tex
-                        });
-                    }
-                    else
-                    {
-                        errors.Add($"{Path.GetFileName(imgFile)}: {Locale.Get("K45_WTS_CUSTOMSPRITE_IMAGETOOLARGE")} (max: 400x400)");
-                    }
-                }
-                else
-                {
-                    errors.Add($"{Path.GetFileName(imgFile)}: {Locale.Get("K45_WTS_CUSTOMSPRITE_FAILEDREADIMAGE")}");
-                }
-            }
-            if (spritesToAdd.Count > 0)
-            {
-                TextureAtlasUtils.RegenerateDefaultTextureAtlas(spritesToAdd);
-            }
-            if (errors.Count > 0)
-            {
-                K45DialogControl.ShowModal(new K45DialogControl.BindProperties
-                {
-                    message = $"{Locale.Get("K45_WTS_CUSTOMSPRITE_ERRORHEADER")}:\n\t{string.Join("\n\t", errors.ToArray())}"
-                }, (x) => true);
-            }
         }
+
+
+
         protected override void StartActions()
         {
             ReloadFontsFromPath();
@@ -190,6 +154,7 @@ namespace Klyte.WriteTheSigns
         public const string FONTS_FILES_FOLDER = "Fonts";
         public const string EXTRA_SPRITES_FILES_FOLDER = "Sprites";
         public const string DEFAULT_FONT_KEY = "/DEFAULT/";
+        public const string EXTRA_SPRITES_FILES_FOLDER_ASSETS = "K45WTS_Sprites";
 
         public static string DefaultPropsLayoutConfigurationFolder { get; } = FOLDER_NAME + Path.DirectorySeparatorChar + DEFAULT_GAME_PROP_LAYOUT_FOLDER;
         public static string DefaultBuildingsConfigurationFolder { get; } = FOLDER_NAME + Path.DirectorySeparatorChar + DEFAULT_GAME_BUILDINGS_CONFIG_FOLDER;
