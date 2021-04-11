@@ -73,12 +73,12 @@ namespace Klyte.WriteTheSigns.UI
             KlyteMonoUtils.CreateUIElement(out m_secondaryContainer, MainContainer.transform, "SecContainer", new Vector4(0, 0, MainContainer.width, 655));
             m_secondaryContainer.autoLayout = true;
             m_secondaryContainer.autoLayoutDirection = LayoutDirection.Horizontal;
-            m_secondaryContainer.autoLayoutPadding = new RectOffset(0, 10, 0, 0);
+            m_secondaryContainer.autoLayoutPadding = new RectOffset(0, 0, 0, 0);
 
             KlyteMonoUtils.CreateUIElement(out UIPanel tertiaryContainer, m_secondaryContainer.transform, "TrcContainer", new Vector4(0, 0, m_secondaryContainer.width * 0.25f, m_secondaryContainer.height));
             LayoutList = tertiaryContainer.gameObject.AddComponent<WTSOnNetLayoutEditorPropList>();
 
-            KlyteMonoUtils.CreateUIElement(out UIPanel editorPanel, m_secondaryContainer.transform, "EditPanel", new Vector4(0, 0, m_secondaryContainer.width * 0.75f - 35, m_secondaryContainer.height));
+            KlyteMonoUtils.CreateUIElement(out UIPanel editorPanel, m_secondaryContainer.transform, "EditPanel", new Vector4(0, 0, m_secondaryContainer.width * 0.75f - 5, m_secondaryContainer.height));
             editorPanel.gameObject.AddComponent<WTSOnNetLayoutEditorPropDetail>();
 
             OnSegmentSet(0);

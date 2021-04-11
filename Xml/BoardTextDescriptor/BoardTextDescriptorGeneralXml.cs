@@ -28,7 +28,22 @@ namespace Klyte.WriteTheSigns.Xml
         [XmlAttribute("destinationReference")]
         public DestinationReference m_destinationRelative = DestinationReference.Self;
         [XmlAttribute("parameterIdx")]
-        public int m_parameterIdx = 1;
+        public int m_parameterIdx = 0;
+        [XmlIgnore]
+        private TextParameterWrapper parameterValue;
+
+        [XmlAttribute("defaultParameterValue")]
+        public string DefaultParameterValueAsString
+        {
+            get => parameterValue?.ToString().TrimToNull();
+            set => parameterValue = value.IsNullOrWhiteSpace() ? null : new TextParameterWrapper(value);
+        }
+        [XmlAttribute("parameterDisplayName")]
+        public string ParameterDisplayName { get; set; }
+
+        [XmlIgnore]
+        public TextParameterWrapper DefaultParameterValue => parameterValue;
+
         [XmlAttribute("fixedText")]
         public string m_fixedText = "Text";
         [XmlAttribute("spriteName")]
@@ -103,6 +118,25 @@ namespace Klyte.WriteTheSigns.Xml
             return false;
         }
 
+        public bool IsParameter() => m_textType == TextType.ParameterizedText || m_textType == TextType.ParameterizedGameSprite || m_textType == TextType.ParameterizedGameSpriteIndexed;
+
+        public Tuple<int, string> ToParameterKV()
+        {
+            string paramType;
+            switch (m_textType)
+            {
+                case TextType.ParameterizedGameSprite:
+                    paramType = "folder:// or assetFolder://"; break;
+                case TextType.ParameterizedGameSpriteIndexed:
+                    paramType = "image:// or assetImage://"; break;
+                case TextType.ParameterizedText:
+                    paramType = "any value"; break;
+                default:
+                    return null;
+            }
+            return Tuple.New(m_parameterIdx, $"<color yellow>{(ParameterDisplayName.IsNullOrWhiteSpace() ? SaveName : ParameterDisplayName)}</color>\n\t{paramType}{(DefaultParameterValue is null ? "" : $"\n\tdef: <color cyan>{DefaultParameterValueAsString}</color>")}");
+        }
+
         public class SubItemSettings
         {
             [XmlAttribute("subItemsPerRow")]
@@ -170,7 +204,8 @@ namespace Klyte.WriteTheSigns.Xml
             [XmlElement("size")]
             public Vector2Xml Size
             {
-                get => m_size; set {
+                get => m_size; set
+                {
                     FrameMeshSettings.cachedFrameArray = null;
                     m_size = value;
                 }
@@ -207,7 +242,8 @@ namespace Klyte.WriteTheSigns.Xml
         public Color GlassColor
         {
             get => m_cachedGlassColor;
-            set {
+            set
+            {
                 cachedFrameArray = null;
                 m_cachedGlassColor = value;
             }
@@ -223,7 +259,8 @@ namespace Klyte.WriteTheSigns.Xml
         public float OuterSpecularLevel
         {
             get => m_outerSpecularLevel;
-            set {
+            set
+            {
                 cachedFrameArray = null;
                 m_outerSpecularLevel = value;
             }
@@ -231,49 +268,56 @@ namespace Klyte.WriteTheSigns.Xml
         [XmlElement("backSize")]
         public Vector2Xml BackSize
         {
-            get => m_backSize; set {
+            get => m_backSize; set
+            {
                 cachedFrameArray = null; m_backSize = value;
             }
         }
         [XmlElement("backOffset")]
         public Vector2Xml BackOffset
         {
-            get => m_backOffset; set {
+            get => m_backOffset; set
+            {
                 cachedFrameArray = null; m_backOffset = value;
             }
         }
         [XmlAttribute("frontDepth")]
         public float FrontDepth
         {
-            get => m_frontDepth; set {
+            get => m_frontDepth; set
+            {
                 cachedFrameArray = null; m_frontDepth = value;
             }
         }
         [XmlAttribute("glassTransparency")]
         public float GlassTransparency
         {
-            get => m_glassTransparency; set {
+            get => m_glassTransparency; set
+            {
                 cachedFrameArray = null; m_glassTransparency = value;
             }
         }
         [XmlAttribute("glassSpecularLevel")]
         public float GlassSpecularLevel
         {
-            get => m_glassSpecularLevel; set {
+            get => m_glassSpecularLevel; set
+            {
                 cachedFrameArray = null; m_glassSpecularLevel = value;
             }
         }
         [XmlAttribute("backDepth")]
         public float BackDepth
         {
-            get => m_backDepth; set {
+            get => m_backDepth; set
+            {
                 cachedFrameArray = null; m_backDepth = value;
             }
         }
         [XmlAttribute("frontBorderThickness")]
         public float FrontBorderThickness
         {
-            get => m_frontBorderThickness; set {
+            get => m_frontBorderThickness; set
+            {
                 cachedFrameArray = null; m_frontBorderThickness = value;
             }
         }

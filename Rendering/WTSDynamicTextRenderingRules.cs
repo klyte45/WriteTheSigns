@@ -1093,10 +1093,10 @@ namespace Klyte.WriteTheSigns.Rendering
                 case TextType.District: return GetFromCacheArray(WTSOnNetData.Instance.GetCachedDistrictId(targetSegment), textDescriptor, RenderUtils.CacheArrayTypes.Districts, baseFont);
                 case TextType.Park: return GetFromCacheArray(WTSOnNetData.Instance.GetCachedDistrictParkId(targetSegment), textDescriptor, RenderUtils.CacheArrayTypes.Parks, baseFont);
                 case TextType.PostalCode: return GetFromCacheArray(targetSegment, textDescriptor, RenderUtils.CacheArrayTypes.PostalCode, baseFont);
-                case TextType.ParameterizedText: return RenderUtils.GetTextData(propDescriptor.GetTextParameter(textDescriptor.m_parameterIdx) ?? $"<PARAM#{textDescriptor.m_parameterIdx} NOT SET>", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                 case TextType.TimeTemperature: return GetTimeTemperatureText(textDescriptor, ref baseFont, segmentId, secIdx);
-                case TextType.ParameterizedGameSprite: return GetSpriteFromCycle(textDescriptor, propDescriptor.ParameterizedValidImages, segmentId, secIdx);
-                case TextType.ParameterizedGameSpriteIndexed: return GetSpriteFromParameter(propDescriptor.IndexedValidImages, textDescriptor.m_parameterIdx);
+                case TextType.ParameterizedText: return RenderUtils.GetTextData((propDescriptor.GetTextParameter(textDescriptor.m_parameterIdx) ?? textDescriptor.DefaultParameterValue)?.ToString() ?? $"<PARAM#{textDescriptor.m_parameterIdx} NOT SET>", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
+                case TextType.ParameterizedGameSprite: return GetSpriteFromCycle(textDescriptor, propDescriptor, segmentId, secIdx, textDescriptor.m_parameterIdx);
+                case TextType.ParameterizedGameSpriteIndexed: return GetSpriteFromParameter(textDescriptor, propDescriptor, textDescriptor.m_parameterIdx);
                 default: return null;
             };
         }
@@ -1119,26 +1119,32 @@ namespace Klyte.WriteTheSigns.Rendering
             }
         }
 
-        private static BasicRenderInformation GetSpriteFromCycle(BoardTextDescriptorGeneralXml textDescriptor, string[] spritesAvailable, ushort refId, int secIdx)
+        private static BasicRenderInformation GetSpriteFromCycle(BoardTextDescriptorGeneralXml textDescriptor, OnNetInstanceCacheContainerXml descriptor, ushort refId, int secIdx, int parameterIdx)
         {
-            if (spritesAvailable == null || spritesAvailable.Length == 0)
+            var param = descriptor.GetTextParameter(parameterIdx) ?? textDescriptor.DefaultParameterValue;
+            if (param is null)
             {
                 return WriteTheSignsMod.Controller.AtlasesLibrary.GetFromLocalAtlases(null, "K45_WTS FrameParamsNotSet");
             }
-            if (textDescriptor.AnimationSettings.m_itemCycleFramesDuration == 0)
+            if (param.ParamType != TextParameterWrapper.ParameterType.FOLDER)
+            {
+                return WriteTheSignsMod.Controller.AtlasesLibrary.GetFromLocalAtlases(null, "K45_WTS FrameParamsFolderRequired");
+            }
+            if (textDescriptor.AnimationSettings.m_itemCycleFramesDuration < 100)
             {
                 textDescriptor.AnimationSettings.m_itemCycleFramesDuration = 100;
             }
-            var idx = spritesAvailable.Length == 1 ? 0 : (int)((SimulationManager.instance.m_currentFrameIndex + textDescriptor.AnimationSettings.m_extraDelayCycleFrames + (refId * (1 + secIdx))) % (spritesAvailable.Length * textDescriptor.AnimationSettings.m_itemCycleFramesDuration) / textDescriptor.AnimationSettings.m_itemCycleFramesDuration);
-            return WriteTheSignsMod.Controller.AtlasesLibrary.GetFromLocalAtlases(null, spritesAvailable[idx]);
+            return param.GetCurrentSprite(descriptor.m_cachedProp, (int length) => (int)(((SimulationManager.instance.m_currentFrameIndex + textDescriptor.AnimationSettings.m_extraDelayCycleFrames + (refId * (1 + secIdx))) % (length * textDescriptor.AnimationSettings.m_itemCycleFramesDuration) / textDescriptor.AnimationSettings.m_itemCycleFramesDuration)));
+
         }
-        private static BasicRenderInformation GetSpriteFromParameter(string[] spritesAvailable, int idx)
+        private static BasicRenderInformation GetSpriteFromParameter(BoardTextDescriptorGeneralXml textDescriptor, OnNetInstanceCacheContainerXml descriptor, int idx)
         {
-            if (spritesAvailable == null || spritesAvailable.Length <= idx || spritesAvailable[idx] == null)
+            var param = descriptor.GetTextParameter(idx) ?? textDescriptor.DefaultParameterValue;
+            if (param is null)
             {
                 return WriteTheSignsMod.Controller.AtlasesLibrary.GetFromLocalAtlases(null, "K45_WTS FrameParamsNotSet");
             }
-            return WriteTheSignsMod.Controller.AtlasesLibrary.GetFromLocalAtlases(null, spritesAvailable[idx]);
+            return param.GetImageBRI(descriptor.m_cachedProp);
         }
 
         private static StopInformation[] GetTargetStopInfo(BoardInstanceBuildingXml descriptor, ushort buildingId)

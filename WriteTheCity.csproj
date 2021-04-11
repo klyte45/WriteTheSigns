@@ -221,6 +221,7 @@
     <Compile Include="Singleton\WTSBuildingPropsSingleton.cs" />
     <Compile Include="SpriteAtlas\WTSAtlasesLibrary.cs" />
     <Compile Include="Utils\WTSAtlasLoadingUtils.cs" />
+    <Compile Include="Xml\BoardDescriptor\TextParameterWrapper.cs" />
     <Compile Include="Xml\Enums\ConfigurationSource.cs" />
     <Compile Include="UI\Tabs\BuildingEditor\WTSBuildingLayoutEditorPropList.cs" />
     <Compile Include="UI\Tabs\BuildingEditor\WTSBuildingLayoutEditorPropDetail.cs" />
@@ -494,6 +495,11 @@
   <ItemGroup>
     <Content Include="commons\UI\Images\base.psd" />
     <Content Include="commons\UI\Images\sprites.psd" />
+    <EmbeddedResource Include="UI\Images\%25K45_WTS FrameParamsImageRequired.png" />
+    <EmbeddedResource Include="UI\Images\%25K45_WTS FrameParamsInvalidImage.png" />
+    <EmbeddedResource Include="UI\Images\%25K45_WTS FrameParamsInvalidImageAsset.png" />
+    <EmbeddedResource Include="UI\Images\%25K45_WTS FrameParamsFolderRequired.png" />
+    <EmbeddedResource Include="UI\Images\%25K45_WTS FrameParamsInvalidFolder.png" />
   </ItemGroup>
   <PropertyGroup>
     <PostBuildEvent>xcopy /Y "$(TargetPath)" "$(ProjectDir)\_requiredDLLs"

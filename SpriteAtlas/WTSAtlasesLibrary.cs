@@ -14,6 +14,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using UnityEngine;
 using static ColossalFramework.UI.UITextureAtlas;
 
@@ -21,6 +22,12 @@ namespace Klyte.WriteTheSigns.Sprites
 {
     public class WTSAtlasesLibrary : MonoBehaviour
     {
+        public const string PROTOCOL_IMAGE = "image://";
+        public const string PROTOCOL_IMAGE_ASSET = "assetImage://";
+        public const string PROTOCOL_FOLDER = "folder://";
+        public const string PROTOCOL_FOLDER_ASSET = "assetFolder://";
+
+
         private Dictionary<string, UITextureAtlas> LocalAtlases { get; } = new Dictionary<string, UITextureAtlas>();
         private Dictionary<ulong, UITextureAtlas> AssetAtlases { get; } = new Dictionary<ulong, UITextureAtlas>();
 
@@ -266,17 +273,62 @@ namespace Klyte.WriteTheSigns.Sprites
             }
         }
 
-        internal string[] FindByInLocal(string targetAtlas, string searchName, out UITextureAtlas atlas)
-        {
-            if (!LocalAtlases.TryGetValue(targetAtlas ?? string.Empty, out atlas))
-            {
-                return new string[0];
-            }
+        internal string[] FindByInLocal(string targetAtlas, string searchName, out UITextureAtlas atlas) => LocalAtlases.TryGetValue(targetAtlas ?? string.Empty, out atlas)
+                ? atlas.spriteNames.Where((x, i) => i > 0 && x.ToLower().Contains(searchName.ToLower())).Select(x => $"{(targetAtlas.IsNullOrWhiteSpace() ? "<ROOT>" : targetAtlas)}/{x}").OrderBy(x => x).ToArray()
+                : (new string[0]);
+        internal string[] FindByInAsset(ulong assetId, string searchName, out UITextureAtlas atlas) => AssetAtlases.TryGetValue(assetId, out atlas)
+                ? atlas.spriteNames.Where((x, i) => i > 0 && x.ToLower().Contains(searchName.ToLower())).Select(x => $"{assetId}/{x}").OrderBy(x => x).ToArray()
+                : (new string[0]);
+        internal string[] FindByInLocalFolders(string searchName) => LocalAtlases.Keys.Select(x => x == string.Empty ? "<ROOT>" : x).Where(x => x.ToLower().Contains(searchName.ToLower())).OrderBy(x => x).ToArray();
 
-            return atlas.spriteNames.Where(x => x.ToLower().Contains(searchName)).OrderBy(x => x).ToArray();
+        internal string[] OnFilterParamImagesByText(UISprite sprite, string inputText, string propName, out string protocolFound)
+        {
+            Match match;
+            if ((inputText?.Length ?? 0) >= 4 && (match = Regex.Match(inputText ?? "", $"^({PROTOCOL_IMAGE}|{PROTOCOL_IMAGE_ASSET}|{PROTOCOL_FOLDER}|{PROTOCOL_FOLDER_ASSET})(([^/]+)/)?(.*)$")).Success)
+            {
+                protocolFound = match.Groups[1].Value;
+                var subfolder = match.Groups[3].Value;
+
+
+                var searchName = match.Groups[4].Value;
+                string[] results;
+                UITextureAtlas atlas;
+                switch (protocolFound)
+                {
+                    default:
+                    case PROTOCOL_IMAGE:
+                        results = (subfolder.IsNullOrWhiteSpace() ? WriteTheSignsMod.Controller.AtlasesLibrary.FindByInLocalFolders(searchName).Select(x => $"{x}/") : new List<string>()).Union(WriteTheSignsMod.Controller.AtlasesLibrary.FindByInLocal(subfolder == "<ROOT>" ? null : subfolder, searchName, out atlas)).ToArray();
+                        break;
+                    case PROTOCOL_IMAGE_ASSET:
+                        results = WriteTheSignsMod.Controller.AtlasesLibrary.FindByInAsset(ulong.TryParse(propName?.Split('.')[0] ?? "", out ulong wId) ? wId : 0u, searchName, out atlas);
+                        break;
+                    case PROTOCOL_FOLDER:
+                        results = WriteTheSignsMod.Controller.AtlasesLibrary.FindByInLocalFolders(searchName);
+                        atlas = null;
+                        break;
+                    case PROTOCOL_FOLDER_ASSET:
+                        results = AssetAtlases.TryGetValue(ulong.TryParse(propName?.Split('.')[0] ?? "", out wId) ? wId : 0, out atlas) ? new string[] { "<ROOT>" } : new string[0];
+                        break;
+                }
+                sprite.atlas = atlas;
+                return results;
+            }
+            else
+            {
+                protocolFound = null;
+                return null;
+            }
+        }
+        #endregion
+
+        public void GetAtlas(string atlasName, out UITextureAtlas result)
+        {
+            if (!LocalAtlases.TryGetValue(atlasName ?? string.Empty, out result) && ulong.TryParse(atlasName ?? string.Empty, out ulong workshopId))
+            {
+                AssetAtlases.TryGetValue(workshopId, out result);
+            }
         }
 
-        #endregion
         #region Loading
         public void LoadImagesFromLocalFolders()
         {
@@ -344,29 +396,42 @@ namespace Klyte.WriteTheSigns.Sprites
         }
         #endregion
         #region Getters
-        public BasicRenderInformation GetFromLocalAtlases(string atlasName, string spriteName)
+        public string[] GetSpritesFromLocalAtlas(string atlasName) => LocalAtlases.TryGetValue(atlasName ?? string.Empty, out UITextureAtlas atlas) ? atlas.spriteNames : null;
+        public string[] GetSpritesFromAssetAtlas(ulong workshopId) => AssetAtlases.TryGetValue(workshopId, out UITextureAtlas atlas) ? atlas.spriteNames : null;
+        public BasicRenderInformation GetFromLocalAtlases(string atlasName, string spriteName, bool fallbackOnInvalid = false)
         {
             if (spriteName.IsNullOrWhiteSpace())
             {
-                return null;
+                return GetFromLocalAtlases(null, "K45_WTS FrameParamsInvalidImage");
             }
 
             if (LocalAtlasesCache.TryGetValue(atlasName ?? string.Empty, out Dictionary<string, BasicRenderInformation> resultDicCache) && resultDicCache.TryGetValue(spriteName ?? "", out BasicRenderInformation cachedInfo))
             {
                 return cachedInfo;
             }
+            if (!LocalAtlases.TryGetValue(atlasName ?? string.Empty, out UITextureAtlas atlas) || !atlas.spriteNames.Contains(spriteName))
+            {
+                return fallbackOnInvalid ? GetFromLocalAtlases(null, "K45_WTS FrameParamsInvalidImage") : null;
+            }
             if (resultDicCache == null)
             {
                 LocalAtlasesCache[atlasName ?? string.Empty] = new Dictionary<string, BasicRenderInformation>();
             }
+
 
             LocalAtlasesCache[atlasName ?? string.Empty][spriteName] = null;
 
             StartCoroutine(CreateItemAtlasCoroutine(LocalAtlases, LocalAtlasesCache, atlasName ?? string.Empty, spriteName));
             return null;
         }
+        public BasicRenderInformation GetSlideFromLocal(string atlasName, Func<int, int> idxFunc, bool fallbackOnInvalid = false) => !LocalAtlases.TryGetValue(atlasName ?? string.Empty, out UITextureAtlas atlas)
+                ? fallbackOnInvalid ? GetFromLocalAtlases(null, "K45_WTS FrameParamsInvalidFolder") : null
+                : GetFromLocalAtlases(atlasName ?? string.Empty, atlas.spriteNames[idxFunc(atlas.spriteNames.Length - 1) + 1], fallbackOnInvalid);
+        public BasicRenderInformation GetSlideFromAsset(ulong assetId, Func<int, int> idxFunc, bool fallbackOnInvalid = false) => !AssetAtlases.TryGetValue(assetId, out UITextureAtlas atlas)
+                ? fallbackOnInvalid ? GetFromLocalAtlases(null, "K45_WTS FrameParamsInvalidFolder") : null
+                : GetFromAssetAtlases(assetId, atlas.spriteNames[idxFunc(atlas.spriteNames.Length - 1) + 1], fallbackOnInvalid);
 
-        public BasicRenderInformation GetFromAssetAtlases(ulong assetId, string spriteName)
+        public BasicRenderInformation GetFromAssetAtlases(ulong assetId, string spriteName, bool fallbackOnInvalid = false)
         {
             if (spriteName.IsNullOrWhiteSpace() || !AssetAtlases.ContainsKey(assetId))
             {
@@ -375,6 +440,10 @@ namespace Klyte.WriteTheSigns.Sprites
             if (AssetAtlasesCache.TryGetValue(assetId, out Dictionary<string, BasicRenderInformation> resultDicCache) && resultDicCache.TryGetValue(spriteName ?? "", out BasicRenderInformation cachedInfo))
             {
                 return cachedInfo;
+            }
+            if (!AssetAtlases.TryGetValue(assetId, out UITextureAtlas atlas) || !atlas.spriteNames.Contains(spriteName))
+            {
+                return fallbackOnInvalid ? GetFromLocalAtlases(null, "K45_WTS FrameParamsInvalidImageAsset") : null;
             }
             if (resultDicCache == null)
             {
