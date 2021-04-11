@@ -1,4 +1,5 @@
 ﻿using Klyte.Commons.Utils;
+using Klyte.WriteTheSigns.Utils;
 using UnityEngine;
 
 namespace Klyte.WriteTheSigns.ModShared
@@ -51,6 +52,12 @@ namespace Klyte.WriteTheSigns.ModShared
                 nextStop = TransportLine.GetNextStop(nextStop);
 
             } while (curStop != 0 && curStop != firstStop);
+        }
+
+        internal void OnAutoNameParameterChanged()
+        {
+            WriteTheSignsMod.Controller.BuildingPropsSingleton.ResetLines();
+            RenderUtils.ClearCacheLineName();
         }
     }
 }

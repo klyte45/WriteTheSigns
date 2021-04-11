@@ -1,11 +1,8 @@
 ﻿extern alias TLM;
-
-using ColossalFramework.Globalization;
 using Klyte.Commons.Interfaces;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.ModShared;
 using Klyte.WriteTheSigns.Overrides;
-using Klyte.WriteTheSigns.Rendering;
 using Klyte.WriteTheSigns.Singleton;
 using Klyte.WriteTheSigns.Sprites;
 using Klyte.WriteTheSigns.Tools;
@@ -17,7 +14,6 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using UnityEngine;
-using static ColossalFramework.UI.UITextureAtlas;
 
 namespace Klyte.WriteTheSigns
 {
@@ -43,13 +39,13 @@ namespace Klyte.WriteTheSigns
         public event Action EventFontsReloadedFromFolder;
         public event Action EventOnDistrictChanged;
         public event Action EventOnParkChanged;
-        public event Action EventOnBuildingNameChanged;
+        public event Action<ushort?> EventOnBuildingNameChanged;
         public event Action EventOnZeroMarkerChanged;
         public event Action EventOnPostalCodeChanged;
 
         public static void OnDistrictChanged() => WriteTheSignsMod.Controller?.EventOnDistrictChanged?.Invoke();
         public static void OnParkChanged() => WriteTheSignsMod.Controller?.EventOnParkChanged?.Invoke();
-        public static void OnBuildingNameChanged() => WriteTheSignsMod.Controller?.EventOnBuildingNameChanged?.Invoke();
+        public static void OnBuildingNameChanged(ushort? buildingId) => WriteTheSignsMod.Controller?.EventOnBuildingNameChanged?.Invoke(buildingId);
         public static void OnCityNameChanged() => RenderUtils.ClearCacheCityName();
         public static void OnZeroMarkChanged() => WriteTheSignsMod.Controller?.EventOnZeroMarkerChanged?.Invoke();
         public static void OnPostalCodeChanged() => WriteTheSignsMod.Controller?.EventOnPostalCodeChanged?.Invoke();
@@ -104,7 +100,7 @@ namespace Klyte.WriteTheSigns
             RenderUtils.ClearCacheStreetName();
             RenderUtils.ClearCacheStreetQualifier();
             RenderUtils.ClearCachePostalCode();
-            RenderUtils.ClearCacheBuildingName();
+            RenderUtils.ClearCacheBuildingName(null);
         }
 
         public static void ReloadFontsFromPath()

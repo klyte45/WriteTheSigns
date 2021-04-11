@@ -11,7 +11,7 @@ namespace Klyte.WriteTheSigns.ModShared
             AdrFacade.Instance.EventZeroMarkerBuildingChange += WTSController.OnZeroMarkChanged;
             AdrFacade.Instance.EventRoadNamingChange += WTSController.OnZeroMarkChanged;
             AdrFacade.Instance.EventDistrictChanged += WTSController.OnDistrictChanged;
-            AdrFacade.Instance.EventBuildingNameStrategyChanged += WTSController.OnBuildingNameChanged;
+            AdrFacade.Instance.EventBuildingNameStrategyChanged += () => WTSController.OnBuildingNameChanged(null);
             AdrFacade.Instance.EventPostalCodeChanged += WTSController.OnPostalCodeChanged;
         }
 

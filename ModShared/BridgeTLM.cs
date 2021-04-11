@@ -16,11 +16,7 @@ namespace Klyte.WriteTheSigns.ModShared
                 WriteTheSignsMod.Controller.AtlasesLibrary.PurgeAllLines();
                 RenderUtils.ClearCacheLineId();
             };
-            TLMFacade.Instance.EventAutoNameParameterChanged += () =>
-            {
-                WriteTheSignsMod.Controller.BuildingPropsSingleton.ResetLines();
-                RenderUtils.ClearCacheLineName();
-            };;
+            TLMFacade.Instance.EventAutoNameParameterChanged += OnAutoNameParameterChanged;
             TLMFacade.Instance.EventVehicleIdentifierParameterChanged += RenderUtils.ClearCacheVehicleNumber;
         }
 
@@ -42,7 +38,7 @@ namespace Klyte.WriteTheSigns.ModShared
             FillStops(lineId, startStation, endStation, startStationStr, endStationStr);
         }
 
-       
+
     }
 }
 

@@ -91,12 +91,20 @@ namespace Klyte.WriteTheSigns.Utils
             ClearCacheLineName();
         }
 
-        public static void ClearCacheBuildingName()
+        public static void ClearCacheBuildingName(ushort? buildingId)
         {
             foreach (string[][] m_cache in m_generalCache)
             {
-                m_cache[(int)BuildingName] = new string[BuildingManager.MAX_BUILDING_COUNT];
+                if (buildingId is null)
+                {
+                    m_cache[(int)BuildingName] = new string[BuildingManager.MAX_BUILDING_COUNT];
+                }
+                else
+                {
+                    m_cache[(int)BuildingName][(int)buildingId] = null;
+                }
             }
+
             ClearCacheLineName();
         }
 
