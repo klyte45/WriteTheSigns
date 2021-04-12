@@ -19,7 +19,7 @@ namespace Klyte.WriteTheSigns.Overrides
         {
             RedirectorInstance = KlyteMonoUtils.CreateElement<Redirector>(transform);
             LogUtils.DoLog("Loading Building Manager Overrides");
-            MethodInfo posRename = typeof(WTSController).GetMethod("OnBuildingNameChanged", RedirectorUtils.allFlags);
+            MethodInfo posRename = GetType().GetMethod("OnBuildingNameChanged", RedirectorUtils.allFlags);
             MethodInfo calcGroup = typeof(BuildingManager).GetMethod("CalculateGroupData");
             MethodInfo popGroup = typeof(BuildingManager).GetMethod("PopulateGroupData");
 
@@ -30,7 +30,7 @@ namespace Klyte.WriteTheSigns.Overrides
             MethodInfo AfterPopulateGroupData = GetType().GetMethod("AfterPopulateGroupData", RedirectorUtils.allFlags);
 
             LogUtils.DoLog($"Patching=> {posRename}");
-            RedirectorInstance.AddRedirect(BuildingManager.instance.SetBuildingName(0, "").GetType().GetMethod("MoveNext", RedirectorUtils.allFlags), null, posRename);
+            //RedirectorInstance.AddRedirect(BuildingManager.instance.SetBuildingName(0, "").GetType().GetMethod("MoveNext", RedirectorUtils.allFlags), null, posRename);
             LogUtils.DoLog($"Patching=> {AfterCalculateGroupData}");
             RedirectorInstance.AddRedirect(calcGroup, null, AfterCalculateGroupData);
             LogUtils.DoLog($"Patching=> {AfterPopulateGroupData}");
@@ -40,7 +40,7 @@ namespace Klyte.WriteTheSigns.Overrides
         }
         #endregion
 
-
+        public static void OnBuildingNameChanged() => WTSController.OnBuildingNameChanged(null);
         public static void AfterCalculateGroupData(BuildingManager __instance, int groupX, int groupZ, int layer, ref int vertexCount, ref int triangleCount, ref int objectCount, ref RenderGroup.VertexArrays vertexArrays, ref bool __result)
         {
             if (WriteTheSignsMod.Controller?.BuildingPropsSingleton == null)

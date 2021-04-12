@@ -371,7 +371,7 @@ namespace Klyte.WriteTheSigns.UI
             else
             {
                 var pos = NetManager.instance.m_segments.m_buffer[targetSegment].m_middlePosition;
-                SegmentUtils.GetAddressStreetAndNumber(pos, pos, out int num, out string streetName);
+                WriteTheSignsMod.Controller.ConnectorADR.GetAddressStreetAndNumber(pos, pos, out int num, out string streetName);
                 return $"{((streetName?.Length ?? 0) == 0 ? NetManager.instance.m_segments.m_buffer[targetSegment].Info.GetLocalizedTitle() : streetName)}, ~{num}m";
             }
         }

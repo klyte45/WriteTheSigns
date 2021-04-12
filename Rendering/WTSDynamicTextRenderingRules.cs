@@ -933,14 +933,9 @@ namespace Klyte.WriteTheSigns.Rendering
 
                     if (targetVehicle.m_transportLine == 0)
                     {
-                        if (targetVehicle.m_targetBuilding == 0)
-                        {
-                            return GetFromCacheArray(targetVehicle.m_sourceBuilding, textDescriptor, RenderUtils.CacheArrayTypes.BuildingName, baseFont);
-                        }
-                        else
-                        {
-                            return GetFromCacheArray(WTSBuildingDataCaches.GetStopBuilding(targetVehicle.m_targetBuilding, targetVehicle.m_transportLine), textDescriptor, RenderUtils.CacheArrayTypes.BuildingName, baseFont);
-                        }
+                        return targetVehicle.m_targetBuilding == 0
+                            ? GetFromCacheArray(targetVehicle.m_sourceBuilding, textDescriptor, RenderUtils.CacheArrayTypes.BuildingName, baseFont)
+                            : GetFromCacheArray(WTSBuildingDataCaches.GetStopBuilding(targetVehicle.m_targetBuilding, targetVehicle.m_transportLine), textDescriptor, RenderUtils.CacheArrayTypes.BuildingName, baseFont);
                     }
                     else
                     {
@@ -952,21 +947,10 @@ namespace Klyte.WriteTheSigns.Rendering
                             WriteTheSignsMod.Controller.ConnectorTLM.MapLineDestinations(targetVehicle.m_transportLine);
                             stopInfo = ref GetTargetStopInfo(lastTarget);
                         }
-                        BasicRenderInformation result;
-                        if (stopInfo.m_destinationString != null)
-                        {
-                            result = RenderUtils.GetTextData(stopInfo.m_destinationString, textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
-                        }
-                        else if (stopInfo.m_destinationId != 0)
-                        {
-                            result = RenderUtils.GetTextData(WriteTheSignsMod.Controller.ConnectorTLM.GetStopName(stopInfo.m_destinationId, targetVehicle.m_transportLine), textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
-                        }
-                        else
-                        {
-                            result = RenderUtils.GetTextData(WriteTheSignsMod.Controller.ConnectorTLM.GetStopName(targetVehicle.m_targetBuilding, targetVehicle.m_transportLine), textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
-                        }
-
-
+                        BasicRenderInformation result =
+                              stopInfo.m_destinationString != null ? RenderUtils.GetTextData(stopInfo.m_destinationString, textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont)
+                            : stopInfo.m_destinationId != 0 ? RenderUtils.GetTextData(WriteTheSignsMod.Controller.ConnectorTLM.GetStopName(stopInfo.m_destinationId, targetVehicle.m_transportLine), textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont)
+                            : RenderUtils.GetTextData(WriteTheSignsMod.Controller.ConnectorTLM.GetStopName(targetVehicle.m_targetBuilding, targetVehicle.m_transportLine), textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                         return result;
                     }
 
@@ -1130,7 +1114,7 @@ namespace Klyte.WriteTheSigns.Rendering
             {
                 return WriteTheSignsMod.Controller.AtlasesLibrary.GetFromLocalAtlases(null, "K45_WTS FrameParamsFolderRequired");
             }
-            if (textDescriptor.AnimationSettings.m_itemCycleFramesDuration < 100)
+            if (textDescriptor.AnimationSettings.m_itemCycleFramesDuration < 1)
             {
                 textDescriptor.AnimationSettings.m_itemCycleFramesDuration = 100;
             }
@@ -1160,15 +1144,16 @@ namespace Klyte.WriteTheSigns.Rendering
             return m_emptyInfo;
         }
         private static ref StopInformation GetTargetStopInfo(ushort targetStopId) => ref WriteTheSignsMod.Controller.BuildingPropsSingleton.m_stopInformation[targetStopId];
-        private static StopInformation[] GetAllTargetStopInfo(BoardInstanceBuildingXml descriptor, ushort buildingId) => descriptor?.m_platforms?.SelectMany(platform =>
-                                                                                                                                   {
-                                                                                                                                       if (WriteTheSignsMod.Controller.BuildingPropsSingleton.m_platformToLine[buildingId] != null && WriteTheSignsMod.Controller.BuildingPropsSingleton.m_platformToLine[buildingId]?.ElementAtOrDefault(platform)?.Length > 0)
-                                                                                                                                       {
-                                                                                                                                           StopInformation[] line = WriteTheSignsMod.Controller.BuildingPropsSingleton.m_platformToLine[buildingId][platform];
-                                                                                                                                           return line;
-                                                                                                                                       }
-                                                                                                                                       return new StopInformation[0];
-                                                                                                                                   }).ToArray();
+        private static StopInformation[] GetAllTargetStopInfo(BoardInstanceBuildingXml descriptor, ushort buildingId)
+            => descriptor?.m_platforms?.SelectMany(platform =>
+                {
+                    if (WriteTheSignsMod.Controller.BuildingPropsSingleton.m_platformToLine[buildingId] != null && WriteTheSignsMod.Controller.BuildingPropsSingleton.m_platformToLine[buildingId]?.ElementAtOrDefault(platform)?.Length > 0)
+                    {
+                        StopInformation[] line = WriteTheSignsMod.Controller.BuildingPropsSingleton.m_platformToLine[buildingId][platform];
+                        return line;
+                    }
+                    return new StopInformation[0];
+                }).ToArray();
 
         private static readonly StopInformation[] m_emptyInfo = new StopInformation[0];
 

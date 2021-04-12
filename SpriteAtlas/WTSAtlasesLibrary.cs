@@ -146,6 +146,7 @@ namespace Klyte.WriteTheSigns.Sprites
                 });
                 TransportIsDirty = true;
                 StopAllCoroutines();
+                m_transportLineCache.Clear();
                 yield break;
             }
             yield return 0;

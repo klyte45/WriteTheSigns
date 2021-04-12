@@ -25,7 +25,8 @@ namespace FontStashSharp
         public int FontHeight
         {
             get => _fontHeight;
-            set {
+            set
+            {
                 _fontHeight = value;
                 foreach (Font f in _fonts)
                 {
@@ -46,7 +47,8 @@ namespace FontStashSharp
 
         public FontAtlas CurrentAtlas
         {
-            get {
+            get
+            {
                 if (_currentAtlas == null)
                 {
                     _currentAtlas = new FontAtlas(Mathf.RoundToInt(_size.x), Mathf.RoundToInt(_size.y), 256);
@@ -162,7 +164,62 @@ namespace FontStashSharp
             return true;
         }
 
-        private IEnumerator WriteTextureCoroutine(float x, float y, string str, Vector3 scale, UIHorizontalAlignment alignment)
+        private string ToFilteredString(Dictionary<int, FontGlyph> glyphs, string str, out bool hasResetted)
+        {
+            if (str == null)
+            {
+                throw new ArgumentNullException("str");
+            }
+
+            var result = "";
+            hasResetted = false;
+            for (int i = 0; i < str.Length; i++)
+            {
+                var code = char.ConvertToUtf32(str, i);
+                var glyph = GetGlyph(glyphs, code, out hasResetted, true);
+                if (hasResetted)
+                {
+                    return null;
+                }
+                if (glyph is null)
+                {
+                    if (!char.ConvertFromUtf32(code).IsNormalized(System.Text.NormalizationForm.FormKD))
+                    {
+                        var normalizedStr = char.ConvertFromUtf32(code).Normalize(System.Text.NormalizationForm.FormKD);
+                        for (int j = 0; j < normalizedStr.Length; j++)
+                        {
+                            var codeJ = normalizedStr[j];
+                            var glyphJ = GetGlyph(glyphs, codeJ, out hasResetted, true);
+                            if (hasResetted)
+                            {
+                                return null;
+                            }
+                            if (!(glyphJ is null))
+                            {
+                                result += normalizedStr[j];
+                            }
+                        }
+                    }
+                    if (char.IsHighSurrogate(str[i]))
+                    {
+                        i++;
+                    }
+                }
+                else
+                {
+                    result += str[i];
+                    if (char.IsHighSurrogate(str[i]))
+                    {
+                        result += str[++i];
+                    }
+                }
+            }
+            return result.Trim();
+        }
+
+
+
+        private IEnumerator WriteTextureCoroutine(float x, float y, string strOr, Vector3 scale, UIHorizontalAlignment alignment)
         {
             yield return 0;
             while (!CheckCoroutineCount())
@@ -177,6 +234,22 @@ namespace FontStashSharp
             };
 
             Dictionary<int, FontGlyph> glyphs = GetGlyphsCollection(FontHeight);
+            var str = ToFilteredString(glyphs, strOr, out bool hasResetted);
+            if (hasResetted)
+            {
+                yield break;
+            }
+            if (string.IsNullOrEmpty(str))
+            {
+                if (m_textCache.TryGetValue("", out bri) && m_textCache.TryGetValue(strOr, out BasicRenderInformation currentVal3) && currentVal3 == null)
+                {
+                    m_textCache[strOr] = bri;
+                }
+                else
+                {
+                    m_textCache.Remove(strOr);
+                }
+            }
 
             // Determine ascent and lineHeight from first character
             float ascent = 0, lineHeight = 0;
@@ -233,7 +306,7 @@ namespace FontStashSharp
                         continue;
                     }
 
-                    FontGlyph glyph = GetGlyph(glyphs, codepoint, out bool hasResetted);
+                    FontGlyph glyph = GetGlyph(glyphs, codepoint, out hasResetted);
                     if (hasResetted)
                     {
                         yield break;
@@ -295,13 +368,13 @@ namespace FontStashSharp
             bri.m_generatedMaterial = _currentAtlas.Material;
 
             bri.m_sizeMetersUnscaled = bri.m_mesh.bounds.size;
-            if (m_textCache.TryGetValue(str, out BasicRenderInformation currentVal) && currentVal == null)
+            if (m_textCache.TryGetValue(strOr, out BasicRenderInformation currentVal) && currentVal == null)
             {
-                m_textCache[str] = bri;
+                m_textCache[strOr] = bri;
             }
             else
             {
-                m_textCache.Remove(str);
+                m_textCache.Remove(strOr);
             }
             yield break;
         }
@@ -602,10 +675,10 @@ namespace FontStashSharp
             return glyph;
         }
 
-        private FontGlyph GetGlyph(Dictionary<int, FontGlyph> glyphs, int codepoint, out bool hasResetted)
+        private FontGlyph GetGlyph(Dictionary<int, FontGlyph> glyphs, int codepoint, out bool hasResetted, bool ignoreDefaultChar = false)
         {
             FontGlyph result = GetGlyphInternal(glyphs, codepoint, out hasResetted);
-            if (result == null && DefaultCharacter != null)
+            if (!ignoreDefaultChar && result == null && DefaultCharacter != null)
             {
                 result = GetGlyphInternal(glyphs, DefaultCharacter.Value, out hasResetted);
             }

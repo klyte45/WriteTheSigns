@@ -12,6 +12,7 @@ namespace Klyte.WriteTheSigns.ModShared
         public abstract string GetStreetSuffix(ushort idx);
         public abstract string GetStreetQualifier(ushort idx);
         public abstract string GetStreetPostalCode(Vector3 position, ushort idx);
+        public abstract bool GetAddressStreetAndNumber(Vector3 sidewalk, Vector3 midPosBuilding, out int number, out string streetName);
         public virtual string GetStreetSuffixCustom(ushort idx)
         {
             string result = GetStreetFullName(idx);

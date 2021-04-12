@@ -104,7 +104,7 @@ namespace Klyte.WriteTheSigns.ModShared
             {
                 return DistrictManager.instance.GetDistrictName(districtID);
             }
-            if (SegmentUtils.GetAddressStreetAndNumber(location, location, out int number, out string streetName) && !string.IsNullOrEmpty(streetName))
+            if ( WriteTheSignsMod.Controller.ConnectorADR.GetAddressStreetAndNumber(location, location, out int number, out string streetName) && !string.IsNullOrEmpty(streetName))
             {
                 return streetName + ", " + number;
             }

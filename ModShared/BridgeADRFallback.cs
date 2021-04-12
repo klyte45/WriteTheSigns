@@ -28,7 +28,7 @@ namespace Klyte.WriteTheSigns.ModShared
         private Vector2? m_cachedPos;
         private readonly Color[] m_randomColors = { Color.black, Color.gray, Color.white, Color.red, new Color32(0xFF, 0x88, 0, 0xFf), Color.yellow, Color.green, Color.cyan, Color.blue, Color.magenta };
 
-
+        public override bool GetAddressStreetAndNumber(Vector3 sidewalk, Vector3 midPosBuilding, out int number, out string streetName) => SegmentUtils.GetBasicAddressStreetAndNumber(sidewalk, midPosBuilding, out number, out streetName);
         public override Color GetDistrictColor(ushort districtId) => m_randomColors[districtId % m_randomColors.Length];
         public override Vector2 GetStartPoint()
         {

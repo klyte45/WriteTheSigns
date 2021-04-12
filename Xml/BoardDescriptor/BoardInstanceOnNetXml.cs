@@ -78,6 +78,7 @@ namespace Klyte.WriteTheSigns.Xml
                 m_descriptor = WTSPropLayoutData.Instance.Get(m_propLayoutName);
             }
         }
+        [XmlIgnore]
         public TextParameterWrapper[] m_textParameters = new TextParameterWrapper[TEXT_PARAMETERS_COUNT];
 
         public TextParameterWrapper GetTextParameter(int idx) => m_textParameters?[idx];

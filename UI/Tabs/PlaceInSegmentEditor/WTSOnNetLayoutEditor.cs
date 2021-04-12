@@ -111,7 +111,7 @@ namespace Klyte.WriteTheSigns.UI
         {
             m_secondaryContainer.isVisible = CurrentSegmentId != 0;
             m_containerSelectionDescription.isVisible = CurrentSegmentId != 0;
-            SegmentUtils.GetAddressStreetAndNumber(NetManager.instance.m_segments.m_buffer[CurrentSegmentId].m_middlePosition, NetManager.instance.m_segments.m_buffer[CurrentSegmentId].m_middlePosition, out int num, out string streetName);
+            WriteTheSignsMod.Controller.ConnectorADR.GetAddressStreetAndNumber(NetManager.instance.m_segments.m_buffer[CurrentSegmentId].m_middlePosition, NetManager.instance.m_segments.m_buffer[CurrentSegmentId].m_middlePosition, out int num, out string streetName);
             m_labelSelectionDescription.text = $"{streetName}, ~{num}m";
             if (WTSOnNetData.Instance.m_boardsContainers[CurrentSegmentId] == null)
             {

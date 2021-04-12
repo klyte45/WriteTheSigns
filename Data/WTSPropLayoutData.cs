@@ -34,16 +34,16 @@ namespace Klyte.WriteTheSigns.Data
         }
 
         public string[] FilterBy(string input, TextRenderingClass? renderClass) =>
-            m_indexes
-            .Where((x) => (renderClass == null || renderClass == m_savedDescriptorsSerialized[x.Value].m_allowedRenderClass) && (input.IsNullOrWhiteSpace() ? true : LocaleManager.cultureInfo.CompareInfo.IndexOf(x.Key, input, CompareOptions.IgnoreCase) >= 0))
-            .OrderBy((x) => ((int)(4 - m_savedDescriptorsSerialized[x.Value].m_configurationSource)) + x.Key)
+            m_savedDescriptorsSerialized
+            .Where((x) => (renderClass == null || renderClass == x.Value.m_allowedRenderClass) && (input.IsNullOrWhiteSpace() ? true : LocaleManager.cultureInfo.CompareInfo.IndexOf(x.Key, input, CompareOptions.IgnoreCase) >= 0))
+            .OrderBy((x) => ((int)(4 - x.Value.m_configurationSource)) + x.Key)
             .Select(x => x.Key)
             .ToArray();
 
         [XmlElement("descriptorsData")]
         public override ListWrapper<BoardDescriptorGeneralXml> SavedDescriptorsSerialized
         {
-            get => new ListWrapper<BoardDescriptorGeneralXml>() { listVal = m_savedDescriptorsSerialized.Where(x => x.m_configurationSource == ConfigurationSource.CITY).ToList() };
+            get => new ListWrapper<BoardDescriptorGeneralXml>() { listVal = m_savedDescriptorsSerialized.Values.Where(x => x.m_configurationSource == ConfigurationSource.CITY).ToList() };
             set => ReloadAllPropsConfigurations(value);
         }
 
@@ -51,7 +51,7 @@ namespace Klyte.WriteTheSigns.Data
         public void ReloadAllPropsConfigurations() => ReloadAllPropsConfigurations(null);
         private void ReloadAllPropsConfigurations(ListWrapper<BoardDescriptorGeneralXml> fromCity)
         {
-            m_savedDescriptorsSerialized = fromCity?.listVal?.Select(x => { x.m_configurationSource = ConfigurationSource.CITY; return x; }).ToArray() ?? m_savedDescriptorsSerialized.Where(x => x.m_configurationSource == ConfigurationSource.CITY).ToArray();
+            m_savedDescriptorsSerialized = fromCity?.listVal?.Select(x => { x.m_configurationSource = ConfigurationSource.CITY; return x; }).GroupBy(x => x.SaveName).ToDictionary(x => x.Key, x => x.First()) ?? m_savedDescriptorsSerialized.Where(x => x.Value.m_configurationSource == ConfigurationSource.CITY).ToDictionary(x => x.Key, x => x.Value);
             LogUtils.DoLog("LOADING PROPS CONFIG START -----------------------------");
             var errorList = new List<string>();
             LogUtils.DoLog($"DefaultBuildingsConfigurationFolder = {WTSController.DefaultPropsLayoutConfigurationFolder}");
@@ -92,11 +92,10 @@ namespace Klyte.WriteTheSigns.Data
             }
 
             LogUtils.DoLog("LOADING PROPS CONFIG END -----------------------------");
-            m_savedDescriptorsSerialized = m_savedDescriptorsSerialized
+            m_savedDescriptorsSerialized = m_savedDescriptorsSerialized.Values
                 .GroupBy(p => p.SaveName)
                 .Select(g => g.OrderBy(x => -1 * (int)x.m_configurationSource).First())
-                .ToArray();
-            UpdateIndex();
+                .ToDictionary(x => x.SaveName, x => x);
         }
 
         private void LoadDescriptorsFromXml(FileStream stream, PropInfo info)
@@ -137,7 +136,7 @@ namespace Klyte.WriteTheSigns.Data
                         result.Add(item);
                     }
                 }
-                m_savedDescriptorsSerialized = m_savedDescriptorsSerialized.Union(result).ToArray();
+                m_savedDescriptorsSerialized = m_savedDescriptorsSerialized.Values.Union(result).GroupBy(x => x.SaveName).Select(g => g.OrderByDescending(x => x.m_configurationSource).First()).ToDictionary(x => x.SaveName, x => x);
             }
             else
             {

@@ -15,6 +15,7 @@ namespace Klyte.WriteTheSigns.ModShared
             AdrFacade.Instance.EventPostalCodeChanged += WTSController.OnPostalCodeChanged;
         }
 
+        public override bool GetAddressStreetAndNumber(Vector3 sidewalk, Vector3 midPosBuilding, out int number, out string streetName) => AdrFacade.GetStreetAndNumber(sidewalk, midPosBuilding, out streetName, out number);
         public override Color GetDistrictColor(ushort districtId) => AdrFacade.GetDistrictColor(districtId);
         public override Vector2 GetStartPoint() => AdrFacade.GetStartPoint();
         public override string GetStreetPostalCode(Vector3 position, ushort idx) => AdrFacade.GetPostalCode(position);
