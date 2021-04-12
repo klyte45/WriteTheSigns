@@ -32,7 +32,11 @@ namespace Klyte.WriteTheSigns.Sprites
         private Dictionary<ulong, UITextureAtlas> AssetAtlases { get; } = new Dictionary<ulong, UITextureAtlas>();
 
         private UITextureAtlas m_transportLineAtlas;
-        private readonly Dictionary<int, BasicRenderInformation> m_transportLineCache = new Dictionary<int, BasicRenderInformation>();
+        private Material m_transportLineMaterial;
+        private Dictionary<int, BasicRenderInformation> m_transportLineCache { get; } = new Dictionary<int, BasicRenderInformation>();
+
+        private Dictionary<string, Material> LocalRenderMaterial { get; } = new Dictionary<string, Material>();
+        private Dictionary<ulong, Material> AssetRenderMaterial { get; } = new Dictionary<ulong, Material>();
 
         private Dictionary<string, Dictionary<string, BasicRenderInformation>> LocalAtlasesCache { get; } = new Dictionary<string, Dictionary<string, BasicRenderInformation>>();
         private Dictionary<ulong, Dictionary<string, BasicRenderInformation>> AssetAtlasesCache { get; } = new Dictionary<ulong, Dictionary<string, BasicRenderInformation>>();
@@ -72,6 +76,7 @@ namespace Klyte.WriteTheSigns.Sprites
         {
             m_transportLineCache.Clear();
             ResetTransportAtlas();
+            m_transportLineMaterial = null;
             TransportIsDirty = true;
         }
         public LineIconSpriteNames LineIconTest
@@ -146,6 +151,7 @@ namespace Klyte.WriteTheSigns.Sprites
                 });
                 TransportIsDirty = true;
                 StopAllCoroutines();
+                m_transportLineMaterial = null;
                 m_transportLineCache.Clear();
                 yield break;
             }
@@ -158,7 +164,14 @@ namespace Klyte.WriteTheSigns.Sprites
             yield return 0;
             BuildMeshFromAtlas(id, bri, m_transportLineAtlas);
             yield return 0;
-            RegisterMesh(lineId, bri, m_transportLineCache, m_transportLineAtlas, TransportIsDirty);
+            if(m_transportLineMaterial is null)
+            {
+                m_transportLineMaterial = new Material(m_transportLineAtlas.material)
+                 {
+                     shader = WTSController.DEFAULT_SHADER_TEXT,
+                 };
+            }
+            RegisterMeshSingle(lineId, bri, m_transportLineCache, m_transportLineAtlas, TransportIsDirty, m_transportLineMaterial);
             TransportIsDirty = false;
             yield break;
         }
@@ -346,7 +359,7 @@ namespace Klyte.WriteTheSigns.Sprites
                     var atlasName = isRoot ? string.Empty : Path.GetFileNameWithoutExtension(dir);
                     LocalAtlases[atlasName] = new UITextureAtlas
                     {
-                        material = new Material(WTSController.DEFAULT_SHADER_TEXT)
+                        material = new Material(UIView.GetAView().defaultAtlas.material.shader)
                     };
                     if (isRoot)
                     {
@@ -356,6 +369,7 @@ namespace Klyte.WriteTheSigns.Sprites
                 }
             }
             LocalAtlasesCache.Clear();
+            LocalRenderMaterial.Clear();
             if (errors.Count > 0)
             {
                 K45DialogControl.ShowModal(new K45DialogControl.BindProperties
@@ -422,7 +436,7 @@ namespace Klyte.WriteTheSigns.Sprites
 
             LocalAtlasesCache[atlasName ?? string.Empty][spriteName] = null;
 
-            StartCoroutine(CreateItemAtlasCoroutine(LocalAtlases, LocalAtlasesCache, atlasName ?? string.Empty, spriteName));
+            StartCoroutine(CreateItemAtlasCoroutine(LocalAtlases, LocalRenderMaterial, LocalAtlasesCache, atlasName ?? string.Empty, spriteName));
             return null;
         }
         public BasicRenderInformation GetSlideFromLocal(string atlasName, Func<int, int> idxFunc, bool fallbackOnInvalid = false) => !LocalAtlases.TryGetValue(atlasName ?? string.Empty, out UITextureAtlas atlas)
@@ -452,10 +466,10 @@ namespace Klyte.WriteTheSigns.Sprites
             }
 
             AssetAtlasesCache[assetId][spriteName] = null;
-            StartCoroutine(CreateItemAtlasCoroutine(AssetAtlases, AssetAtlasesCache, assetId, spriteName));
+            StartCoroutine(CreateItemAtlasCoroutine(AssetAtlases, AssetRenderMaterial, AssetAtlasesCache, assetId, spriteName));
             return null;
         }
-        private IEnumerator CreateItemAtlasCoroutine<T>(Dictionary<T, UITextureAtlas> spriteDict, Dictionary<T, Dictionary<string, BasicRenderInformation>> spriteDictCache, T assetId, string spriteName)
+        private IEnumerator CreateItemAtlasCoroutine<T>(Dictionary<T, UITextureAtlas> spriteDict, Dictionary<T, Material> materialDict, Dictionary<T, Dictionary<string, BasicRenderInformation>> spriteDictCache, T assetId, string spriteName)
         {
             yield return 0;
             if (!spriteDict.TryGetValue(assetId, out UITextureAtlas targetAtlas))
@@ -474,7 +488,7 @@ namespace Klyte.WriteTheSigns.Sprites
                 m_refText = $"<sprite asset,{assetId},{spriteName}>"
             };
             BuildMeshFromAtlas(spriteName, bri, targetAtlas, targetAtlas[spriteName].width / targetAtlas[spriteName].height);
-            RegisterMesh(spriteName, bri, spriteDictCache[assetId], targetAtlas);
+            RegisterMesh(assetId, spriteName, bri, spriteDictCache[assetId], materialDict, targetAtlas);
             yield break;
         }
         #endregion
@@ -613,33 +627,46 @@ namespace Klyte.WriteTheSigns.Sprites
             mesh.tangents = tangents;
         }
 
-        private static void RegisterMesh<T>(T idx, BasicRenderInformation bri, Dictionary<T, BasicRenderInformation> cache, UITextureAtlas referenceAtlas, bool isDirty = false)
+        private static void RegisterMesh<T>(T idx, string sprite, BasicRenderInformation bri, Dictionary<string, BasicRenderInformation> cache, Dictionary<T, Material> materialIndex, UITextureAtlas referenceAtlas, bool isDirty = false)
         {
             bri.m_mesh.RecalculateNormals();
             SolveTangents(bri.m_mesh);
-            UpdateMaterial(referenceAtlas, isDirty);
+            if (!materialIndex.TryGetValue(idx, out Material material))
+            {
+                material = new Material(referenceAtlas.material)
+                {
+                    shader = WTSController.DEFAULT_SHADER_TEXT,
+                };
+                materialIndex[idx] = material;
+            }
+            RegisterMeshSingle(sprite, bri, cache, referenceAtlas, isDirty, material);
+        }
 
-            bri.m_generatedMaterial = referenceAtlas.material;
+        private static void RegisterMeshSingle<T>(T sprite, BasicRenderInformation bri, Dictionary<T, BasicRenderInformation> cache, UITextureAtlas referenceAtlas, bool isDirty, Material material)
+        {
+            UpdateMaterial(referenceAtlas, material, isDirty);
+
+            bri.m_generatedMaterial = material;
 
             bri.m_sizeMetersUnscaled = bri.m_mesh.bounds.size;
-            if (cache.TryGetValue(idx, out BasicRenderInformation currentVal) && currentVal == null)
+            if (cache.TryGetValue(sprite, out BasicRenderInformation currentVal) && currentVal == null)
             {
-                cache[idx] = bri;
+                cache[sprite] = bri;
             }
             else
             {
-                cache.Remove(idx);
+                cache.Remove(sprite);
             }
         }
 
-        public static void UpdateMaterial(UITextureAtlas referenceAtlas, bool isDirty)
+        public static void UpdateMaterial(UITextureAtlas referenceAtlas, Material material, bool isDirty)
         {
             if (isDirty || referenceAtlas.material.GetTexture("_ACIMap") is null)
             {
                 var aciTex = new Texture2D(referenceAtlas.texture.width, referenceAtlas.texture.height);
                 aciTex.SetPixels(referenceAtlas.texture.GetPixels().Select(x => new Color(1 - x.a, 0, 1f, 1)).ToArray());
                 aciTex.Apply();
-                referenceAtlas.material.SetTexture("_ACIMap", aciTex);
+                material.SetTexture("_ACIMap", aciTex);
             }
         }
         #endregion

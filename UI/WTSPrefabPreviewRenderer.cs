@@ -19,7 +19,8 @@ namespace Klyte.WriteTheSigns.UI
         public Vector2 Size
         {
             get => new Vector2(m_camera.targetTexture.width, m_camera.targetTexture.height);
-            set {
+            set
+            {
                 if (Size != value)
                 {
                     m_camera.targetTexture = new RenderTexture((int)value.x, (int)value.y, 24, RenderTextureFormat.ARGB32);
@@ -50,14 +51,13 @@ namespace Klyte.WriteTheSigns.UI
         public Matrix4x4 RenderPrefab(PI info, Vector3 offsetPosition, Vector3 offsetRotation, BoardTextDescriptorGeneralXml[] TextDescriptors, int referenceIdx, string overrideText, BoardDescriptorGeneralXml descriptor = null)
         {
 
-            var instanceInfo = Singleton<InfoManager>.instance;
             var sunLightSource = DayNightProperties.instance.sunLightSource;
             var intensity = sunLightSource.intensity;
             var color2 = sunLightSource.color;
             var eulerAngles = sunLightSource.transform.eulerAngles;
-           sunLightSource.intensity = 2f;
-           sunLightSource.color = Color.white;
-           sunLightSource.transform.eulerAngles = new Vector3(50f, 180f, 70f);
+            sunLightSource.intensity = 2f;
+            sunLightSource.color = Color.white;
+            sunLightSource.transform.eulerAngles = new Vector3(50f, 180f, 70f);
             var mainLight = Singleton<RenderManager>.instance.MainLight;
             Singleton<RenderManager>.instance.MainLight = sunLightSource;
             if (mainLight == DayNightProperties.instance.moonLightSource)

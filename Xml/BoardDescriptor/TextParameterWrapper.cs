@@ -54,6 +54,7 @@ namespace Klyte.WriteTheSigns.Xml
                         ParamType = ParameterType.IMAGE;
                         isLocal = false;
                         atlasName = string.Empty;
+                        TextOrSpriteValue = inputMatches.Groups[4].Value;
                         return;
                     default:
                         TextOrSpriteValue = value;
