@@ -81,6 +81,14 @@ namespace Klyte.WriteTheSigns.ModShared
 
         private string GetStopName(ushort stopId, ushort lineId, out ushort buildingID, out ushort parkID, out ushort districtID)
         {
+            if (stopId == 0)
+            {
+                buildingID = 0;
+                parkID = 0;
+                districtID = 0;
+                return "";
+            }
+
             buildingID = WTSBuildingDataCaches.GetStopBuilding(stopId, lineId);
 
             if (buildingID > 0)
@@ -104,7 +112,7 @@ namespace Klyte.WriteTheSigns.ModShared
             {
                 return DistrictManager.instance.GetDistrictName(districtID);
             }
-            if ( WriteTheSignsMod.Controller.ConnectorADR.GetAddressStreetAndNumber(location, location, out int number, out string streetName) && !string.IsNullOrEmpty(streetName))
+            if (WriteTheSignsMod.Controller.ConnectorADR.GetAddressStreetAndNumber(location, location, out int number, out string streetName) && !string.IsNullOrEmpty(streetName))
             {
                 return streetName + ", " + number;
             }

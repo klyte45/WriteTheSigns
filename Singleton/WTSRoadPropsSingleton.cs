@@ -117,7 +117,7 @@ namespace Klyte.WriteTheSigns.Singleton
                         }
 
                         WTSDynamicTextRenderingRules.GetColorForRule(nodeID, y, z, targetDescriptor.Descriptor, targetDescriptor, out bool rendered);
-                        if (rendered && !(item.m_currentDescriptor.Descriptor.CachedProp is null))
+                        if (rendered && !(item.m_currentDescriptor.Descriptor?.CachedProp is null))
                         {
                             result = PropInstance.CalculateGroupData(item.m_currentDescriptor.Descriptor.CachedProp, layer, ref vertexCount, ref triangleCount, ref objectCount, ref vertexArrays);
                         }
@@ -136,7 +136,7 @@ namespace Klyte.WriteTheSigns.Singleton
                     if (item?.m_renderPlate ?? false)
                     {
                         BoardInstanceRoadNodeXml targetDescriptor = item.m_currentDescriptor;
-                        if (targetDescriptor?.Descriptor?.PropName == null || item.m_currentDescriptor.Descriptor.CachedProp is null)
+                        if (targetDescriptor?.Descriptor?.PropName == null || targetDescriptor?.Descriptor?.CachedProp is null)
                         {
                             continue;
                         }
@@ -377,7 +377,7 @@ namespace Klyte.WriteTheSigns.Singleton
             refBoard.m_platePosition = platePosI;
             refBoard.m_streetDirection = -dir + 90 + segmentIDirection.y;
             refBoard.m_segmentId = segmentIid;
-            refBoard.m_cachedColor = targetDescriptor.UseDistrictColor ? WriteTheSignsMod.Controller.ConnectorADR.GetDistrictColor(refBoard.m_districtId) : targetDescriptor.Descriptor.FixedColor ?? Color.white;
+            refBoard.m_cachedColor = targetDescriptor.UseDistrictColor ? WriteTheSignsMod.Controller.ConnectorADR.GetDistrictColor(refBoard.m_districtId) : targetDescriptor.Descriptor?.FixedColor ?? Color.white;
             refBoard.m_cachedContrastColor = KlyteMonoUtils.ContrastColor(refBoard.m_cachedColor);
             refBoard.m_distanceRef = Vector2.Distance(VectorUtils.XZ(refBoard.m_platePosition), WriteTheSignsMod.Controller.ConnectorADR.GetStartPoint());
             refBoard.m_distanceRefKm = Mathf.RoundToInt(refBoard.m_distanceRef / 1000);

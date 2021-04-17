@@ -93,7 +93,7 @@ namespace Klyte.WriteTheSigns.Singleton
             for (int i = 0; i < Data.BoardsContainers[buildingID, 0, 0].Length; i++)
             {
                 var descriptor = targetDescriptor.PropInstances[i];
-                var targetProp = descriptor.CachedSimpleProp ?? descriptor.Descriptor.CachedProp;
+                var targetProp = descriptor.CachedSimpleProp ?? descriptor.Descriptor?.CachedProp;
                 if (!(targetProp is null))
                 {
                     BoardBunchContainerBuilding item = Data.BoardsContainers[buildingID, 0, 0][i];
@@ -122,11 +122,16 @@ namespace Klyte.WriteTheSigns.Singleton
             for (int i = 0; i < targetDescriptor.PropInstances.Length; i++)
             {
                 var descriptor = targetDescriptor.PropInstances[i];
-                var targetProp = descriptor.CachedSimpleProp ?? descriptor.Descriptor.CachedProp;
+                var targetProp = descriptor.CachedSimpleProp ?? descriptor.Descriptor?.CachedProp;
                 if (targetProp != null)
                 {
                     BoardBunchContainerBuilding item = Data.BoardsContainers[buildingID, 0, 0][i];
-                    var targetPosition = item.m_cachedPosition ?? default;
+                    if (item is null)
+                    {
+                        continue;
+                    }
+
+                    var targetPosition = item.m_cachedPosition ?? Vector3.zero;
                     for (int j = 0; j <= item.m_cachedArrayRepeatTimes; j++)
                     {
                         if (j > 0)
@@ -335,7 +340,7 @@ namespace Klyte.WriteTheSigns.Singleton
         {
             var isSimple = targetDescriptor.Descriptor == null;
 
-            var propname = isSimple ? targetDescriptor.SimplePropName : targetDescriptor.Descriptor.PropName;
+            var propname = isSimple ? targetDescriptor.SimplePropName : targetDescriptor.Descriptor?.PropName;
 
             Color parentColor = WTSDynamicTextRenderingRules.RenderPropMesh(cachedProp, cameraInfo, buildingId, boardIdx, 0, layerMask, data.m_angle, position, Vector4.zero, rotation, targetDescriptor.PropScale, targetDescriptor.Descriptor, targetDescriptor, out Matrix4x4 propMatrix, out bool rendered, new InstanceID { Building = buildingId });
 

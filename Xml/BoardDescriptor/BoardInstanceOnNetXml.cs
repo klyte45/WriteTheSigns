@@ -78,10 +78,6 @@ namespace Klyte.WriteTheSigns.Xml
                 m_descriptor = WTSPropLayoutData.Instance.Get(m_propLayoutName);
             }
         }
-        [XmlIgnore]
-        public TextParameterWrapper[] m_textParameters = new TextParameterWrapper[TEXT_PARAMETERS_COUNT];
-
-        public TextParameterWrapper GetTextParameter(int idx) => m_textParameters?[idx];
 
 
         [XmlAttribute("simplePropName")]
@@ -167,9 +163,6 @@ namespace Klyte.WriteTheSigns.Xml
             }
         }
 
-
-
-
         public void SetTextParameter(int idx, string val)
         {
             if (m_textParameters == null)
@@ -179,13 +172,11 @@ namespace Klyte.WriteTheSigns.Xml
             m_textParameters[idx] = val.IsNullOrWhiteSpace() ? null : new TextParameterWrapper(val);
         }
 
-        public Dictionary<int, string[]> GetAllParametersUsed()
-        {
-            if (!(Descriptor is null))
-            {
-                return Descriptor.TextDescriptors.Select(x => x.ToParameterKV()).Where(x => !(x is null)).GroupBy(x => x.First).ToDictionary(x => x.Key, x => x.Select(y => y.Second).ToArray());
-            }
-            return null;
-        }
+        public Dictionary<int, string[]> GetAllParametersUsed() => Descriptor?.TextDescriptors.Select(x => x.ToParameterKV()).Where(x => !(x is null)).GroupBy(x => x.First).ToDictionary(x => x.Key, x => x.Select(y => y.Second).ToArray());
+
+        [XmlIgnore]
+        public TextParameterWrapper[] m_textParameters = new TextParameterWrapper[TEXT_PARAMETERS_COUNT];
+
+        public TextParameterWrapper GetTextParameter(int idx) => m_textParameters?[idx];
     }
 }

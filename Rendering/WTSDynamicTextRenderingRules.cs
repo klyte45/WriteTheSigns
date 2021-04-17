@@ -28,9 +28,11 @@ namespace Klyte.WriteTheSigns.Rendering
             TextType.OwnName,
             TextType.LinesSymbols,
             TextType.LineIdentifier,
+            TextType.NextStopLine,
+            TextType.PrevStopLine,
             TextType.LastStopLine,
             TextType.LineFullName,
-            TextType.CityName
+            TextType.CityName,
         };
 
         internal static Material m_rotorMaterial;
@@ -72,17 +74,20 @@ namespace Klyte.WriteTheSigns.Rendering
             },
             [TextRenderingClass.Buildings] = new TextType[]
             {
-               TextType.Fixed,
-               TextType.GameSprite,
-               TextType.OwnName,
-               TextType.LinesSymbols,
-               TextType.LineFullName,
-               TextType.NextStopLine, // Next Station Line 1
-               TextType.PrevStopLine, // Previous Station Line 2
-               TextType.LastStopLine, // Line Destination (Last stop before get back) 3
-               TextType.PlatformNumber,
-               TextType.TimeTemperature,
-               TextType.CityName
+                TextType.Fixed,
+                TextType.GameSprite,
+                TextType.ParameterizedGameSprite,
+                TextType.ParameterizedGameSpriteIndexed,
+                TextType.ParameterizedText,
+                TextType.OwnName,
+                TextType.LinesSymbols,
+                TextType.LineFullName,
+                TextType.NextStopLine, // Next Station Line 1
+                TextType.PrevStopLine, // Previous Station Line 2
+                TextType.LastStopLine, // Line Destination (Last stop before get back) 3
+                TextType.PlatformNumber,
+                TextType.TimeTemperature,
+                TextType.CityName
             },
             [TextRenderingClass.PlaceOnNet] = new TextType[]
             {
@@ -90,6 +95,7 @@ namespace Klyte.WriteTheSigns.Rendering
                 TextType.GameSprite,
                 TextType.ParameterizedGameSprite,
                 TextType.ParameterizedGameSpriteIndexed,
+                TextType.ParameterizedText,
                 TextType.StreetPrefix,
                 TextType.StreetSuffix,
                 TextType.StreetNameComplete,
@@ -98,9 +104,8 @@ namespace Klyte.WriteTheSigns.Rendering
                 TextType.Park,
                 TextType.DistrictOrPark,
                 TextType.ParkOrDistrict,
-                TextType.ParameterizedText,
                 TextType.TimeTemperature,
-               TextType.CityName
+                TextType.CityName
             },
         };
 
@@ -881,6 +886,9 @@ namespace Klyte.WriteTheSigns.Rendering
                 case TextType.LineFullName:
                     multipleOutput = GetAllTargetStopInfo(buildingDescritpor, refID).GroupBy(x => x.m_lineId).Select(x => x.First()).Select(x => GetFromCacheArray(x.m_lineId, textDescriptor, RenderUtils.CacheArrayTypes.LineFullName, baseFont));
                     return null;
+                case TextType.ParameterizedText: return RenderUtils.GetTextData((buildingDescritpor.GetTextParameter(textDescriptor.m_parameterIdx) ?? textDescriptor.DefaultParameterValue)?.ToString() ?? $"<PARAM#{textDescriptor.m_parameterIdx} NOT SET>", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
+                case TextType.ParameterizedGameSprite: return GetSpriteFromCycle(textDescriptor, buildingDescritpor, refID, boardIdx, textDescriptor.m_parameterIdx);
+                case TextType.ParameterizedGameSpriteIndexed: return GetSpriteFromParameter(textDescriptor, buildingDescritpor, textDescriptor.m_parameterIdx);
                 default:
                     return null;
             }
@@ -926,6 +934,14 @@ namespace Klyte.WriteTheSigns.Rendering
                     ref Vehicle[] buffer4 = ref VehicleManager.instance.m_vehicles.m_buffer;
                     ref Vehicle targetVehicle4 = ref buffer4[buffer4[refID].GetFirstVehicle(refID)];
                     return GetFromCacheArray(targetVehicle4.m_transportLine, textDescriptor, RenderUtils.CacheArrayTypes.LineFullName, baseFont);
+                case TextType.NextStopLine:
+                    ref Vehicle[] buffer7 = ref VehicleManager.instance.m_vehicles.m_buffer;
+                    ref Vehicle targetVehicle7 = ref buffer7[buffer7[refID].GetFirstVehicle(refID)];
+                    return RenderUtils.GetTextData(WriteTheSignsMod.Controller.ConnectorTLM.GetStopName(targetVehicle7.m_targetBuilding, targetVehicle7.m_transportLine), textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
+                case TextType.PrevStopLine:
+                    ref Vehicle[] buffer5 = ref VehicleManager.instance.m_vehicles.m_buffer;
+                    ref Vehicle targetVehicle5 = ref buffer5[buffer5[refID].GetFirstVehicle(refID)];
+                    return RenderUtils.GetTextData(WriteTheSignsMod.Controller.ConnectorTLM.GetStopName(TransportLine.GetPrevStop(targetVehicle5.m_targetBuilding), targetVehicle5.m_transportLine), textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                 case TextType.LastStopLine:
                     ref Vehicle[] buffer2 = ref VehicleManager.instance.m_vehicles.m_buffer;
                     ref Vehicle targetVehicle = ref buffer2[buffer2[refID].GetFirstVehicle(refID)];
@@ -1093,7 +1109,7 @@ namespace Klyte.WriteTheSigns.Rendering
                     time = ((time + 11) % 12) + 1;
                 }
                 var precision = WriteTheSignsMod.ClockPrecision.value;
-                return RenderUtils.GetTextData($"{((int)time).ToString($"D{(WriteTheSignsMod.ClockShowLeadingZero ? "2" : "1")}")}{(SimulationManager.instance.m_currentFrameIndex % 150 > 75 ? ":" : ".")}{((int)(((int)(time % 1 * 60 / precision)) * precision)).ToString("D2")}", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
+                return RenderUtils.GetTextData($"{((int)time).ToString($"D{(WriteTheSignsMod.ClockShowLeadingZero ? "2" : "1")}")}:{((int)(((int)(time % 1 * 60 / precision)) * precision)).ToString("D2")}", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
             }
             else
             {
@@ -1105,7 +1121,11 @@ namespace Klyte.WriteTheSigns.Rendering
         {
             var param = descriptor.GetTextParameter(parameterIdx) ?? textDescriptor.DefaultParameterValue;
             return GetSpriteFromCycle(textDescriptor, descriptor.Descriptor.CachedProp, param, refId, secIdx);
-
+        }
+        private static BasicRenderInformation GetSpriteFromCycle(BoardTextDescriptorGeneralXml textDescriptor, BoardInstanceBuildingXml descriptor, ushort refId, int secIdx, int parameterIdx)
+        {
+            var param = descriptor.GetTextParameter(parameterIdx) ?? textDescriptor.DefaultParameterValue;
+            return GetSpriteFromCycle(textDescriptor, descriptor.Descriptor.CachedProp, param, refId, secIdx);
         }
 
         private static BasicRenderInformation GetSpriteFromCycle(BoardTextDescriptorGeneralXml textDescriptor, PrefabInfo cachedPrefab, TextParameterWrapper param, ushort refId, int secIdx)
@@ -1126,6 +1146,8 @@ namespace Klyte.WriteTheSigns.Rendering
         }
 
         private static BasicRenderInformation GetSpriteFromParameter(BoardTextDescriptorGeneralXml textDescriptor, OnNetInstanceCacheContainerXml descriptor, int idx)
+            => GetSpriteFromParameter(descriptor.Descriptor.CachedProp, descriptor.GetTextParameter(idx) ?? textDescriptor.DefaultParameterValue);
+        private static BasicRenderInformation GetSpriteFromParameter(BoardTextDescriptorGeneralXml textDescriptor, BoardInstanceBuildingXml descriptor, int idx)
             => GetSpriteFromParameter(descriptor.Descriptor.CachedProp, descriptor.GetTextParameter(idx) ?? textDescriptor.DefaultParameterValue);
         private static BasicRenderInformation GetSpriteFromParameter(PrefabInfo prop, TextParameterWrapper param)
             => param is null

@@ -223,6 +223,8 @@
     <Compile Include="SpriteAtlas\WTSAtlasesLibrary.cs" />
     <Compile Include="Tools\VehicleEditorTool.cs" />
     <Compile Include="Utils\WTSAtlasLoadingUtils.cs" />
+    <Compile Include="Xml\Enums\ColoringMode.cs" />
+    <Compile Include="Xml\Containers\ExportableBoardInstanceBuildingListXml.cs" />
     <Compile Include="Xml\BoardDescriptor\TextParameterWrapper.cs" />
     <Compile Include="Xml\Enums\ConfigurationSource.cs" />
     <Compile Include="UI\Tabs\BuildingEditor\WTSBuildingLayoutEditorPropList.cs" />

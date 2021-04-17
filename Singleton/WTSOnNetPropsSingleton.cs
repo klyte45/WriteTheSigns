@@ -148,7 +148,11 @@ namespace Klyte.WriteTheSigns.Singleton
             var rotation = targetDescriptor.m_cachedRotation ?? Vector3.zero;
             var isSimple = targetDescriptor.Descriptor == null;
 
-            var propname = isSimple ? targetDescriptor.m_simplePropName : targetDescriptor.Descriptor.PropName;
+            var propname = isSimple ? targetDescriptor.m_simplePropName : targetDescriptor.Descriptor?.PropName;
+            if (propname is null)
+            {
+                return;
+            }
 
             Color parentColor = WTSDynamicTextRenderingRules.RenderPropMesh(cachedProp, cameraInfo, segmentId, boardIdx, 0, 0xFFFFFFF, 0, position, Vector4.zero, rotation, targetDescriptor.PropScale, targetDescriptor.Descriptor, targetDescriptor, out Matrix4x4 propMatrix, out bool rendered, new InstanceID { NetNode = segmentId });
 

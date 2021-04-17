@@ -9,8 +9,10 @@ using Klyte.WriteTheSigns.Data;
 using Klyte.WriteTheSigns.Libraries;
 using Klyte.WriteTheSigns.Rendering;
 using Klyte.WriteTheSigns.Singleton;
+using Klyte.WriteTheSigns.Sprites;
 using Klyte.WriteTheSigns.Xml;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -78,6 +80,9 @@ namespace Klyte.WriteTheSigns.UI
 
         private UITextField m_propFilter;
 
+        private UITextField[] m_textParams;
+        private UILabel[] m_textParamsLabels;
+
         private IEnumerable<UIComponent> AllFields
         {
             get
@@ -96,8 +101,8 @@ namespace Klyte.WriteTheSigns.UI
                             m_libLoad,
                             m_subBuildingSelect,
                             m_chkUseFixedIfMulti,
-                            m_propFilter
-                }.Union(m_position).Union(m_rotation).Union(m_repeatArrayDistance).Union(m_scale).ToArray();
+                            m_propFilter,
+                }.Union(m_position).Union(m_rotation).Union(m_repeatArrayDistance).Union(m_scale).Union(m_textParams).ToArray();
                 }
                 return m_allFields.Union(m_checkboxTemplateList.items.Select(x => x as UIComponent));
             }
@@ -111,17 +116,26 @@ namespace Klyte.WriteTheSigns.UI
             MainContainer.clipChildren = true;
             MainContainer.autoLayoutDirection = LayoutDirection.Vertical;
             MainContainer.autoLayoutPadding = new RectOffset(0, 0, 4, 4);
+            MainContainer.eventVisibilityChanged += (x, y) =>
+            {
+                if (y)
+                {
+                    SafeObtain(UpdateParams);
+                }
+            };
 
             KlyteMonoUtils.CreateTabsComponent(out m_tabstrip, out UITabContainer m_tabContainer, MainContainer.transform, "TextEditor", new Vector4(0, 0, MainContainer.width, 40), new Vector4(0, 0, MainContainer.width, MainContainer.height - 40));
             UIPanel m_tabSettings = TabCommons.CreateNonScrollableTabLocalized(m_tabstrip, KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_Settings), "K45_WTS_BUILDINGEDITOR_BASIC_SETTINGS", "RcSettings");
             UIPanel m_tabPublicTransport = TabCommons.CreateNonScrollableTabLocalized(m_tabstrip, "InfoIconPublicTransport", "K45_WTS_BUILDINGEDITOR_PUBLICTRANSPORTSTATION_SETTINGS", "PublicTransport");
             UIPanel m_tabSpawning = TabCommons.CreateNonScrollableTabLocalized(m_tabstrip, KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_Reload), "K45_WTS_BUILDINGEDITOR_SPAWNING_SETTINGS", "RcSpawning");
             UIPanel m_tabAppearence = TabCommons.CreateNonScrollableTabLocalized(m_tabstrip, KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_AutoColorIcon), "K45_WTS_BUILDINGEDITOR_APPEARANCE_SETTINGS", "RcAppearence");
+            UIPanel m_tabParameters = TabCommons.CreateNonScrollableTabLocalized(m_tabstrip, KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_AutoNameIcon), "K45_WTS_BUILDINGEDITOR_TEXT_PARAMETERS", "RcParameters");
 
             var helperSettings = new UIHelperExtension(m_tabSettings, LayoutDirection.Vertical);
             var helperPublicTransport = new UIHelperExtension(m_tabPublicTransport, LayoutDirection.Vertical);
             var helperSpawning = new UIHelperExtension(m_tabSpawning, LayoutDirection.Vertical);
             var helperAppearence = new UIHelperExtension(m_tabAppearence, LayoutDirection.Vertical);
+            var helperParameters = new UIHelperExtension(m_tabParameters, LayoutDirection.Vertical);
 
 
 
@@ -132,7 +146,6 @@ namespace Klyte.WriteTheSigns.UI
 
             AddDropdown(Locale.Get("K45_WTS_BUILDINGEDITOR_PROPTYPE"), out m_propSelectionType, helperSettings, new string[] { Locale.Get("K45_WTS_BUILDINGEDITOR_PROPLAYOUT"), Locale.Get("K45_WTS_BUILDINGEDITOR_PROPMODELSELECT") }, OnPropSelecionClassChange);
             AddFilterableInput(Locale.Get("K45_WTS_BUILDINGEDITOR_MODELLAYOUTSELECT"), helperSettings, out m_propFilter, out _, OnFilterLayouts, OnConfigSelectionChange);
-
             AddVector3Field(Locale.Get("K45_WTS_BUILDINGEDITOR_POSITION"), out m_position, helperSettings, OnPositionChanged);
             AddVector3Field(Locale.Get("K45_WTS_BUILDINGEDITOR_ROTATION"), out m_rotation, helperSettings, OnRotationChanged);
             AddVector3Field(Locale.Get("K45_WTS_BUILDINGEDITOR_SCALE"), out m_scale, helperSettings, OnScaleChanged);
@@ -164,8 +177,83 @@ namespace Klyte.WriteTheSigns.UI
 
             CreateTemplatePlatform();
             m_checkboxTemplateList = new UITemplateList<UIPanel>(m_platformList, PLATFORM_SELECTION_TEMPLATE_NAME);
-        }
 
+
+            m_textParams = new UITextField[BoardInstanceBuildingXml.TEXT_PARAMETERS_COUNT];
+            m_textParamsLabels = new UILabel[BoardInstanceBuildingXml.TEXT_PARAMETERS_COUNT];
+            for (int i = 0; i < BoardInstanceBuildingXml.TEXT_PARAMETERS_COUNT; i++)
+            {
+                var currentIdx = i;
+                UISprite sprite = null;
+                AddFilterableInput(string.Format(Locale.Get($"K45_WTS_BUILDINGEDITOR_TEXTPARAM"), currentIdx), helperParameters, out m_textParams[i], out m_textParamsLabels[i], out UIListBox lb, (x) => OnFilterParamImages(sprite, x), (t, x, y) => OnParamChanged(t, currentIdx, x, y));
+                m_textParamsLabels[i].processMarkup = true;
+                sprite = AddSpriteInEditorRow(lb, true, 300);
+                m_textParams[i].eventGotFocus += (x, y) =>
+                {
+                    var text = ((UITextField)x).text;
+                    if (text.StartsWith(WTSAtlasesLibrary.PROTOCOL_IMAGE_ASSET) || text.StartsWith(WTSAtlasesLibrary.PROTOCOL_IMAGE))
+                    {
+                        sprite.spriteName = ((UITextField)x).text.Split('/').Last().Trim();
+                    }
+                };
+                lb.eventItemMouseHover += (x, y) => sprite.spriteName = lb.items[y].Split('/').Last().Trim();
+                lb.eventVisibilityChanged += (x, y) => sprite.isVisible = y;
+                sprite.isVisible = false;
+            }
+
+        }
+        private string[] OnFilterParamImages(UISprite sprite, string arg)
+        {
+            string[] results = null;
+            SafeObtain((ref BoardInstanceBuildingXml x) => results = WriteTheSignsMod.Controller.AtlasesLibrary.OnFilterParamImagesByText(sprite, arg, x.Descriptor?.CachedProp?.name ?? x.CachedSimpleProp?.name, out lastProtocol_searchedParam));
+            return results;
+        }
+        private string lastProtocol_searchedParam;
+        private string OnParamChanged(string inputText, int paramIdx, int selIdx, string[] array)
+        {
+
+            if (selIdx >= 0 && lastProtocol_searchedParam == WTSAtlasesLibrary.PROTOCOL_IMAGE && array[selIdx].EndsWith("/"))
+            {
+                StartCoroutine(RefocusParamIn2Frames(paramIdx));
+                return lastProtocol_searchedParam + array[selIdx].Trim();
+            }
+            else
+            {
+                if (selIdx >= 0 && !(lastProtocol_searchedParam is null))
+                {
+                    CurrentEdited.SetTextParameter(paramIdx, lastProtocol_searchedParam + array[selIdx].Trim());
+                }
+                else
+                {
+                    CurrentEdited.SetTextParameter(paramIdx, inputText);
+                }
+                lastProtocol_searchedParam = null;
+                return CurrentEdited?.GetTextParameter(paramIdx)?.ToString() ?? "";
+            }
+        }
+        private IEnumerator RefocusParamIn2Frames(int paramIdx)
+        {
+            yield return new WaitForEndOfFrame();
+            m_textParams[paramIdx].Focus();
+        }
+        private void UpdateParams(ref BoardInstanceBuildingXml x)
+        {
+            var paramsUsed = x.GetAllParametersUsed();
+            if ((paramsUsed?.Count ?? 0) > 0)
+            {
+                m_tabstrip.ShowTab("RcParameters");
+                for (int i = 0; i < m_textParams.Length; i++)
+                {
+                    m_textParamsLabels[i].suffix = paramsUsed?.ContainsKey(i) ?? false ? $" - {Locale.Get("K45_WTS_USEDAS")}\n{string.Join("\n", paramsUsed[i])}" : "";
+                    m_textParams[i].text = x.GetTextParameter(i)?.ToString() ?? "";
+                    m_textParams[i].parent.isVisible = paramsUsed?.ContainsKey(i) ?? false;
+                }
+            }
+            else
+            {
+                m_tabstrip.HideTab("RcParameters");
+            }
+        }
 
         private void CreateTemplatePlatform()
         {
@@ -299,7 +387,7 @@ namespace Klyte.WriteTheSigns.UI
 
                 m_chkUseFixedIfMulti.isVisible = x.ColorModeProp == ColoringMode.ByPlatform;
 
-
+                UpdateParams(ref x);
 
 
                 if (Source != ConfigurationSource.CITY)
@@ -347,13 +435,18 @@ namespace Klyte.WriteTheSigns.UI
                     PropIndexes.instance.PrefabsLoaded.TryGetValue(targetValue, out PropInfo info);
                     x.CachedSimpleProp = info;
                 }
+                UpdateParams(ref x);
             });
 
             return targetValue;
         }
 
 
-        private void OnPropSelecionClassChange(int sel) => SafeObtain((ref BoardInstanceBuildingXml x) => m_propFilter.text = sel == 0 ? x.PropLayoutName ?? "" : PropIndexes.GetListName(x.CachedSimpleProp));
+        private void OnPropSelecionClassChange(int sel) => SafeObtain((ref BoardInstanceBuildingXml x) =>
+        {
+            m_propFilter.text = (sel == 0 ? x.PropLayoutName : PropIndexes.GetListName(x.CachedSimpleProp)) ?? "";
+            UpdateParams(ref x);
+        });
 
         public void Update()
         {
@@ -451,31 +544,6 @@ namespace Klyte.WriteTheSigns.UI
                 this.index = index;
             }
         }
-
-        #region Simple Prop selection
-
-
-
-        private string OnSetProp(string typed, int sel, string[] items)
-        {
-            if (sel >= 0)
-            {
-                PropIndexes.instance.PrefabsLoaded.TryGetValue(items[sel], out PropInfo targetProp);
-                SafeObtain((ref BoardInstanceBuildingXml x) => x.CachedSimpleProp = targetProp);
-                return items[sel];
-            }
-            else
-            {
-                SafeObtain((ref BoardInstanceBuildingXml x) => x.CachedSimpleProp = null);
-                return null;
-            }
-
-        }
-
-
-        #endregion
-
-
     }
 
 
