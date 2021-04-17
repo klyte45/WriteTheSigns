@@ -108,6 +108,7 @@
     <Compile Include="commons\Redirectors\UIDynamicPanelsRedirector.cs" />
     <Compile Include="commons\Redirectors\UIViewRedirector.cs" />
     <Compile Include="commons\Redirectors\UIWorkshopAssetRedirector.cs" />
+    <Compile Include="commons\Tools\BasicVehicleTool.cs" />
     <Compile Include="commons\Tools\BasicBuildingTool.cs" />
     <Compile Include="commons\Tools\BasicNetTool.cs" />
     <Compile Include="commons\UI\AVOPreviewRenderer.cs" />
@@ -220,6 +221,7 @@
     <Compile Include="Singleton\WTSVehicleTextsSingleton.cs" />
     <Compile Include="Singleton\WTSBuildingPropsSingleton.cs" />
     <Compile Include="SpriteAtlas\WTSAtlasesLibrary.cs" />
+    <Compile Include="Tools\VehicleEditorTool.cs" />
     <Compile Include="Utils\WTSAtlasLoadingUtils.cs" />
     <Compile Include="Xml\BoardDescriptor\TextParameterWrapper.cs" />
     <Compile Include="Xml\Enums\ConfigurationSource.cs" />

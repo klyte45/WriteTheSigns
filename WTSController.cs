@@ -20,8 +20,9 @@ namespace Klyte.WriteTheSigns
 
     public class WTSController : BaseController<WriteTheSignsMod, WTSController>
     {
-        public RoadSegmentTool RoadSegmentToolInstance => FindObjectOfType<RoadSegmentTool>();
-        public BuildingEditorTool BuildingEditorToolInstance => FindObjectOfType<BuildingEditorTool>();
+        public RoadSegmentTool RoadSegmentToolInstance => ToolsModifierControl.toolController.GetComponent<RoadSegmentTool>();
+        public BuildingEditorTool BuildingEditorToolInstance => ToolsModifierControl.toolController.GetComponent<BuildingEditorTool>();
+        public VehicleEditorTool VehicleEditorToolInstance => ToolsModifierControl.toolController.GetComponent<VehicleEditorTool>();
 
         internal WTSAtlasesLibrary AtlasesLibrary { get; private set; }
         internal WTSBuildingPropsSingleton BuildingPropsSingleton { get; private set; }
@@ -52,14 +53,18 @@ namespace Klyte.WriteTheSigns
 
         public void Awake()
         {
-            if (RoadSegmentToolInstance == null)
+            if (RoadSegmentToolInstance is null)
             {
                 ToolsModifierControl.toolController.gameObject.AddComponent<RoadSegmentTool>();
             }
 
-            if (BuildingEditorToolInstance == null)
+            if (BuildingEditorToolInstance is null)
             {
                 ToolsModifierControl.toolController.gameObject.AddComponent<BuildingEditorTool>();
+            }
+            if (VehicleEditorToolInstance is null)
+            {
+                ToolsModifierControl.toolController.gameObject.AddComponent<VehicleEditorTool>();
             }
             ReloadAbbreviationFiles();
 
