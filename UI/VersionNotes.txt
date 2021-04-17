@@ -11,6 +11,7 @@
 <color cyan>- Fixed sprite selection improved</color>: Now you will use it like a parameter, supporting the image related protocols listed above.
 <color cyan>- Vehicle picker</color>: Now you don't need to find the vehicle name in the list anymore, just press the dropper button then click at desired vehicle
 <color cyan>- Parameters support in buildings</color>: You can use to customize each prop layout instance, like it can be done when placing in segment.
+<color cyan>- Font character support</color>: Now even not supported characters for some fonts (like accented letters) will try to fallback to a existing character (like the regular letter in case of accents). If N/A, will be removed from string, not occupying a letter space anymore.
 
 <color #777777>v0.2.1 - 31/MAR/21
 Beta-2.1 version:
