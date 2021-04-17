@@ -50,6 +50,7 @@ namespace Klyte.WriteTheSigns.UI
 
         public Matrix4x4 RenderPrefab(PI info, Vector3 offsetPosition, Vector3 offsetRotation, BoardTextDescriptorGeneralXml[] TextDescriptors, int referenceIdx, string overrideText, BoardDescriptorGeneralXml descriptor = null)
         {
+            if (info is null) return default;
 
             var sunLightSource = DayNightProperties.instance.sunLightSource;
             var intensity = sunLightSource.intensity;
@@ -87,7 +88,7 @@ namespace Klyte.WriteTheSigns.UI
             }
             else
             {
-                BasicRenderInformation refer = WTSDynamicTextRenderingRules.GetTextMesh(TextDescriptors[referenceIdx], 0, 0, referenceIdx, m_defaultInstance, descriptor, out IEnumerable<BasicRenderInformation> briArr) ?? briArr?.FirstOrDefault();
+                BasicRenderInformation refer = WTSDynamicTextRenderingRules.GetTextMesh(TextDescriptors[referenceIdx], 0, 0, referenceIdx, m_defaultInstance, descriptor, out IEnumerable<BasicRenderInformation> briArr, info) ?? briArr?.FirstOrDefault();
                 if (refer == null)
                 {
                     return default;

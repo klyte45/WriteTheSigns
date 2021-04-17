@@ -162,7 +162,7 @@ namespace Klyte.WriteTheSigns.UI
         private void OnCopyToCity()
         {
             WTSBuildingsData.Instance.CityDescriptors[m_currentBuildingName] = XmlUtils.DefaultXmlDeserialize<BuildingGroupDescriptorXml>(XmlUtils.DefaultXmlSerialize(CurrentEditingInstance));
-            CurrentEditingInstance.LocalLayouts.ForEach(x =>
+            CurrentEditingInstance.CaculateLocalLayouts().ForEach(x =>
             {
                 if (WTSPropLayoutData.Instance.Get(x.Key) == null)
                 {

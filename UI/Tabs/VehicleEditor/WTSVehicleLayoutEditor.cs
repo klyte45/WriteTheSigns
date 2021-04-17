@@ -49,7 +49,6 @@ namespace Klyte.WriteTheSigns.UI
         #region Mid bar controls
         private UIScrollablePanel m_editTabstrip;
         private UIButton m_plusButton;
-        private WTSVehicleLayoutEditorPreview m_preview;
         private UIPanel m_orderedRulesList;
         #endregion
         #region Bottom bar panels
@@ -69,6 +68,7 @@ namespace Klyte.WriteTheSigns.UI
 
         public bool LockSelection { get; private set; }
         public ConfigurationSource CurrentConfigurationSource { get; private set; }
+        internal WTSVehicleLayoutEditorPreview Preview { get; private set; }
 
         internal event Action<int> CurrentTabChanged;
 
@@ -116,7 +116,7 @@ namespace Klyte.WriteTheSigns.UI
 
 
             KlyteMonoUtils.CreateUIElement(out UIPanel previewContainer, m_middleBar.transform, "previewContainer", new UnityEngine.Vector4(0, 0, m_middleBar.width * .6f, m_middleBar.height - m_middleBar.padding.vertical));
-            m_preview = previewContainer.gameObject.AddComponent<WTSVehicleLayoutEditorPreview>();
+            Preview = previewContainer.gameObject.AddComponent<WTSVehicleLayoutEditorPreview>();
 
 
             KlyteMonoUtils.CreateScrollPanel(m_middleBar, out m_editTabstrip, out _, m_middleBar.width - previewContainer.width - m_middleBar.padding.horizontal - (m_middleBar.autoLayoutPadding.horizontal * 2) - 20, 300);
@@ -231,7 +231,12 @@ namespace Klyte.WriteTheSigns.UI
             m_btnPaste.isVisible = CurrentConfigurationSource == ConfigurationSource.CITY;
         }
 
-        private void OnPasteFromClipboard() => EditingInstance = XmlUtils.DefaultXmlDeserialize<LayoutDescriptorVehicleXml>(m_clipboard);
+        private void OnPasteFromClipboard()
+        {
+            EditingInstance = XmlUtils.DefaultXmlDeserialize<LayoutDescriptorVehicleXml>(m_clipboard);
+            EditingInstance.VehicleAssetName = CurrentVehicleInfo.name;
+        }
+
         private void OnCreateNewCity()
         {
             WTSVehicleData.Instance.CityDescriptors[CurrentVehicleInfo.name] = new LayoutDescriptorVehicleXml
@@ -291,7 +296,7 @@ namespace Klyte.WriteTheSigns.UI
             m_textInfoEditor.isVisible = CurrentTab != 0;
             CurrentTabChanged?.Invoke(idx);
             FixTabstrip();
-            m_preview.ResetCamera();
+            Preview.ResetCamera();
 
         }
 

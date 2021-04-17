@@ -114,7 +114,7 @@ namespace Klyte.WriteTheSigns.UI
                 {
                     try
                     {
-                        return y.Value?.name == EditingInstance?.m_propName;
+                        return y.Value?.name == EditingInstance?.PropName;
                     }
                     catch { return false; }
                 }).FirstOrDefault();
@@ -222,10 +222,10 @@ namespace Klyte.WriteTheSigns.UI
             return error;
         }
 
-        private void OnExportAsAsset() => ExportTo(Path.Combine(Path.GetDirectoryName(PackageManager.FindAssetByName(EditingInstance?.m_propName)?.package?.packagePath), $"{WTSController.m_defaultFileNamePropsXml}.xml"), true);
+        private void OnExportAsAsset() => ExportTo(Path.Combine(Path.GetDirectoryName(PackageManager.FindAssetByName(EditingInstance?.PropName)?.package?.packagePath), $"{WTSController.m_defaultFileNamePropsXml}.xml"), true);
         private void ExportTo(string output, bool isAsset)
         {
-            if (EditingInstance?.m_propName != null)
+            if (EditingInstance?.PropName != null)
             {
                 ListWrapper<BoardDescriptorGeneralXml> currentFile;
                 if (File.Exists(output))
@@ -238,7 +238,7 @@ namespace Klyte.WriteTheSigns.UI
                 }
 
                 var targetLayoutName = EditingInstance.SaveName;
-                var assetId = EditingInstance.m_propName.Split('.')[0];
+                var assetId = EditingInstance.PropName.Split('.')[0];
                 if (isAsset && targetLayoutName.StartsWith($"{assetId}/"))
                 {
                     targetLayoutName = targetLayoutName.Split("/".ToCharArray(), 2)[1];
@@ -278,7 +278,7 @@ namespace Klyte.WriteTheSigns.UI
             }
         }
 
-        private void OnExportAsGlobal() => ExportTo(Path.Combine(WTSController.DefaultPropsLayoutConfigurationFolder, $"{WTSController.m_defaultFileNamePropsXml}_{PackageManager.FindAssetByName(EditingInstance?.m_propName)?.package.packageMainAsset ?? EditingInstance?.m_propName}.xml"), false);
+        private void OnExportAsGlobal() => ExportTo(Path.Combine(WTSController.DefaultPropsLayoutConfigurationFolder, $"{WTSController.m_defaultFileNamePropsXml}_{PackageManager.FindAssetByName(EditingInstance?.PropName)?.package.packageMainAsset ?? EditingInstance?.PropName}.xml"), false);
 
 
 

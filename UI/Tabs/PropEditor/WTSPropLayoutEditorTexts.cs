@@ -123,22 +123,52 @@ namespace Klyte.WriteTheSigns.UI
 
             AddDropdown(Locale.Get("K45_WTS_TEXT_CONTENT"), out m_dropdownTextContent, helperConfig, Enum.GetNames(typeof(TextType)).Select(x => Locale.Get("K45_WTS_BOARD_TEXT_TYPE_DESC", x.ToString())).ToArray(), OnSetTextOwnNameContent);
             AddTextField(Locale.Get("K45_WTS_CUSTOM_TEXT"), out m_customText, helperConfig, OnSetTextCustom);
-            AddFilterableInput(Locale.Get("K45_WTS_SPRITE_NAME"), helperConfig, out m_spriteFilter, out UIListBox popup, OnFilterSprites, OnSpriteNameChanged);
-            popup.size = new Vector2(824, 220);
-            popup.processMarkup = true;
+
+            AddFilterableInput(Locale.Get("K45_WTS_SPRITE_NAME"), helperConfig, out m_spriteFilter, out UIListBox lb2, (x) => OnFilterParamImages(WTSPropLayoutEditor.Instance.PropPreview.OverrideSprite, x), OnSpriteNameChanged);
+            lb2.size = new Vector2(MainContainer.width - 20, 220);
+            lb2.processMarkup = true;
+            m_spriteFilter.eventGotFocus += (x, y) =>
+            {
+                var text = ((UITextField)x).text;
+                if (text.StartsWith(WTSAtlasesLibrary.PROTOCOL_IMAGE_ASSET) || text.StartsWith(WTSAtlasesLibrary.PROTOCOL_IMAGE))
+                {
+                    WTSPropLayoutEditor.Instance.PropPreview.OverrideSprite.spriteName = ((UITextField)x).text.Split('/').Last().Trim();
+                }
+            };
+            lb2.eventItemMouseHover += (x, y) =>
+            {
+                if (y >= 0 && y < lb2.items.Length)
+                {
+                    WTSPropLayoutEditor.Instance.PropPreview.OverrideSprite.spriteName = lb2.items[y].Split('/').Last().Trim();
+                }
+            };
+            lb2.eventVisibilityChanged += (x, y) => WTSPropLayoutEditor.Instance.PropPreview.OverrideSprite.parent.isVisible = y;
+            WTSPropLayoutEditor.Instance.PropPreview.OverrideSprite.parent.isVisible = false;
 
             AddDropdown(Locale.Get("K45_WTS_PROPLAYOUT_DESTINATIONREFERENCE"), out m_destinationRef, helperConfig, (Enum.GetValues(typeof(DestinationReference)) as DestinationReference[]).OrderBy(x => (int)x).Select(x => Locale.Get("K45_WTS_ONNETTEXT_DESTINATION_DESC", x.ToString())).ToArray(), OnChangeDestinationRef);
             AddDropdown(Locale.Get("K45_WTS_PROPLAYOUT_TEXTPARAMETERIDX"), out m_parameterIdx, helperConfig, new string[BoardInstanceOnNetXml.TEXT_PARAMETERS_COUNT].Select((x, i) => $"#{i}").ToArray(), OnChangeTextParameterIdx);
             AddTextField(Locale.Get("K45_WTS_PROPLAYOUT_TEXTPARAMETERNAME"), out m_parameterDisplayName, helperConfig, OnSetParameterDisplayName);
 
-            UISprite sprite = null;
-            AddFilterableInput(Locale.Get("K45_WTS_PROPLAYOUT_TEXTPARAMETERDEFAULTVAL"), helperConfig, out m_defaultParameterValue, out UIListBox lb, (x) => OnFilterParamImages(sprite, x), OnChangedDefaultTextParam);
+            AddFilterableInput(Locale.Get("K45_WTS_PROPLAYOUT_TEXTPARAMETERDEFAULTVAL"), helperConfig, out m_defaultParameterValue, out UIListBox lb, (x) => OnFilterParamImages(WTSPropLayoutEditor.Instance.PropPreview.OverrideSprite, x), OnChangedDefaultTextParam);
             lb.processMarkup = true;
-            sprite = AddSpriteInEditorRow(lb, true, 300);
-            m_defaultParameterValue.eventGotFocus += (x, y) => sprite.spriteName = ((UITextField)x).text.Length >= 4 ? ((UITextField)x).text.Substring(4) : "";
-            lb.eventItemMouseHover += (x, y) => sprite.spriteName = lb.items[y].Trim();
-            lb.eventVisibilityChanged += (x, y) => sprite.isVisible = y;
-            sprite.isVisible = false;
+            lb.size = new Vector2(MainContainer.width - 20, 220);
+            m_defaultParameterValue.eventGotFocus += (x, y) =>
+            {
+                var text = ((UITextField)x).text;
+                if (text.StartsWith(WTSAtlasesLibrary.PROTOCOL_IMAGE_ASSET) || text.StartsWith(WTSAtlasesLibrary.PROTOCOL_IMAGE))
+                {
+                    WTSPropLayoutEditor.Instance.PropPreview.OverrideSprite.spriteName = ((UITextField)x).text.Split('/').Last().Trim();
+                }
+            };
+            lb.eventItemMouseHover += (x, y) =>
+            {
+                if (y >= 0 && y < lb.items.Length)
+                {
+                    WTSPropLayoutEditor.Instance.PropPreview.OverrideSprite.spriteName = lb.items[y].Split('/').Last().Trim();
+                }
+            };
+            lb.eventVisibilityChanged += (x, y) => WTSPropLayoutEditor.Instance.PropPreview.OverrideSprite.parent.isVisible = y;
+            WTSPropLayoutEditor.Instance.PropPreview.OverrideSprite.parent.isVisible = false;
 
             AddIntField(Locale.Get("K45_WTS_PROPLAYOUT_ITEMDURATIONFRAMES"), out m_slideDurationFrames, helperConfig, OnSetDurationFrames, false);
             AddIntField(Locale.Get("K45_WTS_PROPLAYOUT_DESYNCFRAMES"), out m_slideDesync, helperConfig, OnSetDesyncOffset, false);
@@ -198,7 +228,7 @@ namespace Klyte.WriteTheSigns.UI
         {
             if (selIdx >= 0 && lastProtocol_searchedParam == WTSAtlasesLibrary.PROTOCOL_IMAGE && array[selIdx].EndsWith("/"))
             {
-                StartCoroutine(RefocusParamIn2Frames());
+                StartCoroutine(RefocusParamIn2Frames(m_defaultParameterValue));
                 return lastProtocol_searchedParam + array[selIdx].Trim();
             }
             else
@@ -211,13 +241,13 @@ namespace Klyte.WriteTheSigns.UI
         }
 
 
-        private IEnumerator RefocusParamIn2Frames()
+        private IEnumerator RefocusParamIn2Frames(UITextField target)
         {
             yield return new WaitForEndOfFrame();
-            m_defaultParameterValue.Focus();
+            target.Focus();
         }
 
-        private string[] OnFilterParamImages(UISprite sprite, string arg) => WriteTheSignsMod.Controller.AtlasesLibrary.OnFilterParamImagesByText(sprite, arg, WTSPropLayoutEditor.Instance.EditingInstance.m_propName, out lastProtocol_searchedParam);
+        private string[] OnFilterParamImages(UISprite sprite, string arg) => WriteTheSignsMod.Controller.AtlasesLibrary.OnFilterParamImagesByText(sprite, arg, WTSPropLayoutEditor.Instance.EditingInstance.PropName, out lastProtocol_searchedParam);
 
         public void Start() => WriteTheSignsMod.Controller.EventFontsReloadedFromFolder += () => SafeObtain((ref BoardTextDescriptorGeneralXml x) => WTSUtils.ReloadFontsOf(m_overrideFontSelect, x.m_overrideFont, true));
 
@@ -284,7 +314,7 @@ namespace Klyte.WriteTheSigns.UI
             m_textPrefix.text = x.m_prefix ?? "";
             m_textSuffix.text = x.m_suffix ?? "";
             m_allCaps.isChecked = x.m_allCaps;
-            m_spriteFilter.text = x.m_spriteName ?? "";
+            m_spriteFilter.text = x.m_spriteParam?.ToString() ?? "";
             m_applyAbbreviations.isChecked = x.m_applyAbbreviations;
 
             m_arrayCustomBlink[0].text = x.IlluminationConfig.CustomBlink.X.ToString("F3");
@@ -393,21 +423,20 @@ namespace Klyte.WriteTheSigns.UI
        });
         private void OnSetTextCustom(string text) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_fixedText = text);
 
-        private string GetCurrentSpriteName()
+        private string OnSpriteNameChanged(string input, int selIdx, string[] refArray)
         {
-            string result = null;
-            SafeObtain((ref BoardTextDescriptorGeneralXml desc) => result = desc.m_spriteName);
-            return result;
-        }
-
-        private string OnSpriteNameChanged(string input, int obj, string[] refArray)
-        {
-            if (obj >= 0)
+            if (selIdx >= 0 && lastProtocol_searchedParam == WTSAtlasesLibrary.PROTOCOL_IMAGE && refArray[selIdx].EndsWith("/"))
             {
-                var targetValue = refArray[obj].Split(new char[] { '>' }, 2)[1].Trim();
-                SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_spriteName = targetValue);
+                StartCoroutine(RefocusParamIn2Frames(m_spriteFilter));
+                return lastProtocol_searchedParam + refArray[selIdx].Trim();
             }
-            return GetCurrentSpriteName();
+            else
+            {
+                string result = "";
+                SafeObtain((ref BoardTextDescriptorGeneralXml x) => result = (x.SpriteParam = ((selIdx >= 0 && lastProtocol_searchedParam != null) ? lastProtocol_searchedParam + refArray[selIdx].Trim() : input) ?? ""));
+                lastProtocol_searchedParam = null;
+                return result;
+            }
         }
 
         private string[] OnFilterSprites(string input) => m_spriteFilter.atlas.spriteNames.Where(x => x.ToLower().Contains(input.ToLower())).OrderBy(x => x).Select(x => $"<sprite {x}> {x}").ToArray();
@@ -429,11 +458,11 @@ namespace Klyte.WriteTheSigns.UI
                                                                        desc.PlacingConfig.m_create180degYClone = isChecked;
                                                                        ApplyShowRules(desc);
                                                                    });
-        private void OnChangeMirrored(bool isChecked) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) =>
-        {
-            desc.PlacingConfig.m_mirrored = isChecked;
-            ApplyShowRules(desc);
-        });
+        //private void OnChangeMirrored(bool isChecked) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) =>
+        //{
+        //    desc.PlacingConfig.m_mirrored = isChecked;
+        //    ApplyShowRules(desc);
+        //});
 
         private void OnSetTextAlignmentHorizontal(int sel) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_textAlign = (UIHorizontalAlignment)sel);
         private void OnFixedColorChanged(Color value) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.ColoringConfig.m_defaultColor = value);

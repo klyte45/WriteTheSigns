@@ -8,11 +8,11 @@ namespace Klyte.WriteTheSigns.Utils
 {
     public static class WTSAtlasLoadingUtils
     {
-        public static void LoadAllImagesFromFolder(string folder, out List<SpriteInfo> spritesToAdd, out List<string> errors)
+        public static void LoadAllImagesFromFolder(string folder, out List<SpriteInfo> spritesToAdd, out List<string> errors, bool addPrefix = true)
         {
             spritesToAdd = new List<SpriteInfo>();
             errors = new List<string>();
-            LoadAllImagesFromFolderRef(folder, ref spritesToAdd, ref errors, true);
+            LoadAllImagesFromFolderRef(folder, ref spritesToAdd, ref errors, addPrefix);
         }
         public static void LoadAllImagesFromFolderRef(string folder, ref List<SpriteInfo> spritesToAdd, ref List<string> errors, bool addPrefix)
         {

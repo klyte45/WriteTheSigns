@@ -112,20 +112,20 @@ namespace Klyte.WriteTheSigns.Data
                     if (info != null)
                     {
                         string[] propEffName = info.name.Split(".".ToCharArray(), 2);
-                        string[] xmlEffName = item.m_propName?.Split(".".ToCharArray(), 2);
+                        string[] xmlEffName = item.PropName?.Split(".".ToCharArray(), 2);
                         if (propEffName?.Length == 2 && xmlEffName?.Length == 2 && xmlEffName[1] == propEffName[1])
                         {
-                            item.m_propName = info.name;
+                            item.PropName = info.name;
                             item.m_configurationSource = ConfigurationSource.ASSET;
                             item.SaveName = propEffName[0] + "/" + item.SaveName;
                             result.Add(item);
                         }
                         else
                         {
-                            LogUtils.DoWarnLog($"PROP NAME WAS NOT MATCHING PROP INFO! SKIPPING! (prop folder: {$"{info}" ?? "<GLOBAL>"}| descriptor: {item.SaveName} | item.m_propName: {item.m_propName})");
+                            LogUtils.DoWarnLog($"PROP NAME WAS NOT MATCHING PROP INFO! SKIPPING! (prop folder: {$"{info}" ?? "<GLOBAL>"}| descriptor: {item.SaveName} | item.m_propName: {item.PropName})");
                         }
                     }
-                    else if (item.m_propName == null)
+                    else if (item.PropName == null)
                     {
                         LogUtils.DoErrorLog($"PROP NAME WAS NOT SET! (prop folder: {$"{info}" ?? "<GLOBAL>"}| descriptor: {item.SaveName})");
                         continue;

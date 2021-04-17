@@ -1,4 +1,6 @@
 ﻿using Klyte.Commons.Interfaces;
+using Klyte.Commons.Utils;
+using System.Linq;
 using System.Xml.Serialization;
 
 namespace Klyte.WriteTheSigns.Xml
@@ -22,6 +24,21 @@ namespace Klyte.WriteTheSigns.Xml
 
         [XmlIgnore]
         internal bool SubmeshesUpdated { get; set; }
+
+        private VehicleInfo m_cachedInfo;
+
+        [XmlIgnore]
+        internal VehicleInfo CachedInfo
+        {
+            get
+            {
+                if (m_cachedInfo is null && (m_cachedInfo = VehiclesIndexes.instance.PrefabsLoaded.Values.Where(x => x.name == VehicleAssetName).FirstOrDefault()) is null)
+                {
+                    m_cachedInfo = new VehicleInfo();
+                }
+                return m_cachedInfo;
+            }
+        }
     }
 
 }

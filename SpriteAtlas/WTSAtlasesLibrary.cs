@@ -164,12 +164,12 @@ namespace Klyte.WriteTheSigns.Sprites
             yield return 0;
             BuildMeshFromAtlas(id, bri, m_transportLineAtlas);
             yield return 0;
-            if(m_transportLineMaterial is null)
+            if (m_transportLineMaterial is null)
             {
                 m_transportLineMaterial = new Material(m_transportLineAtlas.material)
-                 {
-                     shader = WTSController.DEFAULT_SHADER_TEXT,
-                 };
+                {
+                    shader = WTSController.DEFAULT_SHADER_TEXT,
+                };
             }
             RegisterMeshSingle(lineId, bri, m_transportLineCache, m_transportLineAtlas, TransportIsDirty, m_transportLineMaterial);
             TransportIsDirty = false;
@@ -290,8 +290,8 @@ namespace Klyte.WriteTheSigns.Sprites
         internal string[] FindByInLocal(string targetAtlas, string searchName, out UITextureAtlas atlas) => LocalAtlases.TryGetValue(targetAtlas ?? string.Empty, out atlas)
                 ? atlas.spriteNames.Where((x, i) => i > 0 && x.ToLower().Contains(searchName.ToLower())).Select(x => $"{(targetAtlas.IsNullOrWhiteSpace() ? "<ROOT>" : targetAtlas)}/{x}").OrderBy(x => x).ToArray()
                 : (new string[0]);
-        internal string[] FindByInAsset(ulong assetId, string searchName, out UITextureAtlas atlas) => AssetAtlases.TryGetValue(assetId, out atlas)
-                ? atlas.spriteNames.Where((x, i) => i > 0 && x.ToLower().Contains(searchName.ToLower())).Select(x => $"{assetId}/{x}").OrderBy(x => x).ToArray()
+        internal string[] FindByInAsset(ulong assetId, string searchName, out UITextureAtlas atlas, bool asRoot = false) => AssetAtlases.TryGetValue(assetId, out atlas)
+                ? atlas.spriteNames.Where((x, i) => i > 0 && x.ToLower().Contains(searchName.ToLower())).Select(x => $"{(asRoot ? "<ROOT>" : assetId.ToString())}/{x}").OrderBy(x => x).ToArray()
                 : (new string[0]);
         internal string[] FindByInLocalFolders(string searchName) => LocalAtlases.Keys.Select(x => x == string.Empty ? "<ROOT>" : x).Where(x => x.ToLower().Contains(searchName.ToLower())).OrderBy(x => x).ToArray();
 
@@ -314,7 +314,7 @@ namespace Klyte.WriteTheSigns.Sprites
                         results = (subfolder.IsNullOrWhiteSpace() ? WriteTheSignsMod.Controller.AtlasesLibrary.FindByInLocalFolders(searchName).Select(x => $"{x}/") : new List<string>()).Union(WriteTheSignsMod.Controller.AtlasesLibrary.FindByInLocal(subfolder == "<ROOT>" ? null : subfolder, searchName, out atlas)).ToArray();
                         break;
                     case PROTOCOL_IMAGE_ASSET:
-                        results = WriteTheSignsMod.Controller.AtlasesLibrary.FindByInAsset(ulong.TryParse(propName?.Split('.')[0] ?? "", out ulong wId) ? wId : 0u, searchName, out atlas);
+                        results = WriteTheSignsMod.Controller.AtlasesLibrary.FindByInAsset(ulong.TryParse(propName?.Split('.')[0] ?? "", out ulong wId) ? wId : 0u, searchName, out atlas, true);
                         break;
                     case PROTOCOL_FOLDER:
                         results = WriteTheSignsMod.Controller.AtlasesLibrary.FindByInLocalFolders(searchName);
@@ -354,7 +354,7 @@ namespace Klyte.WriteTheSigns.Sprites
                 bool isRoot = dir == WTSController.ExtraSpritesFolder;
                 var spritesToAdd = new List<SpriteInfo>();
                 WTSAtlasLoadingUtils.LoadAllImagesFromFolderRef(dir, ref spritesToAdd, ref errors, isRoot);
-                if (spritesToAdd.Count > 0)
+                if (isRoot || spritesToAdd.Count > 0)
                 {
                     var atlasName = isRoot ? string.Empty : Path.GetFileNameWithoutExtension(dir);
                     LocalAtlases[atlasName] = new UITextureAtlas
@@ -391,16 +391,16 @@ namespace Klyte.WriteTheSigns.Sprites
         {
             if (workshopId > 0 && workshopId != ~0UL && !AssetAtlases.ContainsKey(workshopId))
             {
-                CreateAtlasEntry(AssetAtlases, workshopId, directoryPath);
+                CreateAtlasEntry(AssetAtlases, workshopId, directoryPath, false);
             }
 
         }
 
-        private UITextureAtlas CreateAtlasEntry<T>(Dictionary<T, UITextureAtlas> atlasDic, T atlasName, string path)
+        private UITextureAtlas CreateAtlasEntry<T>(Dictionary<T, UITextureAtlas> atlasDic, T atlasName, string path, bool addPrefix)
         {
             UITextureAtlas targetAtlas = ScriptableObject.CreateInstance<UITextureAtlas>();
             targetAtlas.material = new Material(WTSController.DEFAULT_SHADER_TEXT);
-            WTSAtlasLoadingUtils.LoadAllImagesFromFolder(path, out List<SpriteInfo> spritesToAdd, out List<string> errors);
+            WTSAtlasLoadingUtils.LoadAllImagesFromFolder(path, out List<SpriteInfo> spritesToAdd, out List<string> errors, addPrefix);
             TextureAtlasUtils.RegenerateTextureAtlas(targetAtlas, spritesToAdd);
             foreach (string error in errors)
             {

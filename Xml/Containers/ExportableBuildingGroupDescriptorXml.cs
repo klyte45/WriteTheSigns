@@ -14,7 +14,7 @@ namespace Klyte.WriteTheSigns.Xml
     {
 
         [XmlElement("localLayout")]
-        [Obsolete("XML EXPORTING ONLY!")]
+        [Obsolete("XML EXPORTING ONLY!", true)]
         public override SimpleXmlDictionary<string, BoardDescriptorGeneralXml> LocalLayouts
         {
             get {
@@ -29,6 +29,8 @@ namespace Klyte.WriteTheSigns.Xml
             }
             set => m_localLayouts = value;
         }
+
+        public Dictionary<string, BoardDescriptorGeneralXml> GetCachedLocalLayouts() => m_localLayouts;
 
         private bool TryGetDescriptor(string layoutName, out BoardDescriptorGeneralXml descriptor)
         {

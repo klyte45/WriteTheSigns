@@ -19,7 +19,8 @@ namespace Klyte.WriteTheSigns.Xml
         [XmlElement("arrayRepeatOffset")]
         public Vector3Xml ArrayRepeat
         {
-            get => m_arrayRepeat; set {
+            get => m_arrayRepeat; set
+            {
                 if (value != m_arrayRepeat)
                 {
                     OnChangeMatrixData();
@@ -33,7 +34,8 @@ namespace Klyte.WriteTheSigns.Xml
         public int ArrayRepeatTimes
         {
             get => m_arrayRepeatTimes;
-            set {
+            set
+            {
                 if (value != m_arrayRepeatTimes)
                 {
                     OnChangeMatrixData();
@@ -53,7 +55,8 @@ namespace Klyte.WriteTheSigns.Xml
         [XmlAttribute("propLayoutName")]
         public string PropLayoutName
         {
-            get => m_propLayoutName; set {
+            get => m_propLayoutName; set
+            {
                 m_propLayoutName = value;
                 m_descriptor = null;
             }
@@ -66,7 +69,8 @@ namespace Klyte.WriteTheSigns.Xml
         [XmlIgnore]
         public BoardDescriptorGeneralXml Descriptor
         {
-            get {
+            get
+            {
                 if (m_descriptor == null && m_propLayoutName != null)
                 {
                     if (!TryGetDescriptor(m_propLayoutName, out m_descriptor) || m_descriptor.m_allowedRenderClass != Rendering.TextRenderingClass.Buildings)
@@ -77,7 +81,8 @@ namespace Klyte.WriteTheSigns.Xml
                 }
                 return m_descriptor;
             }
-            internal set {
+            internal set
+            {
                 m_propLayoutName = value?.SaveName;
                 m_descriptor = null;
             }
@@ -91,29 +96,28 @@ namespace Klyte.WriteTheSigns.Xml
         [XmlAttribute("subBuildingIdxPivotReference")]
         public int SubBuildingPivotReference { get; set; } = -1;
 
+        private string simplePropName;
         [XmlAttribute("simplePropName")]
-        public string m_simplePropName;
-        [XmlIgnore]
-        public PropInfo SimpleProp
+        public string SimplePropName
         {
-            get {
-                if (m_simplePropName != null && m_simpleProp?.name != m_simplePropName)
-                {
-                    m_simpleProp = PrefabCollection<PropInfo>.FindLoaded(m_simplePropName);
-                    if (m_simpleProp == null)
-                    {
-                        m_simplePropName = null;
-                    }
-                }
-                return m_simpleProp;
-            }
-            internal set {
-                m_simplePropName = value?.name;
-                m_simpleProp = null;
+            get => simplePropName; set
+            {
+                simplePropName = value;
+                m_cachedSimpleProp = value is null ? null : PrefabCollection<PropInfo>.FindLoaded(value);
             }
         }
         [XmlIgnore]
-        private PropInfo m_simpleProp;
+        public PropInfo CachedSimpleProp
+        {
+            get => m_cachedSimpleProp;
+            internal set
+            {
+                SimplePropName = value?.name;
+                m_cachedSimpleProp = value;
+            }
+        }
+        [XmlIgnore]
+        private PropInfo m_cachedSimpleProp;
         private Vector3Xml m_arrayRepeat = new Vector3Xml();
 
         [XmlIgnore]

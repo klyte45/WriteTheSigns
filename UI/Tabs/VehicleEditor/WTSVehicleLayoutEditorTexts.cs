@@ -7,9 +7,11 @@ using Klyte.Commons.UI.SpriteNames;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Libraries;
 using Klyte.WriteTheSigns.Rendering;
+using Klyte.WriteTheSigns.Sprites;
 using Klyte.WriteTheSigns.Utils;
 using Klyte.WriteTheSigns.Xml;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -86,6 +88,7 @@ namespace Klyte.WriteTheSigns.UI
 
         private string m_clipboard;
         private UITextField m_spriteFilter;
+        private string lastProtocol_searchedParam;
 
         public void Awake()
         {
@@ -162,9 +165,27 @@ namespace Klyte.WriteTheSigns.UI
 
             AddDropdown(Locale.Get("K45_WTS_TEXT_CONTENT"), out m_dropdownTextContent, helperConfig, WTSDynamicTextRenderingRules.ALLOWED_TYPES_VEHICLE.Select(x => Locale.Get("K45_WTS_BOARD_TEXT_TYPE_DESC_VEHICLE", x.ToString())).ToArray(), OnSetTextOwnNameContent);
             AddTextField(Locale.Get("K45_WTS_CUSTOM_TEXT"), out m_customText, helperConfig, OnSetTextCustom);
-            AddFilterableInput(Locale.Get("K45_WTS_SPRITE_NAME"), helperConfig, out m_spriteFilter, out UIListBox popup, OnFilterSprites, OnSpriteNameChanged);
-            popup.processMarkup = true;
-            popup.height = 210;
+
+            AddFilterableInput(Locale.Get("K45_WTS_SPRITE_NAME"), helperConfig, out m_spriteFilter, out UIListBox lb2, (x) => OnFilterSprites(WTSVehicleLayoutEditor.Instance.Preview.OverrideSprite, x), OnSpriteNameChanged);
+            lb2.size = new Vector2(MainContainer.width - 20, 220);
+            lb2.processMarkup = true;
+            m_spriteFilter.eventGotFocus += (x, y) =>
+            {
+                var text = ((UITextField)x).text;
+                if (text.StartsWith(WTSAtlasesLibrary.PROTOCOL_IMAGE_ASSET) || text.StartsWith(WTSAtlasesLibrary.PROTOCOL_IMAGE))
+                {
+                    WTSVehicleLayoutEditor.Instance.Preview.OverrideSprite.spriteName = ((UITextField)x).text.Split('/').Last().Trim();
+                }
+            };
+            lb2.eventItemMouseHover += (x, y) =>
+            {
+                if (y >= 0 && y < lb2.items.Length)
+                {
+                    WTSVehicleLayoutEditor.Instance.Preview.OverrideSprite.spriteName = lb2.items[y].Split('/').Last().Trim();
+                }
+            };
+            lb2.eventVisibilityChanged += (x, y) => WTSVehicleLayoutEditor.Instance.Preview.OverrideSprite.parent.isVisible = y;
+            WTSVehicleLayoutEditor.Instance.Preview.OverrideSprite.parent.isVisible = false;
 
             helperConfig.AddSpace(5);
             AddDropdown(Locale.Get("K45_WTS_OVERRIDE_FONT"), out m_overrideFontSelect, helperConfig, new string[0], OnSetOverrideFont);
@@ -275,7 +296,7 @@ namespace Klyte.WriteTheSigns.UI
             m_textPrefix.text = x.m_prefix ?? "";
             m_textSuffix.text = x.m_suffix ?? "";
             m_allCaps.isChecked = x.m_allCaps;
-            m_spriteFilter.text = x.m_spriteName ?? "";
+            m_spriteFilter.text = x.m_spriteParam?.ToString() ?? "";
 
             m_arrayCustomBlink[0].text = x.IlluminationConfig.CustomBlink.X.ToString("F3");
             m_arrayCustomBlink[1].text = x.IlluminationConfig.CustomBlink.Y.ToString("F3");
@@ -365,20 +386,9 @@ namespace Klyte.WriteTheSigns.UI
         private void OnSetSuffix(string text) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_suffix = text);
         private void OnSetPrefix(string text) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_prefix = text);
         private void OnSetOverrideFont(int sel) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) =>
-        {
-            if (sel > 1 && sel < (m_overrideFontSelect?.items?.Length ?? 0))
-            {
-                desc.m_overrideFont = m_overrideFontSelect.items[sel];
-            }
-            else if (sel == 1)
-            {
-                desc.m_overrideFont = WTSController.DEFAULT_FONT_KEY;
-            }
-            else
-            {
-                desc.m_overrideFont = null;
-            }
-        });
+        desc.m_overrideFont = sel > 1 && sel < (m_overrideFontSelect?.items?.Length ?? 0) ? m_overrideFontSelect.items[sel]
+                : sel == 1 ? WTSController.DEFAULT_FONT_KEY
+                : null);
         private void OnSetFontClass(int sel) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) =>
         {
             if (sel >= 0)
@@ -389,25 +399,29 @@ namespace Klyte.WriteTheSigns.UI
         });
         private void OnSetTextCustom(string text) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_fixedText = text);
 
-        private string GetCurrentSpriteName()
-        {
-            string result = null;
-            SafeObtain((ref BoardTextDescriptorGeneralXml desc) => result = desc.m_spriteName);
-            return result;
-        }
 
-        private string OnSpriteNameChanged(string input, int obj, string[] refArray)
+        private string OnSpriteNameChanged(string input, int selIdx, string[] refArray)
         {
-            if (obj >= 0)
+            if (selIdx >= 0 && lastProtocol_searchedParam == WTSAtlasesLibrary.PROTOCOL_IMAGE && refArray[selIdx].EndsWith("/"))
             {
-                var targetValue = refArray[obj].Split(new char[] { '>' }, 2)[1].Trim();
-                SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_spriteName = targetValue);
+                StartCoroutine(RefocusParamIn2Frames(m_spriteFilter));
+                return lastProtocol_searchedParam + refArray[selIdx].Trim();
             }
-            return GetCurrentSpriteName();
+            else
+            {
+                string result = "";
+                SafeObtain((ref BoardTextDescriptorGeneralXml x) => result = (x.SpriteParam = (selIdx >= 0 && lastProtocol_searchedParam != null) ? lastProtocol_searchedParam + refArray[selIdx].Trim() : input) ?? "");
+                lastProtocol_searchedParam = null;
+                return result;
+            }
+        }
+        private IEnumerator RefocusParamIn2Frames(UITextField target)
+        {
+            yield return new WaitForEndOfFrame();
+            target.Focus();
         }
 
-        private string[] OnFilterSprites(string input) => m_spriteFilter.atlas.spriteNames.Where(x => x.ToLower().Contains(input.ToLower())).OrderBy(x => x).Select(x => $"<sprite {x}> {x}").ToArray();
-
+        private string[] OnFilterSprites(UISprite sprite, string arg) => WriteTheSignsMod.Controller.AtlasesLibrary.OnFilterParamImagesByText(sprite, arg, WTSVehicleLayoutEditor.Instance.EditingInstance?.VehicleAssetName, out lastProtocol_searchedParam);
         private void OnSetTextOwnNameContent(int sel) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) =>
                                                        {
                                                            if (sel >= 0)

@@ -130,18 +130,31 @@ namespace Klyte.WriteTheSigns.Rendering
             }
         }
 
-        public static Color RenderPropMesh<DESC>(ref PropInfo propInfo, RenderManager.CameraInfo cameraInfo, ushort refId, int boardIdx, int secIdx,
-            int layerMask, float refAngleRad, Vector3 position, Vector4 dataVector, ref string propName, Vector3 propAngle, Vector3 propScale,
-            BoardDescriptorGeneralXml propLayout, DESC descriptor,
-            out Matrix4x4 propMatrix, out bool rendered, InstanceID propRenderID) where DESC : BoardInstanceXml
+        public static Color RenderPropMesh<DESC>(PropInfo propInfo, RenderManager.CameraInfo cameraInfo, ushort refId, int boardIdx, int secIdx,
+            int layerMask, float refAngleRad, Vector3 position, Vector4 dataVector, Vector3 propAngle, Vector3 propScale, BoardDescriptorGeneralXml propLayout,
+            DESC descriptor, out Matrix4x4 propMatrix,
+            out bool rendered, InstanceID propRenderID) where DESC : BoardInstanceXml
         {
-            Color propColor = EnsurePropCache(ref propInfo, refId, boardIdx, secIdx, ref propName, propLayout, descriptor, out rendered);
+            Color propColor = GetColorForRule(refId, boardIdx, secIdx, propLayout, descriptor, out rendered);
             if (!rendered)
             {
                 propMatrix = new Matrix4x4();
                 return propColor;
             }
             propMatrix = RenderUtils.RenderProp(refId, refAngleRad, cameraInfo, propInfo, propColor, position, dataVector, boardIdx, propAngle, propScale, layerMask, out rendered, propRenderID);
+            return propColor;
+        }
+
+        public static Color GetColorForRule<DESC>(ushort refId, int boardIdx, int secIdx, BoardDescriptorGeneralXml propLayout, DESC descriptor, out bool rendered) where DESC : BoardInstanceXml
+        {
+            Color propColor = WTSDynamicTextRenderingRules.GetPropColor(refId, boardIdx, secIdx, descriptor, propLayout, out bool colorFound);
+            if (!colorFound)
+            {
+                rendered = false;
+                return propColor;
+            }
+            propColor.a = 1;
+            rendered = true;
             return propColor;
         }
 
@@ -179,7 +192,7 @@ namespace Klyte.WriteTheSigns.Rendering
             BoardDescriptorGeneralXml propLayout, ref BoardTextDescriptorGeneralXml textDescriptor, MaterialPropertyBlock materialPropertyBlock,
             int instanceFlags, Color parentColor, PrefabInfo srcInfo, Camera targetCamera = null)
         {
-            BasicRenderInformation renderInfo = GetTextMesh(textDescriptor, refID, boardIdx, secIdx, descriptor, propLayout, out IEnumerable<BasicRenderInformation> multipleOutput);
+            BasicRenderInformation renderInfo = GetTextMesh(textDescriptor, refID, boardIdx, secIdx, descriptor, propLayout, out IEnumerable<BasicRenderInformation> multipleOutput, propLayout?.CachedProp);
             if (renderInfo == null)
             {
                 if (multipleOutput != null && multipleOutput.Count() > 0)
@@ -220,15 +233,9 @@ namespace Klyte.WriteTheSigns.Rendering
                         var startPoint = new Vector3(textDescriptor.PlacingConfig.Position.X + regularOffsetX, textDescriptor.PlacingConfig.Position.Y - regularOffsetY, textDescriptor.PlacingConfig.Position.Z);
                         var startPointClone = new Vector3(textDescriptor.PlacingConfig.Position.X + cloneOffsetX, textDescriptor.PlacingConfig.Position.Y - regularOffsetY, textDescriptor.PlacingConfig.Position.Z);
 
-                        Vector3 lastRowOrColumnStartPoint;
-                        if (textDescriptor.MultiItemSettings.VerticalFirst)
-                        {
-                            lastRowOrColumnStartPoint = new Vector3(startPoint.x, textDescriptor.PlacingConfig.Position.Y - CalculateOffsetYMultiItem(textDescriptor.MultiItemSettings.VerticalAlign, lastRowOrColumnItemCount, rowHeight), startPoint.z);
-                        }
-                        else
-                        {
-                            lastRowOrColumnStartPoint = new Vector3(textDescriptor.PlacingConfig.Position.X + CalculateOffsetXMultiItem(textDescriptor.m_textAlign, lastRowOrColumnItemCount, columnWidth, maxWidth), startPoint.y, startPoint.z);
-                        }
+                        Vector3 lastRowOrColumnStartPoint = textDescriptor.MultiItemSettings.VerticalFirst
+                            ? new Vector3(startPoint.x, textDescriptor.PlacingConfig.Position.Y - CalculateOffsetYMultiItem(textDescriptor.MultiItemSettings.VerticalAlign, lastRowOrColumnItemCount, rowHeight), startPoint.z)
+                            : new Vector3(textDescriptor.PlacingConfig.Position.X + CalculateOffsetXMultiItem(textDescriptor.m_textAlign, lastRowOrColumnItemCount, columnWidth, maxWidth), startPoint.y, startPoint.z);
                         Color colorToSet = GetTextColor(refID, boardIdx, secIdx, descriptor, propLayout, textDescriptor);
                         //LogUtils.DoWarnLog($"sz = {resultArray.Length};targetCount = {targetCount}; origPos = {textDescriptor.PlacingConfig.Position}; maxItemsInAColumn = {maxItemsInAColumn}; maxItemsInARow = {maxItemsInARow};columnWidth={columnWidth};rowHeight={rowHeight}");
 
@@ -266,7 +273,7 @@ namespace Klyte.WriteTheSigns.Rendering
                     return;
                 }
             }
-            if (renderInfo?.m_mesh == null || renderInfo?.m_generatedMaterial == null)
+            if (renderInfo?.m_mesh is null || renderInfo?.m_generatedMaterial is null)
             {
                 return;
             }
@@ -297,7 +304,7 @@ namespace Klyte.WriteTheSigns.Rendering
                 Material targetMaterial = renderInfo.m_generatedMaterial;
                 PropManager instance = CalculateIllumination(refID, boardIdx, secIdx, textDescriptor, materialPropertyBlock, ref colorToSet, instanceFlags, ref objectIndex);
 
-                Graphics.DrawMesh(renderInfo.m_mesh, matrix, targetMaterial, 10, targetCamera, 0, materialPropertyBlock, false);               
+                Graphics.DrawMesh(renderInfo.m_mesh, matrix, targetMaterial, 10, targetCamera, 0, materialPropertyBlock, false);
 
                 if (((Vector2)textDescriptor.BackgroundMeshSettings.Size).sqrMagnitude != 0)
                 {
@@ -676,13 +683,13 @@ namespace Klyte.WriteTheSigns.Rendering
                 {
                     case ColoringMode.Fixed:
                         rand.seed = refId * (1u + (uint)boardIdx);
-                        return propLayout?.FixedColor ?? buildingDescriptor.SimpleProp?.GetColor(ref rand) ?? Color.white;
+                        return propLayout?.FixedColor ?? buildingDescriptor.CachedSimpleProp?.GetColor(ref rand) ?? Color.white;
                     case ColoringMode.ByPlatform:
                         var stops = GetAllTargetStopInfo(buildingDescriptor, refId).Where(x => x.m_lineId != 0);
                         if (buildingDescriptor.UseFixedIfMultiline && stops.GroupBy(x => x.m_lineId).Count() > 1)
                         {
                             rand.seed = refId * (1u + (uint)boardIdx);
-                            return propLayout?.FixedColor ?? buildingDescriptor.SimpleProp?.GetColor(ref rand) ?? Color.white;
+                            return propLayout?.FixedColor ?? buildingDescriptor.CachedSimpleProp?.GetColor(ref rand) ?? Color.white;
                         }
                         StopInformation stop = stops.FirstOrDefault();
                         if (stop.m_lineId != 0)
@@ -776,14 +783,14 @@ namespace Klyte.WriteTheSigns.Rendering
         }
         #endregion
         #region Get text mesh
-        internal static BasicRenderInformation GetTextMesh(BoardTextDescriptorGeneralXml textDescriptor, ushort refID, int boardIdx, int secIdx, BoardInstanceXml instance, BoardDescriptorGeneralXml propLayout, out IEnumerable<BasicRenderInformation> multipleOutput)
+        internal static BasicRenderInformation GetTextMesh(BoardTextDescriptorGeneralXml textDescriptor, ushort refID, int boardIdx, int secIdx, BoardInstanceXml instance, BoardDescriptorGeneralXml propLayout, out IEnumerable<BasicRenderInformation> multipleOutput, PrefabInfo refPrefab)
         {
             multipleOutput = null;
             DynamicSpriteFont baseFont = FontServer.instance[WTSEtcData.Instance.FontSettings.GetTargetFont(textDescriptor.m_fontClass)] ?? FontServer.instance[propLayout?.FontName];
 
             if (instance is BoardPreviewInstanceXml preview)
             {
-                return GetTextForPreview(textDescriptor, propLayout, ref multipleOutput, ref baseFont, preview);
+                return GetTextForPreview(textDescriptor, propLayout, ref multipleOutput, ref baseFont, preview, refPrefab);
             }
             else if (instance is LayoutDescriptorVehicleXml vehicleDescriptor)
             {
@@ -831,7 +838,7 @@ namespace Klyte.WriteTheSigns.Rendering
             }
             switch (targetType)
             {
-                case TextType.GameSprite: return WriteTheSignsMod.Controller.AtlasesLibrary.GetFromLocalAtlases(null, textDescriptor.m_spriteName);
+                case TextType.GameSprite: return GetSpriteFromParameter(data.m_currentDescriptor.Descriptor.CachedProp, textDescriptor.m_spriteParam);
                 case TextType.DistanceFromReference: return RenderUtils.GetTextData($"{data.m_distanceRefKm}", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                 case TextType.Fixed: return RenderUtils.GetTextData(textDescriptor.m_fixedText ?? "", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                 case TextType.StreetSuffix: return GetFromCacheArray(data.m_segmentId, textDescriptor, RenderUtils.CacheArrayTypes.SuffixStreetName, baseFont);
@@ -856,7 +863,7 @@ namespace Klyte.WriteTheSigns.Rendering
             TextType targetType = textDescriptor.m_textType;
             switch (targetType)
             {
-                case TextType.GameSprite: return WriteTheSignsMod.Controller.AtlasesLibrary.GetFromLocalAtlases(null, textDescriptor.m_spriteName);
+                case TextType.GameSprite: return GetSpriteFromParameter(buildingDescritpor.Descriptor.CachedProp, textDescriptor.m_spriteParam);
                 case TextType.Fixed: return RenderUtils.GetTextData(textDescriptor.m_fixedText ?? "", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                 case TextType.OwnName: return GetFromCacheArray(refID, textDescriptor, RenderUtils.CacheArrayTypes.BuildingName, baseFont);
                 case TextType.NextStopLine: return GetFromCacheArray(GetTargetStopInfo(buildingDescritpor, refID).FirstOrDefault().NextStopBuildingId, textDescriptor, RenderUtils.CacheArrayTypes.BuildingName, baseFont);
@@ -890,7 +897,7 @@ namespace Klyte.WriteTheSigns.Rendering
             switch (targetType)
             {
                 case TextType.CityName: return GetFromCacheArray(0, textDescriptor, RenderUtils.CacheArrayTypes.Districts, baseFont);
-                case TextType.GameSprite: return WriteTheSignsMod.Controller.AtlasesLibrary.GetFromLocalAtlases(null, textDescriptor.m_spriteName);
+                case TextType.GameSprite: return GetSpriteFromParameter(vehicleDescriptor.CachedInfo, textDescriptor.m_spriteParam);
                 case TextType.Fixed: return RenderUtils.GetTextData(textDescriptor.m_fixedText ?? "", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                 case TextType.OwnName: return GetFromCacheArray(refID, textDescriptor, RenderUtils.CacheArrayTypes.VehicleNumber, baseFont);
                 case TextType.LineIdentifier:
@@ -951,7 +958,7 @@ namespace Klyte.WriteTheSigns.Rendering
             }
         }
 
-        private static BasicRenderInformation GetTextForPreview(BoardTextDescriptorGeneralXml textDescriptor, BoardDescriptorGeneralXml propLayout, ref IEnumerable<BasicRenderInformation> multipleOutput, ref DynamicSpriteFont baseFont, BoardPreviewInstanceXml preview)
+        private static BasicRenderInformation GetTextForPreview(BoardTextDescriptorGeneralXml textDescriptor, BoardDescriptorGeneralXml propLayout, ref IEnumerable<BasicRenderInformation> multipleOutput, ref DynamicSpriteFont baseFont, BoardPreviewInstanceXml preview, PrefabInfo refInfo)
         {
             if (baseFont is null)
             {
@@ -999,16 +1006,15 @@ namespace Klyte.WriteTheSigns.Rendering
                 case TextType.ParkOrDistrict: return RenderUtils.GetTextData($"{otherText}Area or District", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                 case TextType.Park: return RenderUtils.GetTextData($"{otherText}Area", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                 case TextType.PlatformNumber: return RenderUtils.GetTextData("00", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
-                case TextType.ParameterizedText: return RenderUtils.GetTextData($"##PARAM{textDescriptor.m_parameterIdx}##", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
-                case TextType.ParameterizedGameSprite: return WriteTheSignsMod.Controller.AtlasesLibrary.GetFromLocalAtlases(null, "K45_WTS FrameBorder");
-                case TextType.ParameterizedGameSpriteIndexed: return WriteTheSignsMod.Controller.AtlasesLibrary.GetFromLocalAtlases(null, "K45_WTS FrameBorder");
+                case TextType.ParameterizedText: return RenderUtils.GetTextData(textDescriptor.DefaultParameterValue?.ToString() ?? $"##PARAM{textDescriptor.m_parameterIdx}##", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
+                case TextType.ParameterizedGameSprite: return textDescriptor.DefaultParameterValue != null ? GetSpriteFromCycle(textDescriptor, propLayout.CachedProp, textDescriptor.DefaultParameterValue, 0, 0) : WriteTheSignsMod.Controller.AtlasesLibrary.GetFromLocalAtlases(null, "K45_WTS FrameBorder");
+                case TextType.ParameterizedGameSpriteIndexed: return textDescriptor.DefaultParameterValue != null ? GetSpriteFromParameter(propLayout.CachedProp, textDescriptor.DefaultParameterValue) : WriteTheSignsMod.Controller.AtlasesLibrary.GetFromLocalAtlases(null, "K45_WTS FrameBorder");
                 case TextType.TimeTemperature: return RenderUtils.GetTextData($"24:60", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                 case TextType.LinesSymbols:
                     multipleOutput = WriteTheSignsMod.Controller.AtlasesLibrary.DrawLineFormats(new int[textDescriptor.MultiItemSettings.SubItemsPerColumn * textDescriptor.MultiItemSettings.SubItemsPerRow].Select((x, y) => -y - 1));
-
                     return null;
                 case TextType.GameSprite:
-                    return WriteTheSignsMod.Controller.AtlasesLibrary.GetFromLocalAtlases(null, textDescriptor.m_spriteName) ?? RenderUtils.GetTextData("<Invalid Sprite!>", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
+                    return GetSpriteFromParameter(refInfo, textDescriptor.m_spriteParam) ?? WriteTheSignsMod.Controller.AtlasesLibrary.GetFromLocalAtlases(null, "K45_WTS FrameParamsInvalidImage");
                 default:
                     string text = $"{textDescriptor.m_textType}: {preview.m_currentText}";
                     if (textDescriptor.m_allCaps)
@@ -1061,7 +1067,7 @@ namespace Klyte.WriteTheSigns.Rendering
             switch (targetType)
             {
                 case TextType.CityName: return GetFromCacheArray(0, textDescriptor, RenderUtils.CacheArrayTypes.Districts, baseFont);
-                case TextType.GameSprite: return WriteTheSignsMod.Controller.AtlasesLibrary.GetFromLocalAtlases(null, textDescriptor.m_spriteName);
+                case TextType.GameSprite: return GetSpriteFromParameter(propDescriptor.Descriptor.CachedProp, textDescriptor.m_spriteParam);
                 case TextType.Fixed: return RenderUtils.GetTextData(textDescriptor.m_fixedText ?? "", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                 case TextType.StreetSuffix: return GetFromCacheArray(targetSegment, textDescriptor, RenderUtils.CacheArrayTypes.SuffixStreetName, baseFont);
                 case TextType.StreetNameComplete: return GetFromCacheArray(targetSegment, textDescriptor, RenderUtils.CacheArrayTypes.FullStreetName, baseFont);
@@ -1098,6 +1104,12 @@ namespace Klyte.WriteTheSigns.Rendering
         private static BasicRenderInformation GetSpriteFromCycle(BoardTextDescriptorGeneralXml textDescriptor, OnNetInstanceCacheContainerXml descriptor, ushort refId, int secIdx, int parameterIdx)
         {
             var param = descriptor.GetTextParameter(parameterIdx) ?? textDescriptor.DefaultParameterValue;
+            return GetSpriteFromCycle(textDescriptor, descriptor.Descriptor.CachedProp, param, refId, secIdx);
+
+        }
+
+        private static BasicRenderInformation GetSpriteFromCycle(BoardTextDescriptorGeneralXml textDescriptor, PrefabInfo cachedPrefab, TextParameterWrapper param, ushort refId, int secIdx)
+        {
             if (param is null)
             {
                 return WriteTheSignsMod.Controller.AtlasesLibrary.GetFromLocalAtlases(null, "K45_WTS FrameParamsNotSet");
@@ -1110,18 +1122,15 @@ namespace Klyte.WriteTheSigns.Rendering
             {
                 textDescriptor.AnimationSettings.m_itemCycleFramesDuration = 100;
             }
-            return param.GetCurrentSprite(descriptor.m_cachedProp, (int length) => (int)(((SimulationManager.instance.m_currentFrameIndex + textDescriptor.AnimationSettings.m_extraDelayCycleFrames + (refId * (1 + secIdx))) % (length * textDescriptor.AnimationSettings.m_itemCycleFramesDuration) / textDescriptor.AnimationSettings.m_itemCycleFramesDuration)));
+            return param.GetCurrentSprite(cachedPrefab, (int length) => (int)(((SimulationManager.instance.m_currentFrameIndex + textDescriptor.AnimationSettings.m_extraDelayCycleFrames + (refId * (1 + secIdx))) % (length * textDescriptor.AnimationSettings.m_itemCycleFramesDuration) / textDescriptor.AnimationSettings.m_itemCycleFramesDuration)));
+        }
 
-        }
         private static BasicRenderInformation GetSpriteFromParameter(BoardTextDescriptorGeneralXml textDescriptor, OnNetInstanceCacheContainerXml descriptor, int idx)
-        {
-            var param = descriptor.GetTextParameter(idx) ?? textDescriptor.DefaultParameterValue;
-            if (param is null)
-            {
-                return WriteTheSignsMod.Controller.AtlasesLibrary.GetFromLocalAtlases(null, "K45_WTS FrameParamsNotSet");
-            }
-            return param.GetImageBRI(descriptor.m_cachedProp);
-        }
+            => GetSpriteFromParameter(descriptor.Descriptor.CachedProp, descriptor.GetTextParameter(idx) ?? textDescriptor.DefaultParameterValue);
+        private static BasicRenderInformation GetSpriteFromParameter(PrefabInfo prop, TextParameterWrapper param)
+            => param is null
+                ? WriteTheSignsMod.Controller.AtlasesLibrary.GetFromLocalAtlases(null, "K45_WTS FrameParamsNotSet")
+                : param.GetImageBRI(prop);
 
         private static StopInformation[] GetTargetStopInfo(BoardInstanceBuildingXml descriptor, ushort buildingId)
         {

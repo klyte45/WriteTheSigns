@@ -33,7 +33,8 @@ namespace Klyte.WriteTheSigns.UI
         private bool m_dirty;
         public bool Dirty
         {
-            get => m_dirty; set {
+            get => m_dirty; set
+            {
                 if (value && MainContainer.isVisible)
                 {
                     ReloadData();
@@ -79,7 +80,8 @@ namespace Klyte.WriteTheSigns.UI
 
         private IEnumerable<UIComponent> AllFields
         {
-            get {
+            get
+            {
                 if (m_allFields == null)
                 {
 
@@ -255,11 +257,11 @@ namespace Klyte.WriteTheSigns.UI
         {
             SafeObtain((ref BoardInstanceBuildingXml x) =>
             {
-                var isPublicTransportStation = PrefabCollection<BuildingInfo>.FindLoaded(CurrentBuildingName)?.m_buildingAI is TransportStationAI;
+                var isPublicTransportStation = PrefabCollection<BuildingInfo>.FindLoaded(CurrentBuildingName ?? "")?.m_buildingAI is TransportStationAI;
 
                 m_name.text = x.SaveName ?? "";
-                m_propSelectionType.selectedIndex = x.PropLayoutName == null ? 1 : x.SimpleProp == null ? 0 : 1; 
-                m_propFilter.text = x.PropLayoutName ?? PropIndexes.GetListName(x.SimpleProp) ?? "";
+                m_propSelectionType.selectedIndex = x.PropLayoutName == null ? 1 : x.CachedSimpleProp == null ? 0 : 1;
+                m_propFilter.text = x.PropLayoutName ?? PropIndexes.GetListName(x.CachedSimpleProp) ?? "";
                 m_position[0].text = x.PropPosition.X.ToString("F3");
                 m_position[1].text = x.PropPosition.Y.ToString("F3");
                 m_position[2].text = x.PropPosition.Z.ToString("F3");
@@ -270,7 +272,7 @@ namespace Klyte.WriteTheSigns.UI
                 m_scale[1].text = x.PropScale.y.ToString("F3");
                 m_scale[2].text = x.PropScale.z.ToString("F3");
 
-                var buildingInfo = PrefabCollection<BuildingInfo>.FindLoaded(CurrentBuildingName);
+                var buildingInfo = PrefabCollection<BuildingInfo>.FindLoaded(CurrentBuildingName ?? "");
                 if ((buildingInfo.m_subBuildings?.Length ?? 0) > 0)
                 {
                     m_subBuildingSelect.items = new string[] { Locale.Get("K45_WTS_MAINBUILIDING") }.Union(buildingInfo.m_subBuildings?.Select((z, y) => $"{y}: {z.m_buildingInfo.name.Split(new char[] { '.' }, 2).LastOrDefault()}")).ToArray();
@@ -337,13 +339,13 @@ namespace Klyte.WriteTheSigns.UI
                 if (m_propSelectionType.selectedIndex == 0)
                 {
                     x.PropLayoutName = targetValue;
-                    x.m_simplePropName = null;
+                    x.SimplePropName = null;
                 }
                 else
                 {
                     x.PropLayoutName = null;
                     PropIndexes.instance.PrefabsLoaded.TryGetValue(targetValue, out PropInfo info);
-                    x.SimpleProp = info;
+                    x.CachedSimpleProp = info;
                 }
             });
 
@@ -351,7 +353,7 @@ namespace Klyte.WriteTheSigns.UI
         }
 
 
-        private void OnPropSelecionClassChange(int sel) => SafeObtain((ref BoardInstanceBuildingXml x) => m_propFilter.text = sel == 0 ? x.PropLayoutName ?? "" : PropIndexes.GetListName(x.SimpleProp));
+        private void OnPropSelecionClassChange(int sel) => SafeObtain((ref BoardInstanceBuildingXml x) => m_propFilter.text = sel == 0 ? x.PropLayoutName ?? "" : PropIndexes.GetListName(x.CachedSimpleProp));
 
         public void Update()
         {
@@ -459,12 +461,12 @@ namespace Klyte.WriteTheSigns.UI
             if (sel >= 0)
             {
                 PropIndexes.instance.PrefabsLoaded.TryGetValue(items[sel], out PropInfo targetProp);
-                SafeObtain((ref BoardInstanceBuildingXml x) => x.SimpleProp = targetProp);
+                SafeObtain((ref BoardInstanceBuildingXml x) => x.CachedSimpleProp = targetProp);
                 return items[sel];
             }
             else
             {
-                SafeObtain((ref BoardInstanceBuildingXml x) => x.SimpleProp = null);
+                SafeObtain((ref BoardInstanceBuildingXml x) => x.CachedSimpleProp = null);
                 return null;
             }
 

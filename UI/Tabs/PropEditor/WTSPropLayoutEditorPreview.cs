@@ -2,10 +2,10 @@
 using ColossalFramework.UI;
 using Klyte.Commons.Extensions;
 using Klyte.Commons.UI.SpriteNames;
+using Klyte.Commons.UI.Sprites;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Rendering;
 using Klyte.WriteTheSigns.Xml;
-using SpriteFontPlus;
 using UnityEngine;
 
 namespace Klyte.WriteTheSigns.UI
@@ -28,6 +28,8 @@ namespace Klyte.WriteTheSigns.UI
 
         private string m_overrideText = null;
 
+        public UISprite OverrideSprite { get; private set; }
+
         private PropInfo CurrentInfo => WTSPropLayoutEditor.Instance.CurrentPropInfo;
         private int TabToPreview => WTSPropLayoutEditor.Instance.CurrentTab - 1;
         private BoardDescriptorGeneralXml EditingInstancePreview => WTSPropLayoutEditor.Instance.EditingInstance;
@@ -46,12 +48,17 @@ namespace Klyte.WriteTheSigns.UI
             MainContainer.autoLayoutDirection = LayoutDirection.Horizontal;
             MainContainer.padding = new RectOffset(8, 8, 8, 8);
 
-            KlyteMonoUtils.CreateUIElement(out m_previewPanel, MainContainer.transform, "previewPanel", new UnityEngine.Vector4(0, 0, MainContainer.width - 66, 300));
-            m_previewPanel.backgroundSprite = "GenericPanel";
+            KlyteMonoUtils.CreateUIElement(out m_previewPanel, MainContainer.transform, "previewPanel", new UnityEngine.Vector4(0, 0, 0, 300));
             m_previewPanel.autoLayout = true;
             m_previewPanel.disabledColor = Color.black;
 
-            KlyteMonoUtils.CreateUIElement(out m_preview, m_previewPanel.transform, "preview", new UnityEngine.Vector4(0, 0, m_previewPanel.width, m_previewPanel.height));
+            KlyteMonoUtils.CreateUIElement(out UIPanel subPreviewPanel, m_previewPanel.transform, "previewSubPanel", new UnityEngine.Vector4(0, 0, MainContainer.width - 66, m_previewPanel.height));
+            subPreviewPanel.backgroundSprite = "GenericPanel";
+            subPreviewPanel.autoLayout = true;
+            subPreviewPanel.disabledColor = Color.black;
+
+
+            KlyteMonoUtils.CreateUIElement(out m_preview, subPreviewPanel.transform, "preview", new UnityEngine.Vector4(0, 0, subPreviewPanel.width, subPreviewPanel.height));
             KlyteMonoUtils.CreateElement(out m_previewRenderer, MainContainer.transform);
             m_previewRenderer.Size = m_preview.size * 2f;
             m_preview.texture = m_previewRenderer.Texture;
@@ -59,6 +66,20 @@ namespace Klyte.WriteTheSigns.UI
             m_preview.eventMouseMove += OnMouseMove;
             m_previewRenderer.Zoom = TargetZoom;
             m_preview.disabledColor = Color.black;
+
+            KlyteMonoUtils.CreateUIElement(out UIPanel overrideSpriteContainer, MainContainer.transform, "overrideSpriteContainer", new UnityEngine.Vector4(0, 0, MainContainer.width - 66, 300));
+            overrideSpriteContainer.autoLayout = true;
+            overrideSpriteContainer.autoLayoutDirection = LayoutDirection.Horizontal;
+
+            KlyteMonoUtils.CreateUIElement(out UIPanel overrideSpriteSubContainer, overrideSpriteContainer.transform, "overrideSpriteSubContainer", new UnityEngine.Vector4(0, 0, overrideSpriteContainer.width, overrideSpriteContainer.height));
+            overrideSpriteSubContainer.backgroundSprite = KlyteResourceLoader.GetDefaultSpriteNameFor(LineIconSpriteNames.K45_SquareIcon, true);
+            overrideSpriteSubContainer.autoLayout = true;
+            overrideSpriteSubContainer.autoLayoutDirection = LayoutDirection.Horizontal;
+
+            OverrideSprite = overrideSpriteSubContainer.AddUIComponent<UISprite>();
+            OverrideSprite.size = overrideSpriteContainer.size;
+            overrideSpriteSubContainer.isVisible = false;
+
 
             KlyteMonoUtils.CreateUIElement(out m_previewControls, MainContainer.transform, "controls", new UnityEngine.Vector4(0, 0, 50, 300));
             m_previewControls.padding = new RectOffset(5, 5, 5, 5);
@@ -135,7 +156,7 @@ namespace Klyte.WriteTheSigns.UI
                     float moveMultiplier = 1;
                     if (CurrentTextDescriptor != null)
                     {
-                        Vector3 textExt = WTSDynamicTextRenderingRules.GetTextMesh(CurrentTextDescriptor, 0, 0, 0, m_previewRenderer.GetDefaultInstance(), m_previewRenderer.GetDefaultInstance().Descriptor, out _)?.m_mesh?.bounds.extents ?? default;
+                        Vector3 textExt = WTSDynamicTextRenderingRules.GetTextMesh(CurrentTextDescriptor, 0, 0, 0, m_previewRenderer.GetDefaultInstance(), m_previewRenderer.GetDefaultInstance().Descriptor, out _, CurrentInfo)?.m_mesh?.bounds.extents ?? default;
 
                         if (CurrentTextDescriptor.m_maxWidthMeters > 0)
                         {

@@ -27,7 +27,8 @@ namespace Klyte.WriteTheSigns.Singleton
 
         public Dictionary<ItemClass, List<NetInfo>> AllClasses
         {
-            get {
+            get
+            {
                 if (m_allClasses == null)
                 {
                     m_allClasses = ((FastList<PrefabCollection<NetInfo>.PrefabData>)typeof(PrefabCollection<NetInfo>).GetField("m_scenePrefabs", RedirectorUtils.allFlags).GetValue(null)).m_buffer
@@ -110,19 +111,15 @@ namespace Klyte.WriteTheSigns.Singleton
                     if (item?.m_renderPlate ?? false)
                     {
                         ref BoardInstanceRoadNodeXml targetDescriptor = ref item.m_currentDescriptor;
-                        if (targetDescriptor?.Descriptor?.m_propName == null)
+                        if (targetDescriptor?.Descriptor?.PropName == null)
                         {
                             continue;
                         }
 
-                        if (item.m_cachedProp?.name != targetDescriptor?.Descriptor?.m_propName)
+                        WTSDynamicTextRenderingRules.GetColorForRule(nodeID, y, z, targetDescriptor.Descriptor, targetDescriptor, out bool rendered);
+                        if (rendered && !(item.m_currentDescriptor.Descriptor.CachedProp is null))
                         {
-                            item.m_cachedProp = null;
-                        }
-                        WTSDynamicTextRenderingRules.EnsurePropCache(ref item.m_cachedProp, nodeID, y, z, ref targetDescriptor.Descriptor.m_propName, targetDescriptor.Descriptor, targetDescriptor, out bool rendered);
-                        if (rendered)
-                        {
-                            result = PropInstance.CalculateGroupData(item.m_cachedProp, layer, ref vertexCount, ref triangleCount, ref objectCount, ref vertexArrays);
+                            result = PropInstance.CalculateGroupData(item.m_currentDescriptor.Descriptor.CachedProp, layer, ref vertexCount, ref triangleCount, ref objectCount, ref vertexArrays);
                         }
                     }
                 }
@@ -139,11 +136,11 @@ namespace Klyte.WriteTheSigns.Singleton
                     if (item?.m_renderPlate ?? false)
                     {
                         BoardInstanceRoadNodeXml targetDescriptor = item.m_currentDescriptor;
-                        if (targetDescriptor?.Descriptor?.m_propName == null || item.m_cachedProp == null)
+                        if (targetDescriptor?.Descriptor?.PropName == null || item.m_currentDescriptor.Descriptor.CachedProp is null)
                         {
                             continue;
                         }
-                        WTSDynamicTextRenderingRules.PropInstancePopulateGroupData(item.m_cachedProp, layer, new InstanceID { NetNode = nodeID }, item.m_platePosition, targetDescriptor.Scale, new Vector3(0, item.m_streetDirection, 0), ref vertexIndex, ref triangleIndex, groupPosition, data, ref min, ref max, ref maxRenderDistance, ref maxInstanceDistance);
+                        WTSDynamicTextRenderingRules.PropInstancePopulateGroupData(item.m_currentDescriptor.Descriptor.CachedProp, layer, new InstanceID { NetNode = nodeID }, item.m_platePosition, targetDescriptor.Scale, new Vector3(0, item.m_streetDirection, 0), ref vertexIndex, ref triangleIndex, groupPosition, data, ref min, ref max, ref maxRenderDistance, ref maxInstanceDistance);
                     }
                 }
             }
@@ -159,24 +156,19 @@ namespace Klyte.WriteTheSigns.Singleton
                     if (item?.m_renderPlate ?? false)
                     {
                         ref BoardInstanceRoadNodeXml targetDescriptor = ref item.m_currentDescriptor;
-                        if (targetDescriptor?.Descriptor?.m_propName == null)
+                        if (targetDescriptor?.Descriptor?.PropName == null)
                         {
                             continue;
                         }
-
-                        if (item.m_cachedProp?.name != targetDescriptor?.Descriptor?.m_propName)
-                        {
-                            item.m_cachedProp = null;
-                        }
-                        RenderSign(cameraInfo, nodeID, y, z, item.m_platePosition, item.m_streetDirection, ref targetDescriptor, ref item.m_cachedProp);
+                        RenderSign(cameraInfo, nodeID, y, z, item.m_platePosition, item.m_streetDirection, ref targetDescriptor, targetDescriptor?.Descriptor?.CachedProp);
                     }
                 }
             }
         }
 
-        private void RenderSign(RenderManager.CameraInfo cameraInfo, ushort nodeID, int boardIdx, int secIdx, Vector3 position, float direction, ref BoardInstanceRoadNodeXml targetDescriptor, ref PropInfo cachedProp)
+        private void RenderSign(RenderManager.CameraInfo cameraInfo, ushort nodeID, int boardIdx, int secIdx, Vector3 position, float direction, ref BoardInstanceRoadNodeXml targetDescriptor, PropInfo cachedProp)
         {
-            Color parentColor = WTSDynamicTextRenderingRules.RenderPropMesh(ref cachedProp, cameraInfo, nodeID, boardIdx, secIdx, 0xFFFFFFF, 0, position, Vector4.zero, ref targetDescriptor.Descriptor.m_propName, new Vector3(0, direction) + targetDescriptor.PropRotation, targetDescriptor.PropScale, targetDescriptor.Descriptor, targetDescriptor, out Matrix4x4 propMatrix, out bool rendered, new InstanceID { NetNode = nodeID });
+            Color parentColor = WTSDynamicTextRenderingRules.RenderPropMesh(cachedProp, cameraInfo, nodeID, boardIdx, secIdx, 0xFFFFFFF, 0, position, Vector4.zero, new Vector3(0, direction) + targetDescriptor.PropRotation, targetDescriptor.PropScale, targetDescriptor.Descriptor, targetDescriptor, out Matrix4x4 propMatrix, out bool rendered, new InstanceID { NetNode = nodeID });
             if (rendered)
             {
 
@@ -238,7 +230,7 @@ namespace Klyte.WriteTheSigns.Singleton
             BoardInstanceRoadNodeXml targetDescriptor, int[] nodeRotationOrder, int[] anglesRotationOrder,
             ref int subboardOffset)
         {
-            if (targetDescriptor?.Descriptor?.m_propName == null)
+            if (targetDescriptor?.Descriptor?.PropName == null)
             {
                 return false;
             }

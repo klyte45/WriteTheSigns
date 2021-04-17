@@ -136,7 +136,14 @@ namespace Klyte.WriteTheSigns.UI
                 AddFilterableInput(string.Format(Locale.Get($"K45_WTS_ONNETEDITOR_TEXTPARAM"), currentIdx), helperParameters, out m_textParams[i], out m_textParamsLabels[i], out UIListBox lb, (x) => OnFilterParamImages(sprite, x), (t, x, y) => OnParamChanged(t, currentIdx, x, y));
                 m_textParamsLabels[i].processMarkup = true;
                 sprite = AddSpriteInEditorRow(lb, true, 300);
-                m_textParams[i].eventGotFocus += (x, y) => sprite.spriteName = ((UITextField)x).text.Length >= 4 ? ((UITextField)x).text.Substring(4) : "";
+                m_textParams[i].eventGotFocus += (x, y) =>
+                {
+                    var text = ((UITextField)x).text;
+                    if (text.StartsWith(WTSAtlasesLibrary.PROTOCOL_IMAGE_ASSET) || text.StartsWith(WTSAtlasesLibrary.PROTOCOL_IMAGE))
+                    {
+                        sprite.spriteName = ((UITextField)x).text.Split('/').Last().Trim();
+                    }
+                };
                 lb.eventItemMouseHover += (x, y) => sprite.spriteName = lb.items[y].Split('/').Last().Trim();
                 lb.eventVisibilityChanged += (x, y) => sprite.isVisible = y;
                 sprite.isVisible = false;
@@ -186,7 +193,7 @@ namespace Klyte.WriteTheSigns.UI
         private string[] OnFilterParamImages(UISprite sprite, string arg)
         {
             string[] results = null;
-            SafeObtain((x) => results = WriteTheSignsMod.Controller.AtlasesLibrary.OnFilterParamImagesByText(sprite, arg, x.m_cachedProp?.name, out lastProtocol_searchedParam));
+            SafeObtain((x) => results = WriteTheSignsMod.Controller.AtlasesLibrary.OnFilterParamImagesByText(sprite, arg, x.Descriptor?.CachedProp?.name ?? x.m_simpleCachedProp?.name, out lastProtocol_searchedParam));
             return results;
         }
 

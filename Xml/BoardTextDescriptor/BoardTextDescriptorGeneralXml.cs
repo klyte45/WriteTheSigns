@@ -46,8 +46,27 @@ namespace Klyte.WriteTheSigns.Xml
 
         [XmlAttribute("fixedText")]
         public string m_fixedText = "Text";
+        [XmlIgnore]
+        public TextParameterWrapper m_spriteParam;
+
+        [XmlAttribute("spriteNameV2")]
+        public string SpriteParam
+        {
+            get => m_spriteParam?.ToString();
+            set => m_spriteParam = new TextParameterWrapper(value);
+        }
         [XmlAttribute("spriteName")]
-        public string m_spriteName = "";
+        public string SpriteParam_Legacy
+        {
+            get => null;
+            set
+            {
+                if (!(value is null))
+                {
+                    m_spriteParam = new TextParameterWrapper($"image://<ROOT>/{value}");
+                }
+            }
+        }
 
         [XmlAttribute("overrideFont")] public string m_overrideFont;
         [XmlAttribute("fontClass")] public FontClass m_fontClass = FontClass.Regular;

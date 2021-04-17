@@ -39,16 +39,9 @@ namespace Klyte.WriteTheSigns.Singleton
                         continue;
                     }
 
-                    if (targetDescriptor.m_cachedProp?.name != targetDescriptor.m_simplePropName)
+                    if (targetDescriptor.m_simpleCachedProp.name != targetDescriptor.m_simplePropName)
                     {
-                        targetDescriptor.m_cachedProp = null;
-                    }
-                }
-                else
-                {
-                    if (targetDescriptor.m_cachedProp?.name != targetDescriptor.Descriptor.m_propName)
-                    {
-                        targetDescriptor.m_cachedProp = null;
+                        targetDescriptor.m_simpleCachedProp = null;
                     }
                 }
                 if (targetDescriptor.m_cachedPosition == null || targetDescriptor.m_cachedRotation == null)
@@ -69,7 +62,7 @@ namespace Klyte.WriteTheSigns.Singleton
                     targetDescriptor.m_cachedPosition.Y += targetDescriptor.PropPosition.Y;
                     targetDescriptor.m_cachedRotation = (Vector3Xml)(targetDescriptor.PropRotation + new Vector3(0, rotation + 90));
                 }
-                RenderSign(cameraInfo, segmentId, i, ref targetDescriptor, ref targetDescriptor.m_cachedProp);
+                RenderSign(cameraInfo, segmentId, i, ref targetDescriptor, targetDescriptor?.Descriptor?.CachedProp ?? targetDescriptor.m_simpleCachedProp);
             }
 
         }
@@ -84,32 +77,28 @@ namespace Klyte.WriteTheSigns.Singleton
             for (var i = 0; i < itemGroup.BoardsData.Length; i++)
             {
                 var targetDescriptor = itemGroup.BoardsData[i];
-                if (targetDescriptor?.Descriptor == null)
+                bool rendered;
+                var isSimple = targetDescriptor.Descriptor == null;
+                if (isSimple)
                 {
                     if (targetDescriptor?.SimpleProp == null)
                     {
                         continue;
                     }
 
-                    if (targetDescriptor.m_cachedProp?.name != targetDescriptor.m_simplePropName)
+                    if (targetDescriptor.m_simpleCachedProp?.name != targetDescriptor.m_simplePropName)
                     {
-                        targetDescriptor.m_cachedProp = null;
+                        targetDescriptor.m_simpleCachedProp = null;
                     }
+                    WTSDynamicTextRenderingRules.EnsurePropCache(ref targetDescriptor.m_simpleCachedProp, segmentID, i, 0, ref targetDescriptor.m_simplePropName, targetDescriptor.Descriptor, targetDescriptor, out rendered);
                 }
                 else
                 {
-                    if (targetDescriptor.m_cachedProp?.name != targetDescriptor.Descriptor.m_propName)
-                    {
-                        targetDescriptor.m_cachedProp = null;
-                    }
+                    WTSDynamicTextRenderingRules.GetColorForRule(segmentID, i, 0, targetDescriptor.Descriptor, targetDescriptor, out rendered);
                 }
-                var isSimple = targetDescriptor.Descriptor == null;
-                var propname = isSimple ? targetDescriptor.m_simplePropName : targetDescriptor.Descriptor.m_propName;
-                WTSDynamicTextRenderingRules.EnsurePropCache(ref targetDescriptor.m_cachedProp, segmentID, i, 0, ref propname, targetDescriptor.Descriptor, targetDescriptor, out bool rendered);
-                (isSimple ? ref targetDescriptor.m_simplePropName : ref targetDescriptor.Descriptor.m_propName) = propname;
                 if (rendered)
                 {
-                    PropInstance.CalculateGroupData(targetDescriptor.m_cachedProp, layer, ref vertexCount, ref triangleCount, ref objectCount, ref vertexArrays);
+                    PropInstance.CalculateGroupData(isSimple ? targetDescriptor.m_simpleCachedProp : targetDescriptor.Descriptor.CachedProp, layer, ref vertexCount, ref triangleCount, ref objectCount, ref vertexArrays);
                 }
             }
         }
@@ -124,44 +113,53 @@ namespace Klyte.WriteTheSigns.Singleton
             for (var i = 0; i < itemGroup.BoardsData.Length; i++)
             {
                 var targetDescriptor = itemGroup.BoardsData[i];
+                if (targetDescriptor is null)
+                {
+                    continue;
+                }
+
                 if (targetDescriptor?.Descriptor == null)
                 {
-                    if (targetDescriptor?.SimpleProp == null)
+                    if (targetDescriptor?.SimpleProp is null)
                     {
                         continue;
                     }
 
-                    if (targetDescriptor.m_cachedProp?.name != targetDescriptor.m_simplePropName)
+                    if (targetDescriptor.m_simpleCachedProp?.name != targetDescriptor.m_simplePropName)
                     {
-                        targetDescriptor.m_cachedProp = null;
+                        targetDescriptor.m_simpleCachedProp = null;
                     }
                 }
-                else
+                if (!(targetDescriptor.Descriptor?.CachedProp is null))
                 {
-                    if (targetDescriptor.m_cachedProp?.name != targetDescriptor.Descriptor.m_propName)
-                    {
-                        targetDescriptor.m_cachedProp = null;
-                    }
+                    WTSDynamicTextRenderingRules.PropInstancePopulateGroupData(targetDescriptor.Descriptor.CachedProp, layer, new InstanceID { NetSegment = segmentID }, targetDescriptor.m_cachedPosition, targetDescriptor.Scale, targetDescriptor.m_cachedRotation ?? default(Vector3), ref vertexIndex, ref triangleIndex, groupPosition, data, ref min, ref max, ref maxRenderDistance, ref maxInstanceDistance);
                 }
-                if (targetDescriptor.m_cachedProp != null)
+                if (!(targetDescriptor.m_simpleCachedProp is null))
                 {
-                    WTSDynamicTextRenderingRules.PropInstancePopulateGroupData(targetDescriptor.m_cachedProp, layer, new InstanceID { NetSegment = segmentID }, targetDescriptor.m_cachedPosition, targetDescriptor.Scale, targetDescriptor.m_cachedRotation ?? default(Vector3), ref vertexIndex, ref triangleIndex, groupPosition, data, ref min, ref max, ref maxRenderDistance, ref maxInstanceDistance);
+                    WTSDynamicTextRenderingRules.PropInstancePopulateGroupData(targetDescriptor.m_simpleCachedProp, layer, new InstanceID { NetSegment = segmentID }, targetDescriptor.m_cachedPosition, targetDescriptor.Scale, targetDescriptor.m_cachedRotation ?? default(Vector3), ref vertexIndex, ref triangleIndex, groupPosition, data, ref min, ref max, ref maxRenderDistance, ref maxInstanceDistance);
                 }
             }
         }
 
 
-        private void RenderSign(RenderManager.CameraInfo cameraInfo, ushort segmentId, int boardIdx, ref OnNetInstanceCacheContainerXml targetDescriptor, ref PropInfo cachedProp)
+        private void RenderSign(RenderManager.CameraInfo cameraInfo, ushort segmentId, int boardIdx, ref OnNetInstanceCacheContainerXml targetDescriptor, PropInfo cachedProp)
         {
             var position = targetDescriptor.m_cachedPosition ?? Vector3.zero;
             var rotation = targetDescriptor.m_cachedRotation ?? Vector3.zero;
             var isSimple = targetDescriptor.Descriptor == null;
 
-            var propname = isSimple ? targetDescriptor.m_simplePropName : targetDescriptor.Descriptor.m_propName;
+            var propname = isSimple ? targetDescriptor.m_simplePropName : targetDescriptor.Descriptor.PropName;
 
-            Color parentColor = WTSDynamicTextRenderingRules.RenderPropMesh(ref cachedProp, cameraInfo, segmentId, boardIdx, 0, 0xFFFFFFF, 0, position, Vector4.zero, ref propname, rotation, targetDescriptor.PropScale, targetDescriptor.Descriptor, targetDescriptor, out Matrix4x4 propMatrix, out bool rendered, new InstanceID { NetNode = segmentId });
+            Color parentColor = WTSDynamicTextRenderingRules.RenderPropMesh(cachedProp, cameraInfo, segmentId, boardIdx, 0, 0xFFFFFFF, 0, position, Vector4.zero, rotation, targetDescriptor.PropScale, targetDescriptor.Descriptor, targetDescriptor, out Matrix4x4 propMatrix, out bool rendered, new InstanceID { NetNode = segmentId });
 
-            (isSimple ? ref targetDescriptor.m_simplePropName : ref targetDescriptor.Descriptor.m_propName) = propname;
+            if (isSimple)
+            {
+                targetDescriptor.m_simplePropName = propname;
+            }
+            else
+            {
+                targetDescriptor.Descriptor.PropName = propname;
+            }
 
             if (rendered && !isSimple)
             {
