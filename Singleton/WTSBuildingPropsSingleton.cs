@@ -7,7 +7,6 @@ using Klyte.WriteTheSigns.Data;
 using Klyte.WriteTheSigns.Overrides;
 using Klyte.WriteTheSigns.Rendering;
 using Klyte.WriteTheSigns.UI;
-using Klyte.WriteTheSigns.Utils;
 using Klyte.WriteTheSigns.Xml;
 using SpriteFontPlus;
 using System;
@@ -341,17 +340,12 @@ namespace Klyte.WriteTheSigns.Singleton
             var isSimple = targetDescriptor.Descriptor == null;
 
             var propname = isSimple ? targetDescriptor.SimplePropName : targetDescriptor.Descriptor?.PropName;
+            if (propname is null)
+            {
+                return;
+            }
 
             Color parentColor = WTSDynamicTextRenderingRules.RenderPropMesh(cachedProp, cameraInfo, buildingId, boardIdx, 0, layerMask, data.m_angle, position, Vector4.zero, rotation, targetDescriptor.PropScale, targetDescriptor.Descriptor, targetDescriptor, out Matrix4x4 propMatrix, out bool rendered, new InstanceID { Building = buildingId });
-
-            if (isSimple)
-            {
-                targetDescriptor.SimplePropName = propname;
-            }
-            else
-            {
-                targetDescriptor.Descriptor.PropName = propname;
-            }
 
             if (rendered && !isSimple)
             {
@@ -511,7 +505,7 @@ namespace Klyte.WriteTheSigns.Singleton
                 m_lineId = nmInstance.m_nodes.m_buffer[stopId].m_transportLine,
                 m_stopId = stopId
             };
-            result.m_destinationId = FindDestinationStop(stopId, result.m_lineId);
+            result.m_destinationId = FindDestinationStop(stopId);
 
             ref NetSegment[] segBuffer = ref nmInstance.m_segments.m_buffer;
 
@@ -635,39 +629,8 @@ namespace Klyte.WriteTheSigns.Singleton
             quad.d = center - vector + vector2;
             return quad;
         }
-        private ushort FindDestinationStop(ushort stopId, ushort lineId)
-        {
-            if (m_allowedTypesNextPreviousStations.Contains(TransportManager.instance.m_lines.m_buffer[NetManager.instance.m_nodes.m_buffer[stopId].m_transportLine].Info.m_transportType))
-            {
-                ushort prevStop;
-                ushort curStop = stopId;
-                ushort nextStop = TransportLine.GetNextStop(curStop);
-                int stopCount = 0;
-                do
-                {
-                    prevStop = curStop;
-                    curStop = nextStop;
-                    nextStop = TransportLine.GetNextStop(curStop);
-                    if (WTSBuildingDataCaches.GetStopBuilding(nextStop, lineId) == WTSBuildingDataCaches.GetStopBuilding(prevStop, lineId))
-                    {
-                        return curStop;
-                    }
-                    if (nextStop == 0)
-                    {
-                        LogUtils.DoLog($"broken line: { NetManager.instance.m_nodes.m_buffer[nextStop].m_transportLine}");
-                        return 0;
-                    }
-                    if (nextStop == stopId)
-                    {
-                        LogUtils.DoLog($"Thats a loop line: { NetManager.instance.m_nodes.m_buffer[nextStop].m_transportLine}");
-                        return 0;
-                    }
-                    stopCount++;
-                } while (stopCount < 9999);
+        private ushort FindDestinationStop(ushort stopId) => WTSDynamicTextRenderingRules.GetStopDestinationData(stopId).m_destinationId;
 
-            }
-            return 0;
-        }
         private readonly TransportInfo.TransportType[] m_allowedTypesNextPreviousStations =
     {
             TransportInfo.TransportType.Metro,

@@ -956,12 +956,8 @@ namespace Klyte.WriteTheSigns.Rendering
                     {
                         var target = targetVehicle.m_targetBuilding;
                         var lastTarget = TransportLine.GetPrevStop(target);
-                        ref StopInformation stopInfo = ref GetTargetStopInfo(lastTarget);
-                        if (stopInfo.m_lineId == 0)
-                        {
-                            WriteTheSignsMod.Controller.ConnectorTLM.MapLineDestinations(targetVehicle.m_transportLine);
-                            stopInfo = ref GetTargetStopInfo(lastTarget);
-                        }
+                        StopInformation stopInfo = GetStopDestinationData(lastTarget);
+
                         BasicRenderInformation result =
                               stopInfo.m_destinationString != null ? RenderUtils.GetTextData(stopInfo.m_destinationString, textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont)
                             : stopInfo.m_destinationId != 0 ? RenderUtils.GetTextData(WriteTheSignsMod.Controller.ConnectorTLM.GetStopName(stopInfo.m_destinationId, targetVehicle.m_transportLine), textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont)
@@ -1166,7 +1162,25 @@ namespace Klyte.WriteTheSigns.Rendering
             }
             return m_emptyInfo;
         }
-        private static ref StopInformation GetTargetStopInfo(ushort targetStopId) => ref WriteTheSignsMod.Controller.BuildingPropsSingleton.m_stopInformation[targetStopId];
+        internal static StopInformation GetStopDestinationData(ushort targetStopId)
+        {
+            var result = WriteTheSignsMod.Controller.BuildingPropsSingleton.m_stopInformation[targetStopId];
+            if (result.m_lineId == 0)
+            {
+                var line = NetManager.instance.m_nodes.m_buffer[targetStopId].m_transportLine;
+                if (line > 0)
+                {
+                    WriteTheSignsMod.Controller.ConnectorTLM.MapLineDestinations(line);
+                    result = WriteTheSignsMod.Controller.BuildingPropsSingleton.m_stopInformation[targetStopId];
+                }
+                else
+                {
+                    result.m_lineId = ushort.MaxValue;
+                }
+            }
+            return result;
+        }
+
         private static StopInformation[] GetAllTargetStopInfo(BoardInstanceBuildingXml descriptor, ushort buildingId)
             => descriptor?.m_platforms?.SelectMany(platform =>
                 {
