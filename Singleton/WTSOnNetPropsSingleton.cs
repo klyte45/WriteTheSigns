@@ -155,15 +155,7 @@ namespace Klyte.WriteTheSigns.Singleton
             }
 
             Color parentColor = WTSDynamicTextRenderingRules.RenderPropMesh(cachedProp, cameraInfo, segmentId, boardIdx, 0, 0xFFFFFFF, 0, position, Vector4.zero, rotation, targetDescriptor.PropScale, targetDescriptor.Descriptor, targetDescriptor, out Matrix4x4 propMatrix, out bool rendered, new InstanceID { NetNode = segmentId });
-
-            if (isSimple)
-            {
-                targetDescriptor.m_simplePropName = propname;
-            }
-            else
-            {
-                targetDescriptor.Descriptor.PropName = propname;
-            }
+       
 
             if (rendered && !isSimple)
             {
