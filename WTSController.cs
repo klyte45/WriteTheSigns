@@ -44,10 +44,31 @@ namespace Klyte.WriteTheSigns
         public event Action EventOnZeroMarkerChanged;
         public event Action EventOnPostalCodeChanged;
 
-        public static void OnDistrictChanged() => WriteTheSignsMod.Controller?.EventOnDistrictChanged?.Invoke();
-        public static void OnParkChanged() => WriteTheSignsMod.Controller?.EventOnParkChanged?.Invoke();
+        public static void OnDistrictChanged()
+        {
+            if (LoadingManager.instance.m_LoadingWrapper.loadingComplete)
+            {
+                WriteTheSignsMod.Controller?.EventOnDistrictChanged?.Invoke();
+            }
+        }
+
+        public static void OnParkChanged()
+        {
+            if (LoadingManager.instance.m_LoadingWrapper.loadingComplete)
+            {
+                WriteTheSignsMod.Controller?.EventOnParkChanged?.Invoke();
+            }
+        }
+
         public static void OnBuildingNameChanged(ushort? buildingId) => WriteTheSignsMod.Controller?.EventOnBuildingNameChanged?.Invoke(buildingId);
-        public static void OnCityNameChanged() => RenderUtils.ClearCacheCityName();
+        public static void OnCityNameChanged()
+        {
+            if (LoadingManager.instance.m_LoadingWrapper.loadingComplete)
+            {
+                RenderUtils.ClearCacheCityName();
+            }
+        }
+
         public static void OnZeroMarkChanged() => WriteTheSignsMod.Controller?.EventOnZeroMarkerChanged?.Invoke();
         public static void OnPostalCodeChanged() => WriteTheSignsMod.Controller?.EventOnPostalCodeChanged?.Invoke();
 
