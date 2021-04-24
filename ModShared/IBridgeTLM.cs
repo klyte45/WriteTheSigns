@@ -1,5 +1,7 @@
 ﻿using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Utils;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace Klyte.WriteTheSigns.ModShared
@@ -13,34 +15,41 @@ namespace Klyte.WriteTheSigns.ModShared
         public abstract string GetVehicleIdentifier(ushort vehicleId);
         public abstract string GetLineIdString(ushort lineId);
         public abstract void MapLineDestinations(ushort lineId);
-        protected static void FillStops(ushort lineId, ushort startStation, ushort endStation, string startStationStr, string endStationStr)
+        protected static void FillStops(ushort lineId, List<BridgeTLM.DestinationPoco> destinations)
         {
             ref TransportLine tl = ref TransportManager.instance.m_lines.m_buffer[lineId];
             ref NetNode[] nodes = ref NetManager.instance.m_nodes.m_buffer;
 
-            var firstStop = startStation == 0 ? tl.m_stops : startStation;
+            if (destinations.Count == 0)
+            {
+                destinations.Add(new BridgeTLM.DestinationPoco { stopId = destinations[0].stopId, stopName = null });
+            }
+
+            var firstStop = destinations[0].stopId;
             var curStop = firstStop;
             var nextStop = TransportLine.GetNextStop(curStop);
             ushort prevStop = TransportLine.GetPrevStop(curStop);
-            var destination = endStation == 0 ? startStation : endStation;
-            var destinationStr = endStation == 0 ? startStationStr : endStationStr;
+            var destinationId = destinations[1 % destinations.Count].stopId;
+            var destinationStr = destinations[1 % destinations.Count].stopName;
             var buildingSing = WriteTheSignsMod.Controller.BuildingPropsSingleton;
             do
             {
-                if (curStop == startStation && endStation > 0)
+                var destinationInfo = destinations.Where(x => x.stopId == curStop).FirstOrDefault();
+                if (!(destinationInfo is null))
                 {
-                    destination = endStation;
-                    destinationStr = endStationStr;
+                    var nextDest = destinations.IndexOf(destinationInfo) + 1;
+                    destinationId = destinations[nextDest % destinations.Count].stopId;
+                    destinationStr = destinations[nextDest % destinations.Count].stopName;
+                    if (destinationStr is null)
+                    {
+                        destinationStr = WriteTheSignsMod.Controller.ConnectorTLM.GetStopName(destinationId, lineId);
+                    }
                 }
-                else if (curStop == endStation)
-                {
-                    destination = startStation;
-                    destinationStr = startStationStr;
-                }
+
                 buildingSing.m_stopInformation[curStop] = new Xml.StopInformation
                 {
                     m_lineId = lineId,
-                    m_destinationId = destination,
+                    m_destinationId = destinationId,
                     m_nextStopId = nextStop,
                     m_previousStopId = prevStop,
                     m_stopId = curStop,

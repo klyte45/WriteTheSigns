@@ -182,8 +182,10 @@ namespace Klyte.WriteTheSigns.ModShared
         public override void MapLineDestinations(ushort lineId)
         {
             CalculatePath(lineId, out ushort startStation, out ushort endStation);
-
-            FillStops(lineId, startStation, endStation, null, null);
+            FillStops(lineId, new List<BridgeTLM.DestinationPoco>{
+                new BridgeTLM.DestinationPoco{ stopId = startStation},
+                new BridgeTLM.DestinationPoco{ stopId = endStation}
+            });
         }
 
         private enum NamingType

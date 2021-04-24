@@ -364,6 +364,8 @@ namespace Klyte.WriteTheSigns.Sprites
                     if (isRoot)
                     {
                         spritesToAdd.AddRange(UIView.GetAView().defaultAtlas.sprites.Select(x => CloneSpriteInfo(x)).ToList());
+                        TextureAtlasUtils.LoadImagesFromResources("commons.UI.Images", ref spritesToAdd);
+                        TextureAtlasUtils.LoadImagesFromResources("UI.Images", ref spritesToAdd);
                     }
                     TextureAtlasUtils.RegenerateTextureAtlas(LocalAtlases[atlasName], spritesToAdd);
                 }

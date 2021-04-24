@@ -150,6 +150,13 @@ namespace Klyte.WriteTheSigns.Utils
                 m_cache[(int)LineFullName] = new string[TransportManager.MAX_LINE_COUNT];
             }
         }
+        public static void ClearCacheLineName(ushort lineId)
+        {
+            foreach (string[][] m_cache in m_generalCache)
+            {
+                m_cache[(int)LineFullName][lineId] = null;
+            }
+        }
 
         public enum CacheArrayTypes
         {

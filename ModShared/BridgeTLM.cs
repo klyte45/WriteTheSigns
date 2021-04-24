@@ -1,6 +1,8 @@
 extern alias TLM;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Utils;
+using System.Collections.Generic;
+using System.Linq;
 using TLM::Klyte.TransportLinesManager.Extensions;
 using TLM::Klyte.TransportLinesManager.ModShared;
 using UnityEngine;
@@ -18,6 +20,11 @@ namespace Klyte.WriteTheSigns.ModShared
             };
             TLMFacade.Instance.EventAutoNameParameterChanged += OnAutoNameParameterChanged;
             TLMFacade.Instance.EventVehicleIdentifierParameterChanged += RenderUtils.ClearCacheVehicleNumber;
+            TLMFacade.Instance.EventLineDestinationsChanged += (lineId) =>
+            {
+                WriteTheSignsMod.Controller.BuildingPropsSingleton.ResetLines();
+                RenderUtils.ClearCacheLineName(lineId);
+            };
         }
 
         public override Tuple<string, Color, string> GetLineLogoParameters(ushort lineID)
@@ -34,11 +41,15 @@ namespace Klyte.WriteTheSigns.ModShared
         public override string GetLineIdString(ushort lineId) => TLMFacade.GetLineStringId(lineId);
         public override void MapLineDestinations(ushort lineId)
         {
-            TLMFacade.CalculateAutoName(lineId, out ushort startStation, out ushort endStation, out string startStationStr, out string endStationStr);
-            FillStops(lineId, startStation, endStation, startStationStr, endStationStr);
+            TLMFacade.CalculateAutoName(lineId, out List<TLMFacade.DestinationPoco> destinations);
+            FillStops(lineId, destinations.Select(x => new DestinationPoco { stopId = x.stopId, stopName = x.stopName }).ToList());
         }
 
-
+        public class DestinationPoco
+        {
+            public string stopName;
+            public ushort stopId;
+        }
     }
 }
 
