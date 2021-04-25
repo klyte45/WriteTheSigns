@@ -4,6 +4,8 @@ using SpriteFontPlus;
 using SpriteFontPlus.Utility;
 using System;
 using System.Linq;
+using System.Runtime.InteropServices;
+using System.Text;
 using UnityEngine;
 using static Klyte.WriteTheSigns.Utils.RenderUtils.CacheArrayTypes;
 
@@ -11,7 +13,36 @@ namespace Klyte.WriteTheSigns.Utils
 {
     internal static class RenderUtils
     {
-        private static string[][][] m_generalCache = new string[Enum.GetValues(typeof(CacheTransformTypes)).Length][][].Select(x => new string[Enum.GetValues(typeof(CacheArrayTypes)).Length][]).ToArray();
+        private static string[][][] m_generalCache = GenerateCacheArray();
+
+        private static string[][][] GenerateCacheArray() => new string[Enum.GetValues(typeof(CacheTransformTypes)).Length][][].Select(x => new string[Enum.GetValues(typeof(CacheArrayTypes)).Length][]).ToArray();
+
+
+        public static long GetGeneralTextCacheSize()
+        {
+            long sizeBytes = 0;
+            foreach (string[][] m_cache in m_generalCache)
+            {
+                if (!(m_cache is null))
+                {
+                    foreach (string[] subCache in m_cache)
+                    {
+                        if (!(subCache is null))
+                        {
+                            foreach (string val in subCache)
+                            {
+                                if (val != null)
+                                {
+                                    sizeBytes += Encoding.Default.GetBytes(val).Length;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            LogUtils.DoLog($"size by for: {sizeBytes}; by marshaller: {Marshal.SizeOf(sizeBytes)}");
+            return sizeBytes;
+        }
 
         static RenderUtils()
         {

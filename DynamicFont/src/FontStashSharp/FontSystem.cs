@@ -22,6 +22,17 @@ namespace FontStashSharp
 
         private Dictionary<string, BasicRenderInformation> m_textCache = new Dictionary<string, BasicRenderInformation>();
 
+        internal long GetCacheSize()
+        {
+            long size = 0;
+            foreach(var bri in m_textCache.Values)
+            {
+                size += bri.GetSize();
+            }
+
+            return size;
+        }
+
         public int FontHeight
         {
             get => _fontHeight;
