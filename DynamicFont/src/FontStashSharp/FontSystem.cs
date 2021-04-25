@@ -537,10 +537,10 @@ namespace FontStashSharp
 
             advance = x - startx;
 
-            bounds.X = minx;
-            bounds.Y = miny;
-            bounds.X2 = maxx;
-            bounds.Y2 = maxy;
+            bounds.minX = minx;
+            bounds.minY = miny;
+            bounds.maxX = maxx;
+            bounds.maxY = maxy;
 
             return advance;
         }
@@ -745,7 +745,7 @@ namespace FontStashSharp
             var bounds = new Bounds();
             TextBounds(0, 0, str, ref bounds);
 
-            var targetTexture = new Texture2D(Mathf.CeilToInt((bounds.X2 - bounds.X)), Mathf.CeilToInt((bounds.Y2 - bounds.Y)), TextureFormat.ARGB32, false);
+            var targetTexture = new Texture2D(Mathf.CeilToInt((bounds.maxX - bounds.minX)), Mathf.CeilToInt((bounds.maxY - bounds.minY)), TextureFormat.ARGB32, false);
             targetTexture.SetPixels(new Color[targetTexture.width * targetTexture.height]);
 
             FontGlyph prevGlyph = null;
@@ -777,7 +777,14 @@ namespace FontStashSharp
 
                 Color[] arr = CurrentAtlas.GetGlyphColors(glyph);
 
-                MergeTextures(targetTexture, arr, Mathf.RoundToInt(q.X0 - bounds.X), Mathf.RoundToInt(q.Y0 - bounds.Y), (int)(q.X1 - q.X0), (int)(q.Y1 - q.Y0), false, true);
+                MergeTextures(tex: targetTexture,
+                              colors: arr,
+                              startX: Mathf.RoundToInt(q.X0 - bounds.minX),
+                              startY: Mathf.RoundToInt(bounds.maxY - q.Y1),
+                              sizeX: (int)(q.X1 - q.X0),
+                              sizeY: (int)(q.Y1 - q.Y0),
+                              swapXY: false,
+                              flipVertical: true);
 
                 prevGlyph = glyph;
             }

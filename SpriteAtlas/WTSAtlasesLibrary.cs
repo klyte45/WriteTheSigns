@@ -233,17 +233,22 @@ namespace Klyte.WriteTheSigns.Sprites
                 Destroy(formTexture);
                 var targetBorder = new RectOffset(spriteInfo.border.left * 2, spriteInfo.border.right * 2, spriteInfo.border.top * 2, spriteInfo.border.bottom * 2);
 
-                float textBoundHeight = Mathf.Min(height * .66f, height * .85f - targetBorder.vertical);
-                float textBoundWidth = (width * .9f - targetBorder.horizontal);
+                float textBoundHeight = Mathf.Min(height * .66f, (height * .85f) - targetBorder.vertical);
+                float textBoundWidth = ((width * .9f) - targetBorder.horizontal);
 
-                var textAreaSize = new Vector4((1f - (textBoundWidth / width)) * (targetBorder.horizontal == 0 ? 0.5f : 1f * targetBorder.left / targetBorder.horizontal) * width, height * (1f - (textBoundHeight / height)) * (targetBorder.vertical == 0 ? 0.5f : 1f * targetBorder.bottom / targetBorder.vertical), textBoundWidth, textBoundHeight);
+                var textAreaSize = new Vector4(
+                    (1f - (textBoundWidth / width)) * (targetBorder.horizontal == 0 ? 0.5f : 1f * targetBorder.left / targetBorder.horizontal) * width,
+                    height * (1f - (textBoundHeight / height)) * (targetBorder.vertical == 0 ? 0.5f : 1f * targetBorder.bottom / targetBorder.vertical),
+                    textBoundWidth,
+                    textBoundHeight);
 
 
-                float scaleTextTex = Mathf.Min(textAreaSize.z / texText.width, textAreaSize.w / texText.height);
                 float proportionTexText = texText.width / texText.height;
                 float proportionTextBound = textBoundWidth / textBoundHeight;
-                float widthReducer = proportionTextBound / proportionTexText;
-                TextureScaler.scale(texText, Mathf.FloorToInt(texText.width * Mathf.Min(widthReducer, 1) * scaleTextTex), Mathf.FloorToInt(texText.height * scaleTextTex));
+                float widthReducer = Mathf.Min(proportionTextBound / proportionTexText, 1);
+                float heightReducer = Mathf.Min(widthReducer * 3, 1);
+                float scaleTextTex = Mathf.Min(textAreaSize.z / (texText.width * widthReducer), textAreaSize.w / (texText.height * heightReducer));
+                TextureScaler.scale(texText, Mathf.FloorToInt(texText.width * widthReducer * scaleTextTex), Mathf.FloorToInt(texText.height * heightReducer * scaleTextTex));
 
                 Color[] textColors = texText.GetPixels();
                 int textWidth = texText.width;
@@ -262,10 +267,16 @@ namespace Klyte.WriteTheSigns.Sprites
                     {
                         for (int j = 0; j <= borderWidth / 2; j++)
                         {
-                            TextureRenderUtils.MergeColorArrays(targetColorArray, targetWidth, textOutlineArray, leftMerge + i + borderWidth / 4, topMerge + j + borderWidth / 4, textWidth, textHeight);
+                            TextureRenderUtils.MergeColorArrays(targetColorArray, targetWidth, textOutlineArray, leftMerge + i + (borderWidth / 4), topMerge + j + (borderWidth / 4), textWidth, textHeight);
                         }
                     }
-                    TextureRenderUtils.MergeColorArrays(targetColorArray, targetWidth, textColors.Select(x => new Color(contrastColor.r, contrastColor.g, contrastColor.b, x.a)).ToArray(), leftMerge + borderWidth / 2, topMerge + borderWidth / 2, textWidth, textHeight);
+                    TextureRenderUtils.MergeColorArrays(colorOr: targetColorArray,
+                                                        widthOr: targetWidth,
+                                                        colors: textColors.Select(x => new Color(contrastColor.r, contrastColor.g, contrastColor.b, x.a)).ToArray(),
+                                                        startX: leftMerge + (borderWidth / 2),
+                                                        startY: topMerge + (borderWidth / 2),
+                                                        sizeX: textWidth,
+                                                        sizeY: textHeight);
                     return Tuple.New(targetColorArray, targetWidth, targetHeight);
                 });
                 while (!task.hasEnded || m_coroutineCounter > 1)
