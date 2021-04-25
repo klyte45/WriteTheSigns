@@ -98,7 +98,7 @@ namespace SpriteFontPlus
             var bounds = new FontStashSharp.Bounds();
             _fontSystem.TextBounds(0, 0, text, ref bounds);
 
-            return new Vector2(bounds.X2, bounds.Y2);
+            return new Vector2(bounds.maxX, bounds.maxY);
         }
 
         public Texture2D DrawTextToTexture(string str) => _fontSystem.WriteTexture2D(str);
@@ -108,7 +108,7 @@ namespace SpriteFontPlus
             var bounds = new FontStashSharp.Bounds();
             _fontSystem.TextBounds(position.x, position.y, text, ref bounds);
 
-            return new Rect((int)bounds.X, (int)bounds.Y, (int)(bounds.X2 - bounds.X) * scale, (int)(bounds.Y2 - bounds.Y) * scale);
+            return new Rect((int)bounds.minX, (int)bounds.minY, (int)(bounds.maxX - bounds.minX) * scale, (int)(bounds.maxY - bounds.minY) * scale);
         }
 
         public void Reset(int width, int height) => _fontSystem.Reset(width, height);

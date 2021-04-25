@@ -2,6 +2,6 @@
 {
 	internal struct Bounds
 	{
-		public float X, Y, X2, Y2;
+		public float minX, minY, maxX, maxY;
 	}
 }
