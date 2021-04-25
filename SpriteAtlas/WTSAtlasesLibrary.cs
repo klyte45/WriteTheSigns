@@ -22,24 +22,6 @@ namespace Klyte.WriteTheSigns.Sprites
 {
     public class WTSAtlasesLibrary : MonoBehaviour
     {
-        public const string PROTOCOL_IMAGE = "image://";
-        public const string PROTOCOL_IMAGE_ASSET = "assetImage://";
-        public const string PROTOCOL_FOLDER = "folder://";
-        public const string PROTOCOL_FOLDER_ASSET = "assetFolder://";
-
-
-        private Dictionary<string, UITextureAtlas> LocalAtlases { get; } = new Dictionary<string, UITextureAtlas>();
-        private Dictionary<ulong, UITextureAtlas> AssetAtlases { get; } = new Dictionary<ulong, UITextureAtlas>();
-
-        private UITextureAtlas m_transportLineAtlas;
-        private Material m_transportLineMaterial;
-        private Dictionary<int, BasicRenderInformation> m_transportLineCache { get; } = new Dictionary<int, BasicRenderInformation>();
-
-        private Dictionary<string, Material> LocalRenderMaterial { get; } = new Dictionary<string, Material>();
-        private Dictionary<ulong, Material> AssetRenderMaterial { get; } = new Dictionary<ulong, Material>();
-
-        private Dictionary<string, Dictionary<string, BasicRenderInformation>> LocalAtlasesCache { get; } = new Dictionary<string, Dictionary<string, BasicRenderInformation>>();
-        private Dictionary<ulong, Dictionary<string, BasicRenderInformation>> AssetAtlasesCache { get; } = new Dictionary<ulong, Dictionary<string, BasicRenderInformation>>();
 
         protected void Awake()
         {
@@ -53,7 +35,240 @@ namespace Klyte.WriteTheSigns.Sprites
 
             LoadImagesFromLocalFolders();
         }
-        #region transport lines
+
+        #region Imported atlas
+
+        public const string PROTOCOL_IMAGE = "image://";
+        public const string PROTOCOL_IMAGE_ASSET = "assetImage://";
+        public const string PROTOCOL_FOLDER = "folder://";
+        public const string PROTOCOL_FOLDER_ASSET = "assetFolder://";
+
+
+        private Dictionary<string, UITextureAtlas> LocalAtlases { get; } = new Dictionary<string, UITextureAtlas>();
+        private Dictionary<ulong, UITextureAtlas> AssetAtlases { get; } = new Dictionary<ulong, UITextureAtlas>();
+        private Dictionary<string, Material> LocalRenderMaterial { get; } = new Dictionary<string, Material>();
+        private Dictionary<ulong, Material> AssetRenderMaterial { get; } = new Dictionary<ulong, Material>();
+        private Dictionary<string, Dictionary<string, BasicRenderInformation>> LocalAtlasesCache { get; } = new Dictionary<string, Dictionary<string, BasicRenderInformation>>();
+        private Dictionary<ulong, Dictionary<string, BasicRenderInformation>> AssetAtlasesCache { get; } = new Dictionary<ulong, Dictionary<string, BasicRenderInformation>>();
+
+
+        #region Getters
+
+        public void GetAtlas(string atlasName, out UITextureAtlas result)
+        {
+            if (!LocalAtlases.TryGetValue(atlasName ?? string.Empty, out result) && ulong.TryParse(atlasName ?? string.Empty, out ulong workshopId))
+            {
+                AssetAtlases.TryGetValue(workshopId, out result);
+            }
+        }
+
+        public string[] GetSpritesFromLocalAtlas(string atlasName) => LocalAtlases.TryGetValue(atlasName ?? string.Empty, out UITextureAtlas atlas) ? atlas.spriteNames : null;
+        public string[] GetSpritesFromAssetAtlas(ulong workshopId) => AssetAtlases.TryGetValue(workshopId, out UITextureAtlas atlas) ? atlas.spriteNames : null;
+        public BasicRenderInformation GetFromLocalAtlases(string atlasName, string spriteName, bool fallbackOnInvalid = false)
+        {
+            if (spriteName.IsNullOrWhiteSpace())
+            {
+                return GetFromLocalAtlases(null, "K45_WTS FrameParamsInvalidImage");
+            }
+
+            if (LocalAtlasesCache.TryGetValue(atlasName ?? string.Empty, out Dictionary<string, BasicRenderInformation> resultDicCache) && resultDicCache.TryGetValue(spriteName ?? "", out BasicRenderInformation cachedInfo))
+            {
+                return cachedInfo;
+            }
+            if (!LocalAtlases.TryGetValue(atlasName ?? string.Empty, out UITextureAtlas atlas) || !atlas.spriteNames.Contains(spriteName))
+            {
+                return fallbackOnInvalid ? GetFromLocalAtlases(null, "K45_WTS FrameParamsInvalidImage") : null;
+            }
+            if (resultDicCache == null)
+            {
+                LocalAtlasesCache[atlasName ?? string.Empty] = new Dictionary<string, BasicRenderInformation>();
+            }
+
+
+            LocalAtlasesCache[atlasName ?? string.Empty][spriteName] = null;
+
+            StartCoroutine(CreateItemAtlasCoroutine(LocalAtlases, LocalRenderMaterial, LocalAtlasesCache, atlasName ?? string.Empty, spriteName));
+            return null;
+        }
+        public BasicRenderInformation GetSlideFromLocal(string atlasName, Func<int, int> idxFunc, bool fallbackOnInvalid = false) => !LocalAtlases.TryGetValue(atlasName ?? string.Empty, out UITextureAtlas atlas)
+                ? fallbackOnInvalid ? GetFromLocalAtlases(null, "K45_WTS FrameParamsInvalidFolder") : null
+                : GetFromLocalAtlases(atlasName ?? string.Empty, atlas.spriteNames[idxFunc(atlas.spriteNames.Length - 1) + 1], fallbackOnInvalid);
+        public BasicRenderInformation GetSlideFromAsset(ulong assetId, Func<int, int> idxFunc, bool fallbackOnInvalid = false) => !AssetAtlases.TryGetValue(assetId, out UITextureAtlas atlas)
+                ? fallbackOnInvalid ? GetFromLocalAtlases(null, "K45_WTS FrameParamsInvalidFolder") : null
+                : GetFromAssetAtlases(assetId, atlas.spriteNames[idxFunc(atlas.spriteNames.Length - 1) + 1], fallbackOnInvalid);
+
+        public BasicRenderInformation GetFromAssetAtlases(ulong assetId, string spriteName, bool fallbackOnInvalid = false)
+        {
+            if (spriteName.IsNullOrWhiteSpace() || !AssetAtlases.ContainsKey(assetId))
+            {
+                return null;
+            }
+            if (AssetAtlasesCache.TryGetValue(assetId, out Dictionary<string, BasicRenderInformation> resultDicCache) && resultDicCache.TryGetValue(spriteName ?? "", out BasicRenderInformation cachedInfo))
+            {
+                return cachedInfo;
+            }
+            if (!AssetAtlases.TryGetValue(assetId, out UITextureAtlas atlas) || !atlas.spriteNames.Contains(spriteName))
+            {
+                return fallbackOnInvalid ? GetFromLocalAtlases(null, "K45_WTS FrameParamsInvalidImageAsset") : null;
+            }
+            if (resultDicCache == null)
+            {
+                AssetAtlasesCache[assetId] = new Dictionary<string, BasicRenderInformation>();
+            }
+
+            AssetAtlasesCache[assetId][spriteName] = null;
+            StartCoroutine(CreateItemAtlasCoroutine(AssetAtlases, AssetRenderMaterial, AssetAtlasesCache, assetId, spriteName));
+            return null;
+        }
+        private IEnumerator CreateItemAtlasCoroutine<T>(Dictionary<T, UITextureAtlas> spriteDict, Dictionary<T, Material> materialDict, Dictionary<T, Dictionary<string, BasicRenderInformation>> spriteDictCache, T assetId, string spriteName)
+        {
+            yield return 0;
+            if (!spriteDict.TryGetValue(assetId, out UITextureAtlas targetAtlas))
+            {
+                LogUtils.DoWarnLog($"ATLAS NOT FOUND: {assetId}");
+                yield break;
+            }
+            if (targetAtlas[spriteName] is null)
+            {
+                LogUtils.DoWarnLog($"SPRITE NOT FOUND: {spriteName}");
+                yield break;
+            }
+            var bri = new BasicRenderInformation
+            {
+                m_YAxisOverflows = new RangeVector { min = 0, max = 20 },
+                m_refText = $"<sprite asset,{assetId},{spriteName}>"
+            };
+            BuildMeshFromAtlas(spriteName, bri, targetAtlas, targetAtlas[spriteName].width / targetAtlas[spriteName].height);
+            RegisterMesh(assetId, spriteName, bri, spriteDictCache[assetId], materialDict, targetAtlas);
+            yield break;
+        }
+        #endregion
+
+        #region Filtering
+        internal string[] FindByInLocal(string targetAtlas, string searchName, out UITextureAtlas atlas) => LocalAtlases.TryGetValue(targetAtlas ?? string.Empty, out atlas)
+              ? atlas.spriteNames.Where((x, i) => i > 0 && x.ToLower().Contains(searchName.ToLower())).Select(x => $"{(targetAtlas.IsNullOrWhiteSpace() ? "<ROOT>" : targetAtlas)}/{x}").OrderBy(x => x).ToArray()
+              : (new string[0]);
+        internal string[] FindByInAsset(ulong assetId, string searchName, out UITextureAtlas atlas, bool asRoot = false) => AssetAtlases.TryGetValue(assetId, out atlas)
+                ? atlas.spriteNames.Where((x, i) => i > 0 && x.ToLower().Contains(searchName.ToLower())).Select(x => $"{(asRoot ? "<ROOT>" : assetId.ToString())}/{x}").OrderBy(x => x).ToArray()
+                : (new string[0]);
+        internal string[] FindByInLocalFolders(string searchName) => LocalAtlases.Keys.Select(x => x == string.Empty ? "<ROOT>" : x).Where(x => x.ToLower().Contains(searchName.ToLower())).OrderBy(x => x).ToArray();
+
+        internal string[] OnFilterParamImagesByText(UISprite sprite, string inputText, string propName, out string protocolFound)
+        {
+            Match match;
+            if ((inputText?.Length ?? 0) >= 4 && (match = Regex.Match(inputText ?? "", $"^({PROTOCOL_IMAGE}|{PROTOCOL_IMAGE_ASSET}|{PROTOCOL_FOLDER}|{PROTOCOL_FOLDER_ASSET})(([^/]+)/)?(.*)$")).Success)
+            {
+                protocolFound = match.Groups[1].Value;
+                var subfolder = match.Groups[3].Value;
+
+
+                var searchName = match.Groups[4].Value;
+                string[] results;
+                UITextureAtlas atlas;
+                switch (protocolFound)
+                {
+                    default:
+                    case PROTOCOL_IMAGE:
+                        results = (subfolder.IsNullOrWhiteSpace() ? WriteTheSignsMod.Controller.AtlasesLibrary.FindByInLocalFolders(searchName).Select(x => $"{x}/") : new List<string>()).Union(WriteTheSignsMod.Controller.AtlasesLibrary.FindByInLocal(subfolder == "<ROOT>" ? null : subfolder, searchName, out atlas)).ToArray();
+                        break;
+                    case PROTOCOL_IMAGE_ASSET:
+                        results = WriteTheSignsMod.Controller.AtlasesLibrary.FindByInAsset(ulong.TryParse(propName?.Split('.')[0] ?? "", out ulong wId) ? wId : 0u, searchName, out atlas, true);
+                        break;
+                    case PROTOCOL_FOLDER:
+                        results = WriteTheSignsMod.Controller.AtlasesLibrary.FindByInLocalFolders(searchName);
+                        atlas = null;
+                        break;
+                    case PROTOCOL_FOLDER_ASSET:
+                        results = AssetAtlases.TryGetValue(ulong.TryParse(propName?.Split('.')[0] ?? "", out wId) ? wId : 0, out atlas) ? new string[] { "<ROOT>" } : new string[0];
+                        break;
+                }
+                sprite.atlas = atlas;
+                return results;
+            }
+            else
+            {
+                protocolFound = null;
+                return null;
+            }
+        }
+        #endregion
+
+        #region Loading
+        public void LoadImagesFromLocalFolders()
+        {
+            LocalAtlases.Clear();
+            var errors = new List<string>();
+            var folders = new string[] { WTSController.ExtraSpritesFolder }.Union(Directory.GetDirectories(WTSController.ExtraSpritesFolder));
+            foreach (var dir in folders)
+            {
+                bool isRoot = dir == WTSController.ExtraSpritesFolder;
+                var spritesToAdd = new List<SpriteInfo>();
+                WTSAtlasLoadingUtils.LoadAllImagesFromFolderRef(dir, ref spritesToAdd, ref errors, isRoot);
+                if (isRoot || spritesToAdd.Count > 0)
+                {
+                    var atlasName = isRoot ? string.Empty : Path.GetFileNameWithoutExtension(dir);
+                    LocalAtlases[atlasName] = new UITextureAtlas
+                    {
+                        material = new Material(UIView.GetAView().defaultAtlas.material.shader)
+                    };
+                    if (isRoot)
+                    {
+                        spritesToAdd.AddRange(UIView.GetAView().defaultAtlas.sprites.Select(x => CloneSpriteInfo(x)).ToList());
+                        TextureAtlasUtils.LoadImagesFromResources("commons.UI.Images", ref spritesToAdd);
+                        TextureAtlasUtils.LoadImagesFromResources("UI.Images", ref spritesToAdd);
+                    }
+                    TextureAtlasUtils.RegenerateTextureAtlas(LocalAtlases[atlasName], spritesToAdd);
+                }
+            }
+            LocalAtlasesCache.Clear();
+            LocalRenderMaterial.Clear();
+            if (errors.Count > 0)
+            {
+                K45DialogControl.ShowModal(new K45DialogControl.BindProperties
+                {
+                    message = $"{Locale.Get("K45_WTS_CUSTOMSPRITE_ERRORHEADER")}:\n\t{string.Join("\n\t", errors.ToArray())}"
+                }, (x) => true);
+            }
+        }
+
+        private SpriteInfo CloneSpriteInfo(SpriteInfo x) => new SpriteInfo
+        {
+            border = x.border,
+            name = x.name,
+            region = default,
+            texture = x.texture
+        };
+
+        private void LoadImagesFromPrefab(ulong workshopId, string directoryPath, PrefabInfo info)
+        {
+            if (workshopId > 0 && workshopId != ~0UL && !AssetAtlases.ContainsKey(workshopId))
+            {
+                CreateAtlasEntry(AssetAtlases, workshopId, directoryPath, false);
+            }
+
+        }
+
+        private UITextureAtlas CreateAtlasEntry<T>(Dictionary<T, UITextureAtlas> atlasDic, T atlasName, string path, bool addPrefix)
+        {
+            UITextureAtlas targetAtlas = ScriptableObject.CreateInstance<UITextureAtlas>();
+            targetAtlas.material = new Material(WTSController.DEFAULT_SHADER_TEXT);
+            WTSAtlasLoadingUtils.LoadAllImagesFromFolder(path, out List<SpriteInfo> spritesToAdd, out List<string> errors, addPrefix);
+            TextureAtlasUtils.RegenerateTextureAtlas(targetAtlas, spritesToAdd);
+            foreach (string error in errors)
+            {
+                LogUtils.DoErrorLog($"ERROR LOADING IMAGE: {error}");
+            }
+            atlasDic[atlasName] = targetAtlas;
+            return targetAtlas;
+        }
+        #endregion
+
+        #endregion
+
+        #region Transport lines
+        private UITextureAtlas m_transportLineAtlas;
+        private Material m_transportLineMaterial;
+        private Dictionary<int, BasicRenderInformation> TransportLineCache { get; } = new Dictionary<int, BasicRenderInformation>();
 
         private bool TransportIsDirty { get; set; }
         private void ResetTransportAtlas()
@@ -69,12 +284,12 @@ namespace Klyte.WriteTheSigns.Sprites
             {
                 m_transportLineAtlas.Remove(id);
             }
-            m_transportLineCache.Remove(lineId);
+            TransportLineCache.Remove(lineId);
             TransportIsDirty = true;
         }
         public void PurgeAllLines()
         {
-            m_transportLineCache.Clear();
+            TransportLineCache.Clear();
             ResetTransportAtlas();
             m_transportLineMaterial = null;
             TransportIsDirty = true;
@@ -98,7 +313,7 @@ namespace Klyte.WriteTheSigns.Sprites
 
             foreach (int id in ids.OrderBy(x => x < 0 ? x.ToString("D6") : WriteTheSignsMod.Controller.ConnectorTLM.GetLineSortString((ushort)x)))
             {
-                if (m_transportLineCache.TryGetValue(id, out BasicRenderInformation bri))
+                if (TransportLineCache.TryGetValue(id, out BasicRenderInformation bri))
                 {
                     if (bri != null)
                     {
@@ -107,7 +322,7 @@ namespace Klyte.WriteTheSigns.Sprites
                 }
                 else
                 {
-                    m_transportLineCache[id] = null;
+                    TransportLineCache[id] = null;
                     StartCoroutine(WriteTransportLineTextureCoroutine(id));
                 }
             }
@@ -152,7 +367,7 @@ namespace Klyte.WriteTheSigns.Sprites
                 TransportIsDirty = true;
                 StopAllCoroutines();
                 m_transportLineMaterial = null;
-                m_transportLineCache.Clear();
+                TransportLineCache.Clear();
                 yield break;
             }
             yield return 0;
@@ -171,7 +386,7 @@ namespace Klyte.WriteTheSigns.Sprites
                     shader = WTSController.DEFAULT_SHADER_TEXT,
                 };
             }
-            RegisterMeshSingle(lineId, bri, m_transportLineCache, m_transportLineAtlas, TransportIsDirty, m_transportLineMaterial);
+            RegisterMeshSingle(lineId, bri, TransportLineCache, m_transportLineAtlas, TransportIsDirty, m_transportLineMaterial);
             TransportIsDirty = false;
             yield break;
         }
@@ -191,7 +406,6 @@ namespace Klyte.WriteTheSigns.Sprites
         }
         private static uint m_lastCoroutineStep = 0;
         private static uint m_coroutineCounter = 0;
-
         public static IEnumerator<Texture2D> RenderSpriteLine(DynamicSpriteFont font, UITextureAtlas atlas, string spriteName, Color bgColor, string text, float textScale = 1)
         {
             if (font is null)
@@ -297,216 +511,9 @@ namespace Klyte.WriteTheSigns.Sprites
                 yield return targetTexture;
             }
         }
-
-        internal string[] FindByInLocal(string targetAtlas, string searchName, out UITextureAtlas atlas) => LocalAtlases.TryGetValue(targetAtlas ?? string.Empty, out atlas)
-                ? atlas.spriteNames.Where((x, i) => i > 0 && x.ToLower().Contains(searchName.ToLower())).Select(x => $"{(targetAtlas.IsNullOrWhiteSpace() ? "<ROOT>" : targetAtlas)}/{x}").OrderBy(x => x).ToArray()
-                : (new string[0]);
-        internal string[] FindByInAsset(ulong assetId, string searchName, out UITextureAtlas atlas, bool asRoot = false) => AssetAtlases.TryGetValue(assetId, out atlas)
-                ? atlas.spriteNames.Where((x, i) => i > 0 && x.ToLower().Contains(searchName.ToLower())).Select(x => $"{(asRoot ? "<ROOT>" : assetId.ToString())}/{x}").OrderBy(x => x).ToArray()
-                : (new string[0]);
-        internal string[] FindByInLocalFolders(string searchName) => LocalAtlases.Keys.Select(x => x == string.Empty ? "<ROOT>" : x).Where(x => x.ToLower().Contains(searchName.ToLower())).OrderBy(x => x).ToArray();
-
-        internal string[] OnFilterParamImagesByText(UISprite sprite, string inputText, string propName, out string protocolFound)
-        {
-            Match match;
-            if ((inputText?.Length ?? 0) >= 4 && (match = Regex.Match(inputText ?? "", $"^({PROTOCOL_IMAGE}|{PROTOCOL_IMAGE_ASSET}|{PROTOCOL_FOLDER}|{PROTOCOL_FOLDER_ASSET})(([^/]+)/)?(.*)$")).Success)
-            {
-                protocolFound = match.Groups[1].Value;
-                var subfolder = match.Groups[3].Value;
-
-
-                var searchName = match.Groups[4].Value;
-                string[] results;
-                UITextureAtlas atlas;
-                switch (protocolFound)
-                {
-                    default:
-                    case PROTOCOL_IMAGE:
-                        results = (subfolder.IsNullOrWhiteSpace() ? WriteTheSignsMod.Controller.AtlasesLibrary.FindByInLocalFolders(searchName).Select(x => $"{x}/") : new List<string>()).Union(WriteTheSignsMod.Controller.AtlasesLibrary.FindByInLocal(subfolder == "<ROOT>" ? null : subfolder, searchName, out atlas)).ToArray();
-                        break;
-                    case PROTOCOL_IMAGE_ASSET:
-                        results = WriteTheSignsMod.Controller.AtlasesLibrary.FindByInAsset(ulong.TryParse(propName?.Split('.')[0] ?? "", out ulong wId) ? wId : 0u, searchName, out atlas, true);
-                        break;
-                    case PROTOCOL_FOLDER:
-                        results = WriteTheSignsMod.Controller.AtlasesLibrary.FindByInLocalFolders(searchName);
-                        atlas = null;
-                        break;
-                    case PROTOCOL_FOLDER_ASSET:
-                        results = AssetAtlases.TryGetValue(ulong.TryParse(propName?.Split('.')[0] ?? "", out wId) ? wId : 0, out atlas) ? new string[] { "<ROOT>" } : new string[0];
-                        break;
-                }
-                sprite.atlas = atlas;
-                return results;
-            }
-            else
-            {
-                protocolFound = null;
-                return null;
-            }
-        }
         #endregion
 
-        public void GetAtlas(string atlasName, out UITextureAtlas result)
-        {
-            if (!LocalAtlases.TryGetValue(atlasName ?? string.Empty, out result) && ulong.TryParse(atlasName ?? string.Empty, out ulong workshopId))
-            {
-                AssetAtlases.TryGetValue(workshopId, out result);
-            }
-        }
-
-        #region Loading
-        public void LoadImagesFromLocalFolders()
-        {
-            LocalAtlases.Clear();
-            var errors = new List<string>();
-            var folders = new string[] { WTSController.ExtraSpritesFolder }.Union(Directory.GetDirectories(WTSController.ExtraSpritesFolder));
-            foreach (var dir in folders)
-            {
-                bool isRoot = dir == WTSController.ExtraSpritesFolder;
-                var spritesToAdd = new List<SpriteInfo>();
-                WTSAtlasLoadingUtils.LoadAllImagesFromFolderRef(dir, ref spritesToAdd, ref errors, isRoot);
-                if (isRoot || spritesToAdd.Count > 0)
-                {
-                    var atlasName = isRoot ? string.Empty : Path.GetFileNameWithoutExtension(dir);
-                    LocalAtlases[atlasName] = new UITextureAtlas
-                    {
-                        material = new Material(UIView.GetAView().defaultAtlas.material.shader)
-                    };
-                    if (isRoot)
-                    {
-                        spritesToAdd.AddRange(UIView.GetAView().defaultAtlas.sprites.Select(x => CloneSpriteInfo(x)).ToList());
-                        TextureAtlasUtils.LoadImagesFromResources("commons.UI.Images", ref spritesToAdd);
-                        TextureAtlasUtils.LoadImagesFromResources("UI.Images", ref spritesToAdd);
-                    }
-                    TextureAtlasUtils.RegenerateTextureAtlas(LocalAtlases[atlasName], spritesToAdd);
-                }
-            }
-            LocalAtlasesCache.Clear();
-            LocalRenderMaterial.Clear();
-            if (errors.Count > 0)
-            {
-                K45DialogControl.ShowModal(new K45DialogControl.BindProperties
-                {
-                    message = $"{Locale.Get("K45_WTS_CUSTOMSPRITE_ERRORHEADER")}:\n\t{string.Join("\n\t", errors.ToArray())}"
-                }, (x) => true);
-            }
-        }
-
-        private SpriteInfo CloneSpriteInfo(SpriteInfo x) => new SpriteInfo
-        {
-            border = x.border,
-            name = x.name,
-            region = default,
-            texture = x.texture
-        };
-
-        private void LoadImagesFromPrefab(ulong workshopId, string directoryPath, PrefabInfo info)
-        {
-            if (workshopId > 0 && workshopId != ~0UL && !AssetAtlases.ContainsKey(workshopId))
-            {
-                CreateAtlasEntry(AssetAtlases, workshopId, directoryPath, false);
-            }
-
-        }
-
-        private UITextureAtlas CreateAtlasEntry<T>(Dictionary<T, UITextureAtlas> atlasDic, T atlasName, string path, bool addPrefix)
-        {
-            UITextureAtlas targetAtlas = ScriptableObject.CreateInstance<UITextureAtlas>();
-            targetAtlas.material = new Material(WTSController.DEFAULT_SHADER_TEXT);
-            WTSAtlasLoadingUtils.LoadAllImagesFromFolder(path, out List<SpriteInfo> spritesToAdd, out List<string> errors, addPrefix);
-            TextureAtlasUtils.RegenerateTextureAtlas(targetAtlas, spritesToAdd);
-            foreach (string error in errors)
-            {
-                LogUtils.DoErrorLog($"ERROR LOADING IMAGE: {error}");
-            }
-            atlasDic[atlasName] = targetAtlas;
-            return targetAtlas;
-        }
-        #endregion
-        #region Getters
-        public string[] GetSpritesFromLocalAtlas(string atlasName) => LocalAtlases.TryGetValue(atlasName ?? string.Empty, out UITextureAtlas atlas) ? atlas.spriteNames : null;
-        public string[] GetSpritesFromAssetAtlas(ulong workshopId) => AssetAtlases.TryGetValue(workshopId, out UITextureAtlas atlas) ? atlas.spriteNames : null;
-        public BasicRenderInformation GetFromLocalAtlases(string atlasName, string spriteName, bool fallbackOnInvalid = false)
-        {
-            if (spriteName.IsNullOrWhiteSpace())
-            {
-                return GetFromLocalAtlases(null, "K45_WTS FrameParamsInvalidImage");
-            }
-
-            if (LocalAtlasesCache.TryGetValue(atlasName ?? string.Empty, out Dictionary<string, BasicRenderInformation> resultDicCache) && resultDicCache.TryGetValue(spriteName ?? "", out BasicRenderInformation cachedInfo))
-            {
-                return cachedInfo;
-            }
-            if (!LocalAtlases.TryGetValue(atlasName ?? string.Empty, out UITextureAtlas atlas) || !atlas.spriteNames.Contains(spriteName))
-            {
-                return fallbackOnInvalid ? GetFromLocalAtlases(null, "K45_WTS FrameParamsInvalidImage") : null;
-            }
-            if (resultDicCache == null)
-            {
-                LocalAtlasesCache[atlasName ?? string.Empty] = new Dictionary<string, BasicRenderInformation>();
-            }
-
-
-            LocalAtlasesCache[atlasName ?? string.Empty][spriteName] = null;
-
-            StartCoroutine(CreateItemAtlasCoroutine(LocalAtlases, LocalRenderMaterial, LocalAtlasesCache, atlasName ?? string.Empty, spriteName));
-            return null;
-        }
-        public BasicRenderInformation GetSlideFromLocal(string atlasName, Func<int, int> idxFunc, bool fallbackOnInvalid = false) => !LocalAtlases.TryGetValue(atlasName ?? string.Empty, out UITextureAtlas atlas)
-                ? fallbackOnInvalid ? GetFromLocalAtlases(null, "K45_WTS FrameParamsInvalidFolder") : null
-                : GetFromLocalAtlases(atlasName ?? string.Empty, atlas.spriteNames[idxFunc(atlas.spriteNames.Length - 1) + 1], fallbackOnInvalid);
-        public BasicRenderInformation GetSlideFromAsset(ulong assetId, Func<int, int> idxFunc, bool fallbackOnInvalid = false) => !AssetAtlases.TryGetValue(assetId, out UITextureAtlas atlas)
-                ? fallbackOnInvalid ? GetFromLocalAtlases(null, "K45_WTS FrameParamsInvalidFolder") : null
-                : GetFromAssetAtlases(assetId, atlas.spriteNames[idxFunc(atlas.spriteNames.Length - 1) + 1], fallbackOnInvalid);
-
-        public BasicRenderInformation GetFromAssetAtlases(ulong assetId, string spriteName, bool fallbackOnInvalid = false)
-        {
-            if (spriteName.IsNullOrWhiteSpace() || !AssetAtlases.ContainsKey(assetId))
-            {
-                return null;
-            }
-            if (AssetAtlasesCache.TryGetValue(assetId, out Dictionary<string, BasicRenderInformation> resultDicCache) && resultDicCache.TryGetValue(spriteName ?? "", out BasicRenderInformation cachedInfo))
-            {
-                return cachedInfo;
-            }
-            if (!AssetAtlases.TryGetValue(assetId, out UITextureAtlas atlas) || !atlas.spriteNames.Contains(spriteName))
-            {
-                return fallbackOnInvalid ? GetFromLocalAtlases(null, "K45_WTS FrameParamsInvalidImageAsset") : null;
-            }
-            if (resultDicCache == null)
-            {
-                AssetAtlasesCache[assetId] = new Dictionary<string, BasicRenderInformation>();
-            }
-
-            AssetAtlasesCache[assetId][spriteName] = null;
-            StartCoroutine(CreateItemAtlasCoroutine(AssetAtlases, AssetRenderMaterial, AssetAtlasesCache, assetId, spriteName));
-            return null;
-        }
-        private IEnumerator CreateItemAtlasCoroutine<T>(Dictionary<T, UITextureAtlas> spriteDict, Dictionary<T, Material> materialDict, Dictionary<T, Dictionary<string, BasicRenderInformation>> spriteDictCache, T assetId, string spriteName)
-        {
-            yield return 0;
-            if (!spriteDict.TryGetValue(assetId, out UITextureAtlas targetAtlas))
-            {
-                LogUtils.DoWarnLog($"ATLAS NOT FOUND: {assetId}");
-                yield break;
-            }
-            if (targetAtlas[spriteName] is null)
-            {
-                LogUtils.DoWarnLog($"SPRITE NOT FOUND: {spriteName}");
-                yield break;
-            }
-            var bri = new BasicRenderInformation
-            {
-                m_YAxisOverflows = new RangeVector { min = 0, max = 20 },
-                m_refText = $"<sprite asset,{assetId},{spriteName}>"
-            };
-            BuildMeshFromAtlas(spriteName, bri, targetAtlas, targetAtlas[spriteName].width / targetAtlas[spriteName].height);
-            RegisterMesh(assetId, spriteName, bri, spriteDictCache[assetId], materialDict, targetAtlas);
-            yield break;
-        }
-        #endregion
-
-        #region geometry
+        #region Geometry
 
         private static readonly int[] kTriangleIndices = new int[]    {
             0,
