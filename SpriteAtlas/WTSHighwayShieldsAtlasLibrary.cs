@@ -7,6 +7,7 @@ using Klyte.WriteTheSigns.Utils;
 using Klyte.WriteTheSigns.Xml;
 using SpriteFontPlus;
 using SpriteFontPlus.Utility;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -159,7 +160,8 @@ namespace Klyte.WriteTheSigns.Sprites
                 int shieldHeight = spriteInfo.texture.height;
                 int shieldWidth = spriteInfo.texture.width;
                 var shieldTexture = new Texture2D(shieldWidth, shieldHeight);
-                shieldTexture.SetPixels(spriteInfo.texture.GetPixels().Select(x => descriptor.BackgroundColorIsFromHighway && parameters.hwColor != default ? x.MultiplyChannelsButAlpha(parameters.hwColor) : x.MultiplyChannelsButAlpha(descriptor.BackgroundColor)).ToArray());
+                var targetColor = descriptor.BackgroundColorIsFromHighway && parameters.hwColor != default ? parameters.hwColor : descriptor.BackgroundColor;
+                shieldTexture.SetPixels(spriteInfo.texture.GetPixels().Select(x => x.MultiplyChannelsButAlpha(targetColor)).ToArray());
                 TextureScaler.scale(shieldTexture, WTSAtlasLoadingUtils.MAX_SIZE_IMAGE_IMPORT, WTSAtlasLoadingUtils.MAX_SIZE_IMAGE_IMPORT);
                 Color[] formTexturePixels = shieldTexture.GetPixels();
 
@@ -197,22 +199,24 @@ namespace Klyte.WriteTheSigns.Sprites
                         continue;
                     }
 
-                    Color textColor = textDescriptor.ColoringConfig.m_cachedColor;
-                    if (parameters.hwColor != default)
+                    Color textColor;
+                    switch (textDescriptor.ColoringConfig.ColorSource)
                     {
-                        switch (textDescriptor.ColoringConfig.ColorSource)
-                        {
-                            case BoardTextDescriptorGeneralXml.ColoringSettings.ColoringSource.Contrast:
-                                textColor = KlyteMonoUtils.ContrastColor(parameters.hwColor);
-                                break;
-                            case BoardTextDescriptorGeneralXml.ColoringSettings.ColoringSource.Parent:
-                                textColor = parameters.hwColor;
-                                break;
-                        }
+                        case BoardTextDescriptorGeneralXml.ColoringSettings.ColoringSource.Contrast:
+                            textColor = KlyteMonoUtils.ContrastColor(targetColor);
+                            break;
+                        case BoardTextDescriptorGeneralXml.ColoringSettings.ColoringSource.Parent:
+                            textColor = targetColor;
+                            break;
+                        case BoardTextDescriptorGeneralXml.ColoringSettings.ColoringSource.Fixed:
+                        default:
+                            textColor = textDescriptor.ColoringConfig.m_cachedColor;
+                            break;
                     }
+
                     Color[] overlayColorArray = overlayTexture.GetPixels().Select(x => new Color(textColor.r, textColor.g, textColor.b, x.a)).ToArray();
 
-                    var textAreaSize = textDescriptor.GetAreaSize(shieldWidth, shieldHeight, overlayTexture.width, overlayTexture.height);
+                    var textAreaSize = textDescriptor.GetAreaSize(shieldWidth, shieldHeight, overlayTexture.width, overlayTexture.height, true);
                     TextureScaler.scale(overlayTexture, Mathf.FloorToInt(textAreaSize.z), Mathf.FloorToInt(textAreaSize.w));
 
                     Color[] textColors = overlayTexture.GetPixels();
@@ -225,14 +229,21 @@ namespace Klyte.WriteTheSigns.Sprites
                     {
                         int topMerge = Mathf.RoundToInt(textAreaSize.y);
                         int leftMerge = Mathf.RoundToInt(textAreaSize.x);
-                        TextureRenderUtils.MergeColorArrays(colorOr: formTexturePixels,
-                                                            widthOr: shieldWidth,
-                                                            colors: textColors.Select(x => x.MultiplyChannelsButAlpha(textColor)).ToArray(),
-                                                            startX: leftMerge,
-                                                            startY: topMerge,
-                                                            sizeX: textWidth,
-                                                            sizeY: textHeight);
-                        return Tuple.New(overlayColorArray, shieldWidth, shieldHeight);
+                        try
+                        {
+                            TextureRenderUtils.MergeColorArrays(colorOr: formTexturePixels,
+                                                                widthOr: shieldWidth,
+                                                                colors: textColors.Select(x => x.MultiplyChannelsButAlpha(textColor)).ToArray(),
+                                                                startX: leftMerge,
+                                                                startY: topMerge,
+                                                                sizeX: textWidth,
+                                                                sizeY: textHeight);
+                        }
+                        catch (Exception e)
+                        {
+                            LogUtils.DoErrorLog($"Exception while writing text in the shield: {e.Message}\n{e.StackTrace}\n\nDescriptor:{JsonUtility.ToJson(descriptor)}\ntextDescriptor: {textDescriptor?.SaveName}");
+                        }
+                        return Tuple.New(formTexturePixels, shieldWidth, shieldHeight);
                     });
                     while (!task.hasEnded || m_coroutineCounterHS > 1)
                     {

@@ -16,7 +16,7 @@
         Direction,
         DistanceFromReference,
         LastStopLine,
-        HwShieldAndName,
+        HwShield,
         NextStopLine,
         PrevStopLine,
         PlatformNumber,
@@ -32,8 +32,7 @@
         HwCodeShort,
         HwCodeLong,
         HwDettachedPrefix,
-        HwIdentifierSuffix,
-        HwShield
+        HwIdentifierSuffix        
     }
 
 

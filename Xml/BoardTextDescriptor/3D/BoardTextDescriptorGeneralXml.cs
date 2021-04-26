@@ -113,7 +113,6 @@ namespace Klyte.WriteTheSigns.Xml
                 case TextType.HwCodeShort:
                 case TextType.HwDettachedPrefix:
                 case TextType.HwIdentifierSuffix:
-                case TextType.HwShieldAndName:
                     return true;
             }
             return false;
@@ -124,7 +123,6 @@ namespace Klyte.WriteTheSigns.Xml
             {
                 case TextType.LinesSymbols:
                 case TextType.LineFullName:
-                case TextType.HwShieldAndName:
                     return true;
             }
             return false;
@@ -136,7 +134,6 @@ namespace Klyte.WriteTheSigns.Xml
                 case TextType.LinesSymbols:
                 case TextType.GameSprite:
                 case TextType.HwShield:
-                case TextType.HwShieldAndName:
                     return true;
             }
             return false;

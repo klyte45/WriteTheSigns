@@ -226,10 +226,10 @@
     <Compile Include="SpriteAtlas\WTSAtlasesLibrary.cs" />
     <Compile Include="SpriteAtlas\WTSHighwayShieldsAtlasLibrary.cs" />
     <Compile Include="Tools\VehicleEditorTool.cs" />
-    <Compile Include="UI\Tabs\HighwaySigns\WTSHighwayShieldEditor.cs" />
-    <Compile Include="UI\Tabs\HighwaySigns\WTSHighwayShieldLayoutEditorBasics.cs" />
-    <Compile Include="UI\Tabs\HighwaySigns\WTSHighwayShieldLayoutEditorPreview.cs" />
-    <Compile Include="UI\Tabs\HighwaySigns\WTSHighwayShieldLayoutEditorTexts.cs" />
+    <Compile Include="UI\Tabs\HighwayShields\WTSHighwayShieldEditor.cs" />
+    <Compile Include="UI\Tabs\HighwayShields\WTSHighwayShieldLayoutEditorBasics.cs" />
+    <Compile Include="UI\Tabs\HighwayShields\WTSHighwayShieldLayoutEditorPreview.cs" />
+    <Compile Include="UI\Tabs\HighwayShields\WTSHighwayShieldLayoutEditorTexts.cs" />
     <Compile Include="Utils\WTSAtlasLoadingUtils.cs" />
     <Compile Include="Xml\BoardDescriptor\HighwayShieldDescriptor.cs" />
     <Compile Include="Xml\BoardDescriptor\SeedInstanceHighwayShield.cs" />

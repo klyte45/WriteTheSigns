@@ -56,7 +56,10 @@ namespace Klyte.WriteTheSigns.Data
                     if (WriteTheSignsMod.Controller is null || highwayShieldsFont != value)
                     {
                         highwayShieldsFont = value;
-                        WriteTheSignsMod.Controller?.HighwayShieldsAtlasLibrary?.PurgeShields();
+                        if (LoadingManager.instance.m_loadingComplete)
+                        {
+                            WriteTheSignsMod.Controller?.HighwayShieldsAtlasLibrary?.PurgeShields();
+                        }
                     }
                 }
             }

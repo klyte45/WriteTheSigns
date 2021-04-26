@@ -114,6 +114,7 @@ namespace Klyte.WriteTheSigns.UI
                 string result = EditingInstance.BackgroundImage = (selIdx >= 0 && lastProtocol_searchedParam != null) ? lastProtocol_searchedParam + refArray[selIdx].Trim() : input;
                 lastProtocol_searchedParam = null;
                 Preview.ReloadData();
+                WriteTheSignsMod.Controller.HighwayShieldsAtlasLibrary.PurgeShields();
                 return result;
             }
         }
@@ -124,6 +125,7 @@ namespace Klyte.WriteTheSigns.UI
         {
             EditingInstance.BackgroundColor = val;
             Preview.ReloadData();
+            WriteTheSignsMod.Controller.HighwayShieldsAtlasLibrary.PurgeShields();
         }
 
         public void Start()
@@ -156,6 +158,7 @@ namespace Klyte.WriteTheSigns.UI
                 EditingInstance.FontName = idx > 1 ? m_fontSelect.items[idx] : idx == 1 ? WTSController.DEFAULT_FONT_KEY : null;
 
                 Preview.ReloadData();
+                WriteTheSignsMod.Controller.HighwayShieldsAtlasLibrary.PurgeShields();
             }
         }
 

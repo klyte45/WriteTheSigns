@@ -88,7 +88,7 @@ namespace Klyte.WriteTheSigns.Xml
         }
 
 
-        public Vector4 GetAreaSize(float shieldWidth, float shieldHeight, float textureWidth, float textureHeight)
+        public Vector4 GetAreaSize(float shieldWidth, float shieldHeight, float textureWidth, float textureHeight, bool invertY = false)
         {
             var multiplier = GetScale(new Vector2(textureWidth, textureHeight));
             float textTargetHeight = textureHeight * multiplier.y;
@@ -96,7 +96,7 @@ namespace Klyte.WriteTheSigns.Xml
 
             return new Vector4(
                    Mathf.Lerp(0, shieldWidth, OffsetUV.x) - Mathf.Lerp(0, textTargetWidth, PivotUV.x),
-                   Mathf.Lerp(0, shieldHeight, OffsetUV.y) - Mathf.Lerp(0, textTargetHeight, PivotUV.y),
+                   Mathf.Lerp(0, shieldHeight, invertY ? 1 - OffsetUV.y : OffsetUV.y) - Mathf.Lerp(0, textTargetHeight, invertY ? 1 - PivotUV.y : PivotUV.y),
                    textTargetWidth,
                    textTargetHeight);
         }

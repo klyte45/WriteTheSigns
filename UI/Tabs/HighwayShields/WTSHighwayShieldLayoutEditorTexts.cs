@@ -254,18 +254,34 @@ namespace Klyte.WriteTheSigns.UI
                 WTSHighwayShieldEditor.Instance.SetTabName(TabToEdit, text);
             }
         });
-        private void OnSetSuffix(string text) => SafeObtain((ref ImageLayerTextDescriptorXml x) => x.m_suffix = text);
-        private void OnSetPrefix(string text) => SafeObtain((ref ImageLayerTextDescriptorXml x) => x.m_prefix = text);
+        private void OnSetSuffix(string text) => SafeObtain((ref ImageLayerTextDescriptorXml x) =>
+        {
+            x.m_suffix = text;
+
+            WriteTheSignsMod.Controller.HighwayShieldsAtlasLibrary.PurgeShields();
+        });
+        private void OnSetPrefix(string text) => SafeObtain((ref ImageLayerTextDescriptorXml x) =>
+        {
+            x.m_prefix = text;
+
+            WriteTheSignsMod.Controller.HighwayShieldsAtlasLibrary.PurgeShields();
+        });
+
         private void OnSetOverrideFont(int sel) => SafeObtain((ref ImageLayerTextDescriptorXml x) =>
-        x.m_overrideFont = sel > 1 && sel < (m_overrideFontSelect?.items?.Length ?? 0) ? m_overrideFontSelect.items[sel]
-                : sel == 1 ? WTSController.DEFAULT_FONT_KEY
-                : null);
+        {
+            x.m_overrideFont = sel > 1 && sel < (m_overrideFontSelect?.items?.Length ?? 0) ? m_overrideFontSelect.items[sel]
+                    : sel == 1 ? WTSController.DEFAULT_FONT_KEY
+                    : null;
+
+            WriteTheSignsMod.Controller.HighwayShieldsAtlasLibrary.PurgeShields();
+        });
         private void OnSetFontClass(int sel) => SafeObtain((ref ImageLayerTextDescriptorXml x) =>
         {
             if (sel >= 0)
             {
                 x.m_fontClass = (FontClass)sel;
 
+                WriteTheSignsMod.Controller.HighwayShieldsAtlasLibrary.PurgeShields();
             }
         });
         private void OnSetTextCustom(string text) => SafeObtain((ref ImageLayerTextDescriptorXml x) => x.m_fixedText = text);
@@ -283,6 +299,7 @@ namespace Klyte.WriteTheSigns.UI
                 string result = "";
                 SafeObtain((ref ImageLayerTextDescriptorXml x) => result = (x.SpriteParam = (selIdx >= 0 && lastProtocol_searchedParam != null) ? lastProtocol_searchedParam + refArray[selIdx].Trim() : input) ?? "");
                 lastProtocol_searchedParam = null;
+                WriteTheSignsMod.Controller.HighwayShieldsAtlasLibrary.PurgeShields();
                 return result;
             }
         }
@@ -299,39 +316,67 @@ namespace Klyte.WriteTheSigns.UI
                                                            {
                                                                x.m_textType = WTSDynamicTextRenderingRules.ALLOWED_TYPES_HIGHWAY_SHIELDS[sel];
                                                                ApplyShowRules(x);
+                                                               WriteTheSignsMod.Controller.HighwayShieldsAtlasLibrary.PurgeShields();
                                                            }
                                                        });
 
-        private void OnChangeApplyRescaleOnY(bool isChecked) => SafeObtain((ref ImageLayerTextDescriptorXml x) => x.m_applyOverflowResizingOnY = isChecked);
-        private void OnFixedColorChanged(Color value) => SafeObtain((ref ImageLayerTextDescriptorXml x) => x.ColoringConfig.m_cachedColor = value);
-        private void OnMaxWidthChange(int obj) => SafeObtain((ref ImageLayerTextDescriptorXml x) => x.m_maxWidthPixels = obj);
+        private void OnChangeApplyRescaleOnY(bool isChecked) => SafeObtain((ref ImageLayerTextDescriptorXml x) =>
+        {
+            x.m_applyOverflowResizingOnY = isChecked;
+            WriteTheSignsMod.Controller.HighwayShieldsAtlasLibrary.PurgeShields();
+        });
+        private void OnFixedColorChanged(Color value) => SafeObtain((ref ImageLayerTextDescriptorXml x) =>
+                                                       {
+                                                           x.ColoringConfig.m_cachedColor = value;
+
+                                                           WriteTheSignsMod.Controller.HighwayShieldsAtlasLibrary.PurgeShields();
+                                                       });
+
+        private void OnMaxWidthChange(int obj) => SafeObtain((ref ImageLayerTextDescriptorXml x) =>
+        {
+            x.m_maxWidthPixels = obj;
+            WriteTheSignsMod.Controller.HighwayShieldsAtlasLibrary.PurgeShields();
+        });
         private void OnSetColorSource(int obj) => SafeObtain((ref ImageLayerTextDescriptorXml x) =>
         {
             if (obj >= 0)
             {
                 x.ColoringConfig.ColorSource = (ColoringSource)obj;
                 ApplyShowRules(x);
+                WriteTheSignsMod.Controller.HighwayShieldsAtlasLibrary.PurgeShields();
             }
         });
-        private void OnFixedHeightChange(int obj) => SafeObtain((ref ImageLayerTextDescriptorXml x) => x.m_fixedHeightPixels = obj);
-        private void OnScaleSubmit(float scale) => SafeObtain((ref ImageLayerTextDescriptorXml x) => x.m_textScale = scale);
+        private void OnFixedHeightChange(int obj) => SafeObtain((ref ImageLayerTextDescriptorXml x) =>
+        {
+            x.m_fixedHeightPixels = obj;
+
+            WriteTheSignsMod.Controller.HighwayShieldsAtlasLibrary.PurgeShields();
+        });
+        private void OnScaleSubmit(float scale) => SafeObtain((ref ImageLayerTextDescriptorXml x) =>
+        {
+            x.m_textScale = scale;
+            WriteTheSignsMod.Controller.HighwayShieldsAtlasLibrary.PurgeShields();
+        });
 
         private void OnPivotChange(Vector2 obj) => SafeObtain((ref ImageLayerTextDescriptorXml x) =>
         {
             x.PivotUV = Vector2.Min(Vector2.one, Vector2.Max(Vector2.zero, obj));
             m_arrayPivot[0].text = x.PivotUV.x.ToString("F3");
             m_arrayPivot[1].text = x.PivotUV.y.ToString("F3");
+            WriteTheSignsMod.Controller.HighwayShieldsAtlasLibrary.PurgeShields();
         });
         private void OnPositionChange(Vector2 obj) => SafeObtain((ref ImageLayerTextDescriptorXml x) =>
         {
             x.OffsetUV = Vector2.Min(Vector2.one, Vector2.Max(Vector2.zero, obj));
             m_arrayCoord[0].text = x.OffsetUV.x.ToString("F3");
             m_arrayCoord[1].text = x.OffsetUV.y.ToString("F3");
+            WriteTheSignsMod.Controller.HighwayShieldsAtlasLibrary.PurgeShields();
         });
         private void OnSpacingFactorChanged(float obj) => SafeObtain((ref ImageLayerTextDescriptorXml x) =>
         {
             x.m_charSpacingFactor = Math.Max(0, obj);
             m_charSpacingFactor.text = x.m_charSpacingFactor.ToString("F3");
+            WriteTheSignsMod.Controller.HighwayShieldsAtlasLibrary.PurgeShields();
         });
     }
 }

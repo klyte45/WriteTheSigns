@@ -105,6 +105,7 @@ namespace Klyte.WriteTheSigns.Rendering
                 TextType.ParameterizedGameSprite,
                 TextType.ParameterizedGameSpriteIndexed,
                 TextType.ParameterizedText,
+                TextType.HwShield,
                 TextType.StreetPrefix,
                 TextType.StreetSuffix,
                 TextType.StreetNameComplete,
@@ -820,7 +821,7 @@ namespace Klyte.WriteTheSigns.Rendering
             }
             else if (instance is OnNetInstanceCacheContainerXml onNet)
             {
-                return GetTextForOnNet(textDescriptor, refID, boardIdx, onNet, ref baseFont);
+                return GetTextForOnNet(textDescriptor, refID, boardIdx, onNet, ref baseFont, out multipleOutput);
             }
             return RenderUtils.GetTextData(textDescriptor.m_fixedText ?? "", textDescriptor.m_prefix, textDescriptor.m_suffix, null, textDescriptor.m_overrideFont);
         }
@@ -1046,8 +1047,9 @@ namespace Klyte.WriteTheSigns.Rendering
             };
         }
 
-        private static BasicRenderInformation GetTextForOnNet(BoardTextDescriptorGeneralXml textDescriptor, ushort segmentId, int secIdx, OnNetInstanceCacheContainerXml propDescriptor, ref DynamicSpriteFont baseFont)
+        private static BasicRenderInformation GetTextForOnNet(BoardTextDescriptorGeneralXml textDescriptor, ushort segmentId, int secIdx, OnNetInstanceCacheContainerXml propDescriptor, ref DynamicSpriteFont baseFont, out IEnumerable<BasicRenderInformation> multipleOutput)
         {
+            multipleOutput = null;
             var data = WTSOnNetData.Instance.m_boardsContainers[segmentId];
             if (data == null)
             {
@@ -1100,6 +1102,7 @@ namespace Klyte.WriteTheSigns.Rendering
                 case TextType.ParameterizedText: return RenderUtils.GetTextData((propDescriptor.GetTextParameter(textDescriptor.m_parameterIdx) ?? textDescriptor.DefaultParameterValue)?.ToString() ?? $"<PARAM#{textDescriptor.m_parameterIdx} NOT SET>", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                 case TextType.ParameterizedGameSprite: return GetSpriteFromCycle(textDescriptor, propDescriptor, segmentId, secIdx, textDescriptor.m_parameterIdx);
                 case TextType.ParameterizedGameSpriteIndexed: return GetSpriteFromParameter(textDescriptor, propDescriptor, textDescriptor.m_parameterIdx);
+                case TextType.HwShield: return WriteTheSignsMod.Controller.HighwayShieldsAtlasLibrary.DrawHwShield(NetManager.instance.m_segments.m_buffer[targetSegment].m_nameSeed);
                 default: return null;
             };
         }

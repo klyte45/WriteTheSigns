@@ -93,7 +93,7 @@ namespace Klyte.WriteTheSigns.Singleton
                 }, (x) => true);
 
             }
-
+            WriteTheSignsMod.Controller.HighwayShieldsAtlasLibrary.PurgeShields();
             LogUtils.DoLog("LOADING HW SHIELDS CONFIG END -----------------------------");
         }
 
