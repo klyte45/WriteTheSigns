@@ -202,7 +202,7 @@ namespace Klyte.WriteTheSigns.UI
         private void ApplyShowRules(ImageLayerTextDescriptorXml x)
         {
             m_customText.parent.isVisible = x.m_textType == TextType.Fixed;
-            m_textFixedColor.parent.isVisible = !x.ColoringConfig.UseContrastColor;
+            m_textFixedColor.parent.isVisible = x.ColoringConfig.ColorSource == ColoringSource.Fixed;
 
             m_textPrefix.parent.isVisible = !x.IsSpriteText();
             m_textSuffix.parent.isVisible = !x.IsSpriteText();
@@ -310,6 +310,7 @@ namespace Klyte.WriteTheSigns.UI
             if (obj >= 0)
             {
                 x.ColoringConfig.ColorSource = (ColoringSource)obj;
+                ApplyShowRules(x);
             }
         });
         private void OnFixedHeightChange(int obj) => SafeObtain((ref ImageLayerTextDescriptorXml x) => x.m_fixedHeightPixels = obj);
