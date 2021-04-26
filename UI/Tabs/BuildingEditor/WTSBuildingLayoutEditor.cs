@@ -80,7 +80,7 @@ namespace Klyte.WriteTheSigns.UI
             var m_uiHelperHS = new UIHelperExtension(MainContainer);
 
             m_buttonTool = (UIButton)m_uiHelperHS.AddButton(Locale.Get("K45_WTS_PICK_A_BUILDING"), EnablePickTool);
-            KlyteMonoUtils.LimitWidth(m_buttonTool, (m_uiHelperHS.Self.width - 20), true);
+            KlyteMonoUtils.LimitWidthAndBox(m_buttonTool, (m_uiHelperHS.Self.width - 20), true);
 
 
             AddLabel("", m_uiHelperHS, out m_labelSelectionDescription, out m_containerSelectionDescription);

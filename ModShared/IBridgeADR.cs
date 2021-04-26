@@ -6,6 +6,7 @@ namespace Klyte.WriteTheSigns.ModShared
 {
     internal abstract class IBridgeADR : MonoBehaviour
     {
+        public abstract bool AddressesAvailable { get; }
         public abstract Color GetDistrictColor(ushort districtId);
         public abstract Vector2 GetStartPoint();
         public virtual string GetStreetFullName(ushort idx) => NetManager.instance.GetSegmentName(idx);
@@ -47,6 +48,20 @@ namespace Klyte.WriteTheSigns.ModShared
                 return result;
             }
             return "";
+        }
+
+        public abstract AdrHighwayParameters GetHighwayData(ushort seedId);
+        public abstract AdrHighwayParameters GetHighwayTypeData(string typeName);
+        public abstract string[] ListAllAvailableHighwayTypes(string filterText);
+
+        internal class AdrHighwayParameters
+        {
+            public string layoutName;
+            public string detachedStr;
+            public string hwIdentifier;
+            public string shortCode;
+            public string longCode;
+            public Color hwColor;
         }
     }
 }

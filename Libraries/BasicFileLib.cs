@@ -18,6 +18,8 @@ namespace Klyte.WriteTheSigns.Libraries
     [XmlRoot("LibVehicleTextItem")] public class WTSLibVehicleTextItem : LibBaseFile<WTSLibVehicleTextItem, BoardTextDescriptorGeneralXml> { protected override string XmlName => "LibVehicleTextItem"; }
     [XmlRoot("LibOnNetPropLayout")] public class WTSLibOnNetPropLayout : LibBaseFile<WTSLibOnNetPropLayout, BoardInstanceOnNetXml> { protected override string XmlName => "LibOnNetPropLayout"; }
     [XmlRoot("LibOnNetPropLayoutList")] public class WTSLibOnNetPropLayoutList : LibBaseFile<WTSLibOnNetPropLayoutList, ExportableBoardInstanceOnNetListXml> { protected override string XmlName => "LibOnNetPropLayoutList"; }
+    [XmlRoot("LibHighwayShieldLayout")] public class WTSLibHighwayShieldLayout : LibBaseFile<WTSLibHighwayShieldLayout, HighwayShieldDescriptor> { protected override string XmlName => "LibHighwayShieldLayout"; }
+    [XmlRoot("LibHighwayShieldTextLayer")] public class WTSLibHighwayShieldTextLayer : LibBaseFile<WTSLibHighwayShieldTextLayer, ImageLayerTextDescriptorXml> { protected override string XmlName => "LibHighwayShieldTextLayer"; }
 
     //#region Mileage Marker
     //[XmlRoot("LibMileageMarkerProp")] public class WTSLibMileageMarkerGroup : BasicLib<WTSLibMileageMarkerGroup, BoardDescriptorMileageMarkerXml> { protected override string XmlName => "LibMileageMarkerProp"; }

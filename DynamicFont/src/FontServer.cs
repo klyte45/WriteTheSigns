@@ -4,6 +4,8 @@ using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
 using UnityEngine;
 
 namespace SpriteFontPlus
@@ -12,16 +14,21 @@ namespace SpriteFontPlus
     {
         private Dictionary<string, DynamicSpriteFont> m_fontRegistered = new Dictionary<string, DynamicSpriteFont>();
 
+        internal long GetAllFontsCacheSize()
+        {
+            long size = 0L;
+            foreach(var font in m_fontRegistered.Values)
+            {
+                size += font.GetCacheSize();
+            }
+            return size;
+        }
+
         private float m_targetHeight = 100;
 
         private float m_qualityMultiplier = 1f;
 
         private int DefaultTextureSize => WTSController.DefaultTextureSizeFont;
-
-
-        public event Action<string> EventTextureReloaded;
-
-        private bool m_currentlyReloadingAll = false;
 
         private int FontSizeEffective => Mathf.RoundToInt(m_targetHeight * m_qualityMultiplier);
         public Vector2 ScaleEffective => Vector2.one / m_qualityMultiplier;

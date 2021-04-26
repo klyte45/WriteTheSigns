@@ -1,4 +1,5 @@
-﻿using Klyte.Commons.Interfaces;
+﻿using ICities;
+using Klyte.Commons.Interfaces;
 using System.Xml.Serialization;
 
 namespace Klyte.WriteTheSigns.Data
@@ -25,9 +26,9 @@ namespace Klyte.WriteTheSigns.Data
         [XmlIgnore]
         public abstract int SubBoardCount { get; }
 
-        public override void LoadDefaults()
+        public override void LoadDefaults(ISerializableData serializableData)
         {
-            base.LoadDefaults();
+            base.LoadDefaults(serializableData);
             m_boardsContainers = new CC[ObjArraySize, BoardCount, SubBoardCount];
         }
         protected virtual void ResetBoards() => m_boardsContainers = new CC[ObjArraySize, BoardCount, SubBoardCount];

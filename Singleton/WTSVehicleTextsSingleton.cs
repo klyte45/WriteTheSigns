@@ -139,15 +139,15 @@ namespace Klyte.WriteTheSigns.Singleton
 
         #region IO 
 
-        private static string DefaultFilename { get; } = $"{WTSController.m_defaultFileNameBuildingsXml}.xml";
+        private static string DefaultFilename { get; } = $"{WTSController.m_defaultFileNameVehiclesXml}.xml";
 
         public void LoadAllVehiclesConfigurations()
         {
             LogUtils.DoLog("LOADING VEHICLE CONFIG START -----------------------------");
-            FileUtils.ScanPrefabsFolders<VehicleInfo>(DefaultFilename, LoadDescriptorsFromXmlAsset);
             var errorList = new List<string>();
             Data.GlobalDescriptors.Clear();
             Data.AssetsDescriptors.Clear();
+            FileUtils.ScanPrefabsFolders<VehicleInfo>(DefaultFilename, LoadDescriptorsFromXmlAsset);
             LogUtils.DoLog($"DefaultVehiclesConfigurationFolder = {WTSController.DefaultVehiclesConfigurationFolder}");
             foreach (string filename in Directory.GetFiles(WTSController.DefaultVehiclesConfigurationFolder, "*.xml"))
             {

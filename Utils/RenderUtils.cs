@@ -4,6 +4,8 @@ using SpriteFontPlus;
 using SpriteFontPlus.Utility;
 using System;
 using System.Linq;
+using System.Runtime.InteropServices;
+using System.Text;
 using UnityEngine;
 using static Klyte.WriteTheSigns.Utils.RenderUtils.CacheArrayTypes;
 
@@ -11,7 +13,36 @@ namespace Klyte.WriteTheSigns.Utils
 {
     internal static class RenderUtils
     {
-        private static string[][][] m_generalCache = new string[Enum.GetValues(typeof(CacheTransformTypes)).Length][][].Select(x => new string[Enum.GetValues(typeof(CacheArrayTypes)).Length][]).ToArray();
+        private static string[][][] m_generalCache = GenerateCacheArray();
+
+        private static string[][][] GenerateCacheArray() => new string[Enum.GetValues(typeof(CacheTransformTypes)).Length][][].Select(x => new string[Enum.GetValues(typeof(CacheArrayTypes)).Length][]).ToArray();
+
+
+        public static long GetGeneralTextCacheSize()
+        {
+            long sizeBytes = 0;
+            foreach (string[][] m_cache in m_generalCache)
+            {
+                if (!(m_cache is null))
+                {
+                    foreach (string[] subCache in m_cache)
+                    {
+                        if (!(subCache is null))
+                        {
+                            foreach (string val in subCache)
+                            {
+                                if (val != null)
+                                {
+                                    sizeBytes += Encoding.Default.GetBytes(val).Length;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            LogUtils.DoLog($"size by for: {sizeBytes}; by marshaller: {Marshal.SizeOf(sizeBytes)}");
+            return sizeBytes;
+        }
 
         static RenderUtils()
         {
@@ -183,22 +214,54 @@ namespace Klyte.WriteTheSigns.Utils
 
         public static BasicRenderInformation GetFromCacheArray2(ushort refId, string prefix, string suffix, bool allCaps, bool applyAbbreviations, CacheArrayTypes type, DynamicSpriteFont primaryFont, string overrideFont = null)
         {
+            string name = GetTargetStringFor(refId, allCaps, applyAbbreviations, type);
+
+            return name is null ? null : GetTextData(name, prefix, suffix, primaryFont, overrideFont);
+        }
+
+        public static string GetTargetStringFor(ushort refId, bool allCaps, bool applyAbbreviations, CacheArrayTypes type)
+        {
             ref string[][] cache = ref m_generalCache[(allCaps ? 1 : 0) + (applyAbbreviations ? 1 : 2)];
+            string name;
             switch (type)
             {
-                case CacheArrayTypes.Districts: return refId > 256 ? UpdateMeshBuildingName((ushort)(refId - 256), ref cache[(int)BuildingName][refId - 256], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont) : UpdateMeshDistrict(refId, ref cache[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont);
-                case CacheArrayTypes.Parks: return UpdateMeshPark(refId, ref cache[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont);
-                case CacheArrayTypes.SuffixStreetName: return UpdateMeshStreetSuffix(refId, ref cache[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont);
-                case CacheArrayTypes.FullStreetName: return UpdateMeshFullNameStreet(refId, ref cache[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont);
-                case CacheArrayTypes.StreetQualifier: return UpdateMeshStreetQualifier(refId, ref cache[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont);
-                case CacheArrayTypes.BuildingName: return UpdateMeshBuildingName(refId, ref cache[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont);
-                case CacheArrayTypes.PostalCode: return UpdateMeshPostalCode(refId, ref cache[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont);
-                case CacheArrayTypes.VehicleNumber: return UpdateMeshVehicleNumber(refId, ref cache[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont);
-                case CacheArrayTypes.LineIdentifier: return UpdateMeshLineIdentifier(refId, ref cache[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont);
-                case CacheArrayTypes.LineFullName: return UpdateMeshLineFullName(refId, ref cache[(int)type][refId], prefix, suffix, allCaps, applyAbbreviations, primaryFont, overrideFont);
-                default: return null;
+                case CacheArrayTypes.Districts:
+                    name = refId > 256
+                        ? UpdateMeshBuildingName((ushort)(refId - 256), ref cache[(int)BuildingName][refId - 256], allCaps, applyAbbreviations)
+                        : UpdateMeshDistrict(refId, ref cache[(int)type][refId], allCaps, applyAbbreviations);
+                    break;
+                case CacheArrayTypes.Parks:
+                    name = UpdateMeshPark(refId, ref cache[(int)type][refId], allCaps, applyAbbreviations);
+                    break;
+                case CacheArrayTypes.SuffixStreetName:
+                    name = UpdateMeshStreetSuffix(refId, ref cache[(int)type][refId], allCaps, applyAbbreviations);
+                    break;
+                case CacheArrayTypes.FullStreetName:
+                    name = UpdateMeshFullNameStreet(refId, ref cache[(int)type][refId], allCaps, applyAbbreviations);
+                    break;
+                case CacheArrayTypes.StreetQualifier:
+                    name = UpdateMeshStreetQualifier(refId, ref cache[(int)type][refId], allCaps, applyAbbreviations);
+                    break;
+                case CacheArrayTypes.BuildingName:
+                    name = UpdateMeshBuildingName(refId, ref cache[(int)type][refId], allCaps, applyAbbreviations);
+                    break;
+                case CacheArrayTypes.PostalCode:
+                    name = UpdateMeshPostalCode(refId, ref cache[(int)type][refId], allCaps, applyAbbreviations);
+                    break;
+                case CacheArrayTypes.VehicleNumber:
+                    name = UpdateMeshVehicleNumber(refId, ref cache[(int)type][refId], allCaps, applyAbbreviations);
+                    break;
+                case CacheArrayTypes.LineIdentifier:
+                    name = UpdateMeshLineIdentifier(refId, ref cache[(int)type][refId], allCaps, applyAbbreviations);
+                    break;
+                case CacheArrayTypes.LineFullName:
+                    name = UpdateMeshLineFullName(refId, ref cache[(int)type][refId], allCaps, applyAbbreviations);
+                    break;
+                default: name = null; break;
             };
+            return name;
         }
+
         private static string ApplyTransforms(string name, bool allCaps, bool applyAbbreviations)
         {
             if (applyAbbreviations)
@@ -209,166 +272,106 @@ namespace Klyte.WriteTheSigns.Utils
             {
                 name = name.ToUpper();
             }
-
             return name;
         }
 
-        public static BasicRenderInformation UpdateMeshFullNameStreet(ushort idx, ref string name, string prefix, string suffix, bool allCaps, bool applyAbbreviations, DynamicSpriteFont primaryFont, string overrideFont)
+        public static string UpdateMeshFullNameStreet(ushort idx, ref string name, bool allCaps, bool applyAbbreviations)
         {
             if (name == null)
             {
-                if (idx == 0)
-                {
-                    name = "";
-                }
-                else
-                {
-                    name = WriteTheSignsMod.Controller.ConnectorADR.GetStreetFullName(idx) ?? "";
-                    name = ApplyTransforms(name, allCaps, applyAbbreviations);
-                }
-                LogUtils.DoLog($"!GenName {name} for {idx} (UC={allCaps})");
+                name = idx == 0
+                    ? ""
+                    : ApplyTransforms(WriteTheSignsMod.Controller.ConnectorADR.GetStreetFullName(idx) ?? "", allCaps, applyAbbreviations);
+                // LogUtils.DoLog($"!GenName {name} for {idx} (UC={allCaps})");
             }
-            return GetTextData(name, prefix, suffix, primaryFont, overrideFont);
+            return name;
         }
 
-
-
-        public static BasicRenderInformation UpdateMeshStreetQualifier(ushort idx, ref string name, string prefix, string suffix, bool allCaps, bool applyAbbreviations, DynamicSpriteFont primaryFont, string overrideFont)
+        public static string UpdateMeshStreetQualifier(ushort idx, ref string name, bool allCaps, bool applyAbbreviations)
         {
             if (name == null)
             {
-                if (idx == 0)
-                {
-                    name = "";
-                }
-                else
-                {
-                    if ((NetManager.instance.m_segments.m_buffer[idx].m_flags & NetSegment.Flags.CustomName) == 0)
-                    {
-                        name = WriteTheSignsMod.Controller.ConnectorADR.GetStreetQualifier(idx);
-                    }
-                    else
-                    {
-                        name = WriteTheSignsMod.Controller.ConnectorADR.GetStreetQualifierCustom(idx);
-                    }
-                    name = ApplyTransforms(name, allCaps, applyAbbreviations);
-                }
-                LogUtils.DoLog($"!GenName {name} for {idx} (UC={allCaps})");
+                name = idx == 0
+                    ? ""
+                    : (NetManager.instance.m_segments.m_buffer[idx].m_flags & NetSegment.Flags.CustomName) == 0
+                        ? ApplyTransforms(WriteTheSignsMod.Controller.ConnectorADR.GetStreetQualifier(idx), allCaps, applyAbbreviations)
+                        : ApplyTransforms(WriteTheSignsMod.Controller.ConnectorADR.GetStreetQualifierCustom(idx), allCaps, applyAbbreviations);
+                //    LogUtils.DoLog($"!GenName {name} for {idx} (UC={allCaps})");
             }
-            return GetTextData(name, prefix, suffix, primaryFont, overrideFont);
+            return name;
         }
-        public static BasicRenderInformation UpdateMeshPostalCode(ushort idx, ref string name, string prefix, string suffix, bool allCaps, bool applyAbbreviations, DynamicSpriteFont primaryFont, string overrideFont)
+        public static string UpdateMeshPostalCode(ushort idx, ref string name, bool allCaps, bool applyAbbreviations)
         {
             if (name == null)
             {
-                if (idx == 0)
-                {
-                    name = "";
-                }
-                else
-                {
-                    name = WriteTheSignsMod.Controller.ConnectorADR.GetStreetPostalCode(NetManager.instance.m_segments.m_buffer[idx].m_middlePosition, idx);
-                }
-                LogUtils.DoLog($"!Gen Postal Code {name} for {idx} (UC={allCaps})");
+                name = idx == 0
+                    ? ""
+                    : WriteTheSignsMod.Controller.ConnectorADR.GetStreetPostalCode(NetManager.instance.m_segments.m_buffer[idx].m_middlePosition, idx);
+                //  LogUtils.DoLog($"!Gen Postal Code {name} for {idx} (UC={allCaps})");
             }
-            return GetTextData(name, prefix, suffix, primaryFont, overrideFont);
+            return name;
         }
-        public static BasicRenderInformation UpdateMeshDistrict(ushort districtId, ref string name, string prefix, string suffix, bool allCaps, bool applyAbbreviations, DynamicSpriteFont primaryFont, string overrideFont)
+        public static string UpdateMeshDistrict(ushort districtId, ref string name, bool allCaps, bool applyAbbreviations)
         {
             if (name == null)
             {
-                if (districtId == 0)
-                {
-                    name = SimulationManager.instance.m_metaData.m_CityName;
-                }
-                else
-                {
-                    name = DistrictManager.instance.GetDistrictName(districtId);
-                }
-                name = ApplyTransforms(name, allCaps, applyAbbreviations);
+                name = districtId == 0
+                    ? ApplyTransforms(SimulationManager.instance.m_metaData.m_CityName, allCaps, applyAbbreviations)
+                    : ApplyTransforms(DistrictManager.instance.GetDistrictName(districtId), allCaps, applyAbbreviations);
             }
-            return GetTextData(name, prefix, suffix, primaryFont, overrideFont);
+            return name;
         }
-        public static BasicRenderInformation UpdateMeshBuildingName(ushort buildingId, ref string name, string prefix, string suffix, bool allCaps, bool applyAbbreviations, DynamicSpriteFont primaryFont, string overrideFont)
+        public static string UpdateMeshBuildingName(ushort buildingId, ref string name, bool allCaps, bool applyAbbreviations)
         {
             if (name == null)
             {
-                name = BuildingManager.instance.GetBuildingName(buildingId, InstanceID.Empty) ?? "";
-                name = ApplyTransforms(name, allCaps, applyAbbreviations);
+                name = ApplyTransforms(BuildingManager.instance.GetBuildingName(buildingId, InstanceID.Empty) ?? "", allCaps, applyAbbreviations);
             }
-            return GetTextData(name, prefix, suffix, primaryFont, overrideFont);
+            return name;
         }
-        public static BasicRenderInformation UpdateMeshVehicleNumber(ushort vehicleId, ref string name, string prefix, string suffix, bool allCaps, bool applyAbbreviations, DynamicSpriteFont primaryFont, string overrideFont)
+        public static string UpdateMeshVehicleNumber(ushort vehicleId, ref string name, bool allCaps, bool applyAbbreviations)
         {
             if (name == null)
             {
                 name = WriteTheSignsMod.Controller.ConnectorTLM.GetVehicleIdentifier(vehicleId);
             }
-            return GetTextData(name, prefix, suffix, primaryFont, overrideFont);
+            return name;
         }
-        public static BasicRenderInformation UpdateMeshLineIdentifier(ushort lineId, ref string name, string prefix, string suffix, bool allCaps, bool applyAbbreviations, DynamicSpriteFont primaryFont, string overrideFont)
+        public static string UpdateMeshLineIdentifier(ushort lineId, ref string name, bool allCaps, bool applyAbbreviations)
         {
             if (name == null)
             {
-                if (lineId == 0)
-                {
-                    name = "";
-                }
-                else
-                {
-                    name = WriteTheSignsMod.Controller.ConnectorTLM.GetLineIdString(lineId);
-                }
+                name = lineId == 0 ? "" : WriteTheSignsMod.Controller.ConnectorTLM.GetLineIdString(lineId);
             }
-            return GetTextData(name, prefix, suffix, primaryFont, overrideFont);
+            return name;
         }
-        public static BasicRenderInformation UpdateMeshLineFullName(ushort lineId, ref string name, string prefix, string suffix, bool allCaps, bool applyAbbreviations, DynamicSpriteFont primaryFont, string overrideFont)
+        public static string UpdateMeshLineFullName(ushort lineId, ref string name, bool allCaps, bool applyAbbreviations)
         {
             if (name == null)
             {
-                if (lineId == 0)
-                {
-                    name = "";
-                }
-                else
-                {
-                    name = TransportManager.instance.GetLineName(lineId);
-                    name = ApplyTransforms(name, allCaps, applyAbbreviations);
-                }
+                name = lineId == 0 ? "" : ApplyTransforms(TransportManager.instance.GetLineName(lineId), allCaps, applyAbbreviations);
             }
-            return GetTextData(name, prefix, suffix, primaryFont, overrideFont);
+            return name;
         }
-        public static BasicRenderInformation UpdateMeshPark(ushort parkId, ref string name, string prefix, string suffix, bool allCaps, bool applyAbbreviations, DynamicSpriteFont primaryFont, string overrideFont)
+        public static string UpdateMeshPark(ushort parkId, ref string name, bool allCaps, bool applyAbbreviations)
         {
             if (name == null)
             {
-                name = DistrictManager.instance.GetParkName(parkId);
-                name = ApplyTransforms(name, allCaps, applyAbbreviations);
+                name = ApplyTransforms(DistrictManager.instance.GetParkName(parkId), allCaps, applyAbbreviations);
             }
-            return GetTextData(name, prefix, suffix, primaryFont, overrideFont);
+            return name;
         }
-        public static BasicRenderInformation UpdateMeshStreetSuffix(ushort idx, ref string name, string prefix, string suffix, bool allCaps, bool applyAbbreviations, DynamicSpriteFont primaryFont, string overrideFont)
+        public static string UpdateMeshStreetSuffix(ushort idx, ref string name, bool allCaps, bool applyAbbreviations)
         {
             if (name == null)
             {
-                if (idx == 0)
-                {
-                    name = "";
-                }
-                else
-                {
-                    LogUtils.DoLog($"!UpdateMeshStreetSuffix {idx} (UC={allCaps})");
-                    if ((NetManager.instance.m_segments.m_buffer[idx].m_flags & NetSegment.Flags.CustomName) == 0)
-                    {
-                        name = WriteTheSignsMod.Controller.ConnectorADR.GetStreetSuffix(idx);
-                    }
-                    else
-                    {
-                        name = WriteTheSignsMod.Controller.ConnectorADR.GetStreetSuffixCustom(idx);
-                    }
-                    name = ApplyTransforms(name, allCaps, applyAbbreviations);
-                }
+                name = idx == 0
+                    ? ""
+                    : (NetManager.instance.m_segments.m_buffer[idx].m_flags & NetSegment.Flags.CustomName) == 0
+                        ? ApplyTransforms(WriteTheSignsMod.Controller.ConnectorADR.GetStreetSuffix(idx), allCaps, applyAbbreviations)
+                        : ApplyTransforms(WriteTheSignsMod.Controller.ConnectorADR.GetStreetSuffixCustom(idx), allCaps, applyAbbreviations);
             }
-            return GetTextData(name, prefix, suffix, primaryFont, overrideFont);
+            return name;
         }
 
         public static BasicRenderInformation GetTextData(string text, string prefix, string suffix, DynamicSpriteFont primaryFont, string overrideFont)

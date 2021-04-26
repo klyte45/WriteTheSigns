@@ -3,6 +3,7 @@ using ColossalFramework.UI;
 using SpriteFontPlus.Utility;
 using System;
 using System.Text.RegularExpressions;
+using static ColossalFramework.UI.UITextureAtlas;
 
 namespace Klyte.WriteTheSigns.Xml
 {
@@ -104,6 +105,12 @@ namespace Klyte.WriteTheSigns.Xml
 
         public UITextureAtlas GetAtlas(PrefabInfo prefab)
         {
+            UpdateCachedAtlas(prefab);
+            return m_cachedAtlas;
+        }
+
+        private void UpdateCachedAtlas(PrefabInfo prefab)
+        {
             if (m_isDirtyImage)
             {
                 if (ParamType == ParameterType.FOLDER || ParamType == ParameterType.IMAGE)
@@ -117,7 +124,12 @@ namespace Klyte.WriteTheSigns.Xml
                 }
                 m_isDirtyImage = false;
             }
-            return m_cachedAtlas;
+        }
+
+        public SpriteInfo GetCurrentSpriteInfo(PrefabInfo prefab)
+        {
+            UpdateCachedAtlas(prefab);
+            return m_cachedAtlas?[TextOrSpriteValue];
         }
 
         private void UpdatePrefabInfo(PrefabInfo prefab)

@@ -93,10 +93,12 @@
     <Compile Include="commons\Interfaces\Warehouse\ConfigWarehouseBase.cs" />
     <Compile Include="commons\Interfaces\Warehouse\DataContainer.cs" />
     <Compile Include="commons\Interfaces\Warehouse\DataExtensionBase.cs" />
+    <Compile Include="commons\Interfaces\Warehouse\DataExtensionLibBase.cs" />
     <Compile Include="commons\Interfaces\Warehouse\ExtensionInterface2LevelIntImpl.cs" />
     <Compile Include="commons\Interfaces\Warehouse\ExtensionInterfaceDictionaryByEnumImpl.cs" />
     <Compile Include="commons\Interfaces\Warehouse\ExtensionInterfaceDictionaryByUintImpl.cs" />
     <Compile Include="commons\Interfaces\Warehouse\ExtensionInterfaceDictionaryStructValSimplImpl.cs" />
+    <Compile Include="commons\Interfaces\Warehouse\ExtensionInterfaceIndexableImpl.cs" />
     <Compile Include="commons\Interfaces\Warehouse\ExtensionInterfaceListImpl .cs" />
     <Compile Include="commons\Interfaces\Warehouse\ExtensionInterfaceSingleImpl.cs" />
     <Compile Include="commons\Interfaces\Warehouse\IDataExtension.cs" />
@@ -108,9 +110,9 @@
     <Compile Include="commons\Redirectors\UIDynamicPanelsRedirector.cs" />
     <Compile Include="commons\Redirectors\UIViewRedirector.cs" />
     <Compile Include="commons\Redirectors\UIWorkshopAssetRedirector.cs" />
-    <Compile Include="commons\Tools\BasicVehicleTool.cs" />
     <Compile Include="commons\Tools\BasicBuildingTool.cs" />
     <Compile Include="commons\Tools\BasicNetTool.cs" />
+    <Compile Include="commons\Tools\BasicVehicleTool.cs" />
     <Compile Include="commons\UI\AVOPreviewRenderer.cs" />
     <Compile Include="commons\UI\BasicRulesList.cs" />
     <Compile Include="commons\UI\DefaultEditorUILib.cs" />
@@ -182,8 +184,8 @@
     <Compile Include="commons\Utils\XmlUtils.cs" />
     <Compile Include="commons\Utils\ZipUtils.cs" />
     <Compile Include="Data\WTSEtcData.cs" />
+    <Compile Include="Data\WTSHighwayShieldsData.cs" />
     <Compile Include="Data\WTSVehicleData.cs" />
-    <Compile Include="commons\Interfaces\Warehouse\DataExtensionLibBase.cs" />
     <Compile Include="Data\WTSBaseData.cs" />
     <Compile Include="Data\WTSBuildingsData.cs" />
     <Compile Include="Data\WTSHighwayMileageData.cs" />
@@ -217,12 +219,30 @@
     <Compile Include="Overrides\BoardGeneration\ToolManagerOverrides.cs" />
     <Compile Include="Overrides\TransportLineOverrides.cs" />
     <Compile Include="Rendering\WTSDisplayContainerMeshUtils.cs" />
+    <Compile Include="Singleton\WTHighwayShieldsSingleton.cs" />
     <Compile Include="Singleton\WTSOnNetPropsSingleton.cs" />
     <Compile Include="Singleton\WTSVehicleTextsSingleton.cs" />
     <Compile Include="Singleton\WTSBuildingPropsSingleton.cs" />
     <Compile Include="SpriteAtlas\WTSAtlasesLibrary.cs" />
+    <Compile Include="SpriteAtlas\WTSHighwayShieldsAtlasLibrary.cs" />
     <Compile Include="Tools\VehicleEditorTool.cs" />
+    <Compile Include="UI\Tabs\HighwayShields\WTSHighwayShieldEditor.cs" />
+    <Compile Include="UI\Tabs\HighwayShields\WTSHighwayShieldLayoutEditorBasics.cs" />
+    <Compile Include="UI\Tabs\HighwayShields\WTSHighwayShieldLayoutEditorPreview.cs" />
+    <Compile Include="UI\Tabs\HighwayShields\WTSHighwayShieldLayoutEditorTexts.cs" />
     <Compile Include="Utils\WTSAtlasLoadingUtils.cs" />
+    <Compile Include="Xml\BoardDescriptor\HighwayShieldDescriptor.cs" />
+    <Compile Include="Xml\BoardDescriptor\SeedInstanceHighwayShield.cs" />
+    <Compile Include="Xml\BoardTextDescriptor\2D\ImageLayerTextDescriptorXml.cs" />
+    <Compile Include="Xml\BoardTextDescriptor\3D\AnimationSettings.cs" />
+    <Compile Include="Xml\BoardTextDescriptor\3D\BackgroundMesh.cs" />
+    <Compile Include="Xml\BoardTextDescriptor\3D\BlinkType.cs" />
+    <Compile Include="Xml\BoardTextDescriptor\3D\ColoringSettings.cs" />
+    <Compile Include="Xml\BoardTextDescriptor\3D\FontClass.cs" />
+    <Compile Include="Xml\BoardTextDescriptor\3D\FrameMesh.cs" />
+    <Compile Include="Xml\BoardTextDescriptor\3D\IlluminationSettings.cs" />
+    <Compile Include="Xml\BoardTextDescriptor\3D\PlacingSettings.cs" />
+    <Compile Include="Xml\BoardTextDescriptor\3D\SubItemSettings.cs" />
     <Compile Include="Xml\Enums\ColoringMode.cs" />
     <Compile Include="Xml\Containers\ExportableBoardInstanceBuildingListXml.cs" />
     <Compile Include="Xml\BoardDescriptor\TextParameterWrapper.cs" />
@@ -269,7 +289,7 @@
     <Compile Include="Xml\Containers\StopInformation.cs" />
     <Compile Include="Xml\Enums\DestinationReference.cs" />
     <Compile Include="Xml\Enums\RoadQualifierExtractionMode.cs" />
-    <Compile Include="Xml\BoardTextDescriptor\BoardTextDescriptorGeneralXml.cs" />
+    <Compile Include="Xml\BoardTextDescriptor\3D\BoardTextDescriptorGeneralXml.cs" />
     <Compile Include="Xml\Containers\BuildingGroupDescriptorXml.cs" />
     <Compile Include="Xml\Containers\BoardBunchContainerBuilding.cs" />
     <Compile Include="Overrides\BoardGeneration\PathCrawler\MileageMarkerDescriptor.cs" />
@@ -497,13 +517,17 @@
     <EmbeddedResource Include="UI\Images\%25K45_WTS FrameBorder.png" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="commons\UI\Images\base.psd" />
-    <Content Include="commons\UI\Images\sprites.psd" />
     <EmbeddedResource Include="UI\Images\%25K45_WTS FrameParamsImageRequired.png" />
     <EmbeddedResource Include="UI\Images\%25K45_WTS FrameParamsInvalidImage.png" />
     <EmbeddedResource Include="UI\Images\%25K45_WTS FrameParamsInvalidImageAsset.png" />
     <EmbeddedResource Include="UI\Images\%25K45_WTS FrameParamsFolderRequired.png" />
     <EmbeddedResource Include="UI\Images\%25K45_WTS FrameParamsInvalidFolder.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="commons\UI\Images\%25K45_PaintBucket.png" />
+    <Content Include="commons\UI\Images\base.psd" />
+    <Content Include="commons\UI\Images\sprites.psd" />
+    <EmbeddedResource Include="UI\Images\%25K45_WTS_HWSHIELD_00.png" />
   </ItemGroup>
   <PropertyGroup>
     <PostBuildEvent>xcopy /Y "$(TargetPath)" "$(ProjectDir)\_requiredDLLs"

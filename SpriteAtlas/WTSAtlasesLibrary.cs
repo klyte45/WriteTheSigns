@@ -22,24 +22,6 @@ namespace Klyte.WriteTheSigns.Sprites
 {
     public class WTSAtlasesLibrary : MonoBehaviour
     {
-        public const string PROTOCOL_IMAGE = "image://";
-        public const string PROTOCOL_IMAGE_ASSET = "assetImage://";
-        public const string PROTOCOL_FOLDER = "folder://";
-        public const string PROTOCOL_FOLDER_ASSET = "assetFolder://";
-
-
-        private Dictionary<string, UITextureAtlas> LocalAtlases { get; } = new Dictionary<string, UITextureAtlas>();
-        private Dictionary<ulong, UITextureAtlas> AssetAtlases { get; } = new Dictionary<ulong, UITextureAtlas>();
-
-        private UITextureAtlas m_transportLineAtlas;
-        private Material m_transportLineMaterial;
-        private Dictionary<int, BasicRenderInformation> m_transportLineCache { get; } = new Dictionary<int, BasicRenderInformation>();
-
-        private Dictionary<string, Material> LocalRenderMaterial { get; } = new Dictionary<string, Material>();
-        private Dictionary<ulong, Material> AssetRenderMaterial { get; } = new Dictionary<ulong, Material>();
-
-        private Dictionary<string, Dictionary<string, BasicRenderInformation>> LocalAtlasesCache { get; } = new Dictionary<string, Dictionary<string, BasicRenderInformation>>();
-        private Dictionary<ulong, Dictionary<string, BasicRenderInformation>> AssetAtlasesCache { get; } = new Dictionary<ulong, Dictionary<string, BasicRenderInformation>>();
 
         protected void Awake()
         {
@@ -53,298 +35,24 @@ namespace Klyte.WriteTheSigns.Sprites
 
             LoadImagesFromLocalFolders();
         }
-        #region transport lines
 
-        private bool TransportIsDirty { get; set; }
-        private void ResetTransportAtlas()
-        {
-            m_transportLineAtlas = ScriptableObject.CreateInstance<UITextureAtlas>();
-            m_transportLineAtlas.material = new Material(WTSController.DEFAULT_SHADER_TEXT);
+        #region Imported atlas
 
-        }
-        public void PurgeLine(ushort lineId)
-        {
-            string id = $"{lineId}";
-            if (!(m_transportLineAtlas[id] is null))
-            {
-                m_transportLineAtlas.Remove(id);
-            }
-            m_transportLineCache.Remove(lineId);
-            TransportIsDirty = true;
-        }
-        public void PurgeAllLines()
-        {
-            m_transportLineCache.Clear();
-            ResetTransportAtlas();
-            m_transportLineMaterial = null;
-            TransportIsDirty = true;
-        }
-        public LineIconSpriteNames LineIconTest
-        {
-            get => m_lineIconTest; set
-            {
-                m_lineIconTest = value;
-                PurgeLine(0);
-            }
-        }
-        private LineIconSpriteNames m_lineIconTest = LineIconSpriteNames.K45_HexagonIcon;
-        public List<BasicRenderInformation> DrawLineFormats(IEnumerable<int> ids)
-        {
-            var bris = new List<BasicRenderInformation>();
-            if (ids.Count() == 0)
-            {
-                return bris;
-            }
-
-            foreach (int id in ids.OrderBy(x => x < 0 ? x.ToString("D6") : WriteTheSignsMod.Controller.ConnectorTLM.GetLineSortString((ushort)x)))
-            {
-                if (m_transportLineCache.TryGetValue(id, out BasicRenderInformation bri))
-                {
-                    if (bri != null)
-                    {
-                        bris.Add(bri);
-                    }
-                }
-                else
-                {
-                    m_transportLineCache[id] = null;
-                    StartCoroutine(WriteTransportLineTextureCoroutine(id));
-                }
-            }
-            return bris;
-
-        }
-        private IEnumerator WriteTransportLineTextureCoroutine(int lineId)
-        {
-            yield return 0;
-            while (!CheckCoroutineCanContinue())
-            {
-                yield return null;
-            }
-
-            string id = $"{lineId}";
-
-            if (m_transportLineAtlas[id] == null)
-            {
-                Tuple<string, Color, string> lineParams =
-                    lineId == 0 ? Tuple.New(KlyteResourceLoader.GetDefaultSpriteNameFor(LineIconTest), (Color)ColorExtensions.FromRGB(0x5e35b1), "K")
-                    : lineId < 0 ? Tuple.New(KlyteResourceLoader.GetDefaultSpriteNameFor((LineIconSpriteNames)((-lineId % (Enum.GetValues(typeof(LineIconSpriteNames)).Length - 1)) + 1)), WTSDynamicTextRenderingRules.m_spectreSteps[(-lineId) % WTSDynamicTextRenderingRules.m_spectreSteps.Length], $"{-lineId}")
-                    : WriteTheSignsMod.Controller.ConnectorTLM.GetLineLogoParameters((ushort)lineId);
-                if (lineParams == null)
-                {
-                    yield break;
-                }
-                var drawingCoroutine = CoroutineWithData.From(this, RenderSpriteLine(FontServer.instance[WTSEtcData.Instance.FontSettings.PublicTransportLineSymbolFont ?? WTSController.DEFAULT_FONT_KEY], UIView.GetAView().defaultAtlas, lineParams.First, lineParams.Second, lineParams.Third));
-                yield return drawingCoroutine.Coroutine;
-                while (!CheckCoroutineCanContinue())
-                {
-                    yield return null;
-                }
-
-                TextureAtlasUtils.RegenerateTextureAtlas(m_transportLineAtlas, new List<UITextureAtlas.SpriteInfo>
-                {
-                    new UITextureAtlas.SpriteInfo
-                    {
-                        name = id,
-                        texture = drawingCoroutine.result
-                    }
-                });
-                TransportIsDirty = true;
-                StopAllCoroutines();
-                m_transportLineMaterial = null;
-                m_transportLineCache.Clear();
-                yield break;
-            }
-            yield return 0;
-            var bri = new BasicRenderInformation
-            {
-                m_YAxisOverflows = new RangeVector { min = 0, max = 20 },
-            };
-
-            yield return 0;
-            BuildMeshFromAtlas(id, bri, m_transportLineAtlas);
-            yield return 0;
-            if (m_transportLineMaterial is null)
-            {
-                m_transportLineMaterial = new Material(m_transportLineAtlas.material)
-                {
-                    shader = WTSController.DEFAULT_SHADER_TEXT,
-                };
-            }
-            RegisterMeshSingle(lineId, bri, m_transportLineCache, m_transportLineAtlas, TransportIsDirty, m_transportLineMaterial);
-            TransportIsDirty = false;
-            yield break;
-        }
-        private static bool CheckCoroutineCanContinue()
-        {
-            if (m_lastCoroutineStep != SimulationManager.instance.m_currentTickIndex)
-            {
-                m_lastCoroutineStep = SimulationManager.instance.m_currentTickIndex;
-                m_coroutineCounter = 0;
-            }
-            if (m_coroutineCounter >= 1)
-            {
-                return false;
-            }
-            m_coroutineCounter++;
-            return true;
-        }
-        private static uint m_lastCoroutineStep = 0;
-        private static uint m_coroutineCounter = 0;
-
-        public static IEnumerator<Texture2D> RenderSpriteLine(DynamicSpriteFont font, UITextureAtlas atlas, string spriteName, Color bgColor, string text, float textScale = 1)
-        {
-            if (font is null)
-            {
-                font = FontServer.instance[WTSController.DEFAULT_FONT_KEY];
-            }
-
-            UITextureAtlas.SpriteInfo spriteInfo = atlas[spriteName];
-            if (spriteInfo == null)
-            {
-                CODebugBase<InternalLogChannel>.Warn(InternalLogChannel.UI, "Missing sprite " + spriteName + " in " + atlas.name);
-                yield break;
-            }
-            else
-            {
-                while (!CheckCoroutineCanContinue())
-                {
-                    yield return null;
-                }
-
-                int height = spriteInfo.texture.height;
-                int width = spriteInfo.texture.width;
-                var formTexture = new Texture2D(width, height);
-                formTexture.SetPixels(spriteInfo.texture.GetPixels());
-                TextureScaler.scale(formTexture, width * 2, height * 2);
-                Texture2D texText = font.DrawTextToTexture(text);
-
-                Color[] formTexturePixels = formTexture.GetPixels();
-                int borderWidth = 8;
-                height *= 2;
-                width *= 2;
+        public const string PROTOCOL_IMAGE = "image://";
+        public const string PROTOCOL_IMAGE_ASSET = "assetImage://";
+        public const string PROTOCOL_FOLDER = "folder://";
+        public const string PROTOCOL_FOLDER_ASSET = "assetFolder://";
 
 
-                int targetWidth = width + borderWidth;
-                int targetHeight = height + borderWidth;
-                TextureScaler.scale(formTexture, targetWidth, targetHeight);
-                Color contrastColor = KlyteMonoUtils.ContrastColor(bgColor);
-                Color[] targetColorArray = formTexture.GetPixels().Select(x => new Color(contrastColor.r, contrastColor.g, contrastColor.b, x.a)).ToArray();
-                Destroy(formTexture);
-                var targetBorder = new RectOffset(spriteInfo.border.left * 2, spriteInfo.border.right * 2, spriteInfo.border.top * 2, spriteInfo.border.bottom * 2);
-
-                float textBoundHeight = Mathf.Min(height * .66f, (height * .85f) - targetBorder.vertical);
-                float textBoundWidth = ((width * .9f) - targetBorder.horizontal);
-
-                var textAreaSize = new Vector4(
-                    (1f - (textBoundWidth / width)) * (targetBorder.horizontal == 0 ? 0.5f : 1f * targetBorder.left / targetBorder.horizontal) * width,
-                    height * (1f - (textBoundHeight / height)) * (targetBorder.vertical == 0 ? 0.5f : 1f * targetBorder.bottom / targetBorder.vertical),
-                    textBoundWidth,
-                    textBoundHeight);
+        private Dictionary<string, UITextureAtlas> LocalAtlases { get; } = new Dictionary<string, UITextureAtlas>();
+        private Dictionary<ulong, UITextureAtlas> AssetAtlases { get; } = new Dictionary<ulong, UITextureAtlas>();
+        private Dictionary<string, Material> LocalRenderMaterial { get; } = new Dictionary<string, Material>();
+        private Dictionary<ulong, Material> AssetRenderMaterial { get; } = new Dictionary<ulong, Material>();
+        private Dictionary<string, Dictionary<string, BasicRenderInformation>> LocalAtlasesCache { get; } = new Dictionary<string, Dictionary<string, BasicRenderInformation>>();
+        private Dictionary<ulong, Dictionary<string, BasicRenderInformation>> AssetAtlasesCache { get; } = new Dictionary<ulong, Dictionary<string, BasicRenderInformation>>();
 
 
-                float proportionTexText = texText.width / texText.height;
-                float proportionTextBound = textBoundWidth / textBoundHeight;
-                float widthReducer = Mathf.Min(proportionTextBound / proportionTexText, 1);
-                float heightReducer = Mathf.Min(widthReducer * 3, 1);
-                float scaleTextTex = Mathf.Min(textAreaSize.z / (texText.width * widthReducer), textAreaSize.w / (texText.height * heightReducer));
-                TextureScaler.scale(texText, Mathf.FloorToInt(texText.width * widthReducer * scaleTextTex), Mathf.FloorToInt(texText.height * heightReducer * scaleTextTex));
-
-                Color[] textColors = texText.GetPixels();
-                int textWidth = texText.width;
-                int textHeight = texText.height;
-                Destroy(texText);
-
-
-                Task<Tuple<Color[], int, int>> task = ThreadHelper.taskDistributor.Dispatch(() =>
-                {
-                    TextureRenderUtils.MergeColorArrays(targetColorArray, targetWidth, formTexturePixels.Select(x => new Color(bgColor.r, bgColor.g, bgColor.b, x.a)).ToArray(), borderWidth / 2, borderWidth / 2, width, height);
-                    Color[] textOutlineArray = textColors.Select(x => new Color(bgColor.r, bgColor.g, bgColor.b, x.a)).ToArray();
-                    int topMerge = Mathf.RoundToInt((textAreaSize.y + ((textBoundHeight - textHeight) / 2)));
-                    int leftMerge = Mathf.RoundToInt((textAreaSize.x + ((textBoundWidth - textWidth) / 2)));
-
-                    for (int i = 0; i <= borderWidth / 2; i++)
-                    {
-                        for (int j = 0; j <= borderWidth / 2; j++)
-                        {
-                            TextureRenderUtils.MergeColorArrays(targetColorArray, targetWidth, textOutlineArray, leftMerge + i + (borderWidth / 4), topMerge + j + (borderWidth / 4), textWidth, textHeight);
-                        }
-                    }
-                    TextureRenderUtils.MergeColorArrays(colorOr: targetColorArray,
-                                                        widthOr: targetWidth,
-                                                        colors: textColors.Select(x => new Color(contrastColor.r, contrastColor.g, contrastColor.b, x.a)).ToArray(),
-                                                        startX: leftMerge + (borderWidth / 2),
-                                                        startY: topMerge + (borderWidth / 2),
-                                                        sizeX: textWidth,
-                                                        sizeY: textHeight);
-                    return Tuple.New(targetColorArray, targetWidth, targetHeight);
-                });
-                while (!task.hasEnded || m_coroutineCounter > 1)
-                {
-                    m_coroutineCounter++;
-                    yield return null;
-                    if (m_lastCoroutineStep != SimulationManager.instance.m_currentTickIndex)
-                    {
-                        m_lastCoroutineStep = SimulationManager.instance.m_currentTickIndex;
-                        m_coroutineCounter = 0;
-                    }
-                }
-                m_coroutineCounter++;
-
-                var targetTexture = new Texture2D(task.result.Second, task.result.Third, TextureFormat.RGBA32, false);
-                targetTexture.SetPixels(task.result.First);
-                targetTexture.Apply();
-                yield return targetTexture;
-            }
-        }
-
-        internal string[] FindByInLocal(string targetAtlas, string searchName, out UITextureAtlas atlas) => LocalAtlases.TryGetValue(targetAtlas ?? string.Empty, out atlas)
-                ? atlas.spriteNames.Where((x, i) => i > 0 && x.ToLower().Contains(searchName.ToLower())).Select(x => $"{(targetAtlas.IsNullOrWhiteSpace() ? "<ROOT>" : targetAtlas)}/{x}").OrderBy(x => x).ToArray()
-                : (new string[0]);
-        internal string[] FindByInAsset(ulong assetId, string searchName, out UITextureAtlas atlas, bool asRoot = false) => AssetAtlases.TryGetValue(assetId, out atlas)
-                ? atlas.spriteNames.Where((x, i) => i > 0 && x.ToLower().Contains(searchName.ToLower())).Select(x => $"{(asRoot ? "<ROOT>" : assetId.ToString())}/{x}").OrderBy(x => x).ToArray()
-                : (new string[0]);
-        internal string[] FindByInLocalFolders(string searchName) => LocalAtlases.Keys.Select(x => x == string.Empty ? "<ROOT>" : x).Where(x => x.ToLower().Contains(searchName.ToLower())).OrderBy(x => x).ToArray();
-
-        internal string[] OnFilterParamImagesByText(UISprite sprite, string inputText, string propName, out string protocolFound)
-        {
-            Match match;
-            if ((inputText?.Length ?? 0) >= 4 && (match = Regex.Match(inputText ?? "", $"^({PROTOCOL_IMAGE}|{PROTOCOL_IMAGE_ASSET}|{PROTOCOL_FOLDER}|{PROTOCOL_FOLDER_ASSET})(([^/]+)/)?(.*)$")).Success)
-            {
-                protocolFound = match.Groups[1].Value;
-                var subfolder = match.Groups[3].Value;
-
-
-                var searchName = match.Groups[4].Value;
-                string[] results;
-                UITextureAtlas atlas;
-                switch (protocolFound)
-                {
-                    default:
-                    case PROTOCOL_IMAGE:
-                        results = (subfolder.IsNullOrWhiteSpace() ? WriteTheSignsMod.Controller.AtlasesLibrary.FindByInLocalFolders(searchName).Select(x => $"{x}/") : new List<string>()).Union(WriteTheSignsMod.Controller.AtlasesLibrary.FindByInLocal(subfolder == "<ROOT>" ? null : subfolder, searchName, out atlas)).ToArray();
-                        break;
-                    case PROTOCOL_IMAGE_ASSET:
-                        results = WriteTheSignsMod.Controller.AtlasesLibrary.FindByInAsset(ulong.TryParse(propName?.Split('.')[0] ?? "", out ulong wId) ? wId : 0u, searchName, out atlas, true);
-                        break;
-                    case PROTOCOL_FOLDER:
-                        results = WriteTheSignsMod.Controller.AtlasesLibrary.FindByInLocalFolders(searchName);
-                        atlas = null;
-                        break;
-                    case PROTOCOL_FOLDER_ASSET:
-                        results = AssetAtlases.TryGetValue(ulong.TryParse(propName?.Split('.')[0] ?? "", out wId) ? wId : 0, out atlas) ? new string[] { "<ROOT>" } : new string[0];
-                        break;
-                }
-                sprite.atlas = atlas;
-                return results;
-            }
-            else
-            {
-                protocolFound = null;
-                return null;
-            }
-        }
-        #endregion
+        #region Getters
 
         public void GetAtlas(string atlasName, out UITextureAtlas result)
         {
@@ -354,76 +62,6 @@ namespace Klyte.WriteTheSigns.Sprites
             }
         }
 
-        #region Loading
-        public void LoadImagesFromLocalFolders()
-        {
-            LocalAtlases.Clear();
-            var errors = new List<string>();
-            var folders = new string[] { WTSController.ExtraSpritesFolder }.Union(Directory.GetDirectories(WTSController.ExtraSpritesFolder));
-            foreach (var dir in folders)
-            {
-                bool isRoot = dir == WTSController.ExtraSpritesFolder;
-                var spritesToAdd = new List<SpriteInfo>();
-                WTSAtlasLoadingUtils.LoadAllImagesFromFolderRef(dir, ref spritesToAdd, ref errors, isRoot);
-                if (isRoot || spritesToAdd.Count > 0)
-                {
-                    var atlasName = isRoot ? string.Empty : Path.GetFileNameWithoutExtension(dir);
-                    LocalAtlases[atlasName] = new UITextureAtlas
-                    {
-                        material = new Material(UIView.GetAView().defaultAtlas.material.shader)
-                    };
-                    if (isRoot)
-                    {
-                        spritesToAdd.AddRange(UIView.GetAView().defaultAtlas.sprites.Select(x => CloneSpriteInfo(x)).ToList());
-                        TextureAtlasUtils.LoadImagesFromResources("commons.UI.Images", ref spritesToAdd);
-                        TextureAtlasUtils.LoadImagesFromResources("UI.Images", ref spritesToAdd);
-                    }
-                    TextureAtlasUtils.RegenerateTextureAtlas(LocalAtlases[atlasName], spritesToAdd);
-                }
-            }
-            LocalAtlasesCache.Clear();
-            LocalRenderMaterial.Clear();
-            if (errors.Count > 0)
-            {
-                K45DialogControl.ShowModal(new K45DialogControl.BindProperties
-                {
-                    message = $"{Locale.Get("K45_WTS_CUSTOMSPRITE_ERRORHEADER")}:\n\t{string.Join("\n\t", errors.ToArray())}"
-                }, (x) => true);
-            }
-        }
-
-        private SpriteInfo CloneSpriteInfo(SpriteInfo x) => new SpriteInfo
-        {
-            border = x.border,
-            name = x.name,
-            region = default,
-            texture = x.texture
-        };
-
-        private void LoadImagesFromPrefab(ulong workshopId, string directoryPath, PrefabInfo info)
-        {
-            if (workshopId > 0 && workshopId != ~0UL && !AssetAtlases.ContainsKey(workshopId))
-            {
-                CreateAtlasEntry(AssetAtlases, workshopId, directoryPath, false);
-            }
-
-        }
-
-        private UITextureAtlas CreateAtlasEntry<T>(Dictionary<T, UITextureAtlas> atlasDic, T atlasName, string path, bool addPrefix)
-        {
-            UITextureAtlas targetAtlas = ScriptableObject.CreateInstance<UITextureAtlas>();
-            targetAtlas.material = new Material(WTSController.DEFAULT_SHADER_TEXT);
-            WTSAtlasLoadingUtils.LoadAllImagesFromFolder(path, out List<SpriteInfo> spritesToAdd, out List<string> errors, addPrefix);
-            TextureAtlasUtils.RegenerateTextureAtlas(targetAtlas, spritesToAdd);
-            foreach (string error in errors)
-            {
-                LogUtils.DoErrorLog($"ERROR LOADING IMAGE: {error}");
-            }
-            atlasDic[atlasName] = targetAtlas;
-            return targetAtlas;
-        }
-        #endregion
-        #region Getters
         public string[] GetSpritesFromLocalAtlas(string atlasName) => LocalAtlases.TryGetValue(atlasName ?? string.Empty, out UITextureAtlas atlas) ? atlas.spriteNames : null;
         public string[] GetSpritesFromAssetAtlas(ulong workshopId) => AssetAtlases.TryGetValue(workshopId, out UITextureAtlas atlas) ? atlas.spriteNames : null;
         public BasicRenderInformation GetFromLocalAtlases(string atlasName, string spriteName, bool fallbackOnInvalid = false)
@@ -506,7 +144,378 @@ namespace Klyte.WriteTheSigns.Sprites
         }
         #endregion
 
-        #region geometry
+        #region Filtering
+        internal string[] FindByInLocal(string targetAtlas, string searchName, out UITextureAtlas atlas) => LocalAtlases.TryGetValue(targetAtlas ?? string.Empty, out atlas)
+              ? atlas.spriteNames.Where((x, i) => i > 0 && x.ToLower().Contains(searchName.ToLower())).Select(x => $"{(targetAtlas.IsNullOrWhiteSpace() ? "<ROOT>" : targetAtlas)}/{x}").OrderBy(x => x).ToArray()
+              : (new string[0]);
+        internal string[] FindByInAsset(ulong assetId, string searchName, out UITextureAtlas atlas, bool asRoot = false) => AssetAtlases.TryGetValue(assetId, out atlas)
+                ? atlas.spriteNames.Where((x, i) => i > 0 && x.ToLower().Contains(searchName.ToLower())).Select(x => $"{(asRoot ? "<ROOT>" : assetId.ToString())}/{x}").OrderBy(x => x).ToArray()
+                : (new string[0]);
+        internal string[] FindByInLocalFolders(string searchName) => LocalAtlases.Keys.Select(x => x == string.Empty ? "<ROOT>" : x).Where(x => x.ToLower().Contains(searchName.ToLower())).OrderBy(x => x).ToArray();
+
+        internal string[] OnFilterParamImagesByText(UISprite sprite, string inputText, string propName, out string protocolFound)
+        {
+            Match match;
+            if ((inputText?.Length ?? 0) >= 4 && (match = Regex.Match(inputText ?? "", $"^({PROTOCOL_IMAGE}|{PROTOCOL_IMAGE_ASSET}|{PROTOCOL_FOLDER}|{PROTOCOL_FOLDER_ASSET})(([^/]+)/)?(.*)$")).Success)
+            {
+                protocolFound = match.Groups[1].Value;
+                var subfolder = match.Groups[3].Value;
+
+
+                var searchName = match.Groups[4].Value;
+                string[] results;
+                UITextureAtlas atlas;
+                switch (protocolFound)
+                {
+                    default:
+                    case PROTOCOL_IMAGE:
+                        results = (subfolder.IsNullOrWhiteSpace() ? WriteTheSignsMod.Controller.AtlasesLibrary.FindByInLocalFolders(searchName).Select(x => $"{x}/") : new List<string>()).Union(WriteTheSignsMod.Controller.AtlasesLibrary.FindByInLocal(subfolder == "<ROOT>" ? null : subfolder, searchName, out atlas)).ToArray();
+                        break;
+                    case PROTOCOL_IMAGE_ASSET:
+                        results = WriteTheSignsMod.Controller.AtlasesLibrary.FindByInAsset(ulong.TryParse(propName?.Split('.')[0] ?? "", out ulong wId) ? wId : 0u, searchName, out atlas, true);
+                        break;
+                    case PROTOCOL_FOLDER:
+                        results = WriteTheSignsMod.Controller.AtlasesLibrary.FindByInLocalFolders(searchName);
+                        atlas = null;
+                        break;
+                    case PROTOCOL_FOLDER_ASSET:
+                        results = AssetAtlases.TryGetValue(ulong.TryParse(propName?.Split('.')[0] ?? "", out wId) ? wId : 0, out atlas) ? new string[] { "<ROOT>" } : new string[0];
+                        break;
+                }
+                sprite.atlas = atlas;
+                return results;
+            }
+            else
+            {
+                protocolFound = null;
+                return null;
+            }
+        }
+        #endregion
+
+        #region Loading
+        public void LoadImagesFromLocalFolders()
+        {
+            LocalAtlases.Clear();
+            var errors = new List<string>();
+            var folders = new string[] { WTSController.ExtraSpritesFolder }.Union(Directory.GetDirectories(WTSController.ExtraSpritesFolder));
+            foreach (var dir in folders)
+            {
+                bool isRoot = dir == WTSController.ExtraSpritesFolder;
+                var spritesToAdd = new List<SpriteInfo>();
+                WTSAtlasLoadingUtils.LoadAllImagesFromFolderRef(dir, ref spritesToAdd, ref errors, isRoot);
+                if (isRoot || spritesToAdd.Count > 0)
+                {
+                    var atlasName = isRoot ? string.Empty : Path.GetFileNameWithoutExtension(dir);
+                    LocalAtlases[atlasName] = new UITextureAtlas
+                    {
+                        material = new Material(UIView.GetAView().defaultAtlas.material.shader)
+                    };
+                    if (isRoot)
+                    {
+                        spritesToAdd.AddRange(UIView.GetAView().defaultAtlas.sprites.Select(x => CloneSpriteInfo(x)).ToList());
+                        TextureAtlasUtils.LoadImagesFromResources("commons.UI.Images", ref spritesToAdd);
+                        TextureAtlasUtils.LoadImagesFromResources("UI.Images", ref spritesToAdd);
+                    }
+                    TextureAtlasUtils.RegenerateTextureAtlas(LocalAtlases[atlasName], spritesToAdd);
+                }
+            }
+            LocalAtlasesCache.Clear();
+            LocalRenderMaterial.Clear();
+            if (errors.Count > 0)
+            {
+                K45DialogControl.ShowModal(new K45DialogControl.BindProperties
+                {
+                    message = $"{Locale.Get("K45_WTS_CUSTOMSPRITE_ERRORHEADER")}:\n\t{string.Join("\n\t", errors.ToArray())}"
+                }, (x) => true);
+            }
+        }
+
+        private SpriteInfo CloneSpriteInfo(SpriteInfo x) => new SpriteInfo
+        {
+            border = x.border,
+            name = x.name,
+            region = default,
+            texture = x.texture
+        };
+
+        private void LoadImagesFromPrefab(ulong workshopId, string directoryPath, PrefabInfo info)
+        {
+            if (workshopId > 0 && workshopId != ~0UL && !AssetAtlases.ContainsKey(workshopId))
+            {
+                CreateAtlasEntry(AssetAtlases, workshopId, directoryPath, false);
+            }
+
+        }
+
+        private UITextureAtlas CreateAtlasEntry<T>(Dictionary<T, UITextureAtlas> atlasDic, T atlasName, string path, bool addPrefix)
+        {
+            UITextureAtlas targetAtlas = ScriptableObject.CreateInstance<UITextureAtlas>();
+            targetAtlas.material = new Material(WTSController.DEFAULT_SHADER_TEXT);
+            WTSAtlasLoadingUtils.LoadAllImagesFromFolder(path, out List<SpriteInfo> spritesToAdd, out List<string> errors, addPrefix);
+            TextureAtlasUtils.RegenerateTextureAtlas(targetAtlas, spritesToAdd);
+            foreach (string error in errors)
+            {
+                LogUtils.DoErrorLog($"ERROR LOADING IMAGE: {error}");
+            }
+            atlasDic[atlasName] = targetAtlas;
+            return targetAtlas;
+        }
+        #endregion
+
+        #endregion
+
+
+        #region Transport lines
+        private UITextureAtlas m_transportLineAtlas;
+        private Material m_transportLineMaterial;
+        private Dictionary<int, BasicRenderInformation> TransportLineCache { get; } = new Dictionary<int, BasicRenderInformation>();
+
+        private bool TransportIsDirty { get; set; }
+        private void ResetTransportAtlas()
+        {
+            m_transportLineAtlas = ScriptableObject.CreateInstance<UITextureAtlas>();
+            m_transportLineAtlas.material = new Material(UIView.GetAView().defaultAtlas.material.shader);
+        }
+        public void PurgeLine(ushort lineId)
+        {
+            string id = $"{lineId}";
+            if (!(m_transportLineAtlas[id] is null))
+            {
+                m_transportLineAtlas.Remove(id);
+            }
+            TransportLineCache.Remove(lineId);
+            TransportIsDirty = true;
+        }
+        public void PurgeAllLines()
+        {
+            TransportLineCache.Clear();
+            ResetTransportAtlas();
+            m_transportLineMaterial = null;
+            TransportIsDirty = true;
+        }
+        public LineIconSpriteNames LineIconTest
+        {
+            get => m_lineIconTest; set
+            {
+                m_lineIconTest = value;
+                PurgeLine(0);
+            }
+        }
+        private LineIconSpriteNames m_lineIconTest = LineIconSpriteNames.K45_HexagonIcon;
+        public List<BasicRenderInformation> DrawLineFormats(IEnumerable<int> ids)
+        {
+            var bris = new List<BasicRenderInformation>();
+            if (ids.Count() == 0)
+            {
+                return bris;
+            }
+
+            foreach (int id in ids.OrderBy(x => x < 0 ? x.ToString("D6") : WriteTheSignsMod.Controller.ConnectorTLM.GetLineSortString((ushort)x)))
+            {
+                if (TransportLineCache.TryGetValue(id, out BasicRenderInformation bri))
+                {
+                    if (bri != null)
+                    {
+                        bris.Add(bri);
+                    }
+                }
+                else
+                {
+                    TransportLineCache[id] = null;
+                    StartCoroutine(WriteTransportLineTextureCoroutine(id));
+                }
+            }
+            return bris;
+
+        }
+        private IEnumerator WriteTransportLineTextureCoroutine(int lineId)
+        {
+            string id = $"{lineId}";
+            if (m_transportLineAtlas[id] == null)
+            {
+                yield return 0;
+                while (!CheckTransportLineCoroutineCanContinue())
+                {
+                    yield return null;
+                }
+                Tuple<string, Color, string> lineParams =
+                    lineId == 0 ? Tuple.New(KlyteResourceLoader.GetDefaultSpriteNameFor(LineIconTest), (Color)ColorExtensions.FromRGB(0x5e35b1), "K")
+                    : lineId < 0 ? Tuple.New(KlyteResourceLoader.GetDefaultSpriteNameFor((LineIconSpriteNames)((-lineId % (Enum.GetValues(typeof(LineIconSpriteNames)).Length - 1)) + 1)), WTSDynamicTextRenderingRules.m_spectreSteps[(-lineId) % WTSDynamicTextRenderingRules.m_spectreSteps.Length], $"{-lineId}")
+                    : WriteTheSignsMod.Controller.ConnectorTLM.GetLineLogoParameters((ushort)lineId);
+                if (lineParams == null)
+                {
+                    yield break;
+                }
+                var drawingCoroutine = CoroutineWithData.From(this, RenderSpriteLine(FontServer.instance[WTSEtcData.Instance.FontSettings.PublicTransportLineSymbolFont] ?? FontServer.instance[WTSController.DEFAULT_FONT_KEY], UIView.GetAView().defaultAtlas, lineParams.First, lineParams.Second, lineParams.Third));
+                yield return drawingCoroutine.Coroutine;
+                while (!CheckTransportLineCoroutineCanContinue())
+                {
+                    yield return null;
+                }
+
+                TextureAtlasUtils.RegenerateTextureAtlas(m_transportLineAtlas, new List<UITextureAtlas.SpriteInfo>
+                {
+                    new UITextureAtlas.SpriteInfo
+                    {
+                        name = id,
+                        texture = drawingCoroutine.result
+                    }
+                });
+                TransportIsDirty = true;
+                StopAllCoroutines();
+                m_transportLineMaterial = null;
+                TransportLineCache.Clear();
+                yield break;
+            }
+            yield return 0;
+            var bri = new BasicRenderInformation
+            {
+                m_YAxisOverflows = new RangeVector { min = 0, max = 20 },
+            };
+
+            yield return 0;
+            BuildMeshFromAtlas(id, bri, m_transportLineAtlas);
+            yield return 0;
+            if (m_transportLineMaterial is null)
+            {
+                m_transportLineMaterial = new Material(m_transportLineAtlas.material)
+                {
+                    shader = WTSController.DEFAULT_SHADER_TEXT,
+                };
+            }
+            RegisterMeshSingle(lineId, bri, TransportLineCache, m_transportLineAtlas, TransportIsDirty, m_transportLineMaterial);
+            TransportIsDirty = false;
+            yield break;
+        }
+        private static bool CheckTransportLineCoroutineCanContinue()
+        {
+            if (m_lastCoroutineStepTL != SimulationManager.instance.m_currentTickIndex)
+            {
+                m_lastCoroutineStepTL = SimulationManager.instance.m_currentTickIndex;
+                m_coroutineCounterTL = 0;
+            }
+            if (m_coroutineCounterTL >= 1)
+            {
+                return false;
+            }
+            m_coroutineCounterTL++;
+            return true;
+        }
+        private static uint m_lastCoroutineStepTL = 0;
+        private static uint m_coroutineCounterTL = 0;
+        public static IEnumerator<Texture2D> RenderSpriteLine(DynamicSpriteFont font, UITextureAtlas atlas, string spriteName, Color bgColor, string text, float textScale = 1)
+        {
+            if (font is null)
+            {
+                font = FontServer.instance[WTSController.DEFAULT_FONT_KEY];
+            }
+
+            UITextureAtlas.SpriteInfo spriteInfo = atlas[spriteName];
+            if (spriteInfo == null)
+            {
+                CODebugBase<InternalLogChannel>.Warn(InternalLogChannel.UI, "Missing sprite " + spriteName + " in " + atlas.name);
+                yield break;
+            }
+            else
+            {
+                while (!CheckTransportLineCoroutineCanContinue())
+                {
+                    yield return null;
+                }
+
+                int height = spriteInfo.texture.height;
+                int width = spriteInfo.texture.width;
+                var formTexture = new Texture2D(width, height);
+                formTexture.SetPixels(spriteInfo.texture.GetPixels());
+                TextureScaler.scale(formTexture, width * 2, height * 2);
+                Texture2D texText = font.DrawTextToTexture(text,1);
+
+                Color[] formTexturePixels = formTexture.GetPixels();
+                int borderWidth = 8;
+                height *= 2;
+                width *= 2;
+
+
+                int targetWidth = width + borderWidth;
+                int targetHeight = height + borderWidth;
+                TextureScaler.scale(formTexture, targetWidth, targetHeight);
+                Color contrastColor = KlyteMonoUtils.ContrastColor(bgColor);
+                Color[] targetColorArray = formTexture.GetPixels().Select(x => new Color(contrastColor.r, contrastColor.g, contrastColor.b, x.a)).ToArray();
+                Destroy(formTexture);
+                var targetBorder = new RectOffset(spriteInfo.border.left * 2, spriteInfo.border.right * 2, spriteInfo.border.top * 2, spriteInfo.border.bottom * 2);
+
+                float textBoundHeight = Mathf.Min(height * .66f, (height * .85f) - targetBorder.vertical);
+                float textBoundWidth = ((width * .9f) - targetBorder.horizontal);
+
+                var textAreaSize = new Vector4(
+                    (1f - (textBoundWidth / width)) * (targetBorder.horizontal == 0 ? 0.5f : 1f * targetBorder.left / targetBorder.horizontal) * width,
+                    height * (1f - (textBoundHeight / height)) * (targetBorder.vertical == 0 ? 0.5f : 1f * targetBorder.bottom / targetBorder.vertical),
+                    textBoundWidth,
+                    textBoundHeight);
+
+
+                float proportionTexText = texText.width / texText.height;
+                float proportionTextBound = textBoundWidth / textBoundHeight;
+                float widthReducer = Mathf.Min(proportionTextBound / proportionTexText, 1);
+                float heightReducer = Mathf.Min(widthReducer * 3, 1);
+                float scaleTextTex = Mathf.Min(textAreaSize.z / (texText.width * widthReducer), textAreaSize.w / (texText.height * heightReducer));
+                TextureScaler.scale(texText, Mathf.FloorToInt(texText.width * widthReducer * scaleTextTex), Mathf.FloorToInt(texText.height * heightReducer * scaleTextTex));
+
+                Color[] textColors = texText.GetPixels();
+                int textWidth = texText.width;
+                int textHeight = texText.height;
+                Destroy(texText);
+
+
+                Task<Tuple<Color[], int, int>> task = ThreadHelper.taskDistributor.Dispatch(() =>
+                {
+                    TextureRenderUtils.MergeColorArrays(targetColorArray, targetWidth, formTexturePixels.Select(x => new Color(bgColor.r, bgColor.g, bgColor.b, x.a)).ToArray(), borderWidth / 2, borderWidth / 2, width, height);
+                    Color[] textOutlineArray = textColors.Select(x => new Color(bgColor.r, bgColor.g, bgColor.b, x.a)).ToArray();
+                    int topMerge = Mathf.RoundToInt((textAreaSize.y + ((textBoundHeight - textHeight) / 2)));
+                    int leftMerge = Mathf.RoundToInt((textAreaSize.x + ((textBoundWidth - textWidth) / 2)));
+
+                    for (int i = 0; i <= borderWidth / 2; i++)
+                    {
+                        for (int j = 0; j <= borderWidth / 2; j++)
+                        {
+                            TextureRenderUtils.MergeColorArrays(targetColorArray, targetWidth, textOutlineArray, leftMerge + i + (borderWidth / 4), topMerge + j + (borderWidth / 4), textWidth, textHeight);
+                        }
+                    }
+                    TextureRenderUtils.MergeColorArrays(colorOr: targetColorArray,
+                                                        widthOr: targetWidth,
+                                                        colors: textColors.Select(x => new Color(contrastColor.r, contrastColor.g, contrastColor.b, x.a)).ToArray(),
+                                                        startX: leftMerge + (borderWidth / 2),
+                                                        startY: topMerge + (borderWidth / 2),
+                                                        sizeX: textWidth,
+                                                        sizeY: textHeight);
+                    return Tuple.New(targetColorArray, targetWidth, targetHeight);
+                });
+                while (!task.hasEnded || m_coroutineCounterTL > 1)
+                {
+                    if (task.hasEnded)
+                    {
+                        m_coroutineCounterTL++;
+                    }
+
+                    yield return null;
+                    if (m_lastCoroutineStepTL != SimulationManager.instance.m_currentTickIndex)
+                    {
+                        m_lastCoroutineStepTL = SimulationManager.instance.m_currentTickIndex;
+                        m_coroutineCounterTL = 0;
+                    }
+                }
+                m_coroutineCounterTL++;
+
+                var targetTexture = new Texture2D(task.result.Second, task.result.Third, TextureFormat.RGBA32, false);
+                targetTexture.SetPixels(task.result.First);
+                targetTexture.Apply();
+                yield return targetTexture;
+            }
+        }
+        #endregion
+
+        #region Geometry
 
         private static readonly int[] kTriangleIndices = new int[]    {
             0,
@@ -518,7 +527,7 @@ namespace Klyte.WriteTheSigns.Sprites
         };
 
 
-        private static void BuildMeshFromAtlas(string id, BasicRenderInformation bri, UITextureAtlas referenceAtlas, float proportion = 1f)
+        internal static void BuildMeshFromAtlas(string id, BasicRenderInformation bri, UITextureAtlas referenceAtlas, float proportion = 1f)
         {
             var uirenderData = UIRenderData.Obtain();
             try
@@ -655,7 +664,7 @@ namespace Klyte.WriteTheSigns.Sprites
             RegisterMeshSingle(sprite, bri, cache, referenceAtlas, isDirty, material);
         }
 
-        private static void RegisterMeshSingle<T>(T sprite, BasicRenderInformation bri, Dictionary<T, BasicRenderInformation> cache, UITextureAtlas referenceAtlas, bool isDirty, Material material)
+        internal static void RegisterMeshSingle<T>(T sprite, BasicRenderInformation bri, Dictionary<T, BasicRenderInformation> cache, UITextureAtlas referenceAtlas, bool isDirty, Material material)
         {
             UpdateMaterial(referenceAtlas, material, isDirty);
 

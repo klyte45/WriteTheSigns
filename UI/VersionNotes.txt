@@ -1,4 +1,4 @@
-﻿<extended>v0.3 - 18/APR/21
+﻿<extended>v0.3 - 29/APR/21
 <color yellow>Beta-3 version:</color>
 <color cyan>- Load images from workshop items:</color> Just place the images at folder <color yellow>K45WTS_Sprites</color> in the asset directory. It will be copied to staging automatically when uploading the asset to workshop!
 	<color red>NOTE:</color> The automatic copy only will be done if the mod already is in the workshop. For first send, copy it manually.
@@ -7,6 +7,7 @@
 	<color green>assetImage://</color> - Access to K45WTS_Sprites folder images in the current prop asset selected in prop/vehicle layout.
 	<color green>folder://</color> - Access to a Sprites subfolder images collection, use this as parameter value of slideshow text entries.
 	<color green>assetFolder://</color> - Access the K45WTS_Sprites folder images collection, use this as parameter value of slideshow text entries. Note that subfolders aren't supported here!
+<color cyan>- Highway shields</color>: Create layouts to generate shields from your settings done in Addresses mod. <color yellow>Only available if Addresses mod is active!</color>
 <color cyan>- Parameters cleaning & information</color>: Now only the parameters setted up in the layout will appear in the parameter screen. Added also title and default value fields in each text entry filled by the user in a parameter.
 <color cyan>- Fixed sprite selection improved</color>: Now you will use it like a parameter, supporting the image related protocols listed above.
 <color cyan>- Vehicle picker</color>: Now you don't need to find the vehicle name in the list anymore, just press the dropper button then click at desired vehicle

@@ -1,4 +1,5 @@
-﻿using Klyte.Commons.Interfaces;
+﻿using ICities;
+using Klyte.Commons.Interfaces;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Xml;
 using System.Xml.Serialization;
@@ -27,7 +28,7 @@ namespace Klyte.WriteTheSigns.Data
             }
 
             set {
-                LoadDefaults();
+                LoadDefaults(null);
                 foreach (var kv in value.Keys)
                 {
                     m_boardsContainers[kv] = value[kv];
@@ -37,9 +38,9 @@ namespace Klyte.WriteTheSigns.Data
 
         public override string SaveId => "K45_WTS_WTSOnNetData";
 
-        public override void LoadDefaults()
+        public override void LoadDefaults(ISerializableData serializableData)
         {
-            base.LoadDefaults();
+            base.LoadDefaults(serializableData);
             m_boardsContainers = new OnNetGroupDescriptorXml[NetManager.MAX_SEGMENT_COUNT];
         }
 

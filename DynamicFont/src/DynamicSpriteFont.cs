@@ -61,11 +61,13 @@ namespace SpriteFontPlus
 
         public event Action CurrentAtlasFull
         {
-            add {
+            add
+            {
                 _fontSystem.CurrentAtlasFull += value;
             }
 
-            remove {
+            remove
+            {
                 _fontSystem.CurrentAtlasFull -= value;
             }
         }
@@ -96,17 +98,17 @@ namespace SpriteFontPlus
         public Vector2 MeasureString(string text)
         {
             var bounds = new FontStashSharp.Bounds();
-            _fontSystem.TextBounds(0, 0, text, ref bounds);
+            _fontSystem.TextBounds(0, 0, text, 1, ref bounds);
 
             return new Vector2(bounds.maxX, bounds.maxY);
         }
 
-        public Texture2D DrawTextToTexture(string str) => _fontSystem.WriteTexture2D(str);
+        public Texture2D DrawTextToTexture(string str, float spacing) => _fontSystem.WriteTexture2D(str, spacing);
 
         public Rect GetTextBounds(Vector2 position, string text, float scale)
         {
             var bounds = new FontStashSharp.Bounds();
-            _fontSystem.TextBounds(position.x, position.y, text, ref bounds);
+            _fontSystem.TextBounds(position.x, position.y, text, 1, ref bounds);
 
             return new Rect((int)bounds.minX, (int)bounds.minY, (int)(bounds.maxX - bounds.minX) * scale, (int)(bounds.maxY - bounds.minY) * scale);
         }
@@ -119,5 +121,7 @@ namespace SpriteFontPlus
         public static DynamicSpriteFont FromTtf(byte[] ttf, string name, int defaultTargetHeight, int textureWidth, int textureHeight, int blur = 0) => new DynamicSpriteFont(ttf, name, defaultTargetHeight, textureWidth, textureHeight, blur);
 
         public static DynamicSpriteFont FromTtf(Stream ttfStream, string name, int defaultTargetHeight, int textureWidth, int textureHeight, int blur = 0) => FromTtf(ttfStream.ToByteArray(), name, defaultTargetHeight, textureWidth, textureHeight, blur);
+
+        internal long GetCacheSize() => _fontSystem.GetCacheSize();
     }
 }
