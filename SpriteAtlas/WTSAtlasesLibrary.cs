@@ -265,6 +265,7 @@ namespace Klyte.WriteTheSigns.Sprites
 
         #endregion
 
+
         #region Transport lines
         private UITextureAtlas m_transportLineAtlas;
         private Material m_transportLineMaterial;
@@ -274,8 +275,7 @@ namespace Klyte.WriteTheSigns.Sprites
         private void ResetTransportAtlas()
         {
             m_transportLineAtlas = ScriptableObject.CreateInstance<UITextureAtlas>();
-            m_transportLineAtlas.material = new Material(WTSController.DEFAULT_SHADER_TEXT);
-
+            m_transportLineAtlas.material = new Material(UIView.GetAView().defaultAtlas.material.shader);
         }
         public void PurgeLine(ushort lineId)
         {
@@ -331,16 +331,14 @@ namespace Klyte.WriteTheSigns.Sprites
         }
         private IEnumerator WriteTransportLineTextureCoroutine(int lineId)
         {
-            yield return 0;
-            while (!CheckCoroutineCanContinue())
-            {
-                yield return null;
-            }
-
             string id = $"{lineId}";
-
             if (m_transportLineAtlas[id] == null)
             {
+                yield return 0;
+                while (!CheckTransportLineCoroutineCanContinue())
+                {
+                    yield return null;
+                }
                 Tuple<string, Color, string> lineParams =
                     lineId == 0 ? Tuple.New(KlyteResourceLoader.GetDefaultSpriteNameFor(LineIconTest), (Color)ColorExtensions.FromRGB(0x5e35b1), "K")
                     : lineId < 0 ? Tuple.New(KlyteResourceLoader.GetDefaultSpriteNameFor((LineIconSpriteNames)((-lineId % (Enum.GetValues(typeof(LineIconSpriteNames)).Length - 1)) + 1)), WTSDynamicTextRenderingRules.m_spectreSteps[(-lineId) % WTSDynamicTextRenderingRules.m_spectreSteps.Length], $"{-lineId}")
@@ -349,9 +347,9 @@ namespace Klyte.WriteTheSigns.Sprites
                 {
                     yield break;
                 }
-                var drawingCoroutine = CoroutineWithData.From(this, RenderSpriteLine(FontServer.instance[WTSEtcData.Instance.FontSettings.PublicTransportLineSymbolFont ?? WTSController.DEFAULT_FONT_KEY], UIView.GetAView().defaultAtlas, lineParams.First, lineParams.Second, lineParams.Third));
+                var drawingCoroutine = CoroutineWithData.From(this, RenderSpriteLine(FontServer.instance[WTSEtcData.Instance.FontSettings.PublicTransportLineSymbolFont] ?? FontServer.instance[WTSController.DEFAULT_FONT_KEY], UIView.GetAView().defaultAtlas, lineParams.First, lineParams.Second, lineParams.Third));
                 yield return drawingCoroutine.Coroutine;
-                while (!CheckCoroutineCanContinue())
+                while (!CheckTransportLineCoroutineCanContinue())
                 {
                     yield return null;
                 }
@@ -390,22 +388,22 @@ namespace Klyte.WriteTheSigns.Sprites
             TransportIsDirty = false;
             yield break;
         }
-        private static bool CheckCoroutineCanContinue()
+        private static bool CheckTransportLineCoroutineCanContinue()
         {
-            if (m_lastCoroutineStep != SimulationManager.instance.m_currentTickIndex)
+            if (m_lastCoroutineStepTL != SimulationManager.instance.m_currentTickIndex)
             {
-                m_lastCoroutineStep = SimulationManager.instance.m_currentTickIndex;
-                m_coroutineCounter = 0;
+                m_lastCoroutineStepTL = SimulationManager.instance.m_currentTickIndex;
+                m_coroutineCounterTL = 0;
             }
-            if (m_coroutineCounter >= 1)
+            if (m_coroutineCounterTL >= 1)
             {
                 return false;
             }
-            m_coroutineCounter++;
+            m_coroutineCounterTL++;
             return true;
         }
-        private static uint m_lastCoroutineStep = 0;
-        private static uint m_coroutineCounter = 0;
+        private static uint m_lastCoroutineStepTL = 0;
+        private static uint m_coroutineCounterTL = 0;
         public static IEnumerator<Texture2D> RenderSpriteLine(DynamicSpriteFont font, UITextureAtlas atlas, string spriteName, Color bgColor, string text, float textScale = 1)
         {
             if (font is null)
@@ -421,7 +419,7 @@ namespace Klyte.WriteTheSigns.Sprites
             }
             else
             {
-                while (!CheckCoroutineCanContinue())
+                while (!CheckTransportLineCoroutineCanContinue())
                 {
                     yield return null;
                 }
@@ -431,7 +429,7 @@ namespace Klyte.WriteTheSigns.Sprites
                 var formTexture = new Texture2D(width, height);
                 formTexture.SetPixels(spriteInfo.texture.GetPixels());
                 TextureScaler.scale(formTexture, width * 2, height * 2);
-                Texture2D texText = font.DrawTextToTexture(text);
+                Texture2D texText = font.DrawTextToTexture(text,1);
 
                 Color[] formTexturePixels = formTexture.GetPixels();
                 int borderWidth = 8;
@@ -493,17 +491,21 @@ namespace Klyte.WriteTheSigns.Sprites
                                                         sizeY: textHeight);
                     return Tuple.New(targetColorArray, targetWidth, targetHeight);
                 });
-                while (!task.hasEnded || m_coroutineCounter > 1)
+                while (!task.hasEnded || m_coroutineCounterTL > 1)
                 {
-                    m_coroutineCounter++;
-                    yield return null;
-                    if (m_lastCoroutineStep != SimulationManager.instance.m_currentTickIndex)
+                    if (task.hasEnded)
                     {
-                        m_lastCoroutineStep = SimulationManager.instance.m_currentTickIndex;
-                        m_coroutineCounter = 0;
+                        m_coroutineCounterTL++;
+                    }
+
+                    yield return null;
+                    if (m_lastCoroutineStepTL != SimulationManager.instance.m_currentTickIndex)
+                    {
+                        m_lastCoroutineStepTL = SimulationManager.instance.m_currentTickIndex;
+                        m_coroutineCounterTL = 0;
                     }
                 }
-                m_coroutineCounter++;
+                m_coroutineCounterTL++;
 
                 var targetTexture = new Texture2D(task.result.Second, task.result.Third, TextureFormat.RGBA32, false);
                 targetTexture.SetPixels(task.result.First);
@@ -525,7 +527,7 @@ namespace Klyte.WriteTheSigns.Sprites
         };
 
 
-        private static void BuildMeshFromAtlas(string id, BasicRenderInformation bri, UITextureAtlas referenceAtlas, float proportion = 1f)
+        internal static void BuildMeshFromAtlas(string id, BasicRenderInformation bri, UITextureAtlas referenceAtlas, float proportion = 1f)
         {
             var uirenderData = UIRenderData.Obtain();
             try
@@ -662,7 +664,7 @@ namespace Klyte.WriteTheSigns.Sprites
             RegisterMeshSingle(sprite, bri, cache, referenceAtlas, isDirty, material);
         }
 
-        private static void RegisterMeshSingle<T>(T sprite, BasicRenderInformation bri, Dictionary<T, BasicRenderInformation> cache, UITextureAtlas referenceAtlas, bool isDirty, Material material)
+        internal static void RegisterMeshSingle<T>(T sprite, BasicRenderInformation bri, Dictionary<T, BasicRenderInformation> cache, UITextureAtlas referenceAtlas, bool isDirty, Material material)
         {
             UpdateMaterial(referenceAtlas, material, isDirty);
 

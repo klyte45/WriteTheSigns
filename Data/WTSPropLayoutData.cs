@@ -1,5 +1,6 @@
 ﻿using ColossalFramework;
 using ColossalFramework.Globalization;
+using ICities;
 using Klyte.Commons;
 using Klyte.Commons.Interfaces;
 using Klyte.Commons.Utils;
@@ -27,9 +28,9 @@ namespace Klyte.WriteTheSigns.Data
             base.Save();
         }
 
-        public override void LoadDefaults()
+        public override void LoadDefaults(ISerializableData serializableData)
         {
-            base.LoadDefaults();
+            base.LoadDefaults(serializableData);
             ReloadAllPropsConfigurations();
         }
 

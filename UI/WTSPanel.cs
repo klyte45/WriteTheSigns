@@ -36,6 +36,14 @@ namespace Klyte.WriteTheSigns.UI
             m_stripMain.CreateTabLocalized<WTSFontsSettings>(KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_AutoNameIcon), "K45_WTS_FONT_CONFIG_TAB", "WTSFontSettings", false);
         }
 
+        protected void Start()
+        {
+            if (WriteTheSignsMod.Controller.ConnectorADR.AddressesAvailable)
+            {
+                m_stripMain.CreateTabLocalized<WTSHighwayShieldEditor>("K45_WTS_HWSHIELD_00", "K45_WTS_HWSHIELDS_TAB", "WTSHighwayShieldsSettings", false);
+            }
+        }
+
         #endregion
     }
 

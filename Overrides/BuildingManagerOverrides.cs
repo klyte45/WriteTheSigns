@@ -43,6 +43,11 @@ namespace Klyte.WriteTheSigns.Overrides
         public static void OnBuildingNameChanged() => WTSController.OnBuildingNameChanged(null);
         public static void AfterCalculateGroupData(BuildingManager __instance, int groupX, int groupZ, int layer, ref int vertexCount, ref int triangleCount, ref int objectCount, ref RenderGroup.VertexArrays vertexArrays, ref bool __result)
         {
+            if (LoadingManager.instance.m_currentlyLoading)
+            {
+                return;
+            }
+
             if (WriteTheSignsMod.Controller?.BuildingPropsSingleton == null)
             {
                 return;
@@ -78,6 +83,11 @@ namespace Klyte.WriteTheSigns.Overrides
 
         public static void AfterPopulateGroupData(BuildingManager __instance, int groupX, int groupZ, int layer, ref int vertexIndex, ref int triangleIndex, ref Vector3 groupPosition, RenderGroup.MeshData data, ref Vector3 min, ref Vector3 max, ref float maxRenderDistance, ref float maxInstanceDistance)
         {
+            if (LoadingManager.instance.m_currentlyLoading)
+            {
+                return;
+            }
+
             if (WriteTheSignsMod.Controller?.BuildingPropsSingleton == null)
             {
                 return;
@@ -130,6 +140,11 @@ namespace Klyte.WriteTheSigns.Overrides
 
         public static void AfterRenderMeshes(RenderManager.CameraInfo cameraInfo, ushort buildingID)
         {
+            if (LoadingManager.instance.m_currentlyLoading)
+            {
+                return;
+            }
+
             if (WriteTheSignsMod.Controller?.BuildingPropsSingleton == null)
             {
                 return;

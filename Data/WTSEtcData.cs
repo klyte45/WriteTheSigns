@@ -26,11 +26,13 @@ namespace Klyte.WriteTheSigns.Data
     public class FontSettings
     {
         private string m_publicTransportLineSymbolFont;
+        private string highwayShieldsFont;
 
         [XmlAttribute("publicTransportFont")]
         public string PublicTransportLineSymbolFont
         {
-            get => m_publicTransportLineSymbolFont; set {
+            get => m_publicTransportLineSymbolFont; set
+            {
                 if (WriteTheSignsMod.Controller is null || m_publicTransportLineSymbolFont != value)
                 {
                     m_publicTransportLineSymbolFont = value;
@@ -45,6 +47,21 @@ namespace Klyte.WriteTheSigns.Data
         [XmlAttribute("stencilFont")]
         public string StencilFont { get; set; }
 
+        [XmlAttribute("highwayShieldsFont")]
+        public string HighwayShieldsFont
+        {
+            get => highwayShieldsFont; set
+            {
+                {
+                    if (WriteTheSignsMod.Controller is null || highwayShieldsFont != value)
+                    {
+                        highwayShieldsFont = value;
+                        WriteTheSignsMod.Controller?.HighwayShieldsAtlasLibrary?.PurgeShields();
+                    }
+                }
+            }
+        }
+
         internal string GetTargetFont(FontClass fontClass)
         {
             switch (fontClass)
@@ -57,6 +74,8 @@ namespace Klyte.WriteTheSigns.Data
                     return ElectronicFont ?? WTSController.DEFAULT_FONT_KEY;
                 case FontClass.Stencil:
                     return StencilFont ?? WTSController.DEFAULT_FONT_KEY;
+                case FontClass.HighwayShields:
+                    return HighwayShieldsFont ?? WTSController.DEFAULT_FONT_KEY;
             }
             return null;
         }

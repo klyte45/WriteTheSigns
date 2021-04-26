@@ -268,11 +268,11 @@ namespace Klyte.WriteTheSigns.UI
             m_bgColor.selectedColor = x.BackgroundMeshSettings.BackgroundColor;
 
             m_dropdownTextAlignHorizontal.selectedIndex = (int)x.m_textAlign;
-            m_useContrastColor.isChecked = x.ColoringConfig.m_useContrastColor;
+            m_useContrastColor.isChecked = x.ColoringConfig.UseContrastColor;
             m_dropdownMaterialType.selectedIndex = (int)x.IlluminationConfig.IlluminationType;
             m_sliderIllumination.value = x.IlluminationConfig.IlluminationStrength;
             m_dropdownBlinkType.selectedIndex = (int)x.IlluminationConfig.BlinkType;
-            m_textFixedColor.selectedColor = x.ColoringConfig.m_defaultColor;
+            m_textFixedColor.selectedColor = x.ColoringConfig.m_cachedColor;
 
             m_useFrame.isChecked = x.BackgroundMeshSettings.UseFrame;
             m_frameBackSize[0].text = x.BackgroundMeshSettings.FrameMeshSettings.BackSize.X.ToString("F3");
@@ -314,7 +314,7 @@ namespace Klyte.WriteTheSigns.UI
         private void ApplyShowRules(BoardTextDescriptorGeneralXml x)
         {
             m_customText.parent.isVisible = x.m_textType == TextType.Fixed;
-            m_textFixedColor.parent.isVisible = !x.ColoringConfig.m_useContrastColor;
+            m_textFixedColor.parent.isVisible = !x.ColoringConfig.UseContrastColor;
             m_invertTextHorizontalAlignClone.isVisible = x.PlacingConfig.m_create180degYClone;
             m_sliderIllumination.parent.isVisible = x.IlluminationConfig.IlluminationType != MaterialType.OPAQUE;
             m_dropdownBlinkType.parent.isVisible = x.IlluminationConfig.IlluminationType != MaterialType.OPAQUE;
@@ -441,12 +441,12 @@ namespace Klyte.WriteTheSigns.UI
                                                                    });
 
         private void OnSetTextAlignmentHorizontal(int sel) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_textAlign = (UIHorizontalAlignment)sel);
-        private void OnFixedColorChanged(Color value) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.ColoringConfig.m_defaultColor = value);
+        private void OnFixedColorChanged(Color value) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.ColoringConfig.m_cachedColor = value);
         private void OnMaxWidthChange(float obj) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_maxWidthMeters = obj);
         private void OnScaleSubmit(float scale) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_textScale = scale);
         private void OnContrastColorChange(bool isChecked) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) =>
                                                             {
-                                                                desc.ColoringConfig.m_useContrastColor = isChecked;
+                                                                desc.ColoringConfig.UseContrastColor = isChecked;
                                                                 ApplyShowRules(desc);
                                                             });
         private void OnBgSizeChanged(Vector2 obj) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) =>

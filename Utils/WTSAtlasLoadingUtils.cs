@@ -8,6 +8,7 @@ namespace Klyte.WriteTheSigns.Utils
 {
     public static class WTSAtlasLoadingUtils
     {
+        public const int MAX_SIZE_IMAGE_IMPORT = 400;
         public static void LoadAllImagesFromFolder(string folder, out List<SpriteInfo> spritesToAdd, out List<string> errors, bool addPrefix = true)
         {
             spritesToAdd = new List<SpriteInfo>();
@@ -22,7 +23,7 @@ namespace Klyte.WriteTheSigns.Utils
                 var tex = new Texture2D(2, 2, TextureFormat.RGBA32, false);
                 if (tex.LoadImage(fileData))
                 {
-                    if (tex.width <= 400 && tex.width <= 400)
+                    if (tex.width <= MAX_SIZE_IMAGE_IMPORT && tex.width <= MAX_SIZE_IMAGE_IMPORT)
                     {
                         var imgName = addPrefix ? $"K45_WTS_{Path.GetFileNameWithoutExtension(imgFile)}" : Path.GetFileNameWithoutExtension(imgFile);
                         spritesToAdd.Add(new SpriteInfo

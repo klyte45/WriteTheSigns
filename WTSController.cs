@@ -28,6 +28,8 @@ namespace Klyte.WriteTheSigns
         internal WTSBuildingPropsSingleton BuildingPropsSingleton { get; private set; }
         internal WTSVehicleTextsSingleton VehicleTextsSingleton { get; private set; }
         internal WTSOnNetPropsSingleton OnNetPropsSingleton { get; private set; }
+        internal WTSHighwayShieldsSingleton HighwayShieldsSingleton { get; private set; }
+        internal WTSHighwayShieldsAtlasLibrary HighwayShieldsAtlasLibrary { get; private set; }
         internal IBridgeTLM ConnectorTLM { get; private set; }
         internal IBridgeADR ConnectorADR { get; private set; }
 
@@ -95,8 +97,10 @@ namespace Klyte.WriteTheSigns
             RoadPropsSingleton = gameObject.AddComponent<WTSRoadPropsSingleton>();
             VehicleTextsSingleton = gameObject.AddComponent<WTSVehicleTextsSingleton>();
             OnNetPropsSingleton = gameObject.AddComponent<WTSOnNetPropsSingleton>();
-            ConnectorTLM = PluginUtils.GetImplementationTypeForMod<BridgeTLM, BridgeTLMFallback, IBridgeTLM>(gameObject, "TransportLinesManager", "13.4.0.1");
-            ConnectorADR = PluginUtils.GetImplementationTypeForMod<BridgeADR, BridgeADRFallback, IBridgeADR>(gameObject, "KlyteAddresses", "2.0.4.1");
+            HighwayShieldsSingleton = gameObject.AddComponent<WTSHighwayShieldsSingleton>();
+            HighwayShieldsAtlasLibrary = gameObject.AddComponent<WTSHighwayShieldsAtlasLibrary>();
+            ConnectorTLM = PluginUtils.GetImplementationTypeForMod<BridgeTLM, BridgeTLMFallback, IBridgeTLM>(gameObject, "TransportLinesManager", "14.0.0.0");
+            ConnectorADR = PluginUtils.GetImplementationTypeForMod<BridgeADR, BridgeADRFallback, IBridgeADR>(gameObject, "KlyteAddresses", "3.0.0.3");
         }
 
 
@@ -169,9 +173,11 @@ namespace Klyte.WriteTheSigns
         public const string m_defaultFileNameBuildingsXml = "WTS_DefaultBuildingsConfig";
         public const string m_defaultFileNameVehiclesXml = "WTS_DefaultVehiclesConfig";
         public const string m_defaultFileNamePropsXml = "WTS_DefaultPropsConfig";
+        public const string m_defaultFileNameShieldXml = "WTS_ShieldConfig";
         public const string DEFAULT_GAME_PROP_LAYOUT_FOLDER = "PropsDefaultLayouts";
         public const string DEFAULT_GAME_BUILDINGS_CONFIG_FOLDER = "BuildingsDefaultPlacing";
         public const string DEFAULT_GAME_VEHICLES_CONFIG_FOLDER = "VehiclesDefaultPlacing";
+        public const string DEFAULT_HW_SHIELDS_CONFIG_FOLDER = "HighwayShieldsLayouts";
         public const string ABBREVIATION_FILES_FOLDER = "AbbreviationFiles";
         public const string FONTS_FILES_FOLDER = "Fonts";
         public const string EXTRA_SPRITES_FILES_FOLDER = "Sprites";
@@ -181,6 +187,7 @@ namespace Klyte.WriteTheSigns
         public static string DefaultPropsLayoutConfigurationFolder { get; } = FOLDER_NAME + Path.DirectorySeparatorChar + DEFAULT_GAME_PROP_LAYOUT_FOLDER;
         public static string DefaultBuildingsConfigurationFolder { get; } = FOLDER_NAME + Path.DirectorySeparatorChar + DEFAULT_GAME_BUILDINGS_CONFIG_FOLDER;
         public static string DefaultVehiclesConfigurationFolder { get; } = FOLDER_NAME + Path.DirectorySeparatorChar + DEFAULT_GAME_VEHICLES_CONFIG_FOLDER;
+        public static string DefaultHwShieldsConfigurationFolder { get; } = FOLDER_NAME + Path.DirectorySeparatorChar + DEFAULT_HW_SHIELDS_CONFIG_FOLDER;
         public static string ExtraSpritesFolder { get; } = FOLDER_NAME + Path.DirectorySeparatorChar + EXTRA_SPRITES_FILES_FOLDER;
         public static string AbbreviationFilesPath { get; } = FOLDER_NAME + Path.DirectorySeparatorChar + ABBREVIATION_FILES_FOLDER;
         public static string FontFilesPath { get; } = FOLDER_NAME + Path.DirectorySeparatorChar + FONTS_FILES_FOLDER;

@@ -16,7 +16,7 @@
         Direction,
         DistanceFromReference,
         LastStopLine,
-        StreetCode,
+        HwShieldAndName,
         NextStopLine,
         PrevStopLine,
         PlatformNumber,
@@ -28,7 +28,12 @@
         ParameterizedGameSprite,
         ParameterizedGameSpriteIndexed,
         LineFullName,
-        CityName
+        CityName,
+        HwCodeShort,
+        HwCodeLong,
+        HwDettachedPrefix,
+        HwIdentifierSuffix,
+        HwShield
     }
 
 

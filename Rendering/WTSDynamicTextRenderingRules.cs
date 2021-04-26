@@ -34,6 +34,16 @@ namespace Klyte.WriteTheSigns.Rendering
             TextType.LineFullName,
             TextType.CityName,
         };
+        public static readonly TextType[] ALLOWED_TYPES_HIGHWAY_SHIELDS = new TextType[]
+        {
+            TextType.Fixed,
+            TextType.GameSprite,
+            TextType.CityName,
+            TextType.HwCodeShort,
+            TextType.HwCodeLong,
+            TextType.HwDettachedPrefix,
+            TextType.HwIdentifierSuffix,
+         };
 
         internal static Material m_rotorMaterial;
         internal static Material m_outsideMaterial;
@@ -66,7 +76,6 @@ namespace Klyte.WriteTheSigns.Rendering
                 TextType.GameSprite,
                 TextType.Direction,
                 TextType.Mileage,
-                TextType.StreetCode,
                 TextType.StreetPrefix,
                 TextType.StreetSuffix,
                 TextType.StreetNameComplete,
@@ -729,13 +738,13 @@ namespace Klyte.WriteTheSigns.Rendering
         }
         private static Color GetTextColor(ushort refID, int boardIdx, int secIdx, BoardInstanceXml descriptor, BoardDescriptorGeneralXml propLayout, BoardTextDescriptorGeneralXml textDescriptor)
         {
-            if (textDescriptor.ColoringConfig.m_useContrastColor)
+            if (textDescriptor.ColoringConfig.UseContrastColor)
             {
                 return GetContrastColor(refID, boardIdx, secIdx, descriptor, propLayout);
             }
-            else if (textDescriptor.ColoringConfig.m_defaultColor != null)
+            else if (textDescriptor.ColoringConfig.m_cachedColor != null)
             {
-                return textDescriptor.ColoringConfig.m_defaultColor;
+                return textDescriptor.ColoringConfig.m_cachedColor;
             }
             return Color.white;
         }

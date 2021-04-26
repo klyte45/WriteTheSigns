@@ -25,7 +25,7 @@ namespace FontStashSharp
         internal long GetCacheSize()
         {
             long size = 0;
-            foreach(var bri in m_textCache.Values)
+            foreach (var bri in m_textCache.Values)
             {
                 size += bri.GetSize();
             }
@@ -327,7 +327,7 @@ namespace FontStashSharp
                         continue;
                     }
 
-                    GetQuad(glyph, prevGlyph, Spacing, ref originX, ref originY, ref q);
+                    GetQuad(glyph, prevGlyph, Spacing, 1, ref originX, ref originY, ref q);
                     bri.m_YAxisOverflows.min = Mathf.Min(bri.m_YAxisOverflows.min, glyph.YOffset - glyph.Font.Descent + glyph.Font.Ascent);
                     bri.m_YAxisOverflows.max = Mathf.Max(bri.m_YAxisOverflows.max, glyph.Bounds.height + glyph.YOffset - glyph.Font.Ascent + glyph.Font.Descent);
 
@@ -464,7 +464,7 @@ namespace FontStashSharp
             uvs.Add(new Vector2(glyph.Bounds.left / _currentAtlas.Width, glyph.Bounds.top / _currentAtlas.Height));
             uvs.Add(new Vector2(glyph.Bounds.right / _currentAtlas.Width, glyph.Bounds.top / _currentAtlas.Height));
         }
-        public float TextBounds(float x, float y, string str, ref Bounds bounds)
+        public float TextBounds(float x, float y, string str, float charSpacingFactor, ref Bounds bounds)
         {
             if (string.IsNullOrEmpty(str))
             {
@@ -522,7 +522,7 @@ namespace FontStashSharp
                     continue;
                 }
 
-                GetQuad(glyph, prevGlyph, Spacing, ref x, ref y, ref q);
+                GetQuad(glyph, prevGlyph, Spacing, i == str.Length - 1 ? 1f : charSpacingFactor, ref x, ref y, ref q);
                 if (q.X0 < minx)
                 {
                     minx = q.X0;
@@ -697,7 +697,7 @@ namespace FontStashSharp
             return result;
         }
 
-        private void GetQuad(FontGlyph glyph, FontGlyph prevGlyph, float spacing, ref float x, ref float y, ref FontGlyphSquad q)
+        private void GetQuad(FontGlyph glyph, FontGlyph prevGlyph, float spacing, float spacingFactor, ref float x, ref float y, ref FontGlyphSquad q)
         {
             if (prevGlyph != null)
             {
@@ -707,7 +707,7 @@ namespace FontStashSharp
                     adv = prevGlyph.GetKerning(glyph) * glyph.Font.Scale;
                 }
 
-                x += (int)(adv + spacing + 0.5f);
+                x += (int)((adv + spacing) * spacingFactor + 0.5f);
             }
 
             float rx = x + glyph.XOffset;
@@ -721,13 +721,18 @@ namespace FontStashSharp
             q.S1 = glyph.Bounds.xMax * _itw;
             q.T1 = glyph.Bounds.yMax * _ith;
 
-            x += (int)(glyph.XAdvance / 10.0f + 0.5f);
+            x += (int)((glyph.XAdvance / 10.0f * spacingFactor) + 0.5f);
         }
 
 
 
-        public Texture2D WriteTexture2D(string str)
+        public Texture2D WriteTexture2D(string str, float charSpacingFactor)
         {
+            if (charSpacingFactor < 0)
+            {
+                charSpacingFactor = 0;
+            }
+
             Dictionary<int, FontGlyph> glyphs = GetGlyphsCollection(FontHeight);
             // Determine ascent and lineHeight from first character
             float ascent = 0, lineHeight = 0;
@@ -754,7 +759,7 @@ namespace FontStashSharp
             originY += ascent;
 
             var bounds = new Bounds();
-            TextBounds(0, 0, str, ref bounds);
+            TextBounds(0, 0, str, charSpacingFactor, ref bounds);
 
             var targetTexture = new Texture2D(Mathf.CeilToInt((bounds.maxX - bounds.minX)), Mathf.CeilToInt((bounds.maxY - bounds.minY)), TextureFormat.ARGB32, false);
             targetTexture.SetPixels(new Color[targetTexture.width * targetTexture.height]);
@@ -778,7 +783,7 @@ namespace FontStashSharp
                     continue;
                 }
 
-                GetQuad(glyph, prevGlyph, Spacing, ref originX, ref originY, ref q);
+                GetQuad(glyph, prevGlyph, Spacing, charSpacingFactor, ref originX, ref originY, ref q);
 
                 q.X0 = (int)(q.X0);
                 q.X1 = (int)(q.X1);

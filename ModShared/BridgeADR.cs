@@ -6,6 +6,7 @@ namespace Klyte.WriteTheSigns.ModShared
 {
     internal class BridgeADR : IBridgeADR
     {
+        public override bool AddressesAvailable { get; } = true;
         public void Start()
         {
             AdrFacade.Instance.EventZeroMarkerBuildingChange += WTSController.OnZeroMarkChanged;
@@ -21,6 +22,26 @@ namespace Klyte.WriteTheSigns.ModShared
         public override string GetStreetPostalCode(Vector3 position, ushort idx) => AdrFacade.GetPostalCode(position);
         public override string GetStreetQualifier(ushort idx) => AdrFacade.GetStreetQualifier(idx);
         public override string GetStreetSuffix(ushort idx) => AdrFacade.GetStreetSuffix(idx);
+
+        public override AdrHighwayParameters GetHighwayData(ushort seedId)
+        {
+            var result = new AdrHighwayParameters();
+            return AdrFacade.GetSeedHighwayParameters(seedId, out result.layoutName, out result.detachedStr, out result.hwIdentifier, out result.shortCode, out result.longCode, out result.hwColor)
+                ? result
+                : null;
+        }
+
+        public override string[] ListAllAvailableHighwayTypes(string filterText) => AdrFacade.ListAllHighwayTypes(filterText);
+        public override AdrHighwayParameters GetHighwayTypeData(string layoutName)
+        {
+            var result = new AdrHighwayParameters
+            {
+                hwIdentifier = "XXX"
+            };
+            return AdrFacade.GetHighwayTypeParameters(layoutName, out result.detachedStr, out result.shortCode, out result.longCode)
+                ? result
+                : null;
+        }
     }
 }
 

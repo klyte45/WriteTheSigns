@@ -294,11 +294,11 @@ namespace Klyte.WriteTheSigns.UI
             //  m_mirrored.isChecked = x.PlacingConfig.m_mirrored;
 
             m_dropdownTextAlignHorizontal.selectedIndex = (int)x.m_textAlign;
-            m_useContrastColor.isChecked = x.ColoringConfig.m_useContrastColor;
+            m_useContrastColor.isChecked = x.ColoringConfig.UseContrastColor;
             m_dropdownMaterialType.selectedIndex = (int)x.IlluminationConfig.IlluminationType;
             m_sliderIllumination.value = x.IlluminationConfig.IlluminationStrength;
             m_dropdownBlinkType.selectedIndex = (int)x.IlluminationConfig.BlinkType;
-            m_textFixedColor.selectedColor = x.ColoringConfig.m_defaultColor;
+            m_textFixedColor.selectedColor = x.ColoringConfig.m_cachedColor;
 
             m_dropdownTextContent.items = WTSDynamicTextRenderingRules.ALLOWED_TYPES_PER_RENDERING_CLASS[WTSPropLayoutEditor.Instance.EditingInstance.m_allowedRenderClass].Select(y => Locale.Get("K45_WTS_BOARD_TEXT_TYPE_DESC", y.ToString())).ToArray();
             m_dropdownTextContent.selectedIndex = Array.IndexOf(WTSDynamicTextRenderingRules.ALLOWED_TYPES_PER_RENDERING_CLASS[WTSPropLayoutEditor.Instance.EditingInstance.m_allowedRenderClass], x.m_textType);
@@ -338,7 +338,7 @@ namespace Klyte.WriteTheSigns.UI
             m_defaultParameterValue.parent.isVisible = x.IsParameter();
             m_slideDurationFrames.parent.isVisible = x.m_textType == TextType.ParameterizedGameSprite;
             m_slideDesync.parent.isVisible = x.m_textType == TextType.ParameterizedGameSprite;
-            m_textFixedColor.parent.isVisible = !x.ColoringConfig.m_useContrastColor;
+            m_textFixedColor.parent.isVisible = !x.ColoringConfig.UseContrastColor;
             m_invertTextHorizontalAlignClone.isVisible = x.PlacingConfig.m_create180degYClone;
             m_sliderIllumination.parent.isVisible = x.IlluminationConfig.IlluminationType != MaterialType.OPAQUE;
             m_dropdownBlinkType.parent.isVisible = x.IlluminationConfig.IlluminationType != MaterialType.OPAQUE;
@@ -439,7 +439,6 @@ namespace Klyte.WriteTheSigns.UI
             }
         }
 
-        private string[] OnFilterSprites(string input) => m_spriteFilter.atlas.spriteNames.Where(x => x.ToLower().Contains(input.ToLower())).OrderBy(x => x).Select(x => $"<sprite {x}> {x}").ToArray();
 
         private void OnSetTextOwnNameContent(int sel) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) =>
                                                        {
@@ -465,12 +464,12 @@ namespace Klyte.WriteTheSigns.UI
         //});
 
         private void OnSetTextAlignmentHorizontal(int sel) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_textAlign = (UIHorizontalAlignment)sel);
-        private void OnFixedColorChanged(Color value) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.ColoringConfig.m_defaultColor = value);
+        private void OnFixedColorChanged(Color value) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.ColoringConfig.m_cachedColor = value);
         private void OnMaxWidthChange(float obj) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_maxWidthMeters = obj);
         private void OnScaleSubmit(float scale) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_textScale = scale);
         private void OnContrastColorChange(bool isChecked) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) =>
                                                             {
-                                                                desc.ColoringConfig.m_useContrastColor = isChecked;
+                                                                desc.ColoringConfig.UseContrastColor = isChecked;
                                                                 ApplyShowRules(desc);
                                                             });
         private void OnSetMaterialType(int sel) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) =>

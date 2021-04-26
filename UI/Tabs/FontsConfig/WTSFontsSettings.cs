@@ -24,6 +24,7 @@ namespace Klyte.WriteTheSigns.UI
         private UIDropDown m_fontSelectLineSymbols;
         private UIDropDown m_fontSelectElectronic;
         private UIDropDown m_fontSelectStencil;
+        private UIDropDown m_fontSelectHighwayShields;
 
         public void Awake()
         {
@@ -45,6 +46,7 @@ namespace Klyte.WriteTheSigns.UI
             AddFontDD("K45_WTS_FONT_TRANSPORTLINES", m_uiHelperHS, out m_fontSelectLineSymbols, OnSetFontPublicTransportLineSymbol);
             AddFontDD("K45_WTS_FONT_ELECTRONIC", m_uiHelperHS, out m_fontSelectElectronic, OnSetFontPublicElectronic);
             AddFontDD("K45_WTS_FONT_STENCIL", m_uiHelperHS, out m_fontSelectStencil, OnSetFontPublicStencil);
+            AddFontDD("K45_WTS_FONT_HWSHIELDS", m_uiHelperHS, out m_fontSelectHighwayShields, OnSetFontPublicHighwayShields);
 
             ReloadFonts();
         }
@@ -66,6 +68,7 @@ namespace Klyte.WriteTheSigns.UI
             WTSUtils.ReloadFontsOf(m_fontSelectOnNet, WTSOnNetData.Instance.DefaultFont, false, true);
             WTSUtils.ReloadFontsOf(m_fontSelectElectronic, WTSEtcData.Instance.FontSettings.ElectronicFont, false, true);
             WTSUtils.ReloadFontsOf(m_fontSelectStencil, WTSEtcData.Instance.FontSettings.StencilFont, false, true);
+            WTSUtils.ReloadFontsOf(m_fontSelectHighwayShields, WTSEtcData.Instance.FontSettings.HighwayShieldsFont, false, true);
         }
         private void OnSetFontStreet(int sel)
         {
@@ -131,6 +134,17 @@ namespace Klyte.WriteTheSigns.UI
             else if (sel == 0)
             {
                 WTSEtcData.Instance.FontSettings.StencilFont = null;
+            }
+        }
+        private void OnSetFontPublicHighwayShields(int sel)
+        {
+            if (sel > 0)
+            {
+                WTSEtcData.Instance.FontSettings.HighwayShieldsFont = m_fontSelectHighwayShields.selectedValue;
+            }
+            else if (sel == 0)
+            {
+                WTSEtcData.Instance.FontSettings.HighwayShieldsFont = null;
             }
         }
         private void OnSetFontPublicElectronic(int sel)

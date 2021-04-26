@@ -1,6 +1,5 @@
 ﻿using ColossalFramework;
 using ColossalFramework.Globalization;
-using ColossalFramework.Packaging;
 using ColossalFramework.UI;
 using Klyte.Commons.Extensions;
 using Klyte.Commons.Utils;
@@ -8,18 +7,16 @@ using Klyte.WriteTheSigns.Data;
 using Klyte.WriteTheSigns.Singleton;
 using Klyte.WriteTheSigns.Xml;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEngine;
 using static Klyte.Commons.UI.DefaultEditorUILib;
-
 namespace Klyte.WriteTheSigns.UI
 {
-
-    internal class WTSVehicleLayoutEditor : UICustomControl
+    internal class WTSHighwayShieldEditor : UICustomControl
     {
-        public static WTSVehicleLayoutEditor Instance { get; private set; }
+
+        public static WTSHighwayShieldEditor Instance { get; private set; }
         public UIPanel MainContainer { get; protected set; }
 
 
@@ -31,7 +28,7 @@ namespace Klyte.WriteTheSigns.UI
         #endregion
 
         #region Top bar controls
-        private UITextField m_vehicleSearch;
+        private UITextField m_hwTypeSearch;
 
 
         private UILabel m_labelSelectionDescription;
@@ -41,7 +38,6 @@ namespace Klyte.WriteTheSigns.UI
         private UIButton m_btnDelete;
         private UIButton m_btnLoad;
         private UIButton m_btnExport;
-        private UIButton m_btnSteam;
         private UIButton m_btnReload;
         private UIButton m_btnCopy;
         private UIButton m_btnPaste;
@@ -58,21 +54,22 @@ namespace Klyte.WriteTheSigns.UI
 
         internal int CurrentTab { get; private set; }
 
-        private LayoutDescriptorVehicleXml m_editingInstance;
+        private HighwayShieldDescriptor m_editingInstance;
         private UITemplateList<UIButton> m_tabs;
 
-        private event Action<LayoutDescriptorVehicleXml, ConfigurationSource> EventOnVehicleSelectionChanged;
+        private event Action<HighwayShieldDescriptor, ConfigurationSource> EventOnHwTypeSelectionChanged;
 
-        internal ref LayoutDescriptorVehicleXml EditingInstance => ref m_editingInstance;
-        internal VehicleInfo CurrentVehicleInfo { get; set; }
+        internal ref HighwayShieldDescriptor EditingInstance => ref m_editingInstance;
 
         public bool LockSelection { get; private set; }
         public ConfigurationSource CurrentConfigurationSource { get; private set; }
-        internal WTSVehicleLayoutEditorPreview Preview { get; private set; }
+        internal WTSHighwayShieldLayoutEditorPreview Preview { get; private set; }
 
         internal event Action<int> CurrentTabChanged;
 
         private string m_clipboard;
+
+        internal string CurrentSelection { get; private set; }
 
         public void Awake()
         {
@@ -92,15 +89,13 @@ namespace Klyte.WriteTheSigns.UI
             m_topBar.autoFitChildrenVertically = true;
             var m_topHelper = new UIHelperExtension(m_topBar);
 
-            AddFilterableInput(Locale.Get("K45_WTS_VEHICLEEDITOR_SELECTMODEL"), m_topHelper, out m_vehicleSearch, out _, VehiclesIndexes.instance.BasicInputFiltering, OnVehicleNameSelected);
-            AddButtonInEditorRow(m_vehicleSearch, Commons.UI.SpriteNames.CommonsSpriteNames.K45_Dropper, EnableVehiclePicker, null, true, 30);
-            AddButtonInEditorRow(m_vehicleSearch, Commons.UI.SpriteNames.CommonsSpriteNames.K45_QuestionMark, Help_VehicleModel, null, true, 30);
+            AddFilterableInput(Locale.Get("K45_WTS_HIGHWAYTYPE_SELECT"), m_topHelper, out m_hwTypeSearch, out _, WriteTheSignsMod.Controller.ConnectorADR.ListAllAvailableHighwayTypes, OnHwTypeSelected);
+            //AddButtonInEditorRow(m_hwTypeSearch, Commons.UI.SpriteNames.CommonsSpriteNames.K45_QuestionMark, Help_HighwayType, null, true, 30);
 
             AddLabel("", m_topHelper, out m_labelSelectionDescription, out m_containerSelectionDescription);
             KlyteMonoUtils.LimitWidthAndBox(m_labelSelectionDescription, (m_topHelper.Self.width / 2), out UIPanel containerBoxDescription, true);
             m_labelSelectionDescription.prefix = Locale.Get("K45_WTS_CURRENTSELECTION") + ": ";
             m_btnReload = AddButtonInEditorRow(containerBoxDescription, Commons.UI.SpriteNames.CommonsSpriteNames.K45_Reload, OnReloadDescriptors, "K45_WTS_BUILDINGEDITOR_BUTTONROWACTION_RELOADDESCRIPTORS", false);
-            m_btnSteam = AddButtonInEditorRow(containerBoxDescription, Commons.UI.SpriteNames.CommonsSpriteNames.K45_Steam, OnExportAsAsset, "K45_WTS_BUILDINGEDITOR_BUTTONROWACTION_EXPORTTOASSETFOLDER", false);
             m_btnExport = AddButtonInEditorRow(containerBoxDescription, Commons.UI.SpriteNames.CommonsSpriteNames.K45_Export, OnExportAsGlobal, "K45_WTS_BUILDINGEDITOR_BUTTONROWACTION_EXPORTASGLOBAL", false);
             m_btnLoad = AddButtonInEditorRow(containerBoxDescription, Commons.UI.SpriteNames.CommonsSpriteNames.K45_Load, OnOpenGlobalFolder, "K45_WTS_BUILDINGEDITOR_BUTTONROWACTION_OPENGLOBALSFOLDER", false);
             m_btnDelete = AddButtonInEditorRow(containerBoxDescription, Commons.UI.SpriteNames.CommonsSpriteNames.K45_Delete, OnDeleteFromCity, "K45_WTS_BUILDINGEDITOR_BUTTONROWACTION_DELETEFROMCITY", false);
@@ -117,7 +112,7 @@ namespace Klyte.WriteTheSigns.UI
 
 
             KlyteMonoUtils.CreateUIElement(out UIPanel previewContainer, m_middleBar.transform, "previewContainer", new UnityEngine.Vector4(0, 0, m_middleBar.width * .6f, m_middleBar.height - m_middleBar.padding.vertical));
-            Preview = previewContainer.gameObject.AddComponent<WTSVehicleLayoutEditorPreview>();
+            Preview = previewContainer.gameObject.AddComponent<WTSHighwayShieldLayoutEditorPreview>();
 
 
             KlyteMonoUtils.CreateScrollPanel(m_middleBar, out m_editTabstrip, out _, m_middleBar.width - previewContainer.width - m_middleBar.padding.horizontal - (m_middleBar.autoLayoutPadding.horizontal * 2) - 20, 300);
@@ -134,7 +129,7 @@ namespace Klyte.WriteTheSigns.UI
 
             m_tabs = new UITemplateList<UIButton>(m_orderedRulesList, TAB_TEMPLATE_NAME);
             KlyteMonoUtils.CreateUIElement(out m_cantEditText, MainContainer.transform, "text", new UnityEngine.Vector4(0, 0, MainContainer.width - MainContainer.padding.horizontal, 315));
-            m_cantEditText.text = Locale.Get("K45_WTS_VEHICLEEDITOR_CANTEDITTEXT");
+            m_cantEditText.text = Locale.Get("K45_WTS_HWTYPEEDITOR_CANTEDITTEXT");
             m_cantEditText.textAlignment = UIHorizontalAlignment.Center;
             m_cantEditText.wordWrap = true;
 
@@ -143,74 +138,36 @@ namespace Klyte.WriteTheSigns.UI
 
 
             KlyteMonoUtils.CreateUIElement(out m_basicInfoEditor, m_editArea.transform, "basicTab", new UnityEngine.Vector4(0, 0, m_editArea.width - m_editArea.padding.horizontal, m_editArea.height - m_editArea.padding.vertical));
-            m_basicInfoEditor.gameObject.AddComponent<WTSVehicleLayoutEditorBasics>();
+            m_basicInfoEditor.gameObject.AddComponent<WTSHighwayShieldLayoutEditorBasics>();
             KlyteMonoUtils.CreateUIElement(out m_textInfoEditor, m_editArea.transform, "textTab", new UnityEngine.Vector4(0, 0, m_editArea.width - m_editArea.padding.horizontal, m_editArea.height - m_editArea.padding.vertical));
-            m_textInfoEditor.gameObject.AddComponent<WTSVehicleLayoutEditorTexts>();
+            m_textInfoEditor.gameObject.AddComponent<WTSHighwayShieldLayoutEditorTexts>();
             CreateTabTemplate();
 
-            ReloadVehicle();
+            ReloadShield();
             OnTabChange(0);
 
         }
 
-        private void EnableVehiclePicker()
-        {
-            CurrentVehicleInfo = null;
-            ReloadVehicle();
-            WriteTheSignsMod.Controller.VehicleEditorToolInstance.OnVehicleSelect += OnVehiclePicked;
-            WriteTheSignsMod.Controller.VehicleEditorToolInstance.OnParkedVehicleSelect += OnParkedVehiclePicked;
-            WriteTheSignsMod.Controller.VehicleEditorToolInstance.enabled = true;
-        }
-
-        private void OnParkedVehiclePicked(ushort obj) => m_vehicleSearch.text = OnVehicleNameSelected(VehiclesIndexes.GetListName(VehicleManager.instance.m_parkedVehicles.m_buffer[obj].Info), -1, null);
-
-        private void OnVehiclePicked(ushort obj) => m_vehicleSearch.text = OnVehicleNameSelected(VehiclesIndexes.GetListName(VehicleManager.instance.m_vehicles.m_buffer[obj].Info), -1, null);
-
-
-        private void Help_VehicleModel() => K45DialogControl.ShowModalHelp("VehicleLayouts.General", Locale.Get("K45_WTS_VEHICLEEDITOR_HELPTITLE"), 0);
-
         private void OnReloadDescriptors()
         {
-            WriteTheSignsMod.Controller?.VehicleTextsSingleton?.LoadAllVehiclesConfigurations();
-            ReloadVehicle();
+            WriteTheSignsMod.Controller.HighwayShieldsSingleton.LoadAllShieldsConfigurations();
+            ReloadShield();
         }
-        private void OnExportAsAsset() => ExportTo(Path.Combine(Path.GetDirectoryName(PackageManager.FindAssetByName(CurrentVehicleInfo.name)?.package?.packagePath), $"{WTSController.m_defaultFileNameVehiclesXml}.xml"));
+
         private void ExportTo(string output)
         {
-            if (CurrentVehicleInfo != null)
+            if (EditingInstance != null)
             {
-                var assetId = CurrentVehicleInfo.name.Split('.')[0] + ".";
-                var descriptorsToExport = new List<LayoutDescriptorVehicleXml>();
-                foreach (string assetName in VehiclesIndexes.instance.PrefabsLoaded
-                .Where((x) => x.Value.name.StartsWith(assetId) || x.Value.name == CurrentVehicleInfo.name)
-                .Select(x => x.Value.name))
-                {
-                    WTSVehicleTextsSingleton.GetTargetDescriptor(assetName, out _, out LayoutDescriptorVehicleXml target);
-                    if (target != null)
-                    {
-                        target.VehicleAssetName = assetName;
-                        descriptorsToExport.Add(target);
-                    }
-                }
-                if (descriptorsToExport.Count > 0)
-                {
-                    var exportableLayouts = new ExportableLayoutDescriptorVehicleXml
-                    {
-                        Descriptors = descriptorsToExport.ToArray()
-                    };
-                    File.WriteAllText(output, XmlUtils.DefaultXmlSerialize(exportableLayouts));
-
-                    WriteTheSignsMod.Controller?.VehicleTextsSingleton?.LoadAllVehiclesConfigurations();
-                }
+                File.WriteAllText(output, XmlUtils.DefaultXmlSerialize(EditingInstance));
             }
         }
 
-        private void OnExportAsGlobal() => ExportTo(Path.Combine(WTSController.DefaultVehiclesConfigurationFolder, $"{WTSController.m_defaultFileNameVehiclesXml}_{PackageManager.FindAssetByName(CurrentVehicleInfo.name)?.package.packageMainAsset ?? CurrentVehicleInfo.name}.xml"));
+        private void OnExportAsGlobal() => ExportTo(Path.Combine(WTSController.DefaultHwShieldsConfigurationFolder, $"{WTSController.m_defaultFileNameShieldXml}_{CurrentSelection}.xml"));
 
-        private void OnOpenGlobalFolder() => ColossalFramework.Utils.OpenInFileBrowser(WTSController.DefaultVehiclesConfigurationFolder);
+        private void OnOpenGlobalFolder() => ColossalFramework.Utils.OpenInFileBrowser(WTSController.DefaultHwShieldsConfigurationFolder);
         private void OnDeleteFromCity() => K45DialogControl.ShowModal(new K45DialogControl.BindProperties
         {
-            message = Locale.Get("K45_WTS_PROMPTDELETEBUILDINGLAYOUT"),
+            message = Locale.Get("K45_WTS_PROMPTDELETEHWSHIELDLAYOUT"),
             showButton1 = true,
             showButton2 = true,
             textButton1 = Locale.Get("YES"),
@@ -219,8 +176,8 @@ namespace Klyte.WriteTheSigns.UI
         {
             if (x == 1)
             {
-                WTSVehicleData.Instance.CityDescriptors.Remove(CurrentVehicleInfo.name);
-                ReloadVehicle();
+                WTSHighwayShieldsData.Instance.CityDescriptors.Remove(CurrentSelection);
+                ReloadShield();
             }
 
             return true;
@@ -228,14 +185,18 @@ namespace Klyte.WriteTheSigns.UI
 
         internal void RemoveTabFromItem(int tabToEdit)
         {
-            EditingInstance.TextDescriptors = EditingInstance.TextDescriptors.Where((x, y) => y != tabToEdit).ToArray();
-            OnTabChange(Mathf.Min(CurrentTab, EditingInstance.TextDescriptors.Length));
+            EditingInstance.TextDescriptors = EditingInstance.TextDescriptors.Where((x, y) => y != tabToEdit).ToList();
+            OnTabChange(Mathf.Min(CurrentTab, EditingInstance.TextDescriptors.Count));
         }
 
         private void OnCopyToCity()
         {
-            WTSVehicleData.Instance.CityDescriptors[CurrentVehicleInfo.name] = XmlUtils.DefaultXmlDeserialize<LayoutDescriptorVehicleXml>(XmlUtils.DefaultXmlSerialize(EditingInstance));
-            ReloadVehicle();
+            if (EditingInstance != null)
+            {
+                WTSHighwayShieldsData.Instance.CityDescriptors[CurrentSelection] = XmlUtils.DefaultXmlDeserialize<HighwayShieldDescriptor>(XmlUtils.DefaultXmlSerialize(EditingInstance));
+                ReloadShield();
+            }
+
         }
         private void OnCopyToClipboard()
         {
@@ -245,64 +206,54 @@ namespace Klyte.WriteTheSigns.UI
 
         private void OnPasteFromClipboard()
         {
-            var temp = XmlUtils.DefaultXmlDeserialize<LayoutDescriptorVehicleXml>(m_clipboard);
-            temp.VehicleAssetName = CurrentVehicleInfo.name;
+            var temp = XmlUtils.DefaultXmlDeserialize<HighwayShieldDescriptor>(m_clipboard);
+            temp.SaveName = CurrentSelection;
             EditingInstance = temp;
         }
 
         private void OnCreateNewCity()
         {
-            WTSVehicleData.Instance.CityDescriptors[CurrentVehicleInfo.name] = new LayoutDescriptorVehicleXml
+            WTSHighwayShieldsData.Instance.CityDescriptors[CurrentSelection] = new HighwayShieldDescriptor
             {
-                VehicleAssetName = CurrentVehicleInfo.name,
+                SaveName = CurrentSelection,
             };
-            ReloadVehicle();
+            ReloadShield();
         }
 
-        internal void ReloadVehicle()
+        internal void ReloadShield()
         {
 
-            m_middleBar.isVisible = CurrentVehicleInfo != null;
-            m_containerSelectionDescription.isVisible = CurrentVehicleInfo != null;
-            if (CurrentVehicleInfo != null)
+            m_middleBar.isVisible = CurrentSelection != null;
+            m_containerSelectionDescription.isVisible = CurrentSelection != null;
+            if (CurrentSelection != null)
             {
-                WTSVehicleTextsSingleton.GetTargetDescriptor(CurrentVehicleInfo.name, out ConfigurationSource source, out LayoutDescriptorVehicleXml target);
-                m_labelSelectionDescription.text = (CurrentVehicleInfo.name?.EndsWith("_Data") ?? false) ? Locale.Get("VEHICLE_TITLE", CurrentVehicleInfo.name) + "\n" : $"{CurrentVehicleInfo.name}\n";
+                WTSHighwayShieldsSingleton.GetTargetDescriptor(CurrentSelection, out ConfigurationSource source, out HighwayShieldDescriptor target);
+                m_labelSelectionDescription.text = $"{CurrentSelection}\n";
                 m_labelSelectionDescription.suffix = $"{Locale.Get("K45_WTS_CURRENTLY_USING")}: {Locale.Get("K45_WTS_CONFIGURATIONSOURCE", source.ToString())}";
                 EditingInstance = target;
                 CurrentConfigurationSource = source;
-                EventOnVehicleSelectionChanged?.Invoke(EditingInstance, CurrentConfigurationSource);
+                EventOnHwTypeSelectionChanged?.Invoke(EditingInstance, CurrentConfigurationSource);
 
                 m_btnNew.isVisible = CurrentConfigurationSource != ConfigurationSource.CITY;
                 m_btnCopyToCity.isVisible = CurrentConfigurationSource != ConfigurationSource.CITY && CurrentConfigurationSource != ConfigurationSource.NONE;
                 m_btnDelete.isVisible = CurrentConfigurationSource == ConfigurationSource.CITY;
                 m_btnExport.isVisible = CurrentConfigurationSource == ConfigurationSource.CITY;
-                m_btnSteam.isVisible = CurrentConfigurationSource == ConfigurationSource.CITY && CurrentVehicleInfo.name.EndsWith("_Data");
                 OnTabChange(0);
             }
-            m_editArea.isVisible = CurrentVehicleInfo != null && CurrentConfigurationSource == ConfigurationSource.CITY;
-            m_cantEditText.isVisible = CurrentConfigurationSource == ConfigurationSource.ASSET || CurrentConfigurationSource == ConfigurationSource.GLOBAL;
-            m_plusButton.isVisible = CurrentVehicleInfo != null && CurrentConfigurationSource == ConfigurationSource.CITY;
-            m_editTabstrip.isVisible = CurrentVehicleInfo != null && CurrentConfigurationSource != ConfigurationSource.NONE;
-            m_btnCopy.isVisible = CurrentVehicleInfo != null;
+            m_editArea.isVisible = CurrentSelection != null && CurrentConfigurationSource == ConfigurationSource.CITY;
+            m_cantEditText.isVisible = CurrentConfigurationSource == ConfigurationSource.GLOBAL;
+            m_plusButton.isVisible = CurrentSelection != null && CurrentConfigurationSource == ConfigurationSource.CITY;
+            m_editTabstrip.isVisible = CurrentSelection != null && CurrentConfigurationSource != ConfigurationSource.NONE;
+            m_btnCopy.isVisible = CurrentSelection != null && CurrentConfigurationSource != ConfigurationSource.NONE;
             m_btnPaste.isVisible = m_clipboard != null && CurrentConfigurationSource == ConfigurationSource.CITY;
         }
 
-        private string OnVehicleNameSelected(string input, int arg1, string[] arg2)
+        private string OnHwTypeSelected(string input, int arg1, string[] arg2)
         {
-            string result;
-            if (arg1 < 0)
-            {
-                result = input;
-            }
-            else
-            {
-                result = arg2[arg1];
-            }
-
-            CurrentVehicleInfo = VehiclesIndexes.instance.PrefabsLoaded.TryGetValue(result, out VehicleInfo info) ? info : null;
-            ReloadVehicle();
-            return CurrentVehicleInfo is null ? "" : result;
+            string result = arg1 < 0 ? input : arg2[arg1];
+            CurrentSelection = WriteTheSignsMod.Controller.ConnectorADR.ListAllAvailableHighwayTypes(result).Contains(result) ? result : null;
+            ReloadShield();
+            return CurrentSelection is null ? "" : result;
         }
 
         private void OnTabChange(int idx)
@@ -312,22 +263,21 @@ namespace Klyte.WriteTheSigns.UI
             m_textInfoEditor.isVisible = CurrentTab != 0;
             CurrentTabChanged?.Invoke(idx);
             FixTabstrip();
-            Preview.ResetCamera();
+            Preview.ReloadData();
 
         }
 
         private void AddTabToItem(UIComponent x, UIMouseEventParameter y)
         {
-            var newItem = new BoardTextDescriptorGeneralXml
+            var newItem = new ImageLayerTextDescriptorXml
             {
                 SaveName = $"New text"
             };
-            EditingInstance.TextDescriptors = EditingInstance.TextDescriptors.Union(new BoardTextDescriptorGeneralXml[] { newItem
-            }).ToArray();
+            EditingInstance.TextDescriptors.Add(newItem);
             FixTabstrip();
         }
 
-        private const string TAB_TEMPLATE_NAME = "K45_WTS_TabTemplateVehicle";
+        private const string TAB_TEMPLATE_NAME = "K45_WTS_TabTemplateHighwayShield";
 
         private void CreateTabTemplate()
         {
@@ -339,8 +289,8 @@ namespace Klyte.WriteTheSigns.UI
 
         public void FixTabstrip()
         {
-            m_tabs.SetItemCount(EditingInstance?.TextDescriptors?.Length ?? 0);
-            for (int i = 0; i < (EditingInstance?.TextDescriptors?.Length ?? 0); i++)
+            m_tabs.SetItemCount(EditingInstance?.TextDescriptors?.Count ?? 0);
+            for (int i = 0; i < (EditingInstance?.TextDescriptors?.Count ?? 0); i++)
             {
                 var but = m_tabs.items[i];
                 if (but.stringUserData.IsNullOrWhiteSpace())
@@ -366,30 +316,15 @@ namespace Klyte.WriteTheSigns.UI
                 {
                     if (btn != m_plusButton)
                     {
-                        if (btn.zOrder == CurrentTab)
-                        {
-                            btn.state = UIButton.ButtonState.Focused;
-                        }
-                        else
-                        {
-                            btn.state = UIButton.ButtonState.Normal;
-                        }
+                        btn.state = btn.zOrder == CurrentTab ? UIButton.ButtonState.Focused : UIButton.ButtonState.Normal;
                     }
                 }
                 foreach (UIButton btn in m_orderedRulesList.GetComponentsInChildren<UIButton>())
                 {
-                    if (btn.zOrder == CurrentTab - 1)
-                    {
-                        btn.state = UIButton.ButtonState.Focused;
-                    }
-                    else
-                    {
-                        btn.state = UIButton.ButtonState.Normal;
-                    }
+                    btn.state = btn.zOrder == CurrentTab - 1 ? UIButton.ButtonState.Focused : UIButton.ButtonState.Normal;
                 }
             }
         }
-
     }
 
 }
