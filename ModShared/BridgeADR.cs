@@ -14,6 +14,8 @@ namespace Klyte.WriteTheSigns.ModShared
             AdrFacade.Instance.EventDistrictChanged += WTSController.OnDistrictChanged;
             AdrFacade.Instance.EventBuildingNameStrategyChanged += () => WTSController.OnBuildingNameChanged(null);
             AdrFacade.Instance.EventPostalCodeChanged += WTSController.OnPostalCodeChanged;
+            AdrFacade.Instance.EventHighwaySeedChanged += (x) => WriteTheSignsMod.Controller.HighwayShieldsAtlasLibrary.PurgeShields();
+            AdrFacade.Instance.EventHighwaysChanged += WriteTheSignsMod.Controller.HighwayShieldsAtlasLibrary.PurgeShields;
         }
 
         public override bool GetAddressStreetAndNumber(Vector3 sidewalk, Vector3 midPosBuilding, out int number, out string streetName) => AdrFacade.GetStreetAndNumber(sidewalk, midPosBuilding, out streetName, out number);
