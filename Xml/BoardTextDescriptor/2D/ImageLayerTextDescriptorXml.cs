@@ -1,4 +1,5 @@
 ﻿using Klyte.Commons.Interfaces;
+using Klyte.Commons.Utils;
 using System.Xml;
 using System.Xml.Serialization;
 using UnityEngine;
@@ -109,7 +110,7 @@ namespace Klyte.WriteTheSigns.Xml
                     break;
                 case TextType.GameSprite:
                     text = null;
-                    break;
+                    return true;
                 case TextType.CityName:
                     text = SimulationManager.instance.m_metaData.m_CityName;
                     break;
@@ -129,7 +130,7 @@ namespace Klyte.WriteTheSigns.Xml
                     text = null;
                     return false;
             }
-            text = $"{m_prefix}{text}{m_suffix}";
+            text = $"{m_prefix}{text}{m_suffix}".TrimToNull();
             return true;
         }
     }

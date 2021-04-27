@@ -157,12 +157,12 @@ namespace Klyte.WriteTheSigns.Sprites
             else
             {
 
-                int shieldHeight = spriteInfo.texture.height;
-                int shieldWidth = spriteInfo.texture.width;
-                var shieldTexture = new Texture2D(shieldWidth, shieldHeight);
+                int shieldHeight = WTSAtlasLoadingUtils.MAX_SIZE_IMAGE_IMPORT;
+                int shieldWidth = WTSAtlasLoadingUtils.MAX_SIZE_IMAGE_IMPORT;
+                var shieldTexture = new Texture2D(spriteInfo.texture.width, spriteInfo.texture.height);
                 var targetColor = descriptor.BackgroundColorIsFromHighway && parameters.hwColor != default ? parameters.hwColor : descriptor.BackgroundColor;
                 shieldTexture.SetPixels(spriteInfo.texture.GetPixels().Select(x => x.MultiplyChannelsButAlpha(targetColor)).ToArray());
-                TextureScaler.scale(shieldTexture, WTSAtlasLoadingUtils.MAX_SIZE_IMAGE_IMPORT, WTSAtlasLoadingUtils.MAX_SIZE_IMAGE_IMPORT);
+                TextureScaler.scale(shieldTexture, shieldWidth, shieldHeight);
                 Color[] formTexturePixels = shieldTexture.GetPixels();
 
                 foreach (var textDescriptor in descriptor.TextDescriptors)
