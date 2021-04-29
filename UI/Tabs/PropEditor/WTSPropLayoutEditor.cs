@@ -1,7 +1,7 @@
 ﻿using ColossalFramework;
 using ColossalFramework.Globalization;
 using ColossalFramework.UI;
-using Klyte.Commons.Extensors;
+using Klyte.Commons.Extensions;
 using Klyte.Commons.UI.SpriteNames;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Data;
@@ -38,7 +38,6 @@ namespace Klyte.WriteTheSigns.UI
         #region Mid bar controls
         private UIScrollablePanel m_editTabstrip;
         private UIButton m_plusButton;
-        private WTSPropLayoutEditorPreview m_propPreview;
         #endregion
         #region Bottom bar panels
         private UIPanel m_basicInfoEditor;
@@ -55,12 +54,14 @@ namespace Klyte.WriteTheSigns.UI
             get => m_currentInfo;
             set {
                 m_currentInfo = value;
-                EditingInstance.m_propName = value?.name;
-                m_propPreview.ResetCamera();
+                EditingInstance.PropName = value?.name;
+                PropPreview.ResetCamera();
             }
         }
 
         internal Color? CurrentSelectedColor => EditingInstance.FixedColor;
+
+        internal WTSPropLayoutEditorPreview PropPreview { get; private set; }
 
         internal event Action<int> CurrentTabChanged;
 
@@ -99,7 +100,7 @@ namespace Klyte.WriteTheSigns.UI
 
 
             KlyteMonoUtils.CreateUIElement(out UIPanel previewContainer, m_middleBar.transform, "previewContainer", new UnityEngine.Vector4(0, 0, m_middleBar.width * .6f, m_middleBar.height - m_middleBar.padding.vertical));
-            m_propPreview = previewContainer.gameObject.AddComponent<WTSPropLayoutEditorPreview>();
+            PropPreview = previewContainer.gameObject.AddComponent<WTSPropLayoutEditorPreview>();
 
 
             KlyteMonoUtils.CreateScrollPanel(m_middleBar, out m_editTabstrip, out _, m_middleBar.width - previewContainer.width - m_middleBar.padding.horizontal - (m_middleBar.autoLayoutPadding.horizontal * 2) - 20, 300);

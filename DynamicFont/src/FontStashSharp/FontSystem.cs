@@ -22,10 +22,22 @@ namespace FontStashSharp
 
         private Dictionary<string, BasicRenderInformation> m_textCache = new Dictionary<string, BasicRenderInformation>();
 
+        internal long GetCacheSize()
+        {
+            long size = 0;
+            foreach (var bri in m_textCache.Values)
+            {
+                size += bri.GetSize();
+            }
+
+            return size;
+        }
+
         public int FontHeight
         {
             get => _fontHeight;
-            set {
+            set
+            {
                 _fontHeight = value;
                 foreach (Font f in _fonts)
                 {
@@ -46,7 +58,8 @@ namespace FontStashSharp
 
         public FontAtlas CurrentAtlas
         {
-            get {
+            get
+            {
                 if (_currentAtlas == null)
                 {
                     _currentAtlas = new FontAtlas(Mathf.RoundToInt(_size.x), Mathf.RoundToInt(_size.y), 256);
@@ -162,7 +175,62 @@ namespace FontStashSharp
             return true;
         }
 
-        private IEnumerator WriteTextureCoroutine(float x, float y, string str, Vector3 scale, UIHorizontalAlignment alignment)
+        private string ToFilteredString(Dictionary<int, FontGlyph> glyphs, string str, out bool hasResetted)
+        {
+            if (str == null)
+            {
+                throw new ArgumentNullException("str");
+            }
+
+            var result = "";
+            hasResetted = false;
+            for (int i = 0; i < str.Length; i++)
+            {
+                var code = char.ConvertToUtf32(str, i);
+                var glyph = GetGlyph(glyphs, code, out hasResetted, true);
+                if (hasResetted)
+                {
+                    return null;
+                }
+                if (glyph is null)
+                {
+                    if (!char.ConvertFromUtf32(code).IsNormalized(System.Text.NormalizationForm.FormKD))
+                    {
+                        var normalizedStr = char.ConvertFromUtf32(code).Normalize(System.Text.NormalizationForm.FormKD);
+                        for (int j = 0; j < normalizedStr.Length; j++)
+                        {
+                            var codeJ = normalizedStr[j];
+                            var glyphJ = GetGlyph(glyphs, codeJ, out hasResetted, true);
+                            if (hasResetted)
+                            {
+                                return null;
+                            }
+                            if (!(glyphJ is null))
+                            {
+                                result += normalizedStr[j];
+                            }
+                        }
+                    }
+                    if (char.IsHighSurrogate(str[i]))
+                    {
+                        i++;
+                    }
+                }
+                else
+                {
+                    result += str[i];
+                    if (char.IsHighSurrogate(str[i]))
+                    {
+                        result += str[++i];
+                    }
+                }
+            }
+            return result.Trim();
+        }
+
+
+
+        private IEnumerator WriteTextureCoroutine(float x, float y, string strOr, Vector3 scale, UIHorizontalAlignment alignment)
         {
             yield return 0;
             while (!CheckCoroutineCount())
@@ -177,6 +245,22 @@ namespace FontStashSharp
             };
 
             Dictionary<int, FontGlyph> glyphs = GetGlyphsCollection(FontHeight);
+            var str = ToFilteredString(glyphs, strOr, out bool hasResetted);
+            if (hasResetted)
+            {
+                yield break;
+            }
+            if (string.IsNullOrEmpty(str))
+            {
+                if (m_textCache.TryGetValue("", out bri) && m_textCache.TryGetValue(strOr, out BasicRenderInformation currentVal3) && currentVal3 == null)
+                {
+                    m_textCache[strOr] = bri;
+                }
+                else
+                {
+                    m_textCache.Remove(strOr);
+                }
+            }
 
             // Determine ascent and lineHeight from first character
             float ascent = 0, lineHeight = 0;
@@ -233,7 +317,7 @@ namespace FontStashSharp
                         continue;
                     }
 
-                    FontGlyph glyph = GetGlyph(glyphs, codepoint, out bool hasResetted);
+                    FontGlyph glyph = GetGlyph(glyphs, codepoint, out hasResetted);
                     if (hasResetted)
                     {
                         yield break;
@@ -243,7 +327,7 @@ namespace FontStashSharp
                         continue;
                     }
 
-                    GetQuad(glyph, prevGlyph, Spacing, ref originX, ref originY, ref q);
+                    GetQuad(glyph, prevGlyph, Spacing, 1, ref originX, ref originY, ref q);
                     bri.m_YAxisOverflows.min = Mathf.Min(bri.m_YAxisOverflows.min, glyph.YOffset - glyph.Font.Descent + glyph.Font.Ascent);
                     bri.m_YAxisOverflows.max = Mathf.Max(bri.m_YAxisOverflows.max, glyph.Bounds.height + glyph.YOffset - glyph.Font.Ascent + glyph.Font.Descent);
 
@@ -295,13 +379,13 @@ namespace FontStashSharp
             bri.m_generatedMaterial = _currentAtlas.Material;
 
             bri.m_sizeMetersUnscaled = bri.m_mesh.bounds.size;
-            if (m_textCache.TryGetValue(str, out BasicRenderInformation currentVal) && currentVal == null)
+            if (m_textCache.TryGetValue(strOr, out BasicRenderInformation currentVal) && currentVal == null)
             {
-                m_textCache[str] = bri;
+                m_textCache[strOr] = bri;
             }
             else
             {
-                m_textCache.Remove(str);
+                m_textCache.Remove(strOr);
             }
             yield break;
         }
@@ -380,7 +464,7 @@ namespace FontStashSharp
             uvs.Add(new Vector2(glyph.Bounds.left / _currentAtlas.Width, glyph.Bounds.top / _currentAtlas.Height));
             uvs.Add(new Vector2(glyph.Bounds.right / _currentAtlas.Width, glyph.Bounds.top / _currentAtlas.Height));
         }
-        public float TextBounds(float x, float y, string str, ref Bounds bounds)
+        public float TextBounds(float x, float y, string str, float charSpacingFactor, ref Bounds bounds)
         {
             if (string.IsNullOrEmpty(str))
             {
@@ -438,7 +522,7 @@ namespace FontStashSharp
                     continue;
                 }
 
-                GetQuad(glyph, prevGlyph, Spacing, ref x, ref y, ref q);
+                GetQuad(glyph, prevGlyph, Spacing, i == str.Length - 1 ? 1f : charSpacingFactor, ref x, ref y, ref q);
                 if (q.X0 < minx)
                 {
                     minx = q.X0;
@@ -464,10 +548,10 @@ namespace FontStashSharp
 
             advance = x - startx;
 
-            bounds.X = minx;
-            bounds.Y = miny;
-            bounds.X2 = maxx;
-            bounds.Y2 = maxy;
+            bounds.minX = minx;
+            bounds.minY = miny;
+            bounds.maxX = maxx;
+            bounds.maxY = maxy;
 
             return advance;
         }
@@ -602,10 +686,10 @@ namespace FontStashSharp
             return glyph;
         }
 
-        private FontGlyph GetGlyph(Dictionary<int, FontGlyph> glyphs, int codepoint, out bool hasResetted)
+        private FontGlyph GetGlyph(Dictionary<int, FontGlyph> glyphs, int codepoint, out bool hasResetted, bool ignoreDefaultChar = false)
         {
             FontGlyph result = GetGlyphInternal(glyphs, codepoint, out hasResetted);
-            if (result == null && DefaultCharacter != null)
+            if (!ignoreDefaultChar && result == null && DefaultCharacter != null)
             {
                 result = GetGlyphInternal(glyphs, DefaultCharacter.Value, out hasResetted);
             }
@@ -613,7 +697,7 @@ namespace FontStashSharp
             return result;
         }
 
-        private void GetQuad(FontGlyph glyph, FontGlyph prevGlyph, float spacing, ref float x, ref float y, ref FontGlyphSquad q)
+        private void GetQuad(FontGlyph glyph, FontGlyph prevGlyph, float spacing, float spacingFactor, ref float x, ref float y, ref FontGlyphSquad q)
         {
             if (prevGlyph != null)
             {
@@ -623,7 +707,7 @@ namespace FontStashSharp
                     adv = prevGlyph.GetKerning(glyph) * glyph.Font.Scale;
                 }
 
-                x += (int)(adv + spacing + 0.5f);
+                x += (int)((adv + spacing) * spacingFactor + 0.5f);
             }
 
             float rx = x + glyph.XOffset;
@@ -637,13 +721,18 @@ namespace FontStashSharp
             q.S1 = glyph.Bounds.xMax * _itw;
             q.T1 = glyph.Bounds.yMax * _ith;
 
-            x += (int)(glyph.XAdvance / 10.0f + 0.5f);
+            x += (int)((glyph.XAdvance / 10.0f * spacingFactor) + 0.5f);
         }
 
 
 
-        public Texture2D WriteTexture2D(string str)
+        public Texture2D WriteTexture2D(string str, float charSpacingFactor)
         {
+            if (charSpacingFactor < 0)
+            {
+                charSpacingFactor = 0;
+            }
+
             Dictionary<int, FontGlyph> glyphs = GetGlyphsCollection(FontHeight);
             // Determine ascent and lineHeight from first character
             float ascent = 0, lineHeight = 0;
@@ -670,9 +759,9 @@ namespace FontStashSharp
             originY += ascent;
 
             var bounds = new Bounds();
-            TextBounds(0, 0, str, ref bounds);
+            TextBounds(0, 0, str, charSpacingFactor, ref bounds);
 
-            var targetTexture = new Texture2D(Mathf.CeilToInt((bounds.X2 - bounds.X)), Mathf.CeilToInt((bounds.Y2 - bounds.Y)), TextureFormat.ARGB32, false);
+            var targetTexture = new Texture2D(Mathf.CeilToInt((bounds.maxX - bounds.minX)), Mathf.CeilToInt((bounds.maxY - bounds.minY)), TextureFormat.ARGB32, false);
             targetTexture.SetPixels(new Color[targetTexture.width * targetTexture.height]);
 
             FontGlyph prevGlyph = null;
@@ -694,7 +783,7 @@ namespace FontStashSharp
                     continue;
                 }
 
-                GetQuad(glyph, prevGlyph, Spacing, ref originX, ref originY, ref q);
+                GetQuad(glyph, prevGlyph, Spacing, charSpacingFactor, ref originX, ref originY, ref q);
 
                 q.X0 = (int)(q.X0);
                 q.X1 = (int)(q.X1);
@@ -704,7 +793,14 @@ namespace FontStashSharp
 
                 Color[] arr = CurrentAtlas.GetGlyphColors(glyph);
 
-                MergeTextures(targetTexture, arr, Mathf.RoundToInt(q.X0 - bounds.X), Mathf.RoundToInt(q.Y0 - bounds.Y), (int)(q.X1 - q.X0), (int)(q.Y1 - q.Y0), false, true);
+                MergeTextures(tex: targetTexture,
+                              colors: arr,
+                              startX: Mathf.RoundToInt(q.X0 - bounds.minX),
+                              startY: Mathf.RoundToInt(bounds.maxY - q.Y1),
+                              sizeX: (int)(q.X1 - q.X0),
+                              sizeY: (int)(q.Y1 - q.Y0),
+                              swapXY: false,
+                              flipVertical: true);
 
                 prevGlyph = glyph;
             }

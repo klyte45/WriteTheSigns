@@ -1,8 +1,9 @@
-﻿using ColossalFramework.UI;
+﻿using ColossalFramework;
 using Klyte.Commons.Interfaces;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Data;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Xml;
 using System.Xml.Serialization;
@@ -18,7 +19,8 @@ namespace Klyte.WriteTheSigns.Xml
         [XmlAttribute("inverted")]
         public bool InvertSign
         {
-            get => m_invertSign; set {
+            get => m_invertSign; set
+            {
                 m_invertSign = value;
                 OnChangeMatrixData();
             }
@@ -26,7 +28,8 @@ namespace Klyte.WriteTheSigns.Xml
         [XmlAttribute("segmentPosition")]
         public float SegmentPosition
         {
-            get => m_segmentPosition; set {
+            get => m_segmentPosition; set
+            {
                 m_segmentPosition = value;
                 OnChangeMatrixData();
             }
@@ -36,7 +39,8 @@ namespace Klyte.WriteTheSigns.Xml
         public string PropLayoutName
         {
             get => Descriptor?.SaveName;
-            set {
+            set
+            {
                 m_propLayoutName = value;
                 m_descriptor = null;
                 OnChangeMatrixData();
@@ -55,7 +59,8 @@ namespace Klyte.WriteTheSigns.Xml
         [XmlIgnore]
         public BoardDescriptorGeneralXml Descriptor
         {
-            get {
+            get
+            {
                 if (m_descriptor == null && m_propLayoutName != null)
                 {
                     m_descriptor = WTSPropLayoutData.Instance.Get(m_propLayoutName);
@@ -67,14 +72,12 @@ namespace Klyte.WriteTheSigns.Xml
                 }
                 return m_descriptor;
             }
-            internal set {
+            internal set
+            {
                 m_propLayoutName = value?.SaveName;
                 m_descriptor = WTSPropLayoutData.Instance.Get(m_propLayoutName);
             }
         }
-        public string[] m_textParameters = new string[TEXT_PARAMETERS_COUNT];
-
-        public string GetTextParameter(int idx) => m_textParameters?[idx];
 
 
         [XmlAttribute("simplePropName")]
@@ -82,7 +85,8 @@ namespace Klyte.WriteTheSigns.Xml
         [XmlIgnore]
         public PropInfo SimpleProp
         {
-            get {
+            get
+            {
                 if (m_simplePropName != null && m_simpleProp?.name != m_simplePropName)
                 {
                     m_simpleProp = PrefabCollection<PropInfo>.FindLoaded(m_simplePropName);
@@ -93,105 +97,86 @@ namespace Klyte.WriteTheSigns.Xml
                 }
                 return m_simpleProp;
             }
-            internal set {
+            internal set
+            {
                 m_simplePropName = value?.name;
                 m_simpleProp = value;
             }
         }
         [XmlIgnore]
         private PropInfo m_simpleProp;
-        private string[] m_parameterizedValidImages;
-        private string[] m_indexedValidImages;
 
         [XmlAttribute("saveName")]
         public string SaveName { get; set; }
-        [XmlAttribute("textParameter1")] public string TextParameter1 { get => null; set => SetTextParameter(1, value); }
-        [XmlAttribute("textParameter2")] public string TextParameter2 { get => null; set => SetTextParameter(2, value); }
-        [XmlAttribute("textParameter3")] public string TextParameter3 { get => null; set => SetTextParameter(3, value); }
-        [XmlAttribute("textParameter4")] public string TextParameter4 { get => null; set => SetTextParameter(4, value); }
-        [XmlAttribute("textParameter5")] public string TextParameter5 { get => null; set => SetTextParameter(5, value); }
-        [XmlAttribute("textParameter6")] public string TextParameter6 { get => null; set => SetTextParameter(6, value); }
-        [XmlAttribute("textParameter7")] public string TextParameter7 { get => null; set => SetTextParameter(7, value); }
-        [XmlAttribute("textParameter8")] public string TextParameter8 { get => null; set => SetTextParameter(8, value); }
+        [XmlAttribute("textParameter1")] [Obsolete("Legacy Beta 1. Compat only!", true)] public string TextParameter1 { get => null; set => SetTextParameter(1, value); }
+        [XmlAttribute("textParameter2")] [Obsolete("Legacy Beta 1. Compat only!", true)] public string TextParameter2 { get => null; set => SetTextParameter(2, value); }
+        [XmlAttribute("textParameter3")] [Obsolete("Legacy Beta 1. Compat only!", true)] public string TextParameter3 { get => null; set => SetTextParameter(3, value); }
+        [XmlAttribute("textParameter4")] [Obsolete("Legacy Beta 1. Compat only!", true)] public string TextParameter4 { get => null; set => SetTextParameter(4, value); }
+        [XmlAttribute("textParameter5")] [Obsolete("Legacy Beta 1. Compat only!", true)] public string TextParameter5 { get => null; set => SetTextParameter(5, value); }
+        [XmlAttribute("textParameter6")] [Obsolete("Legacy Beta 1. Compat only!", true)] public string TextParameter6 { get => null; set => SetTextParameter(6, value); }
+        [XmlAttribute("textParameter7")] [Obsolete("Legacy Beta 1. Compat only!", true)] public string TextParameter7 { get => null; set => SetTextParameter(7, value); }
+        [XmlAttribute("textParameter8")] [Obsolete("Legacy Beta 1. Compat only!", true)] public string TextParameter8 { get => null; set => SetTextParameter(8, value); }
 
 
         [XmlElement("TextParameters")]
-        [Obsolete("Used for export only!")]
+        [Obsolete("Legacy Beta < 2.1! Compat only", true)]
+        public SimpleNonSequentialList<string> Old_b2_TextParameters
+        {
+            get => null;
+            set
+            {
+                foreach (var k in value?.Keys)
+                {
+                    if (k < m_textParameters.Length)
+                    {
+                        m_textParameters[k] = new TextParameterWrapper(value[k], true);
+                    }
+                }
+            }
+        }
+
+        [XmlElement("TextParametersV3")]
+        [Obsolete("Export only!", true)]
         public SimpleNonSequentialList<string> TextParameters
         {
-            get {
+            get
+            {
                 var res = new SimpleNonSequentialList<string>();
                 for (int i = 0; i < m_textParameters.Length; i++)
                 {
                     if (m_textParameters[i] != null)
                     {
-                        res[i] = m_textParameters[i];
+                        res[i] = m_textParameters[i].ToString();
                     }
                 }
                 return res;
             }
-            set {
+            set
+            {
                 foreach (var k in value?.Keys)
                 {
-                    m_textParameters[k] = value[k];
-                }
-            }
-        }
-
-        [XmlIgnore]
-        public string[] ParameterizedValidImages
-        {
-            get {
-                if (m_parameterizedValidImages == null)
-                {
-                    if (m_textParameters == null)
+                    if (k < m_textParameters.Length)
                     {
-                        m_parameterizedValidImages = new string[0];
-                    }
-                    else
-                    {
-                        var sprites = UIView.GetAView().defaultAtlas.spriteNames;
-                        m_parameterizedValidImages = m_textParameters.Where(x => x != null && x.Length >= 4 && x.ToUpper().StartsWith("IMG_") && sprites.Contains(x.Substring(4))).Select(x => x.Substring(4)).ToArray();
+                        m_textParameters[k] = new TextParameterWrapper(value[k]);
                     }
                 }
-                return m_parameterizedValidImages;
             }
-            private set => m_parameterizedValidImages = value;
-        }
-        [XmlIgnore]
-        public string[] IndexedValidImages
-        {
-            get {
-                if (m_indexedValidImages == null)
-                {
-                    m_indexedValidImages = new string[TEXT_PARAMETERS_COUNT];
-                    if (m_textParameters != null)
-                    {
-                        var sprites = UIView.GetAView().defaultAtlas.spriteNames;
-                        for (int i = 0; i < TEXT_PARAMETERS_COUNT; i++)
-                        {
-                            var x = m_textParameters[i];
-                            m_indexedValidImages[i] = x != null && x.Length >= 4 && x.ToUpper().StartsWith("IMG_") && sprites.Contains(x.Substring(4)) ? x.Substring(4) : null;
-                        }
-                    }
-                }
-                return m_indexedValidImages;
-            }
-            private set => m_indexedValidImages = value;
         }
 
         public void SetTextParameter(int idx, string val)
         {
-            if (m_textParameters == null) { m_textParameters = (new string[TEXT_PARAMETERS_COUNT]); }
-            m_textParameters[idx] = val;
-            InvalidateImageParamCache();
+            if (m_textParameters == null)
+            {
+                m_textParameters = new TextParameterWrapper[TEXT_PARAMETERS_COUNT];
+            }
+            m_textParameters[idx] = val.IsNullOrWhiteSpace() ? null : new TextParameterWrapper(val);
         }
 
-        public void InvalidateImageParamCache()
-        {
-            m_parameterizedValidImages = null;
-            m_indexedValidImages = null;
-        }
+        public Dictionary<int, string[]> GetAllParametersUsed() => Descriptor?.TextDescriptors.Select(x => x.ToParameterKV()).Where(x => !(x is null)).GroupBy(x => x.First).ToDictionary(x => x.Key, x => x.Select(y => y.Second).ToArray());
+
+        [XmlIgnore]
+        public TextParameterWrapper[] m_textParameters = new TextParameterWrapper[TEXT_PARAMETERS_COUNT];
+
+        public TextParameterWrapper GetTextParameter(int idx) => m_textParameters?[idx];
     }
-
 }

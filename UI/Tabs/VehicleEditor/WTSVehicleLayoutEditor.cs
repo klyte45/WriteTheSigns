@@ -2,7 +2,7 @@
 using ColossalFramework.Globalization;
 using ColossalFramework.Packaging;
 using ColossalFramework.UI;
-using Klyte.Commons.Extensors;
+using Klyte.Commons.Extensions;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Data;
 using Klyte.WriteTheSigns.Singleton;
@@ -49,7 +49,6 @@ namespace Klyte.WriteTheSigns.UI
         #region Mid bar controls
         private UIScrollablePanel m_editTabstrip;
         private UIButton m_plusButton;
-        private WTSVehicleLayoutEditorPreview m_preview;
         private UIPanel m_orderedRulesList;
         #endregion
         #region Bottom bar panels
@@ -69,6 +68,7 @@ namespace Klyte.WriteTheSigns.UI
 
         public bool LockSelection { get; private set; }
         public ConfigurationSource CurrentConfigurationSource { get; private set; }
+        internal WTSVehicleLayoutEditorPreview Preview { get; private set; }
 
         internal event Action<int> CurrentTabChanged;
 
@@ -93,20 +93,21 @@ namespace Klyte.WriteTheSigns.UI
             var m_topHelper = new UIHelperExtension(m_topBar);
 
             AddFilterableInput(Locale.Get("K45_WTS_VEHICLEEDITOR_SELECTMODEL"), m_topHelper, out m_vehicleSearch, out _, VehiclesIndexes.instance.BasicInputFiltering, OnVehicleNameSelected);
+            AddButtonInEditorRow(m_vehicleSearch, Commons.UI.SpriteNames.CommonsSpriteNames.K45_Dropper, EnableVehiclePicker, null, true, 30);
             AddButtonInEditorRow(m_vehicleSearch, Commons.UI.SpriteNames.CommonsSpriteNames.K45_QuestionMark, Help_VehicleModel, null, true, 30);
 
             AddLabel("", m_topHelper, out m_labelSelectionDescription, out m_containerSelectionDescription);
-            KlyteMonoUtils.LimitWidthAndBox(m_labelSelectionDescription, (m_topHelper.Self.width / 2), true);
+            KlyteMonoUtils.LimitWidthAndBox(m_labelSelectionDescription, (m_topHelper.Self.width / 2), out UIPanel containerBoxDescription, true);
             m_labelSelectionDescription.prefix = Locale.Get("K45_WTS_CURRENTSELECTION") + ": ";
-            m_btnReload = AddButtonInEditorRow(m_containerSelectionDescription, Commons.UI.SpriteNames.CommonsSpriteNames.K45_Reload, OnReloadDescriptors, "K45_WTS_BUILDINGEDITOR_BUTTONROWACTION_RELOADDESCRIPTORS", false);
-            m_btnSteam = AddButtonInEditorRow(m_containerSelectionDescription, Commons.UI.SpriteNames.CommonsSpriteNames.K45_Steam, OnExportAsAsset, "K45_WTS_BUILDINGEDITOR_BUTTONROWACTION_EXPORTTOASSETFOLDER", false);
-            m_btnExport = AddButtonInEditorRow(m_containerSelectionDescription, Commons.UI.SpriteNames.CommonsSpriteNames.K45_Export, OnExportAsGlobal, "K45_WTS_BUILDINGEDITOR_BUTTONROWACTION_EXPORTASGLOBAL", false);
-            m_btnLoad = AddButtonInEditorRow(m_containerSelectionDescription, Commons.UI.SpriteNames.CommonsSpriteNames.K45_Load, OnOpenGlobalFolder, "K45_WTS_BUILDINGEDITOR_BUTTONROWACTION_OPENGLOBALSFOLDER", false);
-            m_btnDelete = AddButtonInEditorRow(m_containerSelectionDescription, Commons.UI.SpriteNames.CommonsSpriteNames.K45_Delete, OnDeleteFromCity, "K45_WTS_BUILDINGEDITOR_BUTTONROWACTION_DELETEFROMCITY", false);
-            m_btnCopyToCity = AddButtonInEditorRow(m_containerSelectionDescription, Commons.UI.SpriteNames.CommonsSpriteNames.K45_Import, OnCopyToCity, "K45_WTS_BUILDINGEDITOR_BUTTONROWACTION_COPYTOCITY", false);
-            m_btnNew = AddButtonInEditorRow(m_containerSelectionDescription, Commons.UI.SpriteNames.CommonsSpriteNames.K45_New, OnCreateNewCity, "K45_WTS_BUILDINGEDITOR_BUTTONROWACTION_NEWINCITY", false);
-            m_btnCopy = AddButtonInEditorRow(m_containerSelectionDescription, Commons.UI.SpriteNames.CommonsSpriteNames.K45_Copy, OnCopyToClipboard, "K45_WTS_BUILDINGEDITOR_BUTTONROWACTION_COPYTOCLIPBOARD", false);
-            m_btnPaste = AddButtonInEditorRow(m_containerSelectionDescription, Commons.UI.SpriteNames.CommonsSpriteNames.K45_Paste, OnPasteFromClipboard, "K45_WTS_BUILDINGEDITOR_BUTTONROWACTION_PASTEFROMCLIPBOARD", false);
+            m_btnReload = AddButtonInEditorRow(containerBoxDescription, Commons.UI.SpriteNames.CommonsSpriteNames.K45_Reload, OnReloadDescriptors, "K45_WTS_BUILDINGEDITOR_BUTTONROWACTION_RELOADDESCRIPTORS", false);
+            m_btnSteam = AddButtonInEditorRow(containerBoxDescription, Commons.UI.SpriteNames.CommonsSpriteNames.K45_Steam, OnExportAsAsset, "K45_WTS_BUILDINGEDITOR_BUTTONROWACTION_EXPORTTOASSETFOLDER", false);
+            m_btnExport = AddButtonInEditorRow(containerBoxDescription, Commons.UI.SpriteNames.CommonsSpriteNames.K45_Export, OnExportAsGlobal, "K45_WTS_BUILDINGEDITOR_BUTTONROWACTION_EXPORTASGLOBAL", false);
+            m_btnLoad = AddButtonInEditorRow(containerBoxDescription, Commons.UI.SpriteNames.CommonsSpriteNames.K45_Load, OnOpenGlobalFolder, "K45_WTS_BUILDINGEDITOR_BUTTONROWACTION_OPENGLOBALSFOLDER", false);
+            m_btnDelete = AddButtonInEditorRow(containerBoxDescription, Commons.UI.SpriteNames.CommonsSpriteNames.K45_Delete, OnDeleteFromCity, "K45_WTS_BUILDINGEDITOR_BUTTONROWACTION_DELETEFROMCITY", false);
+            m_btnCopyToCity = AddButtonInEditorRow(containerBoxDescription, Commons.UI.SpriteNames.CommonsSpriteNames.K45_Import, OnCopyToCity, "K45_WTS_BUILDINGEDITOR_BUTTONROWACTION_COPYTOCITY", false);
+            m_btnNew = AddButtonInEditorRow(containerBoxDescription, Commons.UI.SpriteNames.CommonsSpriteNames.K45_New, OnCreateNewCity, "K45_WTS_BUILDINGEDITOR_BUTTONROWACTION_NEWINCITY", false);
+            m_btnCopy = AddButtonInEditorRow(containerBoxDescription, Commons.UI.SpriteNames.CommonsSpriteNames.K45_Copy, OnCopyToClipboard, "K45_WTS_BUILDINGEDITOR_BUTTONROWACTION_COPYTOCLIPBOARD", false);
+            m_btnPaste = AddButtonInEditorRow(containerBoxDescription, Commons.UI.SpriteNames.CommonsSpriteNames.K45_Paste, OnPasteFromClipboard, "K45_WTS_BUILDINGEDITOR_BUTTONROWACTION_PASTEFROMCLIPBOARD", false);
             m_btnPaste.isVisible = false;
 
 
@@ -116,7 +117,7 @@ namespace Klyte.WriteTheSigns.UI
 
 
             KlyteMonoUtils.CreateUIElement(out UIPanel previewContainer, m_middleBar.transform, "previewContainer", new UnityEngine.Vector4(0, 0, m_middleBar.width * .6f, m_middleBar.height - m_middleBar.padding.vertical));
-            m_preview = previewContainer.gameObject.AddComponent<WTSVehicleLayoutEditorPreview>();
+            Preview = previewContainer.gameObject.AddComponent<WTSVehicleLayoutEditorPreview>();
 
 
             KlyteMonoUtils.CreateScrollPanel(m_middleBar, out m_editTabstrip, out _, m_middleBar.width - previewContainer.width - m_middleBar.padding.horizontal - (m_middleBar.autoLayoutPadding.horizontal * 2) - 20, 300);
@@ -151,6 +152,20 @@ namespace Klyte.WriteTheSigns.UI
             OnTabChange(0);
 
         }
+
+        private void EnableVehiclePicker()
+        {
+            CurrentVehicleInfo = null;
+            ReloadVehicle();
+            WriteTheSignsMod.Controller.VehicleEditorToolInstance.OnVehicleSelect += OnVehiclePicked;
+            WriteTheSignsMod.Controller.VehicleEditorToolInstance.OnParkedVehicleSelect += OnParkedVehiclePicked;
+            WriteTheSignsMod.Controller.VehicleEditorToolInstance.enabled = true;
+        }
+
+        private void OnParkedVehiclePicked(ushort obj) => m_vehicleSearch.text = OnVehicleNameSelected(VehiclesIndexes.GetListName(VehicleManager.instance.m_parkedVehicles.m_buffer[obj].Info), -1, null);
+
+        private void OnVehiclePicked(ushort obj) => m_vehicleSearch.text = OnVehicleNameSelected(VehiclesIndexes.GetListName(VehicleManager.instance.m_vehicles.m_buffer[obj].Info), -1, null);
+
 
         private void Help_VehicleModel() => K45DialogControl.ShowModalHelp("VehicleLayouts.General", Locale.Get("K45_WTS_VEHICLEEDITOR_HELPTITLE"), 0);
 
@@ -193,26 +208,23 @@ namespace Klyte.WriteTheSigns.UI
         private void OnExportAsGlobal() => ExportTo(Path.Combine(WTSController.DefaultVehiclesConfigurationFolder, $"{WTSController.m_defaultFileNameVehiclesXml}_{PackageManager.FindAssetByName(CurrentVehicleInfo.name)?.package.packageMainAsset ?? CurrentVehicleInfo.name}.xml"));
 
         private void OnOpenGlobalFolder() => ColossalFramework.Utils.OpenInFileBrowser(WTSController.DefaultVehiclesConfigurationFolder);
-        private void OnDeleteFromCity()
+        private void OnDeleteFromCity() => K45DialogControl.ShowModal(new K45DialogControl.BindProperties
         {
-            K45DialogControl.ShowModal(new K45DialogControl.BindProperties
+            message = Locale.Get("K45_WTS_PROMPTDELETEBUILDINGLAYOUT"),
+            showButton1 = true,
+            showButton2 = true,
+            textButton1 = Locale.Get("YES"),
+            textButton2 = Locale.Get("NO"),
+        }, (x) =>
+        {
+            if (x == 1)
             {
-                message = Locale.Get("K45_WTS_PROMPTDELETEBUILDINGLAYOUT"),
-                showButton1 = true,
-                showButton2 = true,
-                textButton1 = Locale.Get("YES"),
-                textButton2 = Locale.Get("NO"),
-            }, (x) =>
-            {
-                if (x == 1)
-                {
-                    WTSVehicleData.Instance.CityDescriptors.Remove(CurrentVehicleInfo.name);
-                    ReloadVehicle();
-                }
+                WTSVehicleData.Instance.CityDescriptors.Remove(CurrentVehicleInfo.name);
+                ReloadVehicle();
+            }
 
-                return true;
-            });
-        }
+            return true;
+        });
 
         internal void RemoveTabFromItem(int tabToEdit)
         {
@@ -231,7 +243,13 @@ namespace Klyte.WriteTheSigns.UI
             m_btnPaste.isVisible = CurrentConfigurationSource == ConfigurationSource.CITY;
         }
 
-        private void OnPasteFromClipboard() => EditingInstance = XmlUtils.DefaultXmlDeserialize<LayoutDescriptorVehicleXml>(m_clipboard);
+        private void OnPasteFromClipboard()
+        {
+            var temp = XmlUtils.DefaultXmlDeserialize<LayoutDescriptorVehicleXml>(m_clipboard);
+            temp.VehicleAssetName = CurrentVehicleInfo.name;
+            EditingInstance = temp;
+        }
+
         private void OnCreateNewCity()
         {
             WTSVehicleData.Instance.CityDescriptors[CurrentVehicleInfo.name] = new LayoutDescriptorVehicleXml
@@ -272,16 +290,19 @@ namespace Klyte.WriteTheSigns.UI
 
         private string OnVehicleNameSelected(string input, int arg1, string[] arg2)
         {
+            string result;
             if (arg1 < 0)
             {
-                CurrentVehicleInfo = null;
-                ReloadVehicle();
-                return "";
+                result = input;
             }
-            var result = arg2[arg1];
+            else
+            {
+                result = arg2[arg1];
+            }
+
             CurrentVehicleInfo = VehiclesIndexes.instance.PrefabsLoaded.TryGetValue(result, out VehicleInfo info) ? info : null;
             ReloadVehicle();
-            return result;
+            return CurrentVehicleInfo is null ? "" : result;
         }
 
         private void OnTabChange(int idx)
@@ -291,7 +312,7 @@ namespace Klyte.WriteTheSigns.UI
             m_textInfoEditor.isVisible = CurrentTab != 0;
             CurrentTabChanged?.Invoke(idx);
             FixTabstrip();
-            m_preview.ResetCamera();
+            Preview.ResetCamera();
 
         }
 

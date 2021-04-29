@@ -1,6 +1,10 @@
-﻿using Klyte.Commons.Interfaces;
+﻿using ColossalFramework;
+using Klyte.Commons.Interfaces;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Data;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Xml;
 using System.Xml.Serialization;
 
@@ -8,8 +12,10 @@ namespace Klyte.WriteTheSigns.Xml
 {
 
     public class BoardInstanceBuildingXml : BoardInstanceXml, ILibable
-
     {
+        public const int TEXT_PARAMETERS_COUNT = 10;
+
+
         [XmlArray("platformOrder")]
         [XmlArrayItem("p")]
         public int[] m_platforms = new int[0];
@@ -19,7 +25,8 @@ namespace Klyte.WriteTheSigns.Xml
         [XmlElement("arrayRepeatOffset")]
         public Vector3Xml ArrayRepeat
         {
-            get => m_arrayRepeat; set {
+            get => m_arrayRepeat; set
+            {
                 if (value != m_arrayRepeat)
                 {
                     OnChangeMatrixData();
@@ -33,7 +40,8 @@ namespace Klyte.WriteTheSigns.Xml
         public int ArrayRepeatTimes
         {
             get => m_arrayRepeatTimes;
-            set {
+            set
+            {
                 if (value != m_arrayRepeatTimes)
                 {
                     OnChangeMatrixData();
@@ -53,7 +61,8 @@ namespace Klyte.WriteTheSigns.Xml
         [XmlAttribute("propLayoutName")]
         public string PropLayoutName
         {
-            get => m_propLayoutName; set {
+            get => m_propLayoutName; set
+            {
                 m_propLayoutName = value;
                 m_descriptor = null;
             }
@@ -66,7 +75,8 @@ namespace Klyte.WriteTheSigns.Xml
         [XmlIgnore]
         public BoardDescriptorGeneralXml Descriptor
         {
-            get {
+            get
+            {
                 if (m_descriptor == null && m_propLayoutName != null)
                 {
                     if (!TryGetDescriptor(m_propLayoutName, out m_descriptor) || m_descriptor.m_allowedRenderClass != Rendering.TextRenderingClass.Buildings)
@@ -77,7 +87,8 @@ namespace Klyte.WriteTheSigns.Xml
                 }
                 return m_descriptor;
             }
-            internal set {
+            internal set
+            {
                 m_propLayoutName = value?.SaveName;
                 m_descriptor = null;
             }
@@ -91,29 +102,28 @@ namespace Klyte.WriteTheSigns.Xml
         [XmlAttribute("subBuildingIdxPivotReference")]
         public int SubBuildingPivotReference { get; set; } = -1;
 
+        private string simplePropName;
         [XmlAttribute("simplePropName")]
-        public string m_simplePropName;
-        [XmlIgnore]
-        public PropInfo SimpleProp
+        public string SimplePropName
         {
-            get {
-                if (m_simplePropName != null && m_simpleProp?.name != m_simplePropName)
-                {
-                    m_simpleProp = PrefabCollection<PropInfo>.FindLoaded(m_simplePropName);
-                    if (m_simpleProp == null)
-                    {
-                        m_simplePropName = null;
-                    }
-                }
-                return m_simpleProp;
-            }
-            internal set {
-                m_simplePropName = value?.name;
-                m_simpleProp = null;
+            get => simplePropName; set
+            {
+                simplePropName = value;
+                m_cachedSimpleProp = value is null ? null : PrefabCollection<PropInfo>.FindLoaded(value);
             }
         }
         [XmlIgnore]
-        private PropInfo m_simpleProp;
+        public PropInfo CachedSimpleProp
+        {
+            get => m_cachedSimpleProp;
+            internal set
+            {
+                SimplePropName = value?.name;
+                m_cachedSimpleProp = value;
+            }
+        }
+        [XmlIgnore]
+        private PropInfo m_cachedSimpleProp;
         private Vector3Xml m_arrayRepeat = new Vector3Xml();
 
         [XmlIgnore]
@@ -121,21 +131,49 @@ namespace Klyte.WriteTheSigns.Xml
         {
             private get; set;
         }
-    }
 
-    public class ExportableBoardInstanceBuildingListXml : ILibable
-    {
-        public BoardInstanceBuildingXml[] Instances { get; set; }
-        public SimpleXmlDictionary<string, BoardDescriptorGeneralXml> Layouts { get; set; }
-        [XmlAttribute("saveName")]
-        public string SaveName { get; set; }
-    }
+        [XmlElement("CustomParameters")]
+        [Obsolete("Export only!", true)]
+        public SimpleNonSequentialList<string> TextParameters
+        {
+            get
+            {
+                var res = new SimpleNonSequentialList<string>();
+                for (int i = 0; i < m_textParameters.Length; i++)
+                {
+                    if (m_textParameters[i] != null)
+                    {
+                        res[i] = m_textParameters[i].ToString();
+                    }
+                }
+                return res;
+            }
+            set
+            {
+                foreach (var k in value?.Keys)
+                {
+                    if (k < m_textParameters.Length)
+                    {
+                        m_textParameters[k] = new TextParameterWrapper(value[k]);
+                    }
+                }
+            }
+        }
 
-    public enum ColoringMode
-    {
-        ByPlatform,
-        Fixed,
-        ByDistrict,
-        FromBuilding
+        public void SetTextParameter(int idx, string val)
+        {
+            if (m_textParameters == null)
+            {
+                m_textParameters = new TextParameterWrapper[TEXT_PARAMETERS_COUNT];
+            }
+            m_textParameters[idx] = val.IsNullOrWhiteSpace() ? null : new TextParameterWrapper(val);
+        }
+
+        public Dictionary<int, string[]> GetAllParametersUsed() => Descriptor?.TextDescriptors.Select(x => x.ToParameterKV()).Where(x => !(x is null)).GroupBy(x => x.First).ToDictionary(x => x.Key, x => x.Select(y => y.Second).ToArray());
+
+        [XmlIgnore]
+        public TextParameterWrapper[] m_textParameters = new TextParameterWrapper[TEXT_PARAMETERS_COUNT];
+
+        public TextParameterWrapper GetTextParameter(int idx) => m_textParameters?[idx];
     }
 }

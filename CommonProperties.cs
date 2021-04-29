@@ -4,7 +4,9 @@ namespace Klyte.Commons
 {
     public static class CommonProperties
     {
-        internal static readonly string[] AssetExtraDirectoryNames = new string[0];
+        internal static readonly string[] AssetExtraDirectoryNames = new string[] {
+            WTSController.EXTRA_SPRITES_FILES_FOLDER_ASSETS
+        };
         internal static readonly string[] AssetExtraFileNames = new string[] {
             WTSController.m_defaultFileNameBuildingsXml+".xml",
             WTSController.m_defaultFileNamePropsXml+".xml",

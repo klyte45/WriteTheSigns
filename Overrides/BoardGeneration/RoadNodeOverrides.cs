@@ -1,5 +1,5 @@
 ﻿using ColossalFramework;
-using Klyte.Commons.Extensors;
+using Klyte.Commons.Extensions;
 using Klyte.Commons.Utils;
 using System;
 using UnityEngine;
@@ -31,6 +31,11 @@ namespace Klyte.WriteTheSigns.Overrides
 
         public static void AfterRenderSegment(RenderManager.CameraInfo cameraInfo, ushort segmentID)
         {
+            if (LoadingManager.instance.m_currentlyLoading)
+            {
+                return;
+            }
+
             ref NetSegment data = ref NetManager.instance.m_segments.m_buffer[segmentID];
             WriteTheSignsMod.Controller?.RoadPropsSingleton?.AfterRenderInstanceImpl(cameraInfo, data.m_startNode, ref NetManager.instance.m_nodes.m_buffer[data.m_startNode]);
             WriteTheSignsMod.Controller?.RoadPropsSingleton?.AfterRenderInstanceImpl(cameraInfo, data.m_endNode, ref NetManager.instance.m_nodes.m_buffer[data.m_endNode]);
@@ -40,7 +45,7 @@ namespace Klyte.WriteTheSigns.Overrides
 
         public static void AfterCalculateGroupData(ref NetManager __instance, int groupX, int groupZ, int layer, ref int vertexCount, ref int triangleCount, ref int objectCount, ref RenderGroup.VertexArrays vertexArrays, ref bool __result)
         {
-            if (WriteTheSignsMod.Controller?.RoadPropsSingleton == null)
+            if (LoadingManager.instance.m_currentlyLoading || WriteTheSignsMod.Controller?.RoadPropsSingleton == null)
             {
                 return;
             }
@@ -94,6 +99,11 @@ namespace Klyte.WriteTheSigns.Overrides
 
         public static void AfterPopulateGroupData(ref NetManager __instance, int groupX, int groupZ, int layer, ref int vertexIndex, ref int triangleIndex, ref Vector3 groupPosition, RenderGroup.MeshData data, ref Vector3 min, ref Vector3 max, ref float maxRenderDistance, ref float maxInstanceDistance, ref bool requireSurfaceMaps)
         {
+            if (LoadingManager.instance.m_currentlyLoading)
+            {
+                return;
+            }
+
             int num = groupX * 270 / 45;
             int num2 = groupZ * 270 / 45;
             int num3 = (groupX + 1) * 270 / 45 - 1;

@@ -1,10 +1,11 @@
 using ColossalFramework;
 using ColossalFramework.Globalization;
 using ColossalFramework.UI;
-using Klyte.Commons.Extensors;
+using Klyte.Commons.Extensions;
 using Klyte.Commons.Interfaces;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.UI;
+using Klyte.WriteTheSigns.Utils;
 using SpriteFontPlus;
 using System;
 using System.Collections.Generic;
@@ -12,7 +13,7 @@ using System.IO;
 using System.Reflection;
 using UnityEngine;
 
-[assembly: AssemblyVersion("0.2.1.1")]
+[assembly: AssemblyVersion("0.3.0.7")]
 namespace Klyte.WriteTheSigns
 {
     public class WriteTheSignsMod : BasicIUserMod<WriteTheSignsMod, WTSController, WTSPanel>
@@ -41,6 +42,7 @@ namespace Klyte.WriteTheSigns
             AddFolderButton(WTSController.DefaultBuildingsConfigurationFolder, group8, "K45_WTS_DEFAULT_BUILDINGS_CONFIG_PATH_TITLE");
             AddFolderButton(WTSController.DefaultVehiclesConfigurationFolder, group8, "K45_WTS_DEFAULT_VEHICLES_CONFIG_PATH_TITLE");
             AddFolderButton(WTSController.DefaultPropsLayoutConfigurationFolder, group8, "K45_WTS_DEFAULT_PROP_LAYOUTS_PATH_TITLE");
+            AddFolderButton(WTSController.DefaultHwShieldsConfigurationFolder, group8, "K45_WTS_DEFAULT_HWSHIELDS_CONFIG_PATH_TITLE");
             AddFolderButton(WTSController.AbbreviationFilesPath, group8, "K45_WTS_ABBREVIATION_FILES_PATH_TITLE");
             AddFolderButton(WTSController.FontFilesPath, group8, "K45_WTS_FONT_FILES_PATH_TITLE");
             AddFolderButton(WTSController.ExtraSpritesFolder, group8, "K45_WTS_EXTRA_SPRITES_PATH_TITLE");
@@ -65,6 +67,13 @@ namespace Klyte.WriteTheSigns
              }).parent as UIPanel).autoFitChildrenVertically = true;
             group5.AddCheckboxLocale("K45_WTS_CLOCK_SHOW_LEADING_ZERO", ClockShowLeadingZero, (x) => ClockShowLeadingZero.value = x);
             group5.AddCheckboxLocale("K45_WTS_CLOCK_12H_CLOCK", Clock12hFormat, (x) => Clock12hFormat.value = x);
+            UIHelperExtension group6 = helper.AddGroupExtended(Locale.Get("K45_WTS_CACHE_INFO"));
+            UIButton calcTextSize = null;
+            var calcTextLbl = "Calculate text search tree cache size";
+            calcTextSize = (UIButton)group6.AddButton(calcTextLbl, () => calcTextSize.text = $"{calcTextLbl}: {RenderUtils.GetGeneralTextCacheSize().ToString("#,##0")}bytes");
+            UIButton calcMeshSize = null;
+            var calcMeshLbl = "Calculate text meshes cache size";
+            calcMeshSize = (UIButton)group6.AddButton(calcMeshLbl, () => calcMeshSize.text = $"{calcMeshLbl}: {FontServer.instance?.GetAllFontsCacheSize().ToString("#,##0")?? "N/A " }bytes");
 
         }
 

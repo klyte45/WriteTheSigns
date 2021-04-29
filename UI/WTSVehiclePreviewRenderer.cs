@@ -10,7 +10,7 @@ namespace Klyte.WriteTheSigns.UI
         protected override ref Material GetMaterial(VehicleInfo info) => ref info.m_material;
         protected override ref Mesh GetMesh(VehicleInfo info) => ref info.m_mesh;
 
-        protected override Matrix4x4 RenderMesh(VehicleInfo info, BoardTextDescriptorGeneralXml[] textDescriptors, Vector3 position, Quaternion rotation, Vector3 scale, Matrix4x4 sourceMatrix, out Color targetColor)
+        protected override Matrix4x4 RenderMesh(VehicleInfo info, BoardTextDescriptorGeneralXml[] textDescriptors, Vector3 position, Quaternion rotation, Vector3 scale, Matrix4x4 sourceMatrix, out Color targetColor, ref int defaultCallsCounter)
         {
             targetColor = WTSDynamicTextRenderingRules.GetPropColor(0, 0, 0, m_defaultInstance, null, out _);
             VehicleManager instance2 = Singleton<VehicleManager>.instance;
@@ -22,8 +22,9 @@ namespace Klyte.WriteTheSigns.UI
             materialBlock.SetVector(instance2.ID_TyrePosition, Vector3.zero);
             materialBlock.SetVector(instance2.ID_LightState, Vector3.zero);
             materialBlock.SetColor(instance2.ID_Color, targetColor * new Color(1, 1, 1, 0));
-            instance2.m_drawCallData.m_defaultCalls += 1;
+            instance2.m_drawCallData.m_batchedCalls += 1;
             info.m_material.SetVectorArray(instance2.ID_TyreLocation, info.m_generatedInfo.m_tyres);
+            defaultCallsCounter++;
             Graphics.DrawMesh(GetMesh(info), matrix, GetMaterial(info), info.m_prefabDataLayer, m_camera, 0, materialBlock, true, true);
 
             for (int j = 0; j < info.m_subMeshes.Length; j++)
@@ -32,9 +33,10 @@ namespace Klyte.WriteTheSigns.UI
                 var subInfo = meshInfo.m_subInfo as VehicleInfoSub;
                 if (subInfo != null && (meshInfo.m_vehicleFlagsRequired & Vehicle.Flags.LeftHandDrive) == 0)
                 {
-                    VehicleManager.instance.m_drawCallData.m_defaultCalls = VehicleManager.instance.m_drawCallData.m_defaultCalls + 1;
+                    VehicleManager.instance.m_drawCallData.m_batchedCalls = VehicleManager.instance.m_drawCallData.m_batchedCalls + 1;
 
                     subInfo.m_material.SetVectorArray(VehicleManager.instance.ID_TyreLocation, subInfo.m_generatedInfo.m_tyres);
+                    defaultCallsCounter++;
                     Graphics.DrawMesh(subInfo.m_mesh, matrix, subInfo.m_material, info.m_prefabDataLayer, null, 0, materialBlock);
 
                 }
@@ -60,8 +62,9 @@ namespace Klyte.WriteTheSigns.UI
             ////materialBlock.SetVector(instance2.ID_LightState, Vector3.zero);
             ////materialBlock.SetColor(instance2.ID_VehicleColor, targetColor);
 
-            ////instance2.m_drawCallData.m_defaultCalls = instance2.m_drawCallData.m_defaultCalls + 1;
+            ////instance2.m_drawCallData.m_batchedCalls = instance2.m_drawCallData.m_batchedCalls + 1;
             ////info.m_material.SetVectorArray(instance2.ID_TyreLocation, info.m_generatedInfo.m_tyres);
+            ///defaultCallsCounter++;
             ////Graphics.DrawMesh(info.m_mesh, matrix, info.m_material, 0, m_camera, 0, materialBlock, true, true);
 
             ////m_camera.Render();

@@ -1,4 +1,4 @@
-﻿using Klyte.Commons.Extensors;
+﻿using Klyte.Commons.Extensions;
 using Klyte.Commons.Utils;
 using System.Collections;
 using System.Reflection;
@@ -11,10 +11,6 @@ namespace Klyte.WriteTheSigns.Overrides
         public Redirector RedirectorInstance { get; private set; }
 
 
-        #region Events
-        public delegate void OnBuildingNameChanged(ushort buildingID);
-        public static event OnBuildingNameChanged EventOnBuildingRenamed;
-
         public static void OnInstanceRenamed(ref InstanceID id)
         {
             if (id.Building > 0)
@@ -23,7 +19,6 @@ namespace Klyte.WriteTheSigns.Overrides
             }
 
         }
-        #endregion
 
         #region Hooking
 
@@ -43,14 +38,9 @@ namespace Klyte.WriteTheSigns.Overrides
         public static void CallBuildRenamedEvent(ushort building) => BuildingManager.instance.StartCoroutine(CallBuildRenamedEvent_impl(building));
         private static IEnumerator CallBuildRenamedEvent_impl(ushort building)
         {
-
-            //returning 0 will make it wait 1 frame
             yield return new WaitForSeconds(1);
-
-
-            //code goes here
-
-            EventOnBuildingRenamed?.Invoke(building);
+            WTSController.OnBuildingNameChanged(building);
+            WriteTheSignsMod.Controller.ConnectorTLM.OnAutoNameParameterChanged();
         }
 
     }

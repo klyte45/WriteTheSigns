@@ -6,7 +6,7 @@ using System.Xml.Serialization;
 namespace Klyte.WriteTheSigns.Data
 {
     [XmlRoot("WTSEtcData")]
-    public class WTSEtcData : DataExtensorBase<WTSEtcData>
+    public class WTSEtcData : DataExtensionBase<WTSEtcData>
     {
         public override string SaveId => "K45_WTS_EtcData";
 
@@ -26,15 +26,17 @@ namespace Klyte.WriteTheSigns.Data
     public class FontSettings
     {
         private string m_publicTransportLineSymbolFont;
+        private string highwayShieldsFont;
 
         [XmlAttribute("publicTransportFont")]
         public string PublicTransportLineSymbolFont
         {
-            get => m_publicTransportLineSymbolFont; set {
+            get => m_publicTransportLineSymbolFont; set
+            {
                 if (WriteTheSignsMod.Controller is null || m_publicTransportLineSymbolFont != value)
                 {
                     m_publicTransportLineSymbolFont = value;
-                    WriteTheSignsMod.Controller?.SpriteRenderingRules?.PurgeAllLines();
+                    WriteTheSignsMod.Controller?.AtlasesLibrary?.PurgeAllLines();
                 }
             }
         }
@@ -44,6 +46,24 @@ namespace Klyte.WriteTheSigns.Data
 
         [XmlAttribute("stencilFont")]
         public string StencilFont { get; set; }
+
+        [XmlAttribute("highwayShieldsFont")]
+        public string HighwayShieldsFont
+        {
+            get => highwayShieldsFont; set
+            {
+                {
+                    if (WriteTheSignsMod.Controller is null || highwayShieldsFont != value)
+                    {
+                        highwayShieldsFont = value;
+                        if (LoadingManager.instance.m_loadingComplete)
+                        {
+                            WriteTheSignsMod.Controller?.HighwayShieldsAtlasLibrary?.PurgeShields();
+                        }
+                    }
+                }
+            }
+        }
 
         internal string GetTargetFont(FontClass fontClass)
         {
@@ -57,6 +77,8 @@ namespace Klyte.WriteTheSigns.Data
                     return ElectronicFont ?? WTSController.DEFAULT_FONT_KEY;
                 case FontClass.Stencil:
                     return StencilFont ?? WTSController.DEFAULT_FONT_KEY;
+                case FontClass.HighwayShields:
+                    return HighwayShieldsFont ?? WTSController.DEFAULT_FONT_KEY;
             }
             return null;
         }

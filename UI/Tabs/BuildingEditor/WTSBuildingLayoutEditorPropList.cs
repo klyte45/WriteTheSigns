@@ -169,7 +169,7 @@ namespace Klyte.WriteTheSigns.UI
         private void AddCurrentListToLibrary(string text)
         {
             WTSLibBuildingPropLayoutList.Reload();
-            var newItem = new ExportableBoardInstanceBuildingListXml { Instances = CurrentEdited.PropInstances, Layouts = CurrentEdited.LocalLayouts };
+            var newItem = new ExportableBoardInstanceBuildingListXml { Instances = CurrentEdited.PropInstances, Layouts = CurrentEdited.CaculateLocalLayouts() };
             WTSLibBuildingPropLayoutList.Instance.Add(text, ref newItem);
             K45DialogControl.ShowModal(new K45DialogControl.BindProperties
             {

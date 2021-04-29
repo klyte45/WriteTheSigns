@@ -2,9 +2,9 @@ using ColossalFramework.Math;
 using Klyte.Commons.Utils;
 using UnityEngine;
 
-namespace Klyte.WriteTheSigns.Connectors
+namespace Klyte.WriteTheSigns.ModShared
 {
-    internal class ConnectorADRFallback : IConnectorADR
+    internal class BridgeADRFallback : IBridgeADR
     {
 
         public override string GetStreetSuffix(ushort idx)
@@ -28,7 +28,9 @@ namespace Klyte.WriteTheSigns.Connectors
         private Vector2? m_cachedPos;
         private readonly Color[] m_randomColors = { Color.black, Color.gray, Color.white, Color.red, new Color32(0xFF, 0x88, 0, 0xFf), Color.yellow, Color.green, Color.cyan, Color.blue, Color.magenta };
 
+        public override bool AddressesAvailable { get; } = false;
 
+        public override bool GetAddressStreetAndNumber(Vector3 sidewalk, Vector3 midPosBuilding, out int number, out string streetName) => SegmentUtils.GetBasicAddressStreetAndNumber(sidewalk, midPosBuilding, out number, out streetName);
         public override Color GetDistrictColor(ushort districtId) => m_randomColors[districtId % m_randomColors.Length];
         public override Vector2 GetStartPoint()
         {
@@ -42,6 +44,9 @@ namespace Klyte.WriteTheSigns.Connectors
 
         public override string GetStreetQualifier(ushort idx) => WriteTheSignsMod.Controller.ConnectorADR.GetStreetFullName(idx).Replace(WriteTheSignsMod.Controller.ConnectorADR.GetStreetSuffix(idx), "");
         public override string GetStreetPostalCode(Vector3 position, ushort idx) => idx.ToString("D5");
+        public override AdrHighwayParameters GetHighwayData(ushort seedId) => null;
+        public override string[] ListAllAvailableHighwayTypes(string filterText) => null;
+        public override AdrHighwayParameters GetHighwayTypeData(string typeName) => null;
     }
 }
 

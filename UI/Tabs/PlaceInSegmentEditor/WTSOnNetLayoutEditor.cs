@@ -1,14 +1,11 @@
 ﻿using ColossalFramework.Globalization;
-using ColossalFramework.Packaging;
 using ColossalFramework.UI;
-using Klyte.Commons.Extensors;
+using Klyte.Commons.Extensions;
 using Klyte.Commons.UI.SpriteNames;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Data;
-using Klyte.WriteTheSigns.Singleton;
 using Klyte.WriteTheSigns.Xml;
 using System;
-using System.IO;
 using UnityEngine;
 using static Klyte.Commons.UI.DefaultEditorUILib;
 
@@ -19,7 +16,8 @@ namespace Klyte.WriteTheSigns.UI
         private static WTSOnNetLayoutEditor m_instance;
         public static WTSOnNetLayoutEditor Instance
         {
-            get {
+            get
+            {
                 if (m_instance == null)
                 {
                     m_instance = FindObjectOfType<WTSOnNetLayoutEditor>();
@@ -57,16 +55,17 @@ namespace Klyte.WriteTheSigns.UI
             MainContainer.autoLayoutDirection = LayoutDirection.Vertical;
             MainContainer.autoLayoutPadding = new RectOffset(5, 5, 5, 5);
 
-            var m_uiHelperHS = new UIHelperExtension(MainContainer); 
+            var m_uiHelperHS = new UIHelperExtension(MainContainer);
 
-             m_buttonTool = (UIButton)m_uiHelperHS.AddButton(Locale.Get("K45_WTS_PICK_A_SEGMENT"), EnablePickTool);
-            KlyteMonoUtils.LimitWidth(m_buttonTool, (m_uiHelperHS.Self.width - 20), true);
+            m_buttonTool = (UIButton)m_uiHelperHS.AddButton(Locale.Get("K45_WTS_PICK_A_SEGMENT"), EnablePickTool);
+            KlyteMonoUtils.LimitWidthAndBox(m_buttonTool, (m_uiHelperHS.Self.width - 20), true);
 
 
             AddLabel("", m_uiHelperHS, out m_labelSelectionDescription, out m_containerSelectionDescription);
-            KlyteMonoUtils.LimitWidthAndBox(m_labelSelectionDescription, (m_uiHelperHS.Self.width / 2), true);
+            KlyteMonoUtils.LimitWidthAndBox(m_labelSelectionDescription, (m_uiHelperHS.Self.width / 2), out UIPanel containerBoxDescription, true);
             m_labelSelectionDescription.prefix = Locale.Get("K45_WTS_CURRENTSELECTION") + ": ";
-            m_btnLock = AddButtonInEditorRow(m_containerSelectionDescription, CommonsSpriteNames.K45_Lock, OnLockSelection, "K45_WTS_SEGMENTEDITOR_BUTTONROWACTION_LOCKCAMERASELECTION", false);
+            m_labelSelectionDescription.minimumSize = new Vector3(0, 30);
+            m_btnLock = AddButtonInEditorRow(containerBoxDescription, CommonsSpriteNames.K45_Lock, OnLockSelection, "K45_WTS_SEGMENTEDITOR_BUTTONROWACTION_LOCKCAMERASELECTION", false, 30);
             m_btnLock.color = LockSelection ? Color.red : Color.white;
             m_btnLock.focusedColor = LockSelection ? Color.red : Color.white;
             m_btnLock.pressedColor = LockSelection ? Color.red : Color.white;
@@ -74,12 +73,12 @@ namespace Klyte.WriteTheSigns.UI
             KlyteMonoUtils.CreateUIElement(out m_secondaryContainer, MainContainer.transform, "SecContainer", new Vector4(0, 0, MainContainer.width, 655));
             m_secondaryContainer.autoLayout = true;
             m_secondaryContainer.autoLayoutDirection = LayoutDirection.Horizontal;
-            m_secondaryContainer.autoLayoutPadding = new RectOffset(0, 10, 0, 0);
+            m_secondaryContainer.autoLayoutPadding = new RectOffset(0, 0, 0, 0);
 
             KlyteMonoUtils.CreateUIElement(out UIPanel tertiaryContainer, m_secondaryContainer.transform, "TrcContainer", new Vector4(0, 0, m_secondaryContainer.width * 0.25f, m_secondaryContainer.height));
             LayoutList = tertiaryContainer.gameObject.AddComponent<WTSOnNetLayoutEditorPropList>();
 
-            KlyteMonoUtils.CreateUIElement(out UIPanel editorPanel, m_secondaryContainer.transform, "EditPanel", new Vector4(0, 0, m_secondaryContainer.width * 0.75f - 35, m_secondaryContainer.height));
+            KlyteMonoUtils.CreateUIElement(out UIPanel editorPanel, m_secondaryContainer.transform, "EditPanel", new Vector4(0, 0, m_secondaryContainer.width * 0.75f - 5, m_secondaryContainer.height));
             editorPanel.gameObject.AddComponent<WTSOnNetLayoutEditorPropDetail>();
 
             OnSegmentSet(0);
@@ -112,9 +111,9 @@ namespace Klyte.WriteTheSigns.UI
         {
             m_secondaryContainer.isVisible = CurrentSegmentId != 0;
             m_containerSelectionDescription.isVisible = CurrentSegmentId != 0;
-            SegmentUtils.GetAddressStreetAndNumber(NetManager.instance.m_segments.m_buffer[CurrentSegmentId].m_middlePosition, NetManager.instance.m_segments.m_buffer[CurrentSegmentId].m_middlePosition,out int num, out string streetName);
+            WriteTheSignsMod.Controller.ConnectorADR.GetAddressStreetAndNumber(NetManager.instance.m_segments.m_buffer[CurrentSegmentId].m_middlePosition, NetManager.instance.m_segments.m_buffer[CurrentSegmentId].m_middlePosition, out int num, out string streetName);
             m_labelSelectionDescription.text = $"{streetName}, ~{num}m";
-            if(WTSOnNetData.Instance.m_boardsContainers[CurrentSegmentId] == null)
+            if (WTSOnNetData.Instance.m_boardsContainers[CurrentSegmentId] == null)
             {
                 WTSOnNetData.Instance.m_boardsContainers[CurrentSegmentId] = new OnNetGroupDescriptorXml();
             }

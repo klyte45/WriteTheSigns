@@ -1,12 +1,10 @@
 ﻿extern alias TLM;
-
-using ColossalFramework.Globalization;
 using Klyte.Commons.Interfaces;
 using Klyte.Commons.Utils;
-using Klyte.WriteTheSigns.Connectors;
+using Klyte.WriteTheSigns.ModShared;
 using Klyte.WriteTheSigns.Overrides;
-using Klyte.WriteTheSigns.Rendering;
 using Klyte.WriteTheSigns.Singleton;
+using Klyte.WriteTheSigns.Sprites;
 using Klyte.WriteTheSigns.Tools;
 using Klyte.WriteTheSigns.Utils;
 using SpriteFontPlus;
@@ -16,105 +14,97 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using UnityEngine;
-using static ColossalFramework.UI.UITextureAtlas;
 
 namespace Klyte.WriteTheSigns
 {
 
     public class WTSController : BaseController<WriteTheSignsMod, WTSController>
     {
-        public RoadSegmentTool RoadSegmentToolInstance => FindObjectOfType<RoadSegmentTool>();
-        public BuildingEditorTool BuildingEditorToolInstance => FindObjectOfType<BuildingEditorTool>();
+        public RoadSegmentTool RoadSegmentToolInstance => ToolsModifierControl.toolController.GetComponent<RoadSegmentTool>();
+        public BuildingEditorTool BuildingEditorToolInstance => ToolsModifierControl.toolController.GetComponent<BuildingEditorTool>();
+        public VehicleEditorTool VehicleEditorToolInstance => ToolsModifierControl.toolController.GetComponent<VehicleEditorTool>();
 
-        internal WTSSpritesRenderingRules SpriteRenderingRules { get; private set; }
+        internal WTSAtlasesLibrary AtlasesLibrary { get; private set; }
         internal WTSBuildingPropsSingleton BuildingPropsSingleton { get; private set; }
         internal WTSVehicleTextsSingleton VehicleTextsSingleton { get; private set; }
         internal WTSOnNetPropsSingleton OnNetPropsSingleton { get; private set; }
-        internal IConnectorTLM ConnectorTLM { get; private set; }
-        internal IConnectorADR ConnectorADR { get; private set; }
+        internal WTSHighwayShieldsSingleton HighwayShieldsSingleton { get; private set; }
+        internal WTSHighwayShieldsAtlasLibrary HighwayShieldsAtlasLibrary { get; private set; }
+        internal IBridgeTLM ConnectorTLM { get; private set; }
+        internal IBridgeADR ConnectorADR { get; private set; }
 
         public WTSRoadPropsSingleton RoadPropsSingleton { get; private set; }
         public Dictionary<string, Dictionary<string, string>> AbbreviationFiles { get; private set; }
         public FontServer FontServer => FontServer.instance;
 
         public static int DefaultTextureSizeFont => 512 << WriteTheSignsMod.StartTextureSizeFont;
-        
+
         public event Action EventFontsReloadedFromFolder;
         public event Action EventOnDistrictChanged;
         public event Action EventOnParkChanged;
-        public event Action EventOnBuildingNameChanged;
+        public event Action<ushort?> EventOnBuildingNameChanged;
         public event Action EventOnZeroMarkerChanged;
         public event Action EventOnPostalCodeChanged;
 
-        public static void OnDistrictChanged() => WriteTheSignsMod.Controller?.EventOnDistrictChanged?.Invoke();
-        public static void OnParkChanged() => WriteTheSignsMod.Controller?.EventOnParkChanged?.Invoke();
-        public static void OnBuildingNameChanged() => WriteTheSignsMod.Controller?.EventOnBuildingNameChanged?.Invoke();
-        public static void OnCityNameChanged() => RenderUtils.ClearCacheCityName();
+        public static void OnDistrictChanged()
+        {
+            if (LoadingManager.instance.m_LoadingWrapper.loadingComplete)
+            {
+                WriteTheSignsMod.Controller?.EventOnDistrictChanged?.Invoke();
+            }
+        }
+
+        public static void OnParkChanged()
+        {
+            if (LoadingManager.instance.m_LoadingWrapper.loadingComplete)
+            {
+                WriteTheSignsMod.Controller?.EventOnParkChanged?.Invoke();
+            }
+        }
+
+        public static void OnBuildingNameChanged(ushort? buildingId) => WriteTheSignsMod.Controller?.EventOnBuildingNameChanged?.Invoke(buildingId);
+        public static void OnCityNameChanged()
+        {
+            if (LoadingManager.instance.m_LoadingWrapper.loadingComplete)
+            {
+                RenderUtils.ClearCacheCityName();
+            }
+        }
+
         public static void OnZeroMarkChanged() => WriteTheSignsMod.Controller?.EventOnZeroMarkerChanged?.Invoke();
         public static void OnPostalCodeChanged() => WriteTheSignsMod.Controller?.EventOnPostalCodeChanged?.Invoke();
 
         public void Awake()
         {
-            if (RoadSegmentToolInstance == null)
+            if (RoadSegmentToolInstance is null)
             {
-                FindObjectOfType<ToolController>().gameObject.AddComponent<RoadSegmentTool>();
+                ToolsModifierControl.toolController.gameObject.AddComponent<RoadSegmentTool>();
             }
 
-            if (BuildingEditorToolInstance == null)
+            if (BuildingEditorToolInstance is null)
             {
-                FindObjectOfType<ToolController>().gameObject.AddComponent<BuildingEditorTool>();
+                ToolsModifierControl.toolController.gameObject.AddComponent<BuildingEditorTool>();
+            }
+            if (VehicleEditorToolInstance is null)
+            {
+                ToolsModifierControl.toolController.gameObject.AddComponent<VehicleEditorTool>();
             }
             ReloadAbbreviationFiles();
 
             FontServer.Ensure();
-            SpriteRenderingRules = gameObject.AddComponent<WTSSpritesRenderingRules>();
+            AtlasesLibrary = gameObject.AddComponent<WTSAtlasesLibrary>();
             BuildingPropsSingleton = gameObject.AddComponent<WTSBuildingPropsSingleton>();
             RoadPropsSingleton = gameObject.AddComponent<WTSRoadPropsSingleton>();
             VehicleTextsSingleton = gameObject.AddComponent<WTSVehicleTextsSingleton>();
             OnNetPropsSingleton = gameObject.AddComponent<WTSOnNetPropsSingleton>();
-            ConnectorTLM = PluginUtils.GetImplementationTypeForMod<ConnectorTLM, ConnectorTLMFallback, IConnectorTLM>(gameObject, "TransportLinesManager", "13.4.0.1");
-            ConnectorADR = PluginUtils.GetImplementationTypeForMod<ConnectorADR, ConnectorADRFallback, IConnectorADR>(gameObject, "KlyteAddresses", "2.0.4.1");
-
-            var spritesToAdd = new List<SpriteInfo>();
-            var errors = new List<string>();
-            foreach (var imgFile in Directory.GetFiles(WTSController.ExtraSpritesFolder, "*.png"))
-            {
-                var fileData = File.ReadAllBytes(imgFile);
-                var tex = new Texture2D(2, 2, TextureFormat.RGBA32, false);
-                if (tex.LoadImage(fileData))
-                {
-                    if (tex.width <= 400 && tex.width <= 400)
-                    {
-                        var imgName = $"K45_WTS_{Path.GetFileNameWithoutExtension(imgFile)}";
-                        spritesToAdd.Add(new SpriteInfo
-                        {
-                            border = new RectOffset(),
-                            name = imgName,
-                            texture = tex
-                        });
-                    }
-                    else
-                    {
-                        errors.Add($"{Path.GetFileName(imgFile)}: {Locale.Get("K45_WTS_CUSTOMSPRITE_IMAGETOOLARGE")} (max: 400x400)");
-                    }
-                }
-                else
-                {
-                    errors.Add($"{Path.GetFileName(imgFile)}: {Locale.Get("K45_WTS_CUSTOMSPRITE_FAILEDREADIMAGE")}");
-                }
-            }
-            if (spritesToAdd.Count > 0)
-            {
-                TextureAtlasUtils.RegenerateDefaultTextureAtlas(spritesToAdd);
-            }
-            if (errors.Count > 0)
-            {
-                K45DialogControl.ShowModal(new K45DialogControl.BindProperties
-                {
-                    message = $"{Locale.Get("K45_WTS_CUSTOMSPRITE_ERRORHEADER")}:\n\t{string.Join("\n\t", errors.ToArray())}"
-                }, (x) => true);
-            }
+            HighwayShieldsSingleton = gameObject.AddComponent<WTSHighwayShieldsSingleton>();
+            HighwayShieldsAtlasLibrary = gameObject.AddComponent<WTSHighwayShieldsAtlasLibrary>();
+            ConnectorTLM = PluginUtils.GetImplementationTypeForMod<BridgeTLM, BridgeTLMFallback, IBridgeTLM>(gameObject, "TransportLinesManager", "14.0.0.0");
+            ConnectorADR = PluginUtils.GetImplementationTypeForMod<BridgeADR, BridgeADRFallback, IBridgeADR>(gameObject, "KlyteAddresses", "3.0.0.3");
         }
+
+
+
         protected override void StartActions()
         {
             ReloadFontsFromPath();
@@ -140,7 +130,7 @@ namespace Klyte.WriteTheSigns
             RenderUtils.ClearCacheStreetName();
             RenderUtils.ClearCacheStreetQualifier();
             RenderUtils.ClearCachePostalCode();
-            RenderUtils.ClearCacheBuildingName();
+            RenderUtils.ClearCacheBuildingName(null);
         }
 
         public static void ReloadFontsFromPath()
@@ -183,17 +173,21 @@ namespace Klyte.WriteTheSigns
         public const string m_defaultFileNameBuildingsXml = "WTS_DefaultBuildingsConfig";
         public const string m_defaultFileNameVehiclesXml = "WTS_DefaultVehiclesConfig";
         public const string m_defaultFileNamePropsXml = "WTS_DefaultPropsConfig";
+        public const string m_defaultFileNameShieldXml = "WTS_ShieldConfig";
         public const string DEFAULT_GAME_PROP_LAYOUT_FOLDER = "PropsDefaultLayouts";
         public const string DEFAULT_GAME_BUILDINGS_CONFIG_FOLDER = "BuildingsDefaultPlacing";
         public const string DEFAULT_GAME_VEHICLES_CONFIG_FOLDER = "VehiclesDefaultPlacing";
+        public const string DEFAULT_HW_SHIELDS_CONFIG_FOLDER = "HighwayShieldsLayouts";
         public const string ABBREVIATION_FILES_FOLDER = "AbbreviationFiles";
         public const string FONTS_FILES_FOLDER = "Fonts";
         public const string EXTRA_SPRITES_FILES_FOLDER = "Sprites";
         public const string DEFAULT_FONT_KEY = "/DEFAULT/";
+        public const string EXTRA_SPRITES_FILES_FOLDER_ASSETS = "K45WTS_Sprites";
 
         public static string DefaultPropsLayoutConfigurationFolder { get; } = FOLDER_NAME + Path.DirectorySeparatorChar + DEFAULT_GAME_PROP_LAYOUT_FOLDER;
         public static string DefaultBuildingsConfigurationFolder { get; } = FOLDER_NAME + Path.DirectorySeparatorChar + DEFAULT_GAME_BUILDINGS_CONFIG_FOLDER;
         public static string DefaultVehiclesConfigurationFolder { get; } = FOLDER_NAME + Path.DirectorySeparatorChar + DEFAULT_GAME_VEHICLES_CONFIG_FOLDER;
+        public static string DefaultHwShieldsConfigurationFolder { get; } = FOLDER_NAME + Path.DirectorySeparatorChar + DEFAULT_HW_SHIELDS_CONFIG_FOLDER;
         public static string ExtraSpritesFolder { get; } = FOLDER_NAME + Path.DirectorySeparatorChar + EXTRA_SPRITES_FILES_FOLDER;
         public static string AbbreviationFilesPath { get; } = FOLDER_NAME + Path.DirectorySeparatorChar + ABBREVIATION_FILES_FOLDER;
         public static string FontFilesPath { get; } = FOLDER_NAME + Path.DirectorySeparatorChar + FONTS_FILES_FOLDER;

@@ -20,7 +20,8 @@ namespace Klyte.WriteTheSigns.Xml
         public BoardInstanceBuildingXml[] PropInstances
         {
             get => m_propInstances;
-            set {
+            set
+            {
                 if (value != null)
                 {
                     m_propInstances = value;
@@ -47,16 +48,19 @@ namespace Klyte.WriteTheSigns.Xml
         protected BoardInstanceBuildingXml[] m_propInstances = new BoardInstanceBuildingXml[0];
 
         [XmlElement("localLayout")]
-        [Obsolete]
+        [Obsolete("Export only!", true)]
         public virtual SimpleXmlDictionary<string, BoardDescriptorGeneralXml> LocalLayouts
         {
-            get {
-                var m_localLayouts = PropInstances.Select(x => WTSPropLayoutData.Instance.Get(x.PropLayoutName)).Where(x => x != null).GroupBy(x => x.SaveName).Select(x => x.FirstOrDefault()).ToDictionary(x => x.SaveName, x => x);
-                var res = new SimpleXmlDictionary<string, BoardDescriptorGeneralXml>();
-                m_localLayouts.ForEach(x => res[x.Key] = x.Value);
-                return res;
-            }
+            get => CaculateLocalLayouts();
             set { }
+        }
+
+        internal SimpleXmlDictionary<string, BoardDescriptorGeneralXml> CaculateLocalLayouts()
+        {
+            m_localLayouts = PropInstances.Select(x => WTSPropLayoutData.Instance.Get(x.PropLayoutName)).Where(x => x != null).GroupBy(x => x.SaveName).Select(x => x.FirstOrDefault()).ToDictionary(x => x.SaveName, x => x);
+            var res = new SimpleXmlDictionary<string, BoardDescriptorGeneralXml>();
+            m_localLayouts.ForEach(x => res[x.Key] = x.Value);
+            return res;
         }
     }
 }

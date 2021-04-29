@@ -131,7 +131,7 @@ namespace Klyte.WriteTheSigns.Singleton
                         flags ^= Vehicle.Flags.Reversed;
                     }
                     ref Vehicle vehicle = ref instance.m_vehicles.m_buffer[vehicleId];
-                    WTSDynamicTextRenderingRules.RenderTextMesh(vehicleId, 0, 0, targetDescriptor, vehicleMatrix, null, ref targetDescriptor.TextDescriptors[j], properties, (int)flags, vehicle.Info.m_vehicleAI.GetColor(vehicleId, ref vehicle, InfoManager.InfoMode.None), v.Info);
+                    WTSDynamicTextRenderingRules.RenderTextMesh(vehicleId, 0, 0, targetDescriptor, vehicleMatrix, null, ref targetDescriptor.TextDescriptors[j], properties, (int)flags, vehicle.Info.m_vehicleAI.GetColor(vehicleId, ref vehicle, InfoManager.InfoMode.None), v.Info, ref VehicleManager.instance.m_drawCallData.m_batchedCalls);
                 }
             }
 
@@ -139,15 +139,15 @@ namespace Klyte.WriteTheSigns.Singleton
 
         #region IO 
 
-        private static string DefaultFilename { get; } = $"{WTSController.m_defaultFileNameBuildingsXml}.xml";
+        private static string DefaultFilename { get; } = $"{WTSController.m_defaultFileNameVehiclesXml}.xml";
 
         public void LoadAllVehiclesConfigurations()
         {
             LogUtils.DoLog("LOADING VEHICLE CONFIG START -----------------------------");
-            FileUtils.ScanPrefabsFolders<VehicleInfo>(DefaultFilename, LoadDescriptorsFromXmlAsset);
             var errorList = new List<string>();
             Data.GlobalDescriptors.Clear();
             Data.AssetsDescriptors.Clear();
+            FileUtils.ScanPrefabsFolders<VehicleInfo>(DefaultFilename, LoadDescriptorsFromXmlAsset);
             LogUtils.DoLog($"DefaultVehiclesConfigurationFolder = {WTSController.DefaultVehiclesConfigurationFolder}");
             foreach (string filename in Directory.GetFiles(WTSController.DefaultVehiclesConfigurationFolder, "*.xml"))
             {

@@ -1,7 +1,7 @@
 ﻿using ColossalFramework.Globalization;
 using ColossalFramework.Packaging;
 using ColossalFramework.UI;
-using Klyte.Commons.Extensors;
+using Klyte.Commons.Extensions;
 using Klyte.Commons.UI.SpriteNames;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Data;
@@ -9,6 +9,7 @@ using Klyte.WriteTheSigns.Singleton;
 using Klyte.WriteTheSigns.Xml;
 using System;
 using System.IO;
+using System.Linq;
 using UnityEngine;
 using static Klyte.Commons.UI.DefaultEditorUILib;
 
@@ -20,7 +21,8 @@ namespace Klyte.WriteTheSigns.UI
         private static WTSBuildingLayoutEditor m_instance;
         public static WTSBuildingLayoutEditor Instance
         {
-            get {
+            get
+            {
                 if (m_instance == null)
                 {
                     m_instance = FindObjectOfType<WTSBuildingLayoutEditor>();
@@ -32,7 +34,8 @@ namespace Klyte.WriteTheSigns.UI
         private string m_currentBuildingName;
         public string CurrentBuildingName
         {
-            get => m_currentBuildingName; private set {
+            get => m_currentBuildingName; private set
+            {
                 m_currentBuildingName = value;
                 ReloadBuilding();
             }
@@ -78,20 +81,20 @@ namespace Klyte.WriteTheSigns.UI
             var m_uiHelperHS = new UIHelperExtension(MainContainer);
 
             m_buttonTool = (UIButton)m_uiHelperHS.AddButton(Locale.Get("K45_WTS_PICK_A_BUILDING"), EnablePickTool);
-            KlyteMonoUtils.LimitWidth(m_buttonTool, (m_uiHelperHS.Self.width - 20), true);
+            KlyteMonoUtils.LimitWidthAndBox(m_buttonTool, (m_uiHelperHS.Self.width - 20), true);
 
 
             AddLabel("", m_uiHelperHS, out m_labelSelectionDescription, out m_containerSelectionDescription);
-            KlyteMonoUtils.LimitWidthAndBox(m_labelSelectionDescription, (m_uiHelperHS.Self.width / 2), true);
+            KlyteMonoUtils.LimitWidthAndBox(m_labelSelectionDescription, (m_uiHelperHS.Self.width / 2), out UIPanel containerBoxDescription, true);
             m_labelSelectionDescription.prefix = Locale.Get("K45_WTS_CURRENTSELECTION") + ": ";
-            m_btnNew = AddButtonInEditorRow(m_containerSelectionDescription, Commons.UI.SpriteNames.CommonsSpriteNames.K45_New, OnCreateNewCity, "K45_WTS_BUILDINGEDITOR_BUTTONROWACTION_NEWINCITY", false);
-            m_btnCopy = AddButtonInEditorRow(m_containerSelectionDescription, Commons.UI.SpriteNames.CommonsSpriteNames.K45_Copy, OnCopyToCity, "K45_WTS_BUILDINGEDITOR_BUTTONROWACTION_COPYTOCITY", false);
-            m_btnDelete = AddButtonInEditorRow(m_containerSelectionDescription, Commons.UI.SpriteNames.CommonsSpriteNames.K45_Delete, OnDeleteFromCity, "K45_WTS_BUILDINGEDITOR_BUTTONROWACTION_DELETEFROMCITY", false);
-            m_btnLoad = AddButtonInEditorRow(m_containerSelectionDescription, Commons.UI.SpriteNames.CommonsSpriteNames.K45_Load, OnOpenGlobalFolder, "K45_WTS_BUILDINGEDITOR_BUTTONROWACTION_OPENGLOBALSFOLDER", false);
-            m_btnExport = AddButtonInEditorRow(m_containerSelectionDescription, Commons.UI.SpriteNames.CommonsSpriteNames.K45_Export, OnExportAsGlobal, "K45_WTS_BUILDINGEDITOR_BUTTONROWACTION_EXPORTASGLOBAL", false);
-            m_btnSteam = AddButtonInEditorRow(m_containerSelectionDescription, Commons.UI.SpriteNames.CommonsSpriteNames.K45_Steam, OnExportAsAsset, "K45_WTS_BUILDINGEDITOR_BUTTONROWACTION_EXPORTTOASSETFOLDER", false);
-            m_btnReload = AddButtonInEditorRow(m_containerSelectionDescription, Commons.UI.SpriteNames.CommonsSpriteNames.K45_Reload, OnReloadDescriptors, "K45_WTS_BUILDINGEDITOR_BUTTONROWACTION_RELOADDESCRIPTORS", false);
-            m_btnLock = AddButtonInEditorRow(m_containerSelectionDescription, CommonsSpriteNames.K45_Lock, OnLockSelection, "K45_WTS_BUILDINGEDITOR_BUTTONROWACTION_LOCKCAMERASELECTION", false);
+            m_btnNew = AddButtonInEditorRow(containerBoxDescription, Commons.UI.SpriteNames.CommonsSpriteNames.K45_New, OnCreateNewCity, "K45_WTS_BUILDINGEDITOR_BUTTONROWACTION_NEWINCITY", false);
+            m_btnCopy = AddButtonInEditorRow(containerBoxDescription, Commons.UI.SpriteNames.CommonsSpriteNames.K45_Copy, OnCopyToCity, "K45_WTS_BUILDINGEDITOR_BUTTONROWACTION_COPYTOCITY", false);
+            m_btnDelete = AddButtonInEditorRow(containerBoxDescription, Commons.UI.SpriteNames.CommonsSpriteNames.K45_Delete, OnDeleteFromCity, "K45_WTS_BUILDINGEDITOR_BUTTONROWACTION_DELETEFROMCITY", false);
+            m_btnLoad = AddButtonInEditorRow(containerBoxDescription, Commons.UI.SpriteNames.CommonsSpriteNames.K45_Load, OnOpenGlobalFolder, "K45_WTS_BUILDINGEDITOR_BUTTONROWACTION_OPENGLOBALSFOLDER", false);
+            m_btnExport = AddButtonInEditorRow(containerBoxDescription, Commons.UI.SpriteNames.CommonsSpriteNames.K45_Export, OnExportAsGlobal, "K45_WTS_BUILDINGEDITOR_BUTTONROWACTION_EXPORTASGLOBAL", false);
+            m_btnSteam = AddButtonInEditorRow(containerBoxDescription, Commons.UI.SpriteNames.CommonsSpriteNames.K45_Steam, OnExportAsAsset, "K45_WTS_BUILDINGEDITOR_BUTTONROWACTION_EXPORTTOASSETFOLDER", false);
+            m_btnReload = AddButtonInEditorRow(containerBoxDescription, Commons.UI.SpriteNames.CommonsSpriteNames.K45_Reload, OnReloadDescriptors, "K45_WTS_BUILDINGEDITOR_BUTTONROWACTION_RELOADDESCRIPTORS", false);
+            m_btnLock = AddButtonInEditorRow(containerBoxDescription, CommonsSpriteNames.K45_Lock, OnLockSelection, "K45_WTS_BUILDINGEDITOR_BUTTONROWACTION_LOCKCAMERASELECTION", false);
             m_btnLock.color = LockSelection ? Color.red : Color.white;
             m_btnLock.focusedColor = LockSelection ? Color.red : Color.white;
             m_btnLock.pressedColor = LockSelection ? Color.red : Color.white;
@@ -129,8 +132,16 @@ namespace Klyte.WriteTheSigns.UI
 
         private void OnExportAsAsset()
         {
-            File.WriteAllText(Path.Combine(Path.GetDirectoryName(PackageManager.FindAssetByName(CurrentBuildingName)?.package?.packagePath), $"{WTSController.m_defaultFileNameBuildingsXml}.xml"), XmlUtils.DefaultXmlSerialize(CurrentEditingInstance));
-            WriteTheSignsMod.Controller?.BuildingPropsSingleton?.LoadAllBuildingConfigurations();
+            var id = CurrentBuildingName?.Split('.')[0];
+            if (id != null)
+            {
+                var path = PackageManager.allPackages.Where(x => x.packageName == id).FirstOrDefault()?.packagePath;
+                if (path != null)
+                {
+                    File.WriteAllText(Path.Combine(Path.GetDirectoryName(path), $"{WTSController.m_defaultFileNameBuildingsXml}.xml"), XmlUtils.DefaultXmlSerialize(CurrentEditingInstance));
+                    WriteTheSignsMod.Controller?.BuildingPropsSingleton?.LoadAllBuildingConfigurations();
+                }
+            }
         }
 
         private void OnExportAsGlobal()
@@ -140,30 +151,27 @@ namespace Klyte.WriteTheSigns.UI
         }
 
         private void OnOpenGlobalFolder() => ColossalFramework.Utils.OpenInFileBrowser(WTSController.DefaultBuildingsConfigurationFolder);
-        private void OnDeleteFromCity()
+        private void OnDeleteFromCity() => K45DialogControl.ShowModal(new K45DialogControl.BindProperties
         {
-            K45DialogControl.ShowModal(new K45DialogControl.BindProperties
+            message = Locale.Get("K45_WTS_PROMPTDELETEBUILDINGLAYOUT"),
+            showButton1 = true,
+            showButton2 = true,
+            textButton1 = Locale.Get("YES"),
+            textButton2 = Locale.Get("NO"),
+        }, (x) =>
+        {
+            if (x == 1)
             {
-                message = Locale.Get("K45_WTS_PROMPTDELETEBUILDINGLAYOUT"),
-                showButton1 = true,
-                showButton2 = true,
-                textButton1 = Locale.Get("YES"),
-                textButton2 = Locale.Get("NO"),
-            }, (x) =>
-            {
-                if (x == 1)
-                {
-                    WTSBuildingsData.Instance.CityDescriptors.Remove(m_currentBuildingName);
-                    ReloadBuilding();
-                }
+                WTSBuildingsData.Instance.CityDescriptors.Remove(m_currentBuildingName);
+                ReloadBuilding();
+            }
 
-                return true;
-            });
-        }
+            return true;
+        });
         private void OnCopyToCity()
         {
             WTSBuildingsData.Instance.CityDescriptors[m_currentBuildingName] = XmlUtils.DefaultXmlDeserialize<BuildingGroupDescriptorXml>(XmlUtils.DefaultXmlSerialize(CurrentEditingInstance));
-            CurrentEditingInstance.LocalLayouts.ForEach(x =>
+            CurrentEditingInstance.CaculateLocalLayouts().ForEach(x =>
             {
                 if (WTSPropLayoutData.Instance.Get(x.Key) == null)
                 {

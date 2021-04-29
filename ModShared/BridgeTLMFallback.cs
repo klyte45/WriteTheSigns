@@ -8,9 +8,9 @@ using System.Linq;
 using UnityEngine;
 using static ItemClass;
 
-namespace Klyte.WriteTheSigns.Connectors
+namespace Klyte.WriteTheSigns.ModShared
 {
-    internal class ConnectorTLMFallback : IConnectorTLM
+    internal class BridgeTLMFallback : IBridgeTLM
     {
         public override Tuple<string, Color, string> GetLineLogoParameters(ushort lineID)
         {
@@ -81,6 +81,14 @@ namespace Klyte.WriteTheSigns.Connectors
 
         private string GetStopName(ushort stopId, ushort lineId, out ushort buildingID, out ushort parkID, out ushort districtID)
         {
+            if (stopId == 0)
+            {
+                buildingID = 0;
+                parkID = 0;
+                districtID = 0;
+                return "";
+            }
+
             buildingID = WTSBuildingDataCaches.GetStopBuilding(stopId, lineId);
 
             if (buildingID > 0)
@@ -104,7 +112,7 @@ namespace Klyte.WriteTheSigns.Connectors
             {
                 return DistrictManager.instance.GetDistrictName(districtID);
             }
-            if (SegmentUtils.GetAddressStreetAndNumber(location, location, out int number, out string streetName) && !string.IsNullOrEmpty(streetName))
+            if (WriteTheSignsMod.Controller.ConnectorADR.GetAddressStreetAndNumber(location, location, out int number, out string streetName) && !string.IsNullOrEmpty(streetName))
             {
                 return streetName + ", " + number;
             }
@@ -174,8 +182,10 @@ namespace Klyte.WriteTheSigns.Connectors
         public override void MapLineDestinations(ushort lineId)
         {
             CalculatePath(lineId, out ushort startStation, out ushort endStation);
-
-            FillStops(lineId, startStation, endStation, null, null);
+            FillStops(lineId, new List<BridgeTLM.DestinationPoco>{
+                new BridgeTLM.DestinationPoco{ stopId = startStation},
+                new BridgeTLM.DestinationPoco{ stopId = endStation}
+            });
         }
 
         private enum NamingType

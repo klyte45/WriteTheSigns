@@ -1,6 +1,6 @@
 ﻿using ColossalFramework;
 using Harmony;
-using Klyte.Commons.Extensors;
+using Klyte.Commons.Extensions;
 using Klyte.Commons.Utils;
 using System;
 using System.Collections.Generic;
@@ -19,7 +19,7 @@ namespace Klyte.WriteTheSigns.Overrides
         {
             RedirectorInstance = KlyteMonoUtils.CreateElement<Redirector>(transform);
             LogUtils.DoLog("Loading Building Manager Overrides");
-            MethodInfo posRename = typeof(WTSController).GetMethod("OnBuildingNameChanged", RedirectorUtils.allFlags);
+            MethodInfo posRename = GetType().GetMethod("OnBuildingNameChanged", RedirectorUtils.allFlags);
             MethodInfo calcGroup = typeof(BuildingManager).GetMethod("CalculateGroupData");
             MethodInfo popGroup = typeof(BuildingManager).GetMethod("PopulateGroupData");
 
@@ -30,7 +30,7 @@ namespace Klyte.WriteTheSigns.Overrides
             MethodInfo AfterPopulateGroupData = GetType().GetMethod("AfterPopulateGroupData", RedirectorUtils.allFlags);
 
             LogUtils.DoLog($"Patching=> {posRename}");
-            RedirectorInstance.AddRedirect(BuildingManager.instance.SetBuildingName(0, "").GetType().GetMethod("MoveNext", RedirectorUtils.allFlags), null, posRename);
+            //RedirectorInstance.AddRedirect(BuildingManager.instance.SetBuildingName(0, "").GetType().GetMethod("MoveNext", RedirectorUtils.allFlags), null, posRename);
             LogUtils.DoLog($"Patching=> {AfterCalculateGroupData}");
             RedirectorInstance.AddRedirect(calcGroup, null, AfterCalculateGroupData);
             LogUtils.DoLog($"Patching=> {AfterPopulateGroupData}");
@@ -40,9 +40,14 @@ namespace Klyte.WriteTheSigns.Overrides
         }
         #endregion
 
-
+        public static void OnBuildingNameChanged() => WTSController.OnBuildingNameChanged(null);
         public static void AfterCalculateGroupData(BuildingManager __instance, int groupX, int groupZ, int layer, ref int vertexCount, ref int triangleCount, ref int objectCount, ref RenderGroup.VertexArrays vertexArrays, ref bool __result)
         {
+            if (LoadingManager.instance.m_currentlyLoading)
+            {
+                return;
+            }
+
             if (WriteTheSignsMod.Controller?.BuildingPropsSingleton == null)
             {
                 return;
@@ -78,6 +83,11 @@ namespace Klyte.WriteTheSigns.Overrides
 
         public static void AfterPopulateGroupData(BuildingManager __instance, int groupX, int groupZ, int layer, ref int vertexIndex, ref int triangleIndex, ref Vector3 groupPosition, RenderGroup.MeshData data, ref Vector3 min, ref Vector3 max, ref float maxRenderDistance, ref float maxInstanceDistance)
         {
+            if (LoadingManager.instance.m_currentlyLoading)
+            {
+                return;
+            }
+
             if (WriteTheSignsMod.Controller?.BuildingPropsSingleton == null)
             {
                 return;
@@ -130,6 +140,11 @@ namespace Klyte.WriteTheSigns.Overrides
 
         public static void AfterRenderMeshes(RenderManager.CameraInfo cameraInfo, ushort buildingID)
         {
+            if (LoadingManager.instance.m_currentlyLoading)
+            {
+                return;
+            }
+
             if (WriteTheSignsMod.Controller?.BuildingPropsSingleton == null)
             {
                 return;

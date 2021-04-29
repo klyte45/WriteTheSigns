@@ -19,7 +19,8 @@ namespace Klyte.WriteTheSigns.UI
         public Vector2 Size
         {
             get => new Vector2(m_camera.targetTexture.width, m_camera.targetTexture.height);
-            set {
+            set
+            {
                 if (Size != value)
                 {
                     m_camera.targetTexture = new RenderTexture((int)value.x, (int)value.y, 24, RenderTextureFormat.ARGB32);
@@ -47,17 +48,20 @@ namespace Klyte.WriteTheSigns.UI
             m_camera.name = "WTSCamera";
         }
 
-        public Matrix4x4 RenderPrefab(PI info, Vector3 offsetPosition, Vector3 offsetRotation, BoardTextDescriptorGeneralXml[] TextDescriptors, int referenceIdx, string overrideText, BoardDescriptorGeneralXml descriptor = null)
+        public Matrix4x4 RenderPrefab(PI info, Vector3 offsetPosition, Vector3 offsetRotation, BoardTextDescriptorGeneralXml[] TextDescriptors, int referenceIdx, string overrideText, ref int defaultCallsCounter, BoardDescriptorGeneralXml descriptor = null)
         {
+            if (info is null)
+            {
+                return default;
+            }
 
-            var instanceInfo = Singleton<InfoManager>.instance;
             var sunLightSource = DayNightProperties.instance.sunLightSource;
             var intensity = sunLightSource.intensity;
             var color2 = sunLightSource.color;
             var eulerAngles = sunLightSource.transform.eulerAngles;
-           sunLightSource.intensity = 2f;
-           sunLightSource.color = Color.white;
-           sunLightSource.transform.eulerAngles = new Vector3(50f, 180f, 70f);
+            sunLightSource.intensity = 2f;
+            sunLightSource.color = Color.white;
+            sunLightSource.transform.eulerAngles = new Vector3(50f, 180f, 70f);
             var mainLight = Singleton<RenderManager>.instance.MainLight;
             Singleton<RenderManager>.instance.MainLight = sunLightSource;
             if (mainLight == DayNightProperties.instance.moonLightSource)
@@ -87,7 +91,7 @@ namespace Klyte.WriteTheSigns.UI
             }
             else
             {
-                BasicRenderInformation refer = WTSDynamicTextRenderingRules.GetTextMesh(TextDescriptors[referenceIdx], 0, 0, referenceIdx, m_defaultInstance, descriptor, out IEnumerable<BasicRenderInformation> briArr) ?? briArr?.FirstOrDefault();
+                BasicRenderInformation refer = WTSDynamicTextRenderingRules.GetTextMesh(TextDescriptors[referenceIdx], 0, 0, referenceIdx, m_defaultInstance, descriptor, out IEnumerable<BasicRenderInformation> briArr, info) ?? briArr?.FirstOrDefault();
                 if (refer == null)
                 {
                     return default;
@@ -121,11 +125,11 @@ namespace Klyte.WriteTheSigns.UI
             m_camera.nearClipPlane = Mathf.Max(zoom - dist * 1.5f, 0.01f);
             m_camera.farClipPlane = zoom + dist * 1.5f;
 
-            var propMatrix = RenderMesh(info, TextDescriptors, positon, rotation, scale, sourceMatrix, out Color targetColor);
+            var propMatrix = RenderMesh(info, TextDescriptors, positon, rotation, scale, sourceMatrix, out Color targetColor, ref defaultCallsCounter);
 
             for (ushort i = 0; i < TextDescriptors?.Length; i++)
             {
-                WTSDynamicTextRenderingRules.RenderTextMesh(0, 0, i, m_defaultInstance, propMatrix, descriptor, ref TextDescriptors[i], m_block, -1, targetColor, info, m_camera);
+                WTSDynamicTextRenderingRules.RenderTextMesh(0, 0, i, m_defaultInstance, propMatrix, descriptor, ref TextDescriptors[i], m_block, -1, targetColor, info, ref defaultCallsCounter, m_camera);
             }
 
             m_camera.Render();
@@ -150,7 +154,7 @@ namespace Klyte.WriteTheSigns.UI
 
 
 
-        protected abstract Matrix4x4 RenderMesh(PI info, BoardTextDescriptorGeneralXml[] textDescriptors, Vector3 position, Quaternion rotation, Vector3 scale, Matrix4x4 sourceMatrix, out Color targetColor);
+        protected abstract Matrix4x4 RenderMesh(PI info, BoardTextDescriptorGeneralXml[] textDescriptors, Vector3 position, Quaternion rotation, Vector3 scale, Matrix4x4 sourceMatrix, out Color targetColor, ref int defaultCallsCounter);
         protected abstract ref Mesh GetMesh(PI info);
         protected abstract ref Material GetMaterial(PI info);
 

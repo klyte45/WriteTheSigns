@@ -10,8 +10,8 @@ namespace Klyte.WriteTheSigns.Xml
 {
     public class BoardDescriptorGeneralXml : ILibable, IKeyGetter<string>
     {
-        [XmlAttribute("propName")]
-        public string m_propName;
+        private const string DEFAULT_PROPNAME = "";
+        private string propName;
 
         [XmlAttribute("availability")]
         public TextRenderingClass m_allowedRenderClass = TextRenderingClass.PlaceOnNet;
@@ -28,7 +28,8 @@ namespace Klyte.WriteTheSigns.Xml
         [XmlIgnore]
         public string OriginalSaveName
         {
-            get {
+            get
+            {
                 string result = m_originalSaveName;
                 m_originalSaveName = null;
                 return result;
@@ -40,7 +41,8 @@ namespace Klyte.WriteTheSigns.Xml
         public string SaveName
         {
             get => m_saveName;
-            set {
+            set
+            {
                 if (m_saveName != null && m_originalSaveName == null)
                 {
                     m_originalSaveName = m_saveName;
@@ -52,10 +54,32 @@ namespace Klyte.WriteTheSigns.Xml
         [XmlElement("textDescriptor")]
         public BoardTextDescriptorGeneralXml[] TextDescriptors { get; set; } = new BoardTextDescriptorGeneralXml[0];
 
+        [XmlAttribute("propName")]
+        public string PropName
+        {
+            get => propName; set
+            {
+                m_cachedInfo = value is null ? null : PrefabCollection<PropInfo>.FindLoaded(value);
+                propName = value;
+            }
+        }
+
         [XmlIgnore]
         private string m_saveName;
 
         private string m_originalSaveName;
+
+        private PropInfo m_cachedInfo;
+        [XmlIgnore]
+        internal PropInfo CachedProp =>
+                //if (m_cachedInfo is null)
+                //{
+                //    if (propName is null || (m_cachedInfo = PropIndexes.instance.PrefabsLoaded.Values.Where(x => x.name == propName).FirstOrDefault()) is null)
+                //    {
+                //        m_cachedInfo = PropIndexes.instance.PrefabsLoaded.Values.Where(x => x.name == DEFAULT_PROPNAME).FirstOrDefault();
+                //    }
+                //}
+                m_cachedInfo;
 
         public string GetKeyString() => m_saveName;
 
