@@ -121,6 +121,12 @@ namespace Klyte.WriteTheSigns.Data
                             item.SaveName = propEffName[0] + "/" + item.SaveName;
                             result.Add(item);
                         }
+                        else if (propEffName[0] == xmlEffName[0])
+                        {
+                            item.m_configurationSource = ConfigurationSource.ASSET;
+                            item.SaveName = propEffName[0] + "/" + item.SaveName;
+                            result.Add(item);
+                        }
                         else
                         {
                             LogUtils.DoWarnLog($"PROP NAME WAS NOT MATCHING PROP INFO! SKIPPING! (prop folder: {$"{info}" ?? "<GLOBAL>"}| descriptor: {item.SaveName} | item.m_propName: {item.PropName})");

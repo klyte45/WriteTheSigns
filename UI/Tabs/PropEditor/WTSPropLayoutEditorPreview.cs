@@ -188,7 +188,7 @@ namespace Klyte.WriteTheSigns.UI
             }
             m_preview.isVisible = true;
             m_previewControls.isVisible = true;
-            m_previewRenderer.RenderPrefab(CurrentInfo, m_cameraPosition, new Vector3(0, CameraRotation), EditingInstancePreview?.TextDescriptors, CurrentTextDescriptor != null ? TabToPreview : -1, m_overrideText, EditingInstancePreview);
+            m_previewRenderer.RenderPrefab(CurrentInfo, m_cameraPosition, new Vector3(0, CameraRotation), EditingInstancePreview?.TextDescriptors, CurrentTextDescriptor != null ? TabToPreview : -1, m_overrideText, ref PropManager.instance.m_drawCallData.m_batchedCalls, EditingInstancePreview);
         }
 
         public void Update()

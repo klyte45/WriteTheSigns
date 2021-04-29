@@ -166,7 +166,7 @@ namespace Klyte.WriteTheSigns.Singleton
                     {
                         MaterialPropertyBlock properties = PropManager.instance.m_materialBlock;
                         properties.Clear();
-                        WTSDynamicTextRenderingRules.RenderTextMesh(segmentId, boardIdx, 0, targetDescriptor, propMatrix, targetDescriptor.Descriptor, ref targetDescriptor.Descriptor.TextDescriptors[j], properties, 0, parentColor, cachedProp);
+                        WTSDynamicTextRenderingRules.RenderTextMesh(segmentId, boardIdx, 0, targetDescriptor, propMatrix, targetDescriptor.Descriptor, ref targetDescriptor.Descriptor.TextDescriptors[j], properties, 0, parentColor, cachedProp, ref NetManager.instance.m_drawCallData.m_batchedCalls);
                     }
 
                 }
