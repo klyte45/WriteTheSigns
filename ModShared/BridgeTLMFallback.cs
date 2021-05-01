@@ -128,6 +128,11 @@ namespace Klyte.WriteTheSigns.ModShared
             NetManager nm = Singleton<NetManager>.instance;
             BuildingManager bm = Singleton<BuildingManager>.instance;
             ushort tempBuildingId;
+            if (stopId > nm.m_nodes.m_buffer.Length)
+            {
+                return stopId;
+            }
+
             Vector3 position = nm.m_nodes.m_buffer[stopId].m_position;
 
             SubService ss = TransportManager.instance.m_lines.m_buffer[lineId].Info.m_class.m_subService;

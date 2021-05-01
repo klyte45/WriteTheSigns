@@ -121,7 +121,7 @@ namespace Klyte.WriteTheSigns.Singleton
             for (int j = 0; j < targetDescriptor.TextDescriptors.Length; j++)
             {
                 ref BoardTextDescriptorGeneralXml descriptor = ref targetDescriptor.TextDescriptors[j];
-                if (cameraInfo.CheckRenderDistance(position, 200 * descriptor.m_textScale * (descriptor.IlluminationConfig?.IlluminationType == FontStashSharp.MaterialType.OPAQUE ? 1 : 2)))
+                if (descriptor != null && cameraInfo.CheckRenderDistance(position, 200 * descriptor.m_textScale * (descriptor.IlluminationConfig?.IlluminationType == FontStashSharp.MaterialType.OPAQUE ? 1 : 2)))
                 {
                     MaterialPropertyBlock properties = instance.m_materialBlock;
                     properties.Clear();
