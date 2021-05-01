@@ -34,14 +34,9 @@ namespace Klyte.WriteTheSigns.Singleton
                 var targetDescriptor = itemGroup.BoardsData[i];
                 if (targetDescriptor?.Descriptor == null)
                 {
-                    if (targetDescriptor?.SimpleProp == null)
+                    if (targetDescriptor?.SimpleProp is null)
                     {
                         continue;
-                    }
-
-                    if (targetDescriptor.m_simpleCachedProp.name != targetDescriptor.m_simplePropName)
-                    {
-                        targetDescriptor.m_simpleCachedProp = null;
                     }
                 }
                 if (targetDescriptor.m_cachedPosition == null || targetDescriptor.m_cachedRotation == null)
@@ -85,12 +80,7 @@ namespace Klyte.WriteTheSigns.Singleton
                     {
                         continue;
                     }
-
-                    if (targetDescriptor.m_simpleCachedProp?.name != targetDescriptor.m_simplePropName)
-                    {
-                        targetDescriptor.m_simpleCachedProp = null;
-                    }
-                    WTSDynamicTextRenderingRules.EnsurePropCache(ref targetDescriptor.m_simpleCachedProp, segmentID, i, 0, ref targetDescriptor.m_simplePropName, targetDescriptor.Descriptor, targetDescriptor, out rendered);
+                    WTSDynamicTextRenderingRules.EnsurePropCache( segmentID, i, 0, targetDescriptor.Descriptor, targetDescriptor, out rendered);
                 }
                 else
                 {
@@ -123,11 +113,6 @@ namespace Klyte.WriteTheSigns.Singleton
                     if (targetDescriptor?.SimpleProp is null)
                     {
                         continue;
-                    }
-
-                    if (targetDescriptor.m_simpleCachedProp?.name != targetDescriptor.m_simplePropName)
-                    {
-                        targetDescriptor.m_simpleCachedProp = null;
                     }
                 }
                 if (!(targetDescriptor.Descriptor?.CachedProp is null))
@@ -166,7 +151,7 @@ namespace Klyte.WriteTheSigns.Singleton
                     {
                         MaterialPropertyBlock properties = PropManager.instance.m_materialBlock;
                         properties.Clear();
-                        WTSDynamicTextRenderingRules.RenderTextMesh(segmentId, boardIdx, 0, targetDescriptor, propMatrix, targetDescriptor.Descriptor, ref targetDescriptor.Descriptor.TextDescriptors[j], properties, 0, parentColor, cachedProp);
+                        WTSDynamicTextRenderingRules.RenderTextMesh(segmentId, boardIdx, 0, targetDescriptor, propMatrix, targetDescriptor.Descriptor, ref targetDescriptor.Descriptor.TextDescriptors[j], properties, 0, parentColor, cachedProp, ref NetManager.instance.m_drawCallData.m_batchedCalls);
                     }
 
                 }

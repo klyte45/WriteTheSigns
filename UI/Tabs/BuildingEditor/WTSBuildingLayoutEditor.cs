@@ -9,6 +9,7 @@ using Klyte.WriteTheSigns.Singleton;
 using Klyte.WriteTheSigns.Xml;
 using System;
 using System.IO;
+using System.Linq;
 using UnityEngine;
 using static Klyte.Commons.UI.DefaultEditorUILib;
 
@@ -131,8 +132,16 @@ namespace Klyte.WriteTheSigns.UI
 
         private void OnExportAsAsset()
         {
-            File.WriteAllText(Path.Combine(Path.GetDirectoryName(PackageManager.FindAssetByName(CurrentBuildingName)?.package?.packagePath), $"{WTSController.m_defaultFileNameBuildingsXml}.xml"), XmlUtils.DefaultXmlSerialize(CurrentEditingInstance));
-            WriteTheSignsMod.Controller?.BuildingPropsSingleton?.LoadAllBuildingConfigurations();
+            var id = CurrentBuildingName?.Split('.')[0];
+            if (id != null)
+            {
+                var path = PackageManager.allPackages.Where(x => x.packageName == id).FirstOrDefault()?.packagePath;
+                if (path != null)
+                {
+                    File.WriteAllText(Path.Combine(Path.GetDirectoryName(path), $"{WTSController.m_defaultFileNameBuildingsXml}.xml"), XmlUtils.DefaultXmlSerialize(CurrentEditingInstance));
+                    WriteTheSignsMod.Controller?.BuildingPropsSingleton?.LoadAllBuildingConfigurations();
+                }
+            }
         }
 
         private void OnExportAsGlobal()

@@ -121,7 +121,7 @@ namespace Klyte.WriteTheSigns.Singleton
             for (int j = 0; j < targetDescriptor.TextDescriptors.Length; j++)
             {
                 ref BoardTextDescriptorGeneralXml descriptor = ref targetDescriptor.TextDescriptors[j];
-                if (cameraInfo.CheckRenderDistance(position, 200 * descriptor.m_textScale * (descriptor.IlluminationConfig?.IlluminationType == FontStashSharp.MaterialType.OPAQUE ? 1 : 2)))
+                if (descriptor != null && cameraInfo.CheckRenderDistance(position, 200 * descriptor.m_textScale * (descriptor.IlluminationConfig?.IlluminationType == FontStashSharp.MaterialType.OPAQUE ? 1 : 2)))
                 {
                     MaterialPropertyBlock properties = instance.m_materialBlock;
                     properties.Clear();
@@ -131,7 +131,7 @@ namespace Klyte.WriteTheSigns.Singleton
                         flags ^= Vehicle.Flags.Reversed;
                     }
                     ref Vehicle vehicle = ref instance.m_vehicles.m_buffer[vehicleId];
-                    WTSDynamicTextRenderingRules.RenderTextMesh(vehicleId, 0, 0, targetDescriptor, vehicleMatrix, null, ref targetDescriptor.TextDescriptors[j], properties, (int)flags, vehicle.Info.m_vehicleAI.GetColor(vehicleId, ref vehicle, InfoManager.InfoMode.None), v.Info);
+                    WTSDynamicTextRenderingRules.RenderTextMesh(vehicleId, 0, 0, targetDescriptor, vehicleMatrix, null, ref targetDescriptor.TextDescriptors[j], properties, (int)flags, vehicle.Info.m_vehicleAI.GetColor(vehicleId, ref vehicle, InfoManager.InfoMode.None), v.Info, ref VehicleManager.instance.m_drawCallData.m_batchedCalls);
                 }
             }
 

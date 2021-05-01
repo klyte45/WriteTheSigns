@@ -172,9 +172,7 @@ namespace Klyte.WriteTheSigns.UI
             }
         }
 
-        private void ShowChangeNameConfigModal(string lastError)
-        {
-            K45DialogControl.ShowModalPromptText(
+        private void ShowChangeNameConfigModal(string lastError) => K45DialogControl.ShowModalPromptText(
                   new K45DialogControl.BindProperties
                   {
                       title = Locale.Get("K45_WTS_PROPEDIT_NAMECHANGE_TITLE"),
@@ -205,7 +203,6 @@ namespace Klyte.WriteTheSigns.UI
                       return true;
                   }
          );
-        }
 
         private string ValidateConfigName(string text)
         {
@@ -222,7 +219,19 @@ namespace Klyte.WriteTheSigns.UI
             return error;
         }
 
-        private void OnExportAsAsset() => ExportTo(Path.Combine(Path.GetDirectoryName(PackageManager.FindAssetByName(EditingInstance?.PropName)?.package?.packagePath), $"{WTSController.m_defaultFileNamePropsXml}.xml"), true);
+        private void OnExportAsAsset()
+        {
+            var id = EditingInstance?.PropName?.Split('.')[0];
+            if (id != null)
+            {
+                var path = PackageManager.allPackages.Where(x => x.packageName == id).FirstOrDefault()?.packagePath;
+                if (path != null)
+                {
+                    ExportTo(Path.Combine(Path.GetDirectoryName(path), $"{WTSController.m_defaultFileNamePropsXml}.xml"), true);
+                }
+            }
+        }
+
         private void ExportTo(string output, bool isAsset)
         {
             if (EditingInstance?.PropName != null)
@@ -283,7 +292,7 @@ namespace Klyte.WriteTheSigns.UI
 
 
         #region Actions        
-        private void OnSetPropColor( Color value) => EditingInstance.FixedColor = (value == default ? (Color?)null : value);
+        private void OnSetPropColor(Color value) => EditingInstance.FixedColor = (value == default ? (Color?)null : value);
 
         private string OnSetProp(string typed, int sel, string[] items)
         {
