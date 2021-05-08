@@ -16,14 +16,8 @@ namespace Klyte.WriteTheSigns.Xml
 
         [XmlElement("textDescriptor")]
         public BoardTextDescriptorGeneralXml[] TextDescriptors { get; set; } = new BoardTextDescriptorGeneralXml[0];
-        [XmlElement("blackSubmesh")]
-        public int[] BlackSubmeshes { get; set; } = new int[0];
         [XmlAttribute("defaultFont")]
         public string FontName { get; set; }
-
-
-        [XmlIgnore]
-        internal bool SubmeshesUpdated { get; set; }
 
         private VehicleInfo m_cachedInfo;
 
@@ -32,13 +26,16 @@ namespace Klyte.WriteTheSigns.Xml
         {
             get
             {
-                if (m_cachedInfo is null && (m_cachedInfo = VehiclesIndexes.instance.PrefabsLoaded.Values.Where(x => x.name == VehicleAssetName).FirstOrDefault()) is null)
+                if (m_cachedInfo is null && VehicleAssetName != null && (m_cachedInfo = VehiclesIndexes.instance.PrefabsLoaded.Values.Where(x => x.name == VehicleAssetName).FirstOrDefault()) is null)
                 {
-                    m_cachedInfo = new VehicleInfo();
+                    VehicleAssetName = null;
                 }
                 return m_cachedInfo;
             }
         }
+
+        public bool IsValid() => !(TextDescriptors is null || CachedInfo is null || VehicleAssetName is null);
+
     }
 
 }
