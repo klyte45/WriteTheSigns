@@ -92,6 +92,13 @@ namespace Klyte.WriteTheSigns
             ReloadAbbreviationFiles();
 
             FontServer.Ensure();
+            AtlasesLibrary = gameObject.AddComponent<WTSAtlasesLibrary>();
+            BuildingPropsSingleton = gameObject.AddComponent<WTSBuildingPropsSingleton>();
+            RoadPropsSingleton = gameObject.AddComponent<WTSRoadPropsSingleton>();
+            VehicleTextsSingleton = gameObject.AddComponent<WTSVehicleTextsSingleton>();
+            OnNetPropsSingleton = gameObject.AddComponent<WTSOnNetPropsSingleton>();
+            HighwayShieldsSingleton = gameObject.AddComponent<WTSHighwayShieldsSingleton>();
+            HighwayShieldsAtlasLibrary = gameObject.AddComponent<WTSHighwayShieldsAtlasLibrary>();
             ConnectorTLM = PluginUtils.GetImplementationTypeForMod<BridgeTLM, BridgeTLMFallback, IBridgeTLM>(gameObject, "TransportLinesManager", "14.0.0.0");
             ConnectorADR = PluginUtils.GetImplementationTypeForMod<BridgeADR, BridgeADRFallback, IBridgeADR>(gameObject, "KlyteAddresses", "3.0.0.3");
         }
@@ -100,14 +107,6 @@ namespace Klyte.WriteTheSigns
 
         protected override void StartActions()
         {
-            AtlasesLibrary = gameObject.AddComponent<WTSAtlasesLibrary>();
-            BuildingPropsSingleton = gameObject.AddComponent<WTSBuildingPropsSingleton>();
-            RoadPropsSingleton = gameObject.AddComponent<WTSRoadPropsSingleton>();
-            VehicleTextsSingleton = gameObject.AddComponent<WTSVehicleTextsSingleton>();
-            OnNetPropsSingleton = gameObject.AddComponent<WTSOnNetPropsSingleton>();
-            HighwayShieldsSingleton = gameObject.AddComponent<WTSHighwayShieldsSingleton>();
-            HighwayShieldsAtlasLibrary = gameObject.AddComponent<WTSHighwayShieldsAtlasLibrary>();
-
             ReloadFontsFromPath();
             BuildingManager.instance.EventBuildingReleased += WTSBuildingDataCaches.PurgeBuildingCache;
             BuildingManager.instance.EventBuildingRelocated += WTSBuildingDataCaches.PurgeBuildingCache;
