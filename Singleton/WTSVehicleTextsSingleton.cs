@@ -6,7 +6,6 @@ using Klyte.WriteTheSigns.Xml;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Xml.Serialization;
 using UnityEngine;
 
@@ -49,32 +48,7 @@ namespace Klyte.WriteTheSigns.Singleton
                 MaterialPropertyBlock materialBlock = VehicleManager.instance.m_materialBlock;
                 materialBlock.Clear();
 
-                UpdateSubmeshes(thiz.m_info, targetDescriptor);
-
                 RenderDescriptor(ref vehicleData, cameraInfo, vehicleID, position, vehicleMatrix, ref targetDescriptor);
-            }
-        }
-
-        internal static void UpdateSubmeshes(VehicleInfo info, LayoutDescriptorVehicleXml targetDescriptor)
-        {
-            if (!targetDescriptor?.SubmeshesUpdated ?? false)
-            {
-                if (info?.m_subMeshes != null && targetDescriptor.BlackSubmeshes != null)
-                {
-                    foreach (int idx in targetDescriptor.BlackSubmeshes)
-                    {
-                        if (idx < info.m_subMeshes.Length && info.m_subMeshes[idx].m_subInfo?.m_material != null)
-                        {
-                            info.m_subMeshes[idx].m_subInfo.m_material.mainTexture = Texture2D.blackTexture;
-                            var aciReplacement = new Texture2D(info.m_subMeshes[idx].m_subInfo.m_material.mainTexture.width, info.m_subMeshes[idx].m_subInfo.m_material.mainTexture.height, TextureFormat.RGBA32, false);
-                            aciReplacement.SetPixels(new Color[info.m_subMeshes[idx].m_subInfo.m_material.mainTexture.width * info.m_subMeshes[idx].m_subInfo.m_material.mainTexture.height].Select(x => Color.blue).ToArray());
-                            info.m_subMeshes[idx].m_vehicleFlagsRequired = Vehicle.Flags.Created;
-                            info.m_subMeshes[idx].m_vehicleFlagsForbidden = 0;
-                            info.m_subMeshes[idx].m_subInfo.m_material.SetTexture("_ACIMap", aciReplacement);
-                        }
-                    }
-                }
-                targetDescriptor.SubmeshesUpdated = true;
             }
         }
 
@@ -196,11 +170,11 @@ namespace Klyte.WriteTheSigns.Singleton
             var serializer = new XmlSerializer(typeof(ExportableLayoutDescriptorVehicleXml));
 
             LogUtils.DoLog($"trying deserialize: {info}");
-
-            if (serializer.Deserialize(stream) is ExportableLayoutDescriptorVehicleXml configs)
+            if (serializer.Deserialize(stream) is ExportableLayoutDescriptorVehicleXml configs && !(configs.Descriptors is null))
             {
-                foreach (var config in configs.Descriptors)
+                for (int i = 0; i < configs.Descriptors.Length; i++)
                 {
+                    LayoutDescriptorVehicleXml config = configs.Descriptors[i];
                     if (info != null)
                     {
                         string[] propEffName = info.name.Split(".".ToCharArray(), 2);
@@ -214,7 +188,22 @@ namespace Klyte.WriteTheSigns.Singleton
                     {
                         throw new Exception("Vehicle name not set at file!!!!");
                     }
-                    referenceDic[config.VehicleAssetName] = config;
+                    if (!config.IsValid())
+                    {
+                        if (CommonProperties.DebugMode)
+                        {
+                            stream.Position = 0;
+                            using (var sr = new StreamReader(stream))
+                            {
+                                K45DialogControl.ShowModalError($"The vehicle layout failed to be loaded from {(info is null ? "global" : $"asset \"{info}\"")} folder! (Descriptor item #{i + 1}/{configs.Descriptors.Length})\nSee data below.", sr.ReadToEnd());
+                            }
+                        }
+
+                    }
+                    else
+                    {
+                        referenceDic[config.VehicleAssetName] = config;
+                    }
                 }
             }
             else

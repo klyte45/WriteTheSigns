@@ -88,7 +88,7 @@ namespace Klyte.WriteTheSigns.UI
             KlyteMonoUtils.LimitWidthAndBox(m_labelSelectionDescription, (m_uiHelperHS.Self.width / 2), out UIPanel containerBoxDescription, true);
             m_labelSelectionDescription.prefix = Locale.Get("K45_WTS_CURRENTSELECTION") + ": ";
             m_btnNew = AddButtonInEditorRow(containerBoxDescription, Commons.UI.SpriteNames.CommonsSpriteNames.K45_New, OnCreateNewCity, "K45_WTS_BUILDINGEDITOR_BUTTONROWACTION_NEWINCITY", false);
-            m_btnCopy = AddButtonInEditorRow(containerBoxDescription, Commons.UI.SpriteNames.CommonsSpriteNames.K45_Copy, OnCopyToCity, "K45_WTS_BUILDINGEDITOR_BUTTONROWACTION_COPYTOCITY", false);
+            m_btnCopy = AddButtonInEditorRow(containerBoxDescription, Commons.UI.SpriteNames.CommonsSpriteNames.K45_Import, OnCopyToCity, "K45_WTS_BUILDINGEDITOR_BUTTONROWACTION_COPYTOCITY", false);
             m_btnDelete = AddButtonInEditorRow(containerBoxDescription, Commons.UI.SpriteNames.CommonsSpriteNames.K45_Delete, OnDeleteFromCity, "K45_WTS_BUILDINGEDITOR_BUTTONROWACTION_DELETEFROMCITY", false);
             m_btnLoad = AddButtonInEditorRow(containerBoxDescription, Commons.UI.SpriteNames.CommonsSpriteNames.K45_Load, OnOpenGlobalFolder, "K45_WTS_BUILDINGEDITOR_BUTTONROWACTION_OPENGLOBALSFOLDER", false);
             m_btnExport = AddButtonInEditorRow(containerBoxDescription, Commons.UI.SpriteNames.CommonsSpriteNames.K45_Export, OnExportAsGlobal, "K45_WTS_BUILDINGEDITOR_BUTTONROWACTION_EXPORTASGLOBAL", false);
@@ -171,15 +171,16 @@ namespace Klyte.WriteTheSigns.UI
         private void OnCopyToCity()
         {
             WTSBuildingsData.Instance.CityDescriptors[m_currentBuildingName] = XmlUtils.DefaultXmlDeserialize<BuildingGroupDescriptorXml>(XmlUtils.DefaultXmlSerialize(CurrentEditingInstance));
-            CurrentEditingInstance.CaculateLocalLayouts().ForEach(x =>
+            foreach (var x in CurrentEditingInstance.m_localLayouts)
             {
-                if (WTSPropLayoutData.Instance.Get(x.Key) == null)
+                if (WTSPropLayoutData.Instance.Get(x.Key) is null)
                 {
-                    var value = x.Value;
-                    x.Value.m_configurationSource = ConfigurationSource.CITY;
+                    var value = XmlUtils.CloneViaXml(x.Value);
+                    value.m_configurationSource = ConfigurationSource.CITY;
+                    value.SaveName = x.Key;
                     WTSPropLayoutData.Instance.Add(x.Key, ref value);
                 }
-            });
+            };
             ReloadBuilding();
         }
         private void OnCreateNewCity()

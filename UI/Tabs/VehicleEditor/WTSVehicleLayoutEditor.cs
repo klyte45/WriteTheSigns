@@ -177,7 +177,7 @@ namespace Klyte.WriteTheSigns.UI
         private void OnExportAsAsset() => ExportTo(Path.Combine(Path.GetDirectoryName(PackageManager.FindAssetByName(CurrentVehicleInfo.name)?.package?.packagePath), $"{WTSController.m_defaultFileNameVehiclesXml}.xml"));
         private void ExportTo(string output)
         {
-            if (CurrentVehicleInfo != null)
+            if (!(CurrentVehicleInfo is null))
             {
                 var assetId = CurrentVehicleInfo.name.Split('.')[0] + ".";
                 var descriptorsToExport = new List<LayoutDescriptorVehicleXml>();
@@ -234,7 +234,13 @@ namespace Klyte.WriteTheSigns.UI
 
         private void OnCopyToCity()
         {
-            WTSVehicleData.Instance.CityDescriptors[CurrentVehicleInfo.name] = XmlUtils.DefaultXmlDeserialize<LayoutDescriptorVehicleXml>(XmlUtils.DefaultXmlSerialize(EditingInstance));
+            var data = XmlUtils.DefaultXmlDeserialize<LayoutDescriptorVehicleXml>(XmlUtils.DefaultXmlSerialize(EditingInstance));
+            if (!data.IsValid())
+            {
+                K45DialogControl.ShowModalError("The vehicle layout failed to be loaded; it wasn't copied!", null);
+                return;
+            }
+            WTSVehicleData.Instance.CityDescriptors[CurrentVehicleInfo.name] = data;
             ReloadVehicle();
         }
         private void OnCopyToClipboard()
@@ -246,6 +252,11 @@ namespace Klyte.WriteTheSigns.UI
         private void OnPasteFromClipboard()
         {
             var temp = XmlUtils.DefaultXmlDeserialize<LayoutDescriptorVehicleXml>(m_clipboard);
+            if (!temp.IsValid())
+            {
+                K45DialogControl.ShowModalError("The current clipboard layout failed to be copied! See data below.", m_clipboard);
+                return;
+            }
             temp.VehicleAssetName = CurrentVehicleInfo.name;
             EditingInstance = temp;
         }
@@ -262,9 +273,9 @@ namespace Klyte.WriteTheSigns.UI
         internal void ReloadVehicle()
         {
 
-            m_middleBar.isVisible = CurrentVehicleInfo != null;
-            m_containerSelectionDescription.isVisible = CurrentVehicleInfo != null;
-            if (CurrentVehicleInfo != null)
+            m_middleBar.isVisible = !(CurrentVehicleInfo is null);
+            m_containerSelectionDescription.isVisible = !(CurrentVehicleInfo is null);
+            if (!(CurrentVehicleInfo is null))
             {
                 WTSVehicleTextsSingleton.GetTargetDescriptor(CurrentVehicleInfo.name, out ConfigurationSource source, out LayoutDescriptorVehicleXml target);
                 m_labelSelectionDescription.text = (CurrentVehicleInfo.name?.EndsWith("_Data") ?? false) ? Locale.Get("VEHICLE_TITLE", CurrentVehicleInfo.name) + "\n" : $"{CurrentVehicleInfo.name}\n";
@@ -280,11 +291,11 @@ namespace Klyte.WriteTheSigns.UI
                 m_btnSteam.isVisible = CurrentConfigurationSource == ConfigurationSource.CITY && CurrentVehicleInfo.name.EndsWith("_Data");
                 OnTabChange(0);
             }
-            m_editArea.isVisible = CurrentVehicleInfo != null && CurrentConfigurationSource == ConfigurationSource.CITY;
+            m_editArea.isVisible = !(CurrentVehicleInfo is null) && CurrentConfigurationSource == ConfigurationSource.CITY;
             m_cantEditText.isVisible = CurrentConfigurationSource == ConfigurationSource.ASSET || CurrentConfigurationSource == ConfigurationSource.GLOBAL;
-            m_plusButton.isVisible = CurrentVehicleInfo != null && CurrentConfigurationSource == ConfigurationSource.CITY;
-            m_editTabstrip.isVisible = CurrentVehicleInfo != null && CurrentConfigurationSource != ConfigurationSource.NONE;
-            m_btnCopy.isVisible = CurrentVehicleInfo != null;
+            m_plusButton.isVisible = !(CurrentVehicleInfo is null) && CurrentConfigurationSource == ConfigurationSource.CITY;
+            m_editTabstrip.isVisible = !(CurrentVehicleInfo is null) && CurrentConfigurationSource != ConfigurationSource.NONE;
+            m_btnCopy.isVisible = !(CurrentVehicleInfo is null);
             m_btnPaste.isVisible = m_clipboard != null && CurrentConfigurationSource == ConfigurationSource.CITY;
         }
 
@@ -366,26 +377,12 @@ namespace Klyte.WriteTheSigns.UI
                 {
                     if (btn != m_plusButton)
                     {
-                        if (btn.zOrder == CurrentTab)
-                        {
-                            btn.state = UIButton.ButtonState.Focused;
-                        }
-                        else
-                        {
-                            btn.state = UIButton.ButtonState.Normal;
-                        }
+                        btn.state = btn.zOrder == CurrentTab ? UIButton.ButtonState.Focused : UIButton.ButtonState.Normal;
                     }
                 }
                 foreach (UIButton btn in m_orderedRulesList.GetComponentsInChildren<UIButton>())
                 {
-                    if (btn.zOrder == CurrentTab - 1)
-                    {
-                        btn.state = UIButton.ButtonState.Focused;
-                    }
-                    else
-                    {
-                        btn.state = UIButton.ButtonState.Normal;
-                    }
+                    btn.state = btn.zOrder == CurrentTab - 1 ? UIButton.ButtonState.Focused : UIButton.ButtonState.Normal;
                 }
             }
         }

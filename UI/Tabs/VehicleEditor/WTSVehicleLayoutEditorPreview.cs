@@ -193,13 +193,12 @@ namespace Klyte.WriteTheSigns.UI
         }
         private void RedrawModel()
         {
-            if (CurrentInfo == default)
+            if (CurrentInfo is null)
             {
                 return;
             }
             m_preview.isVisible = true;
             m_previewControls.isVisible = true;
-            WTSVehicleTextsSingleton.UpdateSubmeshes(CurrentInfo, EditingInstancePreview);
             m_previewRenderer.RenderPrefab(CurrentInfo, m_cameraPosition, new Vector3(0, CameraRotation), EditingInstancePreview?.TextDescriptors, CurrentTextDescriptor != null ? TabToPreview : -1, m_overrideText, ref VehicleManager.instance.m_drawCallData.m_batchedCalls);
 
         }

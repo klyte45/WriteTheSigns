@@ -52,8 +52,7 @@ namespace Klyte.WriteTheSigns.Xml
         }
 
         [XmlElement("textDescriptor")]
-        public BoardTextDescriptorGeneralXml[] TextDescriptors { get; set; } = new BoardTextDescriptorGeneralXml[0];
-
+        public BoardTextDescriptorGeneralXml[] TextDescriptors { get => textDescriptors; set => textDescriptors = value ?? new BoardTextDescriptorGeneralXml[0]; }
         [XmlAttribute("propName")]
         public string PropName
         {
@@ -76,6 +75,7 @@ namespace Klyte.WriteTheSigns.Xml
 
         [XmlIgnore]
         internal ConfigurationSource m_configurationSource;
+        private BoardTextDescriptorGeneralXml[] textDescriptors = new BoardTextDescriptorGeneralXml[0];
     }
 
 }

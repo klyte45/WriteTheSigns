@@ -1,6 +1,6 @@
-﻿using ColossalFramework;
-using ColossalFramework.Globalization;
+﻿using ColossalFramework.Globalization;
 using ColossalFramework.UI;
+using Klyte.Commons;
 using Klyte.Commons.Extensions;
 using Klyte.Commons.UI.SpriteNames;
 using Klyte.Commons.Utils;
@@ -9,7 +9,6 @@ using Klyte.WriteTheSigns.Libraries;
 using Klyte.WriteTheSigns.Utils;
 using Klyte.WriteTheSigns.Xml;
 using System;
-using System.Linq;
 using UnityEngine;
 using static Klyte.Commons.UI.DefaultEditorUILib;
 
@@ -27,10 +26,6 @@ namespace Klyte.WriteTheSigns.UI
         private UIPanel m_tabLib;
 
         protected UIDropDown m_fontSelect;
-        private UIPanel m_submeshTitlePanel;
-        private UIPanel m_submeshesContainer;
-        private UIScrollablePanel m_submeshesScroll;
-        private UITemplateList<UICheckBox> m_submeshList;
 
         private UIButton m_pasteButton;
 
@@ -57,19 +52,12 @@ namespace Klyte.WriteTheSigns.UI
             var helperLib = new UIHelperExtension(m_tabLib, LayoutDirection.Vertical);
 
             AddDropdown(Locale.Get("K45_WTS_OVERRIDE_FONT"), out m_fontSelect, helperSettings, new string[0], OnSetFont);
-            AddLabel(Locale.Get("K45_WTS_SUBMESHESTOTURNBLACK"), helperSettings, out _, out m_submeshTitlePanel);
-
-            KlyteMonoUtils.CreateUIElement(out m_submeshesContainer, helperSettings.Self.transform, "submeshes panel", new Vector4(0, 0, helperSettings.Self.width, helperSettings.Self.height - 100));
-            KlyteMonoUtils.CreateScrollPanel(m_submeshesContainer, out m_submeshesScroll, out _, m_submeshesContainer.width - 30, m_submeshesContainer.height);
-
-            m_submeshList = new UITemplateList<UICheckBox>(m_submeshesScroll, UIHelperExtension.kCheckBoxTemplate);
 
             WTSVehicleLayoutEditor.Instance.CurrentTabChanged += (x) =>
             {
                 if (x == 0 && EditingInstance != null)
                 {
                     m_fontSelect.selectedIndex = EditingInstance.FontName == null ? 0 : EditingInstance.FontName == WTSController.DEFAULT_FONT_KEY ? 1 : Array.IndexOf(m_fontSelect.items, EditingInstance.FontName);
-                    FixSubmeshList();
                 }
                 MainContainer.isVisible = x == 0 && EditingInstance != null;
             };
@@ -91,7 +79,16 @@ namespace Klyte.WriteTheSigns.UI
 
         private void LoadIntoCurrentConfig(string loadedItem)
         {
-            WTSVehicleData.Instance.CityDescriptors[WTSVehicleLayoutEditor.Instance.CurrentVehicleInfo.name] = XmlUtils.DefaultXmlDeserialize<LayoutDescriptorVehicleXml>(loadedItem);
+            var data = XmlUtils.DefaultXmlDeserialize<LayoutDescriptorVehicleXml>(loadedItem);
+            if (!data.IsValid())
+            {
+                if (CommonProperties.DebugMode)
+                {
+                    K45DialogControl.ShowModalError("The vehicle layout failed to be loaded! See data below.", loadedItem);
+                }
+                return;
+            }
+            WTSVehicleData.Instance.CityDescriptors[WTSVehicleLayoutEditor.Instance.CurrentVehicleInfo.name] = data;
             WTSVehicleLayoutEditor.Instance.ReloadVehicle();
         }
 
@@ -104,24 +101,7 @@ namespace Klyte.WriteTheSigns.UI
             m_pasteButton.isVisible = true;
         }
 
-        public void FixSubmeshList()
-        {
-            var newLen = WTSVehicleLayoutEditor.Instance?.CurrentVehicleInfo?.m_subMeshes?.Length ?? 0;
-            m_submeshList.SetItemCount(newLen);
-            for (int i = 0; i < newLen; i++)
-            {
-                var but = m_submeshList.items[i];
-                if (but.stringUserData.IsNullOrWhiteSpace())
-                {
-                    but.eventCheckChanged += (x, y) => OnSetSubmeshBlack(x.zOrder, y);
-                    but.stringUserData = "A";
-                }
-                but.text = WTSVehicleLayoutEditor.Instance.CurrentVehicleInfo.m_subMeshes[i]?.m_subInfo?.name ?? $"<UNNAMED SUBMESH {i}>";
-                but.isChecked = EditingInstance?.BlackSubmeshes?.Contains(i) ?? false;
-            }
-            m_submeshTitlePanel.isVisible = newLen > 0;
-            m_submeshesContainer.isVisible = newLen > 0;
-        }
+
 
 
 
@@ -129,41 +109,12 @@ namespace Klyte.WriteTheSigns.UI
         {
             if (EditingInstance != null)
             {
-                if (idx > 1)
-                {
-                    EditingInstance.FontName = m_fontSelect.items[idx];
-                }
-                else if (idx == 1)
-                {
-                    EditingInstance.FontName = WTSController.DEFAULT_FONT_KEY;
-                }
-                else
-                {
-                    EditingInstance.FontName = null;
-                }
+                EditingInstance.FontName
+                    = idx > 1 ? m_fontSelect.items[idx]
+                    : idx == 1 ? WTSController.DEFAULT_FONT_KEY
+                    : null;
             }
         }
-
-
-        protected void OnSetSubmeshBlack(int idx, bool value)
-        {
-            if (EditingInstance != null)
-            {
-                if (EditingInstance.BlackSubmeshes.Contains(idx) != value)
-                {
-                    if (value)
-                    {
-                        EditingInstance.BlackSubmeshes = EditingInstance.BlackSubmeshes.Union(new int[] { idx }).ToArray();
-                    }
-                    else
-                    {
-                        EditingInstance.BlackSubmeshes = EditingInstance.BlackSubmeshes.Where(x => x != idx).ToArray();
-                    }
-                }
-            }
-        }
-
-
     }
 
 }
