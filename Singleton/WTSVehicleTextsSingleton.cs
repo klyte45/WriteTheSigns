@@ -190,10 +190,13 @@ namespace Klyte.WriteTheSigns.Singleton
                     }
                     if (!config.IsValid())
                     {
-                        stream.Position = 0;
-                        using (var sr = new StreamReader(stream))
+                        if (CommonProperties.DebugMode)
                         {
-                            K45DialogControl.ShowModalError($"The vehicle layout failed to be loaded from {(info is null ? "global" : $"asset \"{info}\"")} folder! (Descriptor item #{i + 1}/{configs.Descriptors.Length})\nSee data below.", sr.ReadToEnd());
+                            stream.Position = 0;
+                            using (var sr = new StreamReader(stream))
+                            {
+                                K45DialogControl.ShowModalError($"The vehicle layout failed to be loaded from {(info is null ? "global" : $"asset \"{info}\"")} folder! (Descriptor item #{i + 1}/{configs.Descriptors.Length})\nSee data below.", sr.ReadToEnd());
+                            }
                         }
 
                     }

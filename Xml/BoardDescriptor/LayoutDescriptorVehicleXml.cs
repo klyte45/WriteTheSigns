@@ -15,11 +15,13 @@ namespace Klyte.WriteTheSigns.Xml
         public string VehicleAssetName { get => SaveName; set => SaveName = value; }
 
         [XmlElement("textDescriptor")]
-        public BoardTextDescriptorGeneralXml[] TextDescriptors { get; set; } = new BoardTextDescriptorGeneralXml[0];
+        public BoardTextDescriptorGeneralXml[] TextDescriptors { get => textDescriptors; set => textDescriptors = value ?? new BoardTextDescriptorGeneralXml[0]; }
+
         [XmlAttribute("defaultFont")]
         public string FontName { get; set; }
 
         private VehicleInfo m_cachedInfo;
+        private BoardTextDescriptorGeneralXml[] textDescriptors = new BoardTextDescriptorGeneralXml[0];
 
         [XmlIgnore]
         internal VehicleInfo CachedInfo
@@ -34,8 +36,14 @@ namespace Klyte.WriteTheSigns.Xml
             }
         }
 
-        public bool IsValid() => !(TextDescriptors is null || CachedInfo is null || VehicleAssetName is null);
-
+        public bool IsValid()
+        {
+            if (TextDescriptors is null)
+            {
+                TextDescriptors = new BoardTextDescriptorGeneralXml[0];
+            }
+            return !(CachedInfo is null || VehicleAssetName is null);
+        }
     }
 
 }

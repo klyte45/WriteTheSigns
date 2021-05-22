@@ -15,3 +15,6 @@
 <color cyan>- Font character support</color>: Now even not supported characters for some fonts (like accented letters) will try to fallback to a existing character (like the regular letter in case of accents). If N/A, will be removed from string, not occupying a letter space anymore.
 
 <color yellow>r8 (02/MAY/21):</color> Fixed some issues in props and vehicles cache.
+<color yellow>r9 (22/MAY/21):</color>
+ - Removed black mesh support for vehicles: use text background instead.
+ - Some breaking bugs were fixed

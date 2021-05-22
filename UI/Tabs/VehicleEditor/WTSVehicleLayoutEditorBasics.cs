@@ -1,5 +1,6 @@
 ﻿using ColossalFramework.Globalization;
 using ColossalFramework.UI;
+using Klyte.Commons;
 using Klyte.Commons.Extensions;
 using Klyte.Commons.UI.SpriteNames;
 using Klyte.Commons.Utils;
@@ -81,7 +82,10 @@ namespace Klyte.WriteTheSigns.UI
             var data = XmlUtils.DefaultXmlDeserialize<LayoutDescriptorVehicleXml>(loadedItem);
             if (!data.IsValid())
             {
-                K45DialogControl.ShowModalError("The vehicle layout failed to be loaded! See data below.", loadedItem);
+                if (CommonProperties.DebugMode)
+                {
+                    K45DialogControl.ShowModalError("The vehicle layout failed to be loaded! See data below.", loadedItem);
+                }
                 return;
             }
             WTSVehicleData.Instance.CityDescriptors[WTSVehicleLayoutEditor.Instance.CurrentVehicleInfo.name] = data;
