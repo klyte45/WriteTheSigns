@@ -17,7 +17,7 @@ namespace Klyte.WriteTheSigns.Xml
         [XmlElement("cachedRot")]
         public Vector3Xml m_cachedRotation;
         [XmlIgnore]
-        public PropInfo m_simpleCachedProp;
+        public PropInfo m_simpleCachedProp => m_simpleProp;
 
         public override void OnChangeMatrixData()
         {

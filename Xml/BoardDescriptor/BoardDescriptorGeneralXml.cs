@@ -52,14 +52,13 @@ namespace Klyte.WriteTheSigns.Xml
         }
 
         [XmlElement("textDescriptor")]
-        public BoardTextDescriptorGeneralXml[] TextDescriptors { get; set; } = new BoardTextDescriptorGeneralXml[0];
-
+        public BoardTextDescriptorGeneralXml[] TextDescriptors { get => textDescriptors; set => textDescriptors = value ?? new BoardTextDescriptorGeneralXml[0]; }
         [XmlAttribute("propName")]
         public string PropName
         {
             get => propName; set
             {
-                m_cachedInfo = value is null ? null : PrefabCollection<PropInfo>.FindLoaded(value);
+                CachedProp = value is null ? null : PrefabCollection<PropInfo>.FindLoaded(value);
                 propName = value;
             }
         }
@@ -69,22 +68,14 @@ namespace Klyte.WriteTheSigns.Xml
 
         private string m_originalSaveName;
 
-        private PropInfo m_cachedInfo;
         [XmlIgnore]
-        internal PropInfo CachedProp =>
-                //if (m_cachedInfo is null)
-                //{
-                //    if (propName is null || (m_cachedInfo = PropIndexes.instance.PrefabsLoaded.Values.Where(x => x.name == propName).FirstOrDefault()) is null)
-                //    {
-                //        m_cachedInfo = PropIndexes.instance.PrefabsLoaded.Values.Where(x => x.name == DEFAULT_PROPNAME).FirstOrDefault();
-                //    }
-                //}
-                m_cachedInfo;
+        internal PropInfo CachedProp { get; private set; }
 
         public string GetKeyString() => m_saveName;
 
         [XmlIgnore]
         internal ConfigurationSource m_configurationSource;
+        private BoardTextDescriptorGeneralXml[] textDescriptors = new BoardTextDescriptorGeneralXml[0];
     }
 
 }

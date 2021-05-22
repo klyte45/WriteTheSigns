@@ -104,7 +104,7 @@ namespace Klyte.WriteTheSigns.Xml
             }
         }
         [XmlIgnore]
-        private PropInfo m_simpleProp;
+        protected PropInfo m_simpleProp;
 
         [XmlAttribute("saveName")]
         public string SaveName { get; set; }

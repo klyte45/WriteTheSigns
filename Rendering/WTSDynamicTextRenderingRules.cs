@@ -173,7 +173,7 @@ namespace Klyte.WriteTheSigns.Rendering
             return propColor;
         }
 
-        public static Color EnsurePropCache<DESC>(ref PropInfo propInfo, ushort refId, int boardIdx, int secIdx, ref string propName, BoardDescriptorGeneralXml propLayout, DESC descriptor, out bool rendered) where DESC : BoardInstanceXml
+        public static Color EnsurePropCache<DESC>(ushort refId, int boardIdx, int secIdx, BoardDescriptorGeneralXml propLayout, DESC descriptor, out bool rendered) where DESC : BoardInstanceXml
         {
             Color propColor = WTSDynamicTextRenderingRules.GetPropColor(refId, boardIdx, secIdx, descriptor, propLayout, out bool colorFound);
             if (!colorFound)
@@ -183,22 +183,6 @@ namespace Klyte.WriteTheSigns.Rendering
             }
             propColor.a = 1;
 
-            if (!string.IsNullOrEmpty(propName))
-            {
-                if (propInfo == null || propInfo.name != propName)
-                {
-                    propInfo = PrefabCollection<PropInfo>.FindLoaded(propName);
-                    if (propInfo == null)
-                    {
-                        LogUtils.DoErrorLog($"PREFAB NOT FOUND: {propName}");
-                        propName = null;
-                    }
-                }
-            }
-            else
-            {
-                propInfo = null;
-            }
             rendered = true;
             return propColor;
         }

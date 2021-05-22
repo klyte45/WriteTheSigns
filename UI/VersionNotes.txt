@@ -14,12 +14,7 @@
 <color cyan>- Parameters support in buildings</color>: You can use to customize each prop layout instance, like it can be done when placing in segment.
 <color cyan>- Font character support</color>: Now even not supported characters for some fonts (like accented letters) will try to fallback to a existing character (like the regular letter in case of accents). If N/A, will be removed from string, not occupying a letter space anymore.
 
-<color #777777>v0.2.1 - 31/MAR/21
-Beta-2.1 version:
-	- Multiline color check: Now use neutral colors only if there are more than 1 different line in the selected platforms, not different stops. (only if "Use neutral if multiline" option is enabled for building props)
-	- Downgrade to C#7.x: The mod must be more stable now, and must work in any OS.
-	- New text type: Support to city name in text spots.
-	- WTS Wiki: Check out the new button at mod options screen to read the wiki of Write the Signs mod! W.I.P.
-	- Workshop asset with WTS export automated: Now any WTS related file exported to be bundled within to send to Steam Workshop will be automatically copied to the staging folder.
-	- Workshop asset tags for WTS: The tags "Write The Signs" and "K45 WTS" will both be added to an asset item sent to workshop if they contain any WTS related file. Check all assets sent with WTS layouts using the button at mod options window.
-</color>
+<color yellow>r8 (02/MAY/21):</color> Fixed some issues in props and vehicles cache.
+<color yellow>r9 (22/MAY/21):</color>
+ - Removed black mesh support for vehicles: use text background instead.
+ - Some breaking bugs were fixed
