@@ -3,7 +3,6 @@ using ColossalFramework.Globalization;
 using ColossalFramework.UI;
 using Klyte.Commons.Extensions;
 using Klyte.Commons.UI.SpriteNames;
-using Klyte.Commons.UI.Sprites;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Data;
 using Klyte.WriteTheSigns.Libraries;
@@ -534,11 +533,11 @@ namespace Klyte.WriteTheSigns.UI
         {
             private Color32 OwnColor => WTSBuildingPropsSingleton.m_colorOrder[index % WTSBuildingPropsSingleton.m_colorOrder.Length];
 
-            public StopSearchUtils.StopPointDescriptorLanes descriptorLane;
+            public StopPointDescriptorLanes descriptorLane;
             public int index;
             public override string ToString() => $"<color #{OwnColor.ToRGB()}>({index})</color> {descriptorLane.vehicleType} @ {descriptorLane.platformLine.GetBounds().center}";
 
-            public PlatformItem(StopSearchUtils.StopPointDescriptorLanes item, int index)
+            public PlatformItem(StopPointDescriptorLanes item, int index)
             {
                 descriptorLane = item;
                 this.index = index;

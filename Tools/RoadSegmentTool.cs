@@ -9,7 +9,7 @@ using UnityEngine;
 namespace Klyte.WriteTheSigns.Tools
 {
 
-    public class RoadSegmentTool : BasicNetTool<RoadSegmentTool>
+    public class RoadSegmentTool : BaseNetTool<RoadSegmentTool>
     {
         public event Action<ushort> OnSelectSegment;
 

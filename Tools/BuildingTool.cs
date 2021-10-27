@@ -9,7 +9,7 @@ using UnityEngine;
 namespace Klyte.WriteTheSigns.Tools
 {
 
-    public class BuildingEditorTool : BasicBuildingTool<BuildingEditorTool>
+    public class BuildingEditorTool : BaseBuildingTool<BuildingEditorTool>
     {
         public event Action<ushort> OnBuildingSelect;
 

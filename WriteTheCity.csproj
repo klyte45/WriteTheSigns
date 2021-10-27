@@ -22,6 +22,7 @@
     <EmbeddedResource Include="UI\Images\*.png" />
     <EmbeddedResource Include="UI\Images\*.txt" />
     <EmbeddedResource Include="UI\VersionNotes.txt" />
+    <EmbeddedResource Include="UI\DefaultFont\*.ttf" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Data\**\*.cs" />

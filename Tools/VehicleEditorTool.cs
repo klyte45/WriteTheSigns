@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Klyte.WriteTheSigns.Tools
 {
 
-    public class VehicleEditorTool : BasicVehicleTool<VehicleEditorTool>
+    public class VehicleEditorTool : BaseVehicleTool<VehicleEditorTool>
     {
         public event Action<ushort> OnVehicleSelect;
         public event Action<ushort> OnParkedVehicleSelect;
