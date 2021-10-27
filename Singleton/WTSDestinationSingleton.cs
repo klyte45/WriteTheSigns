@@ -333,7 +333,8 @@ namespace Klyte.WriteTheSigns.Singleton
             }
         }
 
-        private void AddToPassingList(ref HashSet<ulong> passing, ulong hash) => (passing ??= new HashSet<ulong>()).Add(hash);
+        private void AddToPassingList(ref HashSet<ulong> passing, ulong hash) => (passing = passing ?? new HashSet<ulong>()).Add(hash);
+
         private void InvalidateHashes(ref HashSet<ulong> targets)
         {
             m_validHashes.ExceptWith(targets);

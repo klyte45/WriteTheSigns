@@ -428,7 +428,7 @@ namespace Klyte.WriteTheSigns.Singleton
                             }
                         }
                     }
-                    List<ushort> nearStops = StopSearchUtils.FindNearStops(data.m_position, ItemClass.Service.PublicTransport, ItemClass.Service.PublicTransport, VehicleInfo.VehicleType.None, true, 400f, out _, out _, boundaries);
+                    List<ushort> nearStops = FindNearStops(data.m_position, ItemClass.Service.PublicTransport, ItemClass.Service.PublicTransport, VehicleInfo.VehicleType.None, true, 400f, out _, out _, boundaries);
 
                     m_platformToLine[buildingID] = new StopInformation[m_buildingStopsDescriptor[refName].Length][];
                     if (nearStops.Count > 0)
@@ -499,10 +499,11 @@ namespace Klyte.WriteTheSigns.Singleton
             {
                 nmInstance = NetManager.instance;
             }
-
+            var stopLine = WriteTheSignsMod.Controller.ConnectorTLM.GetStopLine(stopId);
             var result = new StopInformation
             {
-                m_lineId = nmInstance.m_nodes.m_buffer[stopId].m_transportLine,
+                m_lineId = (ushort)stopLine.lineId,
+                m_regionalLine = stopLine.regional,
                 m_stopId = stopId
             };
             result.m_destinationId = FindDestinationStop(stopId);
@@ -545,7 +546,7 @@ namespace Klyte.WriteTheSigns.Singleton
                 float diffPlat = Mathf.Abs(anglePlat - ((angleDirPrev + angleDirNext) / 2)) % 180;
                 if (CommonProperties.DebugMode)
                 {
-                    LogUtils.DoLog($"ANGLE COMPARISON: diff = {diff} | diffPlat = {diffPlat} | PLAT = {anglePlat} | DIR IN = {angleDirPrev} | DIR OUT = {angleDirNext} | ({buildingName} =>  P[{i}] | L = {nmInstance.m_nodes.m_buffer[stopId].m_transportLine} )");
+                    LogUtils.DoLog($"ANGLE COMPARISON: diff = {diff} | diffPlat = {diffPlat} | PLAT = {anglePlat} | DIR IN = {angleDirPrev} | DIR OUT = {angleDirNext} | ({buildingName} =>  P[{i}] | L = {stopLine} )");
                 }
 
                 switch (GetPathType(angleDirPrev, anglePlat, angleDirNext))

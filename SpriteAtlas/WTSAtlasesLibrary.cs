@@ -30,8 +30,8 @@ namespace Klyte.WriteTheSigns.Sprites
             FileUtils.ScanPrefabsFoldersDirectory<PropInfo>(WTSController.EXTRA_SPRITES_FILES_FOLDER_ASSETS, LoadImagesFromPrefab);
 
             ResetTransportAtlas();
-            TransportManager.instance.eventLineColorChanged += PurgeLine;
-            TransportManager.instance.eventLineNameChanged += PurgeLine;
+            TransportManager.instance.eventLineColorChanged += (x) => PurgeLine(x, false);
+            TransportManager.instance.eventLineNameChanged += (x) => PurgeLine(x, false);
 
             LoadImagesFromLocalFolders();
         }
@@ -270,6 +270,7 @@ namespace Klyte.WriteTheSigns.Sprites
         private UITextureAtlas m_transportLineAtlas;
         private Material m_transportLineMaterial;
         private Dictionary<int, BasicRenderInformation> TransportLineCache { get; } = new Dictionary<int, BasicRenderInformation>();
+        private Dictionary<int, BasicRenderInformation> RegionalTransportLineCache { get; } = new Dictionary<int, BasicRenderInformation>();
 
         private bool TransportIsDirty { get; set; }
         private void ResetTransportAtlas()
@@ -277,19 +278,20 @@ namespace Klyte.WriteTheSigns.Sprites
             m_transportLineAtlas = ScriptableObject.CreateInstance<UITextureAtlas>();
             m_transportLineAtlas.material = new Material(UIView.GetAView().defaultAtlas.material.shader);
         }
-        public void PurgeLine(ushort lineId)
+        public void PurgeLine(ushort lineId, bool regional)
         {
-            string id = $"{lineId}";
+            string id = $"{lineId}|{regional}";
             if (!(m_transportLineAtlas[id] is null))
             {
                 m_transportLineAtlas.Remove(id);
             }
-            TransportLineCache.Remove(lineId);
+            (regional ? RegionalTransportLineCache : TransportLineCache).Remove(lineId);
             TransportIsDirty = true;
         }
         public void PurgeAllLines()
         {
             TransportLineCache.Clear();
+            RegionalTransportLineCache.Clear();
             ResetTransportAtlas();
             m_transportLineMaterial = null;
             TransportIsDirty = true;
@@ -299,11 +301,11 @@ namespace Klyte.WriteTheSigns.Sprites
             get => m_lineIconTest; set
             {
                 m_lineIconTest = value;
-                PurgeLine(0);
+                PurgeLine(0, false);
             }
         }
         private LineIconSpriteNames m_lineIconTest = LineIconSpriteNames.K45_HexagonIcon;
-        public List<BasicRenderInformation> DrawLineFormats(IEnumerable<int> ids)
+        internal List<BasicRenderInformation> DrawLineFormats(IEnumerable<WTSLine> ids)
         {
             var bris = new List<BasicRenderInformation>();
             if (ids.Count() == 0)
@@ -311,9 +313,9 @@ namespace Klyte.WriteTheSigns.Sprites
                 return bris;
             }
 
-            foreach (int id in ids.OrderBy(x => x < 0 ? x.ToString("D6") : WriteTheSignsMod.Controller.ConnectorTLM.GetLineSortString((ushort)x)))
+            foreach (var id in ids.OrderBy(x => x.lineId < 0 ? x.lineId.ToString("D6") : WriteTheSignsMod.Controller.ConnectorTLM.GetLineSortString(x)))
             {
-                if (TransportLineCache.TryGetValue(id, out BasicRenderInformation bri))
+                if ((id.regional ? RegionalTransportLineCache : TransportLineCache).TryGetValue(id.lineId, out BasicRenderInformation bri))
                 {
                     if (bri != null)
                     {
@@ -322,16 +324,16 @@ namespace Klyte.WriteTheSigns.Sprites
                 }
                 else
                 {
-                    TransportLineCache[id] = null;
+                    (id.regional ? RegionalTransportLineCache : TransportLineCache)[id.lineId] = null;
                     StartCoroutine(WriteTransportLineTextureCoroutine(id));
                 }
             }
             return bris;
 
         }
-        private IEnumerator WriteTransportLineTextureCoroutine(int lineId)
+        private IEnumerator WriteTransportLineTextureCoroutine(WTSLine line)
         {
-            string id = $"{lineId}";
+            string id = $"{line.lineId}";
             if (m_transportLineAtlas[id] == null)
             {
                 yield return 0;
@@ -340,9 +342,9 @@ namespace Klyte.WriteTheSigns.Sprites
                     yield return null;
                 }
                 Tuple<string, Color, string> lineParams =
-                    lineId == 0 ? Tuple.New(KlyteResourceLoader.GetDefaultSpriteNameFor(LineIconTest), (Color)ColorExtensions.FromRGB(0x5e35b1), "K")
-                    : lineId < 0 ? Tuple.New(KlyteResourceLoader.GetDefaultSpriteNameFor((LineIconSpriteNames)((-lineId % (Enum.GetValues(typeof(LineIconSpriteNames)).Length - 1)) + 1)), WTSDynamicTextRenderingRules.m_spectreSteps[(-lineId) % WTSDynamicTextRenderingRules.m_spectreSteps.Length], $"{-lineId}")
-                    : WriteTheSignsMod.Controller.ConnectorTLM.GetLineLogoParameters((ushort)lineId);
+                    line.lineId == 0 ? Tuple.New(KlyteResourceLoader.GetDefaultSpriteNameFor(LineIconTest), (Color)ColorExtensions.FromRGB(0x5e35b1), "K")
+                    : line.lineId < 0 ? Tuple.New(KlyteResourceLoader.GetDefaultSpriteNameFor((LineIconSpriteNames)((-line.lineId % (Enum.GetValues(typeof(LineIconSpriteNames)).Length - 1)) + 1)), WTSDynamicTextRenderingRules.m_spectreSteps[(-line.lineId) % WTSDynamicTextRenderingRules.m_spectreSteps.Length], $"{-line.lineId}")
+                    : WriteTheSignsMod.Controller.ConnectorTLM.GetLineLogoParameters(line);
                 if (lineParams == null)
                 {
                     yield break;
@@ -366,6 +368,7 @@ namespace Klyte.WriteTheSigns.Sprites
                 StopAllCoroutines();
                 m_transportLineMaterial = null;
                 TransportLineCache.Clear();
+                RegionalTransportLineCache.Clear();
                 yield break;
             }
             yield return 0;
@@ -384,7 +387,7 @@ namespace Klyte.WriteTheSigns.Sprites
                     shader = WTSController.DEFAULT_SHADER_TEXT,
                 };
             }
-            RegisterMeshSingle(lineId, bri, TransportLineCache, m_transportLineAtlas, TransportIsDirty, m_transportLineMaterial);
+            RegisterMeshSingle(line.lineId, bri, line.regional ? RegionalTransportLineCache : TransportLineCache, m_transportLineAtlas, TransportIsDirty, m_transportLineMaterial);
             TransportIsDirty = false;
             yield break;
         }
@@ -429,7 +432,7 @@ namespace Klyte.WriteTheSigns.Sprites
                 var formTexture = new Texture2D(width, height);
                 formTexture.SetPixels(spriteInfo.texture.GetPixels());
                 TextureScaler.scale(formTexture, width * 2, height * 2);
-                Texture2D texText = font.DrawTextToTexture(text,1);
+                Texture2D texText = font.DrawTextToTexture(text, 1);
 
                 Color[] formTexturePixels = formTexture.GetPixels();
                 int borderWidth = 8;

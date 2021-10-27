@@ -20,5 +20,6 @@ namespace Klyte.Commons
         public static string ModRootFolder { get; } = WTSController.FOLDER_NAME;
         public static string ModDllRootFolder { get; } = WriteTheSignsMod.RootFolder;
         public static string ModIcon => WriteTheSignsMod.Instance.IconName;
+        public static string GitHubRepoPath { get; } = "klyte45/WriteTheSigns";
     }
 }

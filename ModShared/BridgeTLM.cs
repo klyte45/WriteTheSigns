@@ -23,28 +23,31 @@ namespace Klyte.WriteTheSigns.ModShared
             TLMFacade.Instance.EventLineDestinationsChanged += (lineId) =>
             {
                 WriteTheSignsMod.Controller.BuildingPropsSingleton.ResetLines();
-                RenderUtils.ClearCacheLineName(lineId);
+                RenderUtils.ClearCacheLineName(new WTSLine(lineId, false));
             };
         }
 
-        public override Tuple<string, Color, string> GetLineLogoParameters(ushort lineID)
+        public override Tuple<string, Color, string> GetLineLogoParameters(WTSLine lineObj)
         {
-            var result = TLMFacade.GetIconStringParameters(lineID);
+            var result = TLMFacade.GetIconStringParameters((ushort)lineObj.lineId, lineObj.regional);
             return Tuple.New(result.First, result.Second, result.Third);
         }
 
-        public override string GetStopName(ushort stopId, ushort lineId) => TLMFacade.GetFullStationName(stopId, lineId, TransportSystemDefinition.GetDefinitionForLine(lineId).SubService);
-        public override ushort GetStopBuildingInternal(ushort stopId, ushort lineId) => TLMFacade.GetStationBuilding(stopId, lineId);
-        public override string GetLineSortString(ushort lineId) => TLMFacade.GetLineSortString(lineId, ref TransportManager.instance.m_lines.m_buffer[lineId]);
+        public override string GetStopName(ushort stopId, WTSLine lineObj) => TLMFacade.GetFullStationName(stopId, (ushort)lineObj.lineId, lineObj.regional, TransportSystemDefinition.GetDefinitionForLine((ushort)lineObj.lineId, lineObj.regional).SubService);
+        public override ushort GetStopBuildingInternal(ushort stopId, WTSLine lineObj) => TLMFacade.GetStationBuilding(stopId, (ushort)lineObj.lineId, lineObj.regional);
+        public override string GetLineSortString(WTSLine lineObj) => TLMFacade.GetLineSortString((ushort)lineObj.lineId, lineObj.regional);
 
         public override string GetVehicleIdentifier(ushort vehicleId) => TLMFacade.Instance.GetVehicleIdentifier(vehicleId);
-        public override string GetLineIdString(ushort lineId) => TLMFacade.GetLineStringId(lineId);
-        public override void MapLineDestinations(ushort lineId)
+        public override WTSLine GetVehicleLine(ushort vehicleId) => new WTSLine(TLMFacade.Instance.GetVehicleLine(vehicleId, out bool regional), regional);
+        public override string GetLineIdString(WTSLine lineObj) => TLMFacade.GetLineStringId((ushort)lineObj.lineId, lineObj.regional);
+        public override void MapLineDestinations(WTSLine lineObj)
         {
-            TLMFacade.CalculateAutoName(lineId, out List<TLMFacade.DestinationPoco> destinations);
-            FillStops(lineId, destinations.Select(x => new DestinationPoco { stopId = x.stopId, stopName = x.stopName }).ToList());
+            TLMFacade.CalculateAutoName((ushort)lineObj.lineId, lineObj.regional, out List<TLMFacade.DestinationPoco> destinations);
+            FillStops(lineObj, destinations.Select(x => new DestinationPoco { stopId = x.stopId, stopName = x.stopName }).ToList());
         }
 
+        public override WTSLine GetStopLine(ushort stopId) => new WTSLine(TLMFacade.GetStopLine(stopId, out bool isBuilding), isBuilding);
+        internal override string GetLineName(WTSLine lineObj) => TLMFacade.GetLineName((ushort)lineObj.lineId, lineObj.regional);
         public class DestinationPoco
         {
             public string stopName;

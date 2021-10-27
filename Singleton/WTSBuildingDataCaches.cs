@@ -32,12 +32,12 @@ namespace Klyte.WriteTheSigns.Utils
             }
         }
 
-        public static ushort GetStopBuilding(ushort stopId, ushort lineId)
+        public static ushort GetStopBuilding(ushort stopId, WTSLine line)
         {
-            uint id = (uint)((lineId << 16) | stopId);
+            var id = line.GetUniqueStopId(stopId);
             if (!m_stopsBuildingsCache.TryGetValue(id, out ushort buildingId))
             {
-                buildingId = WriteTheSignsMod.Controller.ConnectorTLM.GetStopBuildingInternal(stopId, lineId);
+                buildingId = WriteTheSignsMod.Controller.ConnectorTLM.GetStopBuildingInternal(stopId, line);
                 m_stopsBuildingsCache[id] = buildingId;
             }
             return buildingId;

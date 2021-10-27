@@ -538,7 +538,7 @@ namespace Klyte.WriteTheSigns.Rendering
                     objectIndex.z = textDescriptor.IlluminationConfig.IlluminationStrength;
                     break;
             }
-            colorToSet *= Color.Lerp(new Color32(192, 192, 192, 255), Color.white, objectIndex.z);
+            colorToSet *= Color.Lerp(new Color32(200, 200, 200, 255), Color.white, objectIndex.z);
             materialPropertyBlock.SetColor(SHADER_PROP_COLOR, colorToSet);
 
 
@@ -881,7 +881,7 @@ namespace Klyte.WriteTheSigns.Rendering
                 case TextType.TimeTemperature: return GetTimeTemperatureText(textDescriptor, ref baseFont, refID, boardIdx);
                 case TextType.CityName: return GetFromCacheArray(0, textDescriptor, RenderUtils.CacheArrayTypes.Districts, baseFont);
                 case TextType.LinesSymbols:
-                    multipleOutput = WriteTheSignsMod.Controller.AtlasesLibrary.DrawLineFormats(GetAllTargetStopInfo(buildingDescritpor, refID).GroupBy(x => x.m_lineId).Select(x => x.First()).Select(x => (int)x.m_lineId));
+                    multipleOutput = WriteTheSignsMod.Controller.AtlasesLibrary.DrawLineFormats(GetAllTargetStopInfo(buildingDescritpor, refID).GroupBy(x => x.m_lineId).Select(x => x.First()).Select(x => new WTSLine(x.m_lineId, x.m_regionalLine)));
                     return null;
                 case TextType.LineFullName:
                     multipleOutput = GetAllTargetStopInfo(buildingDescritpor, refID).GroupBy(x => x.m_lineId).Select(x => x.First()).Select(x => GetFromCacheArray(x.m_lineId, textDescriptor, RenderUtils.CacheArrayTypes.LineFullName, baseFont));
@@ -910,47 +910,44 @@ namespace Klyte.WriteTheSigns.Rendering
                 case TextType.OwnName: return GetFromCacheArray(refID, textDescriptor, RenderUtils.CacheArrayTypes.VehicleNumber, baseFont);
                 case TextType.LineIdentifier:
                     ref Vehicle[] buffer = ref VehicleManager.instance.m_vehicles.m_buffer;
-                    ref Vehicle vehicle = ref buffer[buffer[refID].GetFirstVehicle(refID)];
-                    var transportLine = vehicle.m_transportLine;
-                    if (transportLine > 0)
+                    var targetVehicleId = buffer[refID].GetFirstVehicle(refID);
+                    var transportLine = WriteTheSignsMod.Controller.ConnectorTLM.GetVehicleLine(targetVehicleId);
+                    if (!transportLine.ZeroLine)
                     {
-                        return GetFromCacheArray(transportLine, textDescriptor, RenderUtils.CacheArrayTypes.LineIdentifier, baseFont);
+                        return GetFromCacheArray((ushort)transportLine.ToRefId(), textDescriptor, RenderUtils.CacheArrayTypes.LineIdentifier, baseFont);
                     }
                     else
                     {
-                        if (vehicle.m_targetBuilding == 0)
-                        {
-                            return RenderUtils.GetTextData(vehicle.m_sourceBuilding.ToString("D5"), textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
-                        }
-                        else
-                        {
-                            return RenderUtils.GetTextData($"R{vehicle.m_targetBuilding.ToString("X4")}", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
-                        }
+                        ref Vehicle vehicle = ref buffer[targetVehicleId];
+                        return vehicle.m_targetBuilding == 0 || (vehicle.m_flags & Vehicle.Flags.GoingBack) != 0
+                            ? RenderUtils.GetTextData(vehicle.m_sourceBuilding.ToString("D5"), textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont)
+                            : RenderUtils.GetTextData($"R{vehicle.m_targetBuilding.ToString("X4")}", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                     }
                 case TextType.LinesSymbols:
                     ref Vehicle[] buffer1 = ref VehicleManager.instance.m_vehicles.m_buffer;
-                    return WriteTheSignsMod.Controller.AtlasesLibrary.DrawLineFormats(new int[] { buffer1[buffer1[refID].GetFirstVehicle(refID)].m_transportLine }).FirstOrDefault();
+                    return WriteTheSignsMod.Controller.AtlasesLibrary.DrawLineFormats(new WTSLine[] { WriteTheSignsMod.Controller.ConnectorTLM.GetVehicleLine(refID) }).FirstOrDefault();
                 case TextType.LineFullName:
-                    ref Vehicle[] buffer4 = ref VehicleManager.instance.m_vehicles.m_buffer;
-                    ref Vehicle targetVehicle4 = ref buffer4[buffer4[refID].GetFirstVehicle(refID)];
-                    return GetFromCacheArray(targetVehicle4.m_transportLine, textDescriptor, RenderUtils.CacheArrayTypes.LineFullName, baseFont);
+                    var regLine = WriteTheSignsMod.Controller.ConnectorTLM.GetVehicleLine(refID);
+                    return regLine.regional ? null : GetFromCacheArray((ushort)regLine.lineId, textDescriptor, RenderUtils.CacheArrayTypes.LineFullName, baseFont);
                 case TextType.NextStopLine:
                     ref Vehicle[] buffer7 = ref VehicleManager.instance.m_vehicles.m_buffer;
                     ref Vehicle targetVehicle7 = ref buffer7[buffer7[refID].GetFirstVehicle(refID)];
-                    return RenderUtils.GetTextData(WriteTheSignsMod.Controller.ConnectorTLM.GetStopName(targetVehicle7.m_targetBuilding, targetVehicle7.m_transportLine), textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
+                    var regLine2 = WriteTheSignsMod.Controller.ConnectorTLM.GetVehicleLine(refID);
+                    return RenderUtils.GetTextData(WriteTheSignsMod.Controller.ConnectorTLM.GetStopName(targetVehicle7.m_targetBuilding, regLine2), textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                 case TextType.PrevStopLine:
                     ref Vehicle[] buffer5 = ref VehicleManager.instance.m_vehicles.m_buffer;
                     ref Vehicle targetVehicle5 = ref buffer5[buffer5[refID].GetFirstVehicle(refID)];
-                    return RenderUtils.GetTextData(WriteTheSignsMod.Controller.ConnectorTLM.GetStopName(TransportLine.GetPrevStop(targetVehicle5.m_targetBuilding), targetVehicle5.m_transportLine), textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
+                    var regLine3 = WriteTheSignsMod.Controller.ConnectorTLM.GetVehicleLine(refID);
+                    return RenderUtils.GetTextData(WriteTheSignsMod.Controller.ConnectorTLM.GetStopName(TransportLine.GetPrevStop(targetVehicle5.m_targetBuilding), regLine3), textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                 case TextType.LastStopLine:
                     ref Vehicle[] buffer2 = ref VehicleManager.instance.m_vehicles.m_buffer;
                     ref Vehicle targetVehicle = ref buffer2[buffer2[refID].GetFirstVehicle(refID)];
-
-                    if (targetVehicle.m_transportLine == 0)
+                    var regLine4 = WriteTheSignsMod.Controller.ConnectorTLM.GetVehicleLine(refID);
+                    if (regLine4.ZeroLine)
                     {
-                        return targetVehicle.m_targetBuilding == 0
+                        return targetVehicle.m_targetBuilding == 0 || (targetVehicle.m_flags & Vehicle.Flags.GoingBack) != 0
                             ? GetFromCacheArray(targetVehicle.m_sourceBuilding, textDescriptor, RenderUtils.CacheArrayTypes.BuildingName, baseFont)
-                            : GetFromCacheArray(WTSBuildingDataCaches.GetStopBuilding(targetVehicle.m_targetBuilding, targetVehicle.m_transportLine), textDescriptor, RenderUtils.CacheArrayTypes.BuildingName, baseFont);
+                            : GetFromCacheArray(WTSBuildingDataCaches.GetStopBuilding(targetVehicle.m_targetBuilding, regLine4), textDescriptor, RenderUtils.CacheArrayTypes.BuildingName, baseFont);
                     }
                     else
                     {
@@ -960,8 +957,8 @@ namespace Klyte.WriteTheSigns.Rendering
 
                         BasicRenderInformation result =
                               stopInfo.m_destinationString != null ? RenderUtils.GetTextData(stopInfo.m_destinationString, textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont)
-                            : stopInfo.m_destinationId != 0 ? RenderUtils.GetTextData(WriteTheSignsMod.Controller.ConnectorTLM.GetStopName(stopInfo.m_destinationId, targetVehicle.m_transportLine), textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont)
-                            : RenderUtils.GetTextData(WriteTheSignsMod.Controller.ConnectorTLM.GetStopName(targetVehicle.m_targetBuilding, targetVehicle.m_transportLine), textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
+                            : stopInfo.m_destinationId != 0 ? RenderUtils.GetTextData(WriteTheSignsMod.Controller.ConnectorTLM.GetStopName(stopInfo.m_destinationId, regLine4), textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont)
+                            : RenderUtils.GetTextData(WriteTheSignsMod.Controller.ConnectorTLM.GetStopName(targetVehicle.m_targetBuilding, regLine4), textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                         return result;
                     }
 
@@ -1023,7 +1020,7 @@ namespace Klyte.WriteTheSigns.Rendering
                 case TextType.ParameterizedGameSpriteIndexed: return textDescriptor.DefaultParameterValue != null ? GetSpriteFromParameter(propLayout.CachedProp, textDescriptor.DefaultParameterValue) : WriteTheSignsMod.Controller.AtlasesLibrary.GetFromLocalAtlases(null, "K45_WTS FrameBorder");
                 case TextType.TimeTemperature: return RenderUtils.GetTextData($"24:60", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                 case TextType.LinesSymbols:
-                    multipleOutput = WriteTheSignsMod.Controller.AtlasesLibrary.DrawLineFormats(new int[textDescriptor.MultiItemSettings.SubItemsPerColumn * textDescriptor.MultiItemSettings.SubItemsPerRow].Select((x, y) => -y - 1));
+                    multipleOutput = WriteTheSignsMod.Controller.AtlasesLibrary.DrawLineFormats(new WTSLine[textDescriptor.MultiItemSettings.SubItemsPerColumn * textDescriptor.MultiItemSettings.SubItemsPerRow].Select((x, y) => new WTSLine(-y - 1, false)));
                     return null;
                 case TextType.GameSprite:
                     return GetSpriteFromParameter(refInfo, textDescriptor.m_spriteParam) ?? WriteTheSignsMod.Controller.AtlasesLibrary.GetFromLocalAtlases(null, "K45_WTS FrameParamsInvalidImage");
@@ -1169,8 +1166,8 @@ namespace Klyte.WriteTheSigns.Rendering
             var result = WriteTheSignsMod.Controller.BuildingPropsSingleton.m_stopInformation[targetStopId];
             if (result.m_lineId == 0)
             {
-                var line = NetManager.instance.m_nodes.m_buffer[targetStopId].m_transportLine;
-                if (line > 0)
+                var line = WriteTheSignsMod.Controller.ConnectorTLM.GetStopLine(targetStopId);
+                if (line.lineId > 0)
                 {
                     WriteTheSignsMod.Controller.ConnectorTLM.MapLineDestinations(line);
                     result = WriteTheSignsMod.Controller.BuildingPropsSingleton.m_stopInformation[targetStopId];

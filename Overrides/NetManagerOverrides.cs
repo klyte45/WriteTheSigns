@@ -22,7 +22,7 @@ namespace Klyte.WriteTheSigns.Overrides
         private static void OnNodeChanged(ref ushort node)
         {
             ushort node_ = node;
-            new AsyncAction(() => EventNodeChanged?.Invoke(node_)).Execute();
+            SimulationManager.instance.AddAction(() => EventNodeChanged?.Invoke(node_)).Execute();
 
             WTSBuildingDataCaches.PurgeStopCache(node);
         }
@@ -32,7 +32,7 @@ namespace Klyte.WriteTheSigns.Overrides
             ushort segment_ = segment;
             ushort endNode_ = endNode;
 
-            new AsyncAction(() =>
+            SimulationManager.instance.AddAction(() =>
             {
                 EventNodeChanged?.Invoke(startNode_);
                 EventNodeChanged?.Invoke(endNode_);
@@ -42,7 +42,7 @@ namespace Klyte.WriteTheSigns.Overrides
         private static void OnSegmentReleased(ref ushort segment)
         {
             ushort segment_ = segment;
-            new AsyncAction(() =>
+            SimulationManager.instance.AddAction(() =>
             {
                 EventNodeChanged?.Invoke(NetManager.instance.m_segments.m_buffer[segment_].m_startNode);
                 EventNodeChanged?.Invoke(NetManager.instance.m_segments.m_buffer[segment_].m_endNode);
@@ -53,7 +53,7 @@ namespace Klyte.WriteTheSigns.Overrides
         private static void OnSegmentNameChanged(ref ushort segmentID)
         {
             ushort segment_ = segmentID;
-            new AsyncAction(() => EventSegmentNameChanged?.Invoke(segment_)).Execute();
+            SimulationManager.instance.AddAction(() => EventSegmentNameChanged?.Invoke(segment_)).Execute();
         }
         #endregion
 #pragma warning restore IDE0051 // Remover membros privados não utilizados

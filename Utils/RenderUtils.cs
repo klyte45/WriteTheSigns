@@ -56,8 +56,8 @@ namespace Klyte.WriteTheSigns.Utils
                 m_cache[(int)Parks] = new string[DistrictManager.MAX_DISTRICT_COUNT];
                 m_cache[(int)BuildingName] = new string[BuildingManager.MAX_BUILDING_COUNT];
                 m_cache[(int)VehicleNumber] = new string[ushort.MaxValue];
-                m_cache[(int)LineIdentifier] = new string[TransportManager.MAX_LINE_COUNT];
-                m_cache[(int)LineFullName] = new string[TransportManager.MAX_LINE_COUNT];
+                m_cache[(int)LineIdentifier] = new string[TransportManager.MAX_LINE_COUNT + NetManager.MAX_NODE_COUNT];
+                m_cache[(int)LineFullName] = new string[TransportManager.MAX_LINE_COUNT + NetManager.MAX_NODE_COUNT];
             }
         }
 
@@ -169,7 +169,7 @@ namespace Klyte.WriteTheSigns.Utils
         {
             foreach (string[][] m_cache in m_generalCache)
             {
-                m_cache[(int)LineIdentifier] = new string[TransportManager.MAX_LINE_COUNT];
+                m_cache[(int)LineIdentifier] = new string[TransportManager.MAX_LINE_COUNT + NetManager.MAX_NODE_COUNT];
             }
             ClearCacheLineName();
             ClearCacheVehicleNumber();
@@ -178,14 +178,14 @@ namespace Klyte.WriteTheSigns.Utils
         {
             foreach (string[][] m_cache in m_generalCache)
             {
-                m_cache[(int)LineFullName] = new string[TransportManager.MAX_LINE_COUNT];
+                m_cache[(int)LineFullName] = new string[TransportManager.MAX_LINE_COUNT + NetManager.MAX_NODE_COUNT];
             }
         }
-        public static void ClearCacheLineName(ushort lineId)
+        public static void ClearCacheLineName(WTSLine lineId)
         {
             foreach (string[][] m_cache in m_generalCache)
             {
-                m_cache[(int)LineFullName][lineId] = null;
+                m_cache[(int)LineFullName][lineId.ToRefId()] = null;
             }
         }
 
@@ -252,10 +252,10 @@ namespace Klyte.WriteTheSigns.Utils
                     name = UpdateMeshVehicleNumber(refId, ref cache[(int)type][refId], allCaps, applyAbbreviations);
                     break;
                 case CacheArrayTypes.LineIdentifier:
-                    name = UpdateMeshLineIdentifier(refId, ref cache[(int)type][refId], allCaps, applyAbbreviations);
+                    name = UpdateMeshLineIdentifier(WTSLine.FromRefID(refId), ref cache[(int)type][refId], allCaps, applyAbbreviations);
                     break;
                 case CacheArrayTypes.LineFullName:
-                    name = UpdateMeshLineFullName(refId, ref cache[(int)type][refId], allCaps, applyAbbreviations);
+                    name = UpdateMeshLineFullName(WTSLine.FromRefID(refId), ref cache[(int)type][refId], allCaps, applyAbbreviations);
                     break;
                 default: name = null; break;
             };
@@ -337,19 +337,19 @@ namespace Klyte.WriteTheSigns.Utils
             }
             return name;
         }
-        public static string UpdateMeshLineIdentifier(ushort lineId, ref string name, bool allCaps, bool applyAbbreviations)
+        public static string UpdateMeshLineIdentifier(WTSLine line, ref string name, bool allCaps, bool applyAbbreviations)
         {
             if (name == null)
             {
-                name = lineId == 0 ? "" : WriteTheSignsMod.Controller.ConnectorTLM.GetLineIdString(lineId);
+                name = line.ZeroLine ? "" : WriteTheSignsMod.Controller.ConnectorTLM.GetLineIdString(line);
             }
             return name;
         }
-        public static string UpdateMeshLineFullName(ushort lineId, ref string name, bool allCaps, bool applyAbbreviations)
+        public static string UpdateMeshLineFullName(WTSLine line, ref string name, bool allCaps, bool applyAbbreviations)
         {
             if (name == null)
             {
-                name = lineId == 0 ? "" : ApplyTransforms(TransportManager.instance.GetLineName(lineId), allCaps, applyAbbreviations);
+                name = line.ZeroLine ? "" : ApplyTransforms(WriteTheSignsMod.Controller.ConnectorTLM.GetLineName(line), allCaps, applyAbbreviations);
             }
             return name;
         }

@@ -536,7 +536,7 @@ namespace Klyte.WriteTheSigns.UI
 
             public StopSearchUtils.StopPointDescriptorLanes descriptorLane;
             public int index;
-            public override string ToString() => $"<k45Symbol {KlyteResourceLoader.GetDefaultSpriteNameFor(LineIconSpriteNames.K45_CircleIcon)},{OwnColor.ToRGB()},{index}>{descriptorLane.vehicleType} @ {descriptorLane.platformLine.GetBounds().center}";
+            public override string ToString() => $"<color #{OwnColor.ToRGB()}>({index})</color> {descriptorLane.vehicleType} @ {descriptorLane.platformLine.GetBounds().center}";
 
             public PlatformItem(StopSearchUtils.StopPointDescriptorLanes item, int index)
             {
