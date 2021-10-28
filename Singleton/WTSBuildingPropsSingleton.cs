@@ -475,7 +475,7 @@ namespace Klyte.WriteTheSigns.Singleton
                                 {
                                     float anglePlat = (m_buildingStopsDescriptor[buildingName][i].directionPath.GetAngleXZ() + 360 + angleBuilding) % 360;
                                     return UpdateStopInformation(stopId, buildingName, i, anglePlat, nmInstance);
-                                }).ToArray();
+                                }).Where(x => x.m_lineId != 0).ToArray();
                             if (CommonProperties.DebugMode)
                             {
                                 LogUtils.DoLog($"NearLines ({i}) = [{string.Join(",", m_platformToLine[buildingID][i].Select(x => x.ToString()).ToArray())}]");
@@ -499,7 +499,8 @@ namespace Klyte.WriteTheSigns.Singleton
             {
                 nmInstance = NetManager.instance;
             }
-            var stopLine = WriteTheSignsMod.Controller.ConnectorTLM.GetStopLine(stopId);
+            var stopLine = WriteTheSignsMod.Controller.ConnectorTLM.GetStopLine(stopId);   
+
             var result = new StopInformation
             {
                 m_lineId = (ushort)stopLine.lineId,

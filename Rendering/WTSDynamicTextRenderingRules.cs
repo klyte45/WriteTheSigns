@@ -696,10 +696,13 @@ namespace Klyte.WriteTheSigns.Rendering
                             rand.seed = refId * (1u + (uint)boardIdx);
                             return propLayout?.FixedColor ?? buildingDescriptor.CachedSimpleProp?.GetColor(ref rand) ?? Color.white;
                         }
-                        StopInformation stop = stops.FirstOrDefault();
-                        if (stop.m_lineId != 0)
+                        if (stops.Count() != 0)
                         {
-                            return TransportManager.instance.GetLineColor(stop.m_lineId);
+                            var line = new WTSLine(stops.FirstOrDefault());
+                            if (!line.ZeroLine)
+                            {
+                                return WriteTheSignsMod.Controller.ConnectorTLM.GetLineColor(line);
+                            }
                         }
                         if (!buildingDescriptor.m_showIfNoLine)
                         {

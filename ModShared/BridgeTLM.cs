@@ -25,6 +25,12 @@ namespace Klyte.WriteTheSigns.ModShared
                 WriteTheSignsMod.Controller.BuildingPropsSingleton.ResetLines();
                 RenderUtils.ClearCacheLineName(new WTSLine(lineId, false));
             };
+            TLMFacade.Instance.EventRegionalLineParameterChanged += (lineId) =>
+            {
+                WriteTheSignsMod.Controller.BuildingPropsSingleton.ResetLines();
+                RenderUtils.ClearCacheLineName(new WTSLine(lineId, true));
+                WriteTheSignsMod.Controller.AtlasesLibrary.PurgeLine(new WTSLine(lineId, true));
+            };
         }
 
         public override Tuple<string, Color, string> GetLineLogoParameters(WTSLine lineObj)
@@ -33,7 +39,13 @@ namespace Klyte.WriteTheSigns.ModShared
             return Tuple.New(result.First, result.Second, result.Third);
         }
 
-        public override string GetStopName(ushort stopId, WTSLine lineObj) => TLMFacade.GetFullStationName(stopId, (ushort)lineObj.lineId, lineObj.regional, TransportSystemDefinition.GetDefinitionForLine((ushort)lineObj.lineId, lineObj.regional).SubService);
+        public override string GetStopName(ushort stopId, WTSLine lineObj)
+            => TLMFacade.GetFullStationName(
+                stopId,
+                (ushort)lineObj.lineId,
+                lineObj.regional,
+                TransportSystemDefinition.GetDefinitionForLine((ushort)lineObj.lineId, lineObj.regional)?.SubService ?? (lineObj.regional ? NetManager.instance.m_nodes.m_buffer[lineObj.lineId].Info.GetSubService() : default)
+                );
         public override ushort GetStopBuildingInternal(ushort stopId, WTSLine lineObj) => TLMFacade.GetStationBuilding(stopId, (ushort)lineObj.lineId, lineObj.regional);
         public override string GetLineSortString(WTSLine lineObj) => TLMFacade.GetLineSortString((ushort)lineObj.lineId, lineObj.regional);
 
@@ -48,6 +60,8 @@ namespace Klyte.WriteTheSigns.ModShared
 
         public override WTSLine GetStopLine(ushort stopId) => new WTSLine(TLMFacade.GetStopLine(stopId, out bool isBuilding), isBuilding);
         internal override string GetLineName(WTSLine lineObj) => TLMFacade.GetLineName((ushort)lineObj.lineId, lineObj.regional);
+        internal override Color GetLineColor(WTSLine lineObj) => TLMFacade.GetLineColor((ushort)lineObj.lineId, lineObj.regional);
+
         public class DestinationPoco
         {
             public string stopName;

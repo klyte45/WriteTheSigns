@@ -278,7 +278,8 @@ namespace Klyte.WriteTheSigns.ModShared
         }
 
         public override WTSLine GetStopLine(ushort stopId) => new WTSLine(NetManager.instance.m_nodes.m_buffer[stopId].m_transportLine, false);
-        internal override string GetLineName(WTSLine line) => line.regional ? "" : TransportManager.instance.GetLineName((ushort)line.lineId);
+        internal override string GetLineName(WTSLine lineObj) => lineObj.regional ? "" : TransportManager.instance.GetLineName((ushort)lineObj.lineId);
+        internal override Color GetLineColor(WTSLine lineObj) => lineObj.regional ? Color.white: TransportManager.instance.GetLineColor((ushort)lineObj.lineId);
 
         private readonly TransferManager.TransferReason[] m_defaultAllowedVehicleTypes = {
             TransferManager.TransferReason.Blimp ,

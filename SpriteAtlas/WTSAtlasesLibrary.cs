@@ -30,8 +30,8 @@ namespace Klyte.WriteTheSigns.Sprites
             FileUtils.ScanPrefabsFoldersDirectory<PropInfo>(WTSController.EXTRA_SPRITES_FILES_FOLDER_ASSETS, LoadImagesFromPrefab);
 
             ResetTransportAtlas();
-            TransportManager.instance.eventLineColorChanged += (x) => PurgeLine(x, false);
-            TransportManager.instance.eventLineNameChanged += (x) => PurgeLine(x, false);
+            TransportManager.instance.eventLineColorChanged += (x) => PurgeLine(new WTSLine(x, false));
+            TransportManager.instance.eventLineNameChanged += (x) => PurgeLine(new WTSLine(x, false));
 
             LoadImagesFromLocalFolders();
         }
@@ -278,14 +278,14 @@ namespace Klyte.WriteTheSigns.Sprites
             m_transportLineAtlas = ScriptableObject.CreateInstance<UITextureAtlas>();
             m_transportLineAtlas.material = new Material(UIView.GetAView().defaultAtlas.material.shader);
         }
-        public void PurgeLine(ushort lineId, bool regional)
+        internal void PurgeLine(WTSLine line)
         {
-            string id = $"{lineId}|{regional}";
+            string id = $"{line.ToRefId()}";
             if (!(m_transportLineAtlas[id] is null))
             {
                 m_transportLineAtlas.Remove(id);
             }
-            (regional ? RegionalTransportLineCache : TransportLineCache).Remove(lineId);
+            (line.regional ? RegionalTransportLineCache : TransportLineCache).Remove(line.lineId);
             TransportIsDirty = true;
         }
         public void PurgeAllLines()
@@ -301,7 +301,7 @@ namespace Klyte.WriteTheSigns.Sprites
             get => m_lineIconTest; set
             {
                 m_lineIconTest = value;
-                PurgeLine(0, false);
+                PurgeLine(new WTSLine(0, false));
             }
         }
         private LineIconSpriteNames m_lineIconTest = LineIconSpriteNames.K45_HexagonIcon;
@@ -333,7 +333,7 @@ namespace Klyte.WriteTheSigns.Sprites
         }
         private IEnumerator WriteTransportLineTextureCoroutine(WTSLine line)
         {
-            string id = $"{line.lineId}";
+            string id = $"{line.ToRefId()}";
             if (m_transportLineAtlas[id] == null)
             {
                 yield return 0;
@@ -342,10 +342,10 @@ namespace Klyte.WriteTheSigns.Sprites
                     yield return null;
                 }
                 Tuple<string, Color, string> lineParams =
-                    line.lineId == 0 ? Tuple.New(KlyteResourceLoader.GetDefaultSpriteNameFor(LineIconTest), (Color)ColorExtensions.FromRGB(0x5e35b1), "K")
+                    line.ZeroLine ? Tuple.New(KlyteResourceLoader.GetDefaultSpriteNameFor(LineIconTest), (Color)ColorExtensions.FromRGB(0x5e35b1), "K")
                     : line.lineId < 0 ? Tuple.New(KlyteResourceLoader.GetDefaultSpriteNameFor((LineIconSpriteNames)((-line.lineId % (Enum.GetValues(typeof(LineIconSpriteNames)).Length - 1)) + 1)), WTSDynamicTextRenderingRules.m_spectreSteps[(-line.lineId) % WTSDynamicTextRenderingRules.m_spectreSteps.Length], $"{-line.lineId}")
                     : WriteTheSignsMod.Controller.ConnectorTLM.GetLineLogoParameters(line);
-                if (lineParams == null)
+                if (lineParams == null || lineParams.Second == Color.clear)
                 {
                     yield break;
                 }

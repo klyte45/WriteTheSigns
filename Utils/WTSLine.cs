@@ -1,4 +1,6 @@
-﻿namespace Klyte.WriteTheSigns.Utils
+﻿using Klyte.WriteTheSigns.Xml;
+
+namespace Klyte.WriteTheSigns.Utils
 {
     internal struct WTSLine
     {
@@ -10,6 +12,8 @@
             this.lineId = lineId;
             this.regional = regional;
         }
+
+        public WTSLine(StopInformation stop) : this(stop.m_lineId, stop.m_regionalLine) { }
 
         public bool ZeroLine => lineId == 0 && !regional;
 

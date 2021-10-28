@@ -1,6 +1,5 @@
 ﻿using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Utils;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -20,9 +19,6 @@ namespace Klyte.WriteTheSigns.ModShared
         public abstract WTSLine GetStopLine(ushort stopId);
         protected static void FillStops(WTSLine lineObj, List<BridgeTLM.DestinationPoco> destinations)
         {
-            ref TransportLine tl = ref TransportManager.instance.m_lines.m_buffer[lineObj.lineId];
-            ref NetNode[] nodes = ref NetManager.instance.m_nodes.m_buffer;
-
             if (destinations.Count == 0)
             {
                 destinations.Add(new BridgeTLM.DestinationPoco { stopId = destinations[0].stopId, stopName = null });
@@ -52,6 +48,7 @@ namespace Klyte.WriteTheSigns.ModShared
                 buildingSing.m_stopInformation[curStop] = new Xml.StopInformation
                 {
                     m_lineId = (ushort)lineObj.lineId,
+                    m_regionalLine = lineObj.regional,
                     m_destinationId = destinationId,
                     m_nextStopId = nextStop,
                     m_previousStopId = prevStop,
@@ -72,6 +69,7 @@ namespace Klyte.WriteTheSigns.ModShared
             RenderUtils.ClearCacheLineName();
         }
 
-        internal abstract string GetLineName(WTSLine line);
+        internal abstract string GetLineName(WTSLine lineObj);
+        internal abstract Color GetLineColor(WTSLine lineObj);
     }
 }
