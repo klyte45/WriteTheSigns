@@ -21,7 +21,7 @@ namespace Klyte.WriteTheSigns.ModShared
         {
             if (destinations.Count == 0)
             {
-                destinations.Add(new BridgeTLM.DestinationPoco { stopId = destinations[0].stopId, stopName = null });
+                return;
             }
 
             var firstStop = destinations[0].stopId;
