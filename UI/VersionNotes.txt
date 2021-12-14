@@ -18,3 +18,9 @@
 <color yellow>r9 (22/MAY/21):</color>
  - Removed black mesh support for vehicles: use text background instead.
  - Some breaking bugs were fixed
+
+ <color yellow>r10 (14/DEC/21):</color>
+ - Added support to the <color green>Unified UI</color>; Now the mod button will be there if it's available.
+ - Fixed issues if not subscribed to Transport Lines Manager or Addresses Mod when using this mod.
+	-> This also solves the issue with the panel not being loaded
+ - Some minor bugfixes & refactoring

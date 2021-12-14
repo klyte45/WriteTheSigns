@@ -123,12 +123,20 @@
       <Name>Addresses</Name>
       <Aliases>ADR</Aliases>
       <Private>False</Private>
+      <Required>False</Required>
     </ProjectReference>
+	<Reference Include="UnifiedUILib">
+      <HintPath>S:\Steam\steamapps\workshop\content\255710\2255219025\UnifiedUILib.dll</HintPath>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+      <Aliases>UUI</Aliases>
+    </Reference>
     <ProjectReference Include="..\TransportLinesManager\TransportLinesManager.csproj">
       <Project>{3f345c94-6b63-4d8f-8a12-e1ebdae831f3}</Project>
       <Name>TransportLinesManager</Name>
       <Aliases>TLM</Aliases>
       <Private>False</Private>
+      <Required>False</Required>
     </ProjectReference>
   </ItemGroup>
   <PropertyGroup>
