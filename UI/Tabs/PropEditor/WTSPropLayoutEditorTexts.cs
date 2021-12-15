@@ -124,7 +124,12 @@ namespace Klyte.WriteTheSigns.UI
             AddDropdown(Locale.Get("K45_WTS_TEXT_CONTENT"), out m_dropdownTextContent, helperConfig, Enum.GetNames(typeof(TextType)).Select(x => Locale.Get("K45_WTS_BOARD_TEXT_TYPE_DESC", x.ToString())).ToArray(), OnSetTextOwnNameContent);
             AddTextField(Locale.Get("K45_WTS_CUSTOM_TEXT"), out m_customText, helperConfig, OnSetTextCustom);
 
-            AddFilterableInput(Locale.Get("K45_WTS_SPRITE_NAME"), helperConfig, out m_spriteFilter, out UIListBox lb2, (x) => OnFilterParamImages(WTSPropLayoutEditor.Instance.PropPreview.OverrideSprite, x), OnSpriteNameChanged);
+            IEnumerator OnFilter(string x, Wrapper<string[]> result)
+            {
+                yield return result.Value = OnFilterParamImages(WTSPropLayoutEditor.Instance.PropPreview.OverrideSprite, x);
+            }
+
+            AddFilterableInput(Locale.Get("K45_WTS_SPRITE_NAME"), helperConfig, out m_spriteFilter, out UIListBox lb2, OnFilter, OnSpriteNameChanged);
             lb2.size = new Vector2(MainContainer.width - 20, 220);
             lb2.processMarkup = true;
             m_spriteFilter.eventGotFocus += (x, y) =>
@@ -148,8 +153,11 @@ namespace Klyte.WriteTheSigns.UI
             AddDropdown(Locale.Get("K45_WTS_PROPLAYOUT_DESTINATIONREFERENCE"), out m_destinationRef, helperConfig, (Enum.GetValues(typeof(DestinationReference)) as DestinationReference[]).OrderBy(x => (int)x).Select(x => Locale.Get("K45_WTS_ONNETTEXT_DESTINATION_DESC", x.ToString())).ToArray(), OnChangeDestinationRef);
             AddDropdown(Locale.Get("K45_WTS_PROPLAYOUT_TEXTPARAMETERIDX"), out m_parameterIdx, helperConfig, new string[BoardInstanceOnNetXml.TEXT_PARAMETERS_COUNT].Select((x, i) => $"#{i}").ToArray(), OnChangeTextParameterIdx);
             AddTextField(Locale.Get("K45_WTS_PROPLAYOUT_TEXTPARAMETERNAME"), out m_parameterDisplayName, helperConfig, OnSetParameterDisplayName);
-
-            AddFilterableInput(Locale.Get("K45_WTS_PROPLAYOUT_TEXTPARAMETERDEFAULTVAL"), helperConfig, out m_defaultParameterValue, out UIListBox lb, (x) => OnFilterParamImages(WTSPropLayoutEditor.Instance.PropPreview.OverrideSprite, x), OnChangedDefaultTextParam);
+            IEnumerator OnFilter2(string x, Wrapper<string[]> result)
+            {
+                yield return result.Value = OnFilterParamImages(WTSPropLayoutEditor.Instance.PropPreview.OverrideSprite, x);
+            }
+            AddFilterableInput(Locale.Get("K45_WTS_PROPLAYOUT_TEXTPARAMETERDEFAULTVAL"), helperConfig, out m_defaultParameterValue, out UIListBox lb, OnFilter2, OnChangedDefaultTextParam);
             lb.processMarkup = true;
             lb.size = new Vector2(MainContainer.width - 20, 220);
             m_defaultParameterValue.eventGotFocus += (x, y) =>

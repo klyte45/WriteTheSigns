@@ -166,7 +166,12 @@ namespace Klyte.WriteTheSigns.UI
             AddDropdown(Locale.Get("K45_WTS_TEXT_CONTENT"), out m_dropdownTextContent, helperConfig, WTSDynamicTextRenderingRules.ALLOWED_TYPES_VEHICLE.Select(x => Locale.Get("K45_WTS_BOARD_TEXT_TYPE_DESC_VEHICLE", x.ToString())).ToArray(), OnSetTextOwnNameContent);
             AddTextField(Locale.Get("K45_WTS_CUSTOM_TEXT"), out m_customText, helperConfig, OnSetTextCustom);
 
-            AddFilterableInput(Locale.Get("K45_WTS_SPRITE_NAME"), helperConfig, out m_spriteFilter, out UIListBox lb2, (x) => OnFilterSprites(WTSVehicleLayoutEditor.Instance.Preview.OverrideSprite, x), OnSpriteNameChanged);
+            IEnumerator OnFilter(string x, Wrapper<string[]> result)
+            {
+                yield return result.Value = OnFilterSprites(WTSVehicleLayoutEditor.Instance.Preview.OverrideSprite, x);
+            }
+
+            AddFilterableInput(Locale.Get("K45_WTS_SPRITE_NAME"), helperConfig, out m_spriteFilter, out UIListBox lb2, OnFilter, OnSpriteNameChanged);
             lb2.size = new Vector2(MainContainer.width - 20, 220);
             lb2.processMarkup = true;
             m_spriteFilter.eventGotFocus += (x, y) =>

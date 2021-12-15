@@ -7,6 +7,7 @@ using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Rendering;
 using Klyte.WriteTheSigns.Xml;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -34,12 +35,14 @@ namespace Klyte.WriteTheSigns.Data
             ReloadAllPropsConfigurations();
         }
 
-        public string[] FilterBy(string input, TextRenderingClass? renderClass) =>
-            m_savedDescriptorsSerialized
-            .Where((x) => (renderClass == null || renderClass == x.Value.m_allowedRenderClass) && (input.IsNullOrWhiteSpace() ? true : LocaleManager.cultureInfo.CompareInfo.IndexOf(x.Key, input, CompareOptions.IgnoreCase) >= 0))
-            .OrderBy((x) => ((int)(4 - x.Value.m_configurationSource)) + x.Key)
-            .Select(x => x.Key)
-            .ToArray();
+        public IEnumerator FilterBy(string input, TextRenderingClass? renderClass, Wrapper<string[]> result)
+        {
+            yield return result.Value = m_savedDescriptorsSerialized
+.Where((x) => (renderClass == null || renderClass == x.Value.m_allowedRenderClass) && (input.IsNullOrWhiteSpace() ? true : LocaleManager.cultureInfo.CompareInfo.IndexOf(x.Key, input, CompareOptions.IgnoreCase) >= 0))
+.OrderBy((x) => ((int)(4 - x.Value.m_configurationSource)) + x.Key)
+.Select(x => x.Key)
+.ToArray();
+        }
 
         [XmlElement("descriptorsData")]
         public override ListWrapper<BoardDescriptorGeneralXml> SavedDescriptorsSerialized

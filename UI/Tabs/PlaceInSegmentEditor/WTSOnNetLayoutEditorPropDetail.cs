@@ -133,7 +133,11 @@ namespace Klyte.WriteTheSigns.UI
             {
                 var currentIdx = i;
                 UISprite sprite = null;
-                AddFilterableInput(string.Format(Locale.Get($"K45_WTS_ONNETEDITOR_TEXTPARAM"), currentIdx), helperParameters, out m_textParams[i], out m_textParamsLabels[i], out UIListBox lb, (x) => OnFilterParamImages(sprite, x), (t, x, y) => OnParamChanged(t, currentIdx, x, y));
+                IEnumerator OnFilterParam(string x, Wrapper<string[]> result)
+                {
+                    yield return result.Value = OnFilterParamImages(sprite, x);
+                }
+                AddFilterableInput(string.Format(Locale.Get($"K45_WTS_ONNETEDITOR_TEXTPARAM"), currentIdx), helperParameters, out m_textParams[i], out m_textParamsLabels[i], out UIListBox lb, OnFilterParam, (t, x, y) => OnParamChanged(t, currentIdx, x, y));
                 m_textParamsLabels[i].processMarkup = true;
                 sprite = AddSpriteInEditorRow(lb, true, 300);
                 m_textParams[i].eventGotFocus += (x, y) =>
@@ -198,7 +202,17 @@ namespace Klyte.WriteTheSigns.UI
         }
 
 
-        private string[] OnFilterLayouts(string input) => m_propSelectionType.selectedIndex == 0 ? WTSPropLayoutData.Instance.FilterBy(input, TextRenderingClass.PlaceOnNet) : PropIndexes.instance.BasicInputFiltering(input);
+        private IEnumerator OnFilterLayouts(string input, Wrapper<string[]> result)
+        {
+            if (m_propSelectionType.selectedIndex == 0)
+            {
+                yield return WTSPropLayoutData.Instance.FilterBy(input, TextRenderingClass.PlaceOnNet, result);
+            }
+            else
+            {
+                yield return PropIndexes.instance.BasicInputFiltering(input, result);
+            }
+        }
 
         private string OnConfigSelectionChange(string typed, int sel, string[] items)
         {

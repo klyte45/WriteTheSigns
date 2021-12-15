@@ -7,6 +7,7 @@ using Klyte.WriteTheSigns.Data;
 using Klyte.WriteTheSigns.Singleton;
 using Klyte.WriteTheSigns.Xml;
 using System;
+using System.Collections;
 using System.IO;
 using System.Linq;
 using UnityEngine;
@@ -89,7 +90,12 @@ namespace Klyte.WriteTheSigns.UI
             m_topBar.autoFitChildrenVertically = true;
             var m_topHelper = new UIHelperExtension(m_topBar);
 
-            AddFilterableInput(Locale.Get("K45_WTS_HIGHWAYTYPE_SELECT"), m_topHelper, out m_hwTypeSearch, out _, WriteTheSignsMod.Controller.ConnectorADR.ListAllAvailableHighwayTypes, OnHwTypeSelected);
+            IEnumerator OnFilter(string x, Wrapper<string[]> result)
+            {
+                yield return result.Value = WriteTheSignsMod.Controller.ConnectorADR.ListAllAvailableHighwayTypes(x);
+            }
+
+            AddFilterableInput(Locale.Get("K45_WTS_HIGHWAYTYPE_SELECT"), m_topHelper, out m_hwTypeSearch, out _, OnFilter, OnHwTypeSelected);
             //AddButtonInEditorRow(m_hwTypeSearch, Commons.UI.SpriteNames.CommonsSpriteNames.K45_QuestionMark, Help_HighwayType, null, true, 30);
 
             AddLabel("", m_topHelper, out m_labelSelectionDescription, out m_containerSelectionDescription);

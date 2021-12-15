@@ -9,6 +9,7 @@ using Klyte.WriteTheSigns.Libraries;
 using Klyte.WriteTheSigns.Rendering;
 using Klyte.WriteTheSigns.Xml;
 using System;
+using System.Collections;
 using System.Linq;
 using UnityEngine;
 using static ItemClass;
@@ -132,7 +133,10 @@ namespace Klyte.WriteTheSigns.UI
             m_pasteSettings.isVisible = false;
         }
 
-        private string[] OnFilterLayouts(string input) => WTSPropLayoutData.Instance.FilterBy(input, TextRenderingClass.RoadNodes);
+        private IEnumerator OnFilterLayouts(string input, Wrapper<string[]> result)
+        {
+            yield return WTSPropLayoutData.Instance.FilterBy(input, TextRenderingClass.RoadNodes, result);
+        }
 
         private void UpdateDistrictList(ref BoardInstanceRoadNodeXml reference)
         {
@@ -255,44 +259,41 @@ namespace Klyte.WriteTheSigns.UI
             ReloadData();
         }
 
-        private void ReloadData()
-        {
-            SafeObtain((ref BoardInstanceRoadNodeXml x) =>
-            {
-                m_name.text = x.SaveName ?? "";
-                m_propLayoutSelect.text = x.PropLayoutName ?? "";
-                m_position[0].text = x.PropPosition.X.ToString("F3");
-                m_position[1].text = x.PropPosition.Y.ToString("F3");
-                m_position[2].text = x.PropPosition.Z.ToString("F3");
-                m_rotation[0].text = x.PropRotation.X.ToString("F3");
-                m_rotation[1].text = x.PropRotation.Y.ToString("F3");
-                m_rotation[2].text = x.PropRotation.Z.ToString("F3");
-                m_scale[0].text = x.PropScale.x.ToString("F3");
-                m_scale[1].text = x.PropScale.y.ToString("F3");
-                m_scale[2].text = x.PropScale.z.ToString("F3");
+        private void ReloadData() => SafeObtain((ref BoardInstanceRoadNodeXml x) =>
+                                   {
+                                       m_name.text = x.SaveName ?? "";
+                                       m_propLayoutSelect.text = x.PropLayoutName ?? "";
+                                       m_position[0].text = x.PropPosition.X.ToString("F3");
+                                       m_position[1].text = x.PropPosition.Y.ToString("F3");
+                                       m_position[2].text = x.PropPosition.Z.ToString("F3");
+                                       m_rotation[0].text = x.PropRotation.X.ToString("F3");
+                                       m_rotation[1].text = x.PropRotation.Y.ToString("F3");
+                                       m_rotation[2].text = x.PropRotation.Z.ToString("F3");
+                                       m_scale[0].text = x.PropScale.x.ToString("F3");
+                                       m_scale[1].text = x.PropScale.y.ToString("F3");
+                                       m_scale[2].text = x.PropScale.z.ToString("F3");
 
-                m_allowDirty.isChecked = x.AllowedLevels.Contains(Level.Level1);
-                m_allowAlleys.isChecked = x.AllowedLevels.Contains((Level)5);
-                m_allowSmallRoads.isChecked = x.AllowedLevels.Contains(Level.Level2);
-                m_allowMediumRoads.isChecked = x.AllowedLevels.Contains(Level.Level3);
-                m_allowLargeRoads.isChecked = x.AllowedLevels.Contains(Level.Level4);
-                m_allowHighways.isChecked = x.AllowedLevels.Contains(Level.Level5);
+                                       m_allowDirty.isChecked = x.AllowedLevels.Contains(Level.Level1);
+                                       m_allowAlleys.isChecked = x.AllowedLevels.Contains((Level)5);
+                                       m_allowSmallRoads.isChecked = x.AllowedLevels.Contains(Level.Level2);
+                                       m_allowMediumRoads.isChecked = x.AllowedLevels.Contains(Level.Level3);
+                                       m_allowLargeRoads.isChecked = x.AllowedLevels.Contains(Level.Level4);
+                                       m_allowHighways.isChecked = x.AllowedLevels.Contains(Level.Level5);
 
-                m_spawnChance.value = x.SpawnChance;
-                m_minMaxHalfWidth[0].text = x.MinRoadHalfWidth.ToString("F3");
-                m_minMaxHalfWidth[1].text = x.MaxRoadHalfWidth.ToString("F3");
-                m_placeDistrictBorder.isChecked = x.PlaceOnDistrictBorder;
-                m_placeRoadTransition.isChecked = x.PlaceOnTunnelBridgeStart;
-                m_ignoreEmpty.isChecked = x.IgnoreEmptyNameRoads;
+                                       m_spawnChance.value = x.SpawnChance;
+                                       m_minMaxHalfWidth[0].text = x.MinRoadHalfWidth.ToString("F3");
+                                       m_minMaxHalfWidth[1].text = x.MaxRoadHalfWidth.ToString("F3");
+                                       m_placeDistrictBorder.isChecked = x.PlaceOnDistrictBorder;
+                                       m_placeRoadTransition.isChecked = x.PlaceOnTunnelBridgeStart;
+                                       m_ignoreEmpty.isChecked = x.IgnoreEmptyNameRoads;
 
-                m_useDistrictColor.isChecked = x.UseDistrictColor;
+                                       m_useDistrictColor.isChecked = x.UseDistrictColor;
 
-                m_districtWhiteList.isChecked = !x.SelectedDistrictsIsBlacklist;
-                m_districtBlackList.isChecked = x.SelectedDistrictsIsBlacklist;
+                                       m_districtWhiteList.isChecked = !x.SelectedDistrictsIsBlacklist;
+                                       m_districtBlackList.isChecked = x.SelectedDistrictsIsBlacklist;
 
-                UpdateDistrictList(ref x);
-            });
-        }
+                                       UpdateDistrictList(ref x);
+                                   });
 
         private string m_clipboard;
 

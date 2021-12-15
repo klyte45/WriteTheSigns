@@ -57,7 +57,14 @@ namespace Klyte.WriteTheSigns.UI
             AddDropdown(Locale.Get("K45_WTS_OVERRIDE_FONT"), out m_fontSelect, helperSettings, new string[0], OnSetFont);
             AddColorField(helperSettings, Locale.Get("K45_WTS_BACKGROUND_COLOR"), out m_bgColor, OnBgColorChanged);
             AddCheckboxLocale("K45_WTS_USEHWCOLOR", out m_useHwColor, helperSettings, OnUseHwColorChanged);
-            AddFilterableInput(Locale.Get("K45_WTS_BGSPRITE_NAME"), helperSettings, out m_spriteFilter, out UIListBox lb2, (x) => OnFilterParamImages(WTSHighwayShieldEditor.Instance.Preview.OverrideSprite, x), OnBgSpriteNameChanged);
+
+            IEnumerator OnFilter(string x, Wrapper<string[]> result)
+            {
+                yield return result.Value = OnFilterParamImages(WTSHighwayShieldEditor.Instance.Preview.OverrideSprite, x);
+            }
+
+
+            AddFilterableInput(Locale.Get("K45_WTS_BGSPRITE_NAME"), helperSettings, out m_spriteFilter, out UIListBox lb2, OnFilter, OnBgSpriteNameChanged);
             lb2.size = new Vector2(MainContainer.width - 20, 220);
             lb2.processMarkup = true;
             m_spriteFilter.eventGotFocus += (x, y) =>
