@@ -13,6 +13,8 @@ namespace Klyte.WriteTheSigns.Xml
             public MaterialType IlluminationType { get; set; } = MaterialType.OPAQUE;
             [XmlAttribute("strength")]
             public float IlluminationStrength { get; set; } = 1;
+            [XmlAttribute("depth")]
+            public float IlluminationDepth { get; set; } = 0;
             [XmlAttribute("blinkType")]
             public BlinkType BlinkType { get; set; } = BlinkType.None;
             [XmlElement("customBlinkParams")]

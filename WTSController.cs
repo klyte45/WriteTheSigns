@@ -121,6 +121,7 @@ namespace Klyte.WriteTheSigns
             EventOnPostalCodeChanged += RenderUtils.ClearCachePostalCode;
             EventOnZeroMarkerChanged += OnNameSeedChanged;
 
+            FontServer.instance.m_defaultShader = DEFAULT_SHADER_TEXT;
         }
 
         private void OnNameSeedChanged(ushort segmentId) => OnNameSeedChanged();
@@ -196,7 +197,19 @@ namespace Klyte.WriteTheSigns
         internal bool? m_tlmExistsAndActive = null;
         internal bool? m_addressesExistsAndActive = null;
 
-        public static bool ___RELOADSH { get => false; set { if (value) { WTSShaderLibrary.instance.ReloadFromDisk(); } } }
+        public static bool ___RELOADSH
+        {
+            get => false; set
+            {
+                if (value)
+                {
+                    WTSShaderLibrary.instance.ReloadFromDisk();
+                    DEFAULT_SHADER_TEXT = WTSShaderLibrary.instance.GetShaders()["Klyte/WTS/klytetextboards"];
+                    FontServer.instance.m_defaultShader = WTSShaderLibrary.instance.GetShaders()["Klyte/WTS/klytetextboards"];
+                    ReloadFontsFromPath();
+                }
+            }
+        }
 
 
     }

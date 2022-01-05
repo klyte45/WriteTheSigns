@@ -2,10 +2,7 @@ using ColossalFramework;
 using FontStashSharp;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns;
-using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Runtime.Serialization.Formatters.Binary;
 using UnityEngine;
 
 namespace SpriteFontPlus
@@ -17,7 +14,7 @@ namespace SpriteFontPlus
         internal long GetAllFontsCacheSize()
         {
             long size = 0L;
-            foreach(var font in m_fontRegistered.Values)
+            foreach (var font in m_fontRegistered.Values)
             {
                 size += font.GetCacheSize();
             }
@@ -87,7 +84,8 @@ namespace SpriteFontPlus
 
         public DynamicSpriteFont this[string idx]
         {
-            get {
+            get
+            {
                 if (idx != null)
                 {
                     if (Aliases.ContainsKey(idx))
@@ -103,5 +101,7 @@ namespace SpriteFontPlus
         public Dictionary<string, string> Aliases { get; } = new Dictionary<string, string>();
 
         public IEnumerable<string> GetAllFonts() => m_fontRegistered.Keys;
+
+        public Shader m_defaultShader = Shader.Find("Custom/Props/Prop/Default");
     }
 }

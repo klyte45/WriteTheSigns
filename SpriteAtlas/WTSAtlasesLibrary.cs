@@ -36,6 +36,8 @@ namespace Klyte.WriteTheSigns.Sprites
             LoadImagesFromLocalFolders();
         }
 
+        protected void Start() => WriteTheSignsMod.Controller.EventFontsReloadedFromFolder += ResetTransportAtlas;
+
         #region Imported atlas
 
         public const string PROTOCOL_IMAGE = "image://";
@@ -547,7 +549,6 @@ namespace Klyte.WriteTheSigns.Sprites
                 triangles.EnsureCapacity(triangles.Count + kTriangleIndices.Length);
                 triangles.AddRange(kTriangleIndices);
 
-                int baseIndex = 0;
                 float x = 0f;
                 float y = 0f;
                 float x2 = 64 * proportion;
@@ -686,13 +687,13 @@ namespace Klyte.WriteTheSigns.Sprites
 
         public static void UpdateMaterial(UITextureAtlas referenceAtlas, Material material, bool isDirty)
         {
-            if (isDirty || referenceAtlas.material.GetTexture("_ACIMap") is null)
-            {
-                var aciTex = new Texture2D(referenceAtlas.texture.width, referenceAtlas.texture.height);
-                aciTex.SetPixels(referenceAtlas.texture.GetPixels().Select(x => new Color(1 - x.a, 0, 1f, 1)).ToArray());
-                aciTex.Apply();
-                material.SetTexture("_ACIMap", aciTex);
-            }
+            //if (isDirty || referenceAtlas.material.GetTexture("_ACIMap") is null)
+            //{
+            //    var aciTex = new Texture2D(referenceAtlas.texture.width, referenceAtlas.texture.height);
+            //    aciTex.SetPixels(referenceAtlas.texture.GetPixels().Select(x => new Color(1 - x.a, 0, 1f, 1)).ToArray());
+            //    aciTex.Apply();
+            //    material.SetTexture("_ACIMap", aciTex);
+            //}
         }
         #endregion
     }

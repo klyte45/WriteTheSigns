@@ -49,7 +49,6 @@ namespace FontStashSharp
         public Color Color;
         public readonly int Blur;
         public float Spacing;
-        public Vector2 Scale;
         public bool UseKernings = true;
 
         public long LastUpdateAtlas { get; private set; }

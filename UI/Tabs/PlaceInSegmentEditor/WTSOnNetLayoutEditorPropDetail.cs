@@ -66,7 +66,6 @@ namespace Klyte.WriteTheSigns.UI
         private UIButton m_copySettings;
         private UIButton m_pasteSettings;
         private string m_clipboard;
-        private UIComponent[] m_allFields = null;
         private UIButton m_libLoad;
         private UIButton m_libDelete;
         private UITextField m_libSaveNameField;

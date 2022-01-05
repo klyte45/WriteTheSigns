@@ -1,4 +1,4 @@
-﻿using ColossalFramework.Threading;
+﻿using SpriteFontPlus;
 using StbTrueTypeSharp;
 using System;
 using System.Linq;
@@ -35,10 +35,11 @@ namespace FontStashSharp
         private Material m_materialBright;
         public Material Material
         {
-            get {
+            get
+            {
                 if (m_materialBright == null)
                 {
-                    m_materialBright = new Material(Shader.Find("Klyte/WTS/klytetextboards") ?? Shader.Find("Custom/Props/Prop/Default"));
+                    m_materialBright = new Material(FontServer.instance.m_defaultShader);
                 }
                 return m_materialBright;
             }
@@ -236,12 +237,12 @@ namespace FontStashSharp
             // Write to texture
             if (Texture == null)
             {
-                Texture = new Texture2D(Width, Height);
+                Texture = new Texture2D(Width, Height, TextureFormat.RGBA32, false);
                 Texture.SetPixels(new Color[Width * Height].Select(x => Color.clear).ToArray());
             }
 
             Texture.SetPixels(Mathf.RoundToInt(glyph.Bounds.x), Mathf.RoundToInt(glyph.Bounds.y), Mathf.RoundToInt(glyph.Bounds.width), Mathf.RoundToInt(glyph.Bounds.height), colorBuffer, 0);
-            IsDirty = true;
+            Texture.Apply();
         }
 
         public Color[] GetGlyphColors(FontGlyph glyph)
@@ -276,49 +277,16 @@ namespace FontStashSharp
         }
 
         public bool IsDirty { get; private set; } = false;
-
-        private Task m_currentTask;
-
-        public void UpdateMaterial()
-        {
-            if (IsDirty)
-            {
-                Color[] texturePixels = Texture.GetPixels().ToArray();
-                int width = Texture.width;
-                int height = Texture.height;
-
-                Material.mainTexture = Texture;
-                var aciTex = new Texture2D(width, height);
-
-                if (!m_currentTask?.hasEnded ?? false)
-                {
-                    m_currentTask.Abort();
-                }
-                m_currentTask = ThreadHelper.taskDistributor.Dispatch(delegate ()
-                 {
-
-                     aciTex.SetPixels(texturePixels.Select(x => new Color(1 - x.a, 0, 1f, 1)).ToArray());
-
-                     ThreadHelper.dispatcher.Dispatch(() =>
-                     {
-                         aciTex.Apply();
-                         Material.SetTexture("_ACIMap", aciTex);
-                     });
-
-                 });
-
-                IsDirty = false;
-            }
-        }
+        public void UpdateMaterial() => Material.mainTexture = Texture;
 
         private void Blur(byte[] dst, int w, int h, int dstStride, int blur)
         {
-            int alpha = 0;
-            float sigma = 0;
             if (blur < 1)
             {
                 return;
             }
+            int alpha = 0;
+            float sigma = 0;
 
             sigma = blur * 0.57735f;
             alpha = (int)((1 << 16) * (1.0f - Math.Exp(-2.3f / (sigma + 1.0f))));

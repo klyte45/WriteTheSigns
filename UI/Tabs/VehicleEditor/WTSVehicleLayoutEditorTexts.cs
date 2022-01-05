@@ -55,6 +55,7 @@ namespace Klyte.WriteTheSigns.UI
 
         private UIDropDown m_dropdownMaterialType;
         private UISlider m_sliderIllumination;
+        private UISlider m_sliderDepth;
         private UIDropDown m_dropdownBlinkType;
         private UITextField[] m_arrayCustomBlink;
         private UIComponent m_flagsContainer;
@@ -129,6 +130,7 @@ namespace Klyte.WriteTheSigns.UI
             AddColorField(helperAppearance, Locale.Get("K45_WTS_TEXT_COLOR"), out m_textFixedColor, OnFixedColorChanged);
             AddCheckboxLocale("K45_WTS_USE_CONTRAST_COLOR", out m_useContrastColor, helperAppearance, OnContrastColorChange);
             helperAppearance.AddSpace(5);
+            AddSlider(Locale.Get("K45_WTS_TEXT_DEPTH"), out m_sliderDepth, helperAppearance, OnChangeDepth, -1, 1, 0.025f, (x) => $"{x.ToString("P1")}");
             AddDropdown(Locale.Get("K45_WTS_TEXT_ALIGN_HOR"), out m_dropdownTextAlignHorizontal, helperAppearance, Enum.GetNames(typeof(UIHorizontalAlignment)).Select(x => Locale.Get("K45_ALIGNMENT", x)).ToArray(), OnSetTextAlignmentHorizontal);
 
             AddCheckboxLocale("K45_WTS_TEXT_USEFRAME", out m_useFrame, helperFrame, OnUseFrameChange);
@@ -144,7 +146,7 @@ namespace Klyte.WriteTheSigns.UI
             AddSlider(Locale.Get("K45_WTS_TEXT_CONTAINERGLASSSPECULARITY"), out m_frameGlassSpecularLevel, helperFrame, OnFrameGlassSpecularLevelChanged, 0, 1, 0.01f, (x) => (x * 100).ToString("F0") + "%");
 
             AddDropdown(Locale.Get("K45_WTS_TEXT_MATERIALTYPE"), out m_dropdownMaterialType, helperIllumination, Enum.GetNames(typeof(MaterialType)).Select(x => Locale.Get("K45_WTS_TEXTMATERIALTYPE", x.ToString())).ToArray(), OnSetMaterialType);
-            AddSlider(Locale.Get("K45_WTS_TEXT_ILLUMINATIONSTRENGTH"), out m_sliderIllumination, helperIllumination, OnChangeIlluminationStrength, 0, 1, 0.025f, (x) => $"{x.ToString("P1")}");
+            AddSlider(Locale.Get("K45_WTS_TEXT_ILLUMINATIONSTRENGTH"), out m_sliderIllumination, helperIllumination, OnChangeIlluminationStrength, 0, 10, 0.025f, (x) => $"{x.ToString("P1")}");
             AddDropdown(Locale.Get("K45_WTS_TEXT_BLINKTYPE"), out m_dropdownBlinkType, helperIllumination, Enum.GetNames(typeof(BlinkType)).Select(x => Locale.Get("K45_WTS_BLINKTYPE", x.ToString())).ToArray(), OnSetBlinkType);
             AddVector4Field(Locale.Get("K45_WTS_TEXT_CUSTOMBLINKPARAMS"), out m_arrayCustomBlink, helperIllumination, OnCustomBlinkChange);
 
@@ -276,6 +278,7 @@ namespace Klyte.WriteTheSigns.UI
             m_useContrastColor.isChecked = x.ColoringConfig.UseContrastColor;
             m_dropdownMaterialType.selectedIndex = (int)x.IlluminationConfig.IlluminationType;
             m_sliderIllumination.value = x.IlluminationConfig.IlluminationStrength;
+            m_sliderDepth.value = x.IlluminationConfig.IlluminationDepth;
             m_dropdownBlinkType.selectedIndex = (int)x.IlluminationConfig.BlinkType;
             m_textFixedColor.selectedColor = x.ColoringConfig.m_cachedColor;
 
@@ -472,6 +475,7 @@ namespace Klyte.WriteTheSigns.UI
             ApplyShowRules(desc);
         });
         private void OnChangeIlluminationStrength(float val) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.IlluminationConfig.IlluminationStrength = val);
+        private void OnChangeDepth(float val) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.IlluminationConfig.IlluminationDepth = val);
         private void OnCustomBlinkChange(Vector4 obj) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.IlluminationConfig.CustomBlink = (Vector4Xml)obj);
         private void OnSetStateFlag(Vehicle.Flags f, int y) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) =>
         {

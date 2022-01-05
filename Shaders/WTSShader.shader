@@ -10,24 +10,10 @@ Shader "Custom/KlyteTextBoards" {
     Properties
     {
         _Color("Main Color", Vector) = (1,1,1,1)
-        _ColorV0("Color Variation 0", Vector) = (1,1,1,1)
-        _ColorV1("Color Variation 1", Vector) = (1,1,1,1)
-        _ColorV2("Color Variation 2", Vector) = (1,1,1,1)
-        _ColorV3("Color Variation 3", Vector) = (1,1,1,1)
-        _SpecColor("Specular Color", Vector) = (0.5,0.5,0.5,0)
-        _MainTex("Diffuse (RGB)", 2D) = "gray" {}
-        _XYSMap("NormalX/NormalY/Specular (RGB)", 2D) = "bump" {}
-        _ACIMap("Alpha/ColorMask/Illumination (RGB)", 2D) = "black" {}
-        _RollLocation0("Roll Location 0", Vector) = (0,0,0,1)
-        _RollLocation1("Roll Location 1", Vector) = (0,0,0,1)
-        _RollLocation2("Roll Location 2", Vector) = (0,0,0,1)
-        _RollLocation3("Roll Location 3", Vector) = (0,0,0,1)
-        _RollParams0("Roll Params 0", Vector) = (0,1,0,10)
-        _RollParams1("Roll Params 1", Vector) = (0,1,0,10)
-        _RollParams2("Roll Params 2", Vector) = (0,1,0,10)
-        _RollParams3("Roll Params 3", Vector) = (0,1,0,10)
-        _AtlasRect("Atlas Rect", Vector) = (0,0,1,1)
-        _ObjectIndex("?, ?, Illum, ?", Vector) = (0,0,0,0)
+        _BackfaceColor("Backface Color", Vector) = (0.01,0.01,0.01,1)
+        _MainTex("Diffuse (RGBA)", 2D) = "transparent" {}
+        _ObjectIndex("Spec, Gloss, Illum, Em.Str", Vector) = (0,0,0,0)
+        _Cutout ("Alpha cutoff", Range(0,1)) = 0.5
     }
 
     SubShader
@@ -35,28 +21,22 @@ Shader "Custom/KlyteTextBoards" {
         Tags
         {
             "Queue" = "AlphaTest+10"
-            "FORCENOSHADOWCASTING" = "true"
-
+            "RenderType" = "Vehicle" 
         }
 
         Cull Back
-        Lighting Off
+        Lighting On
         ZTest LEqual
         ZWrite On
 
         CGPROGRAM
-        #pragma surface surf Deferred decal:blend
+        #pragma surface surf Deferred alphatest:_Cutout
         #include "UnityLightingCommon.cginc"
 
-        uniform 	fixed4 _SimulationTime;
-        uniform 	fixed4 _WeatherParams; // Temp, Rain, Fog, Wetness
         sampler2D _MainTex;
-        sampler2D _XYSMap;
-        sampler2D _ACIMap;
         fixed4 _Color;
+        float4 _MainTex_TexelSize;
         fixed4 _ObjectIndex;
-        fixed _BumpIntensity;
-        fixed _Emission;
 
         struct Input
         {
@@ -64,61 +44,62 @@ Shader "Custom/KlyteTextBoards" {
             float2 uv_BumpMap;
             fixed4 color;
         };
-        // inline fixed4 LightingShadowOnly(SurfaceOutput s, fixed3 lightDir, fixed atten)
-        // {
-            //     fixed NdotL = dot((.50f, .0f, 0.2f), lightDir)*0.8f + 0.2f;
-            //     fixed4 c;
-            //     c.rgb = s.Albedo * 0.5f * NdotL * atten * length(_LightColor0);
-            //     c.a = s.Alpha;
-            //     return c;
-        // }
 
         half4 LightingDeferred_PrePass(inout SurfaceOutput s, half4 light)
         {
             half4 c;
-            c.rgb = s.Albedo * clamp(light.rrr, 0, 1) * clamp(light.rrr, 0, 1);
-            c.a = round(s.Alpha);
+            c.rgb = s.Albedo.rgb * light ;
+            c.a = s.Alpha;
             return c;
         }
 
         void vert(inout appdata_full v, out Input o)
         {
-            #if defined(PIXELSNAP_ON)
-                v.vertex = UnityPixelSnap (v.vertex);
-            #endif
-
             UNITY_INITIALIZE_OUTPUT(Input, o);
         }
 
         void surf(Input IN, inout SurfaceOutput o)
         {
-            fixed4 c = tex2D(_ACIMap, IN.uv_MainTex);
-            fixed4 s = tex2D(_XYSMap, IN.uv_MainTex);
             fixed4 t = tex2D(_MainTex, IN.uv_MainTex);
-            o.Albedo = t * _Color;
-            o.Alpha = 1.0-c.r;
-            o.Emission = o.Albedo * _ObjectIndex.z * 30;
-            o.Specular = 0;
-            o.Gloss = 50;
+            o.Albedo = t * _Color * .25;
+            o.Alpha = t.a;
+            o.Emission = t * _Color * _ObjectIndex.z * t.a * 10;
+
+            float sample_l;
+            float sample_r;
+            float sample_u;
+            float sample_d;
+            float x_vector;
+            float y_vector;
+
+            if (IN.uv_MainTex.x > 0) { sample_l = tex2D(_MainTex, IN.uv_MainTex - (_MainTex_TexelSize.x,0)).a; }
+            else { sample_l = t.a; }
+            if (IN.uv_MainTex.x < 1) { sample_r = tex2D(_MainTex, IN.uv_MainTex + (_MainTex_TexelSize.x,0)).a; }
+            else { sample_r = t.a; }
+            if (IN.uv_MainTex.y > 0 ) { sample_u = tex2D(_MainTex, IN.uv_MainTex - (0,_MainTex_TexelSize.y)).a; }
+            else { sample_u = t.a; }
+            if (IN.uv_MainTex.y < 1) { sample_d =  tex2D(_MainTex, IN.uv_MainTex + (0,_MainTex_TexelSize.y)).a; }
+            else { sample_d = t.a ;}
+            x_vector = (((sample_l - sample_r)*(_ObjectIndex.x) + 1) * .5f) ;
+            y_vector = (((sample_u - sample_d)*(_ObjectIndex.x) + 1) * .5f) ;
+            
+            o.Normal = UnpackNormal((1,x_vector,y_vector));
         }
         ENDCG
 
         Cull Front
-        Lighting Off
-        ZWrite On
-        ColorMask 0
+        Lighting On
         ZTest LEqual
+        ZWrite On
 
         CGPROGRAM
-        #pragma surface surf Deferred decal:blend
+        #pragma surface surf Deferred alphatest:_Cutout
         #include "UnityLightingCommon.cginc"
 
         sampler2D _MainTex;
-        sampler2D _XYSMap;
-        sampler2D _ACIMap;
-        fixed4 _Color;
-        fixed _BumpIntensity;
-        fixed _Emission;
+        fixed _BackfaceColor;
+        float4 _MainTex_TexelSize;
+        fixed4 _ObjectIndex;
 
         struct Input
         {
@@ -126,38 +107,45 @@ Shader "Custom/KlyteTextBoards" {
             float2 uv_BumpMap;
             fixed4 color;
         };
-        // inline fixed4 LightingShadowOnly(SurfaceOutput s, fixed3 lightDir, fixed atten)
-        // {
-            //     fixed NdotL = dot((.50f, .0f, 0.2f), lightDir)*0.8f + 0.2f;
-            //     fixed4 c;
-            //     c.rgb = s.Albedo * 0.5f * NdotL * atten * length(_LightColor0);
-            //     c.a = s.Alpha;
-            //     return c;
-        // }
 
         half4 LightingDeferred_PrePass(inout SurfaceOutput s, half4 light)
         {
             half4 c;
-            c.rgb = s.Albedo * clamp(light.rrr, 0, 1) * clamp(light.rrr, 0, 1);
-            c.a = round(s.Alpha);
+            c.rgb = s.Albedo.rgb * light ;
+            c.a = s.Alpha;
             return c;
         }
 
         void vert(inout appdata_full v, out Input o)
         {
-            #if defined(PIXELSNAP_ON)
-                v.vertex = UnityPixelSnap (v.vertex);
-            #endif
-
             UNITY_INITIALIZE_OUTPUT(Input, o);
         }
 
         void surf(Input IN, inout SurfaceOutput o)
         {
-            fixed4 c = tex2D(_ACIMap, IN.uv_MainTex);
-            fixed4 s = tex2D(_XYSMap, IN.uv_MainTex);
-            o.Albedo =  half4(0.001,0.001,0.001,1);
-            o.Alpha = 1.0-c.r;
+            fixed4 t = tex2D(_MainTex, IN.uv_MainTex);
+            o.Albedo =  _BackfaceColor;
+            o.Alpha = t.a;
+            
+            float sample_l;
+            float sample_r;
+            float sample_u;
+            float sample_d;
+            float x_vector;
+            float y_vector;
+
+            if (IN.uv_MainTex.x > 0) { sample_l = tex2D(_MainTex, IN.uv_MainTex - (_MainTex_TexelSize.x,0)).a; }
+            else { sample_l = t.a; }
+            if (IN.uv_MainTex.x < 1) { sample_r = tex2D(_MainTex, IN.uv_MainTex + (_MainTex_TexelSize.x,0)).a; }
+            else { sample_r = t.a; }
+            if (IN.uv_MainTex.y > 0 ) { sample_u = tex2D(_MainTex, IN.uv_MainTex - (0,_MainTex_TexelSize.y)).a; }
+            else { sample_u = t.a; }
+            if (IN.uv_MainTex.y < 1) { sample_d =  tex2D(_MainTex, IN.uv_MainTex + (0,_MainTex_TexelSize.y)).a; }
+            else { sample_d = t.a ;}
+            x_vector = (((sample_l - sample_r)*(_ObjectIndex.x) + 1) * .5f) ;
+            y_vector = (((sample_u - sample_d)*(_ObjectIndex.x) + 1) * .5f) ;
+            
+            o.Normal = UnpackNormal((1,x_vector,y_vector));
         }
         ENDCG
     }

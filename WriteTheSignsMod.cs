@@ -30,6 +30,8 @@ namespace Klyte.WriteTheSigns
         public static SavedBool Clock12hFormat = new SavedBool("K45_WTS_clock12hFormat", Settings.gameSettingsFile, false);
         public override void OnReleased() => base.OnReleased();
 
+        private UIButton reloadImages;
+
         protected override void OnLevelLoadingInternal()
         {
             base.OnLevelLoadingInternal();
@@ -54,6 +56,21 @@ namespace Klyte.WriteTheSigns
             group8.AddButton(Locale.Get("K45_WTS_GO_TO_GITHUB"), () => Application.OpenURL("https://github.com/klyte45/WriteTheSignsFiles"));
             group8.AddButton(Locale.Get("K45_WTS_GO_TO_WIKI"), () => Application.OpenURL("https://github.com/klyte45/WriteTheSigns/wiki"));
             group8.AddButton(Locale.Get("K45_WTS_GO_TO_WTSWORKSHOP"), () => Application.OpenURL("https://github.com/klyte45/WriteTheSigns/wiki"));
+            reloadImages = (UIButton)group8.AddButton(Locale.Get("K45_WTS_REFRESH_IMAGES_FOLDER"), () => Controller?.AtlasesLibrary.LoadImagesFromLocalFolders());
+            reloadImages.eventVisibilityChanged += (k, x) =>
+            {
+                if (x)
+                {
+                    if (Controller is null)
+                    {
+                        k.Disable();
+                    }
+                    else
+                    {
+                        k.Enable();
+                    }
+                }
+            };
 
             UIHelperExtension group4 = helper.AddGroupExtended(Locale.Get("K45_WTS_GENERATED_TEXT_OPTIONS"));
             (group4.AddDropdownLocalized("K45_WTS_INITIAL_TEXTURE_SIZE_FONT", new string[] { "512", "1024", "2048", "4096 (!)", "8192 (!!!)", "16384 (WTF??)" }, StartTextureSizeFont, (x) => StartTextureSizeFont.value = x).parent as UIPanel).autoFitChildrenVertically = true;
@@ -77,7 +94,7 @@ namespace Klyte.WriteTheSigns
             calcTextSize = (UIButton)group6.AddButton(calcTextLbl, () => calcTextSize.text = $"{calcTextLbl}: {RenderUtils.GetGeneralTextCacheSize().ToString("#,##0")}bytes");
             UIButton calcMeshSize = null;
             var calcMeshLbl = "Calculate text meshes cache size";
-            calcMeshSize = (UIButton)group6.AddButton(calcMeshLbl, () => calcMeshSize.text = $"{calcMeshLbl}: {FontServer.instance?.GetAllFontsCacheSize().ToString("#,##0")?? "N/A " }bytes");
+            calcMeshSize = (UIButton)group6.AddButton(calcMeshLbl, () => calcMeshSize.text = $"{calcMeshLbl}: {FontServer.instance?.GetAllFontsCacheSize().ToString("#,##0") ?? "N/A " }bytes");
 
         }
 

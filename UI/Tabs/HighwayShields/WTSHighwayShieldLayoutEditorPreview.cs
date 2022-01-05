@@ -19,14 +19,6 @@ namespace Klyte.WriteTheSigns.UI
         private UITextureSprite m_bg;
         private UITemplateList<UITextureSprite> m_layers;
         private UIPanel m_previewPanel;
-        private UIPanel m_previewControls;
-        private UIButton m_lockToSelection;
-        private float m_targetRotation = 0;
-        private Vector2 m_targetCameraPosition = default;
-        private Vector3 m_cameraPosition = default;
-        private bool m_viewLocked;
-
-        private string m_overrideText = null;
 
         public UISprite OverrideSprite { get; private set; }
         private HighwayShieldDescriptor EditingInstancePreview => WTSHighwayShieldEditor.Instance.EditingInstance;

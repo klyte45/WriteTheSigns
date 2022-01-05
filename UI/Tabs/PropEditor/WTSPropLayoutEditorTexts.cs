@@ -28,7 +28,7 @@ namespace Klyte.WriteTheSigns.UI
 
         private UIPanel m_tabSettings;
         private UIPanel m_tabSize;
-        private UIPanel m_tabAppearence;
+        private UIScrollablePanel m_tabAppearence;
         private UIScrollablePanel m_tabConfig;
 
         private UITextField m_tabName;
@@ -49,6 +49,7 @@ namespace Klyte.WriteTheSigns.UI
         private UIColorField m_textFixedColor;
         private UIDropDown m_dropdownMaterialType;
         private UISlider m_sliderIllumination;
+        private UISlider m_sliderDepth;
         private UIDropDown m_dropdownBlinkType;
         private UITextField[] m_arrayCustomBlink;
 
@@ -91,7 +92,7 @@ namespace Klyte.WriteTheSigns.UI
             KlyteMonoUtils.CreateTabsComponent(out m_tabstrip, out m_tabContainer, MainContainer.transform, "TextEditor", new Vector4(0, 0, MainContainer.width, 40), new Vector4(0, 0, MainContainer.width, MainContainer.height - 40));
             m_tabSettings = TabCommons.CreateNonScrollableTabLocalized(m_tabstrip, KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_Settings), "K45_WTS_GENERAL_SETTINGS", "TxtSettings");
             m_tabSize = TabCommons.CreateNonScrollableTabLocalized(m_tabstrip, KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_MoveCross), "K45_WTS_TEXT_SIZE_ATTRIBUTES", "TxtSize");
-            m_tabAppearence = TabCommons.CreateNonScrollableTabLocalized(m_tabstrip, KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_AutoColorIcon), "K45_WTS_TEXT_APPEARANCE_ATTRIBUTES", "TxtApp");
+            m_tabAppearence = TabCommons.CreateScrollableTabLocalized(m_tabstrip, KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_AutoColorIcon), "K45_WTS_TEXT_APPEARANCE_ATTRIBUTES", "TxtApp");
             m_tabConfig = TabCommons.CreateScrollableTabLocalized(m_tabstrip, KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_AutoNameIcon), "K45_WTS_TEXT_CONFIGURATION_ATTRIBUTES", "TxtCnf");
 
             var helperSettings = new UIHelperExtension(m_tabSettings, LayoutDirection.Vertical);
@@ -115,8 +116,9 @@ namespace Klyte.WriteTheSigns.UI
             helperAppearance.AddSpace(5);
             AddCheckboxLocale("K45_WTS_USE_CONTRAST_COLOR", out m_useContrastColor, helperAppearance, OnContrastColorChange);
             AddColorField(helperAppearance, Locale.Get("K45_WTS_TEXT_COLOR"), out m_textFixedColor, OnFixedColorChanged);
+            AddSlider(Locale.Get("K45_WTS_TEXT_DEPTH"), out m_sliderDepth, helperAppearance, OnChangeDepth, -1, 1, 0.025f, (x) => $"{x.ToString("P1")}");
             AddDropdown(Locale.Get("K45_WTS_TEXT_MATERIALTYPE"), out m_dropdownMaterialType, helperAppearance, Enum.GetNames(typeof(MaterialType)).Select(x => Locale.Get("K45_WTS_TEXTMATERIALTYPE", x.ToString())).ToArray(), OnSetMaterialType);
-            AddSlider(Locale.Get("K45_WTS_TEXT_ILLUMINATIONSTRENGTH"), out m_sliderIllumination, helperAppearance, OnChangeIlluminationStrength, 0, 1, 0.025f, (x) => $"{x.ToString("P1")}");
+            AddSlider(Locale.Get("K45_WTS_TEXT_ILLUMINATIONSTRENGTH"), out m_sliderIllumination, helperAppearance, OnChangeIlluminationStrength, 0, 10, 0.025f, (x) => $"{x.ToString("P1")}");
             AddDropdown(Locale.Get("K45_WTS_TEXT_BLINKTYPE"), out m_dropdownBlinkType, helperAppearance, Enum.GetNames(typeof(BlinkType)).Select(x => Locale.Get("K45_WTS_BLINKTYPE", x.ToString())).ToArray(), OnSetBlinkType);
             AddVector4Field(Locale.Get("K45_WTS_TEXT_CUSTOMBLINKPARAMS"), out m_arrayCustomBlink, helperAppearance, OnCustomBlinkChange);
 
@@ -305,6 +307,7 @@ namespace Klyte.WriteTheSigns.UI
             m_useContrastColor.isChecked = x.ColoringConfig.UseContrastColor;
             m_dropdownMaterialType.selectedIndex = (int)x.IlluminationConfig.IlluminationType;
             m_sliderIllumination.value = x.IlluminationConfig.IlluminationStrength;
+            m_sliderDepth.value = x.IlluminationConfig.IlluminationDepth;
             m_dropdownBlinkType.selectedIndex = (int)x.IlluminationConfig.BlinkType;
             m_textFixedColor.selectedColor = x.ColoringConfig.m_cachedColor;
 
@@ -492,6 +495,7 @@ namespace Klyte.WriteTheSigns.UI
             ApplyShowRules(desc);
         });
         private void OnChangeIlluminationStrength(float val) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.IlluminationConfig.IlluminationStrength = val);
+        private void OnChangeDepth(float val) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.IlluminationConfig.IlluminationDepth = val);
         private void OnCustomBlinkChange(Vector4 obj) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.IlluminationConfig.CustomBlink = (Vector4Xml)obj);
         private void OnRotationChange(Vector3 obj) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.PlacingConfig.Rotation = (Vector3Xml)obj);
         private void OnPositionChange(Vector3 obj) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.PlacingConfig.Position = (Vector3Xml)obj);

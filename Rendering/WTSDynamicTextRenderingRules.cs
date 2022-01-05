@@ -298,10 +298,8 @@ namespace Klyte.WriteTheSigns.Rendering
 
                 materialPropertyBlock.Clear();
 
-                var objectIndex = new Vector4();
-
                 Material targetMaterial = renderInfo.m_generatedMaterial;
-                PropManager instance = CalculateIllumination(refID, boardIdx, secIdx, textDescriptor, materialPropertyBlock, ref colorToSet, instanceFlags, ref objectIndex);
+                PropManager instance = CalculateIllumination(refID, boardIdx, secIdx, textDescriptor, materialPropertyBlock, ref colorToSet, instanceFlags);
 
 
                 defaultCallsCounter++;
@@ -518,8 +516,9 @@ namespace Klyte.WriteTheSigns.Rendering
         }
         #endregion
         #region Illumination handling
-        private static PropManager CalculateIllumination(ushort refID, int boardIdx, int secIdx, BoardTextDescriptorGeneralXml textDescriptor, MaterialPropertyBlock materialPropertyBlock, ref Color colorToSet, int instanceFlags, ref Vector4 objectIndex)
+        private static PropManager CalculateIllumination(ushort refID, int boardIdx, int secIdx, BoardTextDescriptorGeneralXml textDescriptor, MaterialPropertyBlock materialPropertyBlock, ref Color colorToSet, int instanceFlags)
         {
+            Vector4 objectIndex = default;
             var randomizer = new Randomizer((refID << 8) + (boardIdx << 2) + secIdx);
             switch (textDescriptor.IlluminationConfig.IlluminationType)
             {
@@ -546,6 +545,9 @@ namespace Klyte.WriteTheSigns.Rendering
             {
                 CalculateBlinkEffect(textDescriptor, ref objectIndex, ref randomizer);
             }
+
+            objectIndex.x = textDescriptor.IlluminationConfig.IlluminationDepth;
+
             PropManager instance = Singleton<PropManager>.instance;
             materialPropertyBlock.SetVector(instance.ID_ObjectIndex, objectIndex);
             return instance;
