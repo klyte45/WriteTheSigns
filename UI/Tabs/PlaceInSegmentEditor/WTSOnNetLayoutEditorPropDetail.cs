@@ -47,7 +47,12 @@ namespace Klyte.WriteTheSigns.UI
         private UITextField m_name;
         private UIDropDown m_propSelectionType;
         private UITextField m_propFilter;
+
+        private UIDropDown m_positioningMode;
         private UISlider m_segmentPosition;
+        private UISlider m_segmentPositionStart;
+        private UISlider m_segmentPositionEnd;
+        private UITextField m_segmentItemRepeatCount;
         private UITextField[] m_position;
         private UITextField[] m_rotation;
         private UITextField[] m_scale;
@@ -90,10 +95,12 @@ namespace Klyte.WriteTheSigns.UI
 
             KlyteMonoUtils.CreateTabsComponent(out m_tabstrip, out UITabContainer m_tabContainer, MainContainer.transform, "TextEditor", new Vector4(0, 0, MainContainer.width, 40), new Vector4(0, 0, MainContainer.width, MainContainer.height - 40));
             UIPanel m_tabSettings = TabCommons.CreateNonScrollableTabLocalized(m_tabstrip, KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_Settings), "K45_WTS_ONNETEDITOR_BASIC_SETTINGS", "RcSettings");
+            UIPanel m_tabLocation = TabCommons.CreateNonScrollableTabLocalized(m_tabstrip, KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_MoveCross), "K45_WTS_ONNETEDITOR_LOCATION_SETTINGS", "LcSettings");
             UIPanel m_tabTargets = TabCommons.CreateNonScrollableTabLocalized(m_tabstrip, "InfoIconEscapeRoutes", "K45_WTS_ONNETEDITOR_TARGET_SETTINGS", "TgSettings");
             UIScrollablePanel m_tabParameters = TabCommons.CreateScrollableTabLocalized(m_tabstrip, KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_FontIcon), "K45_WTS_ONNETEDITOR_TEXT_PARAMETERS", "TpSettings");
 
             var helperSettings = new UIHelperExtension(m_tabSettings, LayoutDirection.Vertical);
+            var helperLocation = new UIHelperExtension(m_tabLocation, LayoutDirection.Vertical);
             var helperTargets = new UIHelperExtension(m_tabTargets, LayoutDirection.Vertical);
             var helperParameters = new UIHelperExtension(m_tabParameters, LayoutDirection.Vertical);
 
@@ -106,12 +113,15 @@ namespace Klyte.WriteTheSigns.UI
             AddDropdown(Locale.Get("K45_WTS_BUILDINGEDITOR_PROPTYPE"), out m_propSelectionType, helperSettings, new string[] { Locale.Get("K45_WTS_ONNETEDITOR_PROPLAYOUT"), Locale.Get("K45_WTS_ONNETEDITOR_PROPMODELSELECT") }, OnPropSelecionClassChange);
             AddFilterableInput(Locale.Get("K45_WTS_BUILDINGEDITOR_MODELLAYOUTSELECT"), helperSettings, out m_propFilter, out _, OnFilterLayouts, OnConfigSelectionChange);
 
-
-            AddSlider(Locale.Get("K45_WTS_ONNETEDITOR_SEGMENTPOSITION"), out m_segmentPosition, helperSettings, OnSegmentPositionChanged, 0, 1, 0.01f, (x) => x.ToString("F2"));
-            AddVector3Field(Locale.Get("K45_WTS_ONNETEDITOR_POSITIONOFFSET"), out m_position, helperSettings, OnPositionChanged);
-            AddVector3Field(Locale.Get("K45_WTS_ONNETEDITOR_ROTATION"), out m_rotation, helperSettings, OnRotationChanged);
-            AddVector3Field(Locale.Get("K45_WTS_ONNETEDITOR_SCALE"), out m_scale, helperSettings, OnScaleChanged);
-            AddCheckboxLocale("K45_WTS_ONNETEDITOR_INVERTSIDE", out m_invertSide, helperSettings, OnInvertSideChanged);
+            AddDropdown(Locale.Get("K45_WTS_POSITIONINGMODE"), out m_positioningMode, helperLocation, new string[] { Locale.Get("K45_WTS_SINGLE"), Locale.Get("K45_WTS_MULTIPLE") }, OnPositioningModeChanged);
+            AddSlider(Locale.Get("K45_WTS_ONNETEDITOR_SEGMENTPOSITION"), out m_segmentPosition, helperLocation, OnSegmentPositionChanged, 0, 1, 0.01f, (x) => x.ToString("F2"));
+            AddSlider(Locale.Get("K45_WTS_ONNETEDITOR_SEGMENTPOSITION_START"), out m_segmentPositionStart, helperLocation, OnSegmentPositionStartChanged, 0, 1, 0.01f, (x) => x.ToString("F2"));
+            AddSlider(Locale.Get("K45_WTS_ONNETEDITOR_SEGMENTPOSITION_END"), out m_segmentPositionEnd, helperLocation, OnSegmentPositionEndChanged, 0, 1, 0.01f, (x) => x.ToString("F2"));
+            AddIntField(Locale.Get("K45_WTS_ONNETEDITOR_SEGMENTPOSITION_COUNT"), out m_segmentItemRepeatCount, helperLocation, OnSegmentPositionRepeatCountChanged, false);
+            AddVector3Field(Locale.Get("K45_WTS_ONNETEDITOR_POSITIONOFFSET"), out m_position, helperLocation, OnPositionChanged);
+            AddVector3Field(Locale.Get("K45_WTS_ONNETEDITOR_ROTATION"), out m_rotation, helperLocation, OnRotationChanged);
+            AddVector3Field(Locale.Get("K45_WTS_ONNETEDITOR_SCALE"), out m_scale, helperLocation, OnScaleChanged);
+            AddCheckboxLocale("K45_WTS_ONNETEDITOR_INVERTSIDE", out m_invertSide, helperLocation, OnInvertSideChanged);
 
             AddLabel(": ", helperTargets, out m_labelTarget1, out _, false);
             AddLabel(": ", helperTargets, out m_labelTarget2, out _, false);
@@ -244,10 +254,28 @@ namespace Klyte.WriteTheSigns.UI
 
         private void OnPropSelecionClassChange(int sel) => SafeObtain((OnNetInstanceCacheContainerXml x) =>
         {
-            m_propFilter.text = sel == 0 ? x.PropLayoutName ?? "" : PropIndexes.GetListName(x.SimpleProp);
+            m_propFilter.text = (sel == 0 ? x.PropLayoutName ?? "" : PropIndexes.GetListName(x.SimpleProp)) ?? "";
             UpdateTabsVisibility(sel);
             UpdateParams(x);
         });
+
+        private void OnPositioningModeChanged(int sel) => SafeObtain((OnNetInstanceCacheContainerXml x) =>
+        {
+            var rept = sel == 1;
+            x.SegmentPositionRepeating = rept;
+            StartCoroutine(HideShowFieldsPosition(rept));
+        });
+
+        private IEnumerator HideShowFieldsPosition(bool rept)
+        {
+            yield return 0;
+            yield return 0;
+            m_segmentPosition.parent.isVisible = !rept;
+            m_segmentPositionStart.parent.isVisible = rept;
+            m_segmentPositionEnd.parent.isVisible = rept;
+            m_segmentItemRepeatCount.parent.isVisible = rept;
+            yield break;
+        }
 
         private void UpdateTabsVisibility(int sel)
         {
@@ -337,11 +365,16 @@ namespace Klyte.WriteTheSigns.UI
                 m_scale[1].text = x.PropScale.y.ToString("F3");
                 m_scale[2].text = x.PropScale.z.ToString("F3");
                 m_segmentPosition.value = x.SegmentPosition;
+                m_segmentPositionStart.value = x.SegmentPositionStart;
+                m_segmentPositionEnd.value = x.SegmentPositionEnd;
+                m_segmentItemRepeatCount.text = x.SegmentPositionRepeatCount.ToString("0");
+                m_positioningMode.selectedIndex = x.SegmentPositionRepeating ? 1 : 0;
                 m_invertSide.isChecked = x.InvertSign;
 
                 UpdateParams(x);
                 ReloadTargets(x);
                 UpdateTabsVisibility(m_propSelectionType.selectedIndex);
+                StartCoroutine(HideShowFieldsPosition(x.SegmentPositionRepeating));
                 m_isLoading = false;
             });
             Dirty = false;
@@ -436,6 +469,9 @@ namespace Klyte.WriteTheSigns.UI
         private void OnScaleChanged(Vector3 obj) => SafeObtain((OnNetInstanceCacheContainerXml x) => x.PropScale = obj);
         private void OnPositionChanged(Vector3 obj) => SafeObtain((OnNetInstanceCacheContainerXml x) => x.PropPosition = (Vector3Xml)obj);
         private void OnSegmentPositionChanged(float val) => SafeObtain((OnNetInstanceCacheContainerXml x) => x.SegmentPosition = val);
+        private void OnSegmentPositionStartChanged(float val) => SafeObtain((OnNetInstanceCacheContainerXml x) => x.SegmentPositionStart = val);
+        private void OnSegmentPositionEndChanged(float val) => SafeObtain((OnNetInstanceCacheContainerXml x) => x.SegmentPositionEnd = val);
+        private void OnSegmentPositionRepeatCountChanged(int val) => SafeObtain((OnNetInstanceCacheContainerXml x) => x.SegmentPositionRepeatCount = (ushort)val);
         private void OnInvertSideChanged(bool isChecked) => SafeObtain((OnNetInstanceCacheContainerXml x) => x.InvertSign = isChecked);
 
 

@@ -816,7 +816,7 @@ namespace Klyte.WriteTheSigns.Rendering
             }
             else if (instance is OnNetInstanceCacheContainerXml onNet)
             {
-                return GetTextForOnNet(textDescriptor, refID, boardIdx, onNet, ref baseFont, out multipleOutput);
+                return GetTextForOnNet(textDescriptor, refID, boardIdx, secIdx, onNet, ref baseFont, out multipleOutput);
             }
             return RenderUtils.GetTextData(textDescriptor.m_fixedText ?? "", textDescriptor.m_prefix, textDescriptor.m_suffix, null, textDescriptor.m_overrideFont);
         }
@@ -883,7 +883,7 @@ namespace Klyte.WriteTheSigns.Rendering
                 case TextType.StreetSuffix: return GetFromCacheArray(WTSBuildingDataCaches.GetBuildingMainAccessSegment(refID), textDescriptor, RenderUtils.CacheArrayTypes.SuffixStreetName, baseFont);
                 case TextType.StreetNameComplete: return GetFromCacheArray(WTSBuildingDataCaches.GetBuildingMainAccessSegment(refID), textDescriptor, RenderUtils.CacheArrayTypes.FullStreetName, baseFont);
                 case TextType.PlatformNumber: return RenderUtils.GetTextData((buildingDescritpor.m_platforms.FirstOrDefault() + 1).ToString(), textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
-                case TextType.TimeTemperature: return GetTimeTemperatureText(textDescriptor, ref baseFont, refID, boardIdx);
+                case TextType.TimeTemperature: return GetTimeTemperatureText(textDescriptor, ref baseFont, refID, boardIdx, 0);
                 case TextType.CityName: return GetFromCacheArray(0, textDescriptor, RenderUtils.CacheArrayTypes.Districts, baseFont);
                 case TextType.LinesSymbols:
                     multipleOutput = WriteTheSignsMod.Controller.AtlasesLibrary.DrawLineFormats(GetAllTargetStopInfo(buildingDescritpor, refID).GroupBy(x => x.m_lineId).Select(x => x.First()).Select(x => new WTSLine(x.m_lineId, x.m_regionalLine)));
@@ -1021,7 +1021,7 @@ namespace Klyte.WriteTheSigns.Rendering
                 case TextType.Park: return RenderUtils.GetTextData($"{otherText}Area", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                 case TextType.PlatformNumber: return RenderUtils.GetTextData("00", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                 case TextType.ParameterizedText: return RenderUtils.GetTextData(textDescriptor.DefaultParameterValue?.ToString() ?? $"##PARAM{textDescriptor.m_parameterIdx}##", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
-                case TextType.ParameterizedGameSprite: return textDescriptor.DefaultParameterValue != null ? GetSpriteFromCycle(textDescriptor, propLayout.CachedProp, textDescriptor.DefaultParameterValue, 0, 0) : WriteTheSignsMod.Controller.AtlasesLibrary.GetFromLocalAtlases(null, "K45_WTS FrameBorder");
+                case TextType.ParameterizedGameSprite: return textDescriptor.DefaultParameterValue != null ? GetSpriteFromCycle(textDescriptor, propLayout.CachedProp, textDescriptor.DefaultParameterValue, 0, 0, 0) : WriteTheSignsMod.Controller.AtlasesLibrary.GetFromLocalAtlases(null, "K45_WTS FrameBorder");
                 case TextType.ParameterizedGameSpriteIndexed: return textDescriptor.DefaultParameterValue != null ? GetSpriteFromParameter(propLayout.CachedProp, textDescriptor.DefaultParameterValue) : WriteTheSignsMod.Controller.AtlasesLibrary.GetFromLocalAtlases(null, "K45_WTS FrameBorder");
                 case TextType.TimeTemperature: return RenderUtils.GetTextData($"24:60", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                 case TextType.LinesSymbols:
@@ -1039,7 +1039,7 @@ namespace Klyte.WriteTheSigns.Rendering
             };
         }
 
-        private static BasicRenderInformation GetTextForOnNet(BoardTextDescriptorGeneralXml textDescriptor, ushort segmentId, int secIdx, OnNetInstanceCacheContainerXml propDescriptor, ref DynamicSpriteFont baseFont, out IEnumerable<BasicRenderInformation> multipleOutput)
+        private static BasicRenderInformation GetTextForOnNet(BoardTextDescriptorGeneralXml textDescriptor, ushort segmentId, int boardIdx, int secIdx, OnNetInstanceCacheContainerXml propDescriptor, ref DynamicSpriteFont baseFont, out IEnumerable<BasicRenderInformation> multipleOutput)
         {
             multipleOutput = null;
             var data = WTSOnNetData.Instance.m_boardsContainers[segmentId];
@@ -1090,18 +1090,18 @@ namespace Klyte.WriteTheSigns.Rendering
                 case TextType.District: return GetFromCacheArray(WTSOnNetData.Instance.GetCachedDistrictId(targetSegment), textDescriptor, RenderUtils.CacheArrayTypes.Districts, baseFont);
                 case TextType.Park: return GetFromCacheArray(WTSOnNetData.Instance.GetCachedDistrictParkId(targetSegment), textDescriptor, RenderUtils.CacheArrayTypes.Parks, baseFont);
                 case TextType.PostalCode: return GetFromCacheArray(targetSegment, textDescriptor, RenderUtils.CacheArrayTypes.PostalCode, baseFont);
-                case TextType.TimeTemperature: return GetTimeTemperatureText(textDescriptor, ref baseFont, segmentId, secIdx);
+                case TextType.TimeTemperature: return GetTimeTemperatureText(textDescriptor, ref baseFont, segmentId, boardIdx, secIdx);
                 case TextType.ParameterizedText: return RenderUtils.GetTextData((propDescriptor.GetTextParameter(textDescriptor.m_parameterIdx) ?? textDescriptor.DefaultParameterValue)?.ToString() ?? $"<PARAM#{textDescriptor.m_parameterIdx} NOT SET>", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
-                case TextType.ParameterizedGameSprite: return GetSpriteFromCycle(textDescriptor, propDescriptor, segmentId, secIdx, textDescriptor.m_parameterIdx);
+                case TextType.ParameterizedGameSprite: return GetSpriteFromCycle(textDescriptor, propDescriptor, segmentId, boardIdx, secIdx, textDescriptor.m_parameterIdx);
                 case TextType.ParameterizedGameSpriteIndexed: return GetSpriteFromParameter(textDescriptor, propDescriptor, textDescriptor.m_parameterIdx);
                 case TextType.HwShield: return WriteTheSignsMod.Controller.HighwayShieldsAtlasLibrary.DrawHwShield(NetManager.instance.m_segments.m_buffer[targetSegment].m_nameSeed);
                 default: return null;
             };
         }
 
-        private static BasicRenderInformation GetTimeTemperatureText(BoardTextDescriptorGeneralXml textDescriptor, ref DynamicSpriteFont baseFont, ushort refId, int secIdx)
+        private static BasicRenderInformation GetTimeTemperatureText(BoardTextDescriptorGeneralXml textDescriptor, ref DynamicSpriteFont baseFont, ushort refId, int boardIdx, int secIdx)
         {
-            if ((SimulationManager.instance.m_currentFrameIndex + (refId * (1 + secIdx))) % 760 < 380)
+            if ((SimulationManager.instance.m_currentFrameIndex + (refId * (1 + boardIdx) + (11345476 * secIdx))) % 760 < 380)
             {
                 var time = SimulationManager.instance.m_currentDayTimeHour;
                 if (WriteTheSignsMod.Clock12hFormat)
@@ -1117,18 +1117,18 @@ namespace Klyte.WriteTheSigns.Rendering
             }
         }
 
-        private static BasicRenderInformation GetSpriteFromCycle(BoardTextDescriptorGeneralXml textDescriptor, OnNetInstanceCacheContainerXml descriptor, ushort refId, int secIdx, int parameterIdx)
+        private static BasicRenderInformation GetSpriteFromCycle(BoardTextDescriptorGeneralXml textDescriptor, OnNetInstanceCacheContainerXml descriptor, ushort refId, int boardIdx, int secIdx, int parameterIdx)
         {
             var param = descriptor.GetTextParameter(parameterIdx) ?? textDescriptor.DefaultParameterValue;
-            return GetSpriteFromCycle(textDescriptor, descriptor.Descriptor.CachedProp, param, refId, secIdx);
+            return GetSpriteFromCycle(textDescriptor, descriptor.Descriptor.CachedProp, param, refId, boardIdx, secIdx);
         }
         private static BasicRenderInformation GetSpriteFromCycle(BoardTextDescriptorGeneralXml textDescriptor, BoardInstanceBuildingXml descriptor, ushort refId, int secIdx, int parameterIdx)
         {
             var param = descriptor.GetTextParameter(parameterIdx) ?? textDescriptor.DefaultParameterValue;
-            return GetSpriteFromCycle(textDescriptor, descriptor.Descriptor.CachedProp, param, refId, secIdx);
+            return GetSpriteFromCycle(textDescriptor, descriptor.Descriptor.CachedProp, param, refId, secIdx, 0);
         }
 
-        private static BasicRenderInformation GetSpriteFromCycle(BoardTextDescriptorGeneralXml textDescriptor, PrefabInfo cachedPrefab, TextParameterWrapper param, ushort refId, int secIdx)
+        private static BasicRenderInformation GetSpriteFromCycle(BoardTextDescriptorGeneralXml textDescriptor, PrefabInfo cachedPrefab, TextParameterWrapper param, ushort refId, int boardIdx, int secIdx)
         {
             if (param is null)
             {
@@ -1142,7 +1142,7 @@ namespace Klyte.WriteTheSigns.Rendering
             {
                 textDescriptor.AnimationSettings.m_itemCycleFramesDuration = 100;
             }
-            return param.GetCurrentSprite(cachedPrefab, (int length) => (int)(((SimulationManager.instance.m_currentFrameIndex + textDescriptor.AnimationSettings.m_extraDelayCycleFrames + (refId * (1 + secIdx))) % (length * textDescriptor.AnimationSettings.m_itemCycleFramesDuration) / textDescriptor.AnimationSettings.m_itemCycleFramesDuration)));
+            return param.GetCurrentSprite(cachedPrefab, (int length) => (int)(((SimulationManager.instance.m_currentFrameIndex + textDescriptor.AnimationSettings.m_extraDelayCycleFrames + (refId * (1 + boardIdx) + (11345476 * secIdx))) % (length * textDescriptor.AnimationSettings.m_itemCycleFramesDuration) / textDescriptor.AnimationSettings.m_itemCycleFramesDuration)));
         }
 
         private static BasicRenderInformation GetSpriteFromParameter(BoardTextDescriptorGeneralXml textDescriptor, OnNetInstanceCacheContainerXml descriptor, int idx)

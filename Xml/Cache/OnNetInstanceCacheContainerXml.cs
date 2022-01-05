@@ -1,4 +1,5 @@
 ﻿using Klyte.Commons.Utils;
+using System.Collections.Generic;
 using System.Xml;
 using System.Xml.Serialization;
 
@@ -13,17 +14,17 @@ namespace Klyte.WriteTheSigns.Xml
         [XmlAttribute("targetSegment4")] public ushort m_targetSegment4;
 
         [XmlElement("cachedPos")]
-        public Vector3Xml m_cachedPosition;
+        public List<Vector3Xml> m_cachedPositions;
         [XmlElement("cachedRot")]
-        public Vector3Xml m_cachedRotation;
+        public List<Vector3Xml> m_cachedRotations;
         [XmlIgnore]
         public PropInfo m_simpleCachedProp => m_simpleProp;
 
         public override void OnChangeMatrixData()
         {
             base.OnChangeMatrixData();
-            m_cachedPosition = null;
-            m_cachedRotation = null;
+            m_cachedPositions = null;
+            m_cachedRotations = null;
         }
     }
 }

@@ -38,7 +38,7 @@ namespace Klyte.WriteTheSigns
             WTSShaderLibrary.instance.GetShaders();
         }
 
-        protected override List<ulong> IncompatibleModList => new List<ulong> { 1831805509 };
+        protected override Dictionary<ulong, string> IncompatibleModList => new Dictionary<ulong, string>();
         protected override List<string> IncompatibleDllModList => new List<string> { "KlyteDynamicTextProps" };
 
         public override void TopSettingsUI(UIHelperExtension helper)

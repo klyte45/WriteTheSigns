@@ -34,6 +34,42 @@ namespace Klyte.WriteTheSigns.Xml
                 OnChangeMatrixData();
             }
         }
+        [XmlAttribute("segmentPositionStart")]
+        public float SegmentPositionStart
+        {
+            get => m_segmentPositionStart; set
+            {
+                m_segmentPositionStart = value;
+                OnChangeMatrixData();
+            }
+        }
+        [XmlAttribute("segmentPositionEnd")]
+        public float SegmentPositionEnd
+        {
+            get => m_segmentPositionEnd; set
+            {
+                m_segmentPositionEnd = value;
+                OnChangeMatrixData();
+            }
+        }
+        [XmlAttribute("segmentPositionsRepeatCount")]
+        public ushort SegmentPositionRepeatCount
+        {
+            get => m_segmentPositionRepeat; set
+            {
+                m_segmentPositionRepeat = value;
+                OnChangeMatrixData();
+            }
+        }
+        [XmlAttribute("segmentPositionsRepeating")]
+        public bool SegmentPositionRepeating
+        {
+            get => m_segmentRepeatItem; set
+            {
+                m_segmentRepeatItem = value;
+                OnChangeMatrixData();
+            }
+        }
 
         [XmlAttribute("propLayoutName")]
         public string PropLayoutName
@@ -54,6 +90,10 @@ namespace Klyte.WriteTheSigns.Xml
         [XmlIgnore]
         private BoardDescriptorGeneralXml m_descriptor;
         private float m_segmentPosition = 0.5f;
+        private float m_segmentPositionStart = 0f;
+        private float m_segmentPositionEnd = 1f;
+        private ushort m_segmentPositionRepeat = 1;
+        private bool m_segmentRepeatItem = false;
         private bool m_invertSign = false;
 
         [XmlIgnore]
