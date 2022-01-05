@@ -23,6 +23,7 @@
     <EmbeddedResource Include="UI\Images\*.txt" />
     <EmbeddedResource Include="UI\VersionNotes.txt" />
     <EmbeddedResource Include="UI\DefaultFont\*.ttf" />
+    <EmbeddedResource Include="Shaders\**\*.unity3d" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Data\**\*.cs" />
@@ -34,6 +35,7 @@
     <Compile Include="Singleton\**\*.cs" />
     <Compile Include="SpriteAtlas\**\*.cs" />
     <Compile Include="Tools\**\*.cs" />
+    <Compile Include="Shaders\**\*.cs" />
     <Compile Include="UI\**\*.cs" />
     <Compile Include="Utils\**\*.cs" />
     <Compile Include="Xml\**\*.cs" />

@@ -13,7 +13,7 @@ using System.IO;
 using System.Reflection;
 using UnityEngine;
 
-[assembly: AssemblyVersion("0.3.0.11")]
+[assembly: AssemblyVersion("0.3.1.*")]
 namespace Klyte.WriteTheSigns
 {
     public class WriteTheSignsMod : BasicIUserMod<WriteTheSignsMod, WTSController, WTSPanel>
@@ -30,7 +30,11 @@ namespace Klyte.WriteTheSigns
         public static SavedBool Clock12hFormat = new SavedBool("K45_WTS_clock12hFormat", Settings.gameSettingsFile, false);
         public override void OnReleased() => base.OnReleased();
 
-        protected override void OnLevelLoadingInternal() => base.OnLevelLoadingInternal();
+        protected override void OnLevelLoadingInternal()
+        {
+            base.OnLevelLoadingInternal();
+            WTSShaderLibrary.instance.GetShaders();
+        }
 
         protected override List<ulong> IncompatibleModList => new List<ulong> { 1831805509 };
         protected override List<string> IncompatibleDllModList => new List<string> { "KlyteDynamicTextProps" };

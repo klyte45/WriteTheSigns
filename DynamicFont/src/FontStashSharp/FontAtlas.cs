@@ -38,7 +38,7 @@ namespace FontStashSharp
             get {
                 if (m_materialBright == null)
                 {
-                    m_materialBright = new Material(Shader.Find("Custom/Props/Prop/Default"));
+                    m_materialBright = new Material(Shader.Find("Klyte/WTS/klytetextboards") ?? Shader.Find("Custom/Props/Prop/Default"));
                 }
                 return m_materialBright;
             }

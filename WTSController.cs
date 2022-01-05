@@ -192,9 +192,12 @@ namespace Klyte.WriteTheSigns
         public static string AbbreviationFilesPath { get; } = FOLDER_NAME + Path.DirectorySeparatorChar + ABBREVIATION_FILES_FOLDER;
         public static string FontFilesPath { get; } = FOLDER_NAME + Path.DirectorySeparatorChar + FONTS_FILES_FOLDER;
 
-        public static Shader DEFAULT_SHADER_TEXT = Shader.Find("Custom/Props/Prop/Default") ?? DistrictManager.instance.m_properties.m_areaNameShader;
+        public static Shader DEFAULT_SHADER_TEXT = WTSShaderLibrary.instance.GetShaders()["Klyte/WTS/klytetextboards"];
         internal bool? m_tlmExistsAndActive = null;
         internal bool? m_addressesExistsAndActive = null;
+
+        public static bool ___RELOADSH { get => false; set { if (value) { WTSShaderLibrary.instance.ReloadFromDisk(); } } }
+
 
     }
 
