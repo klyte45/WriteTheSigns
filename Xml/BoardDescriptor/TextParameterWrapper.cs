@@ -1,5 +1,7 @@
 ﻿using ColossalFramework;
 using ColossalFramework.UI;
+using Klyte.WriteTheSigns.Data;
+using Klyte.WriteTheSigns.Utils;
 using SpriteFontPlus.Utility;
 using System;
 using System.Text.RegularExpressions;
@@ -13,19 +15,20 @@ namespace Klyte.WriteTheSigns.Xml
         {
             TEXT,
             IMAGE,
-            FOLDER
+            FOLDER,
+            VARIABLE
         }
         public TextParameterWrapper()
         {
             ParamType = ParameterType.TEXT;
-            TextOrSpriteValue = string.Empty;            
+            TextOrSpriteValue = string.Empty;
         }
         public TextParameterWrapper(string value, bool acceptLegacy = false)
         {
-            var inputMatches = Regex.Match(value, "^(folder|assetFolder|image|assetImage)://(([^/]+)/)?([^/]+)$");
+            var inputMatches = Regex.Match(value, "^(folder|assetFolder|image|assetImage)://(([^/]+)/)?([^/]+)$|^var://([a-zA-Z0-9_/]+)$");
             if (inputMatches.Success)
             {
-                switch (inputMatches.Groups[1].Value)
+                switch (inputMatches.Groups[0].Value.Split(':')[0])
                 {
                     case "folder":
                         ParamType = ParameterType.FOLDER;
@@ -57,6 +60,10 @@ namespace Klyte.WriteTheSigns.Xml
                         atlasName = string.Empty;
                         TextOrSpriteValue = inputMatches.Groups[4].Value;
                         return;
+                    case "var":
+                        ParamType = ParameterType.VARIABLE;
+                        VariableValue = new TextParameterVariableWrapper(inputMatches.Groups[5].Value);
+                        return;
                     default:
                         TextOrSpriteValue = value;
                         ParamType = ParameterType.TEXT;
@@ -76,7 +83,8 @@ namespace Klyte.WriteTheSigns.Xml
             }
         }
 
-        public string TextOrSpriteValue { get; set; }
+        private string TextOrSpriteValue { get; set; }
+        private TextParameterVariableWrapper VariableValue { get; set; }
         public string AtlasName
         {
             get => atlasName; set
@@ -162,6 +170,23 @@ namespace Klyte.WriteTheSigns.Xml
 
         }
 
+        public string GetTargetTextForBuilding(BoardInstanceBuildingXml descriptorBuilding, ushort buildingId, BoardTextDescriptorGeneralXml textDescriptor)
+        {
+            if (ParamType != ParameterType.VARIABLE)
+            {
+                return ToString();
+            }
+            return VariableValue.GetTargetTextForBuilding(descriptorBuilding, buildingId, textDescriptor);
+        }
+        public string GetTargetTextForNet(OnNetInstanceCacheContainerXml descriptorProp, ushort segmentId, BoardTextDescriptorGeneralXml textDescriptor)
+        {
+            if (ParamType != ParameterType.VARIABLE)
+            {
+                return ToString();
+            }
+            return VariableValue.GetTargetTextForNet(descriptorProp, segmentId, textDescriptor);
+        }
+
         public override string ToString()
         {
             switch (ParamType)
@@ -170,6 +195,8 @@ namespace Klyte.WriteTheSigns.Xml
                     return $"{(isLocal ? "folder" : "assetFolder")}://{(isLocal && !atlasName.IsNullOrWhiteSpace() ? atlasName : "<ROOT>")}";
                 case ParameterType.IMAGE:
                     return $"{(isLocal ? "image" : "assetImage")}://{(isLocal && !atlasName.IsNullOrWhiteSpace() ? atlasName + "/" : "<ROOT>/")}{TextOrSpriteValue}";
+                case ParameterType.VARIABLE:
+                    return $"var://{VariableValue.m_originalCommand}";
                 default:
                     return TextOrSpriteValue;
             }
@@ -194,6 +221,114 @@ namespace Klyte.WriteTheSigns.Xml
                 return WriteTheSignsMod.Controller.AtlasesLibrary.GetFromLocalAtlases(null, "K45_WTS FrameParamsFolderRequired");
             }
 
+        }
+
+
+        public class TextParameterVariableWrapper
+        {
+            public readonly string m_originalCommand;
+
+            private enum VariableType
+            {
+                Invalid,
+                Target
+            }
+
+            internal TextParameterVariableWrapper(string input)
+            {
+                m_originalCommand = input;
+                var parameterPath = input.Split('/');
+                if (parameterPath.Length > 0)
+                {
+                    switch (parameterPath[0])
+                    {
+                        case "target":
+                            if (parameterPath.Length == 3 && byte.TryParse(parameterPath[1], out byte targIdx) && targIdx <= 4)
+                            {
+                                if (Enum.Parse(typeof(TextType), parameterPath[2]) is TextType tt)
+                                {
+                                    switch (tt)
+                                    {
+                                        case TextType.StreetSuffix:
+                                        case TextType.StreetNameComplete:
+                                        case TextType.StreetPrefix:
+                                        case TextType.District:
+                                        case TextType.Park:
+                                        case TextType.PostalCode:
+                                        case TextType.ParkOrDistrict:
+                                        case TextType.DistrictOrPark:
+                                            commonTextType = tt;
+                                            index = targIdx;
+                                            type = VariableType.Target;
+                                            break;
+                                    }
+                                }
+
+
+
+                            }
+                            break;
+                    }
+                }
+            }
+
+            private VariableType type = VariableType.Invalid;
+            private byte index = 0;
+            private TextType commonTextType = TextType.None;
+
+            public string GetTargetTextForBuilding(BoardInstanceBuildingXml buildingDescriptor, ushort buildingId, BoardTextDescriptorGeneralXml textDescriptor)
+            {
+                switch (type)
+                {
+
+                }
+                return m_originalCommand;
+            }
+
+            public string GetTargetTextForNet(OnNetInstanceCacheContainerXml propDescriptor, ushort segmentId, BoardTextDescriptorGeneralXml textDescriptor)
+            {
+                switch (type)
+                {
+                    case VariableType.Target:
+                        var targId = index == 0 ? segmentId : propDescriptor.GetTargetSegment(index);
+                        if (targId == 0 || commonTextType == TextType.None)
+                        {
+                            return $"{commonTextType}@targ{index}";
+                        }
+                        else
+                        {
+                            TextType targetType = commonTextType;
+                            switch (commonTextType)
+                            {
+                                case TextType.ParkOrDistrict: targetType = WTSOnNetData.Instance.GetCachedDistrictParkId(targId) > 0 ? TextType.Park : TextType.District; break;
+                                case TextType.DistrictOrPark: targetType = WTSOnNetData.Instance.GetCachedDistrictId(targId) == 0 && WTSOnNetData.Instance.GetCachedDistrictParkId(targId) > 0 ? TextType.Park : TextType.District; break;
+                                case TextType.Park:
+                                    if (WTSOnNetData.Instance.GetCachedDistrictParkId(targId) == 0)
+                                    {
+                                        return "";
+                                    }
+                                    break;
+                            }
+                            RenderUtils.CacheArrayTypes cacheArrayType;
+                            switch (targetType)
+                            {
+                                case TextType.StreetSuffix: cacheArrayType = RenderUtils.CacheArrayTypes.SuffixStreetName; break;
+                                case TextType.StreetNameComplete: cacheArrayType = RenderUtils.CacheArrayTypes.FullStreetName; break;
+                                case TextType.StreetPrefix: cacheArrayType = RenderUtils.CacheArrayTypes.StreetQualifier; break;
+                                case TextType.District: targId = WTSOnNetData.Instance.GetCachedDistrictId(targId); cacheArrayType = RenderUtils.CacheArrayTypes.Districts; break;
+                                case TextType.Park: targId = WTSOnNetData.Instance.GetCachedDistrictParkId(targId); cacheArrayType = RenderUtils.CacheArrayTypes.Parks; break;
+                                case TextType.PostalCode: cacheArrayType = RenderUtils.CacheArrayTypes.SuffixStreetName; break;
+                                case TextType.ParkOrDistrict: cacheArrayType = RenderUtils.CacheArrayTypes.SuffixStreetName; break;
+                                case TextType.DistrictOrPark: cacheArrayType = RenderUtils.CacheArrayTypes.SuffixStreetName; break;
+                                default:
+                                    goto Fallback;
+                            }
+                            return RenderUtils.GetTargetStringFor(targId, textDescriptor.m_allCaps, textDescriptor.m_applyAbbreviations, cacheArrayType);
+                        }
+                }
+            Fallback:
+                return m_originalCommand;
+            }
         }
     }
 }

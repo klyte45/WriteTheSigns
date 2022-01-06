@@ -176,7 +176,6 @@ namespace Klyte.WriteTheSigns.Xml
         }
 
         [XmlElement("TextParametersV3")]
-        [Obsolete("Export only!", true)]
         public SimpleNonSequentialList<string> TextParameters
         {
             get

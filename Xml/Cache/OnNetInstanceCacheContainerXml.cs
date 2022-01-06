@@ -26,5 +26,22 @@ namespace Klyte.WriteTheSigns.Xml
             m_cachedPositions = null;
             m_cachedRotations = null;
         }
+
+        public ushort GetTargetSegment(int id)
+        {
+            switch (id)
+            {
+                case 1:
+                    return m_targetSegment1;
+                case 2:
+                    return m_targetSegment2;
+                case 3:
+                    return m_targetSegment3;
+                case 4:
+                    return m_targetSegment4;
+                default:
+                    return 0;
+            }
+        }
     }
 }

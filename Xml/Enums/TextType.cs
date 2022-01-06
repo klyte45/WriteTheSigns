@@ -2,6 +2,7 @@
 {
     public enum TextType
     {
+        None,
         OwnName,
         Fixed,
         StreetPrefix,
