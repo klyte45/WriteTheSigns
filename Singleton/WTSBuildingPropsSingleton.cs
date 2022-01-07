@@ -7,6 +7,7 @@ using Klyte.WriteTheSigns.Data;
 using Klyte.WriteTheSigns.Overrides;
 using Klyte.WriteTheSigns.Rendering;
 using Klyte.WriteTheSigns.UI;
+using Klyte.WriteTheSigns.Utils;
 using Klyte.WriteTheSigns.Xml;
 using SpriteFontPlus;
 using System;
@@ -631,7 +632,7 @@ namespace Klyte.WriteTheSigns.Singleton
             quad.d = center - vector + vector2;
             return quad;
         }
-        private ushort FindDestinationStop(ushort stopId) => WTSDynamicTextRenderingRules.GetStopDestinationData(stopId).m_destinationId;
+        private ushort FindDestinationStop(ushort stopId) => WTSStopUtils.GetStopDestinationData(stopId).m_destinationId;
 
         private readonly TransportInfo.TransportType[] m_allowedTypesNextPreviousStations =
     {

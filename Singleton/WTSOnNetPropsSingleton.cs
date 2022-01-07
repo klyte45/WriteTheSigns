@@ -17,7 +17,7 @@ namespace Klyte.WriteTheSigns.Singleton
         public void Start() => WriteTheSignsMod.Controller.EventOnDistrictChanged += OnDistrictChange;
 
 
-        private void OnDistrictChange() => Data.ResetDistrictCache();
+        private void OnDistrictChange() => WTSCacheSingleton.ClearCacheDistrictArea();
         #endregion
 
 

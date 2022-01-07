@@ -1,4 +1,5 @@
 ﻿using Klyte.Commons.Utils;
+using Klyte.WriteTheSigns.Singleton;
 using Klyte.WriteTheSigns.Utils;
 using System.Collections.Generic;
 using System.Linq;
@@ -66,7 +67,7 @@ namespace Klyte.WriteTheSigns.ModShared
         internal void OnAutoNameParameterChanged()
         {
             WriteTheSignsMod.Controller.BuildingPropsSingleton.ResetLines();
-            RenderUtils.ClearCacheLineName();
+            WTSCacheSingleton.ClearCacheLineName();
         }
 
         internal abstract string GetLineName(WTSLine lineObj);

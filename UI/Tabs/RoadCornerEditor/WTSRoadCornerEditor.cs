@@ -5,7 +5,7 @@ using Klyte.Commons.Extensions;
 using Klyte.Commons.UI.SpriteNames;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Data;
-using Klyte.WriteTheSigns.Utils;
+using Klyte.WriteTheSigns.Singleton;
 using Klyte.WriteTheSigns.Xml;
 using System;
 using System.Linq;
@@ -20,7 +20,8 @@ namespace Klyte.WriteTheSigns.UI
         private static WTSRoadCornerEditor m_instance;
         public static WTSRoadCornerEditor Instance
         {
-            get {
+            get
+            {
                 if (m_instance == null)
                 {
                     m_instance = FindObjectOfType<WTSRoadCornerEditor>();
@@ -74,9 +75,7 @@ namespace Klyte.WriteTheSigns.UI
         {
             WTSRoadNodesData.Instance.RoadQualifierExtraction = (RoadQualifierExtractionMode)m_qualifierExtractionDropdown.selectedIndex;
 
-            RenderUtils.ClearCacheFullStreetName();
-            RenderUtils.ClearCacheStreetQualifier();
-            RenderUtils.ClearCacheStreetName();
+            WTSCacheSingleton.ClearCacheSegmentNameParam();
         }
 
         private void OnSetAbbreviationFile(int sel)
@@ -89,8 +88,7 @@ namespace Klyte.WriteTheSigns.UI
             {
                 WTSRoadNodesData.Instance.AbbreviationFile = null;
             }
-            RenderUtils.ClearCacheFullStreetName();
-            RenderUtils.ClearCacheStreetName();
+            WTSCacheSingleton.ClearCacheSegmentNameParam();
         }
 
 

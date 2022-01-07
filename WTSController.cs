@@ -67,7 +67,7 @@ namespace Klyte.WriteTheSigns
         {
             if (LoadingManager.instance.m_LoadingWrapper.loadingComplete)
             {
-                RenderUtils.ClearCacheCityName();
+                WTSCacheSingleton.ClearCacheCityName();
             }
         }
 
@@ -112,13 +112,13 @@ namespace Klyte.WriteTheSigns
             BuildingManager.instance.EventBuildingRelocated += WTSBuildingDataCaches.PurgeBuildingCache;
 
             NetManagerOverrides.EventSegmentNameChanged += OnNameSeedChanged;
-            BuildingManager.instance.EventBuildingRelocated += RenderUtils.ClearCacheBuildingName;
-            BuildingManager.instance.EventBuildingReleased += RenderUtils.ClearCacheBuildingName;
-            BuildingManager.instance.EventBuildingCreated += RenderUtils.ClearCacheBuildingName;
-            EventOnDistrictChanged += RenderUtils.ClearCacheDistrictName;
-            EventOnParkChanged += RenderUtils.ClearCacheParkName;
-            EventOnBuildingNameChanged += RenderUtils.ClearCacheBuildingName;
-            EventOnPostalCodeChanged += RenderUtils.ClearCachePostalCode;
+            BuildingManager.instance.EventBuildingRelocated += WTSCacheSingleton.ClearCacheBuildingName;
+            BuildingManager.instance.EventBuildingReleased += WTSCacheSingleton.ClearCacheBuildingName;
+            BuildingManager.instance.EventBuildingCreated += WTSCacheSingleton.ClearCacheBuildingName;
+            EventOnDistrictChanged += WTSCacheSingleton.ClearCacheDistrictName;
+            EventOnParkChanged += WTSCacheSingleton.ClearCacheParkName;
+            EventOnBuildingNameChanged += WTSCacheSingleton.ClearCacheBuildingName;
+            EventOnPostalCodeChanged += WTSCacheSingleton.ClearCachePostalCode;
             EventOnZeroMarkerChanged += OnNameSeedChanged;
 
             FontServer.instance.m_defaultShader = DEFAULT_SHADER_TEXT;
@@ -127,11 +127,9 @@ namespace Klyte.WriteTheSigns
         private void OnNameSeedChanged(ushort segmentId) => OnNameSeedChanged();
         private void OnNameSeedChanged()
         {
-            RenderUtils.ClearCacheFullStreetName();
-            RenderUtils.ClearCacheStreetName();
-            RenderUtils.ClearCacheStreetQualifier();
-            RenderUtils.ClearCachePostalCode();
-            RenderUtils.ClearCacheBuildingName(null);
+            WTSCacheSingleton.ClearCacheSegmentNameParam();
+            WTSCacheSingleton.ClearCachePostalCode();
+            WTSCacheSingleton.ClearCacheBuildingName(null);
         }
 
         public static void ReloadFontsFromPath()
@@ -149,8 +147,7 @@ namespace Klyte.WriteTheSigns
         public void ReloadAbbreviationFiles()
         {
             AbbreviationFiles = LoadAbbreviationFiles(AbbreviationFilesPath);
-            RenderUtils.ClearCacheStreetName();
-            RenderUtils.ClearCacheStreetQualifier();
+            WTSCacheSingleton.ClearCacheSegmentNameParam();
         }
 
         private static Dictionary<string, Dictionary<string, string>> LoadAbbreviationFiles(string path)

@@ -62,6 +62,8 @@ namespace Klyte.WriteTheSigns.ModShared
             public string shortCode;
             public string longCode;
             public Color hwColor;
+            public int mileageOffset;
+            public bool invertMileage;
         }
     }
 }

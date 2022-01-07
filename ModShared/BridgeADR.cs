@@ -28,9 +28,15 @@ namespace Klyte.WriteTheSigns.ModShared
         public override AdrHighwayParameters GetHighwayData(ushort seedId)
         {
             var result = new AdrHighwayParameters();
-            return AdrFacade.GetSeedHighwayParameters(seedId, out result.layoutName, out result.detachedStr, out result.hwIdentifier, out result.shortCode, out result.longCode, out result.hwColor)
-                ? result
-                : null;
+            if (AdrFacade.GetSeedHighwayParameters(seedId, out result.layoutName, out result.detachedStr, out result.hwIdentifier, out result.shortCode, out result.longCode, out result.hwColor))
+            {
+                AdrFacade.GetMileageSeedConfig(seedId, out result.invertMileage, out result.mileageOffset);
+                return result;
+            }
+            else
+            {
+                return null;
+            }
         }
 
         public override string[] ListAllAvailableHighwayTypes(string filterText) => AdrFacade.ListAllHighwayTypes(filterText);

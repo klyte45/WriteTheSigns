@@ -1,5 +1,6 @@
 extern alias TLM;
 using Klyte.Commons.Utils;
+using Klyte.WriteTheSigns.Singleton;
 using Klyte.WriteTheSigns.Utils;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,19 +17,19 @@ namespace Klyte.WriteTheSigns.ModShared
             TLMFacade.Instance.EventLineSymbolParameterChanged += () =>
             {
                 WriteTheSignsMod.Controller.AtlasesLibrary.PurgeAllLines();
-                RenderUtils.ClearCacheLineId();
+                WTSCacheSingleton.ClearCacheLineId();
             };
             TLMFacade.Instance.EventAutoNameParameterChanged += OnAutoNameParameterChanged;
-            TLMFacade.Instance.EventVehicleIdentifierParameterChanged += RenderUtils.ClearCacheVehicleNumber;
+            TLMFacade.Instance.EventVehicleIdentifierParameterChanged += WTSCacheSingleton.ClearCacheVehicleNumber;
             TLMFacade.Instance.EventLineDestinationsChanged += (lineId) =>
             {
                 WriteTheSignsMod.Controller.BuildingPropsSingleton.ResetLines();
-                RenderUtils.ClearCacheLineName(new WTSLine(lineId, false));
+                WTSCacheSingleton.ClearCacheLineName(new WTSLine(lineId, false));
             };
             TLMFacade.Instance.EventRegionalLineParameterChanged += (lineId) =>
             {
                 WriteTheSignsMod.Controller.BuildingPropsSingleton.ResetLines();
-                RenderUtils.ClearCacheLineName(new WTSLine(lineId, true));
+                WTSCacheSingleton.ClearCacheLineName(new WTSLine(lineId, true));
                 WriteTheSignsMod.Controller.AtlasesLibrary.PurgeLine(new WTSLine(lineId, true));
             };
         }
@@ -58,7 +59,7 @@ namespace Klyte.WriteTheSigns.ModShared
             FillStops(lineObj, destinations.Select(x => new DestinationPoco { stopId = x.stopId, stopName = x.stopName }).ToList());
         }
 
-        public override WTSLine GetStopLine(ushort stopId) => new WTSLine(TLMFacade.GetStopLine(stopId, out bool isBuilding), isBuilding);
+        public override WTSLine GetStopLine(ushort stopId) => new WTSLine((ushort)TLMFacade.GetStopLine(stopId, out bool isBuilding), isBuilding);
         internal override string GetLineName(WTSLine lineObj) => TLMFacade.GetLineName((ushort)lineObj.lineId, lineObj.regional);
         internal override Color GetLineColor(WTSLine lineObj) => TLMFacade.GetLineColor((ushort)lineObj.lineId, lineObj.regional);
 

@@ -27,7 +27,8 @@ namespace Klyte.WriteTheSigns.Xml
         [Obsolete]
         public SimpleXmlDictionary<string, BoardDescriptorGeneralXml> LocalLayouts
         {
-            get {
+            get
+            {
                 var m_localLayouts = BoardsData.Select(x => WTSPropLayoutData.Instance.Get(x.PropLayoutName)).Where(x => x != null).GroupBy(x => x.SaveName).Select(x => x.FirstOrDefault()).ToDictionary(x => x.SaveName, x => x);
                 var res = new SimpleXmlDictionary<string, BoardDescriptorGeneralXml>();
                 m_localLayouts.ForEach(x => res[x.Key] = x.Value);
@@ -35,11 +36,6 @@ namespace Klyte.WriteTheSigns.Xml
             }
             set { }
         }
-
-        [XmlIgnore]
-        private long m_districtUpdated;
-        [XmlIgnore]
-        private long m_parkUpdated;
     }
     public class ExportableBoardInstanceOnNetListXml : ILibable
     {
@@ -48,5 +44,5 @@ namespace Klyte.WriteTheSigns.Xml
         [XmlAttribute("saveName")]
         public string SaveName { get; set; }
     }
-
 }
+

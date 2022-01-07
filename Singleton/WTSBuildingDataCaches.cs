@@ -1,4 +1,6 @@
-using Klyte.Commons.Utils;
+using Klyte.WriteTheSigns.Rendering;
+using Klyte.WriteTheSigns.Singleton;
+using Klyte.WriteTheSigns.Xml;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -15,7 +17,7 @@ namespace Klyte.WriteTheSigns.Utils
             {
                 m_stopsBuildingsCache.Remove(item.Key);
             }
-            m_mainAccessSegmentBuildingsCache.Remove(buildingId);
+            WTSCacheSingleton.ClearCacheBuildingAll(buildingId);
         }
         internal static void PurgeStopCache(ushort stopId)
         {
@@ -43,23 +45,6 @@ namespace Klyte.WriteTheSigns.Utils
             return buildingId;
         }
 
-        private static Dictionary<ushort, ushort> m_mainAccessSegmentBuildingsCache = new Dictionary<ushort, ushort>();
-
-        public static ushort GetBuildingMainAccessSegment(ushort buildingId)
-        {
-            if (!m_mainAccessSegmentBuildingsCache.TryGetValue(buildingId, out ushort segmentId))
-            {
-                SegmentUtils.GetNearestSegment(BuildingManager.instance.m_buildings.m_buffer[buildingId].CalculateSidewalkPosition(), out _, out _, out segmentId);
-                m_mainAccessSegmentBuildingsCache[buildingId] = segmentId;
-            }
-            return segmentId;
-        }
-
-
-
-
-
-
         internal static readonly Color[] m_colorOrder = new Color[]
         {
             Color.red,
@@ -83,9 +68,6 @@ namespace Klyte.WriteTheSigns.Utils
             Color.Lerp( Color.white,                                  Color.black,0.25f),
             Color.Lerp( Color.white,                                  Color.black,0.75f)
         };
-
-
-
 
 
     }

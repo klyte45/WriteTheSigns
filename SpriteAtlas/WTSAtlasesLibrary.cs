@@ -282,7 +282,7 @@ namespace Klyte.WriteTheSigns.Sprites
         }
         internal void PurgeLine(WTSLine line)
         {
-            string id = $"{line.ToRefId()}";
+            string id = $"{line.ToExternalRefId()}";
             if (!(m_transportLineAtlas[id] is null))
             {
                 m_transportLineAtlas.Remove(id);
@@ -335,7 +335,7 @@ namespace Klyte.WriteTheSigns.Sprites
         }
         private IEnumerator WriteTransportLineTextureCoroutine(WTSLine line)
         {
-            string id = $"{line.ToRefId()}";
+            string id = $"{line.ToExternalRefId()}";
             if (m_transportLineAtlas[id] == null)
             {
                 yield return 0;
