@@ -65,6 +65,7 @@ namespace Klyte.WriteTheSigns.UI
 
         private UITextField[] m_textParams;
         private UILabel[] m_textParamsLabels;
+        private UIButton[] m_textParamsIsEmpty;
 
 
         private UIDropDown m_loadDD;
@@ -138,6 +139,7 @@ namespace Klyte.WriteTheSigns.UI
 
             m_textParams = new UITextField[BoardInstanceOnNetXml.TEXT_PARAMETERS_COUNT];
             m_textParamsLabels = new UILabel[BoardInstanceOnNetXml.TEXT_PARAMETERS_COUNT];
+            m_textParamsIsEmpty = new UIButton[BoardInstanceOnNetXml.TEXT_PARAMETERS_COUNT];
             for (int i = 0; i < BoardInstanceOnNetXml.TEXT_PARAMETERS_COUNT; i++)
             {
                 var currentIdx = i;
@@ -148,6 +150,12 @@ namespace Klyte.WriteTheSigns.UI
                 }
                 AddFilterableInput(string.Format(Locale.Get($"K45_WTS_ONNETEDITOR_TEXTPARAM"), currentIdx), helperParameters, out m_textParams[i], out m_textParamsLabels[i], out UIListBox lb, OnFilterParam, (t, x, y) => OnParamChanged(t, currentIdx, x, y));
                 m_textParamsLabels[i].processMarkup = true;
+                m_textParamsIsEmpty[i] = AddButtonInEditorRow(m_textParams[i], CommonsSpriteNames.K45_X, () => SafeObtain((x) =>
+                   {
+                       var isEmpty = x.GetTextParameter(currentIdx).IsEmpty;
+                       x.SetTextParameter(currentIdx, isEmpty ? "" : null);
+                       UpdateParamIsEmptied(x, currentIdx);
+                   }), "K45_WTS_TOGGLETEXTISEMPTYTOOLTIP", true, 30);
                 sprite = AddSpriteInEditorRow(lb, true, 300);
                 m_textParams[i].eventGotFocus += (x, y) =>
                 {
@@ -160,6 +168,7 @@ namespace Klyte.WriteTheSigns.UI
                 lb.eventItemMouseHover += (x, y) => sprite.spriteName = lb.items[y].Split('/').Last().Trim();
                 lb.eventVisibilityChanged += (x, y) => sprite.isVisible = y;
                 sprite.isVisible = false;
+
             }
 
             AddLibBox<WTSLibOnNetPropLayout, BoardInstanceOnNetXml>(helperSettings, out m_copySettings, OnCopyRule, out m_pasteSettings, OnPasteRule, out _, null, out m_loadDD, out m_libLoad, out m_libDelete, out m_libSaveNameField, out m_libSave, out m_gotoFileLib, OnLoadRule, GetRuleSerialized);
@@ -388,21 +397,44 @@ namespace Klyte.WriteTheSigns.UI
                 m_tabstrip.ShowTab("TpSettings");
                 for (int i = 0; i < m_textParams.Length; i++)
                 {
+                    m_textParamsLabels[i].suffix = paramsUsed?.ContainsKey(i) ?? false ? $" - {Locale.Get("K45_WTS_USEDAS")}\n{string.Join("\n", paramsUsed[i])}" : "";
+                    m_textParams[i].text = x.GetTextParameter(i)?.ToString() ?? "";
                     if (paramsUsed?.ContainsKey(i) ?? false)
                     {
-                        m_textParamsLabels[i].suffix = $" - {Locale.Get("K45_WTS_USEDAS")}\n{string.Join("\n", paramsUsed[i])}";
+                        m_textParams[i].parent.isVisible = true;
+                        UpdateParamIsEmptied(x, i);
                     }
                     else
                     {
-                        m_textParamsLabels[i].suffix = "";
+                        m_textParams[i].parent.isVisible = false;
                     }
-                    m_textParams[i].text = x.GetTextParameter(i)?.ToString() ?? "";
-                    m_textParams[i].parent.isVisible = paramsUsed?.ContainsKey(i) ?? false;
                 }
             }
             else
             {
                 m_tabstrip.HideTab("TpSettings");
+            }
+        }
+
+        private void UpdateParamIsEmptied(OnNetInstanceCacheContainerXml x, int i)
+        {
+            if (x.GetTextParameter(i)?.IsEmpty ?? false)
+            {
+                m_textParamsIsEmpty[i].color = Color.red;
+                m_textParamsIsEmpty[i].focusedColor = Color.red;
+                m_textParamsIsEmpty[i].pressedColor = Color.red;
+                m_textParamsIsEmpty[i].disabledColor = Color.red;
+                m_textParams[i].Disable();
+                m_textParams[i].text = "";
+            }
+            else
+            {
+                m_textParamsIsEmpty[i].color = Color.white;
+                m_textParamsIsEmpty[i].focusedColor = Color.white;
+                m_textParamsIsEmpty[i].pressedColor = Color.white;
+                m_textParamsIsEmpty[i].disabledColor = Color.white;
+                m_textParams[i].Enable();
+                m_textParams[i].text = "";
             }
         }
 

@@ -111,7 +111,14 @@ namespace Klyte.WriteTheSigns.Rendering
                 case TextType.LineFullName:
                     multipleOutput = WTSStopUtils.GetAllTargetStopInfo(buildingDescritpor, refID).GroupBy(x => x.m_lineId).Select(x => x.First()).Select(x => GetFromCacheArray(textDescriptor, WTSCacheSingleton.instance.GetCityTransportLine(x.m_lineId).Name, baseFont));
                     return null;
-                case TextType.ParameterizedText: return WTSCacheSingleton.GetTextData((buildingDescritpor.GetTextParameter(textDescriptor.m_parameterIdx) ?? textDescriptor.DefaultParameterValue)?.GetTargetTextForBuilding(buildingDescritpor, refID, textDescriptor) ?? $"<PARAM#{textDescriptor.m_parameterIdx} NOT SET>", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
+                case TextType.ParameterizedText:
+                    var param = buildingDescritpor.GetTextParameter(textDescriptor.m_parameterIdx) ?? textDescriptor.DefaultParameterValue;
+                    string text = param is null
+                        ? $"<PARAM#{textDescriptor.m_parameterIdx} NOT SET>"
+                        : param.IsEmpty
+                            ? ""
+                            : param.GetTargetTextForBuilding(buildingDescritpor, refID, textDescriptor);
+                    return WTSCacheSingleton.GetTextData(text, textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                 case TextType.ParameterizedGameSprite: return GetSpriteFromCycle(textDescriptor, buildingDescritpor, refID, boardIdx, textDescriptor.m_parameterIdx);
                 case TextType.ParameterizedGameSpriteIndexed: return GetSpriteFromParameter(textDescriptor, buildingDescritpor, textDescriptor.m_parameterIdx);
                 default:
@@ -316,7 +323,14 @@ namespace Klyte.WriteTheSigns.Rendering
                 case TextType.Park: return GetFromCacheArray(textDescriptor, WTSCacheSingleton.instance.GetPark(WTSCacheSingleton.instance.GetSegment(targetSegment).ParkId).Name, baseFont);
                 case TextType.PostalCode: return GetFromCacheArray(textDescriptor, WTSCacheSingleton.instance.GetSegment(targetSegment).PostalCode, baseFont);
                 case TextType.TimeTemperature: return GetTimeTemperatureText(textDescriptor, ref baseFont, segmentId, boardIdx, secIdx);
-                case TextType.ParameterizedText: return WTSCacheSingleton.GetTextData((propDescriptor.GetTextParameter(textDescriptor.m_parameterIdx) ?? textDescriptor.DefaultParameterValue)?.GetTargetTextForNet(propDescriptor, segmentId, textDescriptor) ?? $"<PARAM#{textDescriptor.m_parameterIdx} NOT SET>", textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
+                case TextType.ParameterizedText:
+                    var param = propDescriptor.GetTextParameter(textDescriptor.m_parameterIdx) ?? textDescriptor.DefaultParameterValue;
+                    string text = param is null
+                        ? $"<PARAM#{textDescriptor.m_parameterIdx} NOT SET>"
+                        : param.IsEmpty
+                            ? ""
+                            : param.GetTargetTextForNet(propDescriptor, segmentId, textDescriptor);
+                    return WTSCacheSingleton.GetTextData(text, textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
                 case TextType.ParameterizedGameSprite: return GetSpriteFromCycle(textDescriptor, propDescriptor, segmentId, boardIdx, secIdx, textDescriptor.m_parameterIdx);
                 case TextType.ParameterizedGameSpriteIndexed: return GetSpriteFromParameter(textDescriptor, propDescriptor, textDescriptor.m_parameterIdx);
                 case TextType.HwShield: return WriteTheSignsMod.Controller.HighwayShieldsAtlasLibrary.DrawHwShield(NetManager.instance.m_segments.m_buffer[targetSegment].m_nameSeed);
@@ -359,6 +373,10 @@ namespace Klyte.WriteTheSigns.Rendering
             {
                 return WriteTheSignsMod.Controller.AtlasesLibrary.GetFromLocalAtlases(null, "K45_WTS FrameParamsNotSet");
             }
+            if (param.IsEmpty)
+            {
+                return null;
+            }
             if (param.ParamType != TextParameterWrapper.ParameterType.FOLDER)
             {
                 return WriteTheSignsMod.Controller.AtlasesLibrary.GetFromLocalAtlases(null, "K45_WTS FrameParamsFolderRequired");
@@ -377,7 +395,9 @@ namespace Klyte.WriteTheSigns.Rendering
         private static BasicRenderInformation GetSpriteFromParameter(PrefabInfo prop, TextParameterWrapper param)
             => param is null
                 ? WriteTheSignsMod.Controller.AtlasesLibrary.GetFromLocalAtlases(null, "K45_WTS FrameParamsNotSet")
-                : param.GetImageBRI(prop);
+                : param.IsEmpty
+                    ? null
+                    : param.GetImageBRI(prop);
 
         public static BasicRenderInformation GetFromCacheArray(BoardTextDescriptorGeneralXml textDescriptor, string text, DynamicSpriteFont baseFont) => text is null ? null : WTSCacheSingleton.GetTextData(text, textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);
         public static BasicRenderInformation GetFromCacheArray(BoardTextDescriptorGeneralXml textDescriptor, FormatableString text, DynamicSpriteFont baseFont) => text is null ? null : WTSCacheSingleton.GetTextData(text.Get(textDescriptor.m_allCaps, textDescriptor.m_applyAbbreviations), textDescriptor.m_prefix, textDescriptor.m_suffix, baseFont, textDescriptor.m_overrideFont);

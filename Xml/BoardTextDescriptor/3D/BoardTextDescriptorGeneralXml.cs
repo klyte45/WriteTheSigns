@@ -151,7 +151,7 @@ namespace Klyte.WriteTheSigns.Xml
                 case TextType.ParameterizedGameSpriteIndexed:
                     paramType = "image:// or assetImage://"; break;
                 case TextType.ParameterizedText:
-                    paramType = "any value"; break;
+                    paramType = "var:// or any string value"; break;
                 default:
                     return null;
             }

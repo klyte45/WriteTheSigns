@@ -21,8 +21,13 @@ namespace Klyte.WriteTheSigns.Xml
             ParamType = ParameterType.TEXT;
             TextOrSpriteValue = string.Empty;
         }
-        public TextParameterWrapper(string value, bool acceptLegacy = false)
+        public TextParameterWrapper(string value, bool acceptLegacy = false) : base()
         {
+            if (value is null)
+            {
+                IsEmpty = true;
+                return;
+            }
             var inputMatches = Regex.Match(value, "^(folder|assetFolder|image|assetImage)://(([^/]+)/)?([^/]+)$|^var://([a-zA-Z0-9_]+/.*)?$");
             if (inputMatches.Success)
             {
@@ -81,7 +86,14 @@ namespace Klyte.WriteTheSigns.Xml
             }
         }
 
-        private string TextOrSpriteValue { get; set; }
+        private string TextOrSpriteValue
+        {
+            get => textOrSpriteValue; set
+            {
+                IsEmpty = value is null;
+                textOrSpriteValue = IsEmpty ? "" : value;
+            }
+        }
         private TextParameterVariableWrapper VariableValue { get; set; }
         public string AtlasName
         {
@@ -100,14 +112,15 @@ namespace Klyte.WriteTheSigns.Xml
             }
         }
         public ParameterType ParamType { get; set; }
+        public bool IsEmpty { get; private set; }
 
         private UITextureAtlas m_cachedAtlas;
         private string atlasName;
         private bool isLocal;
         private bool m_isDirtyImage = true;
-
         private PrefabInfo cachedPrefab;
         private ulong cachedPrefabId;
+        private string textOrSpriteValue;
 
         public UITextureAtlas GetAtlas(PrefabInfo prefab)
         {
@@ -170,11 +183,9 @@ namespace Klyte.WriteTheSigns.Xml
 
         public string GetTargetTextForBuilding(BoardInstanceBuildingXml descriptorBuilding, ushort buildingId, BoardTextDescriptorGeneralXml textDescriptor)
         {
-            if (ParamType != ParameterType.VARIABLE)
-            {
-                return ToString();
-            }
-            return VariableValue.GetTargetTextForBuilding(descriptorBuilding, buildingId, textDescriptor);
+            return ParamType != ParameterType.VARIABLE
+                ? ToString()
+                : VariableValue.GetTargetTextForBuilding(descriptorBuilding, buildingId, textDescriptor);
         }
         public string GetTargetTextForNet(OnNetInstanceCacheContainerXml descriptorProp, ushort segmentId, BoardTextDescriptorGeneralXml textDescriptor)
         {
@@ -187,6 +198,11 @@ namespace Klyte.WriteTheSigns.Xml
 
         public override string ToString()
         {
+            if (IsEmpty)
+            {
+                return null;
+            }
+
             switch (ParamType)
             {
                 case ParameterType.FOLDER:

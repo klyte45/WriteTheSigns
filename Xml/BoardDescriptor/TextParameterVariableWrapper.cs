@@ -1,5 +1,6 @@
 ﻿using Klyte.WriteTheSigns.Singleton;
 using System;
+using UnityEngine;
 
 namespace Klyte.WriteTheSigns.Xml
 {
@@ -25,8 +26,11 @@ namespace Klyte.WriteTheSigns.Xml
             ParkOrDistrict,
             DistrictOrPark,
             MileageMeters,
-            MileageKiloMeters,
+            MileageKilometers,
             MileageMiles,
+            MileageMetersInt,
+            MileageKilometersInt,
+            MileageMilesInt,
         }
 
         internal TextParameterVariableWrapper(string input)
@@ -45,8 +49,11 @@ namespace Klyte.WriteTheSigns.Xml
                                 switch (tt)
                                 {
                                     case VariableTargetSubType.MileageMeters:
-                                    case VariableTargetSubType.MileageKiloMeters:
+                                    case VariableTargetSubType.MileageKilometers:
                                     case VariableTargetSubType.MileageMiles:
+                                    case VariableTargetSubType.MileageMetersInt:
+                                    case VariableTargetSubType.MileageKilometersInt:
+                                    case VariableTargetSubType.MileageMilesInt:
                                         if (parameterPath.Length >= 4)
                                         {
                                             numberFormat = parameterPath[3];
@@ -115,7 +122,7 @@ namespace Klyte.WriteTheSigns.Xml
                             case VariableTargetSubType.Park: return WTSCacheSingleton.instance.GetPark(WTSCacheSingleton.instance.GetSegment(targId).ParkId).Name.Value;
                             case VariableTargetSubType.PostalCode: return WTSCacheSingleton.instance.GetSegment(targId).PostalCode;
 
-                            case VariableTargetSubType.MileageKiloMeters:
+                            case VariableTargetSubType.MileageKilometers:
                                 multiplier = 0.001f;
                                 goto case VariableTargetSubType.MileageMeters;
                             case VariableTargetSubType.MileageMiles:
@@ -130,6 +137,25 @@ namespace Klyte.WriteTheSigns.Xml
                                 {
                                     numberFormat = "0";
                                     return (WTSCacheSingleton.instance.GetSegment(targId).GetMetersAt(propDescriptor.SegmentPosition) * multiplier).ToString(numberFormat);
+                                }
+
+
+
+                            case VariableTargetSubType.MileageKilometersInt:
+                                multiplier = 0.001f;
+                                goto case VariableTargetSubType.MileageMetersInt;
+                            case VariableTargetSubType.MileageMilesInt:
+                                multiplier = 1 / 1609f;
+                                goto case VariableTargetSubType.MileageMetersInt;
+                            case VariableTargetSubType.MileageMetersInt:
+                                try
+                                {
+                                    return Mathf.RoundToInt(WTSCacheSingleton.instance.GetSegment(targId).GetMetersAt(propDescriptor.SegmentPosition) * multiplier).ToString(numberFormat);
+                                }
+                                catch
+                                {
+                                    numberFormat = "0";
+                                    return Mathf.RoundToInt(WTSCacheSingleton.instance.GetSegment(targId).GetMetersAt(propDescriptor.SegmentPosition) * multiplier).ToString(numberFormat);
                                 }
 
                             default:
