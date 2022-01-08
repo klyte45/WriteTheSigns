@@ -12,6 +12,7 @@ using Klyte.WriteTheSigns.Xml;
 using System;
 using System.Collections;
 using System.Linq;
+using System.Text.RegularExpressions;
 using UnityEngine;
 using static Klyte.Commons.UI.DefaultEditorUILib;
 
@@ -144,29 +145,84 @@ namespace Klyte.WriteTheSigns.UI
             {
                 var currentIdx = i;
                 UISprite sprite = null;
+                UILabel label = null;
                 IEnumerator OnFilterParam(string x, Wrapper<string[]> result)
                 {
-                    yield return result.Value = OnFilterParamImages(sprite, x);
+                    yield return 0;
+                    if (x.StartsWith(WTSAtlasesLibrary.PROTOCOL_IMAGE_ASSET) || x.StartsWith(WTSAtlasesLibrary.PROTOCOL_IMAGE))
+                    {
+                        yield return result.Value = OnFilterParamImages(sprite, x);
+                    }
+                    else if (x.StartsWith(TextParameterVariableWrapper.PROTOCOL_VARIABLE))
+                    {
+                        yield return result.Value = OnFilterParamVariable(label, x) ?? new string[0];
+                    }
                 }
-                AddFilterableInput(string.Format(Locale.Get($"K45_WTS_ONNETEDITOR_TEXTPARAM"), currentIdx), helperParameters, out m_textParams[i], out m_textParamsLabels[i], out UIListBox lb, OnFilterParam, (t, x, y) => OnParamChanged(t, currentIdx, x, y));
-                m_textParamsLabels[i].processMarkup = true;
-                m_textParamsIsEmpty[i] = AddButtonInEditorRow(m_textParams[i], CommonsSpriteNames.K45_X, () => SafeObtain((x) =>
+                AddFilterableInput(string.Format(Locale.Get($"K45_WTS_ONNETEDITOR_TEXTPARAM"), currentIdx), helperParameters, out m_textParams[currentIdx], out m_textParamsLabels[currentIdx], out UIListBox lb, OnFilterParam, (t, x, y) => OnParamChanged(t, currentIdx, x, y, label));
+                m_textParamsLabels[currentIdx].processMarkup = true;
+                m_textParamsIsEmpty[currentIdx] = AddButtonInEditorRow(m_textParams[currentIdx], CommonsSpriteNames.K45_X, () => SafeObtain((x) =>
                    {
                        var isEmpty = x.GetTextParameter(currentIdx).IsEmpty;
                        x.SetTextParameter(currentIdx, isEmpty ? "" : null);
                        UpdateParamIsEmptied(x, currentIdx);
                    }), "K45_WTS_TOGGLETEXTISEMPTYTOOLTIP", true, 30);
                 sprite = AddSpriteInEditorRow(lb, true, 300);
-                m_textParams[i].eventGotFocus += (x, y) =>
+                label = AddLabelInEditorRow(lb, false, 300);
+                label.padding = new RectOffset(5, 5, 5, 5);
+                m_textParams[currentIdx].eventGotFocus += (x, y) =>
                 {
-                    var text = ((UITextField)x).text;
+                    var tf = ((UITextField)x);
+                    var text = tf.text;
                     if (text.StartsWith(WTSAtlasesLibrary.PROTOCOL_IMAGE_ASSET) || text.StartsWith(WTSAtlasesLibrary.PROTOCOL_IMAGE))
                     {
                         sprite.spriteName = ((UITextField)x).text.Split('/').Last().Trim();
+                        sprite.isVisible = true;
+                        label.isVisible = false;
+                    }
+                    else if (text.StartsWith(TextParameterVariableWrapper.PROTOCOL_VARIABLE))
+                    {
+                        sprite.isVisible = false;
+                        label.isVisible = true;
+                        tf.selectOnFocus = false;
+                        tf.selectionStart = text.Length;
+                        tf.selectionEnd = text.Length;
+                    }
+                    else
+                    {
+                        tf.selectOnFocus = true;
                     }
                 };
-                lb.eventItemMouseHover += (x, y) => sprite.spriteName = lb.items[y].Split('/').Last().Trim();
-                lb.eventVisibilityChanged += (x, y) => sprite.isVisible = y;
+                lb.eventItemMouseHover += (x, y) =>
+                {
+                    if (m_textParams[currentIdx].text.StartsWith(WTSAtlasesLibrary.PROTOCOL_IMAGE_ASSET) || m_textParams[currentIdx].text.StartsWith(WTSAtlasesLibrary.PROTOCOL_IMAGE))
+                    {
+                        sprite.spriteName = lb.items[y].Split('/').Last().Trim();
+                    }
+                    else if (m_textParams[currentIdx].text.StartsWith(TextParameterVariableWrapper.PROTOCOL_VARIABLE))
+                    {
+                        if (label.objectUserData is TextParameterVariableWrapper.CommandLevel cmd && !(cmd.nextLevelOptions is null))
+                        {
+                            var str = lb.items[y];
+                            var key = cmd.nextLevelOptions.Where(z => z.Key.ToString() == str).FirstOrDefault().Key;
+                            label.text = key is null ? "" : Locale.Get("K45_WTS_PARAMVARS_DESC", TextParameterVariableWrapper.CommandLevel.ToLocaleVar(key));
+                        }
+                    }
+                };
+                lb.eventVisibilityChanged += (x, y) =>
+                {
+                    var text = m_textParams[currentIdx].text;
+                    if (text.StartsWith(WTSAtlasesLibrary.PROTOCOL_IMAGE_ASSET) || text.StartsWith(WTSAtlasesLibrary.PROTOCOL_IMAGE))
+                    {
+                        sprite.spriteName = ((UITextField)x).text.Split('/').Last().Trim();
+                        sprite.isVisible = true;
+                        label.isVisible = y;
+                    }
+                    else if (text.StartsWith(TextParameterVariableWrapper.PROTOCOL_VARIABLE))
+                    {
+                        sprite.isVisible = false;
+                        label.isVisible = y;
+                    }
+                };
                 sprite.isVisible = false;
 
             }
@@ -183,10 +239,20 @@ namespace Klyte.WriteTheSigns.UI
 
         private string lastProtocol_searchedParam;
 
-        private string OnParamChanged(string inputText, int paramIdx, int selIdx, string[] array)
+        private string OnParamChanged(string inputText, int paramIdx, int selIdx, string[] array, UILabel lbl)
         {
-
-            if (selIdx >= 0 && lastProtocol_searchedParam == WTSAtlasesLibrary.PROTOCOL_IMAGE && array[selIdx].EndsWith("/"))
+            if (inputText.StartsWith(TextParameterVariableWrapper.PROTOCOL_VARIABLE) && lbl != null && lbl.objectUserData is TextParameterVariableWrapper.CommandLevel cl)
+            {
+                if (selIdx >= 0)
+                {
+                    StartCoroutine(RefocusParamIn2Frames(paramIdx));
+                    var pathVal = string.Join("/", Regex.Replace(inputText.Substring(TextParameterVariableWrapper.PROTOCOL_VARIABLE.Length), "^/+|(/)+[^/]+$|(/)/+", "$1$2").Split('/').Take(cl.level).ToArray());
+                    inputText = $"{TextParameterVariableWrapper.PROTOCOL_VARIABLE}{pathVal}{(cl.level > 0 ? "/" : "")}{array[selIdx]}/";
+                }
+                CurrentEdited.SetTextParameter(paramIdx, inputText);
+                return inputText;
+            }
+            else if (selIdx >= 0 && lastProtocol_searchedParam == WTSAtlasesLibrary.PROTOCOL_IMAGE && array[selIdx].EndsWith("/"))
             {
                 StartCoroutine(RefocusParamIn2Frames(paramIdx));
                 return lastProtocol_searchedParam + array[selIdx].Trim();
@@ -217,6 +283,15 @@ namespace Klyte.WriteTheSigns.UI
             string[] results = null;
             SafeObtain((x) => results = WriteTheSignsMod.Controller.AtlasesLibrary.OnFilterParamImagesByText(sprite, arg, x.Descriptor?.CachedProp?.name ?? x.m_simpleCachedProp?.name, out lastProtocol_searchedParam));
             return results;
+        }
+
+        private string[] OnFilterParamVariable(UILabel lbl, string arg)
+        {
+            var cmdResult = TextParameterVariableWrapper.OnFilterParamImagesByText(arg, out string currentDescription);
+            lbl.objectUserData = cmdResult;
+            lbl.prefix = cmdResult.regexValidValues.IsNullOrWhiteSpace() ? "" : $"Regex: <color yellow>{cmdResult.regexValidValues}</color>\n";
+            lbl.text = Locale.Get("K45_WTS_PARAMVARS_DESC", currentDescription);
+            return cmdResult.nextLevelOptions?.Select(x => x.Key.ToString()).OrderBy(x => x).ToArray();
         }
 
 
@@ -397,10 +472,12 @@ namespace Klyte.WriteTheSigns.UI
                 m_tabstrip.ShowTab("TpSettings");
                 for (int i = 0; i < m_textParams.Length; i++)
                 {
-                    m_textParamsLabels[i].suffix = paramsUsed?.ContainsKey(i) ?? false ? $" - {Locale.Get("K45_WTS_USEDAS")}\n{string.Join("\n", paramsUsed[i])}" : "";
-                    m_textParams[i].text = x.GetTextParameter(i)?.ToString() ?? "";
                     if (paramsUsed?.ContainsKey(i) ?? false)
                     {
+                        var param = x.GetTextParameter(i);
+
+                        m_textParamsLabels[i].suffix = $" - {Locale.Get("K45_WTS_USEDAS")}\n{string.Join("\n", paramsUsed[i])}";
+                        m_textParams[i].text = param?.ToString() ?? "";
                         m_textParams[i].parent.isVisible = true;
                         UpdateParamIsEmptied(x, i);
                     }
@@ -434,7 +511,6 @@ namespace Klyte.WriteTheSigns.UI
                 m_textParamsIsEmpty[i].pressedColor = Color.white;
                 m_textParamsIsEmpty[i].disabledColor = Color.white;
                 m_textParams[i].Enable();
-                m_textParams[i].text = "";
             }
         }
 

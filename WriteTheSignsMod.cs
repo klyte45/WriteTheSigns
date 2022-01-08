@@ -1,11 +1,11 @@
 using ColossalFramework;
 using ColossalFramework.Globalization;
 using ColossalFramework.UI;
+using FontStashSharp;
 using Klyte.Commons.Extensions;
 using Klyte.Commons.Interfaces;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.UI;
-using Klyte.WriteTheSigns.Utils;
 using SpriteFontPlus;
 using System;
 using System.Collections.Generic;
@@ -81,6 +81,10 @@ namespace Klyte.WriteTheSigns
                 WTSController.ReloadFontsFromPath();
             }).parent as UIPanel).autoFitChildrenVertically = true;
             FontServer.instance.SetQualityMultiplier(m_qualityArray[FontQuality]);
+            (group4.AddDropdownLocalized("K45_WTS_MAX_PARALLEL_WORD_PROCESSES", new string[] { "1", "2", "4", "8", "16", "32","64","128 (!)", "256 (!!)", "512 (Your game may freeze)", "1024 (Your game WILL freeze)" }, Convert.ToString(FontSystem.MaxCoroutines, 2).Length - 1, (x) => FontSystem.MaxCoroutines.value = 1 << x).parent as UIPanel).autoFitChildrenVertically = true;
+
+
+
             UIHelperExtension group5 = helper.AddGroupExtended(Locale.Get("K45_WTS_GENERATED_CLOCK_OPTIONS"));
             (group5.AddDropdownLocalized("K45_WTS_CLOCK_MINUTES_PRECISION", new string[] { "30", "20", "15 (DEFAULT)", "12", "10", "7.5", "6", "5", "4", "3 (!)", "2 (!!)", "1 (!!!!)" }, Array.IndexOf(m_clockPrecision, ClockPrecision), (x) =>
              {

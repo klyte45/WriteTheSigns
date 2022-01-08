@@ -31,7 +31,7 @@ namespace Klyte.WriteTheSigns.Xml
             var inputMatches = Regex.Match(value, "^(folder|assetFolder|image|assetImage)://(([^/]+)/)?([^/]+)$|^var://([a-zA-Z0-9_]+/.*)?$");
             if (inputMatches.Success)
             {
-                switch (inputMatches.Groups[0].Value.Split(':')[0])
+                switch (value.Split(':')[0])
                 {
                     case "folder":
                         ParamType = ParameterType.FOLDER;

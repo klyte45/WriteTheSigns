@@ -61,9 +61,23 @@ namespace Klyte.WriteTheSigns.Rendering
                 return areaSqMeters ?? 0;
             }
         }
+        public uint Population
+        {
+            get
+            {
+                if (population is null || (SimulationManager.instance.m_currentFrameIndex & 0xFFF) != lastPopUpdate)
+                {
+                    population = DistrictManager.instance.m_districts.m_buffer[districtId].m_populationData.m_finalCount;
+                    lastPopUpdate = SimulationManager.instance.m_currentFrameIndex & 0xFFF;
+                }
+                return population ?? 0;
+            }
+        }
 
         private FormatableString name;
         private int? areaSqMeters;
+        private uint? population;
+        private long lastPopUpdate;
         public void PurgeCache(CacheErasingFlags cacheToPurge, InstanceID refID)
         {
             if (cacheToPurge.Has(CacheErasingFlags.DistrictName))
