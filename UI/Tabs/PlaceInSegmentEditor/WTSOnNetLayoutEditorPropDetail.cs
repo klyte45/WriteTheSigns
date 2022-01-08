@@ -153,7 +153,7 @@ namespace Klyte.WriteTheSigns.UI
                     {
                         yield return result.Value = OnFilterParamImages(sprite, x);
                     }
-                    else if (x.StartsWith(TextParameterVariableWrapper.PROTOCOL_VARIABLE))
+                    else if (x.StartsWith(CommandLevel.PROTOCOL_VARIABLE))
                     {
                         yield return result.Value = OnFilterParamVariable(label, x) ?? new string[0];
                     }
@@ -179,7 +179,7 @@ namespace Klyte.WriteTheSigns.UI
                         sprite.isVisible = true;
                         label.isVisible = false;
                     }
-                    else if (text.StartsWith(TextParameterVariableWrapper.PROTOCOL_VARIABLE))
+                    else if (text.StartsWith(CommandLevel.PROTOCOL_VARIABLE))
                     {
                         sprite.isVisible = false;
                         label.isVisible = true;
@@ -198,13 +198,13 @@ namespace Klyte.WriteTheSigns.UI
                     {
                         sprite.spriteName = lb.items[y].Split('/').Last().Trim();
                     }
-                    else if (m_textParams[currentIdx].text.StartsWith(TextParameterVariableWrapper.PROTOCOL_VARIABLE))
+                    else if (m_textParams[currentIdx].text.StartsWith(CommandLevel.PROTOCOL_VARIABLE))
                     {
-                        if (label.objectUserData is TextParameterVariableWrapper.CommandLevel cmd && !(cmd.nextLevelOptions is null))
+                        if (label.objectUserData is CommandLevel cmd && !(cmd.nextLevelOptions is null))
                         {
                             var str = lb.items[y];
                             var key = cmd.nextLevelOptions.Where(z => z.Key.ToString() == str).FirstOrDefault().Key;
-                            label.text = key is null ? "" : Locale.Get("K45_WTS_PARAMVARS_DESC", TextParameterVariableWrapper.CommandLevel.ToLocaleVar(key));
+                            label.text = key is null ? "" : Locale.Get("K45_WTS_PARAMVARS_DESC", CommandLevel.ToLocaleVar(key));
                         }
                     }
                 };
@@ -217,7 +217,7 @@ namespace Klyte.WriteTheSigns.UI
                         sprite.isVisible = true;
                         label.isVisible = y;
                     }
-                    else if (text.StartsWith(TextParameterVariableWrapper.PROTOCOL_VARIABLE))
+                    else if (text.StartsWith(CommandLevel.PROTOCOL_VARIABLE))
                     {
                         sprite.isVisible = false;
                         label.isVisible = y;
@@ -241,13 +241,13 @@ namespace Klyte.WriteTheSigns.UI
 
         private string OnParamChanged(string inputText, int paramIdx, int selIdx, string[] array, UILabel lbl)
         {
-            if (inputText.StartsWith(TextParameterVariableWrapper.PROTOCOL_VARIABLE) && lbl != null && lbl.objectUserData is TextParameterVariableWrapper.CommandLevel cl)
+            if (inputText.StartsWith(CommandLevel.PROTOCOL_VARIABLE) && lbl != null && lbl.objectUserData is CommandLevel cl)
             {
                 if (selIdx >= 0)
                 {
                     StartCoroutine(RefocusParamIn2Frames(paramIdx));
-                    var pathVal = string.Join("/", Regex.Replace(inputText.Substring(TextParameterVariableWrapper.PROTOCOL_VARIABLE.Length), "^/+|(/)+[^/]+$|(/)/+", "$1$2").Split('/').Take(cl.level).ToArray());
-                    inputText = $"{TextParameterVariableWrapper.PROTOCOL_VARIABLE}{pathVal}{(cl.level > 0 ? "/" : "")}{array[selIdx]}/";
+                    var pathVal = string.Join("/", CommandLevel.GetParameterPath(inputText.Substring(CommandLevel.PROTOCOL_VARIABLE.Length)).Take(cl.level).ToArray());
+                    inputText = $"{CommandLevel.PROTOCOL_VARIABLE}{pathVal}{(cl.level > 0 ? "/" : "")}{array[selIdx]}/";
                 }
                 CurrentEdited.SetTextParameter(paramIdx, inputText);
                 return inputText;
@@ -287,11 +287,19 @@ namespace Klyte.WriteTheSigns.UI
 
         private string[] OnFilterParamVariable(UILabel lbl, string arg)
         {
-            var cmdResult = TextParameterVariableWrapper.OnFilterParamImagesByText(arg, out string currentDescription);
-            lbl.objectUserData = cmdResult;
-            lbl.prefix = cmdResult.regexValidValues.IsNullOrWhiteSpace() ? "" : $"Regex: <color yellow>{cmdResult.regexValidValues}</color>\n";
-            lbl.text = Locale.Get("K45_WTS_PARAMVARS_DESC", currentDescription);
-            return cmdResult.nextLevelOptions?.Select(x => x.Key.ToString()).OrderBy(x => x).ToArray();
+            var cmdResult = CommandLevel.OnFilterParamImagesByText(arg, out string currentDescription);
+            if (cmdResult is null)
+            {
+                lbl.isVisible = false;
+                return null;
+            }
+            else {
+                lbl.isVisible = true;
+                lbl.objectUserData = cmdResult;
+                lbl.prefix = cmdResult.regexValidValues.IsNullOrWhiteSpace() ? "" : $"Regex: <color yellow>{cmdResult.regexValidValues}</color>\n";
+                lbl.text = Locale.Get("K45_WTS_PARAMVARS_DESC", currentDescription);
+                return cmdResult.nextLevelOptions?.Select(x => x.Key.ToString()).OrderBy(x => x).ToArray();
+            }
         }
 
 

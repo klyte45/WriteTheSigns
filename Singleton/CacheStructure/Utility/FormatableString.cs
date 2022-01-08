@@ -5,36 +5,47 @@ namespace Klyte.WriteTheSigns.Rendering
     public class FormatableString
     {
         private string value;
-        private string caps;
+        private string upper;
+        private string lower;
         private string abbreviated;
-        private string capsAbbreviated;
-        
+        private string lowerAbbreviated;
+        private string upperAbbreviated;
+
         public FormatableString(string value) => Value = value;
 
         public string Get(bool uppercase, bool abbreviated)
             => uppercase
-                ? abbreviated ? CapsAbbreviated : Caps
+                ? abbreviated ? UpperAbbreviated : Upper
                 : abbreviated ? Abbreviated : Value;
+
+        public string GetFormatted(string format)
+            => format.Contains("U")
+                ? format.Contains("A") ? UpperAbbreviated : Upper
+                : format.Contains("L")
+                    ? format.Contains("A") ? LowerAbbreviated : Lower
+                    : format.Contains("A") ? Abbreviated : Value;
 
         public string Value
         {
             get => value; set
             {
                 this.value = value ?? "";
-                caps = null;
+                upper = null;
+                lower = null;
                 abbreviated = null;
-                capsAbbreviated = null;
+                lowerAbbreviated = null;
+                upperAbbreviated = null;
             }
         }
-        public string Caps
+        public string Upper
         {
             get
             {
-                if (caps is null)
+                if (upper is null)
                 {
-                    caps = value.ToUpper();
+                    upper = value.ToUpper();
                 }
-                return caps;
+                return upper;
             }
         }
         public string Abbreviated
@@ -48,17 +59,41 @@ namespace Klyte.WriteTheSigns.Rendering
                 return abbreviated;
             }
         }
-        public string CapsAbbreviated
+        public string UpperAbbreviated
         {
             get
             {
-                if (capsAbbreviated is null)
+                if (upperAbbreviated is null)
                 {
-                    capsAbbreviated = Abbreviated.ToUpper();
+                    upperAbbreviated = Abbreviated.ToUpper();
                 }
-                return capsAbbreviated;
+                return upperAbbreviated;
             }
         }
+
+        public string LowerAbbreviated
+        {
+            get
+            {
+                if (lowerAbbreviated is null)
+                {
+                    lowerAbbreviated = Abbreviated.ToLower();
+                }
+                return lowerAbbreviated;
+            }
+        }
+        public string Lower
+        {
+            get
+            {
+                if (lower is null)
+                {
+                    lower = Value.ToLower();
+                }
+                return lower;
+            }
+        }
+
     }
 
 }
