@@ -2,6 +2,7 @@
 using ColossalFramework.Globalization;
 using ColossalFramework.UI;
 using Klyte.Commons.Extensions;
+using Klyte.Commons.UI;
 using Klyte.Commons.UI.SpriteNames;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Data;
@@ -45,11 +46,11 @@ namespace Klyte.WriteTheSigns.UI
 
             var m_uiHelperHS = new UIHelperExtension(MainContainer);
 
-            AddDropdown(Locale.Get("K45_WTS_ABBREVIATION_FILE"), out m_abbriviationFile, m_uiHelperHS, new string[0], OnSetAbbreviationFile);
+            AddEmptyDropdown(Locale.Get("K45_WTS_ABBREVIATION_FILE"), out m_abbriviationFile, m_uiHelperHS, OnSetAbbreviationFile);
             AddButtonInEditorRow(m_abbriviationFile, CommonsSpriteNames.K45_Reload, () => ReloadAbbreviations());
             ReloadAbbreviations();
 
-            AddDropdown(Locale.Get("K45_WTS_CUSTOM_NAME_EXTRACTION_QUALIFIER"), out m_qualifierExtractionDropdown, m_uiHelperHS, Enum.GetNames(typeof(RoadQualifierExtractionMode)).Select(x => Locale.Get($"K45_WTS_RoadQualifierExtractionMode", x)).ToArray(), SetRoadQualifierExtractionMode);
+            AddDropdown(Locale.Get("K45_WTS_CUSTOM_NAME_EXTRACTION_QUALIFIER"), out m_qualifierExtractionDropdown, m_uiHelperHS, ColossalUIExtensions.GetDropdownOptions<RoadQualifierExtractionMode>("K45_WTS_RoadQualifierExtractionMode"), SetRoadQualifierExtractionMode);
             m_qualifierExtractionDropdown.selectedIndex = (int)WTSRoadNodesData.Instance.RoadQualifierExtraction;
 
             KlyteMonoUtils.CreateUIElement(out UIPanel secondaryContainer, MainContainer.transform, "SecContainer", new Vector4(0, 0, MainContainer.width, 655));
@@ -71,9 +72,9 @@ namespace Klyte.WriteTheSigns.UI
             m_abbriviationFile.items = new string[] { Locale.Get("K45_WTS_NO_ABBREVIATION_FILE_OPTION") }.Union(WriteTheSignsMod.Controller.AbbreviationFiles.Keys.OrderBy(x => x)).ToArray();
             m_abbriviationFile.selectedIndex = WTSRoadNodesData.Instance.AbbreviationFile.IsNullOrWhiteSpace() ? 0 : Array.IndexOf(m_abbriviationFile.items, WTSRoadNodesData.Instance.AbbreviationFile);
         }
-        private void SetRoadQualifierExtractionMode(int sel)
+        private void SetRoadQualifierExtractionMode(RoadQualifierExtractionMode sel)
         {
-            WTSRoadNodesData.Instance.RoadQualifierExtraction = (RoadQualifierExtractionMode)m_qualifierExtractionDropdown.selectedIndex;
+            WTSRoadNodesData.Instance.RoadQualifierExtraction = sel;
 
             WTSCacheSingleton.ClearCacheSegmentNameParam();
         }

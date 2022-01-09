@@ -51,7 +51,7 @@ namespace Klyte.WriteTheSigns.UI
             var helperSettings = new UIHelperExtension(m_tabSettings, LayoutDirection.Vertical);
             var helperLib = new UIHelperExtension(m_tabLib, LayoutDirection.Vertical);
 
-            AddDropdown(Locale.Get("K45_WTS_OVERRIDE_FONT"), out m_fontSelect, helperSettings, new string[0], OnSetFont);
+            AddEmptyDropdown(Locale.Get("K45_WTS_OVERRIDE_FONT"), out m_fontSelect, helperSettings, OnSetFont);
 
             WTSVehicleLayoutEditor.Instance.CurrentTabChanged += (x) =>
             {

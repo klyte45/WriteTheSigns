@@ -1,5 +1,6 @@
 using ColossalFramework.Math;
 using Klyte.Commons.Utils;
+using System.Collections;
 using UnityEngine;
 
 namespace Klyte.WriteTheSigns.ModShared
@@ -45,7 +46,7 @@ namespace Klyte.WriteTheSigns.ModShared
         public override string GetStreetQualifier(ushort idx) => WriteTheSignsMod.Controller.ConnectorADR.GetStreetFullName(idx).Replace(WriteTheSignsMod.Controller.ConnectorADR.GetStreetSuffix(idx), "");
         public override string GetStreetPostalCode(Vector3 position, ushort idx) => idx.ToString("D5");
         public override AdrHighwayParameters GetHighwayData(ushort seedId) => null;
-        public override string[] ListAllAvailableHighwayTypes(string filterText) => null;
+        public override IEnumerator ListAllAvailableHighwayTypes(string filterText, Wrapper<string[]> result) => null;
         public override AdrHighwayParameters GetHighwayTypeData(string typeName) => null;
     }
 }

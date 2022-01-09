@@ -3,6 +3,7 @@ using ColossalFramework.Globalization;
 using ColossalFramework.UI;
 using FontStashSharp;
 using Klyte.Commons.Extensions;
+using Klyte.Commons.UI;
 using Klyte.Commons.UI.SpriteNames;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Libraries;
@@ -131,7 +132,7 @@ namespace Klyte.WriteTheSigns.UI
             AddCheckboxLocale("K45_WTS_USE_CONTRAST_COLOR", out m_useContrastColor, helperAppearance, OnContrastColorChange);
             helperAppearance.AddSpace(5);
             AddSlider(Locale.Get("K45_WTS_TEXT_DEPTH"), out m_sliderDepth, helperAppearance, OnChangeDepth, -1, 1, 0.025f, (x) => $"{x.ToString("P1")}");
-            AddDropdown(Locale.Get("K45_WTS_TEXT_ALIGN_HOR"), out m_dropdownTextAlignHorizontal, helperAppearance, Enum.GetNames(typeof(UIHorizontalAlignment)).Select(x => Locale.Get("K45_ALIGNMENT", x)).ToArray(), OnSetTextAlignmentHorizontal);
+            AddDropdown(Locale.Get("K45_WTS_TEXT_ALIGN_HOR"), out m_dropdownTextAlignHorizontal, helperAppearance, ColossalUIExtensions.GetDropdownOptions<UIHorizontalAlignment>("K45_ALIGNMENT"), OnSetTextAlignmentHorizontal);
 
             AddCheckboxLocale("K45_WTS_TEXT_USEFRAME", out m_useFrame, helperFrame, OnUseFrameChange);
             AddCheckboxLocale("K45_WTS_TEXT_CONTAINERUSEVEHICLECOLOR", out m_frameUseVehicleColor, helperFrame, OnFrameUseVehicleColorChange);
@@ -145,9 +146,9 @@ namespace Klyte.WriteTheSigns.UI
             AddSlider(Locale.Get("K45_WTS_TEXT_CONTAINERGLASSTRANSPARENCY"), out m_frameGlassTransparency, helperFrame, OnFrameGlassTransparencyChanged, 0, 1, 0.01f, (x) => (x * 100).ToString("F0") + "%");
             AddSlider(Locale.Get("K45_WTS_TEXT_CONTAINERGLASSSPECULARITY"), out m_frameGlassSpecularLevel, helperFrame, OnFrameGlassSpecularLevelChanged, 0, 1, 0.01f, (x) => (x * 100).ToString("F0") + "%");
 
-            AddDropdown(Locale.Get("K45_WTS_TEXT_MATERIALTYPE"), out m_dropdownMaterialType, helperIllumination, Enum.GetNames(typeof(MaterialType)).Select(x => Locale.Get("K45_WTS_TEXTMATERIALTYPE", x.ToString())).ToArray(), OnSetMaterialType);
+            AddDropdown(Locale.Get("K45_WTS_TEXT_MATERIALTYPE"), out m_dropdownMaterialType, helperIllumination, ColossalUIExtensions.GetDropdownOptions<MaterialType>("K45_WTS_TEXTMATERIALTYPE"), OnSetMaterialType);
             AddSlider(Locale.Get("K45_WTS_TEXT_ILLUMINATIONSTRENGTH"), out m_sliderIllumination, helperIllumination, OnChangeIlluminationStrength, 0, 10, 0.025f, (x) => $"{x.ToString("P1")}");
-            AddDropdown(Locale.Get("K45_WTS_TEXT_BLINKTYPE"), out m_dropdownBlinkType, helperIllumination, Enum.GetNames(typeof(BlinkType)).Select(x => Locale.Get("K45_WTS_BLINKTYPE", x.ToString())).ToArray(), OnSetBlinkType);
+            AddDropdown(Locale.Get("K45_WTS_TEXT_BLINKTYPE"), out m_dropdownBlinkType, helperIllumination, ColossalUIExtensions.GetDropdownOptions<BlinkType>("K45_WTS_BLINKTYPE"), OnSetBlinkType);
             AddVector4Field(Locale.Get("K45_WTS_TEXT_CUSTOMBLINKPARAMS"), out m_arrayCustomBlink, helperIllumination, OnCustomBlinkChange);
 
 
@@ -165,7 +166,7 @@ namespace Klyte.WriteTheSigns.UI
             });
 
 
-            AddDropdown(Locale.Get("K45_WTS_TEXT_CONTENT"), out m_dropdownTextContent, helperConfig, WTSDynamicTextRenderingRules.ALLOWED_TYPES_VEHICLE.Select(x => Locale.Get("K45_WTS_BOARD_TEXT_TYPE_DESC_VEHICLE", x.ToString())).ToArray(), OnSetTextOwnNameContent);
+            AddDropdown(Locale.Get("K45_WTS_TEXT_CONTENT"), out m_dropdownTextContent, helperConfig, WTSDynamicTextRenderingRules.ALLOWED_TYPES_VEHICLE.GetDropdownOptions("K45_WTS_BOARD_TEXT_TYPE_DESC_VEHICLE"), OnSetTextOwnNameContent);
             AddTextField(Locale.Get("K45_WTS_CUSTOM_TEXT"), out m_customText, helperConfig, OnSetTextCustom);
 
             IEnumerator OnFilter(string x, Wrapper<string[]> result)
@@ -195,8 +196,8 @@ namespace Klyte.WriteTheSigns.UI
             WTSVehicleLayoutEditor.Instance.Preview.OverrideSprite.parent.isVisible = false;
 
             helperConfig.AddSpace(5);
-            AddDropdown(Locale.Get("K45_WTS_OVERRIDE_FONT"), out m_overrideFontSelect, helperConfig, new string[0], OnSetOverrideFont);
-            AddDropdown(Locale.Get("K45_WTS_CLASS_FONT"), out m_fontClassSelect, helperConfig, (Enum.GetValues(typeof(FontClass)) as FontClass[]).Select(x => Locale.Get("K45_WTS_FONTCLASS", x.ToString())).ToArray(), OnSetFontClass);
+            AddEmptyDropdown(Locale.Get("K45_WTS_OVERRIDE_FONT"), out m_overrideFontSelect, helperConfig, OnSetOverrideFont);
+            AddDropdown(Locale.Get("K45_WTS_CLASS_FONT"), out m_fontClassSelect, helperConfig, ColossalUIExtensions.GetDropdownOptions<FontClass>("K45_WTS_FONTCLASS"), OnSetFontClass);
             AddTextField(Locale.Get("K45_WTS_PREFIX"), out m_textPrefix, helperConfig, OnSetPrefix);
             AddTextField(Locale.Get("K45_WTS_SUFFIX"), out m_textSuffix, helperConfig, OnSetSuffix);
             AddCheckboxLocale("K45_WTS_TEXT_ALL_CAPS", out m_allCaps, helperConfig, OnSetAllCaps);
@@ -397,14 +398,7 @@ namespace Klyte.WriteTheSigns.UI
         desc.m_overrideFont = sel > 1 && sel < (m_overrideFontSelect?.items?.Length ?? 0) ? m_overrideFontSelect.items[sel]
                 : sel == 1 ? WTSController.DEFAULT_FONT_KEY
                 : null);
-        private void OnSetFontClass(int sel) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) =>
-        {
-            if (sel >= 0)
-            {
-                desc.m_fontClass = (FontClass)sel;
-
-            }
-        });
+        private void OnSetFontClass(FontClass sel) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_fontClass = sel);
         private void OnSetTextCustom(string text) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_fixedText = text);
 
 
@@ -430,11 +424,11 @@ namespace Klyte.WriteTheSigns.UI
         }
 
         private string[] OnFilterSprites(UISprite sprite, string arg) => WriteTheSignsMod.Controller.AtlasesLibrary.OnFilterParamImagesByText(sprite, arg, WTSVehicleLayoutEditor.Instance.EditingInstance?.VehicleAssetName, out lastProtocol_searchedParam);
-        private void OnSetTextOwnNameContent(int sel) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) =>
+        private void OnSetTextOwnNameContent(TextType sel) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) =>
                                                        {
                                                            if (sel >= 0)
                                                            {
-                                                               desc.m_textType = WTSDynamicTextRenderingRules.ALLOWED_TYPES_VEHICLE[sel];
+                                                               desc.m_textType = sel;
                                                                ApplyShowRules(desc);
                                                            }
                                                        });
@@ -448,7 +442,7 @@ namespace Klyte.WriteTheSigns.UI
                                                                        ApplyShowRules(desc);
                                                                    });
 
-        private void OnSetTextAlignmentHorizontal(int sel) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_textAlign = (UIHorizontalAlignment)sel);
+        private void OnSetTextAlignmentHorizontal(UIHorizontalAlignment sel) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_textAlign = sel);
         private void OnFixedColorChanged(Color value) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.ColoringConfig.m_cachedColor = value);
         private void OnMaxWidthChange(float obj) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_maxWidthMeters = obj);
         private void OnScaleSubmit(float scale) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.m_textScale = scale);
@@ -463,15 +457,15 @@ namespace Klyte.WriteTheSigns.UI
             ApplyShowRules(desc);
         });
         private void OnBgColorChanged(Color value) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.BackgroundMeshSettings.BackgroundColor = value);
-        private void OnSetMaterialType(int sel) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) =>
+        private void OnSetMaterialType(MaterialType sel) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) =>
                                                  {
-                                                     desc.IlluminationConfig.IlluminationType = (MaterialType)sel;
+                                                     desc.IlluminationConfig.IlluminationType = sel;
                                                      ApplyShowRules(desc);
                                                  });
 
-        private void OnSetBlinkType(int sel) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) =>
+        private void OnSetBlinkType(BlinkType sel) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) =>
         {
-            desc.IlluminationConfig.BlinkType = (BlinkType)sel;
+            desc.IlluminationConfig.BlinkType = sel;
             ApplyShowRules(desc);
         });
         private void OnChangeIlluminationStrength(float val) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) => desc.IlluminationConfig.IlluminationStrength = val);

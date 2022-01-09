@@ -143,12 +143,12 @@ namespace Klyte.WriteTheSigns.UI
 
             helperSettings.AddSpace(5);
 
-            AddDropdown(Locale.Get("K45_WTS_BUILDINGEDITOR_PROPTYPE"), out m_propSelectionType, helperSettings, new string[] { Locale.Get("K45_WTS_BUILDINGEDITOR_PROPLAYOUT"), Locale.Get("K45_WTS_BUILDINGEDITOR_PROPMODELSELECT") }, OnPropSelecionClassChange);
+            AddDropdown(Locale.Get("K45_WTS_BUILDINGEDITOR_PROPTYPE"), out m_propSelectionType, helperSettings, new string[] { "K45_WTS_BUILDINGEDITOR_PROPLAYOUT", "K45_WTS_BUILDINGEDITOR_PROPMODELSELECT" }.Select((x, i) => Tuple.New(Locale.Get(x), i)).ToArray(), OnPropSelecionClassChange);
             AddFilterableInput(Locale.Get("K45_WTS_BUILDINGEDITOR_MODELLAYOUTSELECT"), helperSettings, out m_propFilter, out _, OnFilterLayouts, OnConfigSelectionChange);
             AddVector3Field(Locale.Get("K45_WTS_BUILDINGEDITOR_POSITION"), out m_position, helperSettings, OnPositionChanged);
             AddVector3Field(Locale.Get("K45_WTS_BUILDINGEDITOR_ROTATION"), out m_rotation, helperSettings, OnRotationChanged);
             AddVector3Field(Locale.Get("K45_WTS_BUILDINGEDITOR_SCALE"), out m_scale, helperSettings, OnScaleChanged);
-            AddDropdown(Locale.Get("K45_WTS_SUBBUILDINGPIVOTREFERENCE"), out m_subBuildingSelect, helperSettings, new string[0], OnSubBuildingRefChanged);
+            AddEmptyDropdown(Locale.Get("K45_WTS_SUBBUILDINGPIVOTREFERENCE"), out m_subBuildingSelect, helperSettings, OnSubBuildingRefChanged);
 
 
             AddLibBox<WTSLibBuildingPropLayout, BoardInstanceBuildingXml>(helperSettings, out m_copySettings, OnCopyRule, out m_pasteSettings, OnPasteRule, out _, null, out m_loadDD, out m_libLoad, out m_libDelete, out m_libSaveNameField, out m_libSave, out m_gotoFileLib, OnLoadRule, GetRuleSerialized);
@@ -158,7 +158,7 @@ namespace Klyte.WriteTheSigns.UI
             AddIntField(Locale.Get("K45_WTS_ARRAY_REPEAT_TIMES"), out m_repeatTimes, helperSpawning, OnRepeatTimesChanged, false);
             AddVector3Field(Locale.Get("K45_WTS_ARRAY_REPEAT_DISTANCE"), out m_repeatArrayDistance, helperSpawning, OnRepeatArrayDistanceChanged);
 
-            AddDropdown(Locale.Get("K45_WTS_COLOR_MODE_SELECT"), out m_colorModeDD, helperAppearence, Enum.GetNames(typeof(ColoringMode)).Select(x => Locale.Get("K45_WTS_PROP_COLOR_MODE", x)).ToArray(), OnColoringModeChanged);
+            AddDropdown(Locale.Get("K45_WTS_COLOR_MODE_SELECT"), out m_colorModeDD, helperAppearence, Enum.GetValues(typeof(ColoringMode)).Cast<ColoringMode>().Select(x => Tuple.New(Locale.Get("K45_WTS_PROP_COLOR_MODE", x.ToString()), x)).ToArray(), OnColoringModeChanged);
             AddCheckboxLocale("K45_WTS_USEFIXEDIFMULTILINES", out m_chkUseFixedIfMulti, helperAppearence, OnUseFixedIfMultiChanged);
 
             WTSBuildingLayoutEditor.Instance.LayoutList.EventSelectionChanged += OnChangeTab;
@@ -524,9 +524,9 @@ namespace Klyte.WriteTheSigns.UI
         private void OnRepeatArrayDistanceChanged(Vector3 obj) => SafeObtain((ref BoardInstanceBuildingXml x) => x.ArrayRepeat = (Vector3Xml)obj);
         private void OnRepeatTimesChanged(int obj) => SafeObtain((ref BoardInstanceBuildingXml x) => x.ArrayRepeatTimes = obj);
 
-        private void OnColoringModeChanged(int sel) => SafeObtain((ref BoardInstanceBuildingXml x) =>
+        private void OnColoringModeChanged(ColoringMode sel) => SafeObtain((ref BoardInstanceBuildingXml x) =>
         {
-            x.ColorModeProp = (ColoringMode)sel;
+            x.ColorModeProp = sel;
             m_chkUseFixedIfMulti.isVisible = x.ColorModeProp == ColoringMode.ByPlatform;
         });
         private void OnUseFixedIfMultiChanged(bool isChecked) => SafeObtain((ref BoardInstanceBuildingXml x) => x.UseFixedIfMultiline = isChecked);

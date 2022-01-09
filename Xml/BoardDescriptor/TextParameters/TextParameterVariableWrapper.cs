@@ -89,16 +89,11 @@ namespace Klyte.WriteTheSigns.Xml
             switch (type)
             {
                 case VariableType.SegmentTarget:
-                    var targId = index == 0 ? segmentId : propDescriptor.GetTargetSegment(index);
+                    var targId = index == 0 ? segmentId : propDescriptor?.GetTargetSegment(index) ?? 0;
 
-                    if (targId == 0 || !(subtype is VariableSegmentTargetSubType targetSubtype) || targetSubtype == VariableSegmentTargetSubType.None)
-                    {
-                        return $"{prefix}{subtype}@targ{index}{suffix}";
-                    }
-                    else
-                    {
-                        return $"{prefix}{targetSubtype.GetFormattedString(propDescriptor, targId, this) ?? m_originalCommand}{suffix}";
-                    }
+                    return targId == 0 || !(subtype is VariableSegmentTargetSubType targetSubtype) || targetSubtype == VariableSegmentTargetSubType.None
+                        ? $"{prefix}{subtype}@targ{index}{suffix}"
+                        : $"{prefix}{targetSubtype.GetFormattedString(propDescriptor, targId, this) ?? m_originalCommand}{suffix}";
                 case VariableType.CityData:
                     if ((subtype is VariableCitySubType targetCitySubtype))
                     {

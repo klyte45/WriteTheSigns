@@ -3,6 +3,7 @@ using ColossalFramework.Globalization;
 using ColossalFramework.Packaging;
 using ColossalFramework.UI;
 using Klyte.Commons.Extensions;
+using Klyte.Commons.UI;
 using Klyte.Commons.UI.SpriteNames;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Data;
@@ -74,9 +75,9 @@ namespace Klyte.WriteTheSigns.UI
             AddTextField(Locale.Get("K45_WTS_PROP_TAB_TITLE"), out m_name, helperSettings, OnSetName);
             AddColorField(helperSettings, Locale.Get("K45_WTS_PROP_COLOR"), out m_fixedColor, OnSetPropColor);
 
-            AddDropdown(Locale.Get("K45_WTS_OVERRIDE_FONT"), out m_fontSelect, helperSettings, new string[0], OnSetFont);
+            AddEmptyDropdown(Locale.Get("K45_WTS_OVERRIDE_FONT"), out m_fontSelect, helperSettings, OnSetFont);
 
-            AddDropdown(Locale.Get("K45_WTS_TEXT_AVAILABILITY"), out m_dropdownTextContent, helperSettings, ddOrder.Select(x => Locale.Get("K45_WTS_BOARD_TEXT_AVAILABILITY_DESC", x.ToString())).ToArray(), OnSetTextOwnNameContent);
+            AddDropdown(Locale.Get("K45_WTS_TEXT_AVAILABILITY"), out m_dropdownTextContent, helperSettings, ddOrder.GetDropdownOptions("K45_WTS_BOARD_TEXT_AVAILABILITY_DESC"), OnSetTextOwnNameContent);
 
 
 
@@ -335,7 +336,7 @@ namespace Klyte.WriteTheSigns.UI
                 }
             }
         }
-        private void OnSetTextOwnNameContent(int sel) => EditingInstance.m_allowedRenderClass = ddOrder[sel];
+        private void OnSetTextOwnNameContent(TextRenderingClass sel) => EditingInstance.m_allowedRenderClass = sel;
 
         #endregion
 

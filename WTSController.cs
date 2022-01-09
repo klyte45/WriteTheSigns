@@ -100,7 +100,7 @@ namespace Klyte.WriteTheSigns
             HighwayShieldsSingleton = gameObject.AddComponent<WTSHighwayShieldsSingleton>();
             HighwayShieldsAtlasLibrary = gameObject.AddComponent<WTSHighwayShieldsAtlasLibrary>();
             ConnectorTLM = PluginUtils.GetImplementationTypeForMod<BridgeTLMFallback, IBridgeTLM>(gameObject, "TransportLinesManager", "14.0.0.0", "Klyte.WriteTheSigns.ModShared.BridgeTLM");
-            ConnectorADR = PluginUtils.GetImplementationTypeForMod<BridgeADRFallback, IBridgeADR>(gameObject, "KlyteAddresses", "3.0.0.3", "Klyte.WriteTheSigns.ModShared.BridgeADR");
+            ConnectorADR = PluginUtils.GetImplementationTypeForMod<BridgeADRFallback, IBridgeADR>(gameObject, "KlyteAddresses", "3.1.1.0", "Klyte.WriteTheSigns.ModShared.BridgeADR");
         }
 
 

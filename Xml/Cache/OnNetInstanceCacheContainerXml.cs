@@ -13,9 +13,9 @@ namespace Klyte.WriteTheSigns.Xml
         [XmlAttribute("targetSegment3")] public ushort m_targetSegment3;
         [XmlAttribute("targetSegment4")] public ushort m_targetSegment4;
 
-        [XmlElement("cachedPos")]
+        [XmlIgnore]
         public List<Vector3Xml> m_cachedPositions;
-        [XmlElement("cachedRot")]
+        [XmlIgnore]
         public List<Vector3Xml> m_cachedRotations;
         [XmlIgnore]
         public PropInfo m_simpleCachedProp => m_simpleProp;

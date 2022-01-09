@@ -2,6 +2,7 @@
 using ColossalFramework.Globalization;
 using ColossalFramework.UI;
 using Klyte.Commons.Extensions;
+using Klyte.Commons.UI;
 using Klyte.Commons.UI.SpriteNames;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Data;
@@ -117,7 +118,7 @@ namespace Klyte.WriteTheSigns.UI
 
             AddCheckboxLocale("K45_WTS_ROADCORNER_DISTRICTSELECTIONASWHITELIST", out m_districtWhiteList, helperDistricts, OnSetDistrictsAsWhitelist);
             AddCheckboxLocale("K45_WTS_ROADCORNER_DISTRICTSELECTIONASBLACKLIST", out m_districtBlackList, helperDistricts, OnSetDistrictsAsBlacklist);
-            AddDropdown(Locale.Get("K45_WTS_ROADCORNER_DISTRICTRESTRICTIONSOLVEORDER"), out m_districtResolutionOrder, helperDistricts, Enum.GetNames(typeof(DistrictRestrictionOrder)).Select(x => Locale.Get("K45_WTS_DISTRICTRESTRICTIONORDER", x)).ToArray(), OnChangeDistrictRestrictionOrder);
+            AddDropdown(Locale.Get("K45_WTS_ROADCORNER_DISTRICTRESTRICTIONSOLVEORDER"), out m_districtResolutionOrder, helperDistricts, ColossalUIExtensions.GetDropdownOptions<DistrictRestrictionOrder>("K45_WTS_DISTRICTRESTRICTIONORDER"), OnChangeDistrictRestrictionOrder);
             KlyteMonoUtils.CreateUIElement(out m_listContainer, helperDistricts.Self.transform, "previewPanel", new UnityEngine.Vector4(0, 0, helperDistricts.Self.width, helperDistricts.Self.height - 160));
             KlyteMonoUtils.CreateScrollPanel(m_listContainer, out m_districtList, out _, m_listContainer.width - 20, m_listContainer.height);
             m_districtList.backgroundSprite = "OptionsScrollbarTrack";
@@ -325,13 +326,7 @@ namespace Klyte.WriteTheSigns.UI
 
         private void OnSetDistrictsAsBlacklist(bool isChecked) => SafeObtain((ref BoardInstanceRoadNodeXml x) => { x.SelectedDistrictsIsBlacklist = isChecked; m_districtWhiteList.isChecked = !isChecked; });
         private void OnSetDistrictsAsWhitelist(bool isChecked) => SafeObtain((ref BoardInstanceRoadNodeXml x) => { x.SelectedDistrictsIsBlacklist = !isChecked; m_districtBlackList.isChecked = !isChecked; });
-        private void OnChangeDistrictRestrictionOrder(int sel) => SafeObtain((ref BoardInstanceRoadNodeXml x) =>
-        {
-            if (sel >= 0)
-            {
-                x.DistrictRestrictionOrder = (DistrictRestrictionOrder)sel;
-            }
-        });
+        private void OnChangeDistrictRestrictionOrder(DistrictRestrictionOrder sel) => SafeObtain((ref BoardInstanceRoadNodeXml x) => x.DistrictRestrictionOrder = sel);
         private void OnChangeSpawnOnDistrictBorder(bool isChecked) => SafeObtain((ref BoardInstanceRoadNodeXml x) => x.PlaceOnDistrictBorder = isChecked);
 
         private void OnChangePlaceRoadTransition(bool isChecked) => SafeObtain((ref BoardInstanceRoadNodeXml x) => x.PlaceOnTunnelBridgeStart = isChecked);

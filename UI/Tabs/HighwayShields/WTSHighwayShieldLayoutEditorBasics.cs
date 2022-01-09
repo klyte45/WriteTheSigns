@@ -54,7 +54,7 @@ namespace Klyte.WriteTheSigns.UI
             var helperSettings = new UIHelperExtension(m_tabSettings, LayoutDirection.Vertical);
             var helperLib = new UIHelperExtension(m_tabLib, LayoutDirection.Vertical);
 
-            AddDropdown(Locale.Get("K45_WTS_OVERRIDE_FONT"), out m_fontSelect, helperSettings, new string[0], OnSetFont);
+            AddEmptyDropdown(Locale.Get("K45_WTS_OVERRIDE_FONT"), out m_fontSelect, helperSettings, OnSetFont);
             AddColorField(helperSettings, Locale.Get("K45_WTS_BACKGROUND_COLOR"), out m_bgColor, OnBgColorChanged);
             AddCheckboxLocale("K45_WTS_USEHWCOLOR", out m_useHwColor, helperSettings, OnUseHwColorChanged);
 

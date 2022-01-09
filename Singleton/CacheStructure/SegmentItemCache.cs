@@ -88,7 +88,7 @@ namespace Klyte.WriteTheSigns.Rendering
                 if (startMileageMeters is null)
                 {
                     var hwData = WriteTheSignsMod.Controller.ConnectorADR.GetHighwayData(NetManager.instance.m_segments.m_buffer[segmentId].m_nameSeed);
-                    startMileageMeters = SegmentUtils.GetNumberAt(0, segmentId, hwData?.invertMileage ?? false, hwData?.mileageOffset ?? 0, out _);
+                    startMileageMeters = SegmentUtils.GetNumberAt(0, segmentId, hwData?.mileageSrc ?? SegmentUtils.MileageStartSource.DEFAULT, hwData?.mileageOffset ?? 0, out _);
                 }
                 return startMileageMeters ?? 0;
             }
@@ -101,7 +101,7 @@ namespace Klyte.WriteTheSigns.Rendering
                 if (endMileageMeters is null)
                 {
                     var hwData = WriteTheSignsMod.Controller.ConnectorADR.GetHighwayData(NetManager.instance.m_segments.m_buffer[segmentId].m_nameSeed);
-                    endMileageMeters = SegmentUtils.GetNumberAt(1, segmentId, hwData?.invertMileage ?? false, hwData?.mileageOffset ?? 0, out _); ;
+                    endMileageMeters = SegmentUtils.GetNumberAt(1, segmentId, hwData?.mileageSrc ?? SegmentUtils.MileageStartSource.DEFAULT, hwData?.mileageOffset ?? 0, out _); ;
                 }
                 return endMileageMeters ?? 0;
             }

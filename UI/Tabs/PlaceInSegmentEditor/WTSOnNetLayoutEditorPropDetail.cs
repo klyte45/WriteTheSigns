@@ -2,6 +2,7 @@
 using ColossalFramework.Globalization;
 using ColossalFramework.UI;
 using Klyte.Commons.Extensions;
+using Klyte.Commons.UI;
 using Klyte.Commons.UI.SpriteNames;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Data;
@@ -12,7 +13,6 @@ using Klyte.WriteTheSigns.Xml;
 using System;
 using System.Collections;
 using System.Linq;
-using System.Text.RegularExpressions;
 using UnityEngine;
 using static Klyte.Commons.UI.DefaultEditorUILib;
 
@@ -112,10 +112,10 @@ namespace Klyte.WriteTheSigns.UI
 
             helperSettings.AddSpace(5);
 
-            AddDropdown(Locale.Get("K45_WTS_BUILDINGEDITOR_PROPTYPE"), out m_propSelectionType, helperSettings, new string[] { Locale.Get("K45_WTS_ONNETEDITOR_PROPLAYOUT"), Locale.Get("K45_WTS_ONNETEDITOR_PROPMODELSELECT") }, OnPropSelecionClassChange);
+            AddDropdown(Locale.Get("K45_WTS_BUILDINGEDITOR_PROPTYPE"), out m_propSelectionType, helperSettings, ColossalUIExtensions.GetDropdownOptions(new string[] { "K45_WTS_ONNETEDITOR_PROPLAYOUT", "K45_WTS_ONNETEDITOR_PROPMODELSELECT" }), OnPropSelecionClassChange);
             AddFilterableInput(Locale.Get("K45_WTS_BUILDINGEDITOR_MODELLAYOUTSELECT"), helperSettings, out m_propFilter, out _, OnFilterLayouts, OnConfigSelectionChange);
 
-            AddDropdown(Locale.Get("K45_WTS_POSITIONINGMODE"), out m_positioningMode, helperLocation, new string[] { Locale.Get("K45_WTS_SINGLE"), Locale.Get("K45_WTS_MULTIPLE") }, OnPositioningModeChanged);
+            AddDropdown(Locale.Get("K45_WTS_POSITIONINGMODE"), out m_positioningMode, helperLocation, ColossalUIExtensions.GetDropdownOptions(new string[] { "K45_WTS_SINGLE", "K45_WTS_MULTIPLE" }), OnPositioningModeChanged);
             AddSlider(Locale.Get("K45_WTS_ONNETEDITOR_SEGMENTPOSITION"), out m_segmentPosition, helperLocation, OnSegmentPositionChanged, 0, 1, 0.01f, (x) => x.ToString("F2"));
             AddSlider(Locale.Get("K45_WTS_ONNETEDITOR_SEGMENTPOSITION_START"), out m_segmentPositionStart, helperLocation, OnSegmentPositionStartChanged, 0, 1, 0.01f, (x) => x.ToString("F2"));
             AddSlider(Locale.Get("K45_WTS_ONNETEDITOR_SEGMENTPOSITION_END"), out m_segmentPositionEnd, helperLocation, OnSegmentPositionEndChanged, 0, 1, 0.01f, (x) => x.ToString("F2"));
@@ -171,8 +171,7 @@ namespace Klyte.WriteTheSigns.UI
                 label.padding = new RectOffset(5, 5, 5, 5);
                 m_textParams[currentIdx].eventGotFocus += (x, y) =>
                 {
-                    var tf = ((UITextField)x);
-                    var text = tf.text;
+                    var text = m_textParams[currentIdx].text;
                     if (text.StartsWith(WTSAtlasesLibrary.PROTOCOL_IMAGE_ASSET) || text.StartsWith(WTSAtlasesLibrary.PROTOCOL_IMAGE))
                     {
                         sprite.spriteName = ((UITextField)x).text.Split('/').Last().Trim();
@@ -183,13 +182,13 @@ namespace Klyte.WriteTheSigns.UI
                     {
                         sprite.isVisible = false;
                         label.isVisible = true;
-                        tf.selectOnFocus = false;
-                        tf.selectionStart = text.Length;
-                        tf.selectionEnd = text.Length;
+                        m_textParams[currentIdx].selectOnFocus = false;
+                        m_textParams[currentIdx].selectionStart = text.Length;
+                        m_textParams[currentIdx].selectionEnd = text.Length;
                     }
                     else
                     {
-                        tf.selectOnFocus = true;
+                        m_textParams[currentIdx].selectOnFocus = true;
                     }
                 };
                 lb.eventItemMouseHover += (x, y) =>
@@ -213,16 +212,22 @@ namespace Klyte.WriteTheSigns.UI
                     var text = m_textParams[currentIdx].text;
                     if (text.StartsWith(WTSAtlasesLibrary.PROTOCOL_IMAGE_ASSET) || text.StartsWith(WTSAtlasesLibrary.PROTOCOL_IMAGE))
                     {
-                        sprite.spriteName = ((UITextField)x).text.Split('/').Last().Trim();
-                        sprite.isVisible = true;
-                        label.isVisible = y;
+                        sprite.spriteName = text.Split('/').Last().Trim();
+                        sprite.isVisible = y;
+                        label.isVisible = false;
                     }
                     else if (text.StartsWith(CommandLevel.PROTOCOL_VARIABLE))
                     {
                         sprite.isVisible = false;
                         label.isVisible = y;
                     }
+                    else
+                    {
+                        label.isVisible = false;
+                        sprite.isVisible = false;
+                    }
                 };
+                label.isVisible = false;
                 sprite.isVisible = false;
 
             }
@@ -293,7 +298,8 @@ namespace Klyte.WriteTheSigns.UI
                 lbl.isVisible = false;
                 return null;
             }
-            else {
+            else
+            {
                 lbl.isVisible = true;
                 lbl.objectUserData = cmdResult;
                 lbl.prefix = cmdResult.regexValidValues.IsNullOrWhiteSpace() ? "" : $"Regex: <color yellow>{cmdResult.regexValidValues}</color>\n";
@@ -346,7 +352,7 @@ namespace Klyte.WriteTheSigns.UI
 
         private void OnPropSelecionClassChange(int sel) => SafeObtain((OnNetInstanceCacheContainerXml x) =>
         {
-            m_propFilter.text = (sel == 0 ? x.PropLayoutName ?? "" : PropIndexes.GetListName(x.SimpleProp)) ?? "";
+            m_propFilter.text = (sel != 1 ? x.PropLayoutName ?? "" : PropIndexes.GetListName(x.SimpleProp)) ?? "";
             UpdateTabsVisibility(sel);
             UpdateParams(x);
         });

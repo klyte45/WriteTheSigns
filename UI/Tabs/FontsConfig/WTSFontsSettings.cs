@@ -3,7 +3,6 @@ using ColossalFramework.UI;
 using ICities;
 using Klyte.Commons.Extensions;
 using Klyte.Commons.UI.SpriteNames;
-using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Data;
 using Klyte.WriteTheSigns.Utils;
 using UnityEngine;
@@ -55,7 +54,7 @@ namespace Klyte.WriteTheSigns.UI
 
         private void AddFontDD(string locale, UIHelperExtension m_uiHelperHS, out UIDropDown targetDD, OnDropdownSelectionChanged callback)
         {
-            AddDropdown(Locale.Get(locale), out targetDD, m_uiHelperHS, new string[0], callback);
+            AddEmptyDropdown(Locale.Get(locale), out targetDD, m_uiHelperHS, callback);
             AddButtonInEditorRow(targetDD, CommonsSpriteNames.K45_Reload, ReloadFonts);
         }
 
