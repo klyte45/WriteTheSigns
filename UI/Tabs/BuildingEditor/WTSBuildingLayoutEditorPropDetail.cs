@@ -210,7 +210,7 @@ namespace Klyte.WriteTheSigns.UI
         private string[] OnFilterParamImages(UISprite sprite, string arg)
         {
             string[] results = null;
-            SafeObtain((ref BoardInstanceBuildingXml x) => results = WriteTheSignsMod.Controller.AtlasesLibrary.OnFilterParamImagesByText(sprite, arg, x.Descriptor?.CachedProp?.name ?? x.CachedSimpleProp?.name, out lastProtocol_searchedParam));
+            SafeObtain((ref BoardInstanceBuildingXml x) => results = WriteTheSignsMod.Controller.AtlasesLibrary.OnFilterParamImagesAndFoldersByText(sprite, arg, x.Descriptor?.CachedProp?.name ?? x.CachedSimpleProp?.name, out lastProtocol_searchedParam));
             return results;
         }
         private string lastProtocol_searchedParam;

@@ -1,5 +1,4 @@
-﻿using ColossalFramework;
-using Klyte.Commons.Interfaces;
+﻿using Klyte.Commons.Interfaces;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Data;
 using System;
@@ -198,7 +197,7 @@ namespace Klyte.WriteTheSigns.Xml
             {
                 m_textParameters = new TextParameterWrapper[TEXT_PARAMETERS_COUNT];
             }
-            m_textParameters[idx] = val.IsNullOrWhiteSpace() ? null : new TextParameterWrapper(val);
+            m_textParameters[idx] = val != null && val?.Trim().Length == 0 ? null : new TextParameterWrapper(val);
         }
         public void DeleteTextParameter(int idx)
         {

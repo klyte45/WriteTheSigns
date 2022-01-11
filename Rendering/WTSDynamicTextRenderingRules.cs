@@ -818,10 +818,10 @@ namespace Klyte.WriteTheSigns.Rendering
             }
             else if (instance is BoardPreviewInstanceXml preview)
             {
-                return KlyteMonoUtils.ContrastColor(preview?.Descriptor?.FixedColor ?? GetCurrentSimulationColor());
+                return (preview?.Descriptor?.FixedColor ?? GetCurrentSimulationColor()).ContrastColor();
             }
             var targetColor = GetPropColor(refID, boardIdx, secIdx, instance, propLayout, out bool colorFound);
-            return KlyteMonoUtils.ContrastColor(colorFound ? targetColor : Color.white);
+            return (colorFound ? targetColor : Color.white).ContrastColor();
         }
         #endregion
 

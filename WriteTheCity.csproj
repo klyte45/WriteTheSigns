@@ -141,6 +141,9 @@
       <Required>False</Required>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="commons\UI\Images\highlight.png" />
+  </ItemGroup>
   <PropertyGroup>
     <PostBuildEvent>
 xcopy /Y /e "$(ProjectDir)\_requiredDLLs\*" "S:\Steam\steamapps\workshop\content\255710\2139980554\*"

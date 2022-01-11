@@ -155,7 +155,7 @@ namespace Klyte.WriteTheSigns.Sprites
                 : (new string[0]);
         internal string[] FindByInLocalFolders(string searchName) => LocalAtlases.Keys.Select(x => x == string.Empty ? "<ROOT>" : x).Where(x => x.ToLower().Contains(searchName.ToLower())).OrderBy(x => x).ToArray();
 
-        internal string[] OnFilterParamImagesByText(UISprite sprite, string inputText, string propName, out string protocolFound)
+        internal string[] OnFilterParamImagesAndFoldersByText(UISprite sprite, string inputText, string propName, out string protocolFound)
         {
             Match match;
             if ((inputText?.Length ?? 0) >= 4 && (match = Regex.Match(inputText ?? "", $"^({PROTOCOL_IMAGE}|{PROTOCOL_IMAGE_ASSET}|{PROTOCOL_FOLDER}|{PROTOCOL_FOLDER_ASSET})(([^/]+)/)?(.*)$")).Success)
@@ -445,7 +445,7 @@ namespace Klyte.WriteTheSigns.Sprites
                 int targetWidth = width + borderWidth;
                 int targetHeight = height + borderWidth;
                 TextureScaler.scale(formTexture, targetWidth, targetHeight);
-                Color contrastColor = KlyteMonoUtils.ContrastColor(bgColor);
+                Color contrastColor = bgColor.ContrastColor();
                 Color[] targetColorArray = formTexture.GetPixels().Select(x => new Color(contrastColor.r, contrastColor.g, contrastColor.b, x.a)).ToArray();
                 Destroy(formTexture);
                 var targetBorder = new RectOffset(spriteInfo.border.left * 2, spriteInfo.border.right * 2, spriteInfo.border.top * 2, spriteInfo.border.bottom * 2);

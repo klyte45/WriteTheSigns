@@ -1,4 +1,5 @@
 using Klyte.WriteTheSigns;
+using UnityEngine;
 
 namespace Klyte.Commons
 {
@@ -21,5 +22,8 @@ namespace Klyte.Commons
         public static string ModDllRootFolder { get; } = WriteTheSignsMod.RootFolder;
         public static string ModIcon => WriteTheSignsMod.Instance.IconName;
         public static string GitHubRepoPath { get; } = "klyte45/WriteTheSigns";
+
+        public static float UIScale { get; } = 1f;
+        public static Color ModColor { get; } = new Color32(1, 79, 113, 255);
     }
 }

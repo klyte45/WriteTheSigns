@@ -15,6 +15,8 @@ namespace Klyte.WriteTheSigns.UI
 
         public override float PanelHeight => 850;
 
+        private WTSTestLiteUI liteUI;
+
         #region Awake
         protected override void AwakeActions()
         {
@@ -34,6 +36,11 @@ namespace Klyte.WriteTheSigns.UI
             m_stripMain.CreateTabLocalized<WTSVehicleLayoutEditor>("IconAssetVehicle", "K45_WTS_VEHICLE_CONFIG_TAB", "WTSVehicleLayoutEditor", false);
             m_stripMain.CreateTabLocalized<WTSOnNetLayoutEditor>("IconAssetRoad", "K45_WTS_ONNET_CONFIG_TAB", "WTSOnNetLayoutEditor", false);
             m_stripMain.CreateTabLocalized<WTSFontsSettings>(KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_AutoNameIcon), "K45_WTS_FONT_CONFIG_TAB", "WTSFontSettings", false);
+
+
+
+            liteUI = KlyteMonoUtils.CreateElement<WTSTestLiteUI>(UIView.GetAView().transform.Find("TSBar").gameObject.transform);
+
         }
 
         protected void Start()
@@ -46,5 +53,4 @@ namespace Klyte.WriteTheSigns.UI
 
         #endregion
     }
-
 }

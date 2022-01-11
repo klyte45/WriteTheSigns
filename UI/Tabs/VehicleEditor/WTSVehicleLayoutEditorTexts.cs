@@ -423,7 +423,7 @@ namespace Klyte.WriteTheSigns.UI
             target.Focus();
         }
 
-        private string[] OnFilterSprites(UISprite sprite, string arg) => WriteTheSignsMod.Controller.AtlasesLibrary.OnFilterParamImagesByText(sprite, arg, WTSVehicleLayoutEditor.Instance.EditingInstance?.VehicleAssetName, out lastProtocol_searchedParam);
+        private string[] OnFilterSprites(UISprite sprite, string arg) => WriteTheSignsMod.Controller.AtlasesLibrary.OnFilterParamImagesAndFoldersByText(sprite, arg, WTSVehicleLayoutEditor.Instance.EditingInstance?.VehicleAssetName, out lastProtocol_searchedParam);
         private void OnSetTextOwnNameContent(TextType sel) => SafeObtain((ref BoardTextDescriptorGeneralXml desc) =>
                                                        {
                                                            if (sel >= 0)

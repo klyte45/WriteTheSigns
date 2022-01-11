@@ -103,7 +103,7 @@ namespace Klyte.WriteTheSigns.UI
                         layer.color = desc.ColoringConfig.m_cachedColor;
                         break;
                     case BoardTextDescriptorGeneralXml.ColoringSettings.ColoringSource.Contrast:
-                        layer.color = KlyteMonoUtils.ContrastColor(EditingInstancePreview.BackgroundColor);
+                        layer.color = EditingInstancePreview.BackgroundColor.ContrastColor();
                         break;
                     case BoardTextDescriptorGeneralXml.ColoringSettings.ColoringSource.Parent:
                         layer.color = EditingInstancePreview.BackgroundColor;

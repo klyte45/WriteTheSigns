@@ -61,7 +61,7 @@ Shader "Custom/KlyteTextBoards" {
         void surf(Input IN, inout SurfaceOutput o)
         {
             fixed4 t = tex2D(_MainTex, IN.uv_MainTex);
-            o.Albedo = t * _Color * .25;
+            o.Albedo = t * _Color * .5;
             o.Alpha = t.a;
             o.Emission = t * _Color * _ObjectIndex.z * t.a * 10;
 

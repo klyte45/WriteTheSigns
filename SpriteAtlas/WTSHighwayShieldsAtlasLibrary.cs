@@ -203,7 +203,7 @@ namespace Klyte.WriteTheSigns.Sprites
                     switch (textDescriptor.ColoringConfig.ColorSource)
                     {
                         case BoardTextDescriptorGeneralXml.ColoringSettings.ColoringSource.Contrast:
-                            textColor = KlyteMonoUtils.ContrastColor(targetColor);
+                            textColor = targetColor.ContrastColor();
                             break;
                         case BoardTextDescriptorGeneralXml.ColoringSettings.ColoringSource.Parent:
                             textColor = targetColor;

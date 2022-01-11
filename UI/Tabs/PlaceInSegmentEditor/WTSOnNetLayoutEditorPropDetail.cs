@@ -151,7 +151,11 @@ namespace Klyte.WriteTheSigns.UI
                     yield return 0;
                     if (x.StartsWith(WTSAtlasesLibrary.PROTOCOL_IMAGE_ASSET) || x.StartsWith(WTSAtlasesLibrary.PROTOCOL_IMAGE))
                     {
-                        yield return result.Value = OnFilterParamImages(sprite, x);
+                        yield return result.Value = OnFilterParamImagesAndFolders(sprite, x);
+                    }
+                    if (x.StartsWith(WTSAtlasesLibrary.PROTOCOL_FOLDER) || x.StartsWith(WTSAtlasesLibrary.PROTOCOL_FOLDER_ASSET))
+                    {
+                        yield return result.Value = OnFilterParamImagesAndFolders(sprite, x);
                     }
                     else if (x.StartsWith(CommandLevel.PROTOCOL_VARIABLE))
                     {
@@ -162,7 +166,7 @@ namespace Klyte.WriteTheSigns.UI
                 m_textParamsLabels[currentIdx].processMarkup = true;
                 m_textParamsIsEmpty[currentIdx] = AddButtonInEditorRow(m_textParams[currentIdx], CommonsSpriteNames.K45_X, () => SafeObtain((x) =>
                    {
-                       var isEmpty = x.GetTextParameter(currentIdx).IsEmpty;
+                       var isEmpty = x.GetTextParameter(currentIdx)?.IsEmpty ?? false;
                        x.SetTextParameter(currentIdx, isEmpty ? "" : null);
                        UpdateParamIsEmptied(x, currentIdx);
                    }), "K45_WTS_TOGGLETEXTISEMPTYTOOLTIP", true, 30);
@@ -176,6 +180,11 @@ namespace Klyte.WriteTheSigns.UI
                     {
                         sprite.spriteName = ((UITextField)x).text.Split('/').Last().Trim();
                         sprite.isVisible = true;
+                        label.isVisible = false;
+                    }
+                    else if (text.StartsWith(WTSAtlasesLibrary.PROTOCOL_FOLDER) || text.StartsWith(WTSAtlasesLibrary.PROTOCOL_FOLDER_ASSET))
+                    {
+                        sprite.isVisible = false;
                         label.isVisible = false;
                     }
                     else if (text.StartsWith(CommandLevel.PROTOCOL_VARIABLE))
@@ -193,17 +202,20 @@ namespace Klyte.WriteTheSigns.UI
                 };
                 lb.eventItemMouseHover += (x, y) =>
                 {
-                    if (m_textParams[currentIdx].text.StartsWith(WTSAtlasesLibrary.PROTOCOL_IMAGE_ASSET) || m_textParams[currentIdx].text.StartsWith(WTSAtlasesLibrary.PROTOCOL_IMAGE))
+                    if (y >= 0)
                     {
-                        sprite.spriteName = lb.items[y].Split('/').Last().Trim();
-                    }
-                    else if (m_textParams[currentIdx].text.StartsWith(CommandLevel.PROTOCOL_VARIABLE))
-                    {
-                        if (label.objectUserData is CommandLevel cmd && !(cmd.nextLevelOptions is null))
+                        if (m_textParams[currentIdx].text.StartsWith(WTSAtlasesLibrary.PROTOCOL_IMAGE_ASSET) || m_textParams[currentIdx].text.StartsWith(WTSAtlasesLibrary.PROTOCOL_IMAGE))
                         {
-                            var str = lb.items[y];
-                            var key = cmd.nextLevelOptions.Where(z => z.Key.ToString() == str).FirstOrDefault().Key;
-                            label.text = key is null ? "" : Locale.Get("K45_WTS_PARAMVARS_DESC", CommandLevel.ToLocaleVar(key));
+                            sprite.spriteName = lb.items[y].Split('/').Last().Trim();
+                        }
+                        else if (m_textParams[currentIdx].text.StartsWith(CommandLevel.PROTOCOL_VARIABLE))
+                        {
+                            if (label.objectUserData is CommandLevel cmd && !(cmd.nextLevelOptions is null))
+                            {
+                                var str = lb.items[y];
+                                var key = cmd.nextLevelOptions.Where(z => z.Key.ToString() == str).FirstOrDefault().Key;
+                                label.text = key is null ? "" : Locale.Get("K45_WTS_PARAMVARS_DESC", CommandLevel.ToLocaleVar(key));
+                            }
                         }
                     }
                 };
@@ -283,10 +295,10 @@ namespace Klyte.WriteTheSigns.UI
             m_textParams[paramIdx].Focus();
         }
 
-        private string[] OnFilterParamImages(UISprite sprite, string arg)
+        private string[] OnFilterParamImagesAndFolders(UISprite sprite, string arg)
         {
             string[] results = null;
-            SafeObtain((x) => results = WriteTheSignsMod.Controller.AtlasesLibrary.OnFilterParamImagesByText(sprite, arg, x.Descriptor?.CachedProp?.name ?? x.m_simpleCachedProp?.name, out lastProtocol_searchedParam));
+            SafeObtain((x) => results = WriteTheSignsMod.Controller.AtlasesLibrary.OnFilterParamImagesAndFoldersByText(sprite, arg, x.Descriptor?.CachedProp?.name ?? x.m_simpleCachedProp?.name, out lastProtocol_searchedParam));
             return results;
         }
 
@@ -311,14 +323,9 @@ namespace Klyte.WriteTheSigns.UI
 
         private IEnumerator OnFilterLayouts(string input, Wrapper<string[]> result)
         {
-            if (m_propSelectionType.selectedIndex == 0)
-            {
-                yield return WTSPropLayoutData.Instance.FilterBy(input, TextRenderingClass.PlaceOnNet, result);
-            }
-            else
-            {
-                yield return PropIndexes.instance.BasicInputFiltering(input, result);
-            }
+            yield return m_propSelectionType.selectedIndex == 0
+                ? WTSPropLayoutData.Instance.FilterBy(input, TextRenderingClass.PlaceOnNet, result)
+                : PropIndexes.instance.BasicInputFiltering(input, result);
         }
 
         private string OnConfigSelectionChange(string typed, int sel, string[] items)

@@ -126,7 +126,7 @@ namespace Klyte.WriteTheSigns.UI
             }
         }
         private string lastProtocol_searchedParam;
-        private string[] OnFilterParamImages(UISprite sprite, string arg) => WriteTheSignsMod.Controller.AtlasesLibrary.OnFilterParamImagesByText(sprite, arg, null, out lastProtocol_searchedParam);
+        private string[] OnFilterParamImages(UISprite sprite, string arg) => WriteTheSignsMod.Controller.AtlasesLibrary.OnFilterParamImagesAndFoldersByText(sprite, arg, null, out lastProtocol_searchedParam);
         private void OnUseHwColorChanged(bool isChecked) => EditingInstance.BackgroundColorIsFromHighway = isChecked;
         private void OnBgColorChanged(Color val)
         {

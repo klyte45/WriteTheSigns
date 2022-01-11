@@ -312,7 +312,7 @@ namespace Klyte.WriteTheSigns.UI
             target.Focus();
         }
 
-        private string[] OnFilterSprites(UISprite sprite, string arg) => WriteTheSignsMod.Controller.AtlasesLibrary.OnFilterParamImagesByText(sprite, arg, null, out lastProtocol_searchedParam);
+        private string[] OnFilterSprites(UISprite sprite, string arg) => WriteTheSignsMod.Controller.AtlasesLibrary.OnFilterParamImagesAndFoldersByText(sprite, arg, null, out lastProtocol_searchedParam);
         private void OnSetTextOwnNameContent(TextType sel) => SafeObtain((ref ImageLayerTextDescriptorXml x) =>
                                                        {
                                                            x.m_textType = sel;
