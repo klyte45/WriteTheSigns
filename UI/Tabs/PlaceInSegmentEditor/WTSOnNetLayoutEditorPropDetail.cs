@@ -304,7 +304,7 @@ namespace Klyte.WriteTheSigns.UI
 
         private string[] OnFilterParamVariable(UILabel lbl, string arg)
         {
-            var cmdResult = CommandLevel.OnFilterParamImagesByText(arg, out string currentDescription);
+            var cmdResult = CommandLevel.OnFilterParamByText(arg, out string currentDescription);
             if (cmdResult is null)
             {
                 lbl.isVisible = false;
@@ -400,7 +400,7 @@ namespace Klyte.WriteTheSigns.UI
         {
             WriteTheSignsMod.Controller.RoadSegmentToolInstance.OnSelectSegment += (k) => SafeObtain((OnNetInstanceCacheContainerXml x) =>
             {
-                x.m_targetSegment1 = k;
+                x.m_targets[1] = k;
                 ReloadTargets(x);
             });
             WriteTheSignsMod.Controller.RoadSegmentToolInstance.enabled = true;
@@ -409,7 +409,7 @@ namespace Klyte.WriteTheSigns.UI
         {
             WriteTheSignsMod.Controller.RoadSegmentToolInstance.OnSelectSegment += (k) => SafeObtain((OnNetInstanceCacheContainerXml x) =>
             {
-                x.m_targetSegment2 = k;
+                x.m_targets[2] = k;
                 ReloadTargets(x);
             });
             WriteTheSignsMod.Controller.RoadSegmentToolInstance.enabled = true;
@@ -418,7 +418,7 @@ namespace Klyte.WriteTheSigns.UI
         {
             WriteTheSignsMod.Controller.RoadSegmentToolInstance.OnSelectSegment += (k) => SafeObtain((OnNetInstanceCacheContainerXml x) =>
             {
-                x.m_targetSegment3 = k;
+                x.m_targets[3] = k;
                 ReloadTargets(x);
             });
             WriteTheSignsMod.Controller.RoadSegmentToolInstance.enabled = true;
@@ -427,7 +427,7 @@ namespace Klyte.WriteTheSigns.UI
         {
             WriteTheSignsMod.Controller.RoadSegmentToolInstance.OnSelectSegment += (k) => SafeObtain((OnNetInstanceCacheContainerXml x) =>
             {
-                x.m_targetSegment4 = k;
+                x.m_targets[4] = k;
                 ReloadTargets(x);
             });
             WriteTheSignsMod.Controller.RoadSegmentToolInstance.enabled = true;
@@ -458,7 +458,7 @@ namespace Klyte.WriteTheSigns.UI
             {
                 m_isLoading = true;
                 m_name.text = x.SaveName ?? "";
-                m_propSelectionType.selectedIndex = x.PropLayoutName == null ? 1 : x.SimpleProp == null ? 0 : 1;
+                m_propSelectionType.selectedIndex = x.PropLayoutName == null ? 1 : 0;
                 m_propFilter.text = x.PropLayoutName ?? PropIndexes.GetListName(x.SimpleProp) ?? "";
                 m_position[0].text = x.PropPosition.X.ToString("F3");
                 m_position[1].text = x.PropPosition.Y.ToString("F3");
@@ -537,10 +537,10 @@ namespace Klyte.WriteTheSigns.UI
 
         private void ReloadTargets(OnNetInstanceCacheContainerXml x)
         {
-            m_labelTarget1.suffix = GetTextForSegment(x.m_targetSegment1) ?? "";
-            m_labelTarget2.suffix = GetTextForSegment(x.m_targetSegment2) ?? "";
-            m_labelTarget3.suffix = GetTextForSegment(x.m_targetSegment3) ?? "";
-            m_labelTarget4.suffix = GetTextForSegment(x.m_targetSegment4) ?? "";
+            m_labelTarget1.suffix = GetTextForSegment(x.GetTargetSegment(1)) ?? "";
+            m_labelTarget2.suffix = GetTextForSegment(x.GetTargetSegment(2)) ?? "";
+            m_labelTarget3.suffix = GetTextForSegment(x.GetTargetSegment(3)) ?? "";
+            m_labelTarget4.suffix = GetTextForSegment(x.GetTargetSegment(4)) ?? "";
         }
 
 

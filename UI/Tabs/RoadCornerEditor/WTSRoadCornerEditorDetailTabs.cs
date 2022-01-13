@@ -141,7 +141,7 @@ namespace Klyte.WriteTheSigns.UI
 
         private void UpdateDistrictList(ref BoardInstanceRoadNodeXml reference)
         {
-            var districts = DistrictUtils.GetValidParks().ToDictionary(x => x.Key, x => 0x100 | x.Value).Union(DistrictUtils.GetValidDistricts()).OrderBy(x => x.Value == 0 ? "" : x.Key).ToDictionary(x => x.Key, x => x.Value);
+            var districts = DistrictUtils.GetValidParks().ToDictionary(x => x.Key, x => 0x100 | x.Value).Concat(DistrictUtils.GetValidDistricts()).OrderBy(x => x.Value == 0 ? "" : x.Key).ToDictionary(x => x.Key, x => x.Value);
             ref DistrictPark[] parkBuffer = ref Singleton<DistrictManager>.instance.m_parks.m_buffer;
             UIPanel[] districtChecks = m_checkboxTemplateList.SetItemCount(districts.Count);
 

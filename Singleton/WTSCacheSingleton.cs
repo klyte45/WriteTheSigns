@@ -26,12 +26,12 @@ namespace Klyte.WriteTheSigns.Singleton
             coroutineFlagsToErase |= cacheFlags;
             yield return 0;
             var objectsToIterate = m_cacheSegments.Values.Cast<IItemCache>()
-                .Union(m_cacheVehicles.Values.Cast<IItemCache>())
-                .Union(m_cacheTransportLines.Values.Cast<IItemCache>())
-                .Union(m_cacheIntercityTransportLines.Values.Cast<IItemCache>())
-                .Union(m_cacheDistricts.Values.Cast<IItemCache>())
-                .Union(m_cacheParks.Values.Cast<IItemCache>())
-                .Union(m_cacheBuildings.Values.Cast<IItemCache>()).ToList();
+                .Concat(m_cacheVehicles.Values.Cast<IItemCache>())
+                .Concat(m_cacheTransportLines.Values.Cast<IItemCache>())
+                .Concat(m_cacheIntercityTransportLines.Values.Cast<IItemCache>())
+                .Concat(m_cacheDistricts.Values.Cast<IItemCache>())
+                .Concat(m_cacheParks.Values.Cast<IItemCache>())
+                .Concat(m_cacheBuildings.Values.Cast<IItemCache>()).ToList();
             for (int i = 0; i < objectsToIterate.Count; i++)
             {
                 objectsToIterate[i].PurgeCache(coroutineFlagsToErase, instanceID);

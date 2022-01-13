@@ -1,9 +1,5 @@
 ﻿using Klyte.Commons.Interfaces;
-using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Data;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Xml;
 using System.Xml.Serialization;
 
@@ -148,86 +144,5 @@ namespace Klyte.WriteTheSigns.Xml
         [XmlAttribute("saveName")]
         public string SaveName { get; set; }
 
-        [XmlElement("TextParametersV3")]
-        [Obsolete("Legacy Beta < 3! Compat only", true)]
-        public SimpleNonSequentialList<string> Old_b3_TextParameters
-        {
-            get => null;
-            set
-            {
-                foreach (var k in value?.Keys)
-                {
-                    if (k < m_textParameters.Length)
-                    {
-                        m_textParameters[k] = new TextParameterWrapper(value[k]);
-                    }
-                }
-            }
-        }
-        [XmlElement("TextParametersV4")]
-        public SimpleNonSequentialList<TextParameterXmlContainer> TextParameters
-        {
-            get
-            {
-                var res = new SimpleNonSequentialList<TextParameterXmlContainer>();
-                for (int i = 0; i < m_textParameters.Length; i++)
-                {
-                    if (m_textParameters[i] != null)
-                    {
-                        res[i] = TextParameterXmlContainer.FromWrapper(m_textParameters[i]);
-                    }
-                }
-                return res;
-            }
-            set
-            {
-                foreach (var k in value?.Keys)
-                {
-                    if (k < m_textParameters.Length)
-                    {
-                        m_textParameters[k] = value[k]?.ToWrapper();
-                    }
-                }
-            }
-        }
-
-        public void SetTextParameter(int idx, string val)
-        {
-            if (m_textParameters == null)
-            {
-                m_textParameters = new TextParameterWrapper[TEXT_PARAMETERS_COUNT];
-            }
-            m_textParameters[idx] = val != null && val?.Trim().Length == 0 ? null : new TextParameterWrapper(val);
-        }
-        public void DeleteTextParameter(int idx)
-        {
-            if (m_textParameters == null)
-            {
-                m_textParameters = new TextParameterWrapper[TEXT_PARAMETERS_COUNT];
-            }
-            m_textParameters[idx] = null;
-        }
-
-        public Dictionary<int, string[]> GetAllParametersUsed() => Descriptor?.TextDescriptors.Select(x => x.ToParameterKV()).Where(x => !(x is null)).GroupBy(x => x.First).ToDictionary(x => x.Key, x => x.Select(y => y.Second).ToArray());
-
-        [XmlIgnore]
-        public TextParameterWrapper[] m_textParameters = new TextParameterWrapper[TEXT_PARAMETERS_COUNT];
-
-        public TextParameterWrapper GetTextParameter(int idx) => m_textParameters?[idx];
-    }
-
-    public class TextParameterXmlContainer
-    {
-        [XmlAttribute("value")]
-        public string Value { get; set; }
-        [XmlAttribute("isEmpty")]
-        public bool IsEmpty { get; set; }
-
-        public static TextParameterXmlContainer FromWrapper(TextParameterWrapper input) => new TextParameterXmlContainer
-        {
-            IsEmpty = input.IsEmpty,
-            Value = input.ToString()
-        };
-        public TextParameterWrapper ToWrapper() => new TextParameterWrapper(IsEmpty ? null : Value);
     }
 }

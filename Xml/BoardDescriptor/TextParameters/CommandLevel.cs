@@ -63,6 +63,7 @@ namespace Klyte.WriteTheSigns.Xml
         }
 
         public static string[] GetParameterPath(string input) => Regex.Split(input, @"(?<!\\)/").Select(x => x.Replace("\\/", "/")).ToArray();
+        public static string FromParameterPath(IEnumerable<string> path) => string.Join("/", path.Select(x => Regex.Replace(x, @"([^\\])/|^/", "$1\\/")).ToArray()) + "/";
         public static string ToLocaleVar(Enum e) => $"{e.GetType().Name}.{e.ToString()}";
 
         public const string PROTOCOL_VARIABLE = "var://";
@@ -113,7 +114,7 @@ namespace Klyte.WriteTheSigns.Xml
             return result;
         }
 
-        internal static CommandLevel OnFilterParamImagesByText(string inputText, out string currentLocaleDesc)
+        internal static CommandLevel OnFilterParamByText(string inputText, out string currentLocaleDesc)
         {
             if ((inputText?.Length ?? 0) >= 4 && inputText.StartsWith(PROTOCOL_VARIABLE))
             {
@@ -134,7 +135,7 @@ namespace Klyte.WriteTheSigns.Xml
 
         private static CommandLevel IterateInCommandTree(out string currentLocaleDesc, string[] parameterPath, Enum levelKey, CommandLevel currentLevel, int level)
         {
-            if(currentLevel is null)
+            if (currentLevel is null)
             {
                 currentLocaleDesc = null;
                 return null;
@@ -163,7 +164,10 @@ namespace Klyte.WriteTheSigns.Xml
                     {
                         if (Regex.IsMatch(parameterPath[level], $"^{currentLevel.regexValidValues}$"))
                         {
-                            return IterateInCommandTree(out currentLocaleDesc, parameterPath, null, currentLevel.nextLevelByRegex, level + 1);
+                            if (currentLevel.nextLevelByRegex != null)
+                            {
+                                return IterateInCommandTree(out currentLocaleDesc, parameterPath, null, currentLevel.nextLevelByRegex, level + 1);
+                            }
                         }
                     }
                 }

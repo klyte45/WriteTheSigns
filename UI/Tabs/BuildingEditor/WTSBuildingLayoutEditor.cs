@@ -178,7 +178,7 @@ namespace Klyte.WriteTheSigns.UI
                     var value = XmlUtils.CloneViaXml(x.Value);
                     value.m_configurationSource = ConfigurationSource.CITY;
                     value.SaveName = x.Key;
-                    WTSPropLayoutData.Instance.Add(x.Key, ref value);
+                    WTSPropLayoutData.Instance.Add(x.Key, value);
                 }
             };
             ReloadBuilding();

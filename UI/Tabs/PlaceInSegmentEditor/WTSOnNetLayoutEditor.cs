@@ -45,7 +45,7 @@ namespace Klyte.WriteTheSigns.UI
 
         public WTSOnNetLayoutEditorPropList LayoutList { get; private set; }
         public ushort CurrentSegmentId { get; private set; }
-        public bool LockSelection { get => WTSTestLiteUI.LockSelection; internal set => WTSTestLiteUI.LockSelection = value; }
+        public bool LockSelection { get => WTSOnNetLiteUI.LockSelection; internal set => WTSOnNetLiteUI.LockSelection = value; }
 
         public void Awake()
         {
@@ -102,7 +102,7 @@ namespace Klyte.WriteTheSigns.UI
 
         private void OnSegmentSet(ushort id)
         {
-            GameObject.FindObjectOfType<WTSTestLiteUI>().CurrentSegmentId = id;
+            GameObject.FindObjectOfType<WTSOnNetLiteUI>().CurrentSegmentId = id;
             CurrentSegmentId = id;
             ReloadSegment();
         }

@@ -170,7 +170,7 @@ namespace Klyte.WriteTheSigns.UI
         {
             WTSLibOnNetPropLayoutList.Reload();
             var newItem = new ExportableBoardInstanceOnNetListXml { Instances = CurrentEdited.BoardsData.Select((x) => XmlUtils.DefaultXmlDeserialize<BoardInstanceOnNetXml>(XmlUtils.DefaultXmlSerialize(x))).ToArray(), Layouts = CurrentEdited.LocalLayouts };
-            WTSLibOnNetPropLayoutList.Instance.Add(text, ref newItem);
+            WTSLibOnNetPropLayoutList.Instance.Add(text,  newItem);
             K45DialogControl.ShowModal(new K45DialogControl.BindProperties
             {
                 title = Locale.Get("K45_WTS_SEGMENT_EXPORTRULESTITLE"),
@@ -215,7 +215,7 @@ namespace Klyte.WriteTheSigns.UI
                         var newEntries = XmlUtils.DefaultXmlDeserialize<OnNetInstanceCacheContainerXml[]>(XmlUtils.DefaultXmlSerialize(newConfig.Instances).Replace(typeof(BoardInstanceOnNetXml).Name, typeof(OnNetInstanceCacheContainerXml).Name));
                         if (ret == 1)
                         {
-                            CurrentEdited.BoardsData = CurrentEdited.BoardsData.Union(newEntries).ToArray();
+                            CurrentEdited.BoardsData = CurrentEdited.BoardsData.Concat(newEntries).ToArray();
                         }
                         else
                         {
@@ -226,7 +226,7 @@ namespace Klyte.WriteTheSigns.UI
                             if (WTSPropLayoutData.Instance.Get(x.Key) == null)
                             {
                                 var value = x.Value;
-                                WTSPropLayoutData.Instance.Add(x.Key, ref value);
+                                WTSPropLayoutData.Instance.Add(x.Key,  value);
                             }
                         });
                         FixTabstrip();
@@ -352,7 +352,7 @@ namespace Klyte.WriteTheSigns.UI
         }
         private void OnAddItemOnList(UIComponent component, UIMouseEventParameter eventParam)
         {
-            CurrentEdited.BoardsData = (CurrentEdited.BoardsData ?? new OnNetInstanceCacheContainerXml[0]).Union(new OnNetInstanceCacheContainerXml[] { new OnNetInstanceCacheContainerXml
+            CurrentEdited.BoardsData = (CurrentEdited.BoardsData ?? new OnNetInstanceCacheContainerXml[0]).Concat(new OnNetInstanceCacheContainerXml[] { new OnNetInstanceCacheContainerXml
             {
                 SaveName = "New layout",
             } }).ToArray();

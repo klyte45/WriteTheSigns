@@ -13,7 +13,7 @@ namespace Klyte.WriteTheSigns.Xml
     public class OnNetGroupDescriptorXml : IBoardBunchContainer
     {
         [XmlIgnore]
-        internal OnNetInstanceCacheContainerXml[] BoardsData { get; set; }
+        internal OnNetInstanceCacheContainerXml[] BoardsData { get; set; } = new OnNetInstanceCacheContainerXml[0];
         [XmlIgnore]
         public bool cached = false;
         [XmlElement("BoardsData")]

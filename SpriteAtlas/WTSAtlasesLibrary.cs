@@ -66,6 +66,7 @@ namespace Klyte.WriteTheSigns.Sprites
 
         public string[] GetSpritesFromLocalAtlas(string atlasName) => LocalAtlases.TryGetValue(atlasName ?? string.Empty, out UITextureAtlas atlas) ? atlas.spriteNames : null;
         public string[] GetSpritesFromAssetAtlas(ulong workshopId) => AssetAtlases.TryGetValue(workshopId, out UITextureAtlas atlas) ? atlas.spriteNames : null;
+        public bool HasAtlas(ulong workshopId) => AssetAtlases.TryGetValue(workshopId, out _);
         public BasicRenderInformation GetFromLocalAtlases(string atlasName, string spriteName, bool fallbackOnInvalid = false)
         {
             if (spriteName.IsNullOrWhiteSpace())
@@ -150,8 +151,14 @@ namespace Klyte.WriteTheSigns.Sprites
         internal string[] FindByInLocal(string targetAtlas, string searchName, out UITextureAtlas atlas) => LocalAtlases.TryGetValue(targetAtlas ?? string.Empty, out atlas)
               ? atlas.spriteNames.Where((x, i) => i > 0 && x.ToLower().Contains(searchName.ToLower())).Select(x => $"{(targetAtlas.IsNullOrWhiteSpace() ? "<ROOT>" : targetAtlas)}/{x}").OrderBy(x => x).ToArray()
               : (new string[0]);
+        internal string[] FindByInLocalSimple(string targetAtlas, string searchName, out UITextureAtlas atlas) => LocalAtlases.TryGetValue(targetAtlas ?? string.Empty, out atlas)
+              ? atlas.spriteNames.Where((x, i) => i > 0 && x.ToLower().Contains(searchName.ToLower())).OrderBy(x => x).ToArray()
+              : (new string[0]);
         internal string[] FindByInAsset(ulong assetId, string searchName, out UITextureAtlas atlas, bool asRoot = false) => AssetAtlases.TryGetValue(assetId, out atlas)
                 ? atlas.spriteNames.Where((x, i) => i > 0 && x.ToLower().Contains(searchName.ToLower())).Select(x => $"{(asRoot ? "<ROOT>" : assetId.ToString())}/{x}").OrderBy(x => x).ToArray()
+                : (new string[0]);
+        internal string[] FindByInAssetSimple(ulong assetId, string searchName, out UITextureAtlas atlas) => AssetAtlases.TryGetValue(assetId, out atlas)
+                ? atlas.spriteNames.Where((x, i) => i > 0 && x.ToLower().Contains(searchName.ToLower())).OrderBy(x => x).ToArray()
                 : (new string[0]);
         internal string[] FindByInLocalFolders(string searchName) => LocalAtlases.Keys.Select(x => x == string.Empty ? "<ROOT>" : x).Where(x => x.ToLower().Contains(searchName.ToLower())).OrderBy(x => x).ToArray();
 
@@ -171,7 +178,7 @@ namespace Klyte.WriteTheSigns.Sprites
                 {
                     default:
                     case PROTOCOL_IMAGE:
-                        results = (subfolder.IsNullOrWhiteSpace() ? WriteTheSignsMod.Controller.AtlasesLibrary.FindByInLocalFolders(searchName).Select(x => $"{x}/") : new List<string>()).Union(WriteTheSignsMod.Controller.AtlasesLibrary.FindByInLocal(subfolder == "<ROOT>" ? null : subfolder, searchName, out atlas)).ToArray();
+                        results = (subfolder.IsNullOrWhiteSpace() ? WriteTheSignsMod.Controller.AtlasesLibrary.FindByInLocalFolders(searchName).Select(x => $"{x}/") : new List<string>()).Concat(WriteTheSignsMod.Controller.AtlasesLibrary.FindByInLocal(subfolder == "<ROOT>" ? null : subfolder, searchName, out atlas)).ToArray();
                         break;
                     case PROTOCOL_IMAGE_ASSET:
                         results = WriteTheSignsMod.Controller.AtlasesLibrary.FindByInAsset(ulong.TryParse(propName?.Split('.')[0] ?? "", out ulong wId) ? wId : 0u, searchName, out atlas, true);
@@ -200,7 +207,7 @@ namespace Klyte.WriteTheSigns.Sprites
         {
             LocalAtlases.Clear();
             var errors = new List<string>();
-            var folders = new string[] { WTSController.ExtraSpritesFolder }.Union(Directory.GetDirectories(WTSController.ExtraSpritesFolder));
+            var folders = new string[] { WTSController.ExtraSpritesFolder }.Concat(Directory.GetDirectories(WTSController.ExtraSpritesFolder));
             foreach (var dir in folders)
             {
                 bool isRoot = dir == WTSController.ExtraSpritesFolder;

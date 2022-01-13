@@ -69,7 +69,7 @@ namespace Klyte.WriteTheSigns.UI
         private void ReloadAbbreviations()
         {
             WriteTheSignsMod.Controller.ReloadAbbreviationFiles();
-            m_abbriviationFile.items = new string[] { Locale.Get("K45_WTS_NO_ABBREVIATION_FILE_OPTION") }.Union(WriteTheSignsMod.Controller.AbbreviationFiles.Keys.OrderBy(x => x)).ToArray();
+            m_abbriviationFile.items = new string[] { Locale.Get("K45_WTS_NO_ABBREVIATION_FILE_OPTION") }.Concat(WriteTheSignsMod.Controller.AbbreviationFiles.Keys.OrderBy(x => x)).ToArray();
             m_abbriviationFile.selectedIndex = WTSRoadNodesData.Instance.AbbreviationFile.IsNullOrWhiteSpace() ? 0 : Array.IndexOf(m_abbriviationFile.items, WTSRoadNodesData.Instance.AbbreviationFile);
         }
         private void SetRoadQualifierExtractionMode(RoadQualifierExtractionMode sel)

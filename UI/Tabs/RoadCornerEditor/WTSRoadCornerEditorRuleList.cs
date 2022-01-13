@@ -142,7 +142,7 @@ namespace Klyte.WriteTheSigns.UI
             {
                 Data = WTSRoadNodesData.Instance.DescriptorRulesOrderXml
             };
-            WTSLibRoadCornerRuleList.Instance.Add(text, ref newItem);
+            WTSLibRoadCornerRuleList.Instance.Add(text,  newItem);
             K45DialogControl.ShowModal(new K45DialogControl.BindProperties
             {
                 title = Locale.Get("K45_WTS_ROADCORNER_EXPORTRULESTITLE"),
@@ -299,7 +299,7 @@ namespace Klyte.WriteTheSigns.UI
         }
         private void OnAddItemOnList(UIComponent component, UIMouseEventParameter eventParam)
         {
-            WTSRoadNodesData.Instance.DescriptorRulesOrder = WTSRoadNodesData.Instance.DescriptorRulesOrder.Union(new BoardInstanceRoadNodeXml[] { new BoardInstanceRoadNodeXml
+            WTSRoadNodesData.Instance.DescriptorRulesOrder = WTSRoadNodesData.Instance.DescriptorRulesOrder.Concat(new BoardInstanceRoadNodeXml[] { new BoardInstanceRoadNodeXml
             {
                 SaveName = "New rule",
             } }).ToArray();

@@ -101,9 +101,9 @@ namespace Klyte.WriteTheSigns.UI
                             m_subBuildingSelect,
                             m_chkUseFixedIfMulti,
                             m_propFilter,
-                }.Union(m_position).Union(m_rotation).Union(m_repeatArrayDistance).Union(m_scale).Union(m_textParams).ToArray();
+                }.Concat(m_position).Concat(m_rotation).Concat(m_repeatArrayDistance).Concat(m_scale).Concat(m_textParams).ToArray();
                 }
-                return m_allFields.Union(m_checkboxTemplateList.items.Select(x => x as UIComponent));
+                return m_allFields.Concat(m_checkboxTemplateList.items.Select(x => x as UIComponent));
             }
         }
 
@@ -298,7 +298,7 @@ namespace Klyte.WriteTheSigns.UI
                         {
                             if (y)
                             {
-                                z.m_platforms = z.m_platforms.Union(new int[] { pi.index }).ToArray();
+                                z.m_platforms = z.m_platforms.Concat(new int[] { pi.index }).ToArray();
                                 x.parent.zOrder = z.m_platforms.Length - 1;
                             }
                             else
@@ -368,7 +368,7 @@ namespace Klyte.WriteTheSigns.UI
                 var buildingInfo = PrefabCollection<BuildingInfo>.FindLoaded(CurrentBuildingName ?? "");
                 if ((buildingInfo.m_subBuildings?.Length ?? 0) > 0)
                 {
-                    m_subBuildingSelect.items = new string[] { Locale.Get("K45_WTS_MAINBUILIDING") }.Union(buildingInfo.m_subBuildings?.Select((z, y) => $"{y}: {z.m_buildingInfo.name.Split(new char[] { '.' }, 2).LastOrDefault()}")).ToArray();
+                    m_subBuildingSelect.items = new string[] { Locale.Get("K45_WTS_MAINBUILIDING") }.Concat(buildingInfo.m_subBuildings?.Select((z, y) => $"{y}: {z.m_buildingInfo.name.Split(new char[] { '.' }, 2).LastOrDefault()}")).ToArray();
                     m_subBuildingSelect.selectedIndex = x.SubBuildingPivotReference + 1;
                 }
                 else

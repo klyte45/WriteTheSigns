@@ -1,9 +1,5 @@
-﻿using ColossalFramework;
-using ColossalFramework.Math;
-using ColossalFramework.UI;
-using Klyte.Commons;
+﻿using Klyte.Commons;
 using System;
-using System.Diagnostics;
 using UnityEngine;
 
 namespace Klyte.WriteTheSigns.Tools
@@ -19,7 +15,7 @@ namespace Klyte.WriteTheSigns.Tools
             if (m_hoverSegment != 0)
             {
                 Color toolColor = m_hoverColor;
-                RenderOverlayUtils.RenderNetSegmentOverlay(cameraInfo, toolColor,  m_hoverSegment);
+                RenderOverlayUtils.RenderNetSegmentOverlay(cameraInfo, toolColor, m_hoverSegment);
                 return;
             }
 
@@ -33,6 +29,7 @@ namespace Klyte.WriteTheSigns.Tools
                 GetComponent<DefaultTool>().enabled = true;
             }
         }
+        protected override void OnRightClick() => GetComponent<DefaultTool>().enabled = true;
 
         protected override void OnDisable()
         {

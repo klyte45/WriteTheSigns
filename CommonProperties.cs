@@ -25,5 +25,6 @@ namespace Klyte.Commons
 
         public static float UIScale { get; } = 1f;
         public static Color ModColor { get; } = new Color32(1, 79, 113, 255);
+        public static MonoBehaviour Controller => WriteTheSignsMod.Controller;
     }
 }

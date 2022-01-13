@@ -285,10 +285,10 @@ namespace Klyte.WriteTheSigns.Rendering
             switch (textDescriptor.m_destinationRelative)
             {
                 case DestinationReference.Self: targetSegment = segmentId; break;
-                case DestinationReference.Target1: targetSegment = propDescriptor.m_targetSegment1; break;
-                case DestinationReference.Target2: targetSegment = propDescriptor.m_targetSegment2; break;
-                case DestinationReference.Target3: targetSegment = propDescriptor.m_targetSegment3; break;
-                case DestinationReference.Target4: targetSegment = propDescriptor.m_targetSegment4; break;
+                case DestinationReference.Target1: targetSegment = propDescriptor.GetTargetSegment(1); break;
+                case DestinationReference.Target2: targetSegment = propDescriptor.GetTargetSegment(2); break;
+                case DestinationReference.Target3: targetSegment = propDescriptor.GetTargetSegment(3); break;
+                case DestinationReference.Target4: targetSegment = propDescriptor.GetTargetSegment(4); break;
             };
 
             if (targetSegment == 0)

@@ -15,8 +15,6 @@ namespace Klyte.WriteTheSigns.UI
 
         public override float PanelHeight => 850;
 
-        private WTSTestLiteUI liteUI;
-
         #region Awake
         protected override void AwakeActions()
         {
@@ -39,7 +37,7 @@ namespace Klyte.WriteTheSigns.UI
 
 
 
-            liteUI = KlyteMonoUtils.CreateElement<WTSTestLiteUI>(UIView.GetAView().transform.Find("TSBar").gameObject.transform);
+            KlyteMonoUtils.CreateElement<WTSOnNetLiteUI>(UIView.GetAView().transform.Find("TSBar").gameObject.transform);
 
         }
 

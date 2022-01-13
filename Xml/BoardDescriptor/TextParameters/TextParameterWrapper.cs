@@ -34,42 +34,22 @@ namespace Klyte.WriteTheSigns.Xml
                 switch (value.Split(':')[0])
                 {
                     case "folder":
-                        ParamType = ParameterType.FOLDER;
-                        isLocal = true;
-                        atlasName = inputMatches.Groups[4].Value;
-                        if (atlasName == "<ROOT>")
-                        {
-                            atlasName = string.Empty;
-                        }
+                        SetLocalFolder(inputMatches.Groups[4].Value);
                         return;
                     case "assetFolder":
-                        ParamType = ParameterType.FOLDER;
-                        isLocal = false;
-                        atlasName = string.Empty;
+                        SetAssetFolder();
                         return;
                     case "image":
-                        ParamType = ParameterType.IMAGE;
-                        isLocal = true;
-                        atlasName = inputMatches.Groups[3].Value;
-                        if (atlasName == "<ROOT>")
-                        {
-                            atlasName = string.Empty;
-                        }
-                        TextOrSpriteValue = inputMatches.Groups[4].Value;
+                        SetLocalImage(inputMatches.Groups[3].Value, inputMatches.Groups[4].Value);
                         return;
                     case "assetImage":
-                        ParamType = ParameterType.IMAGE;
-                        isLocal = false;
-                        atlasName = string.Empty;
-                        TextOrSpriteValue = inputMatches.Groups[4].Value;
+                        SetAssetImage(inputMatches.Groups[4].Value);
                         return;
                     case "var":
-                        ParamType = ParameterType.VARIABLE;
-                        VariableValue = new TextParameterVariableWrapper(inputMatches.Groups[5].Value);
+                        SetVariableFromString(inputMatches.Groups[5].Value);
                         return;
                     default:
-                        TextOrSpriteValue = value;
-                        ParamType = ParameterType.TEXT;
+                        SetPlainString(value);
                         return;
                 }
             }
@@ -86,7 +66,45 @@ namespace Klyte.WriteTheSigns.Xml
             }
         }
 
-        private string TextOrSpriteValue
+        public void SetLocalFolder(string folderName)
+        {
+            ParamType = ParameterType.FOLDER;
+            isLocal = true;
+            atlasName = folderName;
+            if (atlasName == "<ROOT>")
+            {
+                atlasName = string.Empty;
+            }
+        }
+
+        public void SetAssetFolder()
+        {
+            ParamType = ParameterType.FOLDER;
+            isLocal = false;
+            atlasName = string.Empty;
+        }
+
+        public void SetLocalImage(string folder, string file)
+        {
+            ParamType = ParameterType.IMAGE;
+            isLocal = true;
+            atlasName = folder;
+            if (folder is null || atlasName == "<ROOT>")
+            {
+                atlasName = string.Empty;
+            }
+            textOrSpriteValue = file;
+        }
+
+        public void SetAssetImage(string name)
+        {
+            ParamType = ParameterType.IMAGE;
+            isLocal = false;
+            atlasName = string.Empty;
+            textOrSpriteValue = name;
+        }
+
+        public string TextOrSpriteValue
         {
             get => textOrSpriteValue; set
             {
@@ -97,7 +115,7 @@ namespace Klyte.WriteTheSigns.Xml
         private TextParameterVariableWrapper VariableValue { get; set; }
         public string AtlasName
         {
-            get => atlasName; set
+            get => atlasName; private set
             {
                 atlasName = value;
                 m_isDirtyImage = true;
@@ -105,13 +123,13 @@ namespace Klyte.WriteTheSigns.Xml
         }
         public bool IsLocal
         {
-            get => isLocal; set
+            get => isLocal; private set
             {
                 isLocal = value;
                 m_isDirtyImage = true;
             }
         }
-        public ParameterType ParamType { get; set; }
+        public ParameterType ParamType { get; private set; }
         public bool IsEmpty { get; private set; }
 
         private UITextureAtlas m_cachedAtlas;
@@ -121,6 +139,19 @@ namespace Klyte.WriteTheSigns.Xml
         private PrefabInfo cachedPrefab;
         private ulong cachedPrefabId;
         private string textOrSpriteValue;
+
+        public void SetVariableFromString(string stringNoProtocol)
+        {
+            ParamType = ParameterType.VARIABLE;
+            VariableValue = new TextParameterVariableWrapper(stringNoProtocol);
+        }
+
+        public void SetPlainString(string value)
+        {
+            VariableValue = null;
+            TextOrSpriteValue = value;
+            ParamType = ParameterType.TEXT;
+        }
 
         public UITextureAtlas GetAtlas(PrefabInfo prefab)
         {
@@ -181,12 +212,9 @@ namespace Klyte.WriteTheSigns.Xml
 
         }
 
-        public string GetTargetTextForBuilding(BoardInstanceBuildingXml descriptorBuilding, ushort buildingId, BoardTextDescriptorGeneralXml textDescriptor)
-        {
-            return ParamType != ParameterType.VARIABLE
+        public string GetTargetTextForBuilding(BoardInstanceBuildingXml descriptorBuilding, ushort buildingId, BoardTextDescriptorGeneralXml textDescriptor) => ParamType != ParameterType.VARIABLE
                 ? ToString()
                 : VariableValue.GetTargetTextForBuilding(descriptorBuilding, buildingId, textDescriptor);
-        }
         public string GetTargetTextForNet(OnNetInstanceCacheContainerXml descriptorProp, ushort segmentId, BoardTextDescriptorGeneralXml textDescriptor)
         {
             if (ParamType != ParameterType.VARIABLE)
@@ -195,6 +223,15 @@ namespace Klyte.WriteTheSigns.Xml
             }
             return VariableValue.GetTargetTextForNet(descriptorProp, segmentId, textDescriptor);
         }
+        public string GetOriginalVariableParam()
+        {
+            if (ParamType != ParameterType.VARIABLE)
+            {
+                return null;
+            }
+            return VariableValue.m_originalCommand;
+        }
+
 
         public override string ToString()
         {

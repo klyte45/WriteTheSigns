@@ -134,7 +134,7 @@ namespace Klyte.WriteTheSigns.UI
 
         public void SetCurrentSelectionNewName(string newName)
         {
-            WTSPropLayoutData.Instance.Add(newName, ref EditingInstance);
+            WTSPropLayoutData.Instance.Add(newName,  EditingInstance);
             m_configList.text = newName;
         }
 
@@ -154,7 +154,7 @@ namespace Klyte.WriteTheSigns.UI
             {
                 SaveName = $"Tab {button.zOrder}"
             };
-            EditingInstance.TextDescriptors = EditingInstance.TextDescriptors.Union(new BoardTextDescriptorGeneralXml[] {
+            EditingInstance.TextDescriptors = EditingInstance.TextDescriptors.Concat(new BoardTextDescriptorGeneralXml[] {
                 newItem
             }).ToArray();
             button.text = newItem.SaveName;
@@ -243,7 +243,7 @@ namespace Klyte.WriteTheSigns.UI
                               {
                                   m_configurationSource = ConfigurationSource.CITY
                               };
-                              WTSPropLayoutData.Instance.Add(text, ref newModel);
+                              WTSPropLayoutData.Instance.Add(text,  newModel);
                               m_configList.text = ExecuteItemChange(text, true);
                           }
                           else
@@ -259,7 +259,7 @@ namespace Klyte.WriteTheSigns.UI
         {
             BoardDescriptorGeneralXml newItem = XmlUtils.DefaultXmlDeserialize<BoardDescriptorGeneralXml>(data);
             newItem.m_configurationSource = ConfigurationSource.CITY;
-            WTSPropLayoutData.Instance.Add(key, ref newItem);
+            WTSPropLayoutData.Instance.Add(key,  newItem);
             OnTabChange(0);
         }
 

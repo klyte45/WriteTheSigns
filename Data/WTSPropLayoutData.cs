@@ -41,6 +41,7 @@ namespace Klyte.WriteTheSigns.Data
 .Where((x) => (renderClass == null || renderClass == x.Value.m_allowedRenderClass) && (input.IsNullOrWhiteSpace() ? true : LocaleManager.cultureInfo.CompareInfo.IndexOf(x.Key, input, CompareOptions.IgnoreCase) >= 0))
 .OrderBy((x) => ((int)(4 - x.Value.m_configurationSource)) + x.Key)
 .Select(x => x.Key)
+.OrderBy(x => x)
 .ToArray();
         }
 
@@ -146,7 +147,7 @@ namespace Klyte.WriteTheSigns.Data
                         result.Add(item);
                     }
                 }
-                m_savedDescriptorsSerialized = m_savedDescriptorsSerialized.Values.Union(result).GroupBy(x => x.SaveName).Select(g => g.OrderByDescending(x => x.m_configurationSource).First()).ToDictionary(x => x.SaveName, x => x);
+                m_savedDescriptorsSerialized = m_savedDescriptorsSerialized.Values.Concat(result).GroupBy(x => x.SaveName).Select(g => g.OrderByDescending(x => x.m_configurationSource).First()).ToDictionary(x => x.SaveName, x => x);
             }
             else
             {

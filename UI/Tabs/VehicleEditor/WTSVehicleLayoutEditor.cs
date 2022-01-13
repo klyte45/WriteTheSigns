@@ -333,7 +333,7 @@ namespace Klyte.WriteTheSigns.UI
             {
                 SaveName = $"New text"
             };
-            EditingInstance.TextDescriptors = EditingInstance.TextDescriptors.Union(new BoardTextDescriptorGeneralXml[] { newItem
+            EditingInstance.TextDescriptors = EditingInstance.TextDescriptors.Concat(new BoardTextDescriptorGeneralXml[] { newItem
             }).ToArray();
             FixTabstrip();
         }

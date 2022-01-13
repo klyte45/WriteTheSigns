@@ -258,7 +258,7 @@ namespace Klyte.WriteTheSigns.UI
                 {
                     listVal = currentFile.listVal
                     .Where(x => x.SaveName != targetLayoutName)
-                    .Union(new BoardDescriptorGeneralXml[] { CloneViaXml(EditingInstance) }.Select(x => { x.SaveName = targetLayoutName; return x; }))
+                    .Concat(new BoardDescriptorGeneralXml[] { CloneViaXml(EditingInstance) }.Select(x => { x.SaveName = targetLayoutName; return x; }))
                     .ToList()
                 };
                 File.WriteAllText(output, DefaultXmlSerialize(exportableLayouts));
