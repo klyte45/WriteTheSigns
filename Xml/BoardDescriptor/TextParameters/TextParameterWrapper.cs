@@ -14,7 +14,8 @@ namespace Klyte.WriteTheSigns.Xml
             TEXT,
             IMAGE,
             FOLDER,
-            VARIABLE
+            VARIABLE,
+            EMPTY
         }
         public TextParameterWrapper()
         {
@@ -25,6 +26,7 @@ namespace Klyte.WriteTheSigns.Xml
         {
             if (value is null)
             {
+                ParamType = ParameterType.EMPTY;
                 IsEmpty = true;
                 return;
             }

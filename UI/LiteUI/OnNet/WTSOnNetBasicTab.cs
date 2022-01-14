@@ -213,5 +213,7 @@ namespace Klyte.WriteTheSigns.UI
         }
 
         internal bool ShowTabsOnTop() => m_currentModelType == 0 && !m_filterSelectionView;
+        internal bool ShowFooter() => !m_filterSelectionView;
+        internal bool CanHaveParameter() => m_currentModelType == 0;
     }
 }

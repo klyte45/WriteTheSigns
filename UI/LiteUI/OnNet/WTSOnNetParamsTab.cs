@@ -21,16 +21,16 @@ namespace Klyte.WriteTheSigns.UI
         private readonly string[] v_protocolsImg = new[] { Locale.Get("K45_WTS_IMAGESRC_ASSET"), Locale.Get("K45_WTS_IMAGESRC_LOCAL") };
         private readonly string[] v_protocolsFld = new[] { Locale.Get("K45_WTS_FOLDERSRC_ASSET"), Locale.Get("K45_WTS_FOLDERSRC_LOCAL") };
         private readonly string[] v_protocolsTxt = new[] { Locale.Get("K45_WTS_PARAMTYPE_PLAINTEXT"), Locale.Get("K45_WTS_PARAMTYPE_VARIABLE") };
-        private const string v_emptyPlaceholderOption = "<color=#FF00FF>--Empty--</color>";
-
+        private const string v_null = "<color=#FF00FF>--NULL--</color>";
+        private const string v_empty = "<color=#888888>--EMPTY--</color>";
         private Vector2 m_tabViewScroll;
         private Vector2 m_leftPanelScroll;
         private Vector2 m_rightPanelScroll;
         private State m_currentState = State.List;
         private int m_currentEditingParam = 0;
 
-        private string Text = Color.cyan.ToRGB();
-        private string Image = Color.green.ToRGB();
+        private string Text = Color.green.ToRGB();
+        private string Image = Color.cyan.ToRGB();
         private string Folder = Color.yellow.ToRGB();
 
         #region Basic Behavior
@@ -65,13 +65,16 @@ namespace Klyte.WriteTheSigns.UI
             var paramsUsed = item.GetAllParametersUsedWithData();
             if ((paramsUsed?.Count ?? 0) > 0)
             {
-                foreach (var kv in paramsUsed)
+                foreach (var kv in paramsUsed.OrderBy(x => x.Key))
                 {
                     var contentTypes = kv.Value.GroupBy(x => x.m_textType).Select(x => x.Key);
                     if (contentTypes.Count() > 1)
                     {
                         GUILayout.Label(string.Format(Locale.Get($"K45_WTS_ONNETEDITOR_TEXTPARAM"), kv.Key));
-                        GUILayout.Label(Locale.Get($"K45_WTS_ONNETEDITOR_INVALIDPARAMSETTINGS_DIFFERENTKINDSAMEPARAM"));
+                        GUILayout.Label(Locale.Get($"K45_WTS_ONNETEDITOR_INVALIDPARAMSETTINGS_DIFFERENTKINDSAMEPARAM"), new GUIStyle(GUI.skin.label)
+                        {
+                            alignment = TextAnchor.MiddleCenter
+                        });
                         GUILayout.Space(4);
                         continue;
                     }
@@ -89,12 +92,12 @@ namespace Klyte.WriteTheSigns.UI
                             target = Text;
                             break;
                     }
-                    var usedByText = string.Join("\n", kv.Value.Select(x => "\t\u2022 " + (x.ParameterDisplayName.IsNullOrWhiteSpace() ? x.SaveName : x.ParameterDisplayName)).ToArray());
+                    var usedByText = string.Join("\n", kv.Value.Select(x => $"\u2022{(x.ParameterDisplayName.IsNullOrWhiteSpace() ? x.SaveName : x.ParameterDisplayName)} ({(x.DefaultParameterValueAsString is null ? v_empty : $"<color=#{target}>{x.DefaultParameterValueAsString}</color>")})").ToArray());
                     GUIKlyteCommons.DoInHorizontal(() =>
                     {
                         GUILayout.Label(string.Format(Locale.Get($"K45_WTS_ONNETEDITOR_TEXTPARAM"), kv.Key) + $"\n<color=#{target}>{Locale.Get("K45_WTS_BOARD_TEXT_TYPE_DESC", targetContentType.ToString())}</color>\n\n{usedByText}");
                         var param = item.GetTextParameter(kv.Key);
-                        if (GUILayout.Button(param is null ? "<color=#FF00FF>--NULL--</color>" : param.IsEmpty ? "<color=#FFFF00>--EMPTY--</color>" : param.ToString(), GUILayout.ExpandHeight(true)))
+                        if (GUILayout.Button(param is null ? v_null : param.IsEmpty ? v_empty : param.ToString(), GUILayout.ExpandHeight(true)))
                         {
                             if (param is null)
                             {
@@ -214,21 +217,28 @@ namespace Klyte.WriteTheSigns.UI
                 {
                     m_selectedValue = CommandLevel.FromParameterPath(CommandLevel.GetParameterPath(m_selectedValue ?? "").Take(cl.level).Concat(new[] { m_searchResult.Value[m_varListHover] }));
                 }
+                item.SetTextParameter(m_currentEditingParam, GetCurrentParamString());
             }
-            item.SetTextParameter(m_currentEditingParam, GetCurrentParamString());
+            else
+            {
+                if (item.SetTextParameter(m_currentEditingParam, m_searchText == "" ? null : GetCurrentParamString()).ParamType == TextParameterWrapper.ParameterType.TEXT)
+                {
+                    item.DeleteTextParameter(m_currentEditingParam);
+                }
+            }
             m_currentState = State.List;
         }
 
-        private void RestartFilterCoroutine()
+        private void RestartFilterCoroutine(string autoselect = null)
         {
             if (m_searchCoroutine != null)
             {
                 WriteTheSignsMod.Controller.StopCoroutine(m_searchCoroutine);
             }
-            m_searchCoroutine = WriteTheSignsMod.Controller.StartCoroutine(OnFilterParam());
+            m_searchCoroutine = WriteTheSignsMod.Controller.StartCoroutine(OnFilterParam(autoselect));
         }
 
-        private IEnumerator OnFilterParam()
+        private IEnumerator OnFilterParam(string autoselect)
         {
             yield return 0;
             if (m_currentState == State.GettingImage || m_currentState == State.GettingFolder)
@@ -237,7 +247,15 @@ namespace Klyte.WriteTheSigns.UI
             }
             else if (m_currentState == State.GettingText)
             {
-                yield return m_searchResult.Value = new[] { "<color=#FFFF00><<</color>" }.Concat(OnFilterParamVariable()?.Select(x => x.IsNullOrWhiteSpace() ? v_emptyPlaceholderOption : x) ?? new string[0]).ToArray();
+                yield return m_searchResult.Value = new[] { "<color=#FFFF00><<</color>" }.Concat(OnFilterParamVariable()?.Select(x => x.IsNullOrWhiteSpace() ? v_empty : x) ?? new string[0]).ToArray();
+                if (autoselect != null)
+                {
+                    var autoSelectVal = Array.IndexOf(m_searchResult.Value, autoselect);
+                    if (autoSelectVal > 0)
+                    {
+                        OnHoverVar(autoSelectVal, CommandLevel.OnFilterParamByText(GetCurrentParamString(), out _));
+                    }
+                }
             }
         }
         #endregion
@@ -432,6 +450,13 @@ namespace Klyte.WriteTheSigns.UI
                 {
                     m_isVariable = varType == 1;
                     m_selectedValue = null;
+                    m_searchText = "";
+                    m_variableDescription = "";
+                    m_searchResult.Value = new string[0];
+                    if (m_isVariable)
+                    {
+                        RestartFilterCoroutine();
+                    }
                 }
             }, GUILayout.Width(areaRect.width));
 
@@ -493,7 +518,7 @@ namespace Klyte.WriteTheSigns.UI
                 {
                     var value = m_searchResult.Value[selectOpt];
                     var paramPath = CommandLevel.GetParameterPath(m_selectedValue ?? "");
-                    m_selectedValue = CommandLevel.FromParameterPath(paramPath.Take(cl.level).Concat(new[] { value == v_emptyPlaceholderOption ? "" : value }));
+                    m_selectedValue = CommandLevel.FromParameterPath(paramPath.Take(cl.level).Concat(new[] { value == v_empty ? "" : value }));
                     m_searchResult.Value = new string[0];
                     m_searchText = "";
                     m_varListHover = -1;
@@ -501,10 +526,7 @@ namespace Klyte.WriteTheSigns.UI
                 }
                 else
                 {
-                    m_varListHover = selectOpt;
-                    var str = m_searchResult.Value[m_varListHover];
-                    var key = cl.nextLevelOptions.Where(z => z.Key.ToString() == str).FirstOrDefault().Key;
-                    m_variableDescription = (key is null ? "" : $"<color=#00FF00>{key}</color>\n\n" + Locale.Get("K45_WTS_PARAMVARS_DESC", CommandLevel.ToLocaleVar(key)));
+                    OnHoverVar(selectOpt, cl);
                 }
             }
             else if (selectOpt == 0 && cl.level > 0)
@@ -512,10 +534,26 @@ namespace Klyte.WriteTheSigns.UI
                 var paramPath = CommandLevel.GetParameterPath(m_selectedValue ?? "");
                 m_selectedValue = CommandLevel.FromParameterPath(paramPath.Take(cl.level - 1));
                 m_searchResult.Value = new string[0];
-                m_searchText = cl.defaultValue is null ? paramPath[cl.level] : "";
                 m_varListHover = -1;
-                RestartFilterCoroutine();
+                if (CommandLevel.OnFilterParamByText(GetCurrentParamString(), out _).defaultValue is null)
+                {
+                    m_searchText = paramPath[cl.level - 1];
+                    RestartFilterCoroutine();
+                }
+                else
+                {
+                    m_searchText = "";
+                    RestartFilterCoroutine(paramPath[cl.level - 1]);
+                }
             }
+        }
+
+        private void OnHoverVar(int selectOpt, CommandLevel cl)
+        {
+            m_varListHover = selectOpt;
+            var str = m_searchResult.Value[m_varListHover];
+            var key = cl.nextLevelOptions.Where(z => z.Key.ToString() == str).FirstOrDefault().Key;
+            m_variableDescription = (key is null ? "" : $"<color=#00FF00>{key}</color>\n\n" + Locale.Get("K45_WTS_PARAMVARS_DESC", CommandLevel.ToLocaleVar(key)));
         }
 
         private string[] OnFilterParamVariable()

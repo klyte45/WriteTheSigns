@@ -79,13 +79,13 @@ namespace Klyte.WriteTheSigns.Xml
             }
         }
 
-        public void SetTextParameter(int idx, string val)
+        public TextParameterWrapper SetTextParameter(int idx, string val)
         {
             if (m_textParameters == null)
             {
                 m_textParameters = new TextParameterWrapper[TEXT_PARAMETERS_COUNT];
             }
-            m_textParameters[idx] = new TextParameterWrapper(val);
+            return m_textParameters[idx] = new TextParameterWrapper(val);
         }
         public void DeleteTextParameter(int idx)
         {

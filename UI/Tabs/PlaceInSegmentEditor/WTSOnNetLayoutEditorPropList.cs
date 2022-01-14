@@ -31,7 +31,8 @@ namespace Klyte.WriteTheSigns.UI
 
         public ref OnNetInstanceCacheContainerXml CurrentPropLayout
         {
-            get {
+            get
+            {
                 if (m_selectedIndex >= 0 && m_selectedIndex < (CurrentEdited?.BoardsData?.Length ?? 0))
                 {
                     return ref CurrentEdited.BoardsData[m_selectedIndex];
@@ -46,7 +47,8 @@ namespace Klyte.WriteTheSigns.UI
 
         public int SelectedIndex
         {
-            get => m_selectedIndex; private set {
+            get => m_selectedIndex; private set
+            {
                 m_selectedIndex = value;
                 if (value >= 0 && value < BoardsData.Length)
                 {
@@ -111,66 +113,62 @@ namespace Klyte.WriteTheSigns.UI
             CreateTabTemplate();
         }
 
-        private void OnExportData(string defaultText = null)
+        private void OnExportData(string defaultText = null) => K45DialogControl.ShowModalPromptText(new K45DialogControl.BindProperties
         {
-            K45DialogControl.ShowModalPromptText(new K45DialogControl.BindProperties
-            {
-                defaultTextFieldContent = defaultText,
-                title = Locale.Get("K45_WTS_SEGMENT_EXPORTRULESTITLE"),
-                message = Locale.Get("K45_WTS_SEGMENT_EXPORTRULESMESSAGE"),
-                showButton1 = true,
-                textButton1 = Locale.Get("SAVE"),
-                showButton2 = true,
-                textButton2 = Locale.Get("CANCEL"),
-            }, (ret, text) =>
+            defaultTextFieldContent = defaultText,
+            title = Locale.Get("K45_WTS_SEGMENT_EXPORTRULESTITLE"),
+            message = Locale.Get("K45_WTS_SEGMENT_EXPORTRULESMESSAGE"),
+            showButton1 = true,
+            textButton1 = Locale.Get("SAVE"),
+            showButton2 = true,
+            textButton2 = Locale.Get("CANCEL"),
+        }, (ret, text) =>
+         {
+             if (ret == 1)
              {
-                 if (ret == 1)
+                 if (text.IsNullOrWhiteSpace())
                  {
-                     if (text.IsNullOrWhiteSpace())
-                     {
-                         K45DialogControl.UpdateCurrentMessage($"<color #FFFF00>{Locale.Get("K45_WTS_SEGMENT_EXPORTRULESMESSAGE_INVALIDNAME")}</color>\n\n{Locale.Get("K45_WTS_SEGMENT_EXPORTRULESMESSAGE")}");
-                         return false;
-                     }
-                     WTSLibOnNetPropLayoutList.Reload();
-                     var currentData = WTSLibOnNetPropLayoutList.Instance.Get(text);
-                     if (currentData == null)
-                     {
-                         AddCurrentListToLibrary(text);
-                     }
-                     else
-                     {
-                         K45DialogControl.ShowModal(new K45DialogControl.BindProperties
-                         {
-                             title = Locale.Get("K45_WTS_SEGMENT_EXPORTRULESTITLE"),
-                             message = string.Format(Locale.Get("K45_WTS_SEGMENT_EXPORTRULESMESSAGE_CONFIRMOVERWRITE"), text),
-                             showButton1 = true,
-                             textButton1 = Locale.Get("YES"),
-                             showButton2 = true,
-                             textButton2 = Locale.Get("NO"),
-                         }, (x) =>
-                         {
-                             if (x == 1)
-                             {
-                                 AddCurrentListToLibrary(text);
-                             }
-                             else
-                             {
-                                 OnExportData(text);
-                             }
-                             return true;
-                         });
-                     }
+                     K45DialogControl.UpdateCurrentMessage($"<color #FFFF00>{Locale.Get("K45_WTS_SEGMENT_EXPORTRULESMESSAGE_INVALIDNAME")}</color>\n\n{Locale.Get("K45_WTS_SEGMENT_EXPORTRULESMESSAGE")}");
+                     return false;
                  }
-                 return true;
-             });
-
-        }
+                 WTSLibOnNetPropLayoutList.Reload();
+                 var currentData = WTSLibOnNetPropLayoutList.Instance.Get(text);
+                 if (currentData == null)
+                 {
+                     AddCurrentListToLibrary(text);
+                 }
+                 else
+                 {
+                     K45DialogControl.ShowModal(new K45DialogControl.BindProperties
+                     {
+                         title = Locale.Get("K45_WTS_SEGMENT_EXPORTRULESTITLE"),
+                         message = string.Format(Locale.Get("K45_WTS_SEGMENT_EXPORTRULESMESSAGE_CONFIRMOVERWRITE"), text),
+                         showButton1 = true,
+                         textButton1 = Locale.Get("YES"),
+                         showButton2 = true,
+                         textButton2 = Locale.Get("NO"),
+                     }, (x) =>
+                     {
+                         if (x == 1)
+                         {
+                             AddCurrentListToLibrary(text);
+                         }
+                         else
+                         {
+                             OnExportData(text);
+                         }
+                         return true;
+                     });
+                 }
+             }
+             return true;
+         });
 
         private void AddCurrentListToLibrary(string text)
         {
             WTSLibOnNetPropLayoutList.Reload();
-            var newItem = new ExportableBoardInstanceOnNetListXml { Instances = CurrentEdited.BoardsData.Select((x) => XmlUtils.DefaultXmlDeserialize<BoardInstanceOnNetXml>(XmlUtils.DefaultXmlSerialize(x))).ToArray(), Layouts = CurrentEdited.LocalLayouts };
-            WTSLibOnNetPropLayoutList.Instance.Add(text,  newItem);
+            var newItem = new ExportableBoardInstanceOnNetListXml { Instances = CurrentEdited.BoardsData.Select((x) => XmlUtils.DefaultXmlDeserialize<BoardInstanceOnNetXml>(XmlUtils.DefaultXmlSerialize(x))).ToArray(), Layouts = CurrentEdited.GetLocalLayouts() };
+            WTSLibOnNetPropLayoutList.Instance.Add(text, newItem);
             K45DialogControl.ShowModal(new K45DialogControl.BindProperties
             {
                 title = Locale.Get("K45_WTS_SEGMENT_EXPORTRULESTITLE"),
@@ -226,7 +224,7 @@ namespace Klyte.WriteTheSigns.UI
                             if (WTSPropLayoutData.Instance.Get(x.Key) == null)
                             {
                                 var value = x.Value;
-                                WTSPropLayoutData.Instance.Add(x.Key,  value);
+                                WTSPropLayoutData.Instance.Add(x.Key, value);
                             }
                         });
                         FixTabstrip();
@@ -390,7 +388,8 @@ namespace Klyte.WriteTheSigns.UI
 
         public bool Dirty
         {
-            get => m_dirty; set {
+            get => m_dirty; set
+            {
                 if (value && MainContainer.isVisible)
                 {
                     FixTabstrip();
