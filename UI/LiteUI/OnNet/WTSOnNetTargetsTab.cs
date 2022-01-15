@@ -26,7 +26,7 @@ namespace Klyte.WriteTheSigns.UI
 
         private void DrawTargetSegmentSelectionList(OnNetInstanceCacheContainerXml item, Rect areaRect)
         {
-            for (int i = 1; i <= 4; i++)
+            for (int i = 0; i <= 4; i++)
             {
                 GUIKlyteCommons.DoInHorizontal(() =>
                 {
@@ -47,20 +47,20 @@ namespace Klyte.WriteTheSigns.UI
                 return Locale.Get("ANIMAL_STATUS_WAITING");
             }
             var targSeg = item.GetTargetSegment(i);
-            if (cachedSegmentNames[i - 1] is null || targSeg != cachedSegmentNames[i - 1].First)
+            if (cachedSegmentNames[i] is null || targSeg != cachedSegmentNames[i].First)
             {
                 if (targSeg == 0)
                 {
-                    cachedSegmentNames[i - 1] = Tuple.New(targSeg, Locale.Get("K45_WTS_ONNETEDITOR_UNSETTARGETDESC"));
+                    cachedSegmentNames[i] = Tuple.New(targSeg, Locale.Get("K45_WTS_ONNETEDITOR_UNSETTARGETDESC"));
                 }
                 else
                 {
                     var pos = NetManager.instance.m_segments.m_buffer[targSeg].m_middlePosition;
                     WriteTheSignsMod.Controller.ConnectorADR.GetAddressStreetAndNumber(pos, pos, out int num, out string streetName);
-                    cachedSegmentNames[i - 1] = Tuple.New(targSeg, $"{((streetName?.Length ?? 0) == 0 ? NetManager.instance.m_segments.m_buffer[targSeg].Info.GetLocalizedTitle() : streetName)}, ~{num}m");
+                    cachedSegmentNames[i] = Tuple.New(targSeg, $"{((streetName?.Length ?? 0) == 0 ? NetManager.instance.m_segments.m_buffer[targSeg].Info.GetLocalizedTitle() : streetName)}, ~{num}m");
                 }
             }
-            return cachedSegmentNames[i - 1].Second;
+            return cachedSegmentNames[i].Second;
         }
 
         private void OnEnterPickTarget(OnNetInstanceCacheContainerXml item, int idx)
@@ -72,6 +72,6 @@ namespace Klyte.WriteTheSigns.UI
         }
 
         private int CurrentSegmentInSelect = -1;
-        private Tuple<ushort, string>[] cachedSegmentNames = new Tuple<ushort, string>[4];
+        private Tuple<ushort, string>[] cachedSegmentNames = new Tuple<ushort, string>[5];
     }
 }

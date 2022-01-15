@@ -72,6 +72,7 @@ namespace Klyte.WriteTheSigns.ModShared
         }
 
         internal override byte GetDirection(ushort segmentId) => AdrFacade.GetStreetDirection(segmentId);
+        internal override float GetDistanceFromCenter(ushort segmentId) => AdrFacade.GetDistanceFromReference(segmentId);
     }
 }
 

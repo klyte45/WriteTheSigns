@@ -26,6 +26,14 @@ namespace Klyte.WriteTheSigns.Xml
         ParkAreaKm2,
         ParkAreaMi2,
         DistrictPopulation,
+        Direction,
+        HwCodeShort,
+        HwCodeLong,
+        HwDettachedPrefix,
+        HwIdentifierSuffix,
+        DistanceFromReferenceKilometers,
+        DistanceFromReferenceMeters,
+        DistanceFromReferenceMiles,
     }
 
     internal static class VariableSegmentTargetSubTypeExtensions
@@ -57,6 +65,9 @@ namespace Klyte.WriteTheSigns.Xml
                 case VariableSegmentTargetSubType.ParkAreaM2:
                 case VariableSegmentTargetSubType.ParkAreaKm2:
                 case VariableSegmentTargetSubType.ParkAreaMi2:
+                case VariableSegmentTargetSubType.DistanceFromReferenceKilometers:
+                case VariableSegmentTargetSubType.DistanceFromReferenceMeters:
+                case VariableSegmentTargetSubType.DistanceFromReferenceMiles:
                     return CommandLevel.m_numberFormatFloat;
                 case VariableSegmentTargetSubType.DistrictPopulation:
                     return CommandLevel.m_numberFormatInt;
@@ -69,6 +80,11 @@ namespace Klyte.WriteTheSigns.Xml
                 case VariableSegmentTargetSubType.DistrictOrPark:
                     return CommandLevel.m_stringFormat;
                 case VariableSegmentTargetSubType.PostalCode:
+                case VariableSegmentTargetSubType.Direction:
+                case VariableSegmentTargetSubType.HwCodeShort:
+                case VariableSegmentTargetSubType.HwCodeLong:
+                case VariableSegmentTargetSubType.HwDettachedPrefix:
+                case VariableSegmentTargetSubType.HwIdentifierSuffix:
                     return CommandLevel.m_appendPrefix;
                 default:
                     return null;
@@ -124,6 +140,15 @@ namespace Klyte.WriteTheSigns.Xml
                 case VariableSegmentTargetSubType.MileageMeters:
                     return varWrapper.TryFormat(WTSCacheSingleton.instance.GetSegment(targId).GetMetersAt(propDescriptor.SegmentPosition), multiplier);
 
+                case VariableSegmentTargetSubType.DistanceFromReferenceKilometers:
+                    multiplier = 0.001f;
+                    goto case VariableSegmentTargetSubType.DistanceFromReferenceMeters;
+                case VariableSegmentTargetSubType.DistanceFromReferenceMiles:
+                    multiplier = 1 / 1609f;
+                    goto case VariableSegmentTargetSubType.DistanceFromReferenceMeters;
+                case VariableSegmentTargetSubType.DistanceFromReferenceMeters:
+                    return varWrapper.TryFormat(WTSCacheSingleton.instance.GetSegment(targId).DistanceFromCenter, multiplier);
+
                 case VariableSegmentTargetSubType.DistrictAreaKm2:
                     multiplier = 0.000001f;
                     goto case VariableSegmentTargetSubType.DistrictAreaM2;
@@ -144,6 +169,13 @@ namespace Klyte.WriteTheSigns.Xml
 
                 case VariableSegmentTargetSubType.DistrictPopulation:
                     return varWrapper.TryFormat(WTSCacheSingleton.instance.GetDistrict(WTSCacheSingleton.instance.GetSegment(targId).DistrictId).Population);
+
+
+                case VariableSegmentTargetSubType.Direction: return WTSCacheSingleton.instance.GetSegment(targId).Direction;
+                case VariableSegmentTargetSubType.HwCodeShort: return WTSCacheSingleton.instance.GetSegment(targId).HwCodeShort;
+                case VariableSegmentTargetSubType.HwCodeLong: return WTSCacheSingleton.instance.GetSegment(targId).HwCodeLong;
+                case VariableSegmentTargetSubType.HwDettachedPrefix: return WTSCacheSingleton.instance.GetSegment(targId).HwDettachedPrefix;
+                case VariableSegmentTargetSubType.HwIdentifierSuffix: return WTSCacheSingleton.instance.GetSegment(targId).HwIdentifierSuffix;
 
                 default:
                     return null;

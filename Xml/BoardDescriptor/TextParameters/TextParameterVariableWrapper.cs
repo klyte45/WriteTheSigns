@@ -1,7 +1,6 @@
 ﻿using Klyte.WriteTheSigns.Rendering;
 using System;
 using System.Linq;
-using System.Text.RegularExpressions;
 
 namespace Klyte.WriteTheSigns.Xml
 {
@@ -9,7 +8,7 @@ namespace Klyte.WriteTheSigns.Xml
     {
         public readonly string m_originalCommand;
 
-        internal TextParameterVariableWrapper(string input)
+        internal TextParameterVariableWrapper(string input, TextRenderingClass? renderingClass)
         {
             m_originalCommand = input;
             var parameterPath = CommandLevel.GetParameterPath(input);
@@ -21,6 +20,10 @@ namespace Klyte.WriteTheSigns.Xml
                     varType = (VariableType)Enum.Parse(typeof(VariableType), parameterPath[0]);
                 }
                 catch { }
+                if (!varType.Supports(renderingClass))
+                {
+                    return;
+                }
                 switch (varType)
                 {
                     case VariableType.SegmentTarget:
@@ -33,6 +36,20 @@ namespace Klyte.WriteTheSigns.Xml
                                 {
                                     index = targIdx;
                                     type = VariableType.SegmentTarget;
+                                }
+                            }
+                            catch { }
+                        }
+                        break;
+                    case VariableType.CurrentSegment:
+                        if (parameterPath.Length >= 2)
+                        {
+                            try
+                            {
+                                if (Enum.Parse(typeof(VariableSegmentTargetSubType), parameterPath[1]) is VariableSegmentTargetSubType tt
+                                    && tt.ReadData(parameterPath.Skip(2).ToArray(), ref subtype, ref numberFormat, ref stringFormat, ref prefix, ref suffix))
+                                {
+                                    type = VariableType.CurrentSegment;
                                 }
                             }
                             catch { }
@@ -89,11 +106,14 @@ namespace Klyte.WriteTheSigns.Xml
             switch (type)
             {
                 case VariableType.SegmentTarget:
-                    var targId = index == 0 ? segmentId : propDescriptor?.GetTargetSegment(index) ?? 0;
-
+                    var targId = propDescriptor?.GetTargetSegment(index) ?? 0;
                     return targId == 0 || !(subtype is VariableSegmentTargetSubType targetSubtype) || targetSubtype == VariableSegmentTargetSubType.None
                         ? $"{prefix}{subtype}@targ{index}{suffix}"
                         : $"{prefix}{targetSubtype.GetFormattedString(propDescriptor, targId, this) ?? m_originalCommand}{suffix}";
+                case VariableType.CurrentSegment:
+                    return segmentId == 0 || !(subtype is VariableSegmentTargetSubType targetSubtype2) || targetSubtype2 == VariableSegmentTargetSubType.None
+                        ? $"{prefix}{subtype}@currSeg"
+                        : $"{prefix}{targetSubtype2.GetFormattedString(propDescriptor, segmentId, this) ?? m_originalCommand}{suffix}";
                 case VariableType.CityData:
                     if ((subtype is VariableCitySubType targetCitySubtype))
                     {

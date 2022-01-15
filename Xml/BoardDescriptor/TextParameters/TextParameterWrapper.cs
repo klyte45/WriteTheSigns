@@ -145,7 +145,7 @@ namespace Klyte.WriteTheSigns.Xml
         public void SetVariableFromString(string stringNoProtocol)
         {
             ParamType = ParameterType.VARIABLE;
-            VariableValue = new TextParameterVariableWrapper(stringNoProtocol);
+            VariableValue = new TextParameterVariableWrapper(stringNoProtocol, Rendering.TextRenderingClass.PlaceOnNet);
         }
 
         public void SetPlainString(string value)

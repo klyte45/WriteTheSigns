@@ -1,6 +1,7 @@
 ﻿using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Data;
 using Klyte.WriteTheSigns.Xml;
+using System;
 using System.Collections;
 using UnityEngine;
 using static Klyte.Commons.Utils.SegmentUtils;
@@ -71,5 +72,6 @@ namespace Klyte.WriteTheSigns.ModShared
         }
 
         internal abstract byte GetDirection(ushort segmentId);
+        internal abstract float GetDistanceFromCenter(ushort segmentId);
     }
 }

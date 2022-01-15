@@ -6,6 +6,7 @@
         MileageMarker,
         Buildings,
         PlaceOnNet,
+        Vehicle,
     }
 
 }

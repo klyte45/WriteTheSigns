@@ -89,7 +89,7 @@ namespace Klyte.WriteTheSigns.Rendering
                 {
                     direction8 = WriteTheSignsMod.Controller.ConnectorADR.GetDirection(segmentId);
                 }
-                return Locale.Get("K45_CMNS_CARDINALPOINT_SHORT", (direction8 * 2).ToString());
+                return Locale.Get("K45_CMNS_CARDINALPOINT_SHORT", CardinalPoint.m_cardinal16[(direction8 ?? 0) * 2]);
             }
         }
 
@@ -99,8 +99,7 @@ namespace Klyte.WriteTheSigns.Rendering
             {
                 if (startMileageMeters is null)
                 {
-                    var hwData = WriteTheSignsMod.Controller.ConnectorADR.GetHighwayData(NetManager.instance.m_segments.m_buffer[segmentId].m_nameSeed);
-                    startMileageMeters = SegmentUtils.GetNumberAt(0, segmentId, hwData?.mileageSrc ?? SegmentUtils.MileageStartSource.DEFAULT, hwData?.mileageOffset ?? 0, out _);
+                    FillHwParams();
                 }
                 return startMileageMeters ?? 0;
             }
@@ -112,8 +111,7 @@ namespace Klyte.WriteTheSigns.Rendering
             {
                 if (endMileageMeters is null)
                 {
-                    var hwData = WriteTheSignsMod.Controller.ConnectorADR.GetHighwayData(NetManager.instance.m_segments.m_buffer[segmentId].m_nameSeed);
-                    endMileageMeters = SegmentUtils.GetNumberAt(1, segmentId, hwData?.mileageSrc ?? SegmentUtils.MileageStartSource.DEFAULT, hwData?.mileageOffset ?? 0, out _); ;
+                    FillHwParams();
                 }
                 return endMileageMeters ?? 0;
             }
@@ -138,11 +136,63 @@ namespace Klyte.WriteTheSigns.Rendering
             }
         }
 
-        public float DistanceFromCenter { get; internal set; }
-        public string HwCodeShort { get; internal set; }
-        public string HwCodeLong { get; internal set; }
-        public string HwDettachedPrefix { get; internal set; }
-        public string HwIdentifierSuffix { get; internal set; }
+        public float DistanceFromCenter
+        {
+            get
+            {
+                if (distanceFromCenter is null)
+                {
+                    distanceFromCenter = WriteTheSignsMod.Controller.ConnectorADR.GetDistanceFromCenter(segmentId);
+                }
+                return distanceFromCenter ?? 0;
+            }
+        }
+        public string HwCodeShort
+        {
+            get
+            {
+                if (hwCodeShort is null)
+                {
+                    FillHwParams();
+                }
+                return hwCodeShort;
+            }
+        }
+
+
+        public string HwCodeLong
+        {
+            get
+            {
+                if (hwCodeLong is null)
+                {
+                    FillHwParams();
+                }
+                return hwCodeLong;
+            }
+        }
+        public string HwDettachedPrefix
+        {
+            get
+            {
+                if (hwDettachedPrefix is null)
+                {
+                    FillHwParams();
+                }
+                return hwDettachedPrefix;
+            }
+        }
+        public string HwIdentifierSuffix
+        {
+            get
+            {
+                if (hwIdentifierSuffix is null)
+                {
+                    FillHwParams();
+                }
+                return hwIdentifierSuffix;
+            }
+        }
 
         private FormatableString fullStreetName;
         private FormatableString streetName;
@@ -154,11 +204,23 @@ namespace Klyte.WriteTheSigns.Rendering
         private int? endMileageMeters;
         private ushort? outsideConnectionId;
         private byte? direction8;
-        private FormatableString hwCodeShort;
-        private FormatableString hwCodeLong;
-        private FormatableString hwDettachedPrefix;
-        private FormatableString hwIdentifierSuffix;
+        private string hwCodeShort;
+        private string hwCodeLong;
+        private string hwDettachedPrefix;
+        private string hwIdentifierSuffix;
         private float? distanceFromCenter;
+
+
+        private void FillHwParams()
+        {
+            var paramsHw = WriteTheSignsMod.Controller.ConnectorADR.GetHighwayData(NetManager.instance.m_segments.m_buffer[segmentId].m_nameSeed);
+            hwDettachedPrefix = paramsHw?.detachedStr ?? "";
+            hwIdentifierSuffix = paramsHw?.hwIdentifier ?? "";
+            hwCodeShort = paramsHw?.shortCode ?? "";
+            hwCodeLong = paramsHw?.longCode ?? "";
+            startMileageMeters = SegmentUtils.GetNumberAt(0, segmentId, paramsHw?.mileageSrc ?? SegmentUtils.MileageStartSource.DEFAULT, paramsHw?.mileageOffset ?? 0, out _);
+            endMileageMeters = SegmentUtils.GetNumberAt(1, segmentId, paramsHw?.mileageSrc ?? SegmentUtils.MileageStartSource.DEFAULT, paramsHw?.mileageOffset ?? 0, out _);
+        }
 
         public void PurgeCache(CacheErasingFlags cacheToPurge, InstanceID refId)
         {
@@ -194,6 +256,11 @@ namespace Klyte.WriteTheSigns.Rendering
             {
                 startMileageMeters = null;
                 endMileageMeters = null;
+                distanceFromCenter = null;
+            }
+            if (cacheToPurge.Has(CacheErasingFlags.PostalCodeParam))
+            {
+                distanceFromCenter = null;
             }
         }
 

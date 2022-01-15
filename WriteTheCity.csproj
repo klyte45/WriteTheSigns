@@ -39,7 +39,7 @@
     <Compile Include="UI\**\*.cs" />
     <Compile Include="Utils\**\*.cs" />
     <Compile Include="Xml\**\*.cs" />
-    <Compile Include="_StbTrueTypeSharp\**\*.cs" /> 
+    <Compile Include="_StbTrueTypeSharp\**\*.cs" />
     <Compile Include="*.cs" />
   </ItemGroup>
   <ProjectExtensions>
