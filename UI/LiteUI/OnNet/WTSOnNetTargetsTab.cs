@@ -1,6 +1,7 @@
 ﻿using ColossalFramework.Globalization;
 using Klyte.Commons.LiteUI;
 using Klyte.Commons.Utils;
+using Klyte.WriteTheSigns.Tools;
 using Klyte.WriteTheSigns.Xml;
 using UnityEngine;
 
@@ -64,10 +65,10 @@ namespace Klyte.WriteTheSigns.UI
 
         private void OnEnterPickTarget(OnNetInstanceCacheContainerXml item, int idx)
         {
-            WriteTheSignsMod.Controller.RoadSegmentToolInstance.enabled = false;
+            ToolsModifierControl.SetTool<DefaultTool>();
             WriteTheSignsMod.Controller.RoadSegmentToolInstance.OnSelectSegment += (k) => item.SetTargetSegment(idx, k);
             CurrentSegmentInSelect = idx;
-            WriteTheSignsMod.Controller.RoadSegmentToolInstance.enabled = true;
+            ToolsModifierControl.SetTool<RoadSegmentTool>();
         }
 
         private int CurrentSegmentInSelect = -1;

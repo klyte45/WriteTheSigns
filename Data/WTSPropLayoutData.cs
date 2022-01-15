@@ -102,7 +102,6 @@ namespace Klyte.WriteTheSigns.Data
                 .Select(g => g.OrderBy(x => -1 * (int)x.m_configurationSource).First())
                 .ToDictionary(x => x.SaveName, x => x);
         }
-
         private void LoadDescriptorsFromXml(FileStream stream, PropInfo info)
         {
             var serializer = new XmlSerializer(typeof(ListWrapper<BoardDescriptorGeneralXml>));

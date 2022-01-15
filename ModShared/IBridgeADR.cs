@@ -69,5 +69,7 @@ namespace Klyte.WriteTheSigns.ModShared
             public MileageStartSource mileageSrc;
             public MileageStartSource axis;
         }
+
+        internal abstract byte GetDirection(ushort segmentId);
     }
 }

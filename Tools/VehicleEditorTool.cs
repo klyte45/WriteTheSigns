@@ -34,12 +34,12 @@ namespace Klyte.WriteTheSigns.Tools
             if (m_hoverVehicle != 0 && !(OnVehicleSelect is null))
             {
                 OnVehicleSelect.Invoke(m_hoverVehicle);
-                ToolsModifierControl.toolController.CurrentTool = ToolsModifierControl.toolController.GetComponent<DefaultTool>();
+                ToolsModifierControl.SetTool<DefaultTool>();
             }
             else if (m_hoverParkedVehicle != 0 && !(OnParkedVehicleSelect is null))
             {
                 OnParkedVehicleSelect.Invoke(m_hoverParkedVehicle);
-                ToolsModifierControl.toolController.CurrentTool = ToolsModifierControl.toolController.GetComponent<DefaultTool>();
+                ToolsModifierControl.SetTool<DefaultTool>();
             }
         }
 

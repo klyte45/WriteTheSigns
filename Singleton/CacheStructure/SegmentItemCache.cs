@@ -1,4 +1,5 @@
-﻿using Klyte.Commons.Utils;
+﻿using ColossalFramework.Globalization;
+using Klyte.Commons.Utils;
 using UnityEngine;
 
 namespace Klyte.WriteTheSigns.Rendering
@@ -80,6 +81,17 @@ namespace Klyte.WriteTheSigns.Rendering
                 return districtId ?? 0;
             }
         }
+        public string Direction
+        {
+            get
+            {
+                if (direction8 is null)
+                {
+                    direction8 = WriteTheSignsMod.Controller.ConnectorADR.GetDirection(segmentId);
+                }
+                return Locale.Get("K45_CMNS_CARDINALPOINT_SHORT", (direction8 * 2).ToString());
+            }
+        }
 
         public int StartMileageMeters
         {
@@ -126,6 +138,12 @@ namespace Klyte.WriteTheSigns.Rendering
             }
         }
 
+        public float DistanceFromCenter { get; internal set; }
+        public string HwCodeShort { get; internal set; }
+        public string HwCodeLong { get; internal set; }
+        public string HwDettachedPrefix { get; internal set; }
+        public string HwIdentifierSuffix { get; internal set; }
+
         private FormatableString fullStreetName;
         private FormatableString streetName;
         private FormatableString streetQualifier;
@@ -135,6 +153,12 @@ namespace Klyte.WriteTheSigns.Rendering
         private int? startMileageMeters;
         private int? endMileageMeters;
         private ushort? outsideConnectionId;
+        private byte? direction8;
+        private FormatableString hwCodeShort;
+        private FormatableString hwCodeLong;
+        private FormatableString hwDettachedPrefix;
+        private FormatableString hwIdentifierSuffix;
+        private float? distanceFromCenter;
 
         public void PurgeCache(CacheErasingFlags cacheToPurge, InstanceID refId)
         {
@@ -143,6 +167,11 @@ namespace Klyte.WriteTheSigns.Rendering
                 fullStreetName = null;
                 streetName = null;
                 streetQualifier = null;
+                direction8 = null;
+                hwCodeShort = null;
+                hwCodeLong = null;
+                hwDettachedPrefix = null;
+                hwIdentifierSuffix = null;
             }
 
             if (cacheToPurge.Has(CacheErasingFlags.PostalCodeParam))

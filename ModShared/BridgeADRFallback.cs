@@ -48,6 +48,7 @@ namespace Klyte.WriteTheSigns.ModShared
         public override AdrHighwayParameters GetHighwayData(ushort seedId) => null;
         public override IEnumerator ListAllAvailableHighwayTypes(string filterText, Wrapper<string[]> result) => null;
         public override AdrHighwayParameters GetHighwayTypeData(string typeName) => null;
+        internal override byte GetDirection(ushort segmentId) => SegmentUtils.GetCardinalDirectionSegment(segmentId, SegmentUtils.MileageStartSource.DEFAULT);
     }
 }
 

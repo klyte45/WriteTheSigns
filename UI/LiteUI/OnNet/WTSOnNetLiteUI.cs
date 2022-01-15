@@ -3,6 +3,7 @@ using Klyte.Commons.LiteUI;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Data;
 using Klyte.WriteTheSigns.Libraries;
+using Klyte.WriteTheSigns.Tools;
 using Klyte.WriteTheSigns.Xml;
 using System.Linq;
 using UnityEngine;
@@ -11,10 +12,24 @@ namespace Klyte.WriteTheSigns.UI
 {
     internal class WTSOnNetLiteUI : GUIRootWindowBase
     {
+        public static WTSOnNetLiteUI Instance { get; private set; }
         private GUIColorPicker colorPicker;
 
 
+        public WTSOnNetLiteUI()
+           : base("On Net Editor", new Rect(128, 128, 680, 420), resizable: true, minSize: new Vector2(340, 260))
+        {
+            Instance = this;
+            xmlLibList.DeleteI18n = "K45_WTS_SEGMENT_CLEARDATA_AYS";
+        }
         public void Start() => colorPicker = KlyteMonoUtils.CreateElement<GUIColorPicker>(gameObject.transform);
+        public void Update()
+        {
+            if (Visible && Event.current.button == 1)
+            {
+                ToolsModifierControl.SetTool<SegmentEditorPickerTool>();
+            }
+        }
         internal override GUIColorPicker ColorPicker => colorPicker;
 
         private int tabSel = 0;
@@ -123,8 +138,6 @@ namespace Klyte.WriteTheSigns.UI
         }
 
 
-        public WTSOnNetLiteUI()
-           : base("On Net Editor", new Rect(128, 128, 680, 420), resizable: true, minSize: new Vector2(340, 260)) => xmlLibList.DeleteI18n = "K45_WTS_SEGMENT_CLEARDATA_AYS";
 
         protected override void DrawWindow()
         {

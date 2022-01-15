@@ -70,6 +70,8 @@ namespace Klyte.WriteTheSigns.ModShared
                 ? result
                 : null;
         }
+
+        internal override byte GetDirection(ushort segmentId) => AdrFacade.GetStreetDirection(segmentId);
     }
 }
 

@@ -1,4 +1,5 @@
 ﻿using Klyte.WriteTheSigns.Xml;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Klyte.WriteTheSigns.Utils
@@ -19,6 +20,18 @@ namespace Klyte.WriteTheSigns.Utils
         internal static StopInformation[] GetTargetStopInfo(BoardInstanceBuildingXml descriptor, ushort buildingId)
         {
             foreach (int platform in descriptor.m_platforms)
+            {
+                if (WriteTheSignsMod.Controller.BuildingPropsSingleton.m_platformToLine[buildingId] != null && WriteTheSignsMod.Controller.BuildingPropsSingleton.m_platformToLine[buildingId].ElementAtOrDefault(platform)?.Length > 0)
+                {
+                    StopInformation[] line = WriteTheSignsMod.Controller.BuildingPropsSingleton.m_platformToLine[buildingId][platform];
+                    return line;
+                }
+            }
+            return m_emptyInfo;
+        }
+        internal static StopInformation[] GetTargetStopInfo(IEnumerable<int> platforms, ushort buildingId)
+        {
+            foreach (int platform in platforms)
             {
                 if (WriteTheSignsMod.Controller.BuildingPropsSingleton.m_platformToLine[buildingId] != null && WriteTheSignsMod.Controller.BuildingPropsSingleton.m_platformToLine[buildingId].ElementAtOrDefault(platform)?.Length > 0)
                 {

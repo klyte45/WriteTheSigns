@@ -1,4 +1,6 @@
 ﻿extern alias TLM;
+
+using Klyte.Commons;
 using Klyte.Commons.Interfaces;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.ModShared;
@@ -32,6 +34,7 @@ namespace Klyte.WriteTheSigns
         internal WTSHighwayShieldsAtlasLibrary HighwayShieldsAtlasLibrary { get; private set; }
         internal IBridgeTLM ConnectorTLM { get; private set; }
         internal IBridgeADR ConnectorADR { get; private set; }
+        protected override string ClassBridgeUUI { get; } = "Klyte.WriteTheSigns.ModShared.BridgeUUI";
 
         public WTSRoadPropsSingleton RoadPropsSingleton { get; private set; }
         public Dictionary<string, Dictionary<string, string>> AbbreviationFiles { get; private set; }
@@ -76,19 +79,12 @@ namespace Klyte.WriteTheSigns
 
         public void Awake()
         {
-            if (RoadSegmentToolInstance is null)
-            {
-                ToolsModifierControl.toolController.gameObject.AddComponent<RoadSegmentTool>();
-            }
+            ToolsModifierControl.toolController.AddExtraToolToController<RoadSegmentTool>();
+            ToolsModifierControl.toolController.AddExtraToolToController<BuildingEditorTool>();
+            ToolsModifierControl.toolController.AddExtraToolToController<VehicleEditorTool>();
+            ToolsModifierControl.toolController.AddExtraToolToController<SegmentEditorPickerTool>();
 
-            if (BuildingEditorToolInstance is null)
-            {
-                ToolsModifierControl.toolController.gameObject.AddComponent<BuildingEditorTool>();
-            }
-            if (VehicleEditorToolInstance is null)
-            {
-                ToolsModifierControl.toolController.gameObject.AddComponent<VehicleEditorTool>();
-            }
+
             ReloadAbbreviationFiles();
 
             FontServer.Ensure();

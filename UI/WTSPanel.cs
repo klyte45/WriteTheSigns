@@ -2,6 +2,7 @@
 using Klyte.Commons.Interfaces;
 using Klyte.Commons.UI.SpriteNames;
 using Klyte.Commons.Utils;
+using Klyte.WriteTheSigns.Tools;
 using UnityEngine;
 
 namespace Klyte.WriteTheSigns.UI
@@ -46,6 +47,15 @@ namespace Klyte.WriteTheSigns.UI
             if (WriteTheSignsMod.Controller.ConnectorADR.AddressesAvailable)
             {
                 m_stripMain.CreateTabLocalized<WTSHighwayShieldEditor>("K45_WTS_HWSHIELD_00", "K45_WTS_HWSHIELDS_TAB", "WTSHighwayShieldsSettings", false);
+            }
+            if (!WriteTheSignsMod.Controller.BridgeUUI.IsUuiAvailable)
+            {
+                KlyteMonoUtils.CreateUIElement(out UIButton pickerOnSegment, m_stripMain.transform, "K45_WTS_SegmentPickerIcon", new Vector4(0, 0, 40, 40));
+                KlyteMonoUtils.InitButtonSameSprite(pickerOnSegment, "K45_WTS_SegmentPickerIcon");
+                pickerOnSegment.eventClicked += (x, y) => ToolsModifierControl.SetTool<SegmentEditorPickerTool>();
+                pickerOnSegment.anchor = UIAnchorStyle.Right | UIAnchorStyle.Top;
+                pickerOnSegment.hoveredColor = Color.cyan;
+                m_stripMain.tabContainer.AttachUIComponent(new GameObject().AddComponent<UIPanel>().gameObject);
             }
         }
 

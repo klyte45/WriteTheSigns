@@ -6,6 +6,7 @@ using Klyte.Commons.Extensions;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Data;
 using Klyte.WriteTheSigns.Singleton;
+using Klyte.WriteTheSigns.Tools;
 using Klyte.WriteTheSigns.Xml;
 using System;
 using System.Collections.Generic;
@@ -157,9 +158,9 @@ namespace Klyte.WriteTheSigns.UI
         {
             CurrentVehicleInfo = null;
             ReloadVehicle();
-            WriteTheSignsMod.Controller.VehicleEditorToolInstance.OnVehicleSelect += OnVehiclePicked;
-            WriteTheSignsMod.Controller.VehicleEditorToolInstance.OnParkedVehicleSelect += OnParkedVehiclePicked;
-            WriteTheSignsMod.Controller.VehicleEditorToolInstance.enabled = true;
+            var tool = ToolsModifierControl.SetTool<VehicleEditorTool>();
+            tool.OnVehicleSelect += OnVehiclePicked;
+            tool.OnParkedVehicleSelect += OnParkedVehiclePicked;
         }
 
         private void OnParkedVehiclePicked(ushort obj) => m_vehicleSearch.text = OnVehicleNameSelected(VehiclesIndexes.GetListName(VehicleManager.instance.m_parkedVehicles.m_buffer[obj].Info), -1, null);
