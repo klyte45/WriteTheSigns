@@ -58,7 +58,7 @@ namespace Klyte.WriteTheSigns.Xml
             subtype = var;
             return true;
         }
-        public static string GetFormattedString(this VariableBuildingSubType var, IEnumerable<int> platforms, TextParameterVariableWrapper varWrapper, ushort buildingId)
+        public static string GetFormattedString(this VariableBuildingSubType var, IEnumerable<int> platforms, ushort buildingId, TextParameterVariableWrapper varWrapper)
         {
             if (buildingId == 0)
             {

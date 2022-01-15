@@ -71,7 +71,8 @@ namespace Klyte.WriteTheSigns.Xml
         public static readonly CommandLevel m_appendSuffix = new CommandLevel
         {
             descriptionKey = "COMMON_SUFFIX",
-            regexValidValues = ".*"
+            regexValidValues = ".*",
+            nextLevelByRegex = m_endLevel
         };
         public static readonly CommandLevel m_appendPrefix = new CommandLevel
         {
@@ -96,6 +97,9 @@ namespace Klyte.WriteTheSigns.Xml
             descriptionKey = "COMMON_STRINGFORMAT",
             regexValidValues = "[ULA]{0,2}",
             nextLevelByRegex = m_appendPrefix
+        };
+        public static readonly CommandLevel m_endLevel = new CommandLevel
+        {
         };
         private static readonly Dictionary<Enum, CommandLevel> commandTree = ReadCommandTree();
 

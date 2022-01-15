@@ -67,6 +67,12 @@ namespace Klyte.WriteTheSigns.Xml
                         defaultValue = VariableSegmentTargetSubType.None,
                         nextLevelOptions = VariableSegmentTargetSubTypeExtensions.ReadCommandTree()
                     };
+                case VariableType.CurrentVehicle:
+                    return new CommandLevel
+                    {
+                        defaultValue = VariableVehicleSubType.None,
+                        nextLevelOptions = VariableVehicleSubTypeExtensions.ReadCommandTree()
+                    };
                 default:
                     return null;
             }

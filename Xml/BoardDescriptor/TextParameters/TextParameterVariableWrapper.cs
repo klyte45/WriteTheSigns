@@ -1,5 +1,8 @@
 ﻿using Klyte.WriteTheSigns.Rendering;
+using SpriteFontPlus;
+using SpriteFontPlus.Utility;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Klyte.WriteTheSigns.Xml
@@ -60,19 +63,40 @@ namespace Klyte.WriteTheSigns.Xml
                         {
                             try
                             {
-                                if (Enum.Parse(typeof(VariableCitySubType), parameterPath[1]) is VariableCitySubType tt)
+                                if (Enum.Parse(typeof(VariableCitySubType), parameterPath[1]) is VariableCitySubType tt
+                                    && tt.ReadData(parameterPath.Skip(2).ToArray(), ref subtype, ref numberFormat, ref stringFormat, ref prefix, ref suffix))
                                 {
-                                    switch (tt)
-                                    {
-                                        case VariableCitySubType.CityPopulation:
-                                            if (parameterPath.Length >= 3)
-                                            {
-                                                numberFormat = parameterPath[2];
-                                            }
-                                            break;
-                                    }
-                                    subtype = tt;
                                     type = VariableType.CityData;
+                                    break;
+                                }
+                            }
+                            catch { }
+                        }
+                        break;
+                    case VariableType.CurrentBuilding:
+                        if (parameterPath.Length >= 2)
+                        {
+                            try
+                            {
+                                if (Enum.Parse(typeof(VariableBuildingSubType), parameterPath[1]) is VariableBuildingSubType tt
+                                    && tt.ReadData(parameterPath.Skip(2).ToArray(), ref subtype, ref numberFormat, ref stringFormat, ref prefix, ref suffix))
+                                {
+                                    type = VariableType.CurrentBuilding;
+                                    break;
+                                }
+                            }
+                            catch { }
+                        }
+                        break;
+                    case VariableType.CurrentVehicle:
+                        if (parameterPath.Length >= 2)
+                        {
+                            try
+                            {
+                                if (Enum.Parse(typeof(VariableVehicleSubType), parameterPath[1]) is VariableVehicleSubType tt
+                                    && tt.ReadData(parameterPath.Skip(2).ToArray(), ref subtype, ref numberFormat, ref stringFormat, ref prefix, ref suffix))
+                                {
+                                    type = VariableType.CurrentBuilding;
                                     break;
                                 }
                             }
@@ -92,17 +116,50 @@ namespace Klyte.WriteTheSigns.Xml
         private string prefix = "";
         private string suffix = "";
 
-        public string GetTargetTextForBuilding(BoardInstanceBuildingXml buildingDescriptor, ushort buildingId, BoardTextDescriptorGeneralXml textDescriptor)
+
+
+        public BasicRenderInformation GetTargetText(BoardInstanceXml instance, BoardTextDescriptorGeneralXml textDescriptor, DynamicSpriteFont targetFont, ushort refId, int secRefId, int tercRefId, out IEnumerable<BasicRenderInformation> multipleOutput)
         {
+            string targetStr = m_originalCommand;
+            switch (instance)
+            {
+                case OnNetInstanceCacheContainerXml cc:
+                    targetStr = GetTargetTextForNet(cc, refId, textDescriptor, out multipleOutput);
+                    break;
+                case BoardInstanceBuildingXml bd:
+                    targetStr = GetTargetTextForBuilding(bd, refId, textDescriptor, out multipleOutput);
+                    break;
+                default:
+                    multipleOutput = null;
+                    break;
+            }
+            return multipleOutput is null ? targetFont.DrawString(WriteTheSignsMod.Controller, targetStr, default, FontServer.instance.ScaleEffective) : null;
+        }
+
+
+
+        public string GetTargetTextForBuilding(BoardInstanceBuildingXml buildingDescriptor, ushort buildingId, BoardTextDescriptorGeneralXml textDescriptor, out IEnumerable<BasicRenderInformation> multipleOutput)
+        {
+            multipleOutput = null;
             switch (type)
             {
-
+                case VariableType.CurrentBuilding:
+                    return buildingId == 0 || !(subtype is VariableBuildingSubType targetSubtype2) || targetSubtype2 == VariableBuildingSubType.None
+                        ? $"{prefix}{subtype}@currBuilding"
+                        : $"{prefix}{targetSubtype2.GetFormattedString(buildingDescriptor.m_platforms, buildingId, this) ?? m_originalCommand}{suffix}";
+                case VariableType.CityData:
+                    if ((subtype is VariableCitySubType targetCitySubtype))
+                    {
+                        return $"{prefix}{targetCitySubtype.GetFormattedString(this) ?? m_originalCommand}{suffix}";
+                    }
+                    break;
             }
             return m_originalCommand;
         }
 
-        public string GetTargetTextForNet(OnNetInstanceCacheContainerXml propDescriptor, ushort segmentId, BoardTextDescriptorGeneralXml textDescriptor)
+        public string GetTargetTextForNet(OnNetInstanceCacheContainerXml propDescriptor, ushort segmentId, BoardTextDescriptorGeneralXml textDescriptor, out IEnumerable<BasicRenderInformation> multipleOutput)
         {
+            multipleOutput = null;
             switch (type)
             {
                 case VariableType.SegmentTarget:

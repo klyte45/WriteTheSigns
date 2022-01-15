@@ -2,6 +2,8 @@
 using ColossalFramework.UI;
 using Klyte.Commons.Interfaces;
 using Klyte.Commons.Utils;
+using Klyte.WriteTheSigns.Rendering;
+using System;
 using System.Xml;
 using System.Xml.Serialization;
 
@@ -21,7 +23,10 @@ namespace Klyte.WriteTheSigns.Xml
         [XmlAttribute("textAlign")]
         public UIHorizontalAlignment m_textAlign = UIHorizontalAlignment.Center;
         [XmlAttribute("textContent")]
+        [Obsolete("Use textContent")]
         public TextType m_textType = TextType.Fixed;
+        [XmlAttribute("textContentV2")]
+        public TextContent textContent = TextContent.None;
         [XmlAttribute("destinationReference")]
         public DestinationReference m_destinationRelative = DestinationReference.Self;
         [XmlAttribute("parameterIdx")]
@@ -35,6 +40,9 @@ namespace Klyte.WriteTheSigns.Xml
             get => parameterValue?.ToString().TrimToNull();
             set => parameterValue = value.IsNullOrWhiteSpace() ? null : new TextParameterWrapper(value);
         }
+
+        public void SetDefaultParameterValueAsString(string value, TextRenderingClass renderingClass) => parameterValue = value.IsNullOrWhiteSpace() ? null : new TextParameterWrapper(value);
+
         [XmlAttribute("parameterDisplayName")]
         public string ParameterDisplayName { get; set; }
 
@@ -157,6 +165,360 @@ namespace Klyte.WriteTheSigns.Xml
             }
             return Tuple.New(m_parameterIdx, $"<color yellow>{(ParameterDisplayName.IsNullOrWhiteSpace() ? SaveName : ParameterDisplayName)}</color>\n\t{paramType}{(DefaultParameterValue is null ? "" : $"\n\tdef: <color cyan>{DefaultParameterValueAsString}</color>")}");
         }
+
+
+        #region Convert to common
+#pragma warning disable CS0618 // O tipo ou membro é obsoleto
+
+        public void UpdateContentType(TextRenderingClass renderingClass, ref int lastParamUsed)
+        {
+            if (textContent != TextContent.None)
+            {
+                return;
+            }
+
+            switch (renderingClass)
+            {
+                case TextRenderingClass.RoadNodes:
+                    ToCommonDescriptorRoad(ref lastParamUsed);
+                    break;
+                case TextRenderingClass.Buildings:
+                    ToCommonDescriptorBuilding(ref lastParamUsed);
+                    break;
+                case TextRenderingClass.PlaceOnNet:
+                    ToCommonDescriptorOnNet(ref lastParamUsed);
+                    break;
+                case TextRenderingClass.Vehicle:
+                    ToCommonDescriptorVehicle(ref lastParamUsed);
+                    break;
+            }
+        }
+
+        internal void ToCommonDescriptorBuilding(ref int lastParamUsed)
+        {
+            //TextType.Fixed,
+            //TextType.GameSprite,
+            //TextType.ParameterizedGameSprite,
+            //TextType.ParameterizedGameSpriteIndexed,
+            //TextType.ParameterizedText,
+            //TextType.OwnName,
+            //TextType.LinesSymbols,
+            //TextType.LineFullName,
+            //TextType.NextStopLine, // Next Station Line 1
+            //TextType.PrevStopLine, // Previous Station Line 2
+            //TextType.LastStopLine, // Line Destination (Last stop before get back) 3
+            //TextType.PlatformNumber,
+            //TextType.TimeTemperature,
+            //TextType.CityName
+
+            switch (m_textType)
+            {
+                case TextType.Fixed:
+                    textContent = TextContent.ParameterizedText;
+                    SetDefaultParameterValueAsString(m_fixedText, TextRenderingClass.Buildings);
+                    m_parameterIdx = ++lastParamUsed;
+                    break;
+                case TextType.GameSprite:
+                    textContent = TextContent.ParameterizedSpriteSingle;
+                    SetDefaultParameterValueAsString(m_spriteParam.ToString(), TextRenderingClass.Buildings);
+                    m_parameterIdx = ++lastParamUsed;
+                    break;
+                case TextType.ParameterizedText:
+                    textContent = TextContent.ParameterizedText;
+                    SetDefaultParameterValueAsString(DefaultParameterValueAsString, TextRenderingClass.Buildings);
+                    break;
+                case TextType.ParameterizedGameSprite:
+                    textContent = TextContent.ParameterizedSpriteFolder;
+                    SetDefaultParameterValueAsString(DefaultParameterValueAsString, TextRenderingClass.Buildings);
+                    break;
+                case TextType.ParameterizedGameSpriteIndexed:
+                    textContent = TextContent.ParameterizedSpriteSingle;
+                    SetDefaultParameterValueAsString(DefaultParameterValueAsString, TextRenderingClass.Buildings);
+                    break;
+                case TextType.OwnName:
+                    ToParameterStringText(ref lastParamUsed, VariableBuildingSubType.OwnName);
+                    break;
+                case TextType.LinesSymbols:
+                    textContent = TextContent.LinesSymbols;
+                    break;
+                case TextType.LineFullName:
+                    textContent = TextContent.LinesNameList;
+                    break;
+                case TextType.NextStopLine:
+                    ToParameterStringText(ref lastParamUsed, VariableBuildingSubType.NextStopLine);
+                    break;
+                case TextType.PrevStopLine:
+                    ToParameterStringText(ref lastParamUsed, VariableBuildingSubType.PrevStopLine);
+                    break;
+                case TextType.LastStopLine:
+                    ToParameterStringText(ref lastParamUsed, VariableBuildingSubType.LastStopLine);
+                    break;
+                case TextType.PlatformNumber:
+                    ToParameterStringText(ref lastParamUsed, VariableBuildingSubType.PlatformNumber);
+                    break;
+                case TextType.TimeTemperature:
+                    textContent = TextContent.TimeTemperature;
+                    break;
+                case TextType.CityName:
+                    ToParameterStringText(ref lastParamUsed, VariableCitySubType.CityName, TextRenderingClass.Buildings);
+                    break;
+            }
+
+
+
+        }
+
+        internal void ToCommonDescriptorRoad(ref int lastParamUsed)
+        {
+            //    TextType.Fixed,
+            //    TextType.GameSprite,
+            //    TextType.StreetPrefix,
+            //    TextType.StreetSuffix,
+            //    TextType.StreetNameComplete,
+            //    TextType.DistanceFromReference,
+            //    TextType.PostalCode,
+            //    TextType.District,
+            //    TextType.Park,
+            //    TextType.DistrictOrPark,
+            //    TextType.ParkOrDistrict,
+            //    TextType.CityName
+            switch (m_textType)
+            {
+                case TextType.Fixed:
+                    textContent = TextContent.ParameterizedText;
+                    SetDefaultParameterValueAsString(m_fixedText, TextRenderingClass.PlaceOnNet);
+                    m_parameterIdx = ++lastParamUsed;
+                    break;
+                case TextType.GameSprite:
+                    textContent = TextContent.ParameterizedSpriteSingle;
+                    SetDefaultParameterValueAsString(m_spriteParam.ToString(), TextRenderingClass.RoadNodes);
+                    m_parameterIdx = ++lastParamUsed;
+                    break;
+                case TextType.StreetPrefix:
+                    ToParameterStringText(ref lastParamUsed, VariableSegmentTargetSubType.StreetPrefix);
+                    break;
+                case TextType.StreetSuffix:
+                    ToParameterStringText(ref lastParamUsed, VariableSegmentTargetSubType.StreetSuffix);
+                    break;
+                case TextType.StreetNameComplete:
+                    ToParameterStringText(ref lastParamUsed, VariableSegmentTargetSubType.StreetNameComplete);
+                    break;
+                case TextType.District:
+                    ToParameterStringText(ref lastParamUsed, VariableSegmentTargetSubType.District);
+                    break;
+                case TextType.Park:
+                    ToParameterStringText(ref lastParamUsed, VariableSegmentTargetSubType.Park);
+                    break;
+                case TextType.DistrictOrPark:
+                    ToParameterStringText(ref lastParamUsed, VariableSegmentTargetSubType.DistrictOrPark);
+                    break;
+                case TextType.ParkOrDistrict:
+                    ToParameterStringText(ref lastParamUsed, VariableSegmentTargetSubType.DistrictOrPark);
+                    break;
+                case TextType.PostalCode:
+                    ToParameterStringText(ref lastParamUsed, VariableSegmentTargetSubType.PostalCode);
+                    break;
+                case TextType.CityName:
+                    ToParameterStringText(ref lastParamUsed, VariableCitySubType.CityName, TextRenderingClass.RoadNodes);
+                    break;
+                case TextType.DistanceFromReference:
+                    ToParameterStringText(ref lastParamUsed, VariableSegmentTargetSubType.DistanceFromReferenceKilometers);
+                    break; ;
+            }
+
+        }
+        internal void ToCommonDescriptorOnNet(ref int lastParamUsed)
+        {
+
+            //TextType.Fixed,
+            //    TextType.GameSprite,
+            //    TextType.ParameterizedGameSprite,
+            //    TextType.ParameterizedGameSpriteIndexed,
+            //    TextType.ParameterizedText,
+            //    TextType.HwShield,
+            //    TextType.StreetPrefix,
+            //    TextType.StreetSuffix,
+            //    TextType.StreetNameComplete,
+            //    TextType.PostalCode,
+            //    TextType.District,
+            //    TextType.Park,
+            //    TextType.DistrictOrPark,
+            //    TextType.ParkOrDistrict,
+            //    TextType.TimeTemperature,
+            //    TextType.CityName
+            switch (m_textType)
+            {
+                case TextType.Fixed:
+                    textContent = TextContent.ParameterizedText;
+                    SetDefaultParameterValueAsString(m_fixedText, TextRenderingClass.PlaceOnNet);
+                    m_parameterIdx = ++lastParamUsed;
+                    break;
+                case TextType.StreetPrefix:
+                    ToParameterStringText(ref lastParamUsed, VariableSegmentTargetSubType.StreetPrefix);
+                    break;
+                case TextType.StreetSuffix:
+                    ToParameterStringText(ref lastParamUsed, VariableSegmentTargetSubType.StreetSuffix);
+                    break;
+                case TextType.StreetNameComplete:
+                    ToParameterStringText(ref lastParamUsed, VariableSegmentTargetSubType.StreetNameComplete);
+                    break;
+                case TextType.District:
+                    ToParameterStringText(ref lastParamUsed, VariableSegmentTargetSubType.District);
+                    break;
+                case TextType.Park:
+                    ToParameterStringText(ref lastParamUsed, VariableSegmentTargetSubType.Park);
+                    break;
+                case TextType.DistrictOrPark:
+                    ToParameterStringText(ref lastParamUsed, VariableSegmentTargetSubType.DistrictOrPark);
+                    break;
+                case TextType.ParkOrDistrict:
+                    ToParameterStringText(ref lastParamUsed, VariableSegmentTargetSubType.DistrictOrPark);
+                    break;
+                case TextType.LinesSymbols:
+                    textContent = TextContent.LinesSymbols;
+                    break;
+                case TextType.Direction:
+                    ToParameterStringText(ref lastParamUsed, VariableSegmentTargetSubType.Direction);
+                    break;
+                case TextType.HwShield:
+                    textContent = TextContent.HwShield;
+                    break;
+                case TextType.PostalCode:
+                    ToParameterStringText(ref lastParamUsed, VariableSegmentTargetSubType.PostalCode);
+                    break;
+                case TextType.GameSprite:
+                    textContent = TextContent.ParameterizedSpriteSingle;
+                    SetDefaultParameterValueAsString(m_spriteParam.ToString(), TextRenderingClass.PlaceOnNet);
+                    m_parameterIdx = ++lastParamUsed;
+                    break;
+                case TextType.ParameterizedText:
+                    textContent = TextContent.ParameterizedText;
+                    SetDefaultParameterValueAsString(DefaultParameterValueAsString, TextRenderingClass.PlaceOnNet);
+                    break;
+                case TextType.TimeTemperature:
+                    textContent = TextContent.TimeTemperature;
+                    break;
+                case TextType.ParameterizedGameSprite:
+                    textContent = TextContent.ParameterizedSpriteFolder;
+                    SetDefaultParameterValueAsString(DefaultParameterValueAsString, TextRenderingClass.PlaceOnNet);
+                    break;
+                case TextType.ParameterizedGameSpriteIndexed:
+                    textContent = TextContent.ParameterizedSpriteSingle;
+                    SetDefaultParameterValueAsString(DefaultParameterValueAsString, TextRenderingClass.PlaceOnNet);
+                    break;
+                case TextType.CityName:
+                    ToParameterStringText(ref lastParamUsed, VariableCitySubType.CityName, TextRenderingClass.PlaceOnNet);
+                    break;
+                case TextType.HwCodeShort:
+                    ToParameterStringText(ref lastParamUsed, VariableSegmentTargetSubType.HwCodeShort);
+                    break;
+                case TextType.HwCodeLong:
+                    ToParameterStringText(ref lastParamUsed, VariableSegmentTargetSubType.HwCodeLong);
+                    break;
+                case TextType.HwDettachedPrefix:
+                    ToParameterStringText(ref lastParamUsed, VariableSegmentTargetSubType.HwDettachedPrefix);
+                    break;
+                case TextType.HwIdentifierSuffix:
+                    ToParameterStringText(ref lastParamUsed, VariableSegmentTargetSubType.HwIdentifierSuffix);
+                    break;
+            }
+
+        }
+        internal void ToCommonDescriptorVehicle(ref int lastParamUsed)
+        {
+            //TextType.Fixed,
+            //TextType.GameSprite,
+            //TextType.LinesSymbols,
+            //TextType.OwnName,
+            //TextType.LineIdentifier,
+            //TextType.NextStopLine,
+            //TextType.PrevStopLine,
+            //TextType.LastStopLine,
+            //TextType.LineFullName,
+            //TextType.CityName,
+            switch (m_textType)
+            {
+                case TextType.Fixed:
+                    textContent = TextContent.ParameterizedText;
+                    SetDefaultParameterValueAsString(m_fixedText, TextRenderingClass.PlaceOnNet);
+                    m_parameterIdx = ++lastParamUsed;
+                    break;
+                case TextType.GameSprite:
+                    textContent = TextContent.ParameterizedSpriteSingle;
+                    SetDefaultParameterValueAsString(m_spriteParam.ToString(), TextRenderingClass.RoadNodes);
+                    m_parameterIdx = ++lastParamUsed;
+                    break;
+                case TextType.LinesSymbols:
+                    textContent = TextContent.LinesSymbols;
+                    break;
+                case TextType.CityName:
+                    ToParameterStringText(ref lastParamUsed, VariableCitySubType.CityName, TextRenderingClass.RoadNodes);
+                    break;
+                case TextType.OwnName:
+                    ToParameterStringText(ref lastParamUsed, VariableVehicleSubType.OwnNumber);
+                    break;
+                case TextType.LineIdentifier:
+                    ToParameterStringText(ref lastParamUsed, VariableVehicleSubType.LineIdentifier);
+                    break;
+                case TextType.NextStopLine:
+                    ToParameterStringText(ref lastParamUsed, VariableVehicleSubType.NextStopLine);
+                    break;
+                case TextType.PrevStopLine:
+                    ToParameterStringText(ref lastParamUsed, VariableVehicleSubType.PrevStopLine);
+                    break;
+                case TextType.LastStopLine:
+                    ToParameterStringText(ref lastParamUsed, VariableVehicleSubType.LastStopLine);
+                    break;
+                case TextType.LineFullName:
+                    ToParameterStringText(ref lastParamUsed, VariableVehicleSubType.LineFullName);
+                    break;
+            }
+
+        }
+
+        private void ToParameterStringText(ref int lastParamUsed, VariableSegmentTargetSubType targetType)
+        {
+            textContent = TextContent.ParameterizedText;
+            if (m_destinationRelative == 0)
+            {
+                SetDefaultParameterValueAsString($"var://CurrentSegment/{targetType}/{(m_allCaps ? "U" : "")}{(m_applyAbbreviations ? "A" : "")}/{m_prefix}/{m_suffix}", TextRenderingClass.PlaceOnNet);
+            }
+            else
+            {
+                SetDefaultParameterValueAsString($"var://SegmentTarget/{(int)m_destinationRelative}/{targetType}/{(m_allCaps ? "U" : "")}{(m_applyAbbreviations ? "A" : "")}/{m_prefix}/{m_suffix}", TextRenderingClass.PlaceOnNet);
+            }
+            m_parameterIdx = ++lastParamUsed;
+        }
+        private void ToParameterStringText(ref int lastParamUsed, VariableBuildingSubType targetType)
+        {
+            textContent = TextContent.ParameterizedText;
+            SetDefaultParameterValueAsString($"var://CurrentBuilding/{targetType}/{(m_allCaps ? "U" : "")}{(m_applyAbbreviations ? "A" : "")}/{m_prefix}/{m_suffix}", TextRenderingClass.Buildings);
+            m_parameterIdx = ++lastParamUsed;
+        }
+        private void ToParameterStringText(ref int lastParamUsed, VariableCitySubType targetType, TextRenderingClass renderingClass)
+        {
+            textContent = TextContent.ParameterizedText;
+            SetDefaultParameterValueAsString($"var://CityData/{targetType}/{(m_allCaps ? "U" : "")}{(m_applyAbbreviations ? "A" : "")}/{m_prefix}/{m_suffix}", renderingClass);
+            m_parameterIdx = ++lastParamUsed;
+        }
+        private void ToParameterStringText(ref int lastParamUsed, VariableVehicleSubType targetType)
+        {
+            textContent = TextContent.ParameterizedText;
+            if (targetType.GetCommandLevel().descriptionKey == "COMMON_STRINGFORMAT")
+            {
+                SetDefaultParameterValueAsString($"var://CurrentVehicle/{targetType}/{(m_allCaps ? "U" : "")}{(m_applyAbbreviations ? "A" : "")}/{m_prefix}/{m_suffix}", TextRenderingClass.Vehicle);
+            }
+            else
+            {
+                SetDefaultParameterValueAsString($"var://CurrentVehicle/{targetType}/{m_prefix}/{m_suffix}", TextRenderingClass.Vehicle);
+            }
+
+            m_parameterIdx = ++lastParamUsed;
+        }
+
+#pragma warning restore CS0618 // O tipo ou membro é obsoleto
+        #endregion
+
     }
 
 }

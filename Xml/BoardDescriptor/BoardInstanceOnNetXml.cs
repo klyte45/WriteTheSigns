@@ -1,5 +1,6 @@
 ﻿using Klyte.Commons.Interfaces;
 using Klyte.WriteTheSigns.Data;
+using Klyte.WriteTheSigns.Rendering;
 using System.Xml;
 using System.Xml.Serialization;
 
@@ -144,5 +145,12 @@ namespace Klyte.WriteTheSigns.Xml
         [XmlAttribute("saveName")]
         public string SaveName { get; set; }
 
+        public override PrefabInfo TargetAssetParameter => Descriptor?.CachedProp;
+
+        public override TextRenderingClass RenderingClass => TextRenderingClass.PlaceOnNet;
+
+        public override string DescriptorOverrideFont => Descriptor?.FontName;
+
+        public override TextParameterWrapper GetParameter(int idx) => null;
     }
 }

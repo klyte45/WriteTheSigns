@@ -8,6 +8,7 @@ namespace Klyte.WriteTheSigns.Xml
 {
     internal enum VariableVehicleSubType
     {
+        None,
         OwnNumber,
         LineIdentifier,
         NextStopLine,

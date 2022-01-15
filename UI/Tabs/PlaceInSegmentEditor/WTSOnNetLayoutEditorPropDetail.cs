@@ -166,7 +166,7 @@ namespace Klyte.WriteTheSigns.UI
                 m_textParamsLabels[currentIdx].processMarkup = true;
                 m_textParamsIsEmpty[currentIdx] = AddButtonInEditorRow(m_textParams[currentIdx], CommonsSpriteNames.K45_X, () => SafeObtain((x) =>
                    {
-                       var isEmpty = x.GetTextParameter(currentIdx)?.IsEmpty ?? false;
+                       var isEmpty = x.GetParameter(currentIdx)?.IsEmpty ?? false;
                        x.SetTextParameter(currentIdx, isEmpty ? "" : null);
                        UpdateParamIsEmptied(x, currentIdx);
                    }), "K45_WTS_TOGGLETEXTISEMPTYTOOLTIP", true, 30);
@@ -285,7 +285,7 @@ namespace Klyte.WriteTheSigns.UI
                     CurrentEdited.SetTextParameter(paramIdx, inputText);
                 }
                 lastProtocol_searchedParam = null;
-                return CurrentEdited?.GetTextParameter(paramIdx)?.ToString() ?? "";
+                return CurrentEdited?.GetParameter(paramIdx)?.ToString() ?? "";
             }
         }
 
@@ -495,7 +495,7 @@ namespace Klyte.WriteTheSigns.UI
                 {
                     if (paramsUsed?.ContainsKey(i) ?? false)
                     {
-                        var param = x.GetTextParameter(i);
+                        var param = x.GetParameter(i);
 
                         m_textParamsLabels[i].suffix = $" - {Locale.Get("K45_WTS_USEDAS")}\n{string.Join("\n", paramsUsed[i])}";
                         m_textParams[i].text = param?.ToString() ?? "";
@@ -516,7 +516,7 @@ namespace Klyte.WriteTheSigns.UI
 
         private void UpdateParamIsEmptied(OnNetInstanceCacheContainerXml x, int i)
         {
-            if (x.GetTextParameter(i)?.IsEmpty ?? false)
+            if (x.GetParameter(i)?.IsEmpty ?? false)
             {
                 m_textParamsIsEmpty[i].color = Color.red;
                 m_textParamsIsEmpty[i].focusedColor = Color.red;

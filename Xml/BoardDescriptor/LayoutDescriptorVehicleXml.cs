@@ -1,5 +1,6 @@
 ﻿using Klyte.Commons.Interfaces;
 using Klyte.Commons.Utils;
+using Klyte.WriteTheSigns.Rendering;
 using System.Linq;
 using System.Xml.Serialization;
 
@@ -35,6 +36,14 @@ namespace Klyte.WriteTheSigns.Xml
                 return m_cachedInfo;
             }
         }
+
+        public override TextParameterWrapper GetParameter(int idx) => null;
+
+        public override PrefabInfo TargetAssetParameter => CachedInfo;
+
+        public override TextRenderingClass RenderingClass => TextRenderingClass.Vehicle;
+
+        public override string DescriptorOverrideFont => FontName;
 
         public bool IsValid()
         {

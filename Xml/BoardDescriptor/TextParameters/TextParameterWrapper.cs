@@ -1,7 +1,11 @@
 ﻿using ColossalFramework;
 using ColossalFramework.UI;
+using Klyte.WriteTheSigns.Data;
+using SpriteFontPlus;
 using SpriteFontPlus.Utility;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 using static ColossalFramework.UI.UITextureAtlas;
 
@@ -184,6 +188,26 @@ namespace Klyte.WriteTheSigns.Xml
             return m_cachedAtlas?[TextOrSpriteValue];
         }
 
+        public override string ToString()
+        {
+            if (IsEmpty)
+            {
+                return null;
+            }
+
+            switch (ParamType)
+            {
+                case ParameterType.FOLDER:
+                    return $"{(isLocal ? "folder" : "assetFolder")}://{(isLocal && !atlasName.IsNullOrWhiteSpace() ? atlasName : "<ROOT>")}";
+                case ParameterType.IMAGE:
+                    return $"{(isLocal ? "image" : "assetImage")}://{(isLocal && !atlasName.IsNullOrWhiteSpace() ? atlasName + "/" : "<ROOT>/")}{TextOrSpriteValue}";
+                case ParameterType.VARIABLE:
+                    return $"var://{VariableValue.m_originalCommand}";
+                default:
+                    return TextOrSpriteValue;
+            }
+        }
+
         private void UpdatePrefabInfo(PrefabInfo prefab)
         {
             if (cachedPrefab != prefab)
@@ -193,6 +217,55 @@ namespace Klyte.WriteTheSigns.Xml
             }
         }
 
+        #region renderingInfo
+
+        private static DynamicSpriteFont GetTargetFont(BoardInstanceXml instance, BoardTextDescriptorGeneralXml textDescriptor)
+            => FontServer.instance.FirstOf(new[]
+            {
+                textDescriptor.m_overrideFont,
+                WTSEtcData.Instance.FontSettings.GetTargetFont(textDescriptor.m_fontClass),
+                instance.DescriptorOverrideFont,
+                WTSEtcData.Instance.FontSettings.GetTargetFont(instance.RenderingClass),
+            }.Where(x => !x.IsNullOrWhiteSpace()));
+
+        public static BasicRenderInformation GetRenderInfo(BoardInstanceXml instance, BoardTextDescriptorGeneralXml textDescriptor, ushort refId, int secIdx, int tercIdx, out IEnumerable<BasicRenderInformation> multipleOutput)
+        {
+            multipleOutput = null;
+        Restart:
+            switch (textDescriptor.textContent)
+            {
+                case TextContent.None:
+                    int lastParam = 11;
+                    textDescriptor.UpdateContentType(instance.RenderingClass, ref lastParam);
+                    goto Restart;
+                case TextContent.ParameterizedText:
+                    return (instance.GetParameter(textDescriptor.m_parameterIdx) ?? textDescriptor.DefaultParameterValue) is TextParameterWrapper tpw
+                        ? tpw.GetTargetText(instance, textDescriptor, GetTargetFont(instance, textDescriptor), refId, secIdx, tercIdx, out multipleOutput)
+                        : GetTargetFont(instance, textDescriptor)?.DrawString(WriteTheSignsMod.Controller, $"<PARAM#{textDescriptor.m_parameterIdx} NOT SET>", default, FontServer.instance.ScaleEffective);
+                case TextContent.ParameterizedSpriteFolder:
+                    return (instance.GetParameter(textDescriptor.m_parameterIdx) ?? textDescriptor.DefaultParameterValue) is TextParameterWrapper tpw2
+                        ? tpw2.GetSpriteFromCycle(textDescriptor, instance.TargetAssetParameter, refId, secIdx, tercIdx)
+                        : WriteTheSignsMod.Controller.AtlasesLibrary.GetFromLocalAtlases(null, "K45_WTS FrameParamsNotSet");
+                case TextContent.ParameterizedSpriteSingle:
+                    return (instance.GetParameter(textDescriptor.m_parameterIdx) ?? textDescriptor.DefaultParameterValue) is TextParameterWrapper tpw3
+                        ? tpw3.GetSpriteFromParameter(instance.TargetAssetParameter)
+                        : WriteTheSignsMod.Controller.AtlasesLibrary.GetFromLocalAtlases(null, "K45_WTS FrameParamsNotSet");
+                case TextContent.LinesNameList:
+                    break;
+                case TextContent.HwShield:
+                    break;
+                case TextContent.TimeTemperature:
+                    break;
+                case TextContent.LinesSymbols:
+                    break;
+            }
+            return null;
+        }
+
+        private BasicRenderInformation GetSpriteFromParameter(PrefabInfo prop)
+            => IsEmpty
+                    ? null
+                    : GetImageBRI(prop);
         public BasicRenderInformation GetImageBRI(PrefabInfo prefab)
         {
             if (ParamType == ParameterType.IMAGE)
@@ -214,48 +287,39 @@ namespace Klyte.WriteTheSigns.Xml
 
         }
 
-        public string GetTargetTextForBuilding(BoardInstanceBuildingXml descriptorBuilding, ushort buildingId, BoardTextDescriptorGeneralXml textDescriptor) => ParamType != ParameterType.VARIABLE
-                ? ToString()
-                : VariableValue.GetTargetTextForBuilding(descriptorBuilding, buildingId, textDescriptor);
-        public string GetTargetTextForNet(OnNetInstanceCacheContainerXml descriptorProp, ushort segmentId, BoardTextDescriptorGeneralXml textDescriptor)
+        public BasicRenderInformation GetTargetText(BoardInstanceXml descriptorBuilding, BoardTextDescriptorGeneralXml textDescriptor, DynamicSpriteFont targetFont, ushort refId, int secId, int tercId, out IEnumerable<BasicRenderInformation> multipleOutput)
         {
             if (ParamType != ParameterType.VARIABLE)
             {
-                return ToString();
+                multipleOutput = null;
+                return targetFont?.DrawString(WriteTheSignsMod.Controller, ToString(), default, FontServer.instance.ScaleEffective);
             }
-            return VariableValue.GetTargetTextForNet(descriptorProp, segmentId, textDescriptor);
-        }
-        public string GetOriginalVariableParam()
-        {
-            if (ParamType != ParameterType.VARIABLE)
+            else
             {
-                return null;
+                return VariableValue.GetTargetText(descriptorBuilding, textDescriptor, targetFont, refId, secId, tercId, out multipleOutput);
             }
-            return VariableValue.m_originalCommand;
         }
 
+        public string GetOriginalVariableParam() => ParamType != ParameterType.VARIABLE ? null : VariableValue.m_originalCommand;
 
-        public override string ToString()
+
+        private BasicRenderInformation GetSpriteFromCycle(BoardTextDescriptorGeneralXml textDescriptor, PrefabInfo cachedPrefab, ushort refId, int boardIdx, int secIdx)
         {
             if (IsEmpty)
             {
                 return null;
             }
-
-            switch (ParamType)
+            if (ParamType != TextParameterWrapper.ParameterType.FOLDER)
             {
-                case ParameterType.FOLDER:
-                    return $"{(isLocal ? "folder" : "assetFolder")}://{(isLocal && !atlasName.IsNullOrWhiteSpace() ? atlasName : "<ROOT>")}";
-                case ParameterType.IMAGE:
-                    return $"{(isLocal ? "image" : "assetImage")}://{(isLocal && !atlasName.IsNullOrWhiteSpace() ? atlasName + "/" : "<ROOT>/")}{TextOrSpriteValue}";
-                case ParameterType.VARIABLE:
-                    return $"var://{VariableValue.m_originalCommand}";
-                default:
-                    return TextOrSpriteValue;
+                return WriteTheSignsMod.Controller.AtlasesLibrary.GetFromLocalAtlases(null, "K45_WTS FrameParamsFolderRequired");
             }
+            if (textDescriptor.AnimationSettings.m_itemCycleFramesDuration < 1)
+            {
+                textDescriptor.AnimationSettings.m_itemCycleFramesDuration = 100;
+            }
+            return GetCurrentSprite(cachedPrefab, (int length) => (int)(((SimulationManager.instance.m_currentFrameIndex + textDescriptor.AnimationSettings.m_extraDelayCycleFrames + (refId * (1 + boardIdx) + (11345476 * secIdx))) % (length * textDescriptor.AnimationSettings.m_itemCycleFramesDuration) / textDescriptor.AnimationSettings.m_itemCycleFramesDuration)));
         }
-
-        internal BasicRenderInformation GetCurrentSprite(PrefabInfo prefab, Func<int, int> p)
+        private BasicRenderInformation GetCurrentSprite(PrefabInfo prefab, Func<int, int> p)
         {
             if (ParamType == ParameterType.FOLDER)
             {
@@ -275,6 +339,6 @@ namespace Klyte.WriteTheSigns.Xml
             }
 
         }
-
+        #endregion
     }
 }

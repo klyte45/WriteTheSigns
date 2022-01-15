@@ -33,7 +33,9 @@ namespace Klyte.WriteTheSigns.Xml
             switch (var)
             {
                 case VariableCitySubType.CityPopulation:
-                    return CommandLevel.m_numberFormatFloat;
+                    return CommandLevel.m_numberFormatInt;
+                case VariableCitySubType.CityName:
+                    return CommandLevel.m_appendPrefix;
                 default:
                     return null;
             }

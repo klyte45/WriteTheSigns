@@ -70,17 +70,6 @@ namespace Klyte.WriteTheSigns.Rendering
                 TextType.ParkOrDistrict,
                 TextType.CityName
             },
-            [TextRenderingClass.MileageMarker] = new TextType[]
-            {
-                TextType.Fixed,
-                TextType.GameSprite,
-                TextType.Direction,
-                TextType.Mileage,
-                TextType.StreetPrefix,
-                TextType.StreetSuffix,
-                TextType.StreetNameComplete,
-                TextType.CityName,
-            },
             [TextRenderingClass.Buildings] = new TextType[]
             {
                 TextType.Fixed,

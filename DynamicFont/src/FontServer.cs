@@ -98,6 +98,22 @@ namespace SpriteFontPlus
             }
         }
 
+        public DynamicSpriteFont FirstOf(IEnumerable<string> names)
+        {
+            foreach (var idx in names)
+            {
+                if (idx != null)
+                {
+                    if (m_fontRegistered.TryGetValue(Aliases.TryGetValue(idx, out string alias) ? alias : idx, out DynamicSpriteFont value))
+                    {
+                        return value;
+                    }
+                }
+            }
+
+            return null;
+        }
+
         public Dictionary<string, string> Aliases { get; } = new Dictionary<string, string>();
 
         public IEnumerable<string> GetAllFonts() => m_fontRegistered.Keys;

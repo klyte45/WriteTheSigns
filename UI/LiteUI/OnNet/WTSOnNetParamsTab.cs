@@ -96,13 +96,13 @@ namespace Klyte.WriteTheSigns.UI
                     GUIKlyteCommons.DoInHorizontal(() =>
                     {
                         GUILayout.Label(string.Format(Locale.Get($"K45_WTS_ONNETEDITOR_TEXTPARAM"), kv.Key) + $"\n<color=#{target}>{Locale.Get("K45_WTS_BOARD_TEXT_TYPE_DESC", targetContentType.ToString())}</color>\n\n{usedByText}");
-                        var param = item.GetTextParameter(kv.Key);
+                        var param = item.GetParameter(kv.Key);
                         if (GUILayout.Button(param is null ? v_null : param.IsEmpty ? v_empty : param.ToString(), GUILayout.ExpandHeight(true)))
                         {
                             if (param is null)
                             {
                                 item.SetTextParameter(kv.Key, null);
-                                param = item.GetTextParameter(kv.Key);
+                                param = item.GetParameter(kv.Key);
                             }
                             GoToPicker(kv.Key, targetContentType, param, item);
                         }
@@ -221,10 +221,7 @@ namespace Klyte.WriteTheSigns.UI
             }
             else
             {
-                if (item.SetTextParameter(m_currentEditingParam, m_searchText == "" ? null : GetCurrentParamString()).ParamType == TextParameterWrapper.ParameterType.TEXT)
-                {
-                    item.DeleteTextParameter(m_currentEditingParam);
-                }
+                item.SetTextParameter(m_currentEditingParam, m_searchText == "" ? null : GetCurrentParamString());
             }
             m_currentState = State.List;
         }

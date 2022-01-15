@@ -1,5 +1,6 @@
 ﻿using Klyte.Commons.Interfaces;
 using Klyte.WriteTheSigns.Data;
+using Klyte.WriteTheSigns.Rendering;
 using System.Collections.Generic;
 using System.Xml.Serialization;
 using static ItemClass;
@@ -15,7 +16,8 @@ namespace Klyte.WriteTheSigns.Xml
         public string PropLayoutName
         {
             get => Descriptor?.SaveName;
-            set {
+            set
+            {
                 m_propLayoutName = value;
                 m_descriptor = null;
             }
@@ -29,7 +31,8 @@ namespace Klyte.WriteTheSigns.Xml
         [XmlIgnore]
         public BoardDescriptorGeneralXml Descriptor
         {
-            get {
+            get
+            {
                 if (m_descriptor == null && m_propLayoutName != null)
                 {
                     m_descriptor = WTSPropLayoutData.Instance.Get(m_propLayoutName);
@@ -41,7 +44,8 @@ namespace Klyte.WriteTheSigns.Xml
                 }
                 return m_descriptor;
             }
-            internal set {
+            internal set
+            {
                 m_propLayoutName = value?.SaveName;
                 m_descriptor = null;
             }
@@ -62,7 +66,11 @@ namespace Klyte.WriteTheSigns.Xml
         [XmlAttribute("districtSelectionIsBlacklist")] public bool SelectedDistrictsIsBlacklist { get; set; } = true;
         [XmlAttribute("districtRestrictionOrder")] public DistrictRestrictionOrder DistrictRestrictionOrder { get; set; }
 
+        public override PrefabInfo TargetAssetParameter => Descriptor?.CachedProp;
 
+        public override TextRenderingClass RenderingClass => TextRenderingClass.RoadNodes;
+
+        public override string DescriptorOverrideFont => Descriptor?.FontName;
 
         public bool AllowsClass(ItemClass source) => AllowedLevels.Contains(source.m_level);
         public bool AllowsDistrict(byte districtId) => SelectedDistricts.Contains(districtId) != SelectedDistrictsIsBlacklist;
@@ -89,6 +97,7 @@ namespace Klyte.WriteTheSigns.Xml
         }
 
         public void ResetCacheDescriptor() => m_descriptor = null;
+        public override TextParameterWrapper GetParameter(int idx) => null;
     }
     public enum TrafficDirectionRequired
     {

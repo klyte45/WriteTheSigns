@@ -102,6 +102,6 @@ namespace Klyte.WriteTheSigns.Xml
         [XmlIgnore]
         public TextParameterWrapper[] m_textParameters = new TextParameterWrapper[TEXT_PARAMETERS_COUNT];
 
-        public TextParameterWrapper GetTextParameter(int idx) => m_textParameters?[idx];
+        public override TextParameterWrapper GetParameter(int idx) => m_textParameters?[idx];
     }
 }

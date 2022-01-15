@@ -1,11 +1,12 @@
 ﻿using Klyte.Commons.Utils;
+using Klyte.WriteTheSigns.Rendering;
 using System.Xml;
 using System.Xml.Serialization;
 using UnityEngine;
 
 namespace Klyte.WriteTheSigns.Xml
 {
-    public class BoardInstanceXml
+    public abstract class BoardInstanceXml
     {
         private Vector3Xml m_propPosition = new Vector3Xml();
         private Vector3Xml m_propRotation = new Vector3Xml();
@@ -44,6 +45,11 @@ namespace Klyte.WriteTheSigns.Xml
                 RenderManager.instance.UpdateGroups(i);
             }
         }
+
+        public abstract TextParameterWrapper GetParameter(int idx);
+        public abstract PrefabInfo TargetAssetParameter { get; }
+        public abstract TextRenderingClass RenderingClass { get; }
+        public abstract string DescriptorOverrideFont { get; }
     }
 
 }

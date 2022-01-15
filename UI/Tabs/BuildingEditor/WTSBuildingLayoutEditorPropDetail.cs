@@ -233,7 +233,7 @@ namespace Klyte.WriteTheSigns.UI
                     CurrentEdited.SetTextParameter(paramIdx, inputText);
                 }
                 lastProtocol_searchedParam = null;
-                return CurrentEdited?.GetTextParameter(paramIdx)?.ToString() ?? "";
+                return CurrentEdited?.GetParameter(paramIdx)?.ToString() ?? "";
             }
         }
         private IEnumerator RefocusParamIn2Frames(int paramIdx)
@@ -250,7 +250,7 @@ namespace Klyte.WriteTheSigns.UI
                 for (int i = 0; i < m_textParams.Length; i++)
                 {
                     m_textParamsLabels[i].suffix = paramsUsed?.ContainsKey(i) ?? false ? $" - {Locale.Get("K45_WTS_USEDAS")}\n{string.Join("\n", paramsUsed[i])}" : "";
-                    m_textParams[i].text = x.GetTextParameter(i)?.ToString() ?? "";
+                    m_textParams[i].text = x.GetParameter(i)?.ToString() ?? "";
                     m_textParams[i].parent.isVisible = paramsUsed?.ContainsKey(i) ?? false;
                 }
             }
