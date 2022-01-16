@@ -2,6 +2,7 @@
 using Harmony;
 using Klyte.Commons.Extensions;
 using Klyte.Commons.Utils;
+using Klyte.WriteTheSigns.Data;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -29,6 +30,10 @@ namespace Klyte.WriteTheSigns.Overrides
             MethodInfo AfterCalculateGroupData = GetType().GetMethod("AfterCalculateGroupData", RedirectorUtils.allFlags);
             MethodInfo AfterPopulateGroupData = GetType().GetMethod("AfterPopulateGroupData", RedirectorUtils.allFlags);
 
+
+            MethodInfo zoneUpdated = typeof(BuildingManager).GetMethod("AfterTerrainUpdate");
+            MethodInfo zonesUpdatedTranspile = GetType().GetMethod("AfterTerrainUpdateTranspile", RedirectorUtils.allFlags);
+
             LogUtils.DoLog($"Patching=> {posRename}");
             //RedirectorInstance.AddRedirect(BuildingManager.instance.SetBuildingName(0, "").GetType().GetMethod("MoveNext", RedirectorUtils.allFlags), null, posRename);
             LogUtils.DoLog($"Patching=> {AfterCalculateGroupData}");
@@ -37,6 +42,8 @@ namespace Klyte.WriteTheSigns.Overrides
             RedirectorInstance.AddRedirect(popGroup, null, AfterPopulateGroupData);
             LogUtils.DoLog($"Patching=> {postRenderMeshs}");
             RedirectorInstance.AddRedirect(orMeth, null, null, postRenderMeshs);
+            LogUtils.DoLog($"Patching=> {zonesUpdatedTranspile}");
+            RedirectorInstance.AddRedirect(zoneUpdated, null, null, zonesUpdatedTranspile);
         }
         #endregion
 
@@ -186,6 +193,34 @@ namespace Klyte.WriteTheSigns.Overrides
             }
 
 
+        }
+        public static IEnumerable<CodeInstruction> AfterTerrainUpdateTranspile(IEnumerable<CodeInstruction> instr, ILGenerator il)
+        {
+            var instrList = new List<CodeInstruction>(instr);
+            MethodInfo zonesUpdatedLoopItem = typeof(BuildingManagerOverrides).GetMethod("TerrainUpdateBuilding", RedirectorUtils.allFlags);
+            for (int i = 2; i < instrList.Count; i++)
+            {
+                if (instrList[i - 2].opcode == OpCodes.Ldloc_S && instrList[i - 2].operand is LocalBuilder lb && lb.LocalIndex == 16
+                   && instrList[i - 1].opcode == OpCodes.Ldc_R4 && instrList[i - 1].operand is float k && k == 0)
+                {
+                    instrList.InsertRange(i + 1, new List<CodeInstruction> {
+                        new CodeInstruction(OpCodes.Ldloc_S, 10),
+                        new CodeInstruction(OpCodes.Call, zonesUpdatedLoopItem),
+                    });
+                    break;
+                }
+            }
+
+            LogUtils.PrintMethodIL(instrList);
+            return instrList;
+        }
+
+        public static void TerrainUpdateBuilding(ushort buildingId)
+        {
+            if (LoadingManager.instance.m_loadingComplete)
+            {
+                WTSBuildingsData.Instance?.OnBuildingChangedPosition(buildingId);
+            }
         }
     }
 }

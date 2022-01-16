@@ -17,7 +17,12 @@ namespace Klyte.WriteTheSigns.Xml
         public Vector3 m_cachedArrayItemPace;
 
         public bool HasAnyBoard() => true;
-
+        internal void ClearCache()
+        {
+            m_cachedPosition = null;
+            m_cachedRotation = null;
+            m_cachedScale = null;
+        }
     }
 
 }

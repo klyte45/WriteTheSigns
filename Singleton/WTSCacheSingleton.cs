@@ -108,14 +108,23 @@ namespace Klyte.WriteTheSigns.Singleton
             }
         }
 
-        public static void ClearCacheSegmentSeed()
-        {
-            DoClearCacheCoroutineStart(CacheErasingFlags.SegmentNameParam | CacheErasingFlags.SegmentSize);
-        }
+        public static void ClearCacheSegmentSeed() => DoClearCacheCoroutineStart(CacheErasingFlags.SegmentNameParam | CacheErasingFlags.SegmentSize);
 
-        public static void ClearCacheSegmentSize()
+        public static void ClearCacheSegmentSize() => DoClearCacheCoroutineStart(CacheErasingFlags.SegmentSize);
+
+        public static void ClearCacheSegmentSize(ushort segmentId)
         {
-            DoClearCacheCoroutineStart(CacheErasingFlags.SegmentSize);
+            if (instance.m_cacheSegments.TryGetValue(segmentId, out SegmentItemCache cache))
+            {
+                cache.PurgeCache(CacheErasingFlags.SegmentSize, new InstanceID { NetSegment = segmentId });
+            }
+        }
+        public static void ClearCacheSegmentNameParam(ushort segmentId)
+        {
+            if (instance.m_cacheSegments.TryGetValue(segmentId, out SegmentItemCache cache))
+            {
+                cache.PurgeCache(CacheErasingFlags.SegmentNameParam, new InstanceID { NetSegment = segmentId });
+            }
         }
 
         public static void ClearCacheVehicleNumber() => DoClearCacheCoroutineStart(CacheErasingFlags.VehicleParameters);

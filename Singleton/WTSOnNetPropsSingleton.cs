@@ -220,7 +220,7 @@ namespace Klyte.WriteTheSigns.Singleton
                     }
                 }
 
-                if ((i == 0) && (WTSOnNetLayoutEditor.Instance?.MainContainer?.isVisible ?? false) && WTSOnNetLayoutEditor.Instance.LockSelection && (WTSOnNetLayoutEditor.Instance?.CurrentSegmentId == segmentId) && WTSOnNetLayoutEditor.Instance.LayoutList.SelectedIndex == boardIdx && !WriteTheSignsMod.Controller.RoadSegmentToolInstance.enabled)
+                if ((i == 0) && WTSOnNetLiteUI.LockSelection && WTSOnNetLiteUI.Instance.Visible && (WTSOnNetLiteUI.Instance.CurrentSegmentId == segmentId) && WTSOnNetLiteUI.Instance.ListSel == boardIdx && !WriteTheSignsMod.Controller.RoadSegmentToolInstance.enabled)
                 {
                     ToolsModifierControl.cameraController.m_targetPosition = position;
                 }

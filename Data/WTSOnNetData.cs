@@ -1,8 +1,13 @@
 ﻿using ICities;
 using Klyte.Commons.Interfaces;
 using Klyte.Commons.Utils;
+using Klyte.WriteTheSigns.Singleton;
 using Klyte.WriteTheSigns.Xml;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using System.Xml.Serialization;
+using UnityEngine;
 
 namespace Klyte.WriteTheSigns.Data
 {
@@ -15,7 +20,8 @@ namespace Klyte.WriteTheSigns.Data
         [XmlElement("BoardContainers")]
         public SimpleNonSequentialList<OnNetGroupDescriptorXml> BoardContainersExport
         {
-            get {
+            get
+            {
                 var res = new SimpleNonSequentialList<OnNetGroupDescriptorXml>();
                 for (int i = 0; i < m_boardsContainers.Length; i++)
                 {
@@ -27,7 +33,8 @@ namespace Klyte.WriteTheSigns.Data
                 return res;
             }
 
-            set {
+            set
+            {
                 LoadDefaults(null);
                 foreach (var kv in value.Keys)
                 {
@@ -38,6 +45,8 @@ namespace Klyte.WriteTheSigns.Data
 
         public override string SaveId => "K45_WTS_WTSOnNetData";
 
+
+
         public override void LoadDefaults(ISerializableData serializableData)
         {
             base.LoadDefaults(serializableData);
@@ -46,8 +55,41 @@ namespace Klyte.WriteTheSigns.Data
 
         [XmlAttribute("defaultFont")]
         public virtual string DefaultFont { get; set; }
-     
 
+        public void OnSegmentChanged(ushort segmentId)
+        {
+            clearCacheQueue.Add(segmentId);
+
+            if (currentCacheCoroutine is null)
+            {
+                currentCacheCoroutine = WriteTheSignsMod.Controller?.StartCoroutine(ClearCacheQueue());
+            }
+        }
+        private readonly HashSet<ushort> clearCacheQueue = new HashSet<ushort>();
+        private Coroutine currentCacheCoroutine;
+        private IEnumerator ClearCacheQueue()
+        {
+            do
+            {
+                var list = clearCacheQueue.ToList();
+                foreach (var segmentId in list)
+                {
+                    if (BoardContainersExport.TryGetValue(segmentId, out OnNetGroupDescriptorXml descriptorXml))
+                    {
+                        foreach (var board in descriptorXml.BoardsData)
+                        {
+                            board.m_cachedPositions = null;
+                            board.m_cachedRotations = null;
+                        }
+                    }
+                    WTSCacheSingleton.ClearCacheSegmentSize(segmentId);
+                    WTSCacheSingleton.ClearCacheSegmentNameParam(segmentId);
+                    clearCacheQueue.Remove(segmentId);
+                    yield return 0;
+                }
+            } while (clearCacheQueue.Count > 0);
+            currentCacheCoroutine = null;
+        }
     }
 
 }

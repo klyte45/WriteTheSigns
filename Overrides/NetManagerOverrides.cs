@@ -1,8 +1,13 @@
-﻿using Klyte.Commons.Extensions;
+﻿using Harmony;
+using Klyte.Commons.Extensions;
 using Klyte.Commons.Utils;
+using Klyte.WriteTheSigns.Data;
+using Klyte.WriteTheSigns.Singleton;
 using Klyte.WriteTheSigns.Utils;
 using System;
+using System.Collections.Generic;
 using System.Reflection;
+using System.Reflection.Emit;
 using UnityEngine;
 
 namespace Klyte.WriteTheSigns.Overrides
@@ -55,6 +60,60 @@ namespace Klyte.WriteTheSigns.Overrides
             ushort segment_ = segmentID;
             SimulationManager.instance.AddAction(() => EventSegmentNameChanged?.Invoke(segment_)).Execute();
         }
+
+
+
+        public static IEnumerable<CodeInstruction> AfterTerrainUpdateTranspile(IEnumerable<CodeInstruction> instr, ILGenerator il)
+        {
+            var instrList = new List<CodeInstruction>(instr);
+            MethodInfo TerrainUpdateNetNode = typeof(NetManagerOverrides).GetMethod("TerrainUpdateNetNode", RedirectorUtils.allFlags);
+            MethodInfo TerrainUpdateNetSegment = typeof(NetManagerOverrides).GetMethod("TerrainUpdateNetSegment", RedirectorUtils.allFlags);
+            int i = 2;
+            for (; i < instrList.Count; i++)
+            {
+                if (instrList[i - 2].opcode == OpCodes.Ldloc_S && instrList[i - 2].operand is LocalBuilder lb && lb.LocalIndex == 13
+                    && instrList[i - 1].opcode == OpCodes.Ldc_R4 && instrList[i - 1].operand is float k && k == 0)
+                {
+                    instrList.InsertRange(i + 1, new List<CodeInstruction> {
+                        new CodeInstruction(OpCodes.Ldloc_S, 10),
+                        new CodeInstruction(OpCodes.Call, TerrainUpdateNetNode),
+                    });
+                    break;
+                }
+            }
+            for (; i < instrList.Count; i++)
+            {
+                if (instrList[i - 2].opcode == OpCodes.Ldloc_S && instrList[i - 2].operand is LocalBuilder lb && lb.LocalIndex == 23
+                    && instrList[i - 1].opcode == OpCodes.Ldc_R4 && instrList[i - 1].operand is float k && k == 0)
+                {
+                    instrList.InsertRange(i + 1, new List<CodeInstruction> {
+                        new CodeInstruction(OpCodes.Ldloc_S, 16),
+                        new CodeInstruction(OpCodes.Call, TerrainUpdateNetSegment),
+                    });
+                    break;
+                }
+            }
+
+            LogUtils.PrintMethodIL(instrList);
+            return instrList;
+        }
+
+        public static void TerrainUpdateNetNode(ushort netNode)
+        {
+            if (LoadingManager.instance.m_loadingComplete)
+            {
+                WriteTheSignsMod.Controller?.RoadPropsSingleton?.OnNodeChanged(netNode);
+            }
+        }
+
+        public static void TerrainUpdateNetSegment(ushort segmentId)
+        {
+            if (LoadingManager.instance.m_loadingComplete)
+            {
+                WTSOnNetData.Instance.OnSegmentChanged(segmentId);
+            }
+        }
+
         #endregion
 #pragma warning restore IDE0051 // Remover membros privados não utilizados
 
@@ -69,12 +128,14 @@ namespace Klyte.WriteTheSigns.Overrides
             MethodInfo OnSegmentCreated = GetType().GetMethod("OnSegmentCreated", RedirectorUtils.allFlags);
             MethodInfo OnSegmentReleased = GetType().GetMethod("OnSegmentReleased", RedirectorUtils.allFlags);
             MethodInfo OnSegmentNameChanged = GetType().GetMethod("OnSegmentNameChanged", RedirectorUtils.allFlags);
+            MethodInfo AfterTerrainUpdateTranspile = GetType().GetMethod("AfterTerrainUpdateTranspile", RedirectorUtils.allFlags);
 
             RedirectorInstance.AddRedirect(typeof(NetManager).GetMethod("CreateNode", RedirectorUtils.allFlags), null, OnNodeChanged);
             RedirectorInstance.AddRedirect(typeof(NetManager).GetMethod("ReleaseNode", RedirectorUtils.allFlags), null, OnNodeChanged);
             RedirectorInstance.AddRedirect(typeof(NetManager).GetMethod("CreateSegment", RedirectorUtils.allFlags), null, OnSegmentCreated);
             RedirectorInstance.AddRedirect(typeof(NetManager).GetMethod("ReleaseSegment", RedirectorUtils.allFlags), OnSegmentReleased);
             RedirectorInstance.AddRedirect(typeof(NetManager).GetMethod("SetSegmentNameImpl", RedirectorUtils.allFlags), null, OnSegmentNameChanged);
+            RedirectorInstance.AddRedirect(typeof(NetManager).GetMethod("AfterTerrainUpdate", RedirectorUtils.allFlags), null, null, AfterTerrainUpdateTranspile);
             #endregion
 
         }

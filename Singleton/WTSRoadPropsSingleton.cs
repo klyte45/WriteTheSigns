@@ -59,7 +59,7 @@ namespace Klyte.WriteTheSigns.Singleton
             WriteTheSignsMod.Controller.EventOnPostalCodeChanged += ResetViews;
         }
 
-        private void OnNodeChanged(ushort nodeId) => m_updatedStreetPositions[nodeId] = null;
+        public void OnNodeChanged(ushort nodeId) => m_updatedStreetPositions[nodeId] = null;
 
         private void OnNameSeedChanged(ushort segmentId)
         {

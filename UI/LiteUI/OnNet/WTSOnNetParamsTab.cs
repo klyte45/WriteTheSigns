@@ -173,12 +173,14 @@ namespace Klyte.WriteTheSigns.UI
             switch (targetContentType)
             {
                 case TextType.ParameterizedGameSpriteIndexed:
+                    m_searchText = "";
                     m_isLocal = paramVal.IsLocal;
                     m_selectedFolder = paramVal.AtlasName.TrimToNull();
                     m_selectedValue = paramVal.TextOrSpriteValue;
                     m_currentState = State.GettingImage;
                     break;
                 case TextType.ParameterizedGameSprite:
+                    m_searchText = "";
                     m_isLocal = paramVal.IsLocal;
                     m_selectedFolder = paramVal.AtlasName.TrimToNull();
                     m_currentState = State.GettingFolder;
@@ -198,7 +200,6 @@ namespace Klyte.WriteTheSigns.UI
                     }
                     break;
             }
-            m_searchText = "";
             m_searchPropName = item.Descriptor?.PropName;
             m_searchResult.Value = new string[0];
             RestartFilterCoroutine();
@@ -221,7 +222,7 @@ namespace Klyte.WriteTheSigns.UI
             }
             else
             {
-                item.SetTextParameter(m_currentEditingParam, m_searchText == "" ? null : GetCurrentParamString());
+                item.SetTextParameter(m_currentEditingParam, m_currentState == State.GettingText && m_searchText == "" ? null : GetCurrentParamString());
             }
             m_currentState = State.List;
         }

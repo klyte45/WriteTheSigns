@@ -33,7 +33,6 @@ namespace Klyte.WriteTheSigns.UI
             m_stripMain.CreateTabLocalized<WTSRoadCornerEditor>("InfoIconTrafficRoutes", "K45_WTS_STREET_SIGN_CONFIG_TAB", "WTSStreetSign", false);
             m_stripMain.CreateTabLocalized<WTSBuildingLayoutEditor>("IconAssetBuilding", "K45_WTS_BUILDING_CONFIG_TAB", "WTSBuildingSettings", false);
             m_stripMain.CreateTabLocalized<WTSVehicleLayoutEditor>("IconAssetVehicle", "K45_WTS_VEHICLE_CONFIG_TAB", "WTSVehicleLayoutEditor", false);
-            m_stripMain.CreateTabLocalized<WTSOnNetLayoutEditor>("IconAssetRoad", "K45_WTS_ONNET_CONFIG_TAB", "WTSOnNetLayoutEditor", false);
             m_stripMain.CreateTabLocalized<WTSFontsSettings>(KlyteResourceLoader.GetDefaultSpriteNameFor(CommonsSpriteNames.K45_AutoNameIcon), "K45_WTS_FONT_CONFIG_TAB", "WTSFontSettings", false);
 
 
