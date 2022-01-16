@@ -1,8 +1,8 @@
-﻿using Harmony;
+﻿using ColossalFramework.Math;
+using Harmony;
 using Klyte.Commons.Extensions;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Data;
-using Klyte.WriteTheSigns.Singleton;
 using Klyte.WriteTheSigns.Utils;
 using System;
 using System.Collections.Generic;
@@ -132,7 +132,7 @@ namespace Klyte.WriteTheSigns.Overrides
 
             RedirectorInstance.AddRedirect(typeof(NetManager).GetMethod("CreateNode", RedirectorUtils.allFlags), null, OnNodeChanged);
             RedirectorInstance.AddRedirect(typeof(NetManager).GetMethod("ReleaseNode", RedirectorUtils.allFlags), null, OnNodeChanged);
-            RedirectorInstance.AddRedirect(typeof(NetManager).GetMethod("CreateSegment", RedirectorUtils.allFlags), null, OnSegmentCreated);
+            RedirectorInstance.AddRedirect(typeof(NetManager).GetMethod("CreateSegment", RedirectorUtils.allFlags, null, new[] { typeof(ushort).MakeByRefType(), typeof(Randomizer).MakeByRefType(), typeof(NetInfo), typeof(TreeInfo), typeof(ushort), typeof(ushort), typeof(Vector3), typeof(Vector3), typeof(uint), typeof(uint), typeof(bool) }, null), null, OnSegmentCreated);
             RedirectorInstance.AddRedirect(typeof(NetManager).GetMethod("ReleaseSegment", RedirectorUtils.allFlags), OnSegmentReleased);
             RedirectorInstance.AddRedirect(typeof(NetManager).GetMethod("SetSegmentNameImpl", RedirectorUtils.allFlags), null, OnSegmentNameChanged);
             RedirectorInstance.AddRedirect(typeof(NetManager).GetMethod("AfterTerrainUpdate", RedirectorUtils.allFlags), null, null, AfterTerrainUpdateTranspile);
