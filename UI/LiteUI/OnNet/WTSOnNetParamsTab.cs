@@ -195,7 +195,7 @@ namespace Klyte.WriteTheSigns.UI
                     }
                     else
                     {
-                        m_searchText = paramVal.TextOrSpriteValue;
+                        m_searchText = paramVal.TextOrSpriteValue ?? "";
                         m_selectedValue = null;
                     }
                     break;

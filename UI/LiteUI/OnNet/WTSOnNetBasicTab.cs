@@ -205,11 +205,17 @@ namespace Klyte.WriteTheSigns.UI
             }
             GUILayout.Space(12);
 
+
+            GUIKlyteCommons.DoInHorizontal(() =>
+            {
+                item.InvertSign = GUILayout.Toggle(item.InvertSign, Locale.Get("K45_WTS_INVERT_SIGN_SIDE"));
+            });
+
             GUIKlyteCommons.DoInHorizontal(() => GUILayout.Label(Locale.Get("K45_WTS_ONNETEDITOR_LOCATION_SETTINGS")));
 
-            GUIKlyteCommons.AddVector3Field(item.PropPosition, "K45_WTS_ONNETEDITOR_POSITIONOFFSET", f_SegmentPositionOffset, areaRect.width);
-            GUIKlyteCommons.AddVector3Field(item.PropRotation, "K45_WTS_ONNETEDITOR_ROTATION", f_SegmentRotationOffset, areaRect.width);
-            GUIKlyteCommons.AddVector3Field(item.Scale, "K45_WTS_ONNETEDITOR_SCALE", f_SegmentScaleOffset, areaRect.width);
+            GUIKlyteCommons.AddVector3Field(item.PropPosition, "K45_WTS_ONNETEDITOR_POSITIONOFFSET", f_SegmentPositionOffset);
+            GUIKlyteCommons.AddVector3Field(item.PropRotation, "K45_WTS_ONNETEDITOR_ROTATION", f_SegmentRotationOffset);
+            GUIKlyteCommons.AddVector3Field(item.Scale, "K45_WTS_ONNETEDITOR_SCALE", f_SegmentScaleOffset);
         }
 
         internal bool ShowTabsOnTop() => m_currentModelType == 0 && !m_filterSelectionView;

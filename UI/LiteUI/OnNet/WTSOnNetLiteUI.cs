@@ -13,16 +13,12 @@ namespace Klyte.WriteTheSigns.UI
     internal class WTSOnNetLiteUI : GUIRootWindowBase
     {
         public static WTSOnNetLiteUI Instance { get; private set; }
-        private GUIColorPicker colorPicker;
 
 
         public WTSOnNetLiteUI()
-           : base("On Net Editor", new Rect(128, 128, 680, 420), resizable: true, minSize: new Vector2(340, 260))
-        {
-            Instance = this;
-            xmlLibList.DeleteI18n = "K45_WTS_SEGMENT_CLEARDATA_AYS";
-        }
-        public void Start() => colorPicker = KlyteMonoUtils.CreateElement<GUIColorPicker>(gameObject.transform);
+           : base("On Net Editor", new Rect(128, 128, 680, 420), resizable: true, minSize: new Vector2(340, 260)) => Instance = this;
+        public void Start() => Visible = false;
+
         public void Update()
         {
             if (Visible && Event.current.button == 1)
@@ -30,7 +26,6 @@ namespace Klyte.WriteTheSigns.UI
                 ToolsModifierControl.SetTool<SegmentEditorPickerTool>();
             }
         }
-        internal override GUIColorPicker ColorPicker => colorPicker;
 
         private int tabSel = 0;
         private int listSel = -1;
@@ -60,8 +55,26 @@ namespace Klyte.WriteTheSigns.UI
         private readonly WTSOnNetBasicTab basicTab = new WTSOnNetBasicTab();
         private readonly WTSOnNetTargetsTab targetTab = new WTSOnNetTargetsTab();
         private readonly WTSOnNetParamsTab paramsTab = new WTSOnNetParamsTab();
-        private readonly GUIXmlLib<WTSLibOnNetPropLayout, BoardInstanceOnNetXml, OnNetInstanceCacheContainerXml> xmlLibItem = new GUIXmlLib<WTSLibOnNetPropLayout, BoardInstanceOnNetXml, OnNetInstanceCacheContainerXml>();
-        private readonly GUIXmlLib<WTSLibOnNetPropLayoutList, ExportableBoardInstanceOnNetListXml> xmlLibList = new GUIXmlLib<WTSLibOnNetPropLayoutList, ExportableBoardInstanceOnNetListXml>();
+        private readonly GUIXmlLib<WTSLibOnNetPropLayout, BoardInstanceOnNetXml, OnNetInstanceCacheContainerXml> xmlLibItem = new GUIXmlLib<WTSLibOnNetPropLayout, BoardInstanceOnNetXml, OnNetInstanceCacheContainerXml>()
+        {
+            DeleteQuestionI18n = "K45_WTS_SEGMENT_CLEARDATA_AYS",
+            ImportI18n = "K45_WTS_SEGMENT_IMPORTDATA",
+            ExportI18n = "K45_WTS_SEGMENT_EXPORTDATA",
+            DeleteButtonI18n = "K45_WTS_SEGMENT_REMOVEITEM",
+            NameAskingI18n = "K45_WTS_EXPORTDATA_NAMEASKING",
+            NameAskingOverwriteI18n = "K45_WTS_EXPORTDATA_NAMEASKING_OVERWRITE",
+
+        };
+        private readonly GUIXmlLib<WTSLibOnNetPropLayoutList, ExportableBoardInstanceOnNetListXml> xmlLibList = new GUIXmlLib<WTSLibOnNetPropLayoutList, ExportableBoardInstanceOnNetListXml>()
+        {
+            DeleteQuestionI18n = "K45_WTS_SEGMENT_CLEARDATA_AYS",
+            ImportI18n = "K45_WTS_SEGMENT_IMPORTDATA",
+            ExportI18n = "K45_WTS_SEGMENT_EXPORTDATA",
+            DeleteButtonI18n = "K45_WTS_SEGMENT_REMOVEITEM",
+            NameAskingI18n = "K45_WTS_EXPORTDATA_NAMEASKING",
+            NameAskingOverwriteI18n = "K45_WTS_EXPORTDATA_NAMEASKING_OVERWRITE",
+
+        };
 
         public static bool LockSelection { get; internal set; } = true;
         private OnNetGroupDescriptorXml CurrentEditingInstance { get; set; }
@@ -163,7 +176,7 @@ namespace Klyte.WriteTheSigns.UI
             {
                 return;
             }
-            var headerArea = new Rect(5, 20, WindowRect.width - 10, 20);
+            var headerArea = new Rect(5, 24, WindowRect.width - 10, 20);
             if (xmlLibList.Status == FooterBarStatus.Normal)
             {
                 GUIKlyteCommons.DoInArea(headerArea, (x) =>
@@ -193,7 +206,7 @@ namespace Klyte.WriteTheSigns.UI
                 xmlLibList.Draw(headerArea, RedButton, OnDeleteList, OnGetCurrentList);
             }
 
-            GUIKlyteCommons.DoInArea(new Rect(0, 40, 120, WindowRect.height - 40),
+            GUIKlyteCommons.DoInArea(new Rect(0, 44, 120, WindowRect.height - 40),
                 (x) => GUIKlyteCommons.DoInScroll(ref scrollPosition,
                 () =>
                 {
