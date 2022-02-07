@@ -11,3 +11,7 @@
 	NOTE: It also register a new button at Unified UI button, if it's available and active in the mod to use the UUI.
 	Also, the new UI allows to pick variables by selecting it in a list, no need anymore to be typing codes!
 <color cyan>- Recalculate layouts after changing building/segment format/position</color>: Now this mod will respond to all changes done directly by other mods in the segments and buildings, like Move It mod does!
+
+<color yellow>r1 (07/FEB/22)</color> 
+	- Fixed wrong text cache for line identifier and line full name
+	- Updated ja translation

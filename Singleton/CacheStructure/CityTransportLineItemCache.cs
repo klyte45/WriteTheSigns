@@ -10,7 +10,7 @@
             {
                 if (name is null)
                 {
-                    identifier = WriteTheSignsMod.Controller.ConnectorTLM.GetLineName(new Utils.WTSLine() { lineId = transportLineId, regional = false });
+                    name = new FormatableString(WriteTheSignsMod.Controller.ConnectorTLM.GetLineName(new Utils.WTSLine() { lineId = transportLineId, regional = false }));
                 }
                 return name;
             }
