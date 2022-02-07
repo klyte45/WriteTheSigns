@@ -170,7 +170,7 @@ namespace Klyte.WriteTheSigns.UI
         {
             WTSLibBuildingPropLayoutList.Reload();
             var newItem = new ExportableBoardInstanceBuildingListXml { Instances = CurrentEdited.PropInstances, Layouts = CurrentEdited.CaculateLocalLayouts() };
-            WTSLibBuildingPropLayoutList.Instance.Add(text, ref newItem);
+            WTSLibBuildingPropLayoutList.Instance.Add(text,  newItem);
             K45DialogControl.ShowModal(new K45DialogControl.BindProperties
             {
                 title = Locale.Get("K45_WTS_BUILDING_EXPORTRULESTITLE"),
@@ -215,7 +215,7 @@ namespace Klyte.WriteTheSigns.UI
                             if (WTSPropLayoutData.Instance.Get(x.Key) == null)
                             {
                                 var value = x.Value;
-                                WTSPropLayoutData.Instance.Add(x.Key, ref value);
+                                WTSPropLayoutData.Instance.Add(x.Key,  value);
                             }
                         });
                         FixTabstrip();
@@ -352,7 +352,7 @@ namespace Klyte.WriteTheSigns.UI
         }
         private void OnAddItemOnList(UIComponent component, UIMouseEventParameter eventParam)
         {
-            CurrentEdited.PropInstances = CurrentEdited.PropInstances.Union(new BoardInstanceBuildingXml[] { new BoardInstanceBuildingXml
+            CurrentEdited.PropInstances = CurrentEdited.PropInstances.Concat(new BoardInstanceBuildingXml[] { new BoardInstanceBuildingXml
             {
                 SaveName = "New layout",
             } }).ToArray();

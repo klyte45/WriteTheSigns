@@ -6,6 +6,7 @@ using Klyte.Commons.UI.SpriteNames;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Data;
 using Klyte.WriteTheSigns.Singleton;
+using Klyte.WriteTheSigns.Tools;
 using Klyte.WriteTheSigns.Xml;
 using System;
 using System.IO;
@@ -178,7 +179,7 @@ namespace Klyte.WriteTheSigns.UI
                     var value = XmlUtils.CloneViaXml(x.Value);
                     value.m_configurationSource = ConfigurationSource.CITY;
                     value.SaveName = x.Key;
-                    WTSPropLayoutData.Instance.Add(x.Key, ref value);
+                    WTSPropLayoutData.Instance.Add(x.Key, value);
                 }
             };
             ReloadBuilding();
@@ -195,8 +196,7 @@ namespace Klyte.WriteTheSigns.UI
         private void EnablePickTool()
         {
             OnBuildingSet(null);
-            WriteTheSignsMod.Controller.BuildingEditorToolInstance.OnBuildingSelect += OnBuildingSet;
-            WriteTheSignsMod.Controller.BuildingEditorToolInstance.enabled = true;
+            ToolsModifierControl.SetTool<BuildingEditorTool>().OnBuildingSelect += OnBuildingSet;
         }
 
         private void OnBuildingSet(ushort id)

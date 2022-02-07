@@ -3,9 +3,9 @@
     public enum TextRenderingClass
     {
         RoadNodes,
-        MileageMarker,
         Buildings,
         PlaceOnNet,
+        Vehicle,
     }
 
 }

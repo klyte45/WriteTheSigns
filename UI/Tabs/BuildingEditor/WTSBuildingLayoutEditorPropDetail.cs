@@ -3,7 +3,6 @@ using ColossalFramework.Globalization;
 using ColossalFramework.UI;
 using Klyte.Commons.Extensions;
 using Klyte.Commons.UI.SpriteNames;
-using Klyte.Commons.UI.Sprites;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Data;
 using Klyte.WriteTheSigns.Libraries;
@@ -102,9 +101,9 @@ namespace Klyte.WriteTheSigns.UI
                             m_subBuildingSelect,
                             m_chkUseFixedIfMulti,
                             m_propFilter,
-                }.Union(m_position).Union(m_rotation).Union(m_repeatArrayDistance).Union(m_scale).Union(m_textParams).ToArray();
+                }.Concat(m_position).Concat(m_rotation).Concat(m_repeatArrayDistance).Concat(m_scale).Concat(m_textParams).ToArray();
                 }
-                return m_allFields.Union(m_checkboxTemplateList.items.Select(x => x as UIComponent));
+                return m_allFields.Concat(m_checkboxTemplateList.items.Select(x => x as UIComponent));
             }
         }
 
@@ -144,12 +143,12 @@ namespace Klyte.WriteTheSigns.UI
 
             helperSettings.AddSpace(5);
 
-            AddDropdown(Locale.Get("K45_WTS_BUILDINGEDITOR_PROPTYPE"), out m_propSelectionType, helperSettings, new string[] { Locale.Get("K45_WTS_BUILDINGEDITOR_PROPLAYOUT"), Locale.Get("K45_WTS_BUILDINGEDITOR_PROPMODELSELECT") }, OnPropSelecionClassChange);
+            AddDropdown(Locale.Get("K45_WTS_BUILDINGEDITOR_PROPTYPE"), out m_propSelectionType, helperSettings, new string[] { "K45_WTS_BUILDINGEDITOR_PROPLAYOUT", "K45_WTS_BUILDINGEDITOR_PROPMODELSELECT" }.Select((x, i) => Tuple.New(Locale.Get(x), i)).ToArray(), OnPropSelecionClassChange);
             AddFilterableInput(Locale.Get("K45_WTS_BUILDINGEDITOR_MODELLAYOUTSELECT"), helperSettings, out m_propFilter, out _, OnFilterLayouts, OnConfigSelectionChange);
             AddVector3Field(Locale.Get("K45_WTS_BUILDINGEDITOR_POSITION"), out m_position, helperSettings, OnPositionChanged);
             AddVector3Field(Locale.Get("K45_WTS_BUILDINGEDITOR_ROTATION"), out m_rotation, helperSettings, OnRotationChanged);
             AddVector3Field(Locale.Get("K45_WTS_BUILDINGEDITOR_SCALE"), out m_scale, helperSettings, OnScaleChanged);
-            AddDropdown(Locale.Get("K45_WTS_SUBBUILDINGPIVOTREFERENCE"), out m_subBuildingSelect, helperSettings, new string[0], OnSubBuildingRefChanged);
+            AddEmptyDropdown(Locale.Get("K45_WTS_SUBBUILDINGPIVOTREFERENCE"), out m_subBuildingSelect, helperSettings, OnSubBuildingRefChanged);
 
 
             AddLibBox<WTSLibBuildingPropLayout, BoardInstanceBuildingXml>(helperSettings, out m_copySettings, OnCopyRule, out m_pasteSettings, OnPasteRule, out _, null, out m_loadDD, out m_libLoad, out m_libDelete, out m_libSaveNameField, out m_libSave, out m_gotoFileLib, OnLoadRule, GetRuleSerialized);
@@ -159,7 +158,7 @@ namespace Klyte.WriteTheSigns.UI
             AddIntField(Locale.Get("K45_WTS_ARRAY_REPEAT_TIMES"), out m_repeatTimes, helperSpawning, OnRepeatTimesChanged, false);
             AddVector3Field(Locale.Get("K45_WTS_ARRAY_REPEAT_DISTANCE"), out m_repeatArrayDistance, helperSpawning, OnRepeatArrayDistanceChanged);
 
-            AddDropdown(Locale.Get("K45_WTS_COLOR_MODE_SELECT"), out m_colorModeDD, helperAppearence, Enum.GetNames(typeof(ColoringMode)).Select(x => Locale.Get("K45_WTS_PROP_COLOR_MODE", x)).ToArray(), OnColoringModeChanged);
+            AddDropdown(Locale.Get("K45_WTS_COLOR_MODE_SELECT"), out m_colorModeDD, helperAppearence, Enum.GetValues(typeof(ColoringMode)).Cast<ColoringMode>().Select(x => Tuple.New(Locale.Get("K45_WTS_PROP_COLOR_MODE", x.ToString()), x)).ToArray(), OnColoringModeChanged);
             AddCheckboxLocale("K45_WTS_USEFIXEDIFMULTILINES", out m_chkUseFixedIfMulti, helperAppearence, OnUseFixedIfMultiChanged);
 
             WTSBuildingLayoutEditor.Instance.LayoutList.EventSelectionChanged += OnChangeTab;
@@ -185,7 +184,13 @@ namespace Klyte.WriteTheSigns.UI
             {
                 var currentIdx = i;
                 UISprite sprite = null;
-                AddFilterableInput(string.Format(Locale.Get($"K45_WTS_BUILDINGEDITOR_TEXTPARAM"), currentIdx), helperParameters, out m_textParams[i], out m_textParamsLabels[i], out UIListBox lb, (x) => OnFilterParamImages(sprite, x), (t, x, y) => OnParamChanged(t, currentIdx, x, y));
+
+                IEnumerator OnFilter(string x, Wrapper<string[]> result)
+                {
+                    yield return result.Value = OnFilterParamImages(sprite, x);
+                }
+
+                AddFilterableInput(string.Format(Locale.Get($"K45_WTS_BUILDINGEDITOR_TEXTPARAM"), currentIdx), helperParameters, out m_textParams[i], out m_textParamsLabels[i], out UIListBox lb, OnFilter, (t, x, y) => OnParamChanged(t, currentIdx, x, y));
                 m_textParamsLabels[i].processMarkup = true;
                 sprite = AddSpriteInEditorRow(lb, true, 300);
                 m_textParams[i].eventGotFocus += (x, y) =>
@@ -205,7 +210,7 @@ namespace Klyte.WriteTheSigns.UI
         private string[] OnFilterParamImages(UISprite sprite, string arg)
         {
             string[] results = null;
-            SafeObtain((ref BoardInstanceBuildingXml x) => results = WriteTheSignsMod.Controller.AtlasesLibrary.OnFilterParamImagesByText(sprite, arg, x.Descriptor?.CachedProp?.name ?? x.CachedSimpleProp?.name, out lastProtocol_searchedParam));
+            SafeObtain((ref BoardInstanceBuildingXml x) => results = WriteTheSignsMod.Controller.AtlasesLibrary.OnFilterParamImagesAndFoldersByText(sprite, arg, x.Descriptor?.CachedProp?.name ?? x.CachedSimpleProp?.name, out lastProtocol_searchedParam));
             return results;
         }
         private string lastProtocol_searchedParam;
@@ -228,7 +233,7 @@ namespace Klyte.WriteTheSigns.UI
                     CurrentEdited.SetTextParameter(paramIdx, inputText);
                 }
                 lastProtocol_searchedParam = null;
-                return CurrentEdited?.GetTextParameter(paramIdx)?.ToString() ?? "";
+                return CurrentEdited?.GetParameter(paramIdx)?.ToString() ?? "";
             }
         }
         private IEnumerator RefocusParamIn2Frames(int paramIdx)
@@ -245,7 +250,7 @@ namespace Klyte.WriteTheSigns.UI
                 for (int i = 0; i < m_textParams.Length; i++)
                 {
                     m_textParamsLabels[i].suffix = paramsUsed?.ContainsKey(i) ?? false ? $" - {Locale.Get("K45_WTS_USEDAS")}\n{string.Join("\n", paramsUsed[i])}" : "";
-                    m_textParams[i].text = x.GetTextParameter(i)?.ToString() ?? "";
+                    m_textParams[i].text = x.GetParameter(i)?.ToString() ?? "";
                     m_textParams[i].parent.isVisible = paramsUsed?.ContainsKey(i) ?? false;
                 }
             }
@@ -293,7 +298,7 @@ namespace Klyte.WriteTheSigns.UI
                         {
                             if (y)
                             {
-                                z.m_platforms = z.m_platforms.Union(new int[] { pi.index }).ToArray();
+                                z.m_platforms = z.m_platforms.Concat(new int[] { pi.index }).ToArray();
                                 x.parent.zOrder = z.m_platforms.Length - 1;
                             }
                             else
@@ -363,7 +368,7 @@ namespace Klyte.WriteTheSigns.UI
                 var buildingInfo = PrefabCollection<BuildingInfo>.FindLoaded(CurrentBuildingName ?? "");
                 if ((buildingInfo.m_subBuildings?.Length ?? 0) > 0)
                 {
-                    m_subBuildingSelect.items = new string[] { Locale.Get("K45_WTS_MAINBUILIDING") }.Union(buildingInfo.m_subBuildings?.Select((z, y) => $"{y}: {z.m_buildingInfo.name.Split(new char[] { '.' }, 2).LastOrDefault()}")).ToArray();
+                    m_subBuildingSelect.items = new string[] { Locale.Get("K45_WTS_MAINBUILIDING") }.Concat(buildingInfo.m_subBuildings?.Select((z, y) => $"{y}: {z.m_buildingInfo.name.Split(new char[] { '.' }, 2).LastOrDefault()}")).ToArray();
                     m_subBuildingSelect.selectedIndex = x.SubBuildingPivotReference + 1;
                 }
                 else
@@ -411,7 +416,17 @@ namespace Klyte.WriteTheSigns.UI
         }
 
 
-        private string[] OnFilterLayouts(string input) => m_propSelectionType.selectedIndex == 0 ? WTSPropLayoutData.Instance.FilterBy(input, TextRenderingClass.Buildings) : PropIndexes.instance.BasicInputFiltering(input);
+        private IEnumerator OnFilterLayouts(string input, Wrapper<string[]> result)
+        {
+            if (m_propSelectionType.selectedIndex == 0)
+            {
+                yield return WTSPropLayoutData.Instance.FilterBy(input, TextRenderingClass.Buildings, result);
+            }
+            else
+            {
+                yield return PropIndexes.instance.BasicInputFiltering(input, result);
+            }
+        }
 
         private string OnConfigSelectionChange(string typed, int sel, string[] items)
         {
@@ -509,9 +524,9 @@ namespace Klyte.WriteTheSigns.UI
         private void OnRepeatArrayDistanceChanged(Vector3 obj) => SafeObtain((ref BoardInstanceBuildingXml x) => x.ArrayRepeat = (Vector3Xml)obj);
         private void OnRepeatTimesChanged(int obj) => SafeObtain((ref BoardInstanceBuildingXml x) => x.ArrayRepeatTimes = obj);
 
-        private void OnColoringModeChanged(int sel) => SafeObtain((ref BoardInstanceBuildingXml x) =>
+        private void OnColoringModeChanged(ColoringMode sel) => SafeObtain((ref BoardInstanceBuildingXml x) =>
         {
-            x.ColorModeProp = (ColoringMode)sel;
+            x.ColorModeProp = sel;
             m_chkUseFixedIfMulti.isVisible = x.ColorModeProp == ColoringMode.ByPlatform;
         });
         private void OnUseFixedIfMultiChanged(bool isChecked) => SafeObtain((ref BoardInstanceBuildingXml x) => x.UseFixedIfMultiline = isChecked);
@@ -534,11 +549,11 @@ namespace Klyte.WriteTheSigns.UI
         {
             private Color32 OwnColor => WTSBuildingPropsSingleton.m_colorOrder[index % WTSBuildingPropsSingleton.m_colorOrder.Length];
 
-            public StopSearchUtils.StopPointDescriptorLanes descriptorLane;
+            public StopPointDescriptorLanes descriptorLane;
             public int index;
-            public override string ToString() => $"<k45Symbol {KlyteResourceLoader.GetDefaultSpriteNameFor(LineIconSpriteNames.K45_CircleIcon)},{OwnColor.ToRGB()},{index}>{descriptorLane.vehicleType} @ {descriptorLane.platformLine.GetBounds().center}";
+            public override string ToString() => $"<color #{OwnColor.ToRGB()}>({index})</color> {descriptorLane.vehicleType} @ {descriptorLane.platformLine.GetBounds().center}";
 
-            public PlatformItem(StopSearchUtils.StopPointDescriptorLanes item, int index)
+            public PlatformItem(StopPointDescriptorLanes item, int index)
             {
                 descriptorLane = item;
                 this.index = index;

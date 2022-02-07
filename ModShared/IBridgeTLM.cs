@@ -1,4 +1,5 @@
 ﻿using Klyte.Commons.Utils;
+using Klyte.WriteTheSigns.Singleton;
 using Klyte.WriteTheSigns.Utils;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,21 +9,20 @@ namespace Klyte.WriteTheSigns.ModShared
 {
     internal abstract class IBridgeTLM : MonoBehaviour
     {
-        public abstract Tuple<string, Color, string> GetLineLogoParameters(ushort lineID);
-        public abstract ushort GetStopBuildingInternal(ushort stopId, ushort lineId);
-        public abstract string GetStopName(ushort stopId, ushort lineId);
-        public abstract string GetLineSortString(ushort lineId);
+        public abstract Tuple<string, Color, string> GetLineLogoParameters(WTSLine lineObj);
+        public abstract ushort GetStopBuildingInternal(ushort stopId, WTSLine lineObj);
+        public abstract string GetStopName(ushort stopId, WTSLine lineObj);
+        public abstract string GetLineSortString(WTSLine lineObj);
         public abstract string GetVehicleIdentifier(ushort vehicleId);
-        public abstract string GetLineIdString(ushort lineId);
-        public abstract void MapLineDestinations(ushort lineId);
-        protected static void FillStops(ushort lineId, List<BridgeTLM.DestinationPoco> destinations)
+        public abstract string GetLineIdString(WTSLine lineObj);
+        public abstract void MapLineDestinations(WTSLine lineObj);
+        public abstract WTSLine GetVehicleLine(ushort vehicleId);
+        public abstract WTSLine GetStopLine(ushort stopId);
+        protected static void FillStops(WTSLine lineObj, List<BridgeTLM.DestinationPoco> destinations)
         {
-            ref TransportLine tl = ref TransportManager.instance.m_lines.m_buffer[lineId];
-            ref NetNode[] nodes = ref NetManager.instance.m_nodes.m_buffer;
-
             if (destinations.Count == 0)
             {
-                destinations.Add(new BridgeTLM.DestinationPoco { stopId = destinations[0].stopId, stopName = null });
+                return;
             }
 
             var firstStop = destinations[0].stopId;
@@ -42,13 +42,14 @@ namespace Klyte.WriteTheSigns.ModShared
                     destinationStr = destinations[nextDest % destinations.Count].stopName;
                     if (destinationStr is null)
                     {
-                        destinationStr = WriteTheSignsMod.Controller.ConnectorTLM.GetStopName(destinationId, lineId);
+                        destinationStr = WriteTheSignsMod.Controller.ConnectorTLM.GetStopName(destinationId, lineObj);
                     }
                 }
 
                 buildingSing.m_stopInformation[curStop] = new Xml.StopInformation
                 {
-                    m_lineId = lineId,
+                    m_lineId = (ushort)lineObj.lineId,
+                    m_regionalLine = lineObj.regional,
                     m_destinationId = destinationId,
                     m_nextStopId = nextStop,
                     m_previousStopId = prevStop,
@@ -66,7 +67,10 @@ namespace Klyte.WriteTheSigns.ModShared
         internal void OnAutoNameParameterChanged()
         {
             WriteTheSignsMod.Controller.BuildingPropsSingleton.ResetLines();
-            RenderUtils.ClearCacheLineName();
+            WTSCacheSingleton.ClearCacheLineName();
         }
+
+        internal abstract string GetLineName(WTSLine lineObj);
+        internal abstract Color GetLineColor(WTSLine lineObj);
     }
 }

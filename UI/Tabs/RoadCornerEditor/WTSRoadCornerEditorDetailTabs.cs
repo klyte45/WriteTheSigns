@@ -2,6 +2,7 @@
 using ColossalFramework.Globalization;
 using ColossalFramework.UI;
 using Klyte.Commons.Extensions;
+using Klyte.Commons.UI;
 using Klyte.Commons.UI.SpriteNames;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Data;
@@ -9,6 +10,7 @@ using Klyte.WriteTheSigns.Libraries;
 using Klyte.WriteTheSigns.Rendering;
 using Klyte.WriteTheSigns.Xml;
 using System;
+using System.Collections;
 using System.Linq;
 using UnityEngine;
 using static ItemClass;
@@ -116,7 +118,7 @@ namespace Klyte.WriteTheSigns.UI
 
             AddCheckboxLocale("K45_WTS_ROADCORNER_DISTRICTSELECTIONASWHITELIST", out m_districtWhiteList, helperDistricts, OnSetDistrictsAsWhitelist);
             AddCheckboxLocale("K45_WTS_ROADCORNER_DISTRICTSELECTIONASBLACKLIST", out m_districtBlackList, helperDistricts, OnSetDistrictsAsBlacklist);
-            AddDropdown(Locale.Get("K45_WTS_ROADCORNER_DISTRICTRESTRICTIONSOLVEORDER"), out m_districtResolutionOrder, helperDistricts, Enum.GetNames(typeof(DistrictRestrictionOrder)).Select(x => Locale.Get("K45_WTS_DISTRICTRESTRICTIONORDER", x)).ToArray(), OnChangeDistrictRestrictionOrder);
+            AddDropdown(Locale.Get("K45_WTS_ROADCORNER_DISTRICTRESTRICTIONSOLVEORDER"), out m_districtResolutionOrder, helperDistricts, ColossalUIExtensions.GetDropdownOptions<DistrictRestrictionOrder>("K45_WTS_DISTRICTRESTRICTIONORDER"), OnChangeDistrictRestrictionOrder);
             KlyteMonoUtils.CreateUIElement(out m_listContainer, helperDistricts.Self.transform, "previewPanel", new UnityEngine.Vector4(0, 0, helperDistricts.Self.width, helperDistricts.Self.height - 160));
             KlyteMonoUtils.CreateScrollPanel(m_listContainer, out m_districtList, out _, m_listContainer.width - 20, m_listContainer.height);
             m_districtList.backgroundSprite = "OptionsScrollbarTrack";
@@ -132,11 +134,14 @@ namespace Klyte.WriteTheSigns.UI
             m_pasteSettings.isVisible = false;
         }
 
-        private string[] OnFilterLayouts(string input) => WTSPropLayoutData.Instance.FilterBy(input, TextRenderingClass.RoadNodes);
+        private IEnumerator OnFilterLayouts(string input, Wrapper<string[]> result)
+        {
+            yield return WTSPropLayoutData.Instance.FilterBy(input, TextRenderingClass.RoadNodes, result);
+        }
 
         private void UpdateDistrictList(ref BoardInstanceRoadNodeXml reference)
         {
-            var districts = DistrictUtils.GetValidParks().ToDictionary(x => x.Key, x => 0x100 | x.Value).Union(DistrictUtils.GetValidDistricts()).OrderBy(x => x.Value == 0 ? "" : x.Key).ToDictionary(x => x.Key, x => x.Value);
+            var districts = DistrictUtils.GetValidParks().ToDictionary(x => x.Key, x => 0x100 | x.Value).Concat(DistrictUtils.GetValidDistricts()).OrderBy(x => x.Value == 0 ? "" : x.Key).ToDictionary(x => x.Key, x => x.Value);
             ref DistrictPark[] parkBuffer = ref Singleton<DistrictManager>.instance.m_parks.m_buffer;
             UIPanel[] districtChecks = m_checkboxTemplateList.SetItemCount(districts.Count);
 
@@ -255,44 +260,41 @@ namespace Klyte.WriteTheSigns.UI
             ReloadData();
         }
 
-        private void ReloadData()
-        {
-            SafeObtain((ref BoardInstanceRoadNodeXml x) =>
-            {
-                m_name.text = x.SaveName ?? "";
-                m_propLayoutSelect.text = x.PropLayoutName ?? "";
-                m_position[0].text = x.PropPosition.X.ToString("F3");
-                m_position[1].text = x.PropPosition.Y.ToString("F3");
-                m_position[2].text = x.PropPosition.Z.ToString("F3");
-                m_rotation[0].text = x.PropRotation.X.ToString("F3");
-                m_rotation[1].text = x.PropRotation.Y.ToString("F3");
-                m_rotation[2].text = x.PropRotation.Z.ToString("F3");
-                m_scale[0].text = x.PropScale.x.ToString("F3");
-                m_scale[1].text = x.PropScale.y.ToString("F3");
-                m_scale[2].text = x.PropScale.z.ToString("F3");
+        private void ReloadData() => SafeObtain((ref BoardInstanceRoadNodeXml x) =>
+                                   {
+                                       m_name.text = x.SaveName ?? "";
+                                       m_propLayoutSelect.text = x.PropLayoutName ?? "";
+                                       m_position[0].text = x.PropPosition.X.ToString("F3");
+                                       m_position[1].text = x.PropPosition.Y.ToString("F3");
+                                       m_position[2].text = x.PropPosition.Z.ToString("F3");
+                                       m_rotation[0].text = x.PropRotation.X.ToString("F3");
+                                       m_rotation[1].text = x.PropRotation.Y.ToString("F3");
+                                       m_rotation[2].text = x.PropRotation.Z.ToString("F3");
+                                       m_scale[0].text = x.PropScale.x.ToString("F3");
+                                       m_scale[1].text = x.PropScale.y.ToString("F3");
+                                       m_scale[2].text = x.PropScale.z.ToString("F3");
 
-                m_allowDirty.isChecked = x.AllowedLevels.Contains(Level.Level1);
-                m_allowAlleys.isChecked = x.AllowedLevels.Contains((Level)5);
-                m_allowSmallRoads.isChecked = x.AllowedLevels.Contains(Level.Level2);
-                m_allowMediumRoads.isChecked = x.AllowedLevels.Contains(Level.Level3);
-                m_allowLargeRoads.isChecked = x.AllowedLevels.Contains(Level.Level4);
-                m_allowHighways.isChecked = x.AllowedLevels.Contains(Level.Level5);
+                                       m_allowDirty.isChecked = x.AllowedLevels.Contains(Level.Level1);
+                                       m_allowAlleys.isChecked = x.AllowedLevels.Contains((Level)5);
+                                       m_allowSmallRoads.isChecked = x.AllowedLevels.Contains(Level.Level2);
+                                       m_allowMediumRoads.isChecked = x.AllowedLevels.Contains(Level.Level3);
+                                       m_allowLargeRoads.isChecked = x.AllowedLevels.Contains(Level.Level4);
+                                       m_allowHighways.isChecked = x.AllowedLevels.Contains(Level.Level5);
 
-                m_spawnChance.value = x.SpawnChance;
-                m_minMaxHalfWidth[0].text = x.MinRoadHalfWidth.ToString("F3");
-                m_minMaxHalfWidth[1].text = x.MaxRoadHalfWidth.ToString("F3");
-                m_placeDistrictBorder.isChecked = x.PlaceOnDistrictBorder;
-                m_placeRoadTransition.isChecked = x.PlaceOnTunnelBridgeStart;
-                m_ignoreEmpty.isChecked = x.IgnoreEmptyNameRoads;
+                                       m_spawnChance.value = x.SpawnChance;
+                                       m_minMaxHalfWidth[0].text = x.MinRoadHalfWidth.ToString("F3");
+                                       m_minMaxHalfWidth[1].text = x.MaxRoadHalfWidth.ToString("F3");
+                                       m_placeDistrictBorder.isChecked = x.PlaceOnDistrictBorder;
+                                       m_placeRoadTransition.isChecked = x.PlaceOnTunnelBridgeStart;
+                                       m_ignoreEmpty.isChecked = x.IgnoreEmptyNameRoads;
 
-                m_useDistrictColor.isChecked = x.UseDistrictColor;
+                                       m_useDistrictColor.isChecked = x.UseDistrictColor;
 
-                m_districtWhiteList.isChecked = !x.SelectedDistrictsIsBlacklist;
-                m_districtBlackList.isChecked = x.SelectedDistrictsIsBlacklist;
+                                       m_districtWhiteList.isChecked = !x.SelectedDistrictsIsBlacklist;
+                                       m_districtBlackList.isChecked = x.SelectedDistrictsIsBlacklist;
 
-                UpdateDistrictList(ref x);
-            });
-        }
+                                       UpdateDistrictList(ref x);
+                                   });
 
         private string m_clipboard;
 
@@ -324,13 +326,7 @@ namespace Klyte.WriteTheSigns.UI
 
         private void OnSetDistrictsAsBlacklist(bool isChecked) => SafeObtain((ref BoardInstanceRoadNodeXml x) => { x.SelectedDistrictsIsBlacklist = isChecked; m_districtWhiteList.isChecked = !isChecked; });
         private void OnSetDistrictsAsWhitelist(bool isChecked) => SafeObtain((ref BoardInstanceRoadNodeXml x) => { x.SelectedDistrictsIsBlacklist = !isChecked; m_districtBlackList.isChecked = !isChecked; });
-        private void OnChangeDistrictRestrictionOrder(int sel) => SafeObtain((ref BoardInstanceRoadNodeXml x) =>
-        {
-            if (sel >= 0)
-            {
-                x.DistrictRestrictionOrder = (DistrictRestrictionOrder)sel;
-            }
-        });
+        private void OnChangeDistrictRestrictionOrder(DistrictRestrictionOrder sel) => SafeObtain((ref BoardInstanceRoadNodeXml x) => x.DistrictRestrictionOrder = sel);
         private void OnChangeSpawnOnDistrictBorder(bool isChecked) => SafeObtain((ref BoardInstanceRoadNodeXml x) => x.PlaceOnDistrictBorder = isChecked);
 
         private void OnChangePlaceRoadTransition(bool isChecked) => SafeObtain((ref BoardInstanceRoadNodeXml x) => x.PlaceOnTunnelBridgeStart = isChecked);

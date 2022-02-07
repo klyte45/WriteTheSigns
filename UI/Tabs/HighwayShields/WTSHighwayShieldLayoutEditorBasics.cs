@@ -54,10 +54,17 @@ namespace Klyte.WriteTheSigns.UI
             var helperSettings = new UIHelperExtension(m_tabSettings, LayoutDirection.Vertical);
             var helperLib = new UIHelperExtension(m_tabLib, LayoutDirection.Vertical);
 
-            AddDropdown(Locale.Get("K45_WTS_OVERRIDE_FONT"), out m_fontSelect, helperSettings, new string[0], OnSetFont);
+            AddEmptyDropdown(Locale.Get("K45_WTS_OVERRIDE_FONT"), out m_fontSelect, helperSettings, OnSetFont);
             AddColorField(helperSettings, Locale.Get("K45_WTS_BACKGROUND_COLOR"), out m_bgColor, OnBgColorChanged);
             AddCheckboxLocale("K45_WTS_USEHWCOLOR", out m_useHwColor, helperSettings, OnUseHwColorChanged);
-            AddFilterableInput(Locale.Get("K45_WTS_BGSPRITE_NAME"), helperSettings, out m_spriteFilter, out UIListBox lb2, (x) => OnFilterParamImages(WTSHighwayShieldEditor.Instance.Preview.OverrideSprite, x), OnBgSpriteNameChanged);
+
+            IEnumerator OnFilter(string x, Wrapper<string[]> result)
+            {
+                yield return result.Value = OnFilterParamImages(WTSHighwayShieldEditor.Instance.Preview.OverrideSprite, x);
+            }
+
+
+            AddFilterableInput(Locale.Get("K45_WTS_BGSPRITE_NAME"), helperSettings, out m_spriteFilter, out UIListBox lb2, OnFilter, OnBgSpriteNameChanged);
             lb2.size = new Vector2(MainContainer.width - 20, 220);
             lb2.processMarkup = true;
             m_spriteFilter.eventGotFocus += (x, y) =>
@@ -119,7 +126,7 @@ namespace Klyte.WriteTheSigns.UI
             }
         }
         private string lastProtocol_searchedParam;
-        private string[] OnFilterParamImages(UISprite sprite, string arg) => WriteTheSignsMod.Controller.AtlasesLibrary.OnFilterParamImagesByText(sprite, arg, null, out lastProtocol_searchedParam);
+        private string[] OnFilterParamImages(UISprite sprite, string arg) => WriteTheSignsMod.Controller.AtlasesLibrary.OnFilterParamImagesAndFoldersByText(sprite, arg, null, out lastProtocol_searchedParam);
         private void OnUseHwColorChanged(bool isChecked) => EditingInstance.BackgroundColorIsFromHighway = isChecked;
         private void OnBgColorChanged(Color val)
         {

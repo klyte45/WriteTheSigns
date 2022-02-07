@@ -6,6 +6,7 @@ namespace Klyte.WriteTheSigns.Xml
     public struct StopInformation
     {
         public ushort m_stopId;
+        public bool m_regionalLine;
         public ushort m_lineId;
         public ushort m_nextStopId;
         public ushort m_previousStopId;
@@ -13,11 +14,11 @@ namespace Klyte.WriteTheSigns.Xml
         public string m_destinationString;
         public DestinationType destinationType;
 
-        public ushort NextStopBuildingId => WTSBuildingDataCaches.GetStopBuilding(m_nextStopId, m_lineId);
-        public ushort PrevStopBuildingId => WTSBuildingDataCaches.GetStopBuilding(m_previousStopId, m_lineId);
-        public ushort DestinationBuildingId => WTSBuildingDataCaches.GetStopBuilding(m_destinationId, m_lineId);
+        public ushort NextStopBuildingId => WTSBuildingDataCaches.GetStopBuilding(m_nextStopId, new WTSLine(m_lineId, m_regionalLine));
+        public ushort PrevStopBuildingId => WTSBuildingDataCaches.GetStopBuilding(m_previousStopId, new WTSLine(m_lineId, m_regionalLine));
+        public ushort DestinationBuildingId => WTSBuildingDataCaches.GetStopBuilding(m_destinationId, new WTSLine(m_lineId, m_regionalLine));
 
-        public override string ToString() => $"StopInformation(S={m_stopId},L={m_lineId},N={m_nextStopId},P={m_previousStopId},D={m_destinationId}(\"{m_destinationString}\" - {destinationType}))";
+        public override string ToString() => $"StopInformation(S={m_stopId},L={m_lineId}/{(m_regionalLine ? "Building" : "City")},N={m_nextStopId},P={m_previousStopId},D={m_destinationId}(\"{m_destinationString}\" - {destinationType}))";
     }
 
     public enum DestinationType

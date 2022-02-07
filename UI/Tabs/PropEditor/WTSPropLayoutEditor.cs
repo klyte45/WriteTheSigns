@@ -7,6 +7,7 @@ using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Data;
 using Klyte.WriteTheSigns.Xml;
 using System;
+using System.Collections;
 using System.Linq;
 using UnityEngine;
 using static Klyte.Commons.UI.DefaultEditorUILib;
@@ -52,7 +53,8 @@ namespace Klyte.WriteTheSigns.UI
         internal PropInfo CurrentPropInfo
         {
             get => m_currentInfo;
-            set {
+            set
+            {
                 m_currentInfo = value;
                 EditingInstance.PropName = value?.name;
                 PropPreview.ResetCamera();
@@ -76,8 +78,6 @@ namespace Klyte.WriteTheSigns.UI
             MainContainer.width = MainContainer.parent.width;
 
             var mainContainerHelper = new UIHelperExtension(MainContainer);
-
-
             AddFilterableInput("AAAA", mainContainerHelper, out m_configList, out _, OnFilterLayouts, OnConfigSelectionChange);
             m_configList.width += m_configList.parent.GetComponentInChildren<UILabel>().width;
             GameObject.Destroy(m_configList.parent.GetComponentInChildren<UILabel>());
@@ -134,7 +134,7 @@ namespace Klyte.WriteTheSigns.UI
 
         public void SetCurrentSelectionNewName(string newName)
         {
-            WTSPropLayoutData.Instance.Add(newName, ref EditingInstance);
+            WTSPropLayoutData.Instance.Add(newName,  EditingInstance);
             m_configList.text = newName;
         }
 
@@ -154,7 +154,7 @@ namespace Klyte.WriteTheSigns.UI
             {
                 SaveName = $"Tab {button.zOrder}"
             };
-            EditingInstance.TextDescriptors = EditingInstance.TextDescriptors.Union(new BoardTextDescriptorGeneralXml[] {
+            EditingInstance.TextDescriptors = EditingInstance.TextDescriptors.Concat(new BoardTextDescriptorGeneralXml[] {
                 newItem
             }).ToArray();
             button.text = newItem.SaveName;
@@ -214,9 +214,7 @@ namespace Klyte.WriteTheSigns.UI
 
 
         private void ShowNewConfigModal() => ShowNewConfigModal(null);
-        private void ShowNewConfigModal(string lastError)
-        {
-            K45DialogControl.ShowModalPromptText(
+        private void ShowNewConfigModal(string lastError) => K45DialogControl.ShowModalPromptText(
                   new K45DialogControl.BindProperties
                   {
                       title = Locale.Get("K45_WTS_PROPEDIT_CONFIGNEW_TITLE"),
@@ -245,7 +243,7 @@ namespace Klyte.WriteTheSigns.UI
                               {
                                   m_configurationSource = ConfigurationSource.CITY
                               };
-                              WTSPropLayoutData.Instance.Add(text, ref newModel);
+                              WTSPropLayoutData.Instance.Add(text,  newModel);
                               m_configList.text = ExecuteItemChange(text, true);
                           }
                           else
@@ -256,17 +254,19 @@ namespace Klyte.WriteTheSigns.UI
                       return true;
                   }
          );
-        }
 
         internal void ReplaceItem(string key, string data)
         {
             BoardDescriptorGeneralXml newItem = XmlUtils.DefaultXmlDeserialize<BoardDescriptorGeneralXml>(data);
             newItem.m_configurationSource = ConfigurationSource.CITY;
-            WTSPropLayoutData.Instance.Add(key, ref newItem);
+            WTSPropLayoutData.Instance.Add(key,  newItem);
             OnTabChange(0);
         }
 
-        private string[] OnFilterLayouts(string input) => WTSPropLayoutData.Instance.FilterBy(input, null);
+        private IEnumerator OnFilterLayouts(string input, Wrapper<string[]> result)
+        {
+            yield return WTSPropLayoutData.Instance.FilterBy(input, null, result);
+        }
 
         private string OnConfigSelectionChange(string typed, int sel, string[] items)
         {

@@ -1,8 +1,13 @@
 ﻿using ICities;
 using Klyte.Commons.Interfaces;
 using Klyte.Commons.Utils;
+using Klyte.WriteTheSigns.Singleton;
 using Klyte.WriteTheSigns.Xml;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using System.Xml.Serialization;
+using UnityEngine;
 
 namespace Klyte.WriteTheSigns.Data
 {
@@ -15,7 +20,8 @@ namespace Klyte.WriteTheSigns.Data
         [XmlElement("BoardContainers")]
         public SimpleNonSequentialList<OnNetGroupDescriptorXml> BoardContainersExport
         {
-            get {
+            get
+            {
                 var res = new SimpleNonSequentialList<OnNetGroupDescriptorXml>();
                 for (int i = 0; i < m_boardsContainers.Length; i++)
                 {
@@ -27,7 +33,8 @@ namespace Klyte.WriteTheSigns.Data
                 return res;
             }
 
-            set {
+            set
+            {
                 LoadDefaults(null);
                 foreach (var kv in value.Keys)
                 {
@@ -38,6 +45,8 @@ namespace Klyte.WriteTheSigns.Data
 
         public override string SaveId => "K45_WTS_WTSOnNetData";
 
+
+
         public override void LoadDefaults(ISerializableData serializableData)
         {
             base.LoadDefaults(serializableData);
@@ -47,48 +56,40 @@ namespace Klyte.WriteTheSigns.Data
         [XmlAttribute("defaultFont")]
         public virtual string DefaultFont { get; set; }
 
-
-        [XmlIgnore]
-        private byte?[] m_cachedDistrictParkId = new byte?[NetManager.MAX_SEGMENT_COUNT];
-        [XmlIgnore]
-        private ushort?[] m_cachedDistrictId = new ushort?[NetManager.MAX_SEGMENT_COUNT];
-        public ushort GetCachedDistrictParkId(ushort segmentId)
+        public void OnSegmentChanged(ushort segmentId)
         {
-            if (m_cachedDistrictParkId[segmentId] == null)
+            clearCacheQueue.Add(segmentId);
+
+            if (currentCacheCoroutine is null)
             {
-                m_cachedDistrictParkId[segmentId] = DistrictManager.instance.GetPark(NetManager.instance.m_segments.m_buffer[segmentId].m_middlePosition);
+                currentCacheCoroutine = WriteTheSignsMod.Controller?.StartCoroutine(ClearCacheQueue());
             }
-            return m_cachedDistrictParkId[segmentId] ?? 0;
         }
-        public ushort GetCachedDistrictId(ushort segmentId)
+        private readonly HashSet<ushort> clearCacheQueue = new HashSet<ushort>();
+        private Coroutine currentCacheCoroutine;
+        private IEnumerator ClearCacheQueue()
         {
-            if (m_cachedDistrictId[segmentId] == null)
+            do
             {
-                ref NetSegment currSegment = ref NetManager.instance.m_segments.m_buffer[segmentId];
-                ref NetNode nodeEnd = ref NetManager.instance.m_nodes.m_buffer[currSegment.m_endNode];
-                ref NetNode nodeStart = ref NetManager.instance.m_nodes.m_buffer[currSegment.m_startNode];
-                if (nodeEnd.m_building > 0 && BuildingManager.instance.m_buildings.m_buffer[nodeEnd.m_building].Info.m_buildingAI is OutsideConnectionAI)
+                var list = clearCacheQueue.ToList();
+                foreach (var segmentId in list)
                 {
-                    m_cachedDistrictId[segmentId] = (ushort)(nodeEnd.m_building + 256u);
+                    if (BoardContainersExport.TryGetValue(segmentId, out OnNetGroupDescriptorXml descriptorXml))
+                    {
+                        foreach (var board in descriptorXml.BoardsData)
+                        {
+                            board.m_cachedPositions = null;
+                            board.m_cachedRotations = null;
+                        }
+                    }
+                    WTSCacheSingleton.ClearCacheSegmentSize(segmentId);
+                    WTSCacheSingleton.ClearCacheSegmentNameParam(segmentId);
+                    clearCacheQueue.Remove(segmentId);
+                    yield return 0;
                 }
-                else if (nodeStart.m_building > 0 && BuildingManager.instance.m_buildings.m_buffer[nodeStart.m_building].Info.m_buildingAI is OutsideConnectionAI)
-                {
-                    m_cachedDistrictId[segmentId] = (ushort)(nodeStart.m_building + 256u);
-                }
-                else
-                {
-                    m_cachedDistrictId[segmentId] = DistrictManager.instance.GetDistrict(NetManager.instance.m_segments.m_buffer[segmentId].m_middlePosition);
-                }
-            }
-            return m_cachedDistrictId[segmentId] ?? 0;
+            } while (clearCacheQueue.Count > 0);
+            currentCacheCoroutine = null;
         }
-
-        public void ResetDistrictCache()
-        {
-            m_cachedDistrictParkId = new byte?[NetManager.MAX_SEGMENT_COUNT];
-            m_cachedDistrictId = new ushort?[NetManager.MAX_SEGMENT_COUNT];
-        }
-
     }
 
 }

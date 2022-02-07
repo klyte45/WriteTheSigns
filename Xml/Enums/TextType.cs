@@ -2,6 +2,7 @@
 {
     public enum TextType
     {
+        None,
         OwnName,
         Fixed,
         StreetPrefix,
@@ -33,6 +34,17 @@
         HwCodeLong,
         HwDettachedPrefix,
         HwIdentifierSuffix        
+    }
+    public enum TextContent
+    {
+        None,
+        ParameterizedText,
+        ParameterizedSpriteFolder,
+        ParameterizedSpriteSingle,
+        LinesSymbols,
+        LinesNameList,
+        HwShield,
+        TimeTemperature
     }
 
 

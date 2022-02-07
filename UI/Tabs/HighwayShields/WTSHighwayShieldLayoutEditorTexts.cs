@@ -2,6 +2,7 @@
 using ColossalFramework.Globalization;
 using ColossalFramework.UI;
 using Klyte.Commons.Extensions;
+using Klyte.Commons.UI;
 using Klyte.Commons.UI.SpriteNames;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Libraries;
@@ -93,12 +94,17 @@ namespace Klyte.WriteTheSigns.UI
 
             helperAppearance.AddSpace(5);
             AddColorField(helperAppearance, Locale.Get("K45_WTS_TEXT_COLOR"), out m_textFixedColor, OnFixedColorChanged);
-            AddDropdown(Locale.Get("K45_WTS_COLOR_SOURCE"), out m_colorSource, helperAppearance, (Enum.GetValues(typeof(ColoringSource)) as ColoringSource[]).Select(x => Locale.Get("K45_WTS_COLORSRC", x.ToString())).ToArray(), OnSetColorSource);
+            AddDropdown(Locale.Get("K45_WTS_COLOR_SOURCE"), out m_colorSource, helperAppearance, Enum.GetValues(typeof(ColoringSource)).Cast<ColoringSource>().Select(x => Tuple.New(Locale.Get("K45_WTS_COLORSRC", x.ToString()), x)).ToArray(), OnSetColorSource);
             helperAppearance.AddSpace(5);
 
-            AddDropdown(Locale.Get("K45_WTS_TEXT_CONTENT"), out m_dropdownTextContent, helperConfig, WTSDynamicTextRenderingRules.ALLOWED_TYPES_HIGHWAY_SHIELDS.Select(x => Locale.Get("K45_WTS_BOARD_TEXT_TYPE_DESC_HWSHIELD", x.ToString())).ToArray(), OnSetTextOwnNameContent);
+            AddDropdown(Locale.Get("K45_WTS_TEXT_CONTENT"), out m_dropdownTextContent, helperConfig, WTSDynamicTextRenderingRules.ALLOWED_TYPES_HIGHWAY_SHIELDS.Select(x => Tuple.New(Locale.Get("K45_WTS_BOARD_TEXT_TYPE_DESC_HWSHIELD", x.ToString()), x)).ToArray(), OnSetTextOwnNameContent);
             AddTextField(Locale.Get("K45_WTS_CUSTOM_TEXT"), out m_customText, helperConfig, OnSetTextCustom);
-            AddFilterableInput(Locale.Get("K45_WTS_SPRITE_NAME"), helperConfig, out m_spriteFilter, out UIListBox lb2, (x) => OnFilterSprites(WTSHighwayShieldEditor.Instance.Preview.OverrideSprite, x), OnSpriteNameChanged);
+            IEnumerator OnFilter(string x, Wrapper<string[]> result)
+            {
+                yield return result.Value = OnFilterSprites(WTSHighwayShieldEditor.Instance.Preview.OverrideSprite, x);
+            }
+
+            AddFilterableInput(Locale.Get("K45_WTS_SPRITE_NAME"), helperConfig, out m_spriteFilter, out UIListBox lb2, OnFilter, OnSpriteNameChanged);
             lb2.size = new Vector2(MainContainer.width - 20, 220);
             lb2.processMarkup = true;
             m_spriteFilter.eventGotFocus += (x, y) =>
@@ -120,8 +126,8 @@ namespace Klyte.WriteTheSigns.UI
             WTSHighwayShieldEditor.Instance.Preview.OverrideSprite.parent.isVisible = false;
 
             helperConfig.AddSpace(5);
-            AddDropdown(Locale.Get("K45_WTS_OVERRIDE_FONT"), out m_overrideFontSelect, helperConfig, new string[0], OnSetOverrideFont);
-            AddDropdown(Locale.Get("K45_WTS_CLASS_FONT"), out m_fontClassSelect, helperConfig, (Enum.GetValues(typeof(FontClass)) as FontClass[]).Select(x => Locale.Get("K45_WTS_FONTCLASS", x.ToString())).ToArray(), OnSetFontClass);
+            AddEmptyDropdown(Locale.Get("K45_WTS_OVERRIDE_FONT"), out m_overrideFontSelect, helperConfig, OnSetOverrideFont);
+            AddDropdown(Locale.Get("K45_WTS_CLASS_FONT"), out m_fontClassSelect, helperConfig, ColossalUIExtensions.GetDropdownOptions<FontClass>("K45_WTS_FONTCLASS"), OnSetFontClass);
             AddTextField(Locale.Get("K45_WTS_PREFIX"), out m_textPrefix, helperConfig, OnSetPrefix);
             AddTextField(Locale.Get("K45_WTS_SUFFIX"), out m_textSuffix, helperConfig, OnSetSuffix);
 
@@ -275,14 +281,11 @@ namespace Klyte.WriteTheSigns.UI
 
             WriteTheSignsMod.Controller.HighwayShieldsAtlasLibrary.PurgeShields();
         });
-        private void OnSetFontClass(int sel) => SafeObtain((ref ImageLayerTextDescriptorXml x) =>
+        private void OnSetFontClass(FontClass sel) => SafeObtain((ref ImageLayerTextDescriptorXml x) =>
         {
-            if (sel >= 0)
-            {
-                x.m_fontClass = (FontClass)sel;
+            x.m_fontClass = sel;
 
-                WriteTheSignsMod.Controller.HighwayShieldsAtlasLibrary.PurgeShields();
-            }
+            WriteTheSignsMod.Controller.HighwayShieldsAtlasLibrary.PurgeShields();
         });
         private void OnSetTextCustom(string text) => SafeObtain((ref ImageLayerTextDescriptorXml x) => x.m_fixedText = text);
 
@@ -309,15 +312,12 @@ namespace Klyte.WriteTheSigns.UI
             target.Focus();
         }
 
-        private string[] OnFilterSprites(UISprite sprite, string arg) => WriteTheSignsMod.Controller.AtlasesLibrary.OnFilterParamImagesByText(sprite, arg, null, out lastProtocol_searchedParam);
-        private void OnSetTextOwnNameContent(int sel) => SafeObtain((ref ImageLayerTextDescriptorXml x) =>
+        private string[] OnFilterSprites(UISprite sprite, string arg) => WriteTheSignsMod.Controller.AtlasesLibrary.OnFilterParamImagesAndFoldersByText(sprite, arg, null, out lastProtocol_searchedParam);
+        private void OnSetTextOwnNameContent(TextType sel) => SafeObtain((ref ImageLayerTextDescriptorXml x) =>
                                                        {
-                                                           if (sel >= 0)
-                                                           {
-                                                               x.m_textType = WTSDynamicTextRenderingRules.ALLOWED_TYPES_HIGHWAY_SHIELDS[sel];
-                                                               ApplyShowRules(x);
-                                                               WriteTheSignsMod.Controller.HighwayShieldsAtlasLibrary.PurgeShields();
-                                                           }
+                                                           x.m_textType = sel;
+                                                           ApplyShowRules(x);
+                                                           WriteTheSignsMod.Controller.HighwayShieldsAtlasLibrary.PurgeShields();
                                                        });
 
         private void OnChangeApplyRescaleOnY(bool isChecked) => SafeObtain((ref ImageLayerTextDescriptorXml x) =>
@@ -337,14 +337,11 @@ namespace Klyte.WriteTheSigns.UI
             x.m_maxWidthPixels = obj;
             WriteTheSignsMod.Controller.HighwayShieldsAtlasLibrary.PurgeShields();
         });
-        private void OnSetColorSource(int obj) => SafeObtain((ref ImageLayerTextDescriptorXml x) =>
+        private void OnSetColorSource(ColoringSource obj) => SafeObtain((ref ImageLayerTextDescriptorXml x) =>
         {
-            if (obj >= 0)
-            {
-                x.ColoringConfig.ColorSource = (ColoringSource)obj;
-                ApplyShowRules(x);
-                WriteTheSignsMod.Controller.HighwayShieldsAtlasLibrary.PurgeShields();
-            }
+            x.ColoringConfig.ColorSource = obj;
+            ApplyShowRules(x);
+            WriteTheSignsMod.Controller.HighwayShieldsAtlasLibrary.PurgeShields();
         });
         private void OnFixedHeightChange(int obj) => SafeObtain((ref ImageLayerTextDescriptorXml x) =>
         {

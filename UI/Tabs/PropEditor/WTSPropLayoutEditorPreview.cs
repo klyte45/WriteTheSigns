@@ -156,7 +156,7 @@ namespace Klyte.WriteTheSigns.UI
                     float moveMultiplier = 1;
                     if (CurrentTextDescriptor != null)
                     {
-                        Vector3 textExt = WTSDynamicTextRenderingRules.GetTextMesh(CurrentTextDescriptor, 0, 0, 0, m_previewRenderer.GetDefaultInstance(), m_previewRenderer.GetDefaultInstance().Descriptor, out _, CurrentInfo)?.m_mesh?.bounds.extents ?? default;
+                        Vector3 textExt = WTSTextMeshProcess.GetTextMesh(CurrentTextDescriptor, 0, 0, 0, m_previewRenderer.GetDefaultInstance(), m_previewRenderer.GetDefaultInstance().Descriptor, out _, CurrentInfo)?.m_mesh?.bounds.extents ?? default;
 
                         if (CurrentTextDescriptor.m_maxWidthMeters > 0)
                         {

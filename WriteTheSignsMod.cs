@@ -1,11 +1,11 @@
 using ColossalFramework;
 using ColossalFramework.Globalization;
 using ColossalFramework.UI;
+using FontStashSharp;
 using Klyte.Commons.Extensions;
 using Klyte.Commons.Interfaces;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.UI;
-using Klyte.WriteTheSigns.Utils;
 using SpriteFontPlus;
 using System;
 using System.Collections.Generic;
@@ -13,7 +13,7 @@ using System.IO;
 using System.Reflection;
 using UnityEngine;
 
-[assembly: AssemblyVersion("0.3.0.9")]
+[assembly: AssemblyVersion("0.4.0.1")]
 namespace Klyte.WriteTheSigns
 {
     public class WriteTheSignsMod : BasicIUserMod<WriteTheSignsMod, WTSController, WTSPanel>
@@ -30,9 +30,15 @@ namespace Klyte.WriteTheSigns
         public static SavedBool Clock12hFormat = new SavedBool("K45_WTS_clock12hFormat", Settings.gameSettingsFile, false);
         public override void OnReleased() => base.OnReleased();
 
-        protected override void OnLevelLoadingInternal() => base.OnLevelLoadingInternal();
+        private UIButton reloadImages;
 
-        protected override List<ulong> IncompatibleModList => new List<ulong> { 1831805509 };
+        protected override void OnLevelLoadingInternal()
+        {
+            base.OnLevelLoadingInternal();
+            WTSShaderLibrary.instance.GetShaders();
+        }
+
+        protected override Dictionary<ulong, string> IncompatibleModList => new Dictionary<ulong, string>();
         protected override List<string> IncompatibleDllModList => new List<string> { "KlyteDynamicTextProps" };
 
         public override void TopSettingsUI(UIHelperExtension helper)
@@ -50,6 +56,21 @@ namespace Klyte.WriteTheSigns
             group8.AddButton(Locale.Get("K45_WTS_GO_TO_GITHUB"), () => Application.OpenURL("https://github.com/klyte45/WriteTheSignsFiles"));
             group8.AddButton(Locale.Get("K45_WTS_GO_TO_WIKI"), () => Application.OpenURL("https://github.com/klyte45/WriteTheSigns/wiki"));
             group8.AddButton(Locale.Get("K45_WTS_GO_TO_WTSWORKSHOP"), () => Application.OpenURL("https://github.com/klyte45/WriteTheSigns/wiki"));
+            reloadImages = (UIButton)group8.AddButton(Locale.Get("K45_WTS_REFRESH_IMAGES_FOLDER"), () => Controller?.AtlasesLibrary.LoadImagesFromLocalFolders());
+            reloadImages.eventVisibilityChanged += (k, x) =>
+            {
+                if (x)
+                {
+                    if (Controller is null)
+                    {
+                        k.Disable();
+                    }
+                    else
+                    {
+                        k.Enable();
+                    }
+                }
+            };
 
             UIHelperExtension group4 = helper.AddGroupExtended(Locale.Get("K45_WTS_GENERATED_TEXT_OPTIONS"));
             (group4.AddDropdownLocalized("K45_WTS_INITIAL_TEXTURE_SIZE_FONT", new string[] { "512", "1024", "2048", "4096 (!)", "8192 (!!!)", "16384 (WTF??)" }, StartTextureSizeFont, (x) => StartTextureSizeFont.value = x).parent as UIPanel).autoFitChildrenVertically = true;
@@ -60,6 +81,10 @@ namespace Klyte.WriteTheSigns
                 WTSController.ReloadFontsFromPath();
             }).parent as UIPanel).autoFitChildrenVertically = true;
             FontServer.instance.SetQualityMultiplier(m_qualityArray[FontQuality]);
+            (group4.AddDropdownLocalized("K45_WTS_MAX_PARALLEL_WORD_PROCESSES", new string[] { "1", "2", "4", "8", "16", "32","64","128 (!)", "256 (!!)", "512 (Your game may freeze)", "1024 (Your game WILL freeze)" }, Convert.ToString(FontSystem.MaxCoroutines, 2).Length - 1, (x) => FontSystem.MaxCoroutines.value = 1 << x).parent as UIPanel).autoFitChildrenVertically = true;
+
+
+
             UIHelperExtension group5 = helper.AddGroupExtended(Locale.Get("K45_WTS_GENERATED_CLOCK_OPTIONS"));
             (group5.AddDropdownLocalized("K45_WTS_CLOCK_MINUTES_PRECISION", new string[] { "30", "20", "15 (DEFAULT)", "12", "10", "7.5", "6", "5", "4", "3 (!)", "2 (!!)", "1 (!!!!)" }, Array.IndexOf(m_clockPrecision, ClockPrecision), (x) =>
              {
@@ -68,12 +93,9 @@ namespace Klyte.WriteTheSigns
             group5.AddCheckboxLocale("K45_WTS_CLOCK_SHOW_LEADING_ZERO", ClockShowLeadingZero, (x) => ClockShowLeadingZero.value = x);
             group5.AddCheckboxLocale("K45_WTS_CLOCK_12H_CLOCK", Clock12hFormat, (x) => Clock12hFormat.value = x);
             UIHelperExtension group6 = helper.AddGroupExtended(Locale.Get("K45_WTS_CACHE_INFO"));
-            UIButton calcTextSize = null;
-            var calcTextLbl = "Calculate text search tree cache size";
-            calcTextSize = (UIButton)group6.AddButton(calcTextLbl, () => calcTextSize.text = $"{calcTextLbl}: {RenderUtils.GetGeneralTextCacheSize().ToString("#,##0")}bytes");
             UIButton calcMeshSize = null;
             var calcMeshLbl = "Calculate text meshes cache size";
-            calcMeshSize = (UIButton)group6.AddButton(calcMeshLbl, () => calcMeshSize.text = $"{calcMeshLbl}: {FontServer.instance?.GetAllFontsCacheSize().ToString("#,##0")?? "N/A " }bytes");
+            calcMeshSize = (UIButton)group6.AddButton(calcMeshLbl, () => calcMeshSize.text = $"{calcMeshLbl}: {FontServer.instance?.GetAllFontsCacheSize().ToString("#,##0") ?? "N/A " }bytes");
 
         }
 

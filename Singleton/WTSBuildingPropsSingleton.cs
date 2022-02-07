@@ -7,6 +7,7 @@ using Klyte.WriteTheSigns.Data;
 using Klyte.WriteTheSigns.Overrides;
 using Klyte.WriteTheSigns.Rendering;
 using Klyte.WriteTheSigns.UI;
+using Klyte.WriteTheSigns.Utils;
 using Klyte.WriteTheSigns.Xml;
 using SpriteFontPlus;
 using System;
@@ -428,7 +429,7 @@ namespace Klyte.WriteTheSigns.Singleton
                             }
                         }
                     }
-                    List<ushort> nearStops = StopSearchUtils.FindNearStops(data.m_position, ItemClass.Service.PublicTransport, ItemClass.Service.PublicTransport, VehicleInfo.VehicleType.None, true, 400f, out _, out _, boundaries);
+                    List<ushort> nearStops = FindNearStops(data.m_position, ItemClass.Service.PublicTransport, ItemClass.Service.PublicTransport, VehicleInfo.VehicleType.None, true, 400f, out _, out _, boundaries);
 
                     m_platformToLine[buildingID] = new StopInformation[m_buildingStopsDescriptor[refName].Length][];
                     if (nearStops.Count > 0)
@@ -475,7 +476,7 @@ namespace Klyte.WriteTheSigns.Singleton
                                 {
                                     float anglePlat = (m_buildingStopsDescriptor[buildingName][i].directionPath.GetAngleXZ() + 360 + angleBuilding) % 360;
                                     return UpdateStopInformation(stopId, buildingName, i, anglePlat, nmInstance);
-                                }).ToArray();
+                                }).Where(x => x.m_lineId != 0).ToArray();
                             if (CommonProperties.DebugMode)
                             {
                                 LogUtils.DoLog($"NearLines ({i}) = [{string.Join(",", m_platformToLine[buildingID][i].Select(x => x.ToString()).ToArray())}]");
@@ -499,10 +500,12 @@ namespace Klyte.WriteTheSigns.Singleton
             {
                 nmInstance = NetManager.instance;
             }
+            var stopLine = WriteTheSignsMod.Controller.ConnectorTLM.GetStopLine(stopId);   
 
             var result = new StopInformation
             {
-                m_lineId = nmInstance.m_nodes.m_buffer[stopId].m_transportLine,
+                m_lineId = (ushort)stopLine.lineId,
+                m_regionalLine = stopLine.regional,
                 m_stopId = stopId
             };
             result.m_destinationId = FindDestinationStop(stopId);
@@ -545,7 +548,7 @@ namespace Klyte.WriteTheSigns.Singleton
                 float diffPlat = Mathf.Abs(anglePlat - ((angleDirPrev + angleDirNext) / 2)) % 180;
                 if (CommonProperties.DebugMode)
                 {
-                    LogUtils.DoLog($"ANGLE COMPARISON: diff = {diff} | diffPlat = {diffPlat} | PLAT = {anglePlat} | DIR IN = {angleDirPrev} | DIR OUT = {angleDirNext} | ({buildingName} =>  P[{i}] | L = {nmInstance.m_nodes.m_buffer[stopId].m_transportLine} )");
+                    LogUtils.DoLog($"ANGLE COMPARISON: diff = {diff} | diffPlat = {diffPlat} | PLAT = {anglePlat} | DIR IN = {angleDirPrev} | DIR OUT = {angleDirNext} | ({buildingName} =>  P[{i}] | L = {stopLine} )");
                 }
 
                 switch (GetPathType(angleDirPrev, anglePlat, angleDirNext))
@@ -629,7 +632,7 @@ namespace Klyte.WriteTheSigns.Singleton
             quad.d = center - vector + vector2;
             return quad;
         }
-        private ushort FindDestinationStop(ushort stopId) => WTSDynamicTextRenderingRules.GetStopDestinationData(stopId).m_destinationId;
+        private ushort FindDestinationStop(ushort stopId) => WTSStopUtils.GetStopDestinationData(stopId).m_destinationId;
 
         private readonly TransportInfo.TransportType[] m_allowedTypesNextPreviousStations =
     {

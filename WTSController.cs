@@ -1,4 +1,6 @@
 ﻿extern alias TLM;
+
+using Klyte.Commons;
 using Klyte.Commons.Interfaces;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.ModShared;
@@ -32,6 +34,7 @@ namespace Klyte.WriteTheSigns
         internal WTSHighwayShieldsAtlasLibrary HighwayShieldsAtlasLibrary { get; private set; }
         internal IBridgeTLM ConnectorTLM { get; private set; }
         internal IBridgeADR ConnectorADR { get; private set; }
+        protected override string ClassBridgeUUI { get; } = "Klyte.WriteTheSigns.ModShared.BridgeUUI";
 
         public WTSRoadPropsSingleton RoadPropsSingleton { get; private set; }
         public Dictionary<string, Dictionary<string, string>> AbbreviationFiles { get; private set; }
@@ -67,7 +70,7 @@ namespace Klyte.WriteTheSigns
         {
             if (LoadingManager.instance.m_LoadingWrapper.loadingComplete)
             {
-                RenderUtils.ClearCacheCityName();
+                WTSCacheSingleton.ClearCacheCityName();
             }
         }
 
@@ -76,19 +79,12 @@ namespace Klyte.WriteTheSigns
 
         public void Awake()
         {
-            if (RoadSegmentToolInstance is null)
-            {
-                ToolsModifierControl.toolController.gameObject.AddComponent<RoadSegmentTool>();
-            }
+            ToolsModifierControl.toolController.AddExtraToolToController<RoadSegmentTool>();
+            ToolsModifierControl.toolController.AddExtraToolToController<BuildingEditorTool>();
+            ToolsModifierControl.toolController.AddExtraToolToController<VehicleEditorTool>();
+            ToolsModifierControl.toolController.AddExtraToolToController<SegmentEditorPickerTool>();
 
-            if (BuildingEditorToolInstance is null)
-            {
-                ToolsModifierControl.toolController.gameObject.AddComponent<BuildingEditorTool>();
-            }
-            if (VehicleEditorToolInstance is null)
-            {
-                ToolsModifierControl.toolController.gameObject.AddComponent<VehicleEditorTool>();
-            }
+
             ReloadAbbreviationFiles();
 
             FontServer.Ensure();
@@ -99,8 +95,8 @@ namespace Klyte.WriteTheSigns
             OnNetPropsSingleton = gameObject.AddComponent<WTSOnNetPropsSingleton>();
             HighwayShieldsSingleton = gameObject.AddComponent<WTSHighwayShieldsSingleton>();
             HighwayShieldsAtlasLibrary = gameObject.AddComponent<WTSHighwayShieldsAtlasLibrary>();
-            ConnectorTLM = PluginUtils.GetImplementationTypeForMod<BridgeTLM, BridgeTLMFallback, IBridgeTLM>(gameObject, "TransportLinesManager", "14.0.0.0");
-            ConnectorADR = PluginUtils.GetImplementationTypeForMod<BridgeADR, BridgeADRFallback, IBridgeADR>(gameObject, "KlyteAddresses", "3.0.0.3");
+            ConnectorTLM = PluginUtils.GetImplementationTypeForMod<BridgeTLMFallback, IBridgeTLM>(gameObject, "TransportLinesManager", "14.0.0.0", "Klyte.WriteTheSigns.ModShared.BridgeTLM");
+            ConnectorADR = PluginUtils.GetImplementationTypeForMod<BridgeADRFallback, IBridgeADR>(gameObject, "KlyteAddresses", "3.1.1.0", "Klyte.WriteTheSigns.ModShared.BridgeADR");
         }
 
 
@@ -112,25 +108,24 @@ namespace Klyte.WriteTheSigns
             BuildingManager.instance.EventBuildingRelocated += WTSBuildingDataCaches.PurgeBuildingCache;
 
             NetManagerOverrides.EventSegmentNameChanged += OnNameSeedChanged;
-            BuildingManager.instance.EventBuildingRelocated += RenderUtils.ClearCacheBuildingName;
-            BuildingManager.instance.EventBuildingReleased += RenderUtils.ClearCacheBuildingName;
-            BuildingManager.instance.EventBuildingCreated += RenderUtils.ClearCacheBuildingName;
-            EventOnDistrictChanged += RenderUtils.ClearCacheDistrictName;
-            EventOnParkChanged += RenderUtils.ClearCacheParkName;
-            EventOnBuildingNameChanged += RenderUtils.ClearCacheBuildingName;
-            EventOnPostalCodeChanged += RenderUtils.ClearCachePostalCode;
+            BuildingManager.instance.EventBuildingRelocated += WTSCacheSingleton.ClearCacheBuildingName;
+            BuildingManager.instance.EventBuildingReleased += WTSCacheSingleton.ClearCacheBuildingName;
+            BuildingManager.instance.EventBuildingCreated += WTSCacheSingleton.ClearCacheBuildingName;
+            EventOnDistrictChanged += WTSCacheSingleton.ClearCacheDistrictName;
+            EventOnParkChanged += WTSCacheSingleton.ClearCacheParkName;
+            EventOnBuildingNameChanged += WTSCacheSingleton.ClearCacheBuildingName;
+            EventOnPostalCodeChanged += WTSCacheSingleton.ClearCachePostalCode;
             EventOnZeroMarkerChanged += OnNameSeedChanged;
 
+            FontServer.instance.m_defaultShader = DEFAULT_SHADER_TEXT;
         }
 
         private void OnNameSeedChanged(ushort segmentId) => OnNameSeedChanged();
         private void OnNameSeedChanged()
         {
-            RenderUtils.ClearCacheFullStreetName();
-            RenderUtils.ClearCacheStreetName();
-            RenderUtils.ClearCacheStreetQualifier();
-            RenderUtils.ClearCachePostalCode();
-            RenderUtils.ClearCacheBuildingName(null);
+            WTSCacheSingleton.ClearCacheSegmentNameParam();
+            WTSCacheSingleton.ClearCachePostalCode();
+            WTSCacheSingleton.ClearCacheBuildingName(null);
         }
 
         public static void ReloadFontsFromPath()
@@ -148,8 +143,7 @@ namespace Klyte.WriteTheSigns
         public void ReloadAbbreviationFiles()
         {
             AbbreviationFiles = LoadAbbreviationFiles(AbbreviationFilesPath);
-            RenderUtils.ClearCacheStreetName();
-            RenderUtils.ClearCacheStreetQualifier();
+            WTSCacheSingleton.ClearCacheSegmentNameParam();
         }
 
         private static Dictionary<string, Dictionary<string, string>> LoadAbbreviationFiles(string path)
@@ -192,9 +186,24 @@ namespace Klyte.WriteTheSigns
         public static string AbbreviationFilesPath { get; } = FOLDER_NAME + Path.DirectorySeparatorChar + ABBREVIATION_FILES_FOLDER;
         public static string FontFilesPath { get; } = FOLDER_NAME + Path.DirectorySeparatorChar + FONTS_FILES_FOLDER;
 
-        public static Shader DEFAULT_SHADER_TEXT = Shader.Find("Custom/Props/Prop/Default") ?? DistrictManager.instance.m_properties.m_areaNameShader;
+        public static Shader DEFAULT_SHADER_TEXT = WTSShaderLibrary.instance.GetShaders()["Klyte/WTS/klytetextboards"];
         internal bool? m_tlmExistsAndActive = null;
         internal bool? m_addressesExistsAndActive = null;
+
+        public static bool ___RELOADSH
+        {
+            get => false; set
+            {
+                if (value)
+                {
+                    WTSShaderLibrary.instance.ReloadFromDisk();
+                    DEFAULT_SHADER_TEXT = WTSShaderLibrary.instance.GetShaders()["Klyte/WTS/klytetextboards"];
+                    FontServer.instance.m_defaultShader = WTSShaderLibrary.instance.GetShaders()["Klyte/WTS/klytetextboards"];
+                    ReloadFontsFromPath();
+                }
+            }
+        }
+
 
     }
 

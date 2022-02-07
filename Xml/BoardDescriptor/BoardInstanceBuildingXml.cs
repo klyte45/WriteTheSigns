@@ -2,6 +2,7 @@
 using Klyte.Commons.Interfaces;
 using Klyte.Commons.Utils;
 using Klyte.WriteTheSigns.Data;
+using Klyte.WriteTheSigns.Rendering;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -160,6 +161,12 @@ namespace Klyte.WriteTheSigns.Xml
             }
         }
 
+        public override PrefabInfo TargetAssetParameter => Descriptor?.CachedProp;
+
+        public override TextRenderingClass RenderingClass => TextRenderingClass.Buildings;
+
+        public override string DescriptorOverrideFont => Descriptor?.FontName;
+
         public void SetTextParameter(int idx, string val)
         {
             if (m_textParameters == null)
@@ -174,6 +181,6 @@ namespace Klyte.WriteTheSigns.Xml
         [XmlIgnore]
         public TextParameterWrapper[] m_textParameters = new TextParameterWrapper[TEXT_PARAMETERS_COUNT];
 
-        public TextParameterWrapper GetTextParameter(int idx) => m_textParameters?[idx];
+        public override TextParameterWrapper GetParameter(int idx) => m_textParameters?[idx];
     }
 }

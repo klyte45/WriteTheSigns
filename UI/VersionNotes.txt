@@ -1,20 +1,17 @@
-﻿<extended>v0.3 - 29/APR/21
-<color yellow>Beta-3 version:</color>
-<color cyan>- Load images from workshop items:</color> Just place the images at folder <color yellow>K45WTS_Sprites</color> in the asset directory. It will be copied to staging automatically when uploading the asset to workshop!
-	<color red>NOTE:</color> The automatic copy only will be done if the mod already is in the workshop. For first send, copy it manually.
-<color cyan>- Parameters protocols</color>: New parameters types available
-	<color green>image://</color> - Access to Sprites folder images, and supports one level subfolder.
-	<color green>assetImage://</color> - Access to K45WTS_Sprites folder images in the current prop asset selected in prop/vehicle layout.
-	<color green>folder://</color> - Access to a Sprites subfolder images collection, use this as parameter value of slideshow text entries.
-	<color green>assetFolder://</color> - Access the K45WTS_Sprites folder images collection, use this as parameter value of slideshow text entries. Note that subfolders aren't supported here!
-<color cyan>- Highway shields</color>: Create layouts to generate shields from your settings done in Addresses mod. <color yellow>Only available if Addresses mod is active!</color>
-<color cyan>- Parameters cleaning & information</color>: Now only the parameters setted up in the layout will appear in the parameter screen. Added also title and default value fields in each text entry filled by the user in a parameter.
-<color cyan>- Fixed sprite selection improved</color>: Now you will use it like a parameter, supporting the image related protocols listed above.
-<color cyan>- Vehicle picker</color>: Now you don't need to find the vehicle name in the list anymore, just press the dropper button then click at desired vehicle
-<color cyan>- Parameters support in buildings</color>: You can use to customize each prop layout instance, like it can be done when placing in segment.
-<color cyan>- Font character support</color>: Now even not supported characters for some fonts (like accented letters) will try to fallback to a existing character (like the regular letter in case of accents). If N/A, will be removed from string, not occupying a letter space anymore.
+﻿<extended>v0.4 - 25/JAN/22
+<color yellow>Beta-4 version:</color>
+<color cyan>- New Custom Shader:</color> A revolutionary feature that will allow to explore even more the text effect from this mod. In this release already was implemented:
+		- The light brightness can be rised to create glow effects
+		- It's possible to add depth to text or images (making it inset or outset)
+		- Now all text and images backface are black. In the future the color may be changed
+<color cyan>- Text variables parameters</color>: New parameter type that allows to get online game information. It may replace all fixed data stuff from board creation part when creating layouts to put in segments
+<color cyan>- Data cache improvement</color>: Lighter and easier to mantain and expand!
+<color cyan>- Empty value parameter option</color>: Allows to make a text unused in a placed on segment layout to be empty, without alerting that **PARAM X IS NOT SET**.
+<color cyan>- New UI for on segement placement layouts</color>: A separated tool allow to pick a segment and add the layouts in a smarter and lighter way. Check it out!
+	NOTE: It also register a new button at Unified UI button, if it's available and active in the mod to use the UUI.
+	Also, the new UI allows to pick variables by selecting it in a list, no need anymore to be typing codes!
+<color cyan>- Recalculate layouts after changing building/segment format/position</color>: Now this mod will respond to all changes done directly by other mods in the segments and buildings, like Move It mod does!
 
-<color yellow>r8 (02/MAY/21):</color> Fixed some issues in props and vehicles cache.
-<color yellow>r9 (22/MAY/21):</color>
- - Removed black mesh support for vehicles: use text background instead.
- - Some breaking bugs were fixed
+<color yellow>r1 (07/FEB/22)</color> 
+	- Fixed wrong text cache for line identifier and line full name
+	- Updated ja translation

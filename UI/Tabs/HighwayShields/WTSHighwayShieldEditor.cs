@@ -7,6 +7,7 @@ using Klyte.WriteTheSigns.Data;
 using Klyte.WriteTheSigns.Singleton;
 using Klyte.WriteTheSigns.Xml;
 using System;
+using System.Collections;
 using System.IO;
 using System.Linq;
 using UnityEngine;
@@ -89,7 +90,8 @@ namespace Klyte.WriteTheSigns.UI
             m_topBar.autoFitChildrenVertically = true;
             var m_topHelper = new UIHelperExtension(m_topBar);
 
-            AddFilterableInput(Locale.Get("K45_WTS_HIGHWAYTYPE_SELECT"), m_topHelper, out m_hwTypeSearch, out _, WriteTheSignsMod.Controller.ConnectorADR.ListAllAvailableHighwayTypes, OnHwTypeSelected);
+
+            AddFilterableInput(Locale.Get("K45_WTS_HIGHWAYTYPE_SELECT"), m_topHelper, out m_hwTypeSearch, out _, OnFilter, OnHwTypeSelected);
             //AddButtonInEditorRow(m_hwTypeSearch, Commons.UI.SpriteNames.CommonsSpriteNames.K45_QuestionMark, Help_HighwayType, null, true, 30);
 
             AddLabel("", m_topHelper, out m_labelSelectionDescription, out m_containerSelectionDescription);
@@ -146,6 +148,11 @@ namespace Klyte.WriteTheSigns.UI
             ReloadShield();
             OnTabChange(0);
 
+        }
+
+        private IEnumerator OnFilter(string x, Wrapper<string[]> result)
+        {
+            yield return WriteTheSignsMod.Controller.ConnectorADR.ListAllAvailableHighwayTypes(x, result);
         }
 
         private void OnReloadDescriptors()
@@ -251,8 +258,15 @@ namespace Klyte.WriteTheSigns.UI
         private string OnHwTypeSelected(string input, int arg1, string[] arg2)
         {
             string result = arg1 < 0 ? input : arg2[arg1];
-            CurrentSelection = WriteTheSignsMod.Controller.ConnectorADR.ListAllAvailableHighwayTypes(result).Contains(result) ? result : null;
-            ReloadShield();
+            if (arg2?.Contains(result) ?? false)
+            {
+                CurrentSelection = result;
+                ReloadShield();
+            }
+            else
+            {
+                CurrentSelection = null;
+            }
             return CurrentSelection is null ? "" : result;
         }
 

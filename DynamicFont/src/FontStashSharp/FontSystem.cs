@@ -22,6 +22,8 @@ namespace FontStashSharp
 
         private Dictionary<string, BasicRenderInformation> m_textCache = new Dictionary<string, BasicRenderInformation>();
 
+        public static SavedInt MaxCoroutines = new SavedInt("WTS_MaxFontWordsCoroutinesRunning", Settings.gameSettingsFile, 8, true);
+
         internal long GetCacheSize()
         {
             long size = 0;
@@ -49,7 +51,6 @@ namespace FontStashSharp
         public Color Color;
         public readonly int Blur;
         public float Spacing;
-        public Vector2 Scale;
         public bool UseKernings = true;
 
         public long LastUpdateAtlas { get; private set; }
@@ -167,7 +168,7 @@ namespace FontStashSharp
                 m_lastCoroutineStep = SimulationManager.instance.m_currentTickIndex;
                 m_coroutineCounter = 0;
             }
-            if (m_coroutineCounter > 1)
+            if (m_coroutineCounter > MaxCoroutines)
             {
                 return false;
             }

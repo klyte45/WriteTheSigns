@@ -9,7 +9,7 @@ using UnityEngine;
 namespace Klyte.WriteTheSigns.Tools
 {
 
-    public class BuildingEditorTool : BasicBuildingTool<BuildingEditorTool>
+    public class BuildingEditorTool : BaseBuildingTool<BuildingEditorTool>
     {
         public event Action<ushort> OnBuildingSelect;
 
@@ -30,7 +30,7 @@ namespace Klyte.WriteTheSigns.Tools
             if (m_hoverBuilding != 0)
             {
                 OnBuildingSelect?.Invoke(m_hoverBuilding);
-                GetComponent<DefaultTool>().enabled = true;
+                ToolsModifierControl.SetTool<DefaultTool>();
             }
         }
 

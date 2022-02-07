@@ -1,5 +1,6 @@
 ﻿using ColossalFramework;
 using Klyte.Commons.Interfaces;
+using Klyte.WriteTheSigns.Rendering;
 using Klyte.WriteTheSigns.Xml;
 using System.Xml.Serialization;
 
@@ -79,6 +80,21 @@ namespace Klyte.WriteTheSigns.Data
                     return StencilFont ?? WTSController.DEFAULT_FONT_KEY;
                 case FontClass.HighwayShields:
                     return HighwayShieldsFont ?? WTSController.DEFAULT_FONT_KEY;
+            }
+            return null;
+        }
+        internal string GetTargetFont(TextRenderingClass renderingClass)
+        {
+            switch (renderingClass)
+            {
+                case TextRenderingClass.RoadNodes:
+                    return WTSRoadNodesData.Instance.DefaultFont;
+                case TextRenderingClass.Buildings:
+                    return WTSBuildingsData.Instance.DefaultFont;
+                case TextRenderingClass.PlaceOnNet:
+                    return WTSOnNetData.Instance.DefaultFont;
+                case TextRenderingClass.Vehicle:
+                    return WTSVehicleData.Instance.DefaultFont;
             }
             return null;
         }

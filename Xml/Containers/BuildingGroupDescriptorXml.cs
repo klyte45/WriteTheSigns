@@ -36,7 +36,7 @@ namespace Klyte.WriteTheSigns.Xml
         public float StopMappingThresold { get; set; } = 1f;
 
         [XmlAttribute("versionWTSLastEdit")]
-        public string VersionWTSLastEdit { get; } = WriteTheSignsMod.FullVersion;
+        public string VersionWTSLastEdit { get => WriteTheSignsMod.FullVersion; set { } }
 
         [XmlAttribute("versionWTSCreation")]
         public string VersionWTSCreation { get; private set; } = WriteTheSignsMod.FullVersion;

@@ -59,7 +59,7 @@ namespace Klyte.WriteTheSigns.Singleton
             WriteTheSignsMod.Controller.EventOnPostalCodeChanged += ResetViews;
         }
 
-        private void OnNodeChanged(ushort nodeId) => m_updatedStreetPositions[nodeId] = null;
+        public void OnNodeChanged(ushort nodeId) => m_updatedStreetPositions[nodeId] = null;
 
         private void OnNameSeedChanged(ushort segmentId)
         {
@@ -378,7 +378,7 @@ namespace Klyte.WriteTheSigns.Singleton
             refBoard.m_streetDirection = -dir + 90 + segmentIDirection.y;
             refBoard.m_segmentId = segmentIid;
             refBoard.m_cachedColor = targetDescriptor.UseDistrictColor ? WriteTheSignsMod.Controller.ConnectorADR.GetDistrictColor(refBoard.m_districtId) : targetDescriptor.Descriptor?.FixedColor ?? Color.white;
-            refBoard.m_cachedContrastColor = KlyteMonoUtils.ContrastColor(refBoard.m_cachedColor);
+            refBoard.m_cachedContrastColor = refBoard.m_cachedColor.ContrastColor();
             refBoard.m_distanceRef = Vector2.Distance(VectorUtils.XZ(refBoard.m_platePosition), WriteTheSignsMod.Controller.ConnectorADR.GetStartPoint());
             refBoard.m_distanceRefKm = Mathf.RoundToInt(refBoard.m_distanceRef / 1000);
             refBoard.m_currentDescriptor = targetDescriptor;

@@ -1,6 +1,10 @@
-﻿using Klyte.WriteTheSigns.Data;
+﻿using Klyte.Commons.Utils;
+using Klyte.WriteTheSigns.Data;
 using Klyte.WriteTheSigns.Xml;
+using System;
+using System.Collections;
 using UnityEngine;
+using static Klyte.Commons.Utils.SegmentUtils;
 
 namespace Klyte.WriteTheSigns.ModShared
 {
@@ -52,7 +56,7 @@ namespace Klyte.WriteTheSigns.ModShared
 
         public abstract AdrHighwayParameters GetHighwayData(ushort seedId);
         public abstract AdrHighwayParameters GetHighwayTypeData(string typeName);
-        public abstract string[] ListAllAvailableHighwayTypes(string filterText);
+        public abstract IEnumerator ListAllAvailableHighwayTypes(string filterText, Wrapper<string[]> result);
 
         internal class AdrHighwayParameters
         {
@@ -62,6 +66,12 @@ namespace Klyte.WriteTheSigns.ModShared
             public string shortCode;
             public string longCode;
             public Color hwColor;
+            public int mileageOffset;
+            public MileageStartSource mileageSrc;
+            public MileageStartSource axis;
         }
+
+        internal abstract byte GetDirection(ushort segmentId);
+        internal abstract float GetDistanceFromCenter(ushort segmentId);
     }
 }

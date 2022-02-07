@@ -30,11 +30,13 @@ namespace Klyte.WriteTheSigns.Sprites
             FileUtils.ScanPrefabsFoldersDirectory<PropInfo>(WTSController.EXTRA_SPRITES_FILES_FOLDER_ASSETS, LoadImagesFromPrefab);
 
             ResetTransportAtlas();
-            TransportManager.instance.eventLineColorChanged += PurgeLine;
-            TransportManager.instance.eventLineNameChanged += PurgeLine;
+            TransportManager.instance.eventLineColorChanged += (x) => PurgeLine(new WTSLine(x, false));
+            TransportManager.instance.eventLineNameChanged += (x) => PurgeLine(new WTSLine(x, false));
 
             LoadImagesFromLocalFolders();
         }
+
+        protected void Start() => WriteTheSignsMod.Controller.EventFontsReloadedFromFolder += ResetTransportAtlas;
 
         #region Imported atlas
 
@@ -64,6 +66,7 @@ namespace Klyte.WriteTheSigns.Sprites
 
         public string[] GetSpritesFromLocalAtlas(string atlasName) => LocalAtlases.TryGetValue(atlasName ?? string.Empty, out UITextureAtlas atlas) ? atlas.spriteNames : null;
         public string[] GetSpritesFromAssetAtlas(ulong workshopId) => AssetAtlases.TryGetValue(workshopId, out UITextureAtlas atlas) ? atlas.spriteNames : null;
+        public bool HasAtlas(ulong workshopId) => AssetAtlases.TryGetValue(workshopId, out _);
         public BasicRenderInformation GetFromLocalAtlases(string atlasName, string spriteName, bool fallbackOnInvalid = false)
         {
             if (spriteName.IsNullOrWhiteSpace())
@@ -148,12 +151,18 @@ namespace Klyte.WriteTheSigns.Sprites
         internal string[] FindByInLocal(string targetAtlas, string searchName, out UITextureAtlas atlas) => LocalAtlases.TryGetValue(targetAtlas ?? string.Empty, out atlas)
               ? atlas.spriteNames.Where((x, i) => i > 0 && x.ToLower().Contains(searchName.ToLower())).Select(x => $"{(targetAtlas.IsNullOrWhiteSpace() ? "<ROOT>" : targetAtlas)}/{x}").OrderBy(x => x).ToArray()
               : (new string[0]);
+        internal string[] FindByInLocalSimple(string targetAtlas, string searchName, out UITextureAtlas atlas) => LocalAtlases.TryGetValue(targetAtlas ?? string.Empty, out atlas)
+              ? atlas.spriteNames.Where((x, i) => i > 0 && x.ToLower().Contains(searchName.ToLower())).OrderBy(x => x).ToArray()
+              : (new string[0]);
         internal string[] FindByInAsset(ulong assetId, string searchName, out UITextureAtlas atlas, bool asRoot = false) => AssetAtlases.TryGetValue(assetId, out atlas)
                 ? atlas.spriteNames.Where((x, i) => i > 0 && x.ToLower().Contains(searchName.ToLower())).Select(x => $"{(asRoot ? "<ROOT>" : assetId.ToString())}/{x}").OrderBy(x => x).ToArray()
                 : (new string[0]);
+        internal string[] FindByInAssetSimple(ulong assetId, string searchName, out UITextureAtlas atlas) => AssetAtlases.TryGetValue(assetId, out atlas)
+                ? atlas.spriteNames.Where((x, i) => i > 0 && x.ToLower().Contains(searchName.ToLower())).OrderBy(x => x).ToArray()
+                : (new string[0]);
         internal string[] FindByInLocalFolders(string searchName) => LocalAtlases.Keys.Select(x => x == string.Empty ? "<ROOT>" : x).Where(x => x.ToLower().Contains(searchName.ToLower())).OrderBy(x => x).ToArray();
 
-        internal string[] OnFilterParamImagesByText(UISprite sprite, string inputText, string propName, out string protocolFound)
+        internal string[] OnFilterParamImagesAndFoldersByText(UISprite sprite, string inputText, string propName, out string protocolFound)
         {
             Match match;
             if ((inputText?.Length ?? 0) >= 4 && (match = Regex.Match(inputText ?? "", $"^({PROTOCOL_IMAGE}|{PROTOCOL_IMAGE_ASSET}|{PROTOCOL_FOLDER}|{PROTOCOL_FOLDER_ASSET})(([^/]+)/)?(.*)$")).Success)
@@ -169,7 +178,7 @@ namespace Klyte.WriteTheSigns.Sprites
                 {
                     default:
                     case PROTOCOL_IMAGE:
-                        results = (subfolder.IsNullOrWhiteSpace() ? WriteTheSignsMod.Controller.AtlasesLibrary.FindByInLocalFolders(searchName).Select(x => $"{x}/") : new List<string>()).Union(WriteTheSignsMod.Controller.AtlasesLibrary.FindByInLocal(subfolder == "<ROOT>" ? null : subfolder, searchName, out atlas)).ToArray();
+                        results = (subfolder.IsNullOrWhiteSpace() ? WriteTheSignsMod.Controller.AtlasesLibrary.FindByInLocalFolders(searchName).Select(x => $"{x}/") : new List<string>()).Concat(WriteTheSignsMod.Controller.AtlasesLibrary.FindByInLocal(subfolder == "<ROOT>" ? null : subfolder, searchName, out atlas)).ToArray();
                         break;
                     case PROTOCOL_IMAGE_ASSET:
                         results = WriteTheSignsMod.Controller.AtlasesLibrary.FindByInAsset(ulong.TryParse(propName?.Split('.')[0] ?? "", out ulong wId) ? wId : 0u, searchName, out atlas, true);
@@ -198,7 +207,7 @@ namespace Klyte.WriteTheSigns.Sprites
         {
             LocalAtlases.Clear();
             var errors = new List<string>();
-            var folders = new string[] { WTSController.ExtraSpritesFolder }.Union(Directory.GetDirectories(WTSController.ExtraSpritesFolder));
+            var folders = new string[] { WTSController.ExtraSpritesFolder }.Concat(Directory.GetDirectories(WTSController.ExtraSpritesFolder));
             foreach (var dir in folders)
             {
                 bool isRoot = dir == WTSController.ExtraSpritesFolder;
@@ -270,6 +279,7 @@ namespace Klyte.WriteTheSigns.Sprites
         private UITextureAtlas m_transportLineAtlas;
         private Material m_transportLineMaterial;
         private Dictionary<int, BasicRenderInformation> TransportLineCache { get; } = new Dictionary<int, BasicRenderInformation>();
+        private Dictionary<int, BasicRenderInformation> RegionalTransportLineCache { get; } = new Dictionary<int, BasicRenderInformation>();
 
         private bool TransportIsDirty { get; set; }
         private void ResetTransportAtlas()
@@ -277,19 +287,20 @@ namespace Klyte.WriteTheSigns.Sprites
             m_transportLineAtlas = ScriptableObject.CreateInstance<UITextureAtlas>();
             m_transportLineAtlas.material = new Material(UIView.GetAView().defaultAtlas.material.shader);
         }
-        public void PurgeLine(ushort lineId)
+        internal void PurgeLine(WTSLine line)
         {
-            string id = $"{lineId}";
+            string id = $"{line.ToExternalRefId()}";
             if (!(m_transportLineAtlas[id] is null))
             {
                 m_transportLineAtlas.Remove(id);
             }
-            TransportLineCache.Remove(lineId);
+            (line.regional ? RegionalTransportLineCache : TransportLineCache).Remove(line.lineId);
             TransportIsDirty = true;
         }
         public void PurgeAllLines()
         {
             TransportLineCache.Clear();
+            RegionalTransportLineCache.Clear();
             ResetTransportAtlas();
             m_transportLineMaterial = null;
             TransportIsDirty = true;
@@ -299,11 +310,11 @@ namespace Klyte.WriteTheSigns.Sprites
             get => m_lineIconTest; set
             {
                 m_lineIconTest = value;
-                PurgeLine(0);
+                PurgeLine(new WTSLine(0, false));
             }
         }
         private LineIconSpriteNames m_lineIconTest = LineIconSpriteNames.K45_HexagonIcon;
-        public List<BasicRenderInformation> DrawLineFormats(IEnumerable<int> ids)
+        internal List<BasicRenderInformation> DrawLineFormats(IEnumerable<WTSLine> ids)
         {
             var bris = new List<BasicRenderInformation>();
             if (ids.Count() == 0)
@@ -311,9 +322,9 @@ namespace Klyte.WriteTheSigns.Sprites
                 return bris;
             }
 
-            foreach (int id in ids.OrderBy(x => x < 0 ? x.ToString("D6") : WriteTheSignsMod.Controller.ConnectorTLM.GetLineSortString((ushort)x)))
+            foreach (var id in ids.OrderBy(x => x.lineId < 0 ? x.lineId.ToString("D6") : WriteTheSignsMod.Controller.ConnectorTLM.GetLineSortString(x)))
             {
-                if (TransportLineCache.TryGetValue(id, out BasicRenderInformation bri))
+                if ((id.regional ? RegionalTransportLineCache : TransportLineCache).TryGetValue(id.lineId, out BasicRenderInformation bri))
                 {
                     if (bri != null)
                     {
@@ -322,16 +333,16 @@ namespace Klyte.WriteTheSigns.Sprites
                 }
                 else
                 {
-                    TransportLineCache[id] = null;
+                    (id.regional ? RegionalTransportLineCache : TransportLineCache)[id.lineId] = null;
                     StartCoroutine(WriteTransportLineTextureCoroutine(id));
                 }
             }
             return bris;
 
         }
-        private IEnumerator WriteTransportLineTextureCoroutine(int lineId)
+        private IEnumerator WriteTransportLineTextureCoroutine(WTSLine line)
         {
-            string id = $"{lineId}";
+            string id = $"{line.ToExternalRefId()}";
             if (m_transportLineAtlas[id] == null)
             {
                 yield return 0;
@@ -340,10 +351,10 @@ namespace Klyte.WriteTheSigns.Sprites
                     yield return null;
                 }
                 Tuple<string, Color, string> lineParams =
-                    lineId == 0 ? Tuple.New(KlyteResourceLoader.GetDefaultSpriteNameFor(LineIconTest), (Color)ColorExtensions.FromRGB(0x5e35b1), "K")
-                    : lineId < 0 ? Tuple.New(KlyteResourceLoader.GetDefaultSpriteNameFor((LineIconSpriteNames)((-lineId % (Enum.GetValues(typeof(LineIconSpriteNames)).Length - 1)) + 1)), WTSDynamicTextRenderingRules.m_spectreSteps[(-lineId) % WTSDynamicTextRenderingRules.m_spectreSteps.Length], $"{-lineId}")
-                    : WriteTheSignsMod.Controller.ConnectorTLM.GetLineLogoParameters((ushort)lineId);
-                if (lineParams == null)
+                    line.ZeroLine ? Tuple.New(KlyteResourceLoader.GetDefaultSpriteNameFor(LineIconTest), (Color)ColorExtensions.FromRGB(0x5e35b1), "K")
+                    : line.lineId < 0 ? Tuple.New(KlyteResourceLoader.GetDefaultSpriteNameFor((LineIconSpriteNames)((-line.lineId % (Enum.GetValues(typeof(LineIconSpriteNames)).Length - 1)) + 1)), WTSDynamicTextRenderingRules.m_spectreSteps[(-line.lineId) % WTSDynamicTextRenderingRules.m_spectreSteps.Length], $"{-line.lineId}")
+                    : WriteTheSignsMod.Controller.ConnectorTLM.GetLineLogoParameters(line);
+                if (lineParams == null || lineParams.Second == Color.clear)
                 {
                     yield break;
                 }
@@ -366,6 +377,7 @@ namespace Klyte.WriteTheSigns.Sprites
                 StopAllCoroutines();
                 m_transportLineMaterial = null;
                 TransportLineCache.Clear();
+                RegionalTransportLineCache.Clear();
                 yield break;
             }
             yield return 0;
@@ -384,7 +396,7 @@ namespace Klyte.WriteTheSigns.Sprites
                     shader = WTSController.DEFAULT_SHADER_TEXT,
                 };
             }
-            RegisterMeshSingle(lineId, bri, TransportLineCache, m_transportLineAtlas, TransportIsDirty, m_transportLineMaterial);
+            RegisterMeshSingle(line.lineId, bri, line.regional ? RegionalTransportLineCache : TransportLineCache, m_transportLineAtlas, TransportIsDirty, m_transportLineMaterial);
             TransportIsDirty = false;
             yield break;
         }
@@ -429,7 +441,7 @@ namespace Klyte.WriteTheSigns.Sprites
                 var formTexture = new Texture2D(width, height);
                 formTexture.SetPixels(spriteInfo.texture.GetPixels());
                 TextureScaler.scale(formTexture, width * 2, height * 2);
-                Texture2D texText = font.DrawTextToTexture(text,1);
+                Texture2D texText = font.DrawTextToTexture(text, 1);
 
                 Color[] formTexturePixels = formTexture.GetPixels();
                 int borderWidth = 8;
@@ -440,7 +452,7 @@ namespace Klyte.WriteTheSigns.Sprites
                 int targetWidth = width + borderWidth;
                 int targetHeight = height + borderWidth;
                 TextureScaler.scale(formTexture, targetWidth, targetHeight);
-                Color contrastColor = KlyteMonoUtils.ContrastColor(bgColor);
+                Color contrastColor = bgColor.ContrastColor();
                 Color[] targetColorArray = formTexture.GetPixels().Select(x => new Color(contrastColor.r, contrastColor.g, contrastColor.b, x.a)).ToArray();
                 Destroy(formTexture);
                 var targetBorder = new RectOffset(spriteInfo.border.left * 2, spriteInfo.border.right * 2, spriteInfo.border.top * 2, spriteInfo.border.bottom * 2);
@@ -544,7 +556,6 @@ namespace Klyte.WriteTheSigns.Sprites
                 triangles.EnsureCapacity(triangles.Count + kTriangleIndices.Length);
                 triangles.AddRange(kTriangleIndices);
 
-                int baseIndex = 0;
                 float x = 0f;
                 float y = 0f;
                 float x2 = 64 * proportion;
@@ -683,13 +694,13 @@ namespace Klyte.WriteTheSigns.Sprites
 
         public static void UpdateMaterial(UITextureAtlas referenceAtlas, Material material, bool isDirty)
         {
-            if (isDirty || referenceAtlas.material.GetTexture("_ACIMap") is null)
-            {
-                var aciTex = new Texture2D(referenceAtlas.texture.width, referenceAtlas.texture.height);
-                aciTex.SetPixels(referenceAtlas.texture.GetPixels().Select(x => new Color(1 - x.a, 0, 1f, 1)).ToArray());
-                aciTex.Apply();
-                material.SetTexture("_ACIMap", aciTex);
-            }
+            //if (isDirty || referenceAtlas.material.GetTexture("_ACIMap") is null)
+            //{
+            //    var aciTex = new Texture2D(referenceAtlas.texture.width, referenceAtlas.texture.height);
+            //    aciTex.SetPixels(referenceAtlas.texture.GetPixels().Select(x => new Color(1 - x.a, 0, 1f, 1)).ToArray());
+            //    aciTex.Apply();
+            //    material.SetTexture("_ACIMap", aciTex);
+            //}
         }
         #endregion
     }
